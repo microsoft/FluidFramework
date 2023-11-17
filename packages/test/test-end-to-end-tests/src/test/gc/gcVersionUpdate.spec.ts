@@ -139,12 +139,13 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		dataStore1Id = dataStore1.context.id;
 
 		// Create couple more data stores and mark them as referenced.
+		const containerRuntime = dataStore1.context.containerRuntime;
 		const dataStore2 = (await (
-			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type)
+			await containerRuntime.createDataStore(defaultFactory.type)
 		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore2", dataStore2.handle);
 		const dataStore3 = (await (
-			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type)
+			await containerRuntime.createDataStore(defaultFactory.type)
 		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore3", dataStore3.handle);
 		dataStore2Id = dataStore2.context.id;

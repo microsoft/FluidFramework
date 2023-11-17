@@ -72,6 +72,11 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		await waitForContainerConnection(container);
 	});
 
+	async function createNewDataStore() {
+		const newDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
+
 	/**
 	 * There are 9 GC nodes in total in these tests:
 	 * 1 containers root.
@@ -80,12 +85,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	 * 2 attachment blobs.
 	 */
 	it("can correctly generate GC stats without unreferenced nodes", async () => {
-		const dataStore1 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
-		const dataStore2 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -131,12 +132,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are unreferenced", async () => {
-		const dataStore1 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
-		const dataStore2 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -229,12 +226,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are re-referenced", async () => {
-		const dataStore1 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
-		const dataStore2 = (await (
-			await containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -301,12 +294,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const dataStore1 = (await (
-				await containerRuntime.createDataStore(TestDataObjectType)
-			).entryPoint.get()) as ITestDataObject;
-			const dataStore2 = (await (
-				await containerRuntime.createDataStore(TestDataObjectType)
-			).entryPoint.get()) as ITestDataObject;
+			const dataStore1 = await createNewDataStore();
+			const dataStore2 = await createNewDataStore();
 			const expectedGCStats: IGCStats = {
 				nodeCount: 7,
 				unrefNodeCount: 0,

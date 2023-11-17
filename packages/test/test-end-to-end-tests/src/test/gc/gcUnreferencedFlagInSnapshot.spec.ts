@@ -107,17 +107,19 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 		await waitForContainerConnection(mainContainer);
 	});
 
+	async function createNewDataStore() {
+		const newDataStore =
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
+
 	it("should return the unreferenced flag correctly in snapshot for deleted data stores", async () => {
 		const deletedDataStoreIds: string[] = [];
 		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
-		const dataStore2 = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
-		const dataStore3 = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStore2 = await createNewDataStore();
+		const dataStore3 = await createNewDataStore();
 
 		// Add the handles of the above dataStores to mark them as referenced.
 		mainDataStore._root.set("dataStore2", dataStore2.handle);
@@ -149,12 +151,8 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
-		const dataStore2 = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
-		const dataStore3 = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStore2 = await createNewDataStore();
+		const dataStore3 = await createNewDataStore();
 
 		// Add the handles of the above dataStores to mark them as referenced.
 		mainDataStore._root.set("dataStore2", dataStore2.handle);

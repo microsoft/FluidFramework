@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -179,6 +183,11 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		}
 	});
 
+	async function createNewDataStore(containerRuntime: IContainerRuntimeBase) {
+		const newDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
+
 	it("removes GC state and marks all objects as referenced on disabling GC", async () => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
@@ -190,9 +199,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -243,9 +250,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -314,9 +319,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a data store and mark it as unreferenced by storing and the removing its handle in a referenced DDS.
-		const newDataStore = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 		mainDataStore._root.delete("newDataStore");
 
@@ -396,9 +399,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC ran even though gcAllowed was set to false. Whether GC runs or not is determined by the
@@ -422,9 +423,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = (await (
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC did not run even though gcAllowed is set to true. Whether GC runs or not is determined by

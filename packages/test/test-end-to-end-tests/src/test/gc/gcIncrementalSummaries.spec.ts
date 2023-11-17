@@ -66,18 +66,20 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 	});
 
+	async function createNewDataStore() {
+		const newDataStore =
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
+
 	it("only summarizes changed data stores", async () => {
 		const dataStoreSummaryTypesMap: Map<string, SummaryType> = new Map();
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreB = await createNewDataStore();
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreC = await createNewDataStore();
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Summarize and validate that all data store entries are trees since this is the first summary.
@@ -104,13 +106,9 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreB = await createNewDataStore();
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreC = await createNewDataStore();
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Validate that all data store entries are trees since this is the first summary.
@@ -161,13 +159,9 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreB = await createNewDataStore();
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = (await (
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-		).entryPoint.get()) as ITestDataObject;
+		const dataStoreC = await createNewDataStore();
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Summarize and validate that all data store entries are trees since this is the first summary.
@@ -242,16 +236,12 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 			);
 
 			// Create data stores B and mark it as referenced.
-			const dataStoreB = (await (
-				await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-			).entryPoint.get()) as ITestDataObject;
+			const dataStoreB = await createNewDataStore();
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 			// Create 10 data stores and mark them referenced by adding their handle to dataStoreB.
 			for (let i = 1; i <= 10; i++) {
-				const newDataStore = (await (
-					await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
-				).entryPoint.get()) as ITestDataObject;
+				const newDataStore = await createNewDataStore();
 				dataStoreB._root.set(`dataStoreB-${i}`, newDataStore.handle);
 			}
 			await provider.ensureSynchronized();
