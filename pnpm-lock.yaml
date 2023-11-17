@@ -4634,6 +4634,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
+      tsc-multi: ^1.1.0
       typedoc: ^0.12.0
       typescript: ~5.1.6
       underscore: ^1.13.6
@@ -4679,6 +4680,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.88.2
+      tsc-multi: 1.1.0_typescript@5.1.6
       typedoc: 0.12.0
       typescript: 5.1.6
       webpack: 5.88.2
@@ -4711,6 +4713,7 @@ importers:
       semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/property-common': link:../property-common
@@ -4740,6 +4743,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-common:
@@ -4863,6 +4867,7 @@ importers:
       pako: ^2.0.4
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -4913,6 +4918,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-inspector-table:
@@ -4979,6 +4985,7 @@ importers:
       svgo-loader: ^2.1.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       tsconfig-paths-webpack-plugin: ^3.5.2
       typescript: ~5.1.6
       webpack: ^5.82.0
@@ -5049,6 +5056,7 @@ importers:
       svgo-loader: 2.2.2_svgo@1.3.2
       ts-jest: 29.1.1_bklqb6uhx3v54kwzu425tj6wzi
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
+      tsc-multi: 1.1.0_typescript@5.1.6
       tsconfig-paths-webpack-plugin: 3.5.2
       typescript: 5.1.6
       webpack: 5.88.2_webpack-cli@4.10.0
@@ -5083,6 +5091,7 @@ importers:
       semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       underscore: ^1.13.6
     dependencies:
@@ -5113,6 +5122,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-proxy:
@@ -5136,6 +5146,7 @@ importers:
       source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
     dependencies:
@@ -5159,6 +5170,7 @@ importers:
       source-map-loader: 2.0.2_webpack@5.88.2
       ts-jest: 29.1.1_bklqb6uhx3v54kwzu425tj6wzi
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.88.2
 
@@ -5188,6 +5200,7 @@ importers:
       semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
+      tsc-multi: ^1.1.0
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-common': link:../property-common
@@ -5214,6 +5227,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
     specifiers:
@@ -5233,6 +5247,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
@@ -5252,6 +5267,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/services/property-query-service:
@@ -42811,6 +42827,27 @@ packages:
         optional: true
     dependencies:
       typescript: 5.1.6
+    dev: true
+
+  /tsc-multi/1.1.0:
+    resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
+    engines: {node: '>=14'}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=4.3.0'
+    dependencies:
+      debug: 4.3.4
+      fast-glob: 3.3.1
+      get-stdin: 8.0.0
+      p-all: 3.0.0
+      picocolors: 1.0.0
+      signal-exit: 3.0.7
+      string-to-stream: 3.0.1
+      superstruct: 1.0.3
+      tslib: 2.6.2
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /tsc-multi/1.1.0_typescript@5.1.6:

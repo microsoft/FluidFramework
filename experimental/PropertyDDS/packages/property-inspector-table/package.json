@@ -10,9 +10,21 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/src/index.js",
-	"module": "lib/src/index.js",
-	"types": "dist/src/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
+	"types": "dist/index.d.ts",
 	"files": [
 		"dist/src",
 		"dist/assets",
@@ -23,7 +35,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.esm.json",
 		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
@@ -37,7 +49,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.cjs.json",
 		"webpack": "webpack --config webpack.svgs.js"
 	},
 	"dependencies": {
@@ -105,6 +117,7 @@
 		"svgo-loader": "^2.1.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
+		"tsc-multi": "^1.1.0",
 		"tsconfig-paths-webpack-plugin": "^3.5.2",
 		"typescript": "~5.1.6",
 		"webpack": "^5.82.0",
