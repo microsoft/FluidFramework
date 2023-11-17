@@ -18,7 +18,7 @@ import {
 	formatTick,
 } from "@fluidframework/telemetry-utils";
 
-// This import form is used so it's compatible with both CJS and ESM output.
+// This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";
 const { debug: registerDebug } = debugPkg;
 

@@ -11,8 +11,20 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -24,9 +36,9 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "tsc-multi --config tsc-multi.test.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib bench/dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
@@ -39,11 +51,11 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:memory": "mocha --config src/test/memory/.mocharc.js",
-		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.js",
-		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
+		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.cjs\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -106,6 +118,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-node": "^10.9.1",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
 		"uuid": "^9.0.0"
 	},
