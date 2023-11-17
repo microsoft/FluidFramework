@@ -903,6 +903,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
+    clear(): void;
+    // (undocumented)
     floor(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)
     gather(key: TKey, matcher: IRBMatcher<TKey, TData>): RBNode<TKey, TData>[];

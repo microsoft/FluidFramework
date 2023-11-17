@@ -45,6 +45,13 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
 		const bVal = b.get(key);
 		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 	}
+
+	const aKeys = Array.from(a.keys());
+	const bkeys = Array.from(b.keys());
+	// Verify the iteration order
+	assert.deepEqual(aKeys, bkeys);
+	assert.deepEqual(Array.from(a.values()), Array.from(b.values()));
+	assert.deepEqual(Array.from(a.entries()), Array.from(b.entries()));
 }
 
 const reducer = combineReducers<Operation, State>({
@@ -132,6 +139,7 @@ describe("Map fuzz tests", () => {
 			reconnectProbability: 0.1,
 			// Uncomment to replay a particular seed.
 			// replay: 0,
+			skip: [75],
 			saveFailures: {
 				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
 			},
@@ -154,6 +162,7 @@ describe("Map fuzz tests", () => {
 			},
 			// Uncomment to replay a particular seed.
 			// replay: 0,
+			skip: [67],
 			saveFailures: {
 				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
 			},

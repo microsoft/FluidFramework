@@ -89,6 +89,39 @@ export interface IMapKeyAddLocalOpMetadata {
 }
 
 /**
+ * Metadata for an local 'delete' operation.
+ */
+export interface IMapKeyDeleteLocalOpMetadata {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "delete";
+
+	/**
+	 * Unique identifier for the local operation.
+	 */
+	pendingMessageId: number;
+
+	/**
+	 * Local value prior to the edit.
+	 */
+	previousValue: ILocalValue;
+
+	/**
+	 * All associated pending message id's of a local set op, or the creation index of an ack'd key, or both.
+	 *
+	 * For example:
+	 *
+	 * 1. previousIndex: [1] -- indicates the deleted key was already ack'd previously, and its creation index was 1.
+	 * 2. previousIndex: [[1, 2]] -- indicates the deleted key was not ack'd, and there existed two pending local set op targeting this key,
+	 * with message id 1 and 2.
+	 * 3. previousIndex: [1, [4]] -- indicates the delted key was already ack'd perviously, with creation idnex 1; additionaly there also
+	 * existed a local set op targeting this key, with message id 4
+	 */
+	previousIndex: (number | number[])[];
+}
+
+/**
  * Metadata for an local `clear` operation.
  */
 export interface IMapClearLocalOpMetadata {
@@ -106,12 +139,30 @@ export interface IMapClearLocalOpMetadata {
 	 * Local map contents prior to clearing it.
 	 */
 	previousMap?: Map<string, ILocalValue>;
+
+	/**
+	 * The creation index of ack'd keys
+	 */
+	previousAckedKeysTracker?: Map<string, number>;
+
+	/**
+	 * All pending message id's for unack'd set op's
+	 */
+	previousPendingSetTracker?: Map<string, number[]>;
+
+	/**
+	 * The pending delete count for the keys
+	 */
+	previousPendingDeleteTracker?: Map<string, number>;
 }
 
 /**
  * Metadata for a local operation associated with a specific key entry in the map.
  */
-export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+export type MapKeyLocalOpMetadata =
+	| IMapKeyEditLocalOpMetadata
+	| IMapKeyAddLocalOpMetadata
+	| IMapKeyDeleteLocalOpMetadata;
 
 /**
  * Metadata for a local operation.
