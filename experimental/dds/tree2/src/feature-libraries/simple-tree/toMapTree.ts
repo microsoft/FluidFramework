@@ -32,9 +32,11 @@ import { type TypedNode, type TreeField } from "./types";
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
- * @param data - TODO (note POJO nature)
+ * @param data - The input tree to be converted.
+ * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
+ * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  */
-export function toMapTree(
+export function nodeDataToMapTree(
 	data: TypedNode<TreeNodeSchema, "javaScript">,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
@@ -72,7 +74,8 @@ export function toMapTree(
 
 /**
  * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s.
- * @param data - TODO (note POJO nature)
+ * @param data - The input tree to be converted.
+ * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  */
 export function fieldDataToMapTrees(
 	data: TreeField<TreeFieldSchema, "javaScript">,
@@ -89,14 +92,16 @@ export function fieldDataToMapTrees(
 	}
 	if (multiplicity === Multiplicity.Sequence) {
 		assert(Array.isArray(data), "Expected an array as sequence input.");
-		const children = Array.from(data, (child) => toMapTree(child, context, fieldSchema.types));
+		const children = Array.from(data, (child) =>
+			nodeDataToMapTree(child, context, fieldSchema.types),
+		);
 		return children;
 	}
 	assert(
 		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
 		"A single value was provided for an unsupported field",
 	);
-	return [toMapTree(data, context, fieldSchema.types)];
+	return [nodeDataToMapTree(data, context, fieldSchema.types)];
 }
 
 function valueToMapTree(
@@ -143,16 +148,18 @@ function arrayToMapTree(
 }
 
 function mapToMapTree(
-	tree: Map<string, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Map<string, TypedNode<TreeNodeSchema, "javaScript">>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	const type = getType(tree, context, typeSet);
+	const type = getType(data, context, typeSet);
 	const schema = getSchema(context, type);
 
 	const fields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of tree) {
+	for (const [key, value] of data) {
 		assert(!fields.has(brand(key)), "Keys should not be duplicated");
+
+		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (value !== undefined) {
 			const childSchema = getFieldSchema(brand(key), schema);
 			const mappedField = fieldDataToMapTrees(value, context, childSchema);
@@ -166,20 +173,23 @@ function mapToMapTree(
 }
 
 function recordToMapTree(
-	tree: Record<string | number | symbol, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Record<string | number | symbol, TypedNode<TreeNodeSchema, "javaScript">>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	const type = getType(tree, context, typeSet);
+	const type = getType(data, context, typeSet);
 	const schema = getSchema(context, type);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
-	const keys = Reflect.ownKeys(tree).filter((key) => typeof key === "string") as FieldKey[];
+	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
+
 	for (const key of keys) {
 		assert(!fields.has(key), "Keys should not be duplicated");
-		const value = tree[key];
+		const value = data[key];
+
+		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (value !== undefined) {
 			const childSchema = getFieldSchema(brand(key), schema);
 			const mappedChildTree = fieldDataToMapTrees(value, context, childSchema);
@@ -194,11 +204,11 @@ function recordToMapTree(
 }
 
 function getType(
-	tree: TypedNode<TreeNodeSchema, "javaScript">,
+	data: TypedNode<TreeNodeSchema, "javaScript">,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): TreeNodeSchemaIdentifier {
-	const possibleTypes = getPossibleTypes(context, typeSet, tree as ContextuallyTypedNodeData);
+	const possibleTypes = getPossibleTypes(context, typeSet, data as ContextuallyTypedNodeData);
 	assert(possibleTypes.length !== 0, "data is incompatible with all types allowed by the schema");
 	assert(
 		possibleTypes.length === 1,

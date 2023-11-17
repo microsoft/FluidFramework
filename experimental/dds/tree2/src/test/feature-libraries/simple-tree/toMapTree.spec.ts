@@ -9,7 +9,7 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import { SchemaBuilder, leaf } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
-import { toMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
+import { nodeDataToMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
 import { brand } from "../../../util";
 import { EmptyKey, type FieldKey, type MapTree } from "../../../core";
 
@@ -20,7 +20,7 @@ describe("toMapTree", () => {
 
 		const tree = "Hello world";
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: leaf.string.name,
@@ -35,7 +35,7 @@ describe("toMapTree", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const schema = schemaBuilder.intoSchema(schemaBuilder.null);
 
-		const actual = toMapTree(null, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(null, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: leaf.null.name,
@@ -52,7 +52,7 @@ describe("toMapTree", () => {
 
 		const tree = new MockHandle<string>("mock-fluid-handle");
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: leaf.handle.name,
@@ -71,7 +71,7 @@ describe("toMapTree", () => {
 		const handle = new MockHandle<boolean>(true);
 		const tree = [42, handle, 37];
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.list"),
@@ -97,7 +97,7 @@ describe("toMapTree", () => {
 
 		const tree: number[] = [];
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.list"),
@@ -124,7 +124,7 @@ describe("toMapTree", () => {
 		];
 		const tree = new Map<string, number | string | null | undefined>(entries);
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.map"),
@@ -145,7 +145,7 @@ describe("toMapTree", () => {
 
 		const tree = new Map<string, number>();
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.map"),
@@ -172,7 +172,7 @@ describe("toMapTree", () => {
 			d: undefined, // Should be skipped in output
 		};
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.object"),
@@ -195,7 +195,7 @@ describe("toMapTree", () => {
 
 		const tree = {};
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.object"),
@@ -243,7 +243,7 @@ describe("toMapTree", () => {
 			c,
 		};
 
-		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+		const actual = nodeDataToMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
 			type: brand("test.complex-object"),

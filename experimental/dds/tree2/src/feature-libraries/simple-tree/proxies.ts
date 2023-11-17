@@ -48,7 +48,7 @@ import {
 	TreeObjectNode,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
-import { fieldDataToMapTrees, toMapTree } from "./toMapTree";
+import { fieldDataToMapTrees, nodeDataToMapTree } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -173,7 +173,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						if (content === undefined) {
 							typedField.content = undefined;
 						} else {
-							const mappedContent = toMapTree(
+							const mappedContent = nodeDataToMapTree(
 								content,
 								editNode.context,
 								fieldSchema.types,
@@ -659,7 +659,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			if (content === undefined) {
 				node.set(key, undefined);
 			} else {
-				const mappedContent = toMapTree(content, node.context, node.schema.mapFields.types);
+				const mappedContent = nodeDataToMapTree(
+					content,
+					node.context,
+					node.schema.mapFields.types,
+				);
 				const cursor = cursorForMapTreeNode(mappedContent);
 				modifyChildren(
 					node,
