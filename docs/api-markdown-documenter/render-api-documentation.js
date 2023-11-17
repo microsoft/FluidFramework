@@ -10,15 +10,14 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
-	ApiItemUtilities,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
-const yaml = require("js-yaml");
 
 const { alertNodeType } = require("./alert-node");
 const { layoutContent } = require("./api-documentation-layout");
+const { buildNavBar } = require("./build-api-nav-bar");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
@@ -46,17 +45,17 @@ async function renderApiDocumentation() {
 	console.groupEnd();
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
+		apiModel,
 		documentBoundaries: [
 			ApiItemKind.Class,
 			ApiItemKind.Enum,
 			ApiItemKind.Interface,
 			ApiItemKind.Namespace,
 		],
-		apiModel,
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
+		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
-		includeBreadcrumb: false,
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
 			// Skip `@fluid-internal` packages
@@ -86,7 +85,7 @@ async function renderApiDocumentation() {
 		throw error;
 	}
 
-	buildNavBar(documents);
+	await buildNavBar(documents);
 
 	console.groupEnd();
 
@@ -131,55 +130,6 @@ async function renderApiDocumentation() {
 
 	console.groupEnd();
 }
-
-/**
- * Processes documents and generates data required for the nav bar.
- * @param {Array<Object>} documents - List of documents with apiItem.
- * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
- */
-function buildNavBar(documents) {
-	const validKinds = new Set([
-		ApiItemKind.Class,
-		ApiItemKind.Interface,
-		ApiItemKind.Enum,
-		ApiItemKind.Namespace,
-	]);
-	const { allAPIs, packageMap } = documents.reduce(
-		({ allAPIs, packageMap }, { apiItem }) => {
-			if (apiItem === undefined) {
-				return { allAPIs, packageMap };
-			}
-
-			const { displayName, kind } = apiItem;
-
-			const associatedPackage = apiItem.getAssociatedPackage();
-			const packageName =
-				associatedPackage === undefined
-					? undefined
-					: ApiItemUtilities.getUnscopedPackageName(associatedPackage);
-
-			if (kind === ApiItemKind.Package) {
-				packageMap[displayName] = packageName;
-			} else if (validKinds.has(kind)) {
-				allAPIs[packageName] = allAPIs[packageName] || {};
-				allAPIs[packageName][kind] = allAPIs[packageName][kind] || [];
-				allAPIs[packageName][kind].push(displayName);
-			}
-
-			return { allAPIs, packageMap };
-		},
-		{ allAPIs: {}, packageMap: {} },
-	);
-
-	saveToFile("allAPIs.yaml", allAPIs);
-	saveToFile("packageNameToDisplayName.yaml", packageMap);
-	saveToFile("displayNameToPackageName.yaml", invertMap(packageMap));
-}
-
-const saveToFile = (filename, data) =>
-	fs.writeFileSync(path.join(__dirname, "..", "data", filename), yaml.dump(data), "utf8");
-
-const invertMap = (obj) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [v, k]));
 
 module.exports = {
 	renderApiDocumentation,
