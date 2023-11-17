@@ -1077,10 +1077,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		builds.set(undefined, innerMap);
 		let id = firstId;
 		for (const tree of content.map(jsonableTreeFromCursor)) {
-			// Tree creation is idempotent, with the first tree being preferred
-			if (!innerMap.has(id)) {
-				innerMap.set(id, tree);
-			}
+			assert(!innerMap.has(id), "Unexpected duplicate build ID");
+			innerMap.set(id, tree);
 			id = brand((id as number) + 1);
 		}
 		return {
