@@ -27,18 +27,21 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "y"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "y"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000002",
@@ -57,18 +60,21 @@
                                 "type": "Insert",
                                 "id": 1,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "x"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 1
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            1,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "x"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
@@ -90,22 +96,28 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 2,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "a"
-                                  },
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "c"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "a"
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "c"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
@@ -127,18 +139,21 @@
                                 "type": "Insert",
                                 "id": 2,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "b"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 2
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            2,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "b"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000005",
@@ -157,18 +172,21 @@
                                 "type": "Insert",
                                 "id": 2,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "z"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 2
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            2,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "z"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000008",
@@ -190,22 +208,28 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 2,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "d"
-                                  },
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "e"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "d"
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "e"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000009",
@@ -227,18 +251,21 @@
                                 "type": "Insert",
                                 "id": 2,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "f"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 2
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            2,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "f"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-00000000000a",
