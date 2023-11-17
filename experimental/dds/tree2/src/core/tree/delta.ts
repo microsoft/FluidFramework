@@ -217,6 +217,7 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * The ordering has no significance.
 	 *
 	 * @deprecated - Builds should be set at the root.
+	 * TODO:6308 migrate all reader/writers away from this and remove it.
 	 *
 	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
 	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
