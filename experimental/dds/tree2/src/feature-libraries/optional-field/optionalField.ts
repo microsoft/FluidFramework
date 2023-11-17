@@ -35,7 +35,7 @@ import {
 	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
+import { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
 type ChangeId = ChangeAtomId | "self";
@@ -445,25 +445,55 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
-		if (change.childChanges === undefined) {
-			return change;
-		}
-
 		const prunedChange: OptionalChangeset = {};
 		if (change.fieldChange !== undefined) {
+			const prunedNodeChange =
+				change.fieldChange.newContent?.changes !== undefined
+					? pruneChild(change.fieldChange.newContent.changes)
+					: undefined;
+
+			const prunedFieldChange: OptionalFieldChange = {
+				...change.fieldChange,
+			};
+
+			if (prunedFieldChange.newContent?.changes !== undefined) {
+				prunedFieldChange.newContent = nodeUpdateWithNodeChange(
+					prunedFieldChange.newContent,
+					prunedNodeChange,
+				);
+			}
+
+			if (prunedFieldChange.newContent?.changes === undefined) {
+				delete prunedFieldChange.newContent?.changes;
+			}
+
 			prunedChange.fieldChange = change.fieldChange;
 		}
 
-		for (const [id, childChange] of change.childChanges) {
-			const prunedNode = pruneChild(childChange);
-			if (prunedNode !== undefined) {
-				prunedChange.childChanges?.push([id, prunedNode]);
+		if (change.childChanges !== undefined) {
+			for (const [id, childChange] of change.childChanges) {
+				const prunedNode = pruneChild(childChange);
+				if (prunedNode !== undefined) {
+					prunedChange.childChanges?.push([id, prunedNode]);
+				}
 			}
 		}
 
 		return prunedChange;
 	},
 };
+
+function nodeUpdateWithNodeChange(
+	update: NodeUpdate,
+	change: NodeChangeset | undefined,
+): NodeUpdate {
+	const result: NodeUpdate = { ...update, changes: change };
+	if (change === undefined) {
+		delete result.changes;
+	}
+
+	return result;
+}
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
