@@ -116,7 +116,7 @@ extends:
       - ES365AIMigrationTooling
     stages:
       - '${{ if ne(convertToJson(parameters.checks), ''[]'') }}':
-          - template: /tools/pipelines/templates/include-policy-check.yml@self
+          - template: /tools/pipelines/templates/1ES/include-policy-check.yml@self
             parameters:
               buildDirectory: '${{ parameters.buildDirectory }}'
               checks: '${{ parameters.checks }}'
@@ -224,15 +224,15 @@ extends:
                         exit -1;
                       fi
                     fi
-              - template: /tools/pipelines/templates/include-use-node-version.yml@self
-              - template: /tools/pipelines/templates/include-install.yml@self
+              - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
+              - template: /tools/pipelines/templates/1ES/include-install.yml@self
                 parameters:
                   packageManager: '${{ parameters.packageManager }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
               - '${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}':
                   - template: >-
-                      /tools/pipelines/templates/include-set-package-version.yml@self
+                      /tools/pipelines/templates/1ES/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
                       buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
@@ -240,7 +240,7 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
-              - template: /tools/pipelines/templates/include-build-lint.yml@self
+              - template: /tools/pipelines/templates/1ES/include-build-lint.yml@self
                 parameters:
                   taskBuild: '${{ parameters.taskBuild }}'
                   taskLint: '${{ parameters.taskLint }}'
@@ -251,7 +251,7 @@ extends:
                       echo "##vso[task.setvariable variable=startTest]true"
                     displayName: Start Test
                   - '${{ each taskTestStep in parameters.taskTest }}':
-                      - template: /tools/pipelines/templates/include-test-task.yml@self
+                      - template: /tools/pipelines/templates/1ES/include-test-task.yml@self
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
@@ -295,7 +295,7 @@ extends:
                           eq(variables['ReportDirExists'], 'true'))
                   - '${{ if contains(convertToJson(parameters.taskTest), ''tinylicious'') }}': []
                   - template: >-
-                      /tools/pipelines/templates/include-process-test-results.yml@self
+                      /tools/pipelines/templates/1ES/include-process-test-results.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
                       testResultDirs: '${{ parameters.testResultDirs }}'
@@ -360,7 +360,7 @@ extends:
 
                             ls -la $BUNDLE_SIZE_TESTS_DIR;
                       - template: >-
-                          /tools/pipelines/templates/include-telemetry-setup.yml@self
+                          /tools/pipelines/templates/1ES/include-telemetry-setup.yml@self
                         parameters:
                           devFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
@@ -483,7 +483,7 @@ extends:
                       scanType: Register
                       alertWarningLevel: High
       - '${{ if eq(variables.publish, true) }}':
-          - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+          - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
             parameters:
               namespace: '${{ parameters.namespace }}'
               tagName: '${{ parameters.tagName }}'
@@ -503,7 +503,7 @@ extends:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
             steps:
-              - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+              - template: /tools/pipelines/templates/1ES/include-telemetry-setup.yml@self
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
