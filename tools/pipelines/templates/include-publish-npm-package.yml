@@ -22,6 +22,35 @@ parameters:
   type: boolean
   default: false
 
+- name: publishOverride
+  type: string
+  default: default
+
+- name: releaseBuildOverride
+  type: string
+  default: none
+
+- name: nonScopedPackages
+  type: object
+  default: []
+
+- name: buildNumberInPatch
+  type: string
+
+variables:
+# We use 'chalk' to colorize output, which auto-detects color support in the
+# running terminal. The log output shown in Azure DevOps job runs only has
+# basic ANSI color support though, so force that in the pipeline
+- name: FORCE_COLOR
+  value: 1
+- group: ado-feeds
+- template: /tools/pipelines/templates/1ES/include-vars.yml@self
+  parameters:
+    publishOverride: '${{ parameters.publishOverride }}'
+    releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+    buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+    nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+
 stages:
 
 # This stage only runs for test-branch builds
@@ -48,8 +77,6 @@ stages:
   displayName: Publish to internal build feed
   # This condition should match the condition for publish_npm_internal_dev
   condition: and(succeeded(), eq(variables['testBuild'], false))
-  variables:
-  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -66,8 +93,6 @@ stages:
   displayName: Publish to internal dev feed
   # This condition should match the condition for publish_npm_internal_build
   condition: and(succeeded(), eq(variables['testBuild'], false))
-  variables:
-  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -87,8 +112,6 @@ stages:
     displayName: Publish to internal dev feed
     # This condition should match the condition for publish_npm_internal_build
     condition: and(succeeded(), eq(variables['testBuild'], false))
-    variables:
-    - group: ado-feeds
     jobs:
     - template: include-publish-npm-package-deployment.yml
       parameters:
@@ -104,8 +127,6 @@ stages:
   dependsOn: build
   displayName: Publish to public npmjs.org
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
-  variables:
-  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
