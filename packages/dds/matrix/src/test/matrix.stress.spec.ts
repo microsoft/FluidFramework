@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "..";
+import { SharedMatrix, SharedMatrixFactory } from "../index";
 import { extract, expectSize } from "./utils";
 import { UndoRedoStackManager } from "./undoRedoStackManager";
 

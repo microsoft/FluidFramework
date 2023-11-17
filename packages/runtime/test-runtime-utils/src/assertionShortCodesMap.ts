@@ -1433,5 +1433,7 @@ export const shortCodeMap = {
 	"0x833": "Should not be able to rollback v1 ops as they shouldn't have been created locally.",
 	"0x834": "Unexpected v2 op with mismatched attributes",
 	"0x835": "Should not be stamping ops twice!",
-	"0x836": "Provided user was not an \"OdspUser\"."
+	"0x836": "Provided user was not an \"OdspUser\".",
+	"0x837": "Encoded data should be versioned",
+	"0x838": "Encoded schema should validate"
 };
