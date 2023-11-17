@@ -31,12 +31,12 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 // @public
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
 }

@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';

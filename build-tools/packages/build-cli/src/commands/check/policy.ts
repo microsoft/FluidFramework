@@ -4,9 +4,9 @@
  */
 import { Flags } from "@oclif/core";
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
-import path from "node:path";
 
 import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
@@ -218,10 +218,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
-			pathsToCheck.map((line: string) => this.handleLine(line, commandContext));
+			for (const pathToCheck of pathsToCheck) {
+				// eslint-disable-next-line no-await-in-loop
+				await this.checkOrExcludeFile(pathToCheck, commandContext);
+			}
 		} finally {
 			try {
-				runPolicyCheck(commandContext, this.flags.fix);
+				await runFinalHandlers(commandContext, this.flags.fix);
 			} finally {
 				this.logStats();
 			}
@@ -229,59 +232,66 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 
 	/**
-	 * Routes files to their handlers by regex testing their full paths. Synchronize the output, exit code, and resolve
+	 * Routes files to their handlers and resolvers by regex testing their full paths. If a file fails a policy that has a
+	 * resolver, the resolver will be invoked as well. Synchronizes the output, exit codes, and resolve
 	 * decision for all handlers.
 	 */
-	private routeToHandlers(file: string, commandContext: CheckPolicyCommandContext): void {
+	private async routeToHandlers(
+		file: string,
+		commandContext: CheckPolicyCommandContext,
+	): Promise<void> {
 		const { context, handlers, handlerExclusions, gitRoot } = commandContext;
 
 		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
 		const relPath = context.repo.relativeToRepo(file);
 
-		handlers
-			.filter((handler) => handler.match.test(relPath))
-			// eslint-disable-next-line unicorn/no-array-for-each
-			.forEach((handler) => {
-				// doing exclusion per handler
-				const exclusions = handlerExclusions[handler.name];
-				if (
-					exclusions !== undefined &&
-					!exclusions.every((regex) => !regex.test(relPath))
-				) {
-					this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
-					return;
-				}
+		await Promise.all(
+			handlers
+				.filter((handler) => handler.match.test(relPath))
+				.map(async (handler): Promise<void> => {
+					// doing exclusion per handler
+					const exclusions = handlerExclusions[handler.name];
+					if (
+						exclusions !== undefined &&
+						!exclusions.every((regex) => !regex.test(relPath))
+					) {
+						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
+						return;
+					}
 
-				const result = runWithPerf(handler.name, "handle", () =>
-					handler.handler(relPath, gitRoot),
-				);
-				if (result !== undefined && result !== "") {
-					let output = `${newline}file failed policy check: ${relPath}${newline}${result}`;
-					const { resolver } = handler;
-					if (this.flags.fix && resolver) {
-						output += `${newline}attempting to resolve: ${relPath}`;
-						const resolveResult = runWithPerf(handler.name, "resolve", () =>
-							resolver(relPath, gitRoot),
-						);
+					const result = await runWithPerf(handler.name, "handle", async () =>
+						handler.handler(relPath, gitRoot),
+					);
+					if (result !== undefined && result !== "") {
+						let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+						const { resolver } = handler;
+						if (this.flags.fix && resolver) {
+							output += `${newline}attempting to resolve: ${relPath}`;
+							const resolveResult = await runWithPerf(
+								handler.name,
+								"resolve",
+								async () => resolver(relPath, gitRoot),
+							);
 
-						if (resolveResult?.message !== undefined) {
-							output += newline + resolveResult.message;
-						}
+							if (resolveResult?.message !== undefined) {
+								output += newline + resolveResult.message;
+							}
 
-						if (!resolveResult.resolved) {
+							if (!resolveResult.resolved) {
+								process.exitCode = 1;
+							}
+						} else {
 							process.exitCode = 1;
 						}
-					} else {
-						process.exitCode = 1;
-					}
 
-					if (process.exitCode === 1) {
-						this.warning(output);
-					} else {
-						this.info(output);
+						if (process.exitCode === 1) {
+							this.warning(output);
+						} else {
+							this.info(output);
+						}
 					}
-				}
-			});
+				}),
+		);
 	}
 
 	private logStats(): void {
@@ -298,37 +308,48 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	private handleLine(line: string, commandContext: CheckPolicyCommandContext): void {
+	/**
+	 * Given a string that represents a path to a file in the repo, determines if the file should be checked, and if so,
+	 * routes the file to the appropriate handlers.
+	 */
+	private async checkOrExcludeFile(
+		inputPath: string,
+		commandContext: CheckPolicyCommandContext,
+	): Promise<void> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
-		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
+		const filePath = path.join(gitRoot, inputPath).trim().replace(/\\/g, "/");
 
-		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
+		if (!pathRegex.test(inputPath) || !fs.existsSync(filePath)) {
 			return;
 		}
 
 		this.count++;
-		if (!exclusions.every((value) => !value.test(line))) {
-			this.verbose(`Excluded all handlers: ${line}`);
+		if (!exclusions.every((value) => !value.test(inputPath))) {
+			this.verbose(`Excluded all handlers: ${inputPath}`);
 			return;
 		}
 
 		try {
-			this.routeToHandlers(filePath, commandContext);
+			await this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
-			throw new Error(`Line error: ${error}`);
+			throw new Error(`Error routing ${filePath} to handler: ${error}`);
 		}
 
 		this.processed++;
 	}
 }
 
-function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
+async function runWithPerf<T>(
+	name: string,
+	action: policyAction,
+	run: () => Promise<T>,
+): Promise<T> {
 	const actionMap = handlerPerformanceData.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
 
 	const start = Date.now();
-	const result = run();
+	const result = await run();
 	dur += Date.now() - start;
 
 	actionMap.set(name, dur);
@@ -336,12 +357,20 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(commandContext: CheckPolicyCommandContext, fix: boolean): void {
+/**
+ * Runs all the "final" handlers. These handlers are intended to be run as the last step in policy checking, after
+ * resolvers have run.
+ */
+async function runFinalHandlers(
+	commandContext: CheckPolicyCommandContext,
+	fix: boolean,
+): Promise<void> {
 	const { gitRoot, handlers } = commandContext;
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
-			const result = runWithPerf(h.name, "final", () => final(gitRoot, fix));
+			// eslint-disable-next-line no-await-in-loop
+			const result = await runWithPerf(h.name, "final", async () => final(gitRoot, fix));
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (result?.error) {
 				throw new Error(result.error);

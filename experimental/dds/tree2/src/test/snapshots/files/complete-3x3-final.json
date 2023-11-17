@@ -25,6 +25,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 1,
                                 "content": [
                                   {
@@ -61,6 +62,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 1,
                                           "count": 1,
                                           "content": [
                                             {
@@ -106,6 +108,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 2,
                                           "count": 1,
                                           "content": [
                                             {
@@ -151,6 +154,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 3,
                                           "count": 1,
                                           "content": [
                                             {
@@ -193,6 +197,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 4,
                                           "count": 1,
                                           "content": [
                                             {
@@ -238,6 +243,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 5,
                                           "count": 1,
                                           "content": [
                                             {
@@ -283,6 +289,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 6,
                                           "count": 1,
                                           "content": [
                                             {
@@ -325,6 +332,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 7,
                                           "count": 1,
                                           "content": [
                                             {
@@ -370,6 +378,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 8,
                                           "count": 1,
                                           "content": [
                                             {
@@ -415,6 +424,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 9,
                                           "count": 1,
                                           "content": [
                                             {
@@ -452,6 +462,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 10,
                                 "count": 1,
                                 "content": [
                                   {
@@ -488,6 +499,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 11,
                                           "count": 1,
                                           "content": [
                                             {
@@ -533,6 +545,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 12,
                                           "count": 1,
                                           "content": [
                                             {
@@ -578,6 +591,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 13,
                                           "count": 1,
                                           "content": [
                                             {
@@ -620,6 +634,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 14,
                                           "count": 1,
                                           "content": [
                                             {
@@ -665,6 +680,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 15,
                                           "count": 1,
                                           "content": [
                                             {
@@ -710,6 +726,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 16,
                                           "count": 1,
                                           "content": [
                                             {
@@ -752,6 +769,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 17,
                                           "count": 1,
                                           "content": [
                                             {
@@ -797,6 +815,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 18,
                                           "count": 1,
                                           "content": [
                                             {
@@ -842,6 +861,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 19,
                                           "count": 1,
                                           "content": [
                                             {
@@ -879,6 +899,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 20,
                                 "count": 1,
                                 "content": [
                                   {
@@ -915,6 +936,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 21,
                                           "count": 1,
                                           "content": [
                                             {
@@ -960,6 +982,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 22,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1005,6 +1028,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 23,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1047,6 +1071,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 24,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1092,6 +1117,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 25,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1137,6 +1163,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 26,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1179,6 +1206,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 27,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1224,6 +1252,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 28,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1269,6 +1298,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 29,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1303,6 +1333,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 30,
                                 "count": 1,
                                 "content": [
                                   {
@@ -1339,6 +1370,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 31,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1384,6 +1416,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 32,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1429,6 +1462,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 33,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1471,6 +1505,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 34,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1516,6 +1551,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 35,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1561,6 +1597,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 36,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1603,6 +1640,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 37,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1648,6 +1686,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 38,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1693,6 +1732,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 39,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1730,6 +1770,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 40,
                                 "count": 1,
                                 "content": [
                                   {
@@ -1766,6 +1807,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 41,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1811,6 +1853,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 42,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1856,6 +1899,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 43,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1898,6 +1942,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 44,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1943,6 +1988,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 45,
                                           "count": 1,
                                           "content": [
                                             {
@@ -1988,6 +2034,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 46,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2030,6 +2077,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 47,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2075,6 +2123,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 48,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2120,6 +2169,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 49,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2157,6 +2207,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 50,
                                 "count": 1,
                                 "content": [
                                   {
@@ -2193,6 +2244,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 51,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2238,6 +2290,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 52,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2283,6 +2336,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 53,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2325,6 +2379,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 54,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2370,6 +2425,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 55,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2415,6 +2471,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 56,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2457,6 +2514,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 57,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2502,6 +2560,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 58,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2547,6 +2606,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 59,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2581,6 +2641,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 60,
                                 "count": 1,
                                 "content": [
                                   {
@@ -2617,6 +2678,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 61,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2662,6 +2724,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 62,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2707,6 +2770,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 63,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2749,6 +2813,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 64,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2794,6 +2859,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 65,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2839,6 +2905,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 66,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2881,6 +2948,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 67,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2926,6 +2994,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 68,
                                           "count": 1,
                                           "content": [
                                             {
@@ -2971,6 +3040,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 69,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3008,6 +3078,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 70,
                                 "count": 1,
                                 "content": [
                                   {
@@ -3044,6 +3115,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 71,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3089,6 +3161,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 72,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3134,6 +3207,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 73,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3176,6 +3250,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 74,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3221,6 +3296,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 75,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3266,6 +3342,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 76,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3308,6 +3385,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 77,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3353,6 +3431,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 78,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3398,6 +3477,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 79,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3435,6 +3515,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 80,
                                 "count": 1,
                                 "content": [
                                   {
@@ -3471,6 +3552,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 81,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3516,6 +3598,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 82,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3561,6 +3644,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 83,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3603,6 +3687,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 84,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3648,6 +3733,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 85,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3693,6 +3779,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 86,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3735,6 +3822,7 @@
                                       "change": [
                                         {
                                           "type": "Insert",
+                                          "id": 87,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3780,6 +3868,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 88,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3825,6 +3914,7 @@
                                         },
                                         {
                                           "type": "Insert",
+                                          "id": 89,
                                           "count": 1,
                                           "content": [
                                             {
@@ -3867,7 +3957,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.leaf.boolean",
                       "objectNodeFields": [],
@@ -3918,446 +4008,521 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "FieldA",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "FieldA",
                       {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "1"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "2"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "3"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
                             }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "4"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "5"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "6"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "7"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "8"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "9"
-                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "1",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "2",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "3",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "4",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "5",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "6",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "7",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "8",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "9",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "10",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "11",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "12",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "13",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "14",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "15",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "16",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "17",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "18",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "19",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "20",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "21",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "22",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "23",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "24",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "25",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "26",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "27",
+                                []
+                              ]
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "10"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "11"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "12"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "13"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "14"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "15"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "16"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "17"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "18"
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "19"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "20"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "21"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "22"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "23"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "24"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "25"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "26"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "27"
-                            }
-                          ]
-                        }
+                        ]
                       }
-                    ]
-                  ],
-                  [
-                    "FieldB",
+                    ],
                     [
+                      "FieldB",
                       {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "28"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "29"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "30"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
                             }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "31"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "32"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "33"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "34"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "35"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "36"
-                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "28",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "29",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "30",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "31",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "32",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "33",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "34",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "35",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "36",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "37",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "38",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "39",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "40",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "41",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "42",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "43",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "44",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "45",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "46",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "47",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "48",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "49",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "50",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "51",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "52",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "53",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "54",
+                                []
+                              ]
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "37"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "38"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "39"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "40"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "41"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "42"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "43"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "44"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "45"
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "46"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "47"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "48"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "49"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "50"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "51"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "52"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "53"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "54"
-                            }
-                          ]
-                        }
+                        ]
                       }
-                    ]
-                  ],
-                  [
-                    "FieldC",
+                    ],
                     [
+                      "FieldC",
                       {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "55"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "56"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "57"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
                             }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "58"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "59"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "60"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "61"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "62"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "63"
-                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "55",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "56",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "57",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "58",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "59",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "60",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "61",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "62",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "63",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "64",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "65",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "66",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "67",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "68",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "69",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "70",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "71",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "72",
+                                []
+                              ]
+                            ],
+                            "test trees.TestInner",
+                            false,
+                            [
+                              "FieldA",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "73",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "74",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "75",
+                                []
+                              ],
+                              "FieldB",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "76",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "77",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "78",
+                                []
+                              ],
+                              "FieldC",
+                              [
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "79",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "80",
+                                [],
+                                "com.fluidframework.leaf.string",
+                                true,
+                                "81",
+                                []
+                              ]
+                            ]
                           ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "64"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "65"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "66"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "67"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "68"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "69"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "70"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "71"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "72"
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "type": "test trees.TestInner",
-                        "fields": {
-                          "FieldA": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "73"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "74"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "75"
-                            }
-                          ],
-                          "FieldB": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "76"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "77"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "78"
-                            }
-                          ],
-                          "FieldC": [
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "79"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "80"
-                            },
-                            {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "81"
-                            }
-                          ]
-                        }
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
@@ -4372,8 +4537,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": 89
+                  "maxId": 89
                 },
                 "encoding": "utf-8"
               }

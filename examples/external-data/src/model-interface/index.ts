@@ -43,12 +43,6 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly getClientID: () => string | undefined;
 
 	/**
-	 * Send custom signal to simulate being the RuntimeMessage signal
-	 * from alfred while that signal is in prototype state on the dev branch.
-	 */
-	readonly sendCustomDebugSignal: () => void;
-
-	/**
 	 * Returns the resolved URL for the attached container. If container is not
 	 * attached then returns undefined.
 	 */

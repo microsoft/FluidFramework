@@ -11,4 +11,4 @@ export {
 	Uint8ArrayToString,
 } from "./bufferBrowser";
 export { gitHashFile, hashFile } from "./hashFileBrowser";
-export { performance } from "./performanceBrowser";
+export { performance } from "./performanceIsomorphic";

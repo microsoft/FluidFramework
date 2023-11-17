@@ -6,7 +6,7 @@
 import _ from "lodash";
 
 import { expect } from "chai";
-import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainer,
 	IHostLoader,

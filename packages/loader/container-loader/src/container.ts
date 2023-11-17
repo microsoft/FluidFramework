@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import merge from "lodash/merge";
-
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
@@ -1718,7 +1715,10 @@ export class Container
 		// replay saved ops
 		if (pendingLocalState) {
 			for (const message of pendingLocalState.savedOps) {
-				this.processRemoteMessage(message);
+				this.processRemoteMessage({
+					...message,
+					metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+				});
 
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
@@ -2011,7 +2011,14 @@ export class Container
 				  };
 
 		if (this.clientDetailsOverride !== undefined) {
-			merge(client.details, this.clientDetailsOverride);
+			client.details = {
+				...client.details,
+				...this.clientDetailsOverride,
+				capabilities: {
+					...client.details.capabilities,
+					...this.clientDetailsOverride.capabilities,
+				},
+			};
 		}
 		client.details.environment = [
 			client.details.environment,

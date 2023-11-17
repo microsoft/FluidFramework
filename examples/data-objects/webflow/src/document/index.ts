@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -21,10 +23,8 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
-	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabels,
 	reservedMarkerIdKey,
 	reservedRangeLabelsKey,
@@ -87,13 +87,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		switch (markerType) {
 			case ReferenceType.Tile:
 			case ReferenceType.Tile | ReferenceType.NestBegin:
-				// eslint-disable-next-line import/no-deprecated
 				const hasRangeLabels = refHasRangeLabels(segment);
 				const kind = (
-					hasRangeLabels
-						? // eslint-disable-next-line import/no-deprecated
-						  refGetRangeLabels(segment)[0]
-						: refGetTileLabels(segment)[0]
+					hasRangeLabels ? refGetRangeLabels(segment)[0] : refGetTileLabels(segment)[0]
 				) as DocSegmentKind;
 
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
@@ -108,7 +104,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 				// Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
 				// will not close the range.)
 				assert(
-					// eslint-disable-next-line import/no-deprecated
 					refGetRangeLabels(segment)[0] === DocSegmentKind.beginTags,
 					`Unknown refType '${markerType}'.`,
 				);

@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -86,11 +86,10 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 				sharedMap.set("key", true);
 			},
 			reentrant: () => {
-				// ADO:6050. The call below would cause assert 0x2fa
-				// sharedMap.set("key", false);
+				sharedMap.set("key", false);
 			},
 			assertion: () => {
-				assert.strictEqual(sharedMap.get("key"), true);
+				assert.strictEqual(sharedMap.get("key"), false);
 			},
 		},
 		{

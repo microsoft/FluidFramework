@@ -148,7 +148,10 @@ export interface DetachedNodeChanges<TTree = ProtoNode> {
 }
 
 /**
- * Represents the creation of detached nodes
+ * Represents the creation of detached nodes.
+ *
+ * Tree creation is idempotent: if a tree with the same ID already exists,
+ * then this build is ignored in favor of the existing tree.
  * @alpha
  */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
