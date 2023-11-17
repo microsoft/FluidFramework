@@ -22,9 +22,14 @@ const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
 
 /**
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
- * value must always match this constant.
+ * value must always match one of these values.
+ *
+ * @privateRemarks
+ *
+ * "internal" should always be the first value since there is code that treats ALLOWED_PRERELEASE_IDENTIFIER[0] as the
+ * "default value", and internal was the default value when we started using the internal version scheme.
  */
-export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
+export const ALLOWED_PRERELEASE_IDENTIFIERS = ["internal", "beta"];
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
@@ -61,7 +66,7 @@ export function fromInternalScheme(
 	validateVersionScheme(
 		parsedVersion,
 		allowPrereleases,
-		allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER,
+		allowAnyPrereleaseId ? undefined : ALLOWED_PRERELEASE_IDENTIFIERS,
 	);
 
 	assert(parsedVersion !== null);
@@ -120,7 +125,7 @@ export function toInternalScheme(
 	publicVersion: semver.SemVer | string,
 	version: semver.SemVer | string,
 	allowPrereleases = false,
-	prereleaseIdentifier = REQUIRED_PRERELEASE_IDENTIFIER,
+	prereleaseIdentifier = ALLOWED_PRERELEASE_IDENTIFIERS[0],
 ): semver.SemVer {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
@@ -155,8 +160,8 @@ export function toInternalScheme(
  *
  * @param version - The version to check.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
- * @param prereleaseIdentifier - If provided, the version must use this prereleaseIdentifier to be considered a valid
- * internal version. When set to undefined any prerelease identifier will be considered valid.
+ * @param prereleaseIdentifiers - If provided, the version must use one of these prereleaseIdentifier to be considered a
+ * valid internal version. When set to undefined any prerelease identifier will be considered valid.
  * @returns True if the version matches the Fluid internal version scheme. Throws if not.
  *
  * @remarks
@@ -167,7 +172,7 @@ export function validateVersionScheme(
 	// eslint-disable-next-line @rushstack/no-new-null
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
-	prereleaseIdentifier?: string,
+	prereleaseIdentifiers?: string[],
 ) {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
@@ -186,12 +191,14 @@ export function validateVersionScheme(
 		);
 	}
 
-	if (prereleaseIdentifier !== undefined) {
+	if (prereleaseIdentifiers !== undefined) {
 		// the "prerelease identifier" is the first section of the prerelease field
 		const prereleaseId = parsedVersion.prerelease[0];
-		if (prereleaseId !== prereleaseIdentifier) {
+		if (!prereleaseIdentifiers.includes(prereleaseId)) {
 			throw new Error(
-				`First prerelease component should be '${prereleaseIdentifier}'; found ${prereleaseId}`,
+				`First prerelease component should be one of '${prereleaseIdentifiers.join(
+					", ",
+				)}'; found ${prereleaseId}`,
 			);
 		}
 	}
@@ -230,10 +237,10 @@ export function isInternalVersionScheme(
 	allowAnyPrereleaseId = false,
 ): boolean {
 	const parsedVersion = semver.parse(version);
-	const prereleaseId = allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER;
+	const prereleaseIds = allowAnyPrereleaseId ? undefined : ALLOWED_PRERELEASE_IDENTIFIERS;
 
 	try {
-		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseId);
+		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseIds);
 	} catch (error) {
 		return false;
 	}

@@ -7,7 +7,12 @@ import child_process from "node:child_process";
 import * as semver from "semver";
 
 import { detectVersionScheme, getLatestReleaseFromList } from "./schemes";
-import { changePreReleaseIdentifier, isInternalVersionScheme } from "./internalVersionScheme";
+import {
+	ALLOWED_PRERELEASE_IDENTIFIERS,
+	changePreReleaseIdentifier,
+	fromInternalScheme,
+	isInternalVersionScheme,
+} from "./internalVersionScheme";
 
 // TODO: Replace this with a shared release group type.
 type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
@@ -19,21 +24,25 @@ export function getSimpleVersion(
 	fileVersion: string,
 	argBuildNum: string,
 	argRelease: boolean,
-	patch: boolean,
+	simplePatchVersioning: boolean,
 ) {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
-	const buildId = patch ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
+	const buildId = simplePatchVersioning ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
 	let version = fileVersion;
 	if (isInternalVersionScheme(version, /* allowPrereleases */ true)) {
-		if (patch) {
+		if (simplePatchVersioning) {
 			throw new Error(
 				`Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`,
 			);
 		}
 
 		if (!argRelease) {
-			version = changePreReleaseIdentifier(version, "dev");
+			const [, , prereleaseId] = fromInternalScheme(version);
+			version = changePreReleaseIdentifier(
+				version,
+				prereleaseId === ALLOWED_PRERELEASE_IDENTIFIERS[0] ? "dev" : `dev-${prereleaseId}`,
+			);
 		}
 	}
 

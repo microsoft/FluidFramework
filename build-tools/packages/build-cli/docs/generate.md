@@ -80,7 +80,8 @@ FLAGS
                                          based on the TypeScript types that are expected to be used. This flag should
                                          only be used in the Fluid Framework CI pipeline.
                                          <options: none|alpha|beta|public|untrimmed>
-  --patch=<value>                        Indicates the build is a patch build.
+  --patch=<value>                        Indicates the build should use "simple patch versioning" where the value of the
+                                         --build flag is used as the patch version.
   --release=<option>                     Indicates the build is a release build.
                                          <options: release|prerelease|none>
   --tag=<value>                          The tag name to use.

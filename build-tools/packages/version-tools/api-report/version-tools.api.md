@@ -42,7 +42,7 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
 export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined];
 
 // @public
-export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean): string;
+export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, simplePatchVersioning: boolean): string;
 
 // @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
