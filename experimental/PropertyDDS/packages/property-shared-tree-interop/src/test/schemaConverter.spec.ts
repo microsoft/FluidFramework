@@ -13,12 +13,10 @@ import {
 	TreeNodeSchemaIdentifier,
 	TreeFieldSchema,
 	getPrimaryField,
-	isPrimitive,
 	FieldKey,
 	leaf,
-	EmptyKey,
 	schemaIsFieldNode,
-	oneFromSet,
+	schemaIsLeaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
@@ -33,11 +31,11 @@ describe("schema converter", () => {
 		it(`has built-in primitive types and collections`, () => {
 			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 			// Float64
-			assert(fullSchemaData.treeSchema.get(leaf.number.name) === leaf.number);
+			assert(fullSchemaData.nodeSchema.get(leaf.number.name) === leaf.number);
 			// String
-			assert(fullSchemaData.treeSchema.get(leaf.string.name) === leaf.string);
+			assert(fullSchemaData.nodeSchema.get(leaf.string.name) === leaf.string);
 			// Bool
-			assert(fullSchemaData.treeSchema.get(leaf.boolean.name) === leaf.boolean);
+			assert(fullSchemaData.nodeSchema.get(leaf.boolean.name) === leaf.boolean);
 			[
 				"Int8",
 				"Int16",
@@ -55,25 +53,22 @@ describe("schema converter", () => {
 				"Reference",
 			].forEach((typeName) => {
 				if (!new Set(["Float64", "Bool", "String"]).has(typeName)) {
-					const primitiveSchema = fullSchemaData.treeSchema.get(
+					const primitiveSchema = fullSchemaData.nodeSchema.get(
 						brand(`converted.${typeName}`),
 					);
 					assert(primitiveSchema !== undefined);
-					schemaIsFieldNode(primitiveSchema);
+					assert(schemaIsFieldNode(primitiveSchema));
 
-					const innerTypes =
-						primitiveSchema.objectNodeFields.get(EmptyKey)?.allowedTypeSet ??
-						fail("missing schema");
-					assert(innerTypes !== Any);
-					const innerSchema = oneFromSet(innerTypes) ?? fail("unexpected polymorphism");
-					assert(isPrimitive(innerSchema));
+					const innerSchema =
+						primitiveSchema.info.monomorphicChildType ?? fail("missing schema");
+					assert(schemaIsLeaf(innerSchema));
 				}
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.map<${typeName}>`)) !==
+					fullSchemaData.nodeSchema.get(brand(`converted.map<${typeName}>`)) !==
 						undefined,
 				);
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.array<${typeName}>`)) !==
+					fullSchemaData.nodeSchema.get(brand(`converted.array<${typeName}>`)) !==
 						undefined,
 				);
 			});
@@ -88,7 +83,7 @@ describe("schema converter", () => {
 			it(`has built-in ${typeName} node type and collections`, () => {
 				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 
-				const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
+				const propertySchema = fullSchemaData.nodeSchema.get(brand(typeName));
 				assert(propertySchema !== undefined);
 				if (typeName === "converted.NamedProperty") {
 					assert.equal(propertySchema.mapFields, undefined);
@@ -138,11 +133,11 @@ describe("schema converter", () => {
 						? "NodeProperty"
 						: typeName.split(".").slice(1).join(".");
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.map<${originalName}>`)) !==
+					fullSchemaData.nodeSchema.get(brand(`converted.map<${originalName}>`)) !==
 						undefined,
 				);
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.array<${originalName}>`)) !==
+					fullSchemaData.nodeSchema.get(brand(`converted.array<${originalName}>`)) !==
 						undefined,
 				);
 			});
@@ -166,9 +161,9 @@ describe("schema converter", () => {
 		it("can convert empty generic types to collections of Any", () => {
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["array<>"]));
-				assert(fullSchemaData.treeSchema.get(brand("converted.array<>")) === undefined);
+				assert(fullSchemaData.nodeSchema.get(brand("converted.array<>")) === undefined);
 				const primary = getPrimaryField(
-					fullSchemaData.treeSchema.get(brand("converted.array<Any>")) ??
+					fullSchemaData.nodeSchema.get(brand("converted.array<Any>")) ??
 						fail("expected tree schema"),
 				);
 				assert(primary !== undefined);
@@ -183,9 +178,9 @@ describe("schema converter", () => {
 
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["map<>"]));
-				assert(fullSchemaData.treeSchema.get(brand("converted.map<>")) === undefined);
+				assert(fullSchemaData.nodeSchema.get(brand("converted.map<>")) === undefined);
 				const anyMap =
-					fullSchemaData.treeSchema.get(brand("converted.map<Any>")) ??
+					fullSchemaData.nodeSchema.get(brand("converted.map<Any>")) ??
 					fail("expected tree schema");
 
 				assert.deepEqual([...(anyMap.mapFields as TreeFieldSchema).allowedTypes], [Any]);
@@ -238,7 +233,7 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:NeverType-1.0.0"]),
 			);
-			const neverTreeSchema = fullSchemaData.treeSchema.get(
+			const neverTreeSchema = fullSchemaData.nodeSchema.get(
 				brand("converted.Test:NeverType-1.0.0"),
 			);
 			assert(neverTreeSchema !== undefined);
@@ -266,8 +261,8 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
-			const nodeProperty = fullSchemaData.treeSchema.get(nodePropertySchema.name);
-			const testOptional = fullSchemaData.treeSchema.get(
+			const nodeProperty = fullSchemaData.nodeSchema.get(nodePropertySchema.name);
+			const testOptional = fullSchemaData.nodeSchema.get(
 				brand("converted.Test:Optional-1.0.0"),
 			);
 
@@ -309,8 +304,8 @@ describe("schema converter", () => {
 			);
 
 			// 62 types (all types (including built in leaf types), their arrays and maps)
-			assert.equal(fullSchemaData.treeSchema.size, 62);
-			const nodePropertySchemaLookedUp = fullSchemaData.treeSchema.get(
+			assert.equal(fullSchemaData.nodeSchema.size, 62);
+			const nodePropertySchemaLookedUp = fullSchemaData.nodeSchema.get(
 				brand("com.fluidframework.PropertyDDSBuiltIn.NodeProperty"),
 			);
 			assert.equal(nodePropertySchemaLookedUp, nodePropertySchema);
@@ -322,7 +317,7 @@ describe("schema converter", () => {
 				new Set(["Test:Optional-1.0.0"]),
 			);
 			const nodeSchema =
-				fullSchemaData.treeSchema.get(brand("converted.Test:Optional-1.0.0")) ??
+				fullSchemaData.nodeSchema.get(brand("converted.Test:Optional-1.0.0")) ??
 				fail("missing schema");
 			const arrayField =
 				(nodeSchema.objectNodeFields.get(brand("childArray")) as TreeFieldSchema) ??
@@ -332,7 +327,7 @@ describe("schema converter", () => {
 				"converted.array<Test:Child-1.0.0>",
 			);
 			assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
-			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
+			const arraySchema = fullSchemaData.nodeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
 			assert.equal(arraySchema.leafValue, undefined);
 			assert.equal(arraySchema.objectNodeFields.size, 1);
@@ -351,7 +346,7 @@ describe("schema converter", () => {
 				new Set(["Test:Optional-1.0.0"]),
 			);
 			const nodeSchema =
-				fullSchemaData.treeSchema.get(brand("converted.Test:Optional-1.0.0")) ??
+				fullSchemaData.nodeSchema.get(brand("converted.Test:Optional-1.0.0")) ??
 				fail("missing schema");
 			const mapField =
 				(nodeSchema.objectNodeFields.get(brand("childMap")) as TreeFieldSchema) ??
@@ -359,7 +354,7 @@ describe("schema converter", () => {
 			assert.deepEqual(mapField.kind, FieldKinds.optional);
 			const mapTypeName: TreeNodeSchemaIdentifier = brand("converted.map<Test:Child-1.0.0>");
 			assert.deepEqual([...(mapField.types ?? fail("expected types"))], [mapTypeName]);
-			const mapSchema = fullSchemaData.treeSchema.get(mapTypeName);
+			const mapSchema = fullSchemaData.nodeSchema.get(mapTypeName);
 			assert(mapSchema !== undefined);
 			assert.deepEqual(mapSchema.mapFields?.kind, FieldKinds.optional);
 			assert.deepEqual(
@@ -386,7 +381,7 @@ describe("schema converter", () => {
 				new Set([extraTypeName]),
 			);
 			const extraTypeSchema =
-				fullSchemaData.treeSchema.get(brand(`converted.${extraTypeName}`)) ??
+				fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) ??
 				fail("expected tree schema");
 			const anyField =
 				(extraTypeSchema?.objectNodeFields.get(brand("any")) as TreeFieldSchema) ??
@@ -421,7 +416,7 @@ describe("schema converter", () => {
 				new Set([extraTypeName, Any]),
 			);
 			assert(
-				fullSchemaData.treeSchema.get(brand(`converted.${extraTypeName}`)) !== undefined,
+				fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !== undefined,
 			);
 			assert(fullSchemaData.rootFieldSchema.types === undefined);
 		});
@@ -434,7 +429,7 @@ describe("schema converter", () => {
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.${extraTypeName}`)) ===
+					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) ===
 						undefined,
 				);
 			}
@@ -446,7 +441,7 @@ describe("schema converter", () => {
 					new Set([extraTypeName]),
 				);
 				assert(
-					fullSchemaData.treeSchema.get(brand(`converted.${extraTypeName}`)) !==
+					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !==
 						undefined,
 				);
 			}
@@ -459,17 +454,15 @@ describe("schema converter", () => {
 				Any,
 				new Set([`enum<${enumTypeName}>`]),
 			);
-			const enumSchema = fullSchemaData.treeSchema.get(
+			const enumSchema = fullSchemaData.nodeSchema.get(
 				brand(`converted.enum<${enumTypeName}>`),
 			);
 			assert(enumSchema && schemaIsFieldNode(enumSchema));
 			assert(
-				(enumSchema.objectNodeFields.get(EmptyKey) ?? fail("missing schema")).equals(
-					TreeFieldSchema.create(FieldKinds.required, [leaf.number]),
-				),
+				enumSchema.info.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
 			);
 
-			const arrayOfEnums = fullSchemaData.treeSchema.get(
+			const arrayOfEnums = fullSchemaData.nodeSchema.get(
 				brand(`converted.array<enum<${enumTypeName}>>`),
 			);
 			assert(arrayOfEnums);
@@ -477,7 +470,7 @@ describe("schema converter", () => {
 			assert(primary);
 			assert.deepEqual([...(primary.schema as TreeFieldSchema).allowedTypes][0], enumSchema);
 
-			const mapOfEnums = fullSchemaData.treeSchema.get(
+			const mapOfEnums = fullSchemaData.nodeSchema.get(
 				brand(`converted.map<enum<${enumTypeName}>>`),
 			);
 			assert(mapOfEnums);
@@ -507,7 +500,7 @@ describe("schema converter", () => {
 				[convertedParentTypeName, convertedChildTypeName],
 			);
 			const parentSchema =
-				fullSchemaData.treeSchema.get(convertedParentTypeName) ??
+				fullSchemaData.nodeSchema.get(convertedParentTypeName) ??
 				fail("expected tree schema");
 			const childFieldSchema =
 				parentSchema.objectNodeFields.get(childFieldKey) ?? fail("expected field schema");
@@ -517,7 +510,7 @@ describe("schema converter", () => {
 			);
 
 			const childSchema =
-				fullSchemaData.treeSchema.get(convertedChildTypeName) ??
+				fullSchemaData.nodeSchema.get(convertedChildTypeName) ??
 				fail("expected tree schema");
 			const parentFieldSchema =
 				childSchema.objectNodeFields.get(parentFieldKey) ?? fail("expected field schema");

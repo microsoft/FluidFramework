@@ -41,7 +41,7 @@ import { IdAllocator, JsonCompatible, brand, idAllocatorFromMaxId } from "../uti
 import {
 	FieldKinds,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	isNeverField,
 	cursorForTypedTreeData,
@@ -51,6 +51,7 @@ import {
 	MockDependent,
 	applyTestDelta,
 	expectEqualFieldPaths,
+	expectEqualPaths,
 	jsonSequenceRootSchema,
 } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
@@ -262,6 +263,37 @@ export function testForest(config: ForestTestConfiguration): void {
 			expectEqualFieldPaths(cursor.getFieldPath(), childPath);
 		});
 
+		describe("moveCursorToPath", () => {
+			it("moves cursor to specified path.", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+				initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+				const cursor = forest.allocateCursor();
+				const path: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				};
+
+				forest.moveCursorToPath(path, cursor);
+				expectEqualPaths(path, cursor.getPath());
+			});
+		});
+
+		it("getCursorAboveDetachedFields", () => {
+			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const forestCursor = forest.allocateCursor();
+			moveToDetachedField(forest, forestCursor);
+			const expected = mapCursorField(forestCursor, jsonableTreeFromCursor);
+
+			const cursor = forest.getCursorAboveDetachedFields();
+			cursor.enterField(rootFieldKey);
+			const actual = mapCursorField(cursor, jsonableTreeFromCursor);
+			assert.deepEqual(actual, expected);
+		});
+
 		it("anchors creation and use", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
@@ -457,7 +489,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				{ type: leaf.boolean.name, value: true },
 				{ type: leaf.string.name, value: "test" },
 			];
-			initializeForest(forest, content.map(singleTextCursor));
+			initializeForest(forest, content.map(cursorForJsonableTreeNode));
 
 			const clone = forest.clone(schema, forest.anchors);
 			const mark: Delta.Mark = { count: 1, detach: detachId };
@@ -507,7 +539,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									{
 										id: buildId,
 										trees: [
-											singleTextCursor({
+											cursorForJsonableTreeNode({
 												type: leaf.boolean.name,
 												value: true,
 											}),
@@ -543,7 +575,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[
 							xField,
 							deltaForSet(
-								singleTextCursor({
+								cursorForJsonableTreeNode({
 									type: leaf.boolean.name,
 									value: true,
 								}),
@@ -711,7 +743,12 @@ export function testForest(config: ForestTestConfiguration): void {
 							build: [
 								{
 									id: buildId,
-									trees: [singleTextCursor({ type: leaf.number.name, value: 3 })],
+									trees: [
+										cursorForJsonableTreeNode({
+											type: leaf.number.name,
+											value: 3,
+										}),
+									],
 								},
 							],
 							global: [
@@ -725,7 +762,7 @@ export function testForest(config: ForestTestConfiguration): void {
 													{
 														id: buildId2,
 														trees: [
-															singleTextCursor({
+															cursorForJsonableTreeNode({
 																type: leaf.number.name,
 																value: 4,
 															}),
@@ -954,7 +991,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		"forest cursor",
 		(data): ITreeCursor => {
 			const forest = factory(new InMemoryStoredSchemaRepository(testTreeSchema));
-			initializeForest(forest, [singleTextCursor(data)]);
+			initializeForest(forest, [cursorForJsonableTreeNode(data)]);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
 			assert(cursor.firstNode());

@@ -31,7 +31,7 @@ import {
 	describeNoCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
@@ -1255,6 +1255,30 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			bufferToString(await map1.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);
+		assert.strictEqual(
+			bufferToString(await map2.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+	});
+
+	it("abort while stashing blobs", async function () {
+		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const ac = new AbortController();
+		await provider.ensureSynchronized();
+
+		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		assert(container1.closeAndGetPendingLocalState);
+		const pendingOpsP = container1.closeAndGetPendingLocalState(ac.signal);
+		map.set("blob handle", await blobP1);
+		ac.abort();
+		const pendingOps = await pendingOpsP;
+
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
 			"blob contents",

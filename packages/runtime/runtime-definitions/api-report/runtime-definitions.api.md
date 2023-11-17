@@ -176,11 +176,6 @@ export interface IdCreationRange {
     readonly sessionId: SessionId;
 }
 
-// @public (undocumented)
-export type IdCreationRangeWithStashedState = IdCreationRange & {
-    stashedState: SerializedIdCompressorWithOngoingSession;
-};
-
 // @public
 export interface IEnvelope {
     address: string;
@@ -266,7 +261,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }

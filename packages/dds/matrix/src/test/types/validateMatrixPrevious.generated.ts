@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IRevertible():
     TypeOnly<old.IRevertible>;
 declare function use_current_InterfaceDeclaration_IRevertible(
-    use: TypeOnly<current.IRevertible>);
+    use: TypeOnly<current.IRevertible>): void;
 use_current_InterfaceDeclaration_IRevertible(
     get_old_InterfaceDeclaration_IRevertible());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IRevertible(
 declare function get_current_InterfaceDeclaration_IRevertible():
     TypeOnly<current.IRevertible>;
 declare function use_old_InterfaceDeclaration_IRevertible(
-    use: TypeOnly<old.IRevertible>);
+    use: TypeOnly<old.IRevertible>): void;
 use_old_InterfaceDeclaration_IRevertible(
     get_current_InterfaceDeclaration_IRevertible());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IRevertible(
 declare function get_old_InterfaceDeclaration_IUndoConsumer():
     TypeOnly<old.IUndoConsumer>;
 declare function use_current_InterfaceDeclaration_IUndoConsumer(
-    use: TypeOnly<current.IUndoConsumer>);
+    use: TypeOnly<current.IUndoConsumer>): void;
 use_current_InterfaceDeclaration_IUndoConsumer(
     get_old_InterfaceDeclaration_IUndoConsumer());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IUndoConsumer(
 declare function get_current_InterfaceDeclaration_IUndoConsumer():
     TypeOnly<current.IUndoConsumer>;
 declare function use_old_InterfaceDeclaration_IUndoConsumer(
-    use: TypeOnly<old.IUndoConsumer>);
+    use: TypeOnly<old.IUndoConsumer>): void;
 use_old_InterfaceDeclaration_IUndoConsumer(
     get_current_InterfaceDeclaration_IUndoConsumer());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IUndoConsumer(
 declare function get_old_TypeAliasDeclaration_MatrixItem():
     TypeOnly<old.MatrixItem<any>>;
 declare function use_current_TypeAliasDeclaration_MatrixItem(
-    use: TypeOnly<current.MatrixItem<any>>);
+    use: TypeOnly<current.MatrixItem<any>>): void;
 use_current_TypeAliasDeclaration_MatrixItem(
     get_old_TypeAliasDeclaration_MatrixItem());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_MatrixItem(
 declare function get_current_TypeAliasDeclaration_MatrixItem():
     TypeOnly<current.MatrixItem<any>>;
 declare function use_old_TypeAliasDeclaration_MatrixItem(
-    use: TypeOnly<old.MatrixItem<any>>);
+    use: TypeOnly<old.MatrixItem<any>>): void;
 use_old_TypeAliasDeclaration_MatrixItem(
     get_current_TypeAliasDeclaration_MatrixItem());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_MatrixItem(
 declare function get_old_ClassDeclaration_SharedMatrix():
     TypeOnly<old.SharedMatrix>;
 declare function use_current_ClassDeclaration_SharedMatrix(
-    use: TypeOnly<current.SharedMatrix>);
+    use: TypeOnly<current.SharedMatrix>): void;
 use_current_ClassDeclaration_SharedMatrix(
     get_old_ClassDeclaration_SharedMatrix());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_SharedMatrix(
 declare function get_current_ClassDeclaration_SharedMatrix():
     TypeOnly<current.SharedMatrix>;
 declare function use_old_ClassDeclaration_SharedMatrix(
-    use: TypeOnly<old.SharedMatrix>);
+    use: TypeOnly<old.SharedMatrix>): void;
 use_old_ClassDeclaration_SharedMatrix(
     get_current_ClassDeclaration_SharedMatrix());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_SharedMatrix(
 declare function get_old_ClassDeclaration_SharedMatrixFactory():
     TypeOnly<old.SharedMatrixFactory>;
 declare function use_current_ClassDeclaration_SharedMatrixFactory(
-    use: TypeOnly<current.SharedMatrixFactory>);
+    use: TypeOnly<current.SharedMatrixFactory>): void;
 use_current_ClassDeclaration_SharedMatrixFactory(
     get_old_ClassDeclaration_SharedMatrixFactory());
 
@@ -137,6 +137,6 @@ use_current_ClassDeclaration_SharedMatrixFactory(
 declare function get_current_ClassDeclaration_SharedMatrixFactory():
     TypeOnly<current.SharedMatrixFactory>;
 declare function use_old_ClassDeclaration_SharedMatrixFactory(
-    use: TypeOnly<old.SharedMatrixFactory>);
+    use: TypeOnly<old.SharedMatrixFactory>): void;
 use_old_ClassDeclaration_SharedMatrixFactory(
     get_current_ClassDeclaration_SharedMatrixFactory());

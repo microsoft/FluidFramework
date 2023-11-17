@@ -242,9 +242,11 @@ export function rebaseBranch<TChange>(
 		);
 	}
 
+	const toCompose = [...inverses, ...targetRebasePath];
+	const composed = changeRebaser.compose(toCompose);
 	return [
 		newHead,
-		changeRebaser.compose([...inverses, ...targetRebasePath]),
+		composed,
 		{
 			deletedSourceCommits,
 			targetCommits,

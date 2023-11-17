@@ -3,15 +3,26 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
+import {
+	benchmark,
+	BenchmarkTimer,
+	BenchmarkType,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import {
 	jsonableTreeFromCursor,
 	cursorForTypedData,
 	cursorForTypedTreeData,
 } from "../../feature-libraries";
 import { singleJsonCursor } from "../../domains";
-import { insert, TestTreeProviderLite, toJsonableTree, viewWithContent } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
+import {
+	insert,
+	TestTreeProviderLite,
+	toJsonableTree,
+	flexTreeViewWithContent,
+	checkoutWithContent,
+} from "../utils";
+import { FlexTreeView } from "../../shared-tree";
 import { rootFieldKey } from "../../core";
 import {
 	deepPath,
@@ -130,12 +141,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView;
+			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = viewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -145,7 +156,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView;
+			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -156,7 +167,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = viewWithContent(
+					tree = flexTreeViewWithContent(
 						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
 					);
 				},
@@ -170,12 +181,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("EditableTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView;
+			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = viewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepEditableTree(tree);
@@ -185,7 +196,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView;
+			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
@@ -196,7 +207,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = viewWithContent({
+					tree = flexTreeViewWithContent({
 						initialTree: { foo: numbers },
 						schema: wideSchema,
 					});
@@ -223,7 +234,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = viewWithContent(makeDeepContent(numberOfNodes));
+						const tree = checkoutWithContent(makeDeepContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -269,7 +280,7 @@ describe("SharedTree benchmarks", () => {
 						for (let index = 0; index < numberOfNodes; index++) {
 							numbers.push(index);
 						}
-						const tree = viewWithContent({
+						const tree = checkoutWithContent({
 							initialTree: { foo: numbers },
 							schema: wideSchema,
 						});
@@ -357,7 +368,7 @@ describe("SharedTree benchmarks", () => {
 		const commitCounts = [1, 10, 20];
 		const nbPeers = 5;
 		for (const nbCommits of commitCounts) {
-			benchmark({
+			const test = benchmark({
 				type: BenchmarkType.Measurement,
 				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
 				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
@@ -386,6 +397,10 @@ describe("SharedTree benchmarks", () => {
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
 			});
+
+			if (!isInPerformanceTestingMode) {
+				test.timeout(5000);
+			}
 		}
 	});
 });

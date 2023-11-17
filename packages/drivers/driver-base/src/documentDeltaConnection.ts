@@ -9,7 +9,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -74,7 +74,7 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
-	private trackLatencyTimeout: number | undefined;
+	private trackLatencyTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -132,7 +132,7 @@ export class DocumentDeltaConnection
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
-					name,
+					name: name as string,
 				},
 				error,
 			);
@@ -331,11 +331,17 @@ export class DocumentDeltaConnection
 	/**
 	 * Submits a new signal to the server
 	 *
-	 * @param message - signal to submit
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: IDocumentMessage): void {
+	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
 		this.checkNotDisposed();
-		this.emitMessages("submitSignal", [[message]]);
+
+		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
+			throw new UsageError("Sending signals to specific client ids is not supported.");
+		}
+
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**

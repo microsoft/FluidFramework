@@ -40,7 +40,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {

@@ -37,11 +37,11 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/dist/utils.js";
+} from "@fluidframework/container-loader/lib/utils.mjs";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
@@ -230,6 +230,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	};
 
 	const getSnapshotTreeFromSerializedSnapshot = (container: IContainer) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 	};
 

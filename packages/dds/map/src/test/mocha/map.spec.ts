@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -883,7 +883,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
 			public get sharedObject(): SharedMap {
 				// Return the remote SharedMap because we want to verify its summary data.
@@ -891,14 +891,14 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
 			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
 			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const newSubMapId = `subMap-${++this.subMapCount}`;
@@ -909,7 +909,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
 			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
@@ -926,7 +926,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const subMapId1 = `subMap-${++this.subMapCount}`;

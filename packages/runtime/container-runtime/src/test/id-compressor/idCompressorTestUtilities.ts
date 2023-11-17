@@ -14,7 +14,7 @@ import {
 	SaveInfo,
 	take,
 	BaseFuzzTestState,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	IdCreationRange,
 	OpSpaceCompressedId,

@@ -111,11 +111,6 @@ To use a local build of this extension in your browser:
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Inject telemetry key
-If you're manually releasing or testing the Devtools browser extension using a local build, create your .env file with content like  "DEVTOOLS_TELEMETRY_TOKEN=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c". In automated pipeline builds, the telemetry key will be fetched from the "prague-key-vault" group in Azure Ops, and output the generated extension in artifact named `devtools-extension-bundle`.
-`
-For local tests, execute the command npm run `start:client:test`. This ensures the telemetry token is correctly integrated.
-
 ## Contribution Guidelines
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
@@ -166,8 +161,7 @@ Thank you!
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

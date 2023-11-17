@@ -5,9 +5,9 @@
 
 import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
-	RangeEntry,
 	RangeMap,
-	getFirstFromRangeMap,
+	RangeQueryResult,
+	getFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util";
@@ -39,8 +39,8 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeEntry<T> | undefined {
-	return getFirstFromRangeMap(map.get(revision) ?? [], id, count);
+): RangeQueryResult<T> {
+	return getFromRangeMap(map.get(revision) ?? [], id, count);
 }
 
 /**
@@ -67,7 +67,7 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeEntry<T> | undefined;
+	): RangeQueryResult<T>;
 
 	/**
 	 * If there is no data for this key, sets the value to `newValue`, then returns the data for this key.

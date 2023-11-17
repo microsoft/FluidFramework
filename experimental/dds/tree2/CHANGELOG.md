@@ -1,5 +1,52 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Rename SchemaCollection.treeSchema to nodeSchema ([#18067](https://github.com/microsoft/FluidFramework/issues/18067)) [be7ee4b383](https://github.com/microsoft/FluidFramework/commits/be7ee4b383c86fbcb60e92b606bbd305d0157acb)
+
+    This breaks all existing documents, as well as any users of SchemaCollection.treeSchema.
+
+-   Remove editable-tree-1 ([#18169](https://github.com/microsoft/FluidFramework/issues/18169)) [f0100204bd](https://github.com/microsoft/FluidFramework/commits/f0100204bd19f8be769a1163a655a185e7c1289e)
+
+    Remove editable-tree-1 and APIs related to it. Users must migrate to editable-tree-2.
+
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   tree2: Rename DocumentSchema and toDocumentSchema ([#17854](https://github.com/microsoft/FluidFramework/issues/17854)) [0b5944050d](https://github.com/microsoft/FluidFramework/commits/0b5944050d3bc4470a87de4a4332235d37cb719c)
+
+    The following APIs have been renamed:
+
+    -   `DocumentSchema` is now `TreeSchema`
+    -   `toDocumentSchema` is now `intoSchema`
+
+-   tree2: Rename SchemaData, FieldSchema, and FieldStoredSchema ([#17888](https://github.com/microsoft/FluidFramework/issues/17888)) [27f5a5e24d](https://github.com/microsoft/FluidFramework/commits/27f5a5e24dda81eafe5678742d68cd7d8afdc060)
+
+    The following APIs have been renamed:
+
+    -   `SchemaData` is now `TreeStoredSchema`
+    -   `FieldSchema` is now `TreeFieldSchema`
+    -   `FieldStoredSchema` is now `TreeFieldStoredSchema`
+
+-   tree2: Add `null` to allowed leaf types ([#17781](https://github.com/microsoft/FluidFramework/issues/17781)) [040e28f3ab](https://github.com/microsoft/FluidFramework/commits/040e28f3aba415e086fe2661e97d984c97b85045)
+
+    Replaced the jsonNull schema with a new null leaf schema, and added support for leaf values which are null.
+
+-   tree2: Rename TreeSchema ([#17845](https://github.com/microsoft/FluidFramework/issues/17845)) [908ee8921e](https://github.com/microsoft/FluidFramework/commits/908ee8921eb8d7fc21f64eee88a12c678e9756dd)
+
+    The following APIs have been renamed:
+
+    -   `TreeSchema` is now `TreeNodeSchema`
+
+-   tree2: Rename Struct ([#17899](https://github.com/microsoft/FluidFramework/issues/17899)) [d90af254fe](https://github.com/microsoft/FluidFramework/commits/d90af254fe4224dd6391908e88055f3c98cc1d18)
+
+    The following APIs have been renamed:
+
+    -   `Struct` is now `ObjectNode`
+
 ## 2.0.0-internal.7.1.0
 
 ### Major Changes

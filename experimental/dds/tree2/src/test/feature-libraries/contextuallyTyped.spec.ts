@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
@@ -41,17 +41,15 @@ describe("ContextuallyTyped", () => {
 		assert(!isFluidHandle(undefined));
 		assert(!isFluidHandle(null));
 		assert(!isFluidHandle([]));
+		assert(!isFluidHandle({ get: () => {} }));
+		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 		assert(isFluidHandle(new MockHandle(5)));
 		assert(!isFluidHandle({ IFluidHandle: 5 }));
 		assert(!isFluidHandle({ IFluidHandle: {} }));
 		const loopy = { IFluidHandle: {} };
 		loopy.IFluidHandle = loopy;
 		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
-		// Thus this case asserts:
-		assert.throws(
-			() => isFluidHandle(loopy),
-			(e: Error) => validateAssertionError(e, /IFluidHandle/),
-		);
+		assert(!isFluidHandle(loopy));
 	});
 
 	it("allowsValue", () => {
@@ -167,9 +165,11 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const nodeSchema = builder.objectRecursive("node", {
+			const recursiveReference = () => nodeSchema;
+			builder.fixRecursiveReference(recursiveReference);
+			const nodeSchema = builder.object("node", {
 				foo: builder.required(leaf.string),
-				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));
