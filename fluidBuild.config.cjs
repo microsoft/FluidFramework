@@ -161,6 +161,7 @@ module.exports = {
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
 				"^packages/loader/container-loader/package.json",
+        "^experimental/dds/tree2/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
