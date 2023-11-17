@@ -7,7 +7,7 @@ import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {
 	protected get configFileFullPath() {
-		return this.getPackageFileFullPath("tslint.json");
+		return [this.getPackageFileFullPath("tslint.json")];
 	}
 
 	protected async getToolVersion() {
@@ -24,7 +24,7 @@ export class EsLintTask extends TscDependentTask {
 				throw new Error(`Unable to find config file for eslint ${this.command}`);
 			}
 		}
-		return this._configFileFullPath;
+		return [this._configFileFullPath];
 	}
 
 	protected get useWorker() {

@@ -32,11 +32,11 @@
 		{
 			"name": "fluid-build",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
-			"cwd": "${workspaceFolder}/packages/common/container-definitions",
+			"cwd": "${workspaceFolder}/packages/framework/aqueduct",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": [".", "--task", "build"],
+			"args": [".", "--task", "build", "-c"],
 		},
 		{
 			"name": "flub",
@@ -160,6 +160,24 @@
 				"--no-commit",
 				"--no-install",
 			],
+		},
+		{
+			"name": "flub update project",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}/packages/framework/aqueduct",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["update", "project", "--dir", ".", "--newTsconfigs"],
+		},
+		{
+			"name": "flub package report",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["package", "report", "--releaseGroup", "build-tools", "-v"],
 		},
 		{
 			"type": "node",

@@ -8,9 +8,9 @@ import path from "path";
 import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
 
-import { readFileSync } from "fs-extra";
+// import { readFileSync } from "fs-extra";
 import { existsSync, readFileAsync } from "../../../common/utils";
-import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
+import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -42,6 +42,9 @@ export class TscTask extends LeafTask {
 	}
 
 	protected get isIncremental() {
+		if (this.executable === "tsc-multi") {
+			return true;
+		}
 		const config = this.readTsConfig();
 		return config?.options.incremental;
 	}
@@ -316,7 +319,7 @@ export class TscTask extends LeafTask {
 		return path.join(directory, fileName);
 	}
 
-	private get tsBuildInfoFileFullPath() {
+	protected get tsBuildInfoFileFullPath() {
 		if (this._tsBuildInfoFullPath === undefined) {
 			const infoFile = this.getTsBuildInfoFileFromConfig();
 			if (infoFile) {
@@ -344,6 +347,7 @@ export class TscTask extends LeafTask {
 	public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
 		if (this._tsBuildInfo === undefined) {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
 					const tsBuildInfo = JSON.parse(
@@ -424,7 +428,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
-				(task) => task.executable === "tsc",
+				(task) => task.executable === "tsc" || task.executable === "tsc-multi",
 			);
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
 
@@ -435,7 +439,10 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			);
 
 			for (const dep of tasks) {
-				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+				const tsBuildInfo =
+					dep.executable === "tsc-multi"
+						? await (dep as TscMultiTask).readTsBuildInfo()
+						: await (dep as TscTask).readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;
@@ -443,16 +450,19 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles.push(tsBuildInfo);
 			}
 
-			const configFile = this.configFileFullPath;
-			let config = "";
-			if (existsSync(configFile)) {
-				// Include the config file if it exists so that we can detect changes
-				config = await readFileAsync(this.configFileFullPath, "utf8");
+			const configFiles = this.configFileFullPath;
+			const configs: string[] = [];
+
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					// Include the config file if it exists so that we can detect changes
+					configs.push(await readFileAsync(configFile, "utf8"));
+				}
 			}
 
 			return JSON.stringify({
 				version: await this.getToolVersion(),
-				config,
+				configs,
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
@@ -460,7 +470,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPath(): string;
+	protected abstract get configFileFullPath(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }
 
@@ -474,64 +484,60 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
  * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
  * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
  */
-export class TscMultiTask extends LeafWithDoneFileTask {
+export class TscMultiTask extends TscDependentTask {
+	private _tsBuildInfo: ITsBuildInfo | undefined;
+
+	/**
+	 * A list of files that should be considered part of the cache input, if they exist
+	 */
+	private readonly commonFiles = [
+		"package.json",
+		"tsconfig.json",
+		"src/test/tsconfig.json",
+		"tsc-multi.json",
+		"tsc-multi.test.json",
+	];
+
+	protected get configFileFullPath() {
+		return this.commonFiles.map((file) => this.getPackageFileFullPath(file));
+	}
+
 	protected async getToolVersion() {
 		return getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
 	}
 
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		const command = this.command;
-
-		/**
-		 * A list of files that should be considered part of the cache input, if they exist
-		 */
-		const commonFiles = [
-			"tsconfig.json",
-			"src/test/tsconfig.json",
-			"tsc-multi.json",
-			"tsc-multi.test.json",
-		]
-			.map((file) => path.resolve(this.package.directory, file))
-			.filter((file) => existsSync(file));
-
-		try {
+	public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
+		if (this._tsBuildInfo === undefined) {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
-			const tsbuildinfo = this.getPackageFileFullPath(
-				command.includes("esnext")
+			const tsBuildInfoFileFullPath = this.getPackageFileFullPath(
+				this.command.includes("esnext")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
-			if (!existsSync(tsbuildinfo)) {
-				// No tsbuildinfo file, so we need to build
-				return undefined;
+
+			if (existsSync(tsBuildInfoFileFullPath)) {
+				try {
+					const tsBuildInfo = JSON.parse(
+						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
+					);
+					if (
+						tsBuildInfo.program &&
+						tsBuildInfo.program.fileNames &&
+						tsBuildInfo.program.fileInfos &&
+						tsBuildInfo.program.options
+					) {
+						this._tsBuildInfo = tsBuildInfo;
+					} else {
+						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
+					}
+				} catch {
+					this.traceError(`Unable to load ${tsBuildInfoFileFullPath}`);
+				}
+			} else {
+				this.traceError(`${tsBuildInfoFileFullPath} file not found`);
 			}
-
-			const files = [...commonFiles];
-
-			// Add src files
-			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
-
-			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
-			const hashesP = files.map(async (name) => {
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
-					this.getPackageFileFullPath(name),
-				);
-				return { name, hash };
-			});
-
-			const buildInfo = readFileSync(tsbuildinfo).toString();
-			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
-			const hashes = await Promise.all(hashesP);
-			const result = JSON.stringify({
-				version,
-				buildInfo,
-				hashes,
-			});
-			return result;
-		} catch (e) {
-			this.traceError(`error generating done file content. ${e}`);
 		}
-		return undefined;
+		return this._tsBuildInfo;
 	}
 }

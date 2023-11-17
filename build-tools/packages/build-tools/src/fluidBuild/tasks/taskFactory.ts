@@ -17,7 +17,7 @@ import {
 	DepCruiseTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { TscMultiTask, TscTask } from "./leaf/tscTask";
+import { TscTask, TscMultiTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { GroupTask } from "./groupTask";
 import { Task } from "./task";

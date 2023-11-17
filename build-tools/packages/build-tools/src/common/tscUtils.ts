@@ -184,7 +184,9 @@ function createTscUtil(tsLib: typeof ts) {
 			// TODO: parse the command line for real, split space for now.
 			const args = command.split(" ");
 
-			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
+			const parsedCommand = tsLib.parseCommandLine(
+				args[0] === "tsc-multi" ? [] : args.slice(1),
+			);
 			if (parsedCommand.errors.length) {
 				return undefined;
 			}

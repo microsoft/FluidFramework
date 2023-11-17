@@ -1,0 +1,33 @@
+diff --git a/package.json b/package.json
+index afc3ee1ddc529f23d2a456ed60b8d33bde70fe3b..8c87bdc74c6286b8575f415f3c8f332c759f80d5 100644
+--- a/package.json
++++ b/package.json
+@@ -5,10 +5,24 @@
+     "node": ">=10.0.0"
+   },
+   "exports": {
+-    "require": "./dist/jssm.es5.cjs.js",
+-    "import": "./dist/es6/jssm.js",
+-    "default": "./dist/jssm.es5.cjs.js",
+-    "browser": "dist/jssm.es5.iife.js"
++    ".": {
++      "require": {
++        "types": "./jssm.d.ts",
++        "default": "./dist/jssm.es5.cjs.js"
++      },
++      "import": {
++        "types": "./jssm.d.ts",
++        "default": "./dist/es6/jssm.js"
++      },
++      "default": {
++        "types": "./jssm.d.ts",
++        "default": "./dist/jssm.es5.cjs.js"
++      },
++      "browser": {
++        "types": "./jssm.d.ts",
++        "default": "./dist/jssm.es5.iife.js"
++      }
++    }
+   },
+   "autoupdate": {
+     "source": "git",
