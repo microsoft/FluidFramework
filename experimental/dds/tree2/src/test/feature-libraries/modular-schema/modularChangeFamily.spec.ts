@@ -603,10 +603,12 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = new Map([
-				[fieldA, nodeDelta],
-				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
-			]);
+			const expectedDelta: Delta.Root = {
+				fields: new Map([
+					[fieldA, nodeDelta],
+					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+				]),
+			};
 
 			const actual = family.intoDelta(makeAnonChange(rootChange1a));
 			assertDeltaEqual(actual, expectedDelta);

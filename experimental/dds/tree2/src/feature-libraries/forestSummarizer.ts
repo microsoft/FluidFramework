@@ -112,28 +112,34 @@ export class ForestSummarizer implements Summarizable {
 			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 
 			const allocator = idAllocatorFromMaxId();
-			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
-				const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
-					cursor.fork(),
-				);
-				const buildId = { minor: allocator.allocate(nodeCursors.length) };
+			const fieldChanges: [FieldKey, Delta.FieldChanges][] = fields.map(
+				([fieldKey, content]) => {
+					const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
+						cursor.fork(),
+					);
+					const buildId = { minor: allocator.allocate(nodeCursors.length) };
 
-				return [
-					fieldKey,
-					{
-						build: [
-							{
-								id: buildId,
-								trees: nodeCursors,
-							},
-						],
-						local: [{ count: nodeCursors.length, attach: buildId }],
-					},
-				];
-			});
+					return [
+						fieldKey,
+						{
+							build: [
+								{
+									id: buildId,
+									trees: nodeCursors,
+								},
+							],
+							local: [{ count: nodeCursors.length, attach: buildId }],
+						},
+					];
+				},
+			);
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
-			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
+			applyDelta(
+				{ fields: new Map(fieldChanges) },
+				this.forest,
+				makeDetachedFieldIndex("init"),
+			);
 		}
 	}
 }

@@ -124,34 +124,36 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move, insert] = getChanges();
 			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
-			const expected: Delta.Root = new Map([
-				[
-					fieldA,
-					{
-						local: [
-							{
-								count: 1,
-								detach: { minor: 0 },
-								fields: new Map([
-									[
-										fieldC,
-										{
-											build: [{ id: { minor: 1 }, trees: [newNode] }],
-											local: [{ count: 1, attach: { minor: 1 } }],
-										},
-									],
-								]),
-							},
-						],
-					},
-				],
-				[
-					fieldB,
-					{
-						local: [{ count: 1, attach: { minor: 0 } }],
-					},
-				],
-			]);
+			const expected: Delta.Root = {
+				fields: new Map([
+					[
+						fieldA,
+						{
+							local: [
+								{
+									count: 1,
+									detach: { minor: 0 },
+									fields: new Map([
+										[
+											fieldC,
+											{
+												build: [{ id: { minor: 1 }, trees: [newNode] }],
+												local: [{ count: 1, attach: { minor: 1 } }],
+											},
+										],
+									]),
+								},
+							],
+						},
+					],
+					[
+						fieldB,
+						{
+							local: [{ count: 1, attach: { minor: 0 } }],
+						},
+					],
+				]),
+			};
 
 			const delta = family.intoDelta(makeAnonChange(composed));
 			assert.deepEqual(delta, expected);
@@ -188,32 +190,37 @@ describe("ModularChangeFamily integration", () => {
 			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(makeAnonChange(composed));
-			const expected: Delta.Root = new Map([
-				[
-					fieldB,
-					{
-						local: [
-							{ count: 1 },
-							{
-								count: 1,
-								fields: new Map([
-									[
-										fieldC,
-										{
-											build: [
-												{ id: { major: tag2, minor: 1 }, trees: [newNode] },
-											],
-											local: [
-												{ count: 1, attach: { major: tag2, minor: 1 } },
-											],
-										},
-									],
-								]),
-							},
-						],
-					},
-				],
-			]);
+			const expected: Delta.Root = {
+				fields: new Map([
+					[
+						fieldB,
+						{
+							local: [
+								{ count: 1 },
+								{
+									count: 1,
+									fields: new Map([
+										[
+											fieldC,
+											{
+												build: [
+													{
+														id: { major: tag2, minor: 1 },
+														trees: [newNode],
+													},
+												],
+												local: [
+													{ count: 1, attach: { major: tag2, minor: 1 } },
+												],
+											},
+										],
+									]),
+								},
+							],
+						},
+					],
+				]),
+			};
 			assert.deepEqual(actual, expected);
 		});
 
@@ -294,10 +301,12 @@ describe("ModularChangeFamily integration", () => {
 				attach: { major: tag2, minor: 0 },
 				count: 2,
 			};
-			const expected: Delta.Root = new Map([
-				[brand("foo"), { local: [moveOut1, moveIn1] }],
-				[brand("bar"), { local: [moveOut2, moveIn2] }],
-			]);
+			const expected: Delta.Root = {
+				fields: new Map([
+					[brand("foo"), { local: [moveOut1, moveIn1] }],
+					[brand("bar"), { local: [moveOut2, moveIn2] }],
+				]),
+			};
 			const actual = family.intoDelta(makeAnonChange(change));
 			assert.deepEqual(actual, expected);
 		});
@@ -312,11 +321,29 @@ function normalizeDelta(
 	const genId = idAllocator ?? idAllocatorFromMaxId();
 	const map = idMap ?? new Map();
 
-	const normalized = new Map();
-	for (const [field, fieldChanges] of delta) {
-		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, map));
+	const normalized: Mutable<Delta.Root> = {};
+	if (delta.fields !== undefined) {
+		normalized.fields = normalizeDeltaFieldMap(delta.fields, genId, map);
+	}
+	if (delta.build !== undefined && delta.build.length > 0) {
+		normalized.build = delta.build.map(({ id, trees }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, map),
+			trees,
+		}));
 	}
 
+	return normalized;
+}
+
+function normalizeDeltaFieldMap(
+	delta: Delta.FieldMap,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): Delta.FieldMap {
+	const normalized = new Map();
+	for (const [field, fieldChanges] of delta) {
+		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, idMap));
+	}
 	return normalized;
 }
 
@@ -338,7 +365,7 @@ function normalizeDeltaFieldChanges(
 	if (delta.global !== undefined && delta.global.length > 0) {
 		normalized.global = delta.global.map(({ id, fields }) => ({
 			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
-			fields: normalizeDelta(fields, genId, idMap),
+			fields: normalizeDeltaFieldMap(fields, genId, idMap),
 		}));
 	}
 	if (delta.rename !== undefined && delta.rename.length > 0) {
@@ -365,7 +392,7 @@ function normalizeDeltaMark(
 		normalized.detach = normalizeDeltaDetachedNodeId(normalized.detach, genId, idMap);
 	}
 	if (normalized.fields !== undefined) {
-		normalized.fields = normalizeDelta(normalized.fields, genId, idMap);
+		normalized.fields = normalizeDeltaFieldMap(normalized.fields, genId, idMap);
 	}
 	return normalized;
 }

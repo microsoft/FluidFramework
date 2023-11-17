@@ -25,6 +25,7 @@ import {
 	ChangeAtomIdMap,
 	JsonableTree,
 	makeDetachedNodeId,
+	emptyDelta,
 } from "../../core";
 import {
 	brand,
@@ -720,20 +721,24 @@ export class ModularChangeFamily
 	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
-			return new Map();
+			return emptyDelta;
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		const rootDelta = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		const rootDelta: Mutable<Delta.Root> = {};
+		const fieldDeltas = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		if (fieldDeltas.size > 0) {
+			rootDelta.fields = fieldDeltas;
+		}
 		if (change.builds && change.builds.size > 0) {
-			const build: Delta.DetachedNodeBuild[] = [];
+			const builds: Delta.DetachedNodeBuild[] = [];
 			forEachInNestedMap(change.builds, (tree, major, minor) => {
-				build.push({
+				builds.push({
 					id: makeDetachedNodeId(major ?? revision, minor),
 					trees: [cursorForJsonableTreeNode(tree)],
 				});
 			});
-			rootDelta.set(brand("--global--"), { build });
+			rootDelta.build = builds;
 		}
 		return rootDelta;
 	}
