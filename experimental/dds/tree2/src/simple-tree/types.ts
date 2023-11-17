@@ -22,6 +22,16 @@ import {
 } from "../feature-libraries";
 
 /**
+ * Type alias for to document which values are un-hydrated.
+ *
+ * Un-hydrated values are nodes produces from schema's create functions that haven't been inserted into a tree yet.
+ *
+ * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
+ * This no-op wrapper is used instead.
+ */
+export type Unhydrated<T> = T;
+
+/**
  * An non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @privateRemarks

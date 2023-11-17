@@ -15,6 +15,14 @@
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
+ * Subset of the `Map` interface thats also compatible with WeakMap and other similar APIs.
+ */
+export interface SimpleMap<Key, Value> {
+	get(key: Key): Value | undefined;
+	set(key: Key, value: Value): void;
+}
+
+/**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
  *
  * @alpha
@@ -70,10 +78,12 @@ export function setInNestedMap<Key1, Key2, Value>(
  * Sets the value at (key1, key2) in map to value if not already present.
  * Returns the value at (key1, key2) after setting it.
  * This is equivalent to a get or default that adds the default to the map.
- *
- * @alpha
  */
-export function getOrAddInMap<Key, Value>(map: Map<Key, Value>, key: Key, value: Value): Value {
+export function getOrAddInMap<Key, Value>(
+	map: SimpleMap<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
 	const currentValue = map.get(key);
 	if (currentValue !== undefined) {
 		return currentValue;

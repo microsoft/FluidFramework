@@ -15,6 +15,7 @@ export {
 	TreeObjectNode,
 	TreeRoot,
 	TreeNode,
+	Unhydrated,
 } from "./types";
 export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { nodeApi as Tree, TreeApi } from "./node";
