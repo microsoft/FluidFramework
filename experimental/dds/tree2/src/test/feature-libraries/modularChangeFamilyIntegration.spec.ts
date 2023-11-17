@@ -125,6 +125,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move, insert] = getChanges();
 			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
 			const expected: Delta.Root = {
+				build: [{ id: { minor: 1 }, trees: [newNode] }],
 				fields: new Map([
 					[
 						fieldA,
@@ -137,7 +138,6 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												build: [{ id: { minor: 1 }, trees: [newNode] }],
 												local: [{ count: 1, attach: { minor: 1 } }],
 											},
 										],
@@ -191,6 +191,12 @@ describe("ModularChangeFamily integration", () => {
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(makeAnonChange(composed));
 			const expected: Delta.Root = {
+				build: [
+					{
+						id: { major: tag2, minor: 1 },
+						trees: [newNode],
+					},
+				],
 				fields: new Map([
 					[
 						fieldB,
@@ -203,12 +209,6 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												build: [
-													{
-														id: { major: tag2, minor: 1 },
-														trees: [newNode],
-													},
-												],
 												local: [
 													{ count: 1, attach: { major: tag2, minor: 1 } },
 												],
