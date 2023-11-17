@@ -1,15 +1,8 @@
 {
-  "version": 1,
-  "identifiers": [],
-  "shapes": [
-    {
-      "b": {
-        "length": 0,
-        "shape": 0
-      }
-    }
-  ],
-  "data": [
-    0
-  ]
+  "version": "1.0.0",
+  "nodeSchema": [],
+  "rootFieldSchema": {
+    "kind": "Forbidden",
+    "types": []
+  }
 }

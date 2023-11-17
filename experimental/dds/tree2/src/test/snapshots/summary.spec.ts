@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-
 import path from "path";
 import { useAsyncDeterministicStableId } from "../../util";
-import { testTrees as schemaTestTrees } from "../testTrees";
-import { makeSchemaCompressedCodec } from "../../feature-libraries/chunked-forest/codec/compressedCodecs";
-import { typeboxValidator } from "../../external-utilities";
-import { cursorForJsonableTreeField, defaultSchemaPolicy } from "../../feature-libraries";
+import { Any, encodeTreeSchema } from "../../feature-libraries";
+import { TreeStoredSchema, storedEmptyFieldSchema } from "../../core";
+import { SchemaBuilder, leaf } from "../../domains";
+import {
+	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	stringSequenceRootSchema,
+} from "../utils";
 import {
 	createSchemaSnapshot,
 	createSnapshot,
@@ -70,20 +72,66 @@ describe("snapshot tests", () => {
 	}
 });
 
+const schemaTrees: {
+	only?: boolean;
+	skip?: boolean;
+	name: string;
+	schemaData: TreeStoredSchema;
+}[] = [
+	{
+		name: "empty",
+		schemaData: {
+			rootFieldSchema: storedEmptyFieldSchema,
+			nodeSchema: new Map(),
+		},
+	},
+	{
+		name: "json-sequence",
+		schemaData: jsonSequenceRootSchema,
+	},
+	{
+		name: "string-sequence",
+		schemaData: stringSequenceRootSchema,
+	},
+	{
+		name: "number-sequence",
+		schemaData: numberSequenceRootSchema,
+	},
+	{
+		name: "handle-sequence",
+		schemaData: new SchemaBuilder({
+			scope: "HandleSequenceRoot",
+		}).intoSchema(SchemaBuilder.sequence(leaf.handle)),
+	},
+	{
+		name: "optional-number",
+		schemaData: new SchemaBuilder({
+			scope: "OptionalNumberRoot",
+		}).intoSchema(SchemaBuilder.optional(leaf.number)),
+	},
+	{
+		name: "any",
+		schemaData: new SchemaBuilder({
+			scope: "AnyRoot",
+		}).intoSchema(Any),
+	},
+	{
+		name: "any-required",
+		schemaData: new SchemaBuilder({
+			scope: "AnyRequiredRoot",
+		}).intoSchema(SchemaBuilder.required(Any)),
+	},
+];
+
 describe("schema snapshots", () => {
 	if (regenerateSnapshots) {
 		regenTestDirectory(schemaDirPath);
 	}
 
-	for (const { name, treeFactory, schemaData } of schemaTestTrees) {
-		it(name, async () => {
-			const tree = treeFactory();
-			const codec = makeSchemaCompressedCodec(
-				{ jsonValidator: typeboxValidator },
-				schemaData,
-				defaultSchemaPolicy,
-			);
-			const encoded = codec.encode(cursorForJsonableTreeField(tree));
+	for (const { name, schemaData, only = false, skip = false } of schemaTrees) {
+		const itFn = only ? it.only : skip ? it.skip : it;
+		itFn(`${regenerateSnapshots ? "regenerate " : ""}for ${name}`, async () => {
+			const encoded = encodeTreeSchema(schemaData);
 
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (regenerateSnapshots) {
