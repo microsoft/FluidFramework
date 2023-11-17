@@ -550,10 +550,16 @@ describe("Branches", () => {
 		};
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
-		if (onChange !== undefined) {
-			branch.on("beforeChange", onChange);
-			branch.on("afterChange", onChange);
-		}
+		let head = branch.getHead();
+		branch.on("beforeChange", (c) => {
+			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
+			assert.equal(branch.getHead(), head);
+			onChange?.(c);
+		});
+		branch.on("afterChange", (c) => {
+			head = branch.getHead();
+			onChange?.(c);
+		});
 
 		return branch;
 	}
