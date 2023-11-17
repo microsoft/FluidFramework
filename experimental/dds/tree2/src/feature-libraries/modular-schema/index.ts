@@ -29,6 +29,7 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	RemovedTreesFromChild,
 	RevisionMetadataSource,

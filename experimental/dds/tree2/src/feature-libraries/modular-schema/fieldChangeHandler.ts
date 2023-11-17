@@ -90,17 +90,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	): TChangeset;
 
 	/**
-	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendInvert(
-		invertedChange: TChangeset,
-		originalRevision: RevisionTag | undefined,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-	): TChangeset;
-
-	/**
 	 * Rebase `change` over `over`.
 	 * See `ChangeRebaser` for details.
 	 */
@@ -115,16 +104,9 @@ export interface FieldChangeRebaser<TChangeset> {
 	): TChangeset;
 
 	/**
-	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
+	 * @returns `change` with any empty child node changesets removed.
 	 */
-	amendRebase(
-		rebasedChange: TChangeset,
-		over: TaggedChange<TChangeset>,
-		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-	): TChangeset;
+	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 }
 
 /**
@@ -151,8 +133,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		amendCompose: () => fail("Not implemented"),
-		amendInvert: () => fail("Not implemented"),
-		amendRebase: (change) => change,
+		prune: (change) => change,
 	};
 }
 
@@ -200,6 +181,11 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
+
+/**
+ * @alpha
+ */
+export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
  * A function that returns the set of removed trees that should be in memory for a given node changeset to be applied.
