@@ -11,9 +11,7 @@ import { SchemaBuilder, leaf } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { toMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
 import { brand } from "../../../util";
-import { EmptyKey, FieldKey, type MapTree } from "../../../core";
-
-// TODO: empty optional field, empty array, empty map
+import { EmptyKey, type FieldKey, type MapTree } from "../../../core";
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -65,7 +63,7 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("list", () => {
+	it("list (non-empty)", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.list("list", [schemaBuilder.number, schemaBuilder.handle]);
 		const schema = schemaBuilder.intoSchema(rootSchema);
@@ -92,7 +90,24 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("map", () => {
+	it("list (empty)", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const rootSchema = schemaBuilder.list("list", schemaBuilder.number);
+		const schema = schemaBuilder.intoSchema(rootSchema);
+
+		const tree: number[] = [];
+
+		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: brand("test.list"),
+			fields: new Map<FieldKey, MapTree[]>(),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("map (non-empty)", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.map("map", [
 			schemaBuilder.number,
@@ -123,7 +138,24 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("object", () => {
+	it("map (empty)", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const rootSchema = schemaBuilder.map("map", [schemaBuilder.number]);
+		const schema = schemaBuilder.intoSchema(rootSchema);
+
+		const tree = new Map<string, number>();
+
+		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: brand("test.map"),
+			fields: new Map<FieldKey, MapTree[]>(),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("object (non-empty)", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.object("object", {
 			a: schemaBuilder.string,
@@ -149,6 +181,25 @@ describe("toMapTree", () => {
 				[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 				[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
 			]),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("object (empty)", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const rootSchema = schemaBuilder.object("object", {
+			a: schemaBuilder.optional(schemaBuilder.number),
+		});
+		const schema = schemaBuilder.intoSchema(rootSchema);
+
+		const tree = {};
+
+		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: brand("test.object"),
+			fields: new Map<FieldKey, MapTree[]>(),
 		};
 
 		assert.deepEqual(actual, expected);
