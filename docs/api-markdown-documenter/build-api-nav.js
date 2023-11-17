@@ -6,7 +6,7 @@ const yaml = require("js-yaml");
 
 /**
  * Processes documents and generates data required for the nav bar.
- * @param {Array<Object>} documents - List of documents with apiItem.
+ * @param {Array<Object>} documents - List of {@link @fluid-tools/api-markdown-documenter#Document}s with associated API items.
  * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
 async function buildNavBar(documents) {
