@@ -17,6 +17,8 @@ import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes
  * @param event - The string or event to log
  * @returns The outcome of the condition
  *
+ * @privateRemarks This may want to move into the `core-utils` package alongside our `assert` API.
+ *
  * @internal
  */
 export function logIfFalse(
