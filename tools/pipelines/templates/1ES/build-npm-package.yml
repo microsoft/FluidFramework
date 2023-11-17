@@ -146,7 +146,7 @@ extends:
       os: linux
     sdl:
       arrow:
-        serviceConnection: Arrow_FluidFramework_public
+        serviceConnection: $(arrow-service-connection-name)
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
