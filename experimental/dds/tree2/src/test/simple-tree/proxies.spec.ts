@@ -212,6 +212,12 @@ describe("SharedTreeList", () => {
 			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem, { id: "C" }]);
 		});
+
+		itWithRoot("at()", schema, [{ id: "B" }], (list) => {
+			assert.equal(list.at(0), list[0]);
+			assert.deepEqual(list, [{ id: "B" }]);
+			assert.deepEqual(list.at(0), { id: "B" });
+		});
 	});
 
 	describe("inserting inlined content", () => {
@@ -258,10 +264,11 @@ describe("SharedTreeList", () => {
 			numbers: _.list(_.number),
 			strings: _.list(_.string),
 			booleans: _.list(_.boolean),
-			poly: _.list([_.number, _.string, _.boolean]),
+			handles: _.list(_.handle),
+			poly: _.list([_.number, _.string, _.boolean, _.handle]),
 		});
 		const schema = _.intoSchema(obj);
-		const initialTree = { numbers: [], strings: [], booleans: [], poly: [] };
+		const initialTree = { numbers: [], strings: [], booleans: [], handles: [], poly: [] };
 		itWithRoot("numbers", schema, initialTree, (root) => {
 			root.numbers.insertAtStart(0);
 			root.numbers.insertAt(1, 1);
@@ -276,6 +283,14 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root.booleans, [true, false, true]);
 		});
 
+		itWithRoot("handles", schema, initialTree, (root) => {
+			const handles = [new MockHandle(5), new MockHandle(6), new MockHandle(7)];
+			root.handles.insertAtStart(handles[0]);
+			root.handles.insertAt(1, handles[1]);
+			root.handles.insertAtEnd(handles[2]);
+			assert.deepEqual(root.handles, handles);
+		});
+
 		itWithRoot("of multiple possible types", schema, initialTree, (root) => {
 			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
 			allowsStrings.insertAtStart(42);
@@ -283,7 +298,10 @@ describe("SharedTreeList", () => {
 			allowsStsrings.insertAt(1, "s");
 			const allowsBooleans: typeof root.booleans | typeof root.poly = root.poly;
 			allowsBooleans.insertAtEnd(true);
-			assert.deepEqual(root.poly, [42, "s", true]);
+			const handle = new MockHandle(5);
+			const allowsHandles: typeof root.handles | typeof root.poly = root.poly;
+			allowsHandles.insertAtEnd(handle);
+			assert.deepEqual(root.poly, [42, "s", true, handle]);
 		});
 	});
 

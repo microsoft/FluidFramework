@@ -32,6 +32,7 @@ import {
 	ContextuallyTypedNodeData,
 	typeNameSymbol,
 	isFluidHandle,
+	isPrimitiveValue,
 } from "../feature-libraries";
 import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
@@ -250,8 +251,20 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
+<<<<<<< HEAD
 		value(this: TreeListNode, index: number): FlexTreeUnknownUnboxed | undefined {
 			return getSequenceField(this).at(index);
+=======
+		value(
+			this: TreeListNode<AllowedTypes, "javaScript">,
+			index: number,
+		): FlexTreeUnknownUnboxed | undefined {
+			const val = getSequenceField(this).at(index);
+			if (val === undefined || val === null || isPrimitiveValue(val) || isFluidHandle(val)) {
+				return val;
+			}
+			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
+>>>>>>> 868c3c5e75 (at() returns proxy)
 		},
 	},
 	insertAt: {
