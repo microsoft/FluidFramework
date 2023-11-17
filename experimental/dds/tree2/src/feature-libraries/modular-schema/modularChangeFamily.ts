@@ -24,6 +24,7 @@ import {
 	ITreeCursor,
 	ChangeAtomIdMap,
 	JsonableTree,
+	makeDetachedNodeId,
 } from "../../core";
 import {
 	brand,
@@ -728,7 +729,7 @@ export class ModularChangeFamily
 			const build: Delta.DetachedNodeBuild[] = [];
 			forEachInNestedMap(change.builds, (tree, major, minor) => {
 				build.push({
-					id: { major, minor },
+					id: makeDetachedNodeId(major ?? revision, minor),
 					trees: [cursorForJsonableTreeNode(tree)],
 				});
 			});
