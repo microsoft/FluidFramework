@@ -5,7 +5,7 @@
 
 import { TreeStoredSchema, TreeNodeSchemaIdentifier, TreeFieldStoredSchema } from "../core";
 import { fail } from "../util";
-import { defaultSchemaPolicy } from "./default-field-kinds";
+import { defaultSchemaPolicy } from "./default-schema";
 import {
 	TreeSchema,
 	TreeNodeSchema,

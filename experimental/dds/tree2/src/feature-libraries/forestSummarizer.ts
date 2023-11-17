@@ -25,9 +25,12 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { idAllocatorFromMaxId } from "../util";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../codec";
 import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
 import { FullSchemaPolicy } from "./modular-schema";
 import { TreeCompressionStrategy } from "./treeCompressionUtils";
+import { Format } from "./forestSummarizerFormat";
+import { makeForestSummarizerCodec } from "./forestSummarizerCodec";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -43,16 +46,21 @@ export class ForestSummarizer implements Summarizable {
 	private readonly schema: StoredSchemaCollection;
 	private readonly policy: FullSchemaPolicy;
 	private readonly encodeType: TreeCompressionStrategy;
+	private readonly codec: IJsonCodec<[FieldKey, EncodedChunk][], Format>;
+	private readonly options: ICodecOptions;
 
 	public constructor(
 		private readonly forest: IEditableForest,
 		schema: StoredSchemaCollection,
 		policy: FullSchemaPolicy,
 		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+		options?: ICodecOptions,
 	) {
 		this.schema = schema;
 		this.policy = policy;
 		this.encodeType = encodeType;
+		this.options = options ?? { jsonValidator: noopValidator };
+		this.codec = makeForestSummarizerCodec(this.options);
 	}
 
 	/**
@@ -65,11 +73,11 @@ export class ForestSummarizer implements Summarizable {
 	private getTreeString(stringify: SummaryElementStringifier): string {
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		// TODO: Encode all detached fields in one operation for better performance and compression
-		const fields = mapCursorFields(rootCursor, (cursor) => [
+		const fields: [FieldKey, EncodedChunk][] = mapCursorFields(rootCursor, (cursor) => [
 			rootCursor.getFieldKey(),
 			encodeSummary(cursor, this.schema, this.policy, this.encodeType),
 		]);
-		return stringify(fields);
+		return stringify(this.codec.encode(fields));
 	}
 
 	public getAttachSummary(
@@ -109,8 +117,7 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
-
+			const fields = this.codec.decode(parse(treeBufferString) as Format);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, Delta.FieldChanges][] = fields.map(
 				([fieldKey, content]) => {

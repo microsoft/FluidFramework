@@ -140,7 +140,7 @@ function invertMark<TNodeChange>(
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
 		case "Insert": {
-			assert(mark.cellId !== undefined, "Active inserts should target empty cells");
+			assert(mark.cellId !== undefined, 0x80c /* Active inserts should target empty cells */);
 			const deleteMark: CellMark<Delete, TNodeChange> = {
 				type: "Delete",
 				count: mark.count,
@@ -259,11 +259,11 @@ function invertMark<TNodeChange>(
 
 			assert(
 				detachInverses.length === 1,
-				"Only expected MoveIn marks to be split when inverting",
+				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
 			let detachInverse = detachInverses[0];
-			assert(isAttach(detachInverse), "Inverse of a detach should be an attach");
+			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark<TNodeChange>[] = [];
 			for (const attachInverse of attachInverses) {
@@ -277,13 +277,19 @@ function invertMark<TNodeChange>(
 
 				if (attachInverse.type === NoopMarkType) {
 					if (attachInverse.changes !== undefined) {
-						assert(detachInverseCurr.changes === undefined, "Unexpected node changes");
+						assert(
+							detachInverseCurr.changes === undefined,
+							0x80f /* Unexpected node changes */,
+						);
 						detachInverseCurr.changes = attachInverse.changes;
 					}
 					inverses.push(detachInverseCurr);
 					continue;
 				}
-				assert(isDetach(attachInverse), "Inverse of an attach should be a detach");
+				assert(
+					isDetach(attachInverse),
+					0x810 /* Inverse of an attach should be a detach */,
+				);
 
 				const inverted: Mark<TNodeChange> = {
 					type: "AttachAndDetach",
@@ -301,7 +307,7 @@ function invertMark<TNodeChange>(
 				}
 
 				if (attachInverse.changes !== undefined) {
-					assert(inverted.changes === undefined, "Unexpected node changes");
+					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
 					inverted.changes = attachInverse.changes;
 				}
 

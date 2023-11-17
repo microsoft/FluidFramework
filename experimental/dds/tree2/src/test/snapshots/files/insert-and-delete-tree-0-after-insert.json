@@ -150,35 +150,38 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "42",
-                          []
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "42",
+                            []
+                          ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }

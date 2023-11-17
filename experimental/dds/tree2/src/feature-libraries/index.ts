@@ -220,7 +220,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,

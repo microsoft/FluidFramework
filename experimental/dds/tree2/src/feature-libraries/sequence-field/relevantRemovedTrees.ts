@@ -25,7 +25,7 @@ export function* relevantRemovedTrees<TChild>(
 		if (refersToRelevantRemovedTrees(mark)) {
 			assert(
 				mark.cellId !== undefined,
-				"marks referring to removed trees must have an assigned cell ID",
+				0x81d /* marks referring to removed trees must have an assigned cell ID */,
 			);
 			const nodeId = nodeIdFromChangeAtom(mark.cellId);
 			for (let i = 0; i < mark.count; i += 1) {

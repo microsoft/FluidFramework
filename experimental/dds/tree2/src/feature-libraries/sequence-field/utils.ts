@@ -180,7 +180,7 @@ export function normalizeCellRename<TNodeChange>(
 	mark: CellMark<AttachAndDetach, TNodeChange>,
 	nodeChange?: TNodeChange,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
-	assert(mark.cellId !== undefined, "AttachAndDetach marks should have a cell ID");
+	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return withNodeChange(mark, nodeChange);
 	}
@@ -366,7 +366,7 @@ export function isImpactful(
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
-			assert(outputId !== undefined, "Delete marks must have an output cell ID");
+			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(mark.cellId, outputId);
 		}
 		case "AttachAndDetach":
@@ -375,7 +375,7 @@ export function isImpactful(
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
+			assert(mark.cellId !== undefined, 0x825 /* MoveIn marks should target empty cells */);
 			return true;
 		case "Insert":
 			// A Revive has no impact if the nodes are already in the document.
@@ -525,7 +525,7 @@ function tryMergeEffects(
 
 		assert(
 			isAttach(attach) && isDetach(detach),
-			"Merged marks should be same type as input marks",
+			0x826 /* Merged marks should be same type as input marks */,
 		);
 		return { ...lhsAttachAndDetach, attach, detach };
 	}
@@ -1140,7 +1140,7 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 
 	assert(
 		effect.revision === undefined || effect.revision === revision,
-		"Should not overwrite mark revision",
+		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
 }

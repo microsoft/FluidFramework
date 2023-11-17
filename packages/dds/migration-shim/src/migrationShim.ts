@@ -116,7 +116,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 			return false;
 		}
 		const newTree = this.newTreeFactory.create(this.runtime, this.id);
-		assert(this.preMigrationDeltaConnection !== undefined, "Should be in v1 state");
+		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
 		this.populateNewSharedObjectFn(this.legacyTree, newTree);
 		this.newTree = newTree;
@@ -255,7 +255,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	private reconnect(): void {
 		assert(this.services !== undefined, 0x7e7 /* Not connected */);
 		assert(this.newTree !== undefined, 0x7e8 /* New tree not initialized */);
-		assert(this.postMigrationServices === undefined, "Already reconnected!");
+		assert(this.postMigrationServices === undefined, 0x830 /* Already reconnected! */);
 		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
 		this.postMigrationServices = {
 			objectStorage: this.services.objectStorage,
