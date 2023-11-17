@@ -17,7 +17,7 @@ const path = require("path");
 
 const { alertNodeType } = require("./alert-node");
 const { layoutContent } = require("./api-documentation-layout");
-const { buildNavBar } = require("./build-api-nav-bar");
+const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
