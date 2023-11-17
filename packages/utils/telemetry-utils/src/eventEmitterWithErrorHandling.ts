@@ -13,6 +13,10 @@ import { IEvent } from "@fluidframework/core-interfaces";
  * Any exception thrown by "error" listeners will propagate to the caller.
  *
  * @internal
+ *
+ * @privateRemarks
+ * This probably doesn't belong in this package.
+ * We should consider moving it to the `core-utils` package.
  */
 export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,
