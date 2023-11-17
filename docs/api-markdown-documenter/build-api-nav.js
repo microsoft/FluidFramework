@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const { ApiItemKind, ApiItemUtilities } = require("@fluid-tools/api-markdown-documenter");
 
 const fs = require("fs-extra");
