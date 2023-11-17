@@ -5,6 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -346,10 +348,7 @@ function createAttachAndDetachMark<TChange>(
 	);
 	// As a matter of normalization, we only use AttachAndDetach marks to represent cases where the detach's
 	// implicit revival semantics would not be a sufficient representation.
-	assert(
-		attach.type === "MoveIn" || attach.content !== undefined,
-		"Unnecessary AttachAndDetach mark",
-	);
+	assert(attach.type === "MoveIn" || isNewAttach(attach), "Unnecessary AttachAndDetach mark");
 	const mark: SF.CellMark<SF.AttachAndDetach, TChange> = {
 		type: "AttachAndDetach",
 		count: attach.count,

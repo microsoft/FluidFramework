@@ -732,7 +732,7 @@ export class ModularChangeFamily
 					trees: [cursorForJsonableTreeNode(tree)],
 				});
 			});
-			rootDelta.set(brand("--build--"), { build });
+			rootDelta.set(brand("--global--"), { build });
 		}
 		return rootDelta;
 	}

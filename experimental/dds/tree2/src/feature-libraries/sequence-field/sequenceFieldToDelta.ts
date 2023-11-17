@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { cursorForJsonableTreeNode } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -73,12 +72,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
-				if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
-					build.push({
-						id: oldId,
-						trees: mark.attach.content.map(cursorForJsonableTreeNode),
-					});
-				}
 				rename.push({
 					count: mark.count,
 					oldId,

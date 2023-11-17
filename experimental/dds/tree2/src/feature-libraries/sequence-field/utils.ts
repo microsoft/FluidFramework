@@ -121,8 +121,7 @@ export function getInputCellId(
 	let markRevision: RevisionTag | undefined;
 	if (isAttachAndDetachEffect(mark)) {
 		markRevision = mark.attach.revision;
-	} else {
-		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
+	} else if (!isNoopMark(mark)) {
 		markRevision = mark.revision;
 	}
 
@@ -241,10 +240,6 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 	if (clone.type === "AttachAndDetach") {
 		clone.attach = cloneMarkEffect(clone.attach);
 		clone.detach = cloneMarkEffect(clone.detach);
-	}
-
-	if (clone.type === "Insert" && clone.content !== undefined) {
-		clone.content = [...clone.content];
 	}
 	return clone;
 }
@@ -588,13 +583,7 @@ function tryMergeEffects(
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
-				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, "Insert content type mismatch");
-					return lhsInsert;
-				} else {
-					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-				}
+				return lhsInsert;
 			}
 			break;
 		}
@@ -994,11 +983,6 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 				...effect,
 				id: (effect.id as number) + length,
 			};
-
-			if (effect.content !== undefined) {
-				(effect1 as Insert).content = effect.content.slice(0, length);
-				(effect2 as Insert).content = effect.content.slice(length);
-			}
 			return [effect1, effect2];
 		}
 		case "MoveIn": {
