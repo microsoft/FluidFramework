@@ -188,7 +188,23 @@ export class ModularChangeFamily
 					const setRevisionKey = revisionKey ?? revision;
 					const innerDstMap = getOrAddInMap(builds, setRevisionKey, new Map());
 					for (const [id, tree] of innerMap) {
-						innerDstMap.set(id, tree);
+						// Check for duplicate builds and prefer earlier ones.
+						// There are two scenarios where we might get duplicate builds:
+						// - In compositions of rebase sandwiches:
+						// In that case, the trees are identical and it doesn't matter which one we pick.
+						// - In compositions of commits that needed to include repair data refreshers (e.g., undos):
+						// In that case, it's possible for the refreshers to contain different trees because the latter
+						// refresher may already reflect the changes made by the commit that includes the earlier
+						// refresher. This composition includes the changes made by the commit that includes the
+						// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+						// the produced changeset will build a tree one which those changes have already been applied
+						// and also try to apply the changes again, effectively applying them twice.
+						// Note that it would in principle be possible to adopt the later build and exclude from the
+						// composition all the changes already reflected on the tree, but that is not something we
+						// care to support at this time.
+						if (!innerDstMap.has(id)) {
+							innerDstMap.set(id, tree);
+						}
 					}
 				}
 			}

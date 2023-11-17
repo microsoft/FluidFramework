@@ -110,6 +110,7 @@ const EncodedRevisionInfo = Type.Object(
 	noAdditionalProps,
 );
 
+// TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
 export const EncodedBuilds = Type.Array(
 	Type.Union([
 		Type.Tuple([ChangesetLocalIdSchema, Type.Any()]),

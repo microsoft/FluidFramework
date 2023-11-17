@@ -264,6 +264,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					fieldKind: sequence.identifier,
 					change,
 				};
+				// The changes have to be submitted together, otherwise they will be assigned different revisions,
+				// which will prevent the build ID and the insert ID from matching.
 				this.modularBuilder.submitChanges(
 					[build, attach],
 					brand((firstId as number) + length - 1),
