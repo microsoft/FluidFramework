@@ -41,10 +41,8 @@ export type TreeNode =
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
-export interface TreeListNode<
-	TTypes extends AllowedTypes,
-	API extends "javaScript" | "sharedTree" = "sharedTree",
-> extends ReadonlyArray<TreeNodeUnion<TTypes, API>> {
+export interface TreeListNode<TTypes extends AllowedTypes>
+	extends ReadonlyArray<TreeNodeUnion<TTypes>> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -354,7 +352,7 @@ export type TypedNode<
 		: ReadonlyMap<string, TreeField<TSchema["info"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? TreeListNode<TSchema["info"]["allowedTypes"], API>
+		? TreeListNode<TSchema["info"]["allowedTypes"]>
 		: readonly TreeNodeUnion<TSchema["info"]["allowedTypes"], API>[]
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema, API>

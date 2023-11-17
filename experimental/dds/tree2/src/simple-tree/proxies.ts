@@ -213,9 +213,8 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 /**
  * Given a list proxy, returns its underlying LazySequence field.
  */
-const getSequenceField = <TTypes extends AllowedTypes>(
-	list: TreeListNode<AllowedTypes, "javaScript">,
-) => getEditNode(list).content as FlexTreeSequenceField<TTypes>;
+const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode<AllowedTypes>) =>
+	getEditNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -249,16 +248,13 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
-			index: number,
-		): FlexTreeUnknownUnboxed | undefined {
+		value(this: TreeListNode<AllowedTypes>, index: number): FlexTreeUnknownUnboxed | undefined {
 			return getSequenceField(this).at(index);
 		},
 	},
 	insertAt: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			index: number,
 			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
@@ -272,7 +268,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtStart: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
@@ -285,7 +281,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtEnd: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
@@ -300,18 +296,18 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	removeAt: {
-		value(this: TreeListNode<AllowedTypes, "javaScript">, index: number): void {
+		value(this: TreeListNode<AllowedTypes>, index: number): void {
 			getSequenceField(this).removeAt(index);
 		},
 	},
 	removeRange: {
-		value(this: TreeListNode<AllowedTypes, "javaScript">, start?: number, end?: number): void {
+		value(this: TreeListNode<AllowedTypes>, start?: number, end?: number): void {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
 	moveToStart: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			sourceIndex: number,
 			source?: TreeListNode<AllowedTypes>,
 		): void {
@@ -324,7 +320,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToEnd: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			sourceIndex: number,
 			source?: TreeListNode<AllowedTypes>,
 		): void {
@@ -337,7 +333,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToIndex: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			index: number,
 			sourceIndex: number,
 			source?: TreeListNode<AllowedTypes>,
@@ -351,7 +347,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToStart: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			sourceStart: number,
 			sourceEnd: number,
 			source?: TreeListNode<AllowedTypes>,
@@ -369,7 +365,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToEnd: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			sourceStart: number,
 			sourceEnd: number,
 			source?: TreeListNode<AllowedTypes>,
@@ -387,7 +383,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToIndex: {
 		value(
-			this: TreeListNode<AllowedTypes, "javaScript">,
+			this: TreeListNode<AllowedTypes>,
 			index: number,
 			sourceStart: number,
 			sourceEnd: number,
@@ -486,7 +482,7 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch: object = Object.create(listPrototype, {
 		length: {
-			get(this: TreeListNode<AllowedTypes, "javaScript">) {
+			get(this: TreeListNode<AllowedTypes>) {
 				return getSequenceField(this).length;
 			},
 			set() {},
