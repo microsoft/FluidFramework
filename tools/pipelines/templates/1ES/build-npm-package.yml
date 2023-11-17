@@ -416,7 +416,7 @@ extends:
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
               - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}: []
-              - ${{ if eq(parameters.packageManager, 'pnpm'') }}:
+              - ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
                 # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
                 # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
