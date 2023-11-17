@@ -10,65 +10,106 @@ const ruleTester = new RuleTester({
 	parser: require.resolve("@typescript-eslint/parser"),
 });
 
-const validCodeWithJSDoc = `
+const fileWithPublicFunction = `
 /**
  * @public
  */
-export function publicFunction() {}
+export function publicFunction() {}`;
 
+const fileWithPublicImport = `
 import { publicFunction } from "./someModule";
 `;
 
-const validCode2WithJSDoc = `
-/**
- * @internal
- */
-export function internalExceptionFunction() {}
-
+const fileWithInternalImportException = `
 import { internalExceptionFunction } from "./foo";
 `;
 
-const invalidCodeWithJSDoc = `
+const fileWithInternalTaggedFunction = `
 /**
  * @internal
  */
 export function internalFunction() {}
+`;
 
+const fileWithAlphaTaggedFunction = `
+/**
+ * @alpha
+ */
+export function alphaFunction() {}
+`;
+
+const fileWithInternalImport = `
 import { internalFunction } from "./internalModule";
+`;
+
+const fileWithAlphaImport = `
+import { AlphaFunction } from "./foo";
 `;
 
 ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 	// Checks cases that should pass
 	valid: [
+		// Importing something with a non-restricted tag
 		{
-			code: validCodeWithJSDoc,
-			// Valid import
+			code: fileWithPublicImport + fileWithPublicFunction,
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
 				},
 			],
 		},
+		// Restricted tag imported from exception
 		{
-			code: validCode2WithJSDoc,
-			// Restricted tag imported from exception
+			code: fileWithInternalImportException + fileWithInternalTaggedFunction,
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
-					exceptions: ["./foo"],
+					exceptions: { "@internal": ["./foo"] },
 				},
 			],
 		},
 	],
 	// Checks cases that should not pass
 	invalid: [
+		// Import with restricted tag
 		{
-			code: invalidCodeWithJSDoc,
-			// Import with restricted tag
+			code: fileWithInternalTaggedFunction + fileWithInternalImport,
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
-					exceptions: ["./foo", "bar"],
+				},
+			],
+			errors: 1,
+		},
+		// Invalid: tags should start with '@'
+		{
+			code: fileWithPublicFunction + fileWithPublicImport,
+			options: [
+				{
+					tags: ["internal", "alpha"],
+					exceptions: { "@internal": ["./foo"] },
+				},
+			],
+			errors: 2,
+		},
+		// Invalid: Tag isn't excepted
+		{
+			code: fileWithAlphaTaggedFunction + fileWithAlphaImport,
+			options: [
+				{
+					tags: ["@internal", "@alpha"],
+					exceptions: { "@internal": ["./vfoo"] },
+				},
+			],
+			errors: 1,
+		},
+		// Invalid: Tag excepted but wrong filepath
+		{
+			code: fileWithAlphaTaggedFunction + fileWithAlphaImport,
+			options: [
+				{
+					tags: ["@internal", "@alpha"],
+					exceptions: { "@alpha": ["./bar"] },
 				},
 			],
 			errors: 1,

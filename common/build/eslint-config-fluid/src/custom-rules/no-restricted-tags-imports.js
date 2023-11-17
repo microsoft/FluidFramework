@@ -23,9 +23,12 @@ module.exports = {
 						uniqueItems: true,
 					},
 					exceptions: {
-						type: "array",
-						items: { type: "string" },
-						uniqueItems: true,
+						type: "object",
+						additionalProperties: {
+							type: "array",
+							items: { type: "string" },
+							uniqueItems: true,
+						},
 					},
 				},
 				additionalProperties: false,
@@ -36,28 +39,29 @@ module.exports = {
 		},
 	},
 	create(context) {
-		const options = context.options[0] || {};
+		const options = context.options[0];
+		const restrictedTags = new Set();
+		const exceptions = {};
 		// Get restricted tags and throw error if not formatted correctly, ie: doesn't start with '@'
-		const restrictedTags = new Set(
-			(options.tags || []).map((tag) => {
-				if (!tag.startsWith("@")) {
-					context.report({
-						loc: { line: 1, column: 0 },
-						message: `Invalid tag format in rule configuration: '{${tag}}'. Tags should start with '@'.`,
-						data: { tag },
-					});
-					invalidTags = true;
+		(options.tags || []).forEach((tag) => {
+			if (isTagValid(tag, context)) {
+				restrictedTags.add(tag);
+			}
+		});
+		// Validate and save the exceptions object being passed in.
+		Object.keys(options.exceptions || {}).forEach((tag) => {
+			if (isTagValid(tag, context)) {
+				if (!exceptions[tag]) {
+					exceptions[tag] = new Set();
 				}
-				return tag;
-			}),
-		);
-		const exceptions = new Set(options.exceptions || []);
+				options.exceptions[tag].forEach((exceptionPath) => {
+					exceptions[tag].add(exceptionPath);
+				});
+			}
+		});
 		return {
 			ImportDeclaration(node) {
-				const isException = exceptions.has(node.source.value);
-				if (isException) {
-					return; // Skip further checks for this import
-				}
+				const importSource = node.source.value;
 				node.specifiers.forEach((items) => {
 					const variable = context.getDeclaredVariables(items)[0];
 					const sourceCode = context.getSourceCode();
@@ -69,10 +73,14 @@ module.exports = {
 						}
 						const tsdocParser = new TSDocParser();
 						// The leading and trailing new line characters were trimmed so we need to readd them for tsdoc to parse the comment correctly.
-						let x = `/**\n` + comment.value + `\n */`;
-						const parserContext = tsdocParser.parseString(x);
+						let commentText = `/**\n` + comment.value + `\n */`;
+						const parserContext = tsdocParser.parseString(commentText);
+
 						restrictedTags.forEach((tag) => {
 							if (parserContext.docComment.modifierTagSet.hasTagName(tag)) {
+								if (exceptions[tag] && exceptions[tag].has(importSource)) {
+									return; // This import is an exception, so it's allowed
+								}
 								context.report({
 									node,
 									messageId: "importWithRestrictedTag",
@@ -89,3 +97,15 @@ module.exports = {
 		};
 	},
 };
+
+function isTagValid(tag, context) {
+	if (!tag.startsWith("@")) {
+		context.report({
+			loc: { line: 1, column: 0 },
+			message: `Invalid tag format in rule configuration: '{${tag}}'. Tags should start with '@'.`,
+			data: { tag },
+		});
+	} else {
+		return true;
+	}
+}
