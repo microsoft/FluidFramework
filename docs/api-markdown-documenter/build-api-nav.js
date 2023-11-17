@@ -10,33 +10,34 @@ const yaml = require("js-yaml");
  * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
 async function buildNavBar(documents) {
-	const validKinds = new Set([
+	const navKinds = new Set([
 		ApiItemKind.Class,
 		ApiItemKind.Interface,
 		ApiItemKind.Enum,
 		ApiItemKind.Namespace,
 	]);
-	const { allAPIs, packageMap } = documents.reduce(
-		({ allAPIs, packageMap }, { apiItem }) => {
-			if (apiItem === undefined) {
-				return { allAPIs, packageMap };
+	const apiItems = documents
+		.map((document) => document.apiItem)
+		.filter((apiItem) => apiItem !== undefined && apiItem.kind !== ApiItemKind.Model);
+
+	const { allAPIs, packageMap } = apiItems.reduce(
+		({ allAPIs, packageMap }, apiItem) => {
+			const associatedPackage = apiItem.getAssociatedPackage();
+
+			if (associatedPackage === undefined) {
+				throw new Error(`Associated package is undefined for API item: ${apiItem.displayName}`);
 			}
 
-			const { displayName, kind } = apiItem;
+			const packageName = ApiItemUtilities.getUnscopedPackageName(associatedPackage);
 
-			const associatedPackage = apiItem.getAssociatedPackage();
-			const packageName =
-				associatedPackage === undefined
-					? undefined
-					: ApiItemUtilities.getUnscopedPackageName(associatedPackage);
+			const { displayName, kind } = apiItem;
 
 			if (kind === ApiItemKind.Package) {
 				if (packageMap.hasOwnProperty(displayName)) {
 					throw new Error("Package name collision!");
 				}
-
 				packageMap[displayName] = packageName;
-			} else if (validKinds.has(kind)) {
+			} else if (navKinds.has(kind)) {
 				allAPIs[packageName] = allAPIs[packageName] || {};
 				allAPIs[packageName][kind] = allAPIs[packageName][kind] || [];
 				allAPIs[packageName][kind].push(displayName);
@@ -47,17 +48,11 @@ async function buildNavBar(documents) {
 		{ allAPIs: {}, packageMap: {} },
 	);
 
-	const results = await Promise.allSettled([
+	return await Promise.all([
 		saveToFile("allAPIs.yaml", allAPIs),
 		saveToFile("packageNameToDisplayName.yaml", packageMap),
 		saveToFile("displayNameToPackageName.yaml", invertMap(packageMap)),
 	]);
-
-	results.forEach((result, index) => {
-		if (result.status === "rejected") {
-			console.error(`Error saving file ${index}:`, result.reason);
-		}
-	});
 }
 
 const saveToFile = async (filename, data) =>

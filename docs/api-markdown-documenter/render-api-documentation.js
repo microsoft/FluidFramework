@@ -85,7 +85,17 @@ async function renderApiDocumentation() {
 		throw error;
 	}
 
-	await buildNavBar(documents);
+	console.groupEnd();
+
+	console.group();
+	console.log("Generating nav contents...");
+
+	try {
+		await buildNavBar(documents);
+	} catch (error) {
+		console.error("Error saving nav bar yaml files:", error);
+		throw error;
+	}
 
 	console.groupEnd();
 
