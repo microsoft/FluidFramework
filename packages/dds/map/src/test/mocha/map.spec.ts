@@ -20,33 +20,10 @@ import {
 	IMapClearOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
-	MapLocalOpMetadata,
+	IMapKeyDeleteLocalOpMetadata,
 } from "../../internalInterfaces";
 import { MapFactory, SharedMap } from "../../map";
-import { IMapOperation } from "../../mapKernel";
-
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
-	map.connect(services);
-	return map;
-}
-
-function createLocalMap(id: string): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
-	return map;
-}
-
-class TestSharedMap extends SharedMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
-	}
-}
+import { createConnectedMap, createLocalMap, TestSharedMap } from "./mapUtils";
 
 describe("Map", () => {
 	describe("Local state", () => {
@@ -159,7 +136,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","index":0},"third":{"type":"Plain","value":"fourth","index":1},"fifth":{"type":"Plain","value":"sixth","index":2},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"index":3}}}`,
 				);
 			});
 
@@ -176,7 +153,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","index":0},"third":{"type":"Plain","value":"fourth","index":1},"fifth":{"type":"Plain","index":2},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"index":3}}}`,
 				);
 			});
 
@@ -197,7 +174,7 @@ describe("Map", () => {
 					.content;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`,
+					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}},"index":0}}}`,
 				);
 			});
 
@@ -238,6 +215,7 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							index: 0,
 						},
 					},
 				});
@@ -281,10 +259,12 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							index: 0,
 						},
 						zzz: {
 							type: "Plain",
 							value: "the end",
+							index: 2,
 						},
 					},
 				});
@@ -292,6 +272,7 @@ describe("Map", () => {
 					longValue: {
 						type: "Plain",
 						value: longString,
+						index: 1,
 					},
 				});
 
@@ -410,8 +391,8 @@ describe("Map", () => {
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
-				assert.equal(metadata.type, "edit");
+				metadata = map1.testApplyStashedOp(op3) as IMapKeyDeleteLocalOpMetadata;
+				assert.equal(metadata.type, "delete");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };
