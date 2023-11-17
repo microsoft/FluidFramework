@@ -1,3 +1,17 @@
+{{/*
+    Purpose: To generate a dynamic and responsive navigation bar specifically tailored for API documentation pages.
+
+    Inputs:
+      - Current Page Context: Includes parameters like URL, package, and area, used to determine the active state and links in the navigation.
+      - $.Site.Data.packages: Contains packages that should be exposed to in the left nav.
+      - $current, $currentURL: Represent the current page and its URL for navigation context.
+      - $package: Define the current package.
+      - $section, $api_section, $in_api_section: Control the display and highlighting of the navigation bar based on the section type.
+
+    Output:
+      - A navigation bar, <nav>. It displays list items (<li>) and is contains both desktop and mobile nav bars.
+  */}}
+
 {{ $current := . }}
 {{ $currentURL := . | relURL }}
 {{ $package := $current.Params.package }}
