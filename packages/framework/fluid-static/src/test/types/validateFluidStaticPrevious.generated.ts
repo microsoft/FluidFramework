@@ -288,6 +288,30 @@ use_old_InterfaceDeclaration_IServiceAudienceEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_InitialObjects": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_InitialObjects():
+    TypeOnly<old.InitialObjects<any>>;
+declare function use_current_TypeAliasDeclaration_InitialObjects(
+    use: TypeOnly<current.InitialObjects<any>>): void;
+use_current_TypeAliasDeclaration_InitialObjects(
+    get_old_TypeAliasDeclaration_InitialObjects());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_InitialObjects": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_InitialObjects():
+    TypeOnly<current.InitialObjects<any>>;
+declare function use_old_TypeAliasDeclaration_InitialObjects(
+    use: TypeOnly<old.InitialObjects<any>>): void;
+use_old_TypeAliasDeclaration_InitialObjects(
+    get_current_TypeAliasDeclaration_InitialObjects());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_LoadableObjectClass": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
