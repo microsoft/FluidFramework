@@ -62,6 +62,27 @@ import {
 import { unboxedUnion } from "./unboxed";
 import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
 
+/**
+ * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
+ * usage of negative indices, which regular indexing using `[` and `]` does not.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+ * for additional context on the semantics.
+ */
+function indexForAt(index: number, length: number): number | undefined {
+	let finalIndex = Math.trunc(+index);
+	if (isNaN(finalIndex)) {
+		finalIndex = 0;
+	}
+	if (finalIndex < -length || finalIndex >= length) {
+		return undefined;
+	}
+	if (finalIndex < 0) {
+		finalIndex = finalIndex + length;
+	}
+	return finalIndex;
+}
+
 export function makeField(
 	context: Context,
 	schema: TreeFieldSchema,
@@ -166,7 +187,13 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 
 	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
+		const finalIndex = indexForAt(index, this.length);
+
+		if (finalIndex === undefined) {
+			return undefined as FlexTreeTypedNodeUnion<TTypes>;
+		}
+
+		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			makeTree(this.context, cursor),
 		) as FlexTreeTypedNodeUnion<TTypes>;
 	}
@@ -244,18 +271,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
-		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
-		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
-		let finalIndex = Math.trunc(+index);
-		if (isNaN(finalIndex)) {
-			finalIndex = 0;
-		}
-		if (finalIndex < -this.length || finalIndex >= this.length) {
+		const finalIndex = indexForAt(index, this.length);
+
+		if (finalIndex === undefined) {
 			return undefined;
 		}
-		if (finalIndex < 0) {
-			finalIndex = finalIndex + this.length;
-		}
+
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
