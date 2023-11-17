@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-private/test-version-utils";
 import { ITable } from "../table.js";
 import { TableDocument } from "../document.js";
@@ -63,7 +63,7 @@ describeLoaderCompat("Table Document with Interception", (getTestObjectProvider)
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 			const container = await provider.createContainer(TableDocument.getFactory());
-			tableDocument = (await container.getEntryPoint()) as TableDocument;
+			tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			componentContext = {
