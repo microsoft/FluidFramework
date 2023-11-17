@@ -301,10 +301,14 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 		};
 
+		const { revInfos } = getRevInfoFromTaggedChanges([change]);
+		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
 			crossFieldTable,
+			revisionMetadata,
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
@@ -324,6 +328,7 @@ export class ModularChangeFamily
 					(nodeChangeset) => nodeChangeset,
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
 			}
@@ -350,6 +355,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
+		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -367,9 +373,11 @@ export class ModularChangeFamily
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
+						revisionMetadata,
 					),
 				genId,
 				manager,
+				revisionMetadata,
 			);
 
 			const invertedFieldChange: FieldChange = {
@@ -393,6 +401,7 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
+		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -401,6 +410,7 @@ export class ModularChangeFamily
 				{ ...change, change: change.change.fieldChanges },
 				genId,
 				crossFieldTable,
+				revisionMetadata,
 			);
 		}
 

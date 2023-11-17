@@ -27,7 +27,7 @@ export {
 	HasLineage,
 	IdRange,
 	CellMark,
-	TransientEffect,
+	AttachAndDetach,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -53,12 +53,6 @@ export {
 	cloneMark,
 	extractMarkEffect,
 } from "./utils";
-export {
-	isMoveMark,
-	MoveMark,
-	MoveEffectTable,
-	MoveEffect,
-	PairedMarkUpdate,
-} from "./moveEffectTable";
+export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable";
 
 export { relevantRemovedTrees } from "./relevantRemovedTrees";

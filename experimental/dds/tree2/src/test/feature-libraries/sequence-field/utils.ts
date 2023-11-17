@@ -152,12 +152,14 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const table = SF.newCrossFieldTable();
+	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
+		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
@@ -170,6 +172,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
+			revisionMetadata,
 		);
 	}
 

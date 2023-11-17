@@ -16,7 +16,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze, isDeltaVisible } from "../../utils";
+import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
 import {
 	compose,
@@ -260,7 +260,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(isDeltaVisible(delta), false);
+				assert.deepEqual(delta, emptyFieldChanges);
 			});
 		}
 	});

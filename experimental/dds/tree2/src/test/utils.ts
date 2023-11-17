@@ -42,8 +42,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	runSynchronous,
 	SharedTreeContentSnapshot,
-	ITreeView,
-	CheckoutView,
+	CheckoutFlexTreeView,
 } from "../shared-tree";
 import {
 	Any,
@@ -63,7 +62,7 @@ import {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	cursorForJsonableTreeNode,
-	TypedField,
+	FlexTreeTypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
@@ -110,6 +109,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { WrapperTreeView } from "../shared-tree/sharedTree";
 
 // Testing utilities
 
@@ -597,10 +598,10 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return viewWithContent(content, args).checkout;
+	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function viewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -609,19 +610,35 @@ export function viewWithContent<TRoot extends TreeFieldSchema>(
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 	},
-): ITreeView<TRoot> {
+): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
 	const view = createTreeCheckout({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new CheckoutView(
+	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
 		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
+}
+
+export function treeViewWithContent<TRoot extends TreeFieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+	},
+): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
+	const view: WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> = new WrapperTreeView(
+		flexTreeViewWithContent(content, args),
+	);
+	return view;
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
@@ -646,7 +663,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): TypedField<TRoot> {
+): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
 	const branch = createTreeCheckout({
 		...args,
@@ -654,7 +671,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new CheckoutView(
+	const view = new CheckoutFlexTreeView(
 		branch,
 		content.schema,
 		manager,
@@ -960,7 +977,9 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ITreeCheckout): {
+export function createTestUndoRedoStacks(
+	events: ISubscribable<{ revertible(type: Revertible): void }>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -968,7 +987,7 @@ export function createTestUndoRedoStacks(view: ITreeCheckout): {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = view.events.on("revertible", (revertible) => {
+	const unsubscribe = events.on("revertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {

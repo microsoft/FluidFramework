@@ -15,6 +15,7 @@ import {
 	ModularChangeset,
 	RevisionInfo,
 	FieldKindWithEditor,
+	NodeChangeInverter,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -707,6 +708,28 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		let invertWasTested = false;
+		const invert: FieldChangeRebaser<RevisionTag[]>["invert"] = (
+			change: TaggedChange<RevisionTag[]>,
+			invertChild: NodeChangeInverter,
+			genId,
+			crossFieldManager,
+			{ getIndex, tryGetInfo },
+		): RevisionTag[] => {
+			const relevantRevisions = [rev3];
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
+			assert.deepEqual(revsIndices, [0]);
+			const expected: RevisionInfo[] = [{ revision: rev3, rollbackOf: rev0 }];
+			assert.deepEqual(revsInfos, expected);
+			invertWasTested = true;
+			return change.change;
+		};
+
 		const throwCodec = {
 			encode: () => fail("Should not be called"),
 			decode: () => fail("Should not be called"),
@@ -715,6 +738,7 @@ describe("ModularChangeFamily", () => {
 			rebaser: {
 				compose,
 				rebase,
+				invert,
 				prune: (change: RevisionTag[]) => change,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
@@ -783,6 +807,8 @@ describe("ModularChangeFamily", () => {
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
+		dummyFamily.invert(tagRollbackInverse(changeB, rev3, rev0), false);
+		assert(invertWasTested);
 	});
 
 	function ensureIndexDefined(index: number | undefined): number {
