@@ -16,7 +16,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-1ES
 
 - name: isReleaseGroup
   type: boolean
@@ -57,6 +57,24 @@ stages:
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
       # Environment should match the condition for publish_npm_internal_dev
+      environment: package-build-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
+
+- stage: publish_npm_internal_dev
+  dependsOn: build
+  displayName: Publish to internal dev feed
+  # This condition should match the condition for publish_npm_internal_build
+  condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
+  jobs:
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+      feedKind: internal-dev
+      # Environment should match the condition for publish_npm_internal_build
       environment: package-build-feed
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}

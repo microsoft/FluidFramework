@@ -1,0 +1,191 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package-steps template to publish NPM packages/projects
+
+parameters:
+- name: namespace
+  type: boolean
+
+- name: feedUrl
+  type: string
+
+- name: feedKind
+  type: string
+
+- name: artifactPath
+  type: string
+
+- name: publishFlags
+  type: string
+  default:
+
+- name: customEndPoint
+  type: string
+  default:
+
+steps:
+- task: Bash@3
+  displayName: Generate .npmrc for ${{ parameters.artifactPath }}
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+    ${{ if eq(parameters.namespace, true) }}:
+      ${{ if ne(parameters.feedKind, 'public') }}:
+        script: |
+          echo Generating .npmrc for ${{ parameters.feedUrl }}
+          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-example:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-private:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "always-auth=true" >> ./.npmrc
+          cat .npmrc
+      ${{ if eq(parameters.feedKind, 'public') }}:
+        # The official feed excludes @fluid-example and @fluid-private. While earlier steps should also exclude these
+        # packages, excluding those scopes here is an additional defense.
+        script: |
+          echo Generating .npmrc for ${{ parameters.feedUrl }}
+          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "always-auth=true" >> ./.npmrc
+          cat .npmrc
+    ${{ if eq(parameters.namespace, false) }}:
+      script: |
+        echo Generating .npmrc for ${{ parameters.feedUrl }}
+        echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
+        echo "always-auth=true" >> ./.npmrc
+        cat .npmrc
+- task: npmAuthenticate@0
+  displayName: npm Authenticate for ${{ parameters.artifactPath }}
+  inputs:
+    workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
+    customEndPoint: ${{ parameters.customEndPoint }}
+- task: Bash@3
+  displayName: Publish Packages for ${{ parameters.artifactPath }}
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+    script: |
+      tag="--tag canary"
+      if [[ "$(release)" == "release" ]]; then
+        if [ "$(isLatest)" = "true" ]; then
+          tag="--tag latest"
+        fi
+      elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
+        tag="--tag next"
+      fi
+      echo Tag: $tag
+      cp .npmrc ~/.npmrc
+      maximumRetryIfNetworkError=3
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
+        sorted=true
+      else
+        packages=*.tgz
+        sorted=false
+      fi
+      for packageName in $packages
+      do
+        if [[ $sorted == true ]]; then
+          f=$(find -name "${packageName}-[0-9]*.tgz")
+        else
+          f=$packageName
+        fi
+        if [[ $f != "" ]]; then
+          for i in $( seq 1 $maximumRetryIfNetworkError )
+          do
+            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+
+            if grep -q "npm ERR!" "publish_log"
+            then
+                if grep -q "code ENOTFOUND" "publish_log"
+                then
+                  if ! $i -eq $maximumRetryIfNetworkError
+                  then
+                    echo "Network Error Detected"
+                    continue
+                  else
+                    echo "Final Network Error"
+                    exit 1
+                  fi
+                else
+                  if grep -q "You cannot publish over the previously published versions" "publish_log"
+                  then
+                    echo Package has already been published.
+                    local_f="${f}_local"
+                    mv "$f" "$local_f"
+                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                    npm pack $package_name
+                    if cmp -s "$f" "$local_f"
+                    then
+                      echo Continuing as published package matches the current one that was attempting to be released.
+                      rm "$f"
+                      mv "$local_f" "$f"
+                      break
+                    else
+                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                    fi
+                  fi
+                  rm "$f"
+                  mv "$local_f" "$f"
+                  exit 1
+                fi
+            else
+              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+
+              if [[ $release == "release" && $feedId == "build" ]]; then
+                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+
+                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  for scope in "${scopes[@]}"; do
+                      if [[ "$packageName" == "$scope"* ]]; then
+                          packageName="@${packageName/$scope-/$scope/}"
+                      fi
+                  done
+                fi
+
+                baseURL="${${{ parameters.feedUrl }}%/registry/}"
+                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+
+                response=$(curl -f -s -X PATCH \
+                  -H "Content-Type: application/json" \
+                  -H "Accept: application/json" \
+                  -u ":$(System.AccessToken)" \
+                  -d '{
+                        "views": {
+                          "op": "add",
+                          "path": "/views/-",
+                          "value": "Release"
+                        }
+                      }' \
+                      "$feedPromotionUrl"
+                  )
+
+                curlExitStatus=$?
+
+                if echo "$response" | grep -q '"success":"false"'; then
+                  reason="${response#*\"reason\":\"}"
+                  reason="${reason%%\"*}"
+                  echo "Failed to promote package to Release view"
+                  echo "Error reason: $reason"
+                  exit 1
+                elif [ $curlExitStatus -ne 0 ]; then
+                  echo "Failed to promote package due to curl error"
+                  exit 1
+                fi
+              fi
+
+              rm publish_log
+              break
+            fi
+            rm publish_log
+          done
+        fi
+      done
+      rm ~/.npmrc
+      exit 0

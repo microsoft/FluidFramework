@@ -22,7 +22,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-1ES
 
 - name: publishFlags
   type: string
@@ -52,8 +52,8 @@ jobs:
           steps:
           - download: current
             artifact: pack
-          - template: include-use-node-version.yml
-          - template: include-publish-npm-package-steps.yml
+          - template: /tools/pipelines/templates/include-use-node-version.yml@self
+          - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
               namespace: ${{ parameters.namespace }}
               artifactPath: scoped
@@ -62,7 +62,7 @@ jobs:
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
-            - template: include-publish-npm-package-steps.yml
+            - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
               parameters:
                 namespace: false
                 artifactPath: non-scoped
@@ -70,6 +70,6 @@ jobs:
                 feedKind: ${{ parameters.feedKind }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
-          - template: include-git-tag-steps.yml
+          - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
             parameters:
               tagName: ${{ parameters.tagName }}

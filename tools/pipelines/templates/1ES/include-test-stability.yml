@@ -1,0 +1,142 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-test-stability template to build and test NPM packages/projects
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: taskLint
+  type: boolean
+  default: true
+
+- name: taskLintName
+  type: string
+  default: lint
+
+- name: taskTest
+  type: object
+  default:
+  - ci:test
+
+- name: poolBuild
+  type: object
+  default: Large
+
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
+- name: tagName
+  type: string
+  default: client
+
+- name: stageName
+  type: string
+
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
+jobs:
+  # Job - Build
+  - job: build
+    displayName: Build
+    pool: ${{ parameters.poolBuild }}
+    variables:
+      testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+      releaseBuildVar: $[variables.releaseBuild]
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+    steps:
+    # Setup
+    - checkout: self
+      clean: true
+      lfs: ${{ parameters.checkoutSubmodules }}
+      submodules: ${{ parameters.checkoutSubmodules }}
+
+    - task: Bash@3
+      displayName: Parameters
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Show all task group conditions
+
+          echo "
+          Pipeline Variables:
+            releaseBuild=$(releaseBuildVar)
+
+          Tasks Parameters:
+            BuildDir=${{ parameters.buildDirectory }}
+            Build=${{ parameters.taskBuild }}
+            Lint=${{ parameters.taskLint }}
+            LintName: ${{ parameters.taskLintName }}
+            Test=${{ convertToJson(parameters.taskTest) }}
+            TestCoverage=$(testCoverage)
+          "
+
+    - template: include-use-node-version.yml
+
+    - template: include-install.yml 
+      parameters:
+        packageManager: ${{ parameters.packageManager }}
+        buildDirectory: ${{ parameters.buildDirectory }}
+        packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
+
+    - template: include-build-lint.yml 
+      parameters:
+        taskBuild: ${{ parameters.taskBuild }}
+        taskLint: ${{ parameters.taskLint }}
+        taskLintName: ${{ parameters.taskLintName }}
+        buildDirectory: ${{ parameters.buildDirectory }}
+
+    # Test
+    - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+      # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+      - script: |
+          echo "##vso[task.setvariable variable=startTest]true"
+        displayName: Start Test
+
+      - ${{ each taskTestStep in parameters.taskTest }}:
+        - template: include-test-task.yml
+          parameters:
+            taskTestStep: ${{ taskTestStep }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            
+        # Verify if the tinylicious log exists
+        - task: Bash@3
+          displayName: Validate Tinylicious Log
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              logFile=${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
+              echo "##vso[task.setvariable variable=LogExists]$(if [ -f "$logFile" ]; then echo "true"; else echo "false"; fi)"
+          condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
+        # Publish tinylicious log for troubleshooting (only run when the tinylicious log is verified existing)
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+            artifactName: 'tinyliciousLog_${{ parameters.stageName }}_attempt-$(System.JobAttempt)'
+            publishLocation: 'pipeline'
+          condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
+          continueOnError: true
+
+      # Process test result, include publishing and logging
+      - template: include-process-test-results.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
