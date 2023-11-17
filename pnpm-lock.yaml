@@ -1595,7 +1595,7 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
-      '@fluid-experimental/app-insights-logger': workspace:2.0.0-internal.7.3.0
+      '@fluid-experimental/app-insights-logger': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
