@@ -455,7 +455,7 @@ extends:
             
             templateContext:
               outputs:
-                - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}':
+                - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - Tinylicious Log
                       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
