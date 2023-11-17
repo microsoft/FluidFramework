@@ -68,8 +68,8 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
 			<div>
-				To use the Fluid Devtools, open the browser Devtools pane (F12) and click
-				the `Fluid Developer Tools` tab. {supportedFeatures}
+				To use the Fluid Devtools, open the browser Devtools pane (F12) and click the `Fluid
+				Developer Tools` tab. {supportedFeatures}
 			</div>
 		</MessageRelayContext.Provider>
 	);
