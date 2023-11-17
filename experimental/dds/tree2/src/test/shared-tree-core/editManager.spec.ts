@@ -1027,7 +1027,7 @@ function addSequencedChange(
 	...args: Parameters<(typeof editManager)["addSequencedChange"]>
 ): Delta.Root {
 	let delta: Delta.Root = emptyDelta;
-	const offChange = editManager.localBranch.on("change", ({ change }) => {
+	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
 		if (change !== undefined) {
 			delta = editManager.changeFamily.intoDelta(change);
 		}
