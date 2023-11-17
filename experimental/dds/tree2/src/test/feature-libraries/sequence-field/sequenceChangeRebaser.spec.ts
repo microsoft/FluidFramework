@@ -302,22 +302,11 @@ describe("SequenceField - Rebaser Axioms", () => {
 			(change) => !changesTargetingDetached.has(change[0]),
 		);
 
-		const moveChanges = ["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"];
 		for (const [nameA, makeChange1] of shallowTestChanges) {
 			for (const [nameB, makeChange2] of shallowTestChanges) {
 				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
 					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					if (
-						moveChanges.includes(nameA) &&
-						moveChanges.includes(nameB) &&
-						nameC === "Delete"
-					) {
-						it.skip(title, () => {
-							// Some of these tests fail due to BUG 6202 where if a mark in changeA is moved and deleted by changeB,
-							// we may not discover the delete until the second rebase pass,
-							// and we may not be able to update changeA's move destination in the second pass.
-						});
-					} else if (
 						changesTargetingDetached.has(nameA) &&
 						changesTargetingDetached.has(nameB)
 					) {
