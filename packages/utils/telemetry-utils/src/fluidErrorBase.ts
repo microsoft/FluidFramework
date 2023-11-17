@@ -16,7 +16,7 @@ import { ITelemetryProperties } from "@fluidframework/core-interfaces";
  * made readonly, as well as  {@link IFluidErrorBase.errorType} and {@link IFluidErrorBase.errorInstanceId}.
  * It also features getters and setters for telemetry props to be included when the error is logged.
  *
- * @public
+ * @internal
  */
 export interface IFluidErrorBase extends Error {
 	/**
@@ -76,7 +76,7 @@ const hasTelemetryPropFunctions = (x: unknown): boolean =>
 /**
  * Type guard for error data containing the {@link IFluidErrorBase.errorInstanceId} property.
  *
- * @public
+ * @internal
  */
 export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string } =>
 	typeof (x as Partial<{ errorInstanceId: string }>)?.errorInstanceId === "string";
@@ -84,7 +84,7 @@ export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string }
 /**
  * Type guard for {@link IFluidErrorBase}.
  *
- * @public
+ * @internal
  */
 export function isFluidError(error: unknown): error is IFluidErrorBase {
 	return (
@@ -98,7 +98,7 @@ export function isFluidError(error: unknown): error is IFluidErrorBase {
 /**
  * Type guard for old standard of valid/known errors.
  *
- * @public
+ * @internal
  */
 export function isValidLegacyError(
 	error: unknown,

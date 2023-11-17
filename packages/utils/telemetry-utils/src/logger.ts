@@ -46,7 +46,7 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
  *
  * @privateRemarks Please do not modify existing entries for backwards compatibility.
  *
- * @public
+ * @internal
  */
 export enum TelemetryDataTag {
 	/**
@@ -60,19 +60,19 @@ export enum TelemetryDataTag {
 }
 
 /**
- * @public
+ * @internal
  */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 /**
- * @public
+ * @internal
  */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
@@ -87,7 +87,7 @@ export interface ITelemetryLoggerPropertyBags {
  * Used to make telemetry data typed (and support math operations, like comparison),
  * in places where we do expect numbers (like contentsize/duration property in http header).
  *
- * @public
+ * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export function numberFromString(str: string | null | undefined): string | number | undefined {
@@ -101,7 +101,7 @@ export function numberFromString(str: string | null | undefined): string | numbe
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export function formatTick(tick: number): number {
 	return Math.floor(tick);
@@ -110,7 +110,7 @@ export function formatTick(tick: number): number {
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export const eventNamespaceSeparator = ":" as const;
 
@@ -318,7 +318,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
  * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
  *
- * @public
+ * @internal
  */
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
@@ -376,7 +376,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
- * @public
+ * @internal
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -487,7 +487,7 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Input properties for {@link createMultiSinkLogger}.
  *
- * @public
+ * @internal
  */
 export interface MultiSinkLoggerProperties {
 	/**
@@ -515,7 +515,7 @@ export interface MultiSinkLoggerProperties {
 /**
  * Create a logger which logs to multiple other loggers based on the provided props object.
  *
- * @public
+ * @internal
  */
 export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
@@ -618,7 +618,7 @@ export class MultiSinkLogger extends TelemetryLogger {
  * For example, there is rarely a need to record start event, as we really after
  * success / failure tracking, including duration (on success).
  *
- * @public
+ * @internal
  */
 export interface IPerformanceEventMarkers {
 	start?: true;
@@ -629,7 +629,7 @@ export interface IPerformanceEventMarkers {
 /**
  * Helper class to log performance events.
  *
- * @public
+ * @internal
  */
 export class PerformanceEvent {
 	/**
@@ -852,7 +852,7 @@ export class PerformanceEvent {
  * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * where the send() method does nothing and using that.
  *
- * @public
+ * @internal
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
@@ -925,7 +925,7 @@ function convertToBasePropertyTypeUntagged(
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export const tagData = <
 	T extends TelemetryDataTag,
@@ -975,7 +975,7 @@ export const tagData = <
  * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
  * as well as callbacks that return that type.
  *
- * @public
+ * @internal
  */
 export const tagCodeArtifacts = <
 	T extends Record<

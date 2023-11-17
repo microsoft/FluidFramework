@@ -185,7 +185,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
  *
  * @param messageLike - Message to include info about via telemetry props.
  *
- * @public
+ * @internal
  */
 export const extractSafePropertiesFromMessage = (
 	messageLike: Partial<

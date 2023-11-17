@@ -55,7 +55,7 @@ interface Measurements {
  * function. See the documentation of the `includeAggregateMetrics` parameter for additional details that can be
  * included.
  *
- * @public
+ * @internal
  */
 export class SampledTelemetryHelper implements IDisposable {
 	disposed: boolean = false;

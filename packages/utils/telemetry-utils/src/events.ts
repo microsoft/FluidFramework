@@ -11,21 +11,21 @@ import { ITelemetryLoggerExt } from "./telemetryTypes";
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export const connectedEventName = "connected";
 
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export const disconnectedEventName = "disconnected";
 
 /**
  * TODO
  *
- * @public
+ * @internal
  */
 export function safeRaiseEvent(
 	emitter: EventEmitter,
@@ -48,7 +48,7 @@ export function safeRaiseEvent(
  * @param clientId - The connected/disconnected clientId
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
  *
- * @public
+ * @internal
  */
 export function raiseConnectedEvent(
 	logger: ITelemetryLoggerExt,

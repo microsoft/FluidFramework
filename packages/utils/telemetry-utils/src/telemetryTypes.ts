@@ -14,7 +14,7 @@ import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-int
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
  *
- * @public
+ * @internal
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -25,7 +25,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * Includes extra types beyond {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType}, which must be
  * converted before sending to a base logger.
  *
- * @public
+ * @internal
  */
 export type TelemetryEventPropertyTypeExt =
 	| string
@@ -44,7 +44,7 @@ export type TelemetryEventPropertyTypeExt =
  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#Tagged}\<{@link TelemetryEventPropertyTypeExt}\>
- * @public
+ * @internal
  */
 export interface ITaggedTelemetryPropertyTypeExt {
 	value: TelemetryEventPropertyTypeExt;
@@ -54,7 +54,7 @@ export interface ITaggedTelemetryPropertyTypeExt {
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  *
- * @public
+ * @internal
  */
 export interface ITelemetryPropertiesExt {
 	[index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
@@ -66,7 +66,7 @@ export interface ITelemetryPropertiesExt {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  *
- * @public
+ * @internal
  */
 export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 	category: string;
@@ -77,7 +77,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
  *
- * @public
+ * @internal
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
@@ -88,7 +88,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
  * Error telemetry event.
  * @remarks Maps to category = "error"
  *
- * @public
+ * @internal
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
@@ -98,7 +98,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
  *
- * @public
+ * @internal
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
 	duration?: number; // Duration of event (optional)
@@ -111,7 +111,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
  *
- * @public
+ * @internal
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**
