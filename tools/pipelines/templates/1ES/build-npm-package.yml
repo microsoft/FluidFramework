@@ -4,7 +4,7 @@ parameters:
 
   - name: taskBuild
     type: string
-    default: 'ci:build'
+    default: ci:build
 
   - name: taskBuildDocs
     type: boolean
@@ -25,7 +25,7 @@ parameters:
   - name: taskTest
     type: object
     default:
-      - 'ci:test'
+      - ci:test
 
   - name: testResultDirs
     type: object
@@ -58,7 +58,7 @@ parameters:
 
   - name: cgSubDirectory
     type: string
-    default: ''
+    default:
 
   - name: checkoutSubmodules
     type: boolean
@@ -70,7 +70,7 @@ parameters:
 
   - name: buildNumberInPatch
     type: string
-    default: ''
+    default:
 
   - name: nonScopedPackages
     type: object
@@ -101,22 +101,28 @@ parameters:
     type: string
     default: npm
 
+  # Parameter for modifying the 'types' field in the package.json.
+  # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
   - name: packageTypesOverride
     type: string
     default: none
 
   - name: packageManagerInstallCommand
     type: string
-    default: npm ci --unsafe-perm
+    default: 'npm ci --unsafe-perm'
 
   - name: additionalBuildSteps
     type: stepList
     default: []
 
+  # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+  # group
   - name: interdependencyRange
     type: string
-    default: ^
+    default: "^"
 
+  # A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+  # in a pipeline stage separate from the build stage.
   - name: checks
     type: object
     default: []
@@ -154,9 +160,11 @@ extends:
               buildDirectory: '${{ parameters.buildDirectory }}'
               checks: '${{ parameters.checks }}'
               dependencyInstallCommand: pnpm install --frozen-lockfile
+      
+      # Install / Build / Test Stage
       - stage: build
         displayName: Build Stage
-        dependsOn: []
+        dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
           - job: build
             displayName: Build
@@ -281,13 +289,16 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              
               - template: /tools/pipelines/templates/1ES/include-build-lint.yml@self
                 parameters:
                   taskBuild: '${{ parameters.taskBuild }}'
                   taskLint: '${{ parameters.taskLint }}'
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
+              
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+                  # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
                   - script: |
                       echo "##vso[task.setvariable variable=startTest]true"
                     displayName: Start Test
@@ -296,11 +307,16 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
+                  
+                  # Test - Upload coverage results
+                  # Some webpacked file using externals introduce file name with quotes in them
+                  # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+                  # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
                   - ${{ if eq(variables['testCoverage'], true) }}:
                       - task: Bash@3
                         displayName: Check for nyc/report directory
                         inputs:
-                          targetType: inline
+                          targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
@@ -308,7 +324,7 @@ extends:
                       - task: Bash@3
                         displayName: Patch Coverage Results
                         inputs:
-                          targetType: inline
+                          targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
                           script: |
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
@@ -318,7 +334,7 @@ extends:
                         inputs:
                           codeCoverageTool: Cobertura
                           summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-                          reportDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                          reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}: []
@@ -442,15 +458,12 @@ extends:
                 - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}':
                     - output: pipelineArtifact
                       displayName: Publish Artifact - Tinylicious Log
-                      condition: >-
-                        and(succeededOrFailed(), eq(variables['startTest'],
-                        'true'))
-                      targetPath: >-
-                        ${{ parameters.buildDirectory
-                        }}/packages/test/test-end-to-end-tests/tinylicious.log
+                      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                      targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
                       artifactName: tinyliciousLog_attempt-$(System.JobAttempt)
                       sbomEnabled: false
                       publishLocation: pipeline
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                 
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact

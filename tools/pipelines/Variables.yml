@@ -10,6 +10,8 @@ variables:
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
       buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
       nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+  # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
+  # places in the pipeline to push custom telemetry to Kusto.
   - name: absolutePathToTelemetryGenerator
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
