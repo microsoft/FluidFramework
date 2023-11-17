@@ -1,40 +1,76 @@
 {
-	"name": "@fluid-example/schemas",
+	"name": "@fluid-experimental/app-insights-logger",
 	"version": "2.0.0-internal.7.3.0",
-	"private": true,
-	"description": "Centralized package for storing schemas used by the samples.",
+	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "experimental/PropertyDDS/examples/schemas"
+		"directory": "packages/framework/client-logger/app-insights-logger"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "dist/index.js",
+	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint src",
+		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
+		"format-and-build": "npm run format && npm run build",
+		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.js\" -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
+	},
+	"dependencies": {
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.28.0",
+		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "^16.18.38",
+		"@types/sinon": "^7.0.13",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
+		"eslint-plugin-jest": "~27.4.2",
+		"eslint-plugin-react": "~7.33.2",
+		"eslint-plugin-react-hooks": "~4.6.0",
+		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"sinon": "^7.4.2",
+		"tslib": "^1.10.0",
 		"typescript": "~5.1.6"
+	},
+	"fluid": {
+		"browser": {
+			"umd": {
+				"files": [
+					"dist/main.bundle.js"
+				],
+				"library": "main"
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

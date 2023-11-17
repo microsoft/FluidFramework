@@ -1,93 +1,116 @@
 {
-	"name": "@fluid-internal/functional-tests",
+	"name": "@fluidframework/azure-client",
 	"version": "2.0.0-internal.7.3.0",
-	"private": true,
-	"description": "Functional tests",
+	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/test/functional-tests"
+		"directory": "azure/packages/azure-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
-	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
+		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
+		"test": "npm run test:realsvc",
+		"test:realsvc": "npm run test:realsvc:tinylicious",
+		"test:realsvc:local:run": "mocha --recursive \"dist/test/**/*.spec.cjs\" --exit --timeout 10000",
+		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:local:run",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"events": "^3.1.0"
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/server-services-client": "^2.0.1",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"axios": "^0.26.0"
 	},
 	"devDependencies": {
-		"@fluid-private/test-loader-utils": "workspace:~",
-		"@fluid-tools/build-cli": "0.28.0",
+		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.2.0",
+		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.28.0",
-		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
-		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"@types/events": "^3.0.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"c8": "^7.7.1",
+		"@types/uuid": "^9.0.2",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
-		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
+		"start-server-and-test": "^1.11.7",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2"
+		"uuid": "^9.0.0"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }
