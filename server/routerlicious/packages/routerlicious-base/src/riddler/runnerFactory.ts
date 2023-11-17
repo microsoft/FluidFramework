@@ -16,6 +16,7 @@ import {
 	IRunnerFactory,
 	IWebServerFactory,
 	ICollection,
+	ITenantDocument,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -23,7 +24,6 @@ import * as winston from "winston";
 import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
-import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerResources implements IResources {
 	public webServerFactory: IWebServerFactory;

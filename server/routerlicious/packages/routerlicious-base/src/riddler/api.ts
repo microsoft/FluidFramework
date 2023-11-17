@@ -9,6 +9,7 @@ import {
 	ITenantStorage,
 	ITenantOrderer,
 	ITenantCustomData,
+	ITenantDocument,
 	ICache,
 	ICollection,
 } from "@fluidframework/server-services-core";
@@ -18,7 +19,7 @@ import { getParam } from "@fluidframework/server-services-utils";
 import { decode } from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { ITenantDocument, TenantManager } from "./tenantManager";
+import { TenantManager } from "./tenantManager";
 
 export function create(
 	tenantsCollection: ICollection<ITenantDocument>,

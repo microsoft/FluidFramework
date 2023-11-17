@@ -12,12 +12,12 @@ import {
 	IWebServer,
 	ICache,
 	ICollection,
+	ITenantDocument,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
 import * as app from "./app";
-import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerRunner implements IRunner {
 	private server: IWebServer;

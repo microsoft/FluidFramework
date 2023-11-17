@@ -12,10 +12,10 @@ import {
 	EncryptionKeyVersion,
 	MongoManager,
 	ISecretManager,
+	ITenantDocument,
 } from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
 import Sinon from "sinon";
-import { ITenantDocument } from "../../riddler";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";

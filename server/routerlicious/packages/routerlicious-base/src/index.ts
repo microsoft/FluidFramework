@@ -22,7 +22,6 @@ export {
 } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
-	ITenantDocument,
 	RiddlerResources,
 	RiddlerResourcesFactory,
 	RiddlerRunner,

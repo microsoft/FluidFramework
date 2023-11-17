@@ -99,6 +99,7 @@ export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
 export { MongoDocumentRepository } from "./mongoDocumentRepository";
+export { MongoTenantRepository } from "./mongoTenantRepository";
 export { MongoCheckpointRepository } from "./mongoCheckpointRepository";
 export { CheckpointService, ICheckpointService } from "./checkpointService";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
@@ -140,6 +141,7 @@ export {
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
+	ITenantDocument,
 	KeyName,
 } from "./tenant";
 export {

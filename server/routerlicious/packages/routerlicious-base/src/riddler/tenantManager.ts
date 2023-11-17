@@ -9,6 +9,7 @@ import {
 	IEncryptedTenantKeys,
 	ITenantConfig,
 	ITenantCustomData,
+	ITenantDocument,
 	ITenantKeys,
 	ITenantOrderer,
 	ITenantStorage,
@@ -23,37 +24,6 @@ import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-servic
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
-
-/**
- * Tenant details stored to the document database
- */
-export interface ITenantDocument {
-	// Database ID for the tenant. Id is only marked optional because the database will provide it
-	// on initial insert
-	_id: string;
-
-	// API key for the given tenant
-	key: string;
-
-	// second key for the given tenant
-	secondaryKey: string;
-
-	// Storage provider details
-	storage: ITenantStorage;
-
-	// Orderer details
-	orderer: ITenantOrderer;
-
-	// Custom data for tenant extensibility
-	customData: ITenantCustomData;
-
-	// Whether the tenant is disabled
-	disabled: boolean;
-
-	// Timestamp of when this tenant will be hard deleted.
-	// Only applicable if the tenant is disabled.
-	scheduledDeletionTime?: string;
-}
 
 enum FetchTenantKeyMetric {
 	RetrieveFromCacheSucess = "retrieveFromCacheSuccess",

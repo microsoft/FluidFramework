@@ -6,6 +6,7 @@
 import { ICheckpoint, IDeliState, IDocument, IScribe } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { INode } from "./orderer";
+import { ITenantDocument } from "./tenant";
 
 /**
  * Interface to abstract the backend database
@@ -116,6 +117,47 @@ export interface ICheckpointRepository {
 	 * Deletes a checkpoint from the database
 	 */
 	deleteCheckpoint(documentId: string, tenantId: string): Promise<void>;
+}
+
+/**
+ * Abstract away ITenant collection logic
+ */
+export interface ITenantRepository {
+	/**
+	 * Finds one query in the database
+	 *
+	 * @param query - data we want to find
+	 * @param options - optional. If set, provide customized options to the implementations
+	 * @returns The value of the query in the database.
+	 */
+	findOne(query: any, options?: any): Promise<ITenantDocument>;
+
+	/**
+	 * @returns All values in the database.
+	 */
+	findAll(): Promise<ITenantDocument[]>;
+
+	/**
+	 * Finds the query in the database. If it exists, update the value to set.
+	 * Throws if query cannot be found.
+	 *
+	 * @param filter - data we want to find
+	 * @param set - new values to change to
+	 * @param addToSet - an operator that insert a value to array unless the value already exists;
+	 * @param options - optional. If set, provide customized options to the implementations
+	 * only used in mongodb.ts
+	 */
+	update(filter: any, set: any, addToSet: any, options?: any): Promise<void>;
+
+	/**
+	 * Inserts an entry into the database.
+	 * Throws if it would overwrite an existing entry
+	 *
+	 * @param value - data to insert to the database
+	 */
+	insertOne(value: ITenantDocument): Promise<any>;
+
+	deleteOne(filter: any): Promise<any>;
 }
 
 /**

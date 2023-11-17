@@ -5,4 +5,4 @@
 
 export { RiddlerRunner } from "./runner";
 export { RiddlerResources, RiddlerResourcesFactory, RiddlerRunnerFactory } from "./runnerFactory";
-export { ITenantDocument, TenantManager } from "./tenantManager";
+export { TenantManager } from "./tenantManager";
