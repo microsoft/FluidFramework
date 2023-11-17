@@ -277,7 +277,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     static typeCheck(object: unknown): object is LoggingError;
 }
 
-// @internal
+// @internal @deprecated
 export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @internal
