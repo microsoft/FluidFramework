@@ -124,7 +124,7 @@ describe("ModularChangeFamily integration", () => {
 			editor.sequenceField(fieldAPath).move(1, 1, 0);
 
 			// Modifies node2 so that both fieldA and fieldB have changes that need to be transferred
-			// from a move source to a destination during invert.
+			// from a move source to a destination during rebase.
 			editor
 				.sequenceField({
 					parent: node2Path,
