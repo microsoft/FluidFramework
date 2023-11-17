@@ -4,16 +4,16 @@
 
 ```ts
 
-// @public (undocumented)
+// @internal (undocumented)
 export const booleanCases: readonly boolean[];
 
-// @public (undocumented)
+// @internal (undocumented)
 export function generatePairwiseOptions<T extends Record<string, any>>(optionsMatrix: OptionsMatrix<T>, randomSeed?: number): T[];
 
-// @public (undocumented)
+// @internal (undocumented)
 export const numberCases: readonly (number | undefined)[];
 
-// @public (undocumented)
+// @internal
 export type OptionsMatrix<T extends Record<string, any>> = Required<{
     [K in keyof T]: readonly T[K][];
 }>;
