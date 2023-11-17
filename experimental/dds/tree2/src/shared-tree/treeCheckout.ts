@@ -272,7 +272,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			HasListeners<CheckoutEvents>,
 		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
-		branch.on("afterChange", (event) => {
+		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
+		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
+		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
+		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
+		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
 				const delta = this.changeFamily.intoDelta(event.change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
