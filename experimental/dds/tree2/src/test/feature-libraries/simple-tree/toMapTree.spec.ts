@@ -13,6 +13,8 @@ import { toMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
 import { brand } from "../../../util";
 import { EmptyKey, FieldKey, type MapTree } from "../../../core";
 
+// TODO: empty optional field, empty array, empty map
+
 describe("toMapTree", () => {
 	it("string", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
@@ -48,7 +50,7 @@ describe("toMapTree", () => {
 
 	it("handle", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
-		const schema = schemaBuilder.intoSchema(schemaBuilder.string);
+		const schema = schemaBuilder.intoSchema(schemaBuilder.handle);
 
 		const tree = new MockHandle<string>("mock-fluid-handle");
 
@@ -68,7 +70,8 @@ describe("toMapTree", () => {
 		const rootSchema = schemaBuilder.list("list", [schemaBuilder.number, schemaBuilder.handle]);
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
-		const tree = [42, 37, -1];
+		const handle = new MockHandle<boolean>(true);
+		const tree = [42, handle, 37];
 
 		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
@@ -79,8 +82,8 @@ describe("toMapTree", () => {
 					EmptyKey,
 					[
 						{ type: leaf.number.name, value: 42, fields: new Map() },
+						{ type: leaf.handle.name, value: handle, fields: new Map() },
 						{ type: leaf.number.name, value: 37, fields: new Map() },
-						{ type: leaf.number.name, value: -1, fields: new Map() },
 					],
 				],
 			]),
@@ -159,8 +162,16 @@ describe("toMapTree", () => {
 		});
 		const rootSchema = schemaBuilder.object("complex-object", {
 			a: schemaBuilder.string,
-			b: schemaBuilder.list([childObjectSchema, schemaBuilder.handle, schemaBuilder.null]),
-			c: schemaBuilder.map([schemaBuilder.string, schemaBuilder.number]),
+			b: schemaBuilder.list("list", [
+				childObjectSchema,
+				schemaBuilder.handle,
+				schemaBuilder.null,
+			]),
+			c: schemaBuilder.map("map", [
+				childObjectSchema,
+				schemaBuilder.string,
+				schemaBuilder.number,
+			]),
 		});
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
@@ -168,12 +179,12 @@ describe("toMapTree", () => {
 
 		const a = "Hello world";
 		const b = [{ name: "Jack", age: 37 }, null, { name: "Jill", age: 42 }, handle];
-		const cEntries: [string, string | number][] = [
-			["foo", 0],
+		const cEntries: [string, unknown][] = [
+			["foo", { name: "Foo", age: 2 }],
 			["bar", "1"],
 			["baz", 2],
 		];
-		const c = new Map<string, number | string>(cEntries);
+		const c = new Map<string, unknown>(cEntries);
 
 		const tree = {
 			a,
@@ -191,9 +202,7 @@ describe("toMapTree", () => {
 					brand("b"),
 					[
 						{
-							type: brand(
-								'test.List<["com.fluidframework.leaf.handle","com.fluidframework.leaf.null","test.child-object"]>',
-							),
+							type: brand("test.list"),
 							fields: new Map<FieldKey, MapTree[]>([
 								[
 									EmptyKey,
@@ -264,13 +273,37 @@ describe("toMapTree", () => {
 					brand("c"),
 					[
 						{
-							type: brand(
-								'test.Map<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
-							),
+							type: brand("test.map"),
 							fields: new Map<FieldKey, MapTree[]>([
 								[
 									brand("foo"),
-									[{ type: leaf.number.name, value: 0, fields: new Map() }],
+									[
+										{
+											type: childObjectSchema.name,
+											fields: new Map<FieldKey, MapTree[]>([
+												[
+													brand("name"),
+													[
+														{
+															type: leaf.string.name,
+															value: "Foo",
+															fields: new Map(),
+														},
+													],
+												],
+												[
+													brand("age"),
+													[
+														{
+															type: leaf.number.name,
+															value: 2,
+															fields: new Map(),
+														},
+													],
+												],
+											]),
+										},
+									],
 								],
 								[
 									brand("bar"),

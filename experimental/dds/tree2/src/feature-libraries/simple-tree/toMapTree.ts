@@ -11,53 +11,57 @@ import {
 	type FieldKey,
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
-	EmptyKey,
+	type TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
 } from "../../core";
-// eslint-disable-next-line import/no-internal-modules
-import { leaf } from "../../domains/leafDomain";
 import { brand, fail } from "../../util";
 import {
 	ContextuallyTypedNodeData,
 	PrimitiveValue,
 	TreeDataContext,
+	allowsValue,
+	getFieldKind,
+	getFieldSchema,
 	getPossibleTypes,
+	getPrimaryField,
 	isFluidHandle,
 } from "../contextuallyTyped";
-import { type TreeNodeSchema } from "../typed-schema";
-import { TypedNode } from "./types";
+import { Multiplicity } from "../modular-schema";
+import { TreeFieldSchema, type TreeNodeSchema } from "../typed-schema";
+import { TypedNode, TreeField } from "./types";
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
- * @param tree - TODO (note POJO nature)
+ * @param data - TODO (note POJO nature)
  */
 export function toMapTree(
-	tree: TypedNode<TreeNodeSchema, "javaScript">,
+	data: TypedNode<TreeNodeSchema, "javaScript">,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	assert(tree !== undefined, "Cannot map undefined tree.");
+	assert(data !== undefined, "Cannot map undefined tree.");
 
-	if (tree === null) {
-		return valueToMapTree(null, leaf.null.name);
+	if (data === null) {
+		return valueToMapTree(data, context, typeSet);
 	}
-	switch (typeof tree) {
+	switch (typeof data) {
 		case "number":
-			return valueToMapTree(tree, leaf.number.name);
+			return valueToMapTree(data, context, typeSet);
 		case "string":
-			return valueToMapTree(tree, leaf.string.name);
+			return valueToMapTree(data, context, typeSet);
 		case "boolean":
-			return valueToMapTree(tree, leaf.boolean.name);
+			return valueToMapTree(data, context, typeSet);
 		default: {
-			if (isFluidHandle(tree)) {
-				return valueToMapTree(tree, leaf.handle.name);
-			} else if (Array.isArray(tree)) {
-				return arrayToMapTree(tree, context, typeSet);
-			} else if (tree instanceof Map) {
-				return mapToMapTree(tree, context, typeSet);
+			if (isFluidHandle(data)) {
+				return valueToMapTree(data, context, typeSet);
+			} else if (Array.isArray(data)) {
+				return arrayToMapTree(data, context, typeSet);
+			} else if (data instanceof Map) {
+				return mapToMapTree(data, context, typeSet);
 			} else {
 				// Assume record-like object
 				return recordToMapTree(
-					tree as Record<string, TypedNode<TreeNodeSchema, "javaScript">>,
+					data as Record<string, TypedNode<TreeNodeSchema, "javaScript">>,
 					context,
 					typeSet,
 				);
@@ -66,36 +70,71 @@ export function toMapTree(
 	}
 }
 
+/**
+ * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s.
+ * @param data - TODO (note POJO nature)
+ */
+export function fieldDataToMapTrees(
+	data: TreeField<TreeFieldSchema, "javaScript">,
+	context: TreeDataContext,
+	fieldSchema: TreeFieldStoredSchema,
+): MapTree[] {
+	const multiplicity = getFieldKind(fieldSchema).multiplicity;
+	if (data === undefined) {
+		assert(
+			multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
+			"`undefined` provided for a field that does not support `undefined`",
+		);
+		return [];
+	}
+	if (multiplicity === Multiplicity.Sequence) {
+		assert(Array.isArray(data), "Expected an array as sequence input.");
+		const children = Array.from(data, (child) => toMapTree(child, context, fieldSchema.types));
+		return children;
+	}
+	assert(
+		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
+		"A single value was provided for an unsupported field",
+	);
+	return [toMapTree(data, context, fieldSchema.types)];
+}
+
 function valueToMapTree(
 	// eslint-disable-next-line @rushstack/no-new-null
-	tree: PrimitiveValue | IFluidHandle | null,
-	type: TreeNodeSchemaIdentifier,
+	value: PrimitiveValue | IFluidHandle | null,
+	context: TreeDataContext,
+	typeSet: TreeTypeSet,
 ): MapTree {
+	const type = getType(value, context, typeSet);
+	const schema = getSchema(context, type);
+	assert(allowsValue(schema.leafValue, value), "Unsupported schema for provided primitive.");
+
 	return {
-		value: tree,
+		value,
 		type,
-		// TODO: do we really need to instantiate a map for a tree with no fields?
 		fields: new Map(),
 	};
 }
 
 function arrayToMapTree(
-	tree: TypedNode<TreeNodeSchema, "javaScript">[],
+	data: TypedNode<TreeNodeSchema, "javaScript">[],
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	const type = getType(tree, context, typeSet);
-	const childTypeSet = context.schema.nodeSchema.get(type)?.objectNodeFields.get(EmptyKey)?.types;
-	if (childTypeSet === undefined) {
-		throw new Error("TODO");
-	}
+	const type = getType(data, context, typeSet);
+	const schema = getSchema(context, type);
+	const primaryField = getPrimaryField(schema);
+	assert(
+		primaryField !== undefined,
+		"Array data reported comparable with the schema without a primary field.",
+	);
 
-	const mappedChildren = tree
-		.filter((child) => child !== undefined)
-		.map((child) => toMapTree(child, context, childTypeSet));
+	const mappedChildren = fieldDataToMapTrees(data, context, primaryField.schema);
+	const fieldsEntries: [FieldKey, MapTree[]][] =
+		mappedChildren.length === 0 ? [] : [[primaryField.key, mappedChildren]];
 
 	// List children are represented as a single field entry denoted with `EmptyKey`
-	const fields = new Map<FieldKey, MapTree[]>([[EmptyKey, mappedChildren]]);
+	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
 		type,
@@ -109,13 +148,15 @@ function mapToMapTree(
 	typeSet: TreeTypeSet,
 ): MapTree {
 	const type = getType(tree, context, typeSet);
-	const childTypeSet = context.schema.nodeSchema.get(type)?.mapFields?.types ?? fail("TODO");
+	const schema = getSchema(context, type);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of tree) {
+		assert(!fields.has(brand(key)), "Keys should not be duplicated");
 		if (value !== undefined) {
-			const mappedChildTree = toMapTree(value, context, childTypeSet);
-			fields.set(brand(key), [mappedChildTree]);
+			const childSchema = getFieldSchema(brand(key), schema);
+			const mappedField = fieldDataToMapTrees(value, context, childSchema);
+			fields.set(brand(key), mappedField);
 		}
 	}
 	return {
@@ -125,22 +166,24 @@ function mapToMapTree(
 }
 
 function recordToMapTree(
-	tree: Record<string, TypedNode<TreeNodeSchema, "javaScript">>,
+	tree: Record<string | number | symbol, TypedNode<TreeNodeSchema, "javaScript">>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
 	const type = getType(tree, context, typeSet);
+	const schema = getSchema(context, type);
+
 	const fields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of Object.entries(tree)) {
+
+	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
+	const keys = Reflect.ownKeys(tree).filter((key) => typeof key === "string") as FieldKey[];
+	for (const key of keys) {
+		assert(!fields.has(key), "Keys should not be duplicated");
+		const value = tree[key];
 		if (value !== undefined) {
-			const childTypeSet = context.schema.nodeSchema
-				.get(type)
-				?.objectNodeFields.get(brand(key))?.types;
-			if (childTypeSet === undefined) {
-				throw new Error("TODO");
-			}
-			const mappedChildTree = toMapTree(value, context, childTypeSet);
-			fields.set(brand(key), [mappedChildTree]);
+			const childSchema = getFieldSchema(brand(key), schema);
+			const mappedChildTree = fieldDataToMapTrees(value, context, childSchema);
+			fields.set(brand(key), mappedChildTree);
 		}
 	}
 
@@ -162,4 +205,12 @@ function getType(
 		"data is compatible with more than one type allowed by the schema",
 	);
 	return possibleTypes[0];
+}
+
+function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
+	const schema = context.schema.nodeSchema.get(type);
+	if (schema === undefined) {
+		fail("Requested type does not exist in schema.");
+	}
+	return schema;
 }
