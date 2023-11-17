@@ -442,7 +442,7 @@ type FactoryObjectNodeSchema<TScope extends string, Name extends number | string
 type FactoryObjectNodeSchemaRecursive<TScope extends string, Name extends number | string, T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = FactoryTreeSchema<ObjectNodeSchema<`${TScope}.${Name}`, T>>;
 
 // @alpha
-export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema & SharedTreeObjectFactory<TSchema>;
+export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema & TreeObjectFactory<TSchema>;
 
 // @alpha (undocumented)
 export function fail(message: string): never;
@@ -1680,11 +1680,6 @@ export class SharedTreeFactory implements IChannelFactory {
     readonly type: string;
 }
 
-// @alpha
-export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
-    create(content: TypedNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
-}
-
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
@@ -1909,6 +1904,11 @@ export interface TreeNodeStoredSchema {
 export type TreeNodeUnion<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> = TTypes extends readonly [Any] ? unknown : {
     [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeNodeSchema ? TypedNode<InnerType, API> : never : never;
 }[number];
+
+// @alpha
+export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
+    create(content: TypedNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
+}
 
 // @alpha
 export type TreeObjectNode<TSchema extends ObjectNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TreeObjectNodeFields<TSchema["objectNodeFieldsObject"], API>;

@@ -65,6 +65,9 @@ export {
 	normalizeNewFieldContent,
 	NewFieldContent,
 	assertAllowedValue,
+	isFluidHandle,
+	getPossibleTypes,
+	allowsValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -213,7 +216,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,
@@ -244,26 +247,9 @@ export {
 	Context,
 	TreeEvent,
 	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
 } from "./flex-tree";
-
-export {
-	getProxyForField,
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	TreeRoot,
-	Tree,
-	TreeApi,
-	TreeNode,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
-} from "./simple-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
