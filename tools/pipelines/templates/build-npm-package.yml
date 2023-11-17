@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-npm-package template to build NPM packages/projects
 parameters:
   - name: buildDirectory
     type: string
@@ -27,6 +31,8 @@ parameters:
     default:
       - ci:test
 
+  # A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
+  # Used to avoid the force merge limit of 100 result files.
   - name: testResultDirs
     type: object
     default:
@@ -164,6 +170,7 @@ extends:
             parameters:
               buildDirectory: '${{ parameters.buildDirectory }}'
               checks: '${{ parameters.checks }}'
+              # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
       
       # Install / Build / Test Stage
@@ -171,6 +178,7 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
+          # Job - Build
           - job: build
             displayName: Build
             variables:
@@ -179,6 +187,7 @@ extends:
               ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 targetBranchName: $(System.PullRequest.TargetBranch)
             steps:
+              # Setup
               - checkout: self
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
@@ -307,6 +316,7 @@ extends:
                   - script: |
                       echo "##vso[task.setvariable variable=startTest]true"
                     displayName: Start Test
+                  
                   - ${{ each taskTestStep in parameters.taskTest }}:
                       - template: /tools/pipelines/templates/1ES/include-test-task.yml@self
                         parameters:
@@ -342,7 +352,9 @@ extends:
                           reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}: []
+                  
+                  # Here we wanted to publish tinylicious.log artifact, but as part of 1ES migration
+                  # It is now part of templateContext below.
                   - template: /tools/pipelines/templates/1ES/include-process-test-results.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
@@ -388,6 +400,7 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
+
                   - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
                       - task: Bash@3
                         displayName: List report.json
@@ -413,6 +426,8 @@ extends:
                             echo "Report Size:"
                             ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+              
+              # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
                   - task: Npm@1
                     displayName: 'npm run ci:build:docs'
@@ -420,7 +435,9 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
-              - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}: []
+              
+              # Here we wanted to publish docs artifact, but as part of 1ES migration
+              # it is now part of templateContext below.
               - ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
                 # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
@@ -454,6 +471,7 @@ extends:
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
                       exit -1;
                     fi
+              
               # This additional build step is used to run step not part of the main build. In build client pipeline,
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
@@ -477,22 +495,17 @@ extends:
                       artifactName: pack
                       publishLocation: pipeline
                 
-                - output: pipelineArtifact
-                  displayName: Publish Artifact - Test Files
-                  targetPath: $(Build.ArtifactStagingDirectory)/test-files
-                  artifactName: test-files
-                  publishLocation: pipeline
+                    - output: pipelineArtifact
+                      displayName: Publish Artifact - Test Files
+                      targetPath: $(Build.ArtifactStagingDirectory)/test-files
+                      artifactName: test-files
+                      publishLocation: pipeline
                 
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
-                      condition: >-
-                        and( succeeded(), ne(variables['Build.Reason'],
-                        'PullRequest'), eq(${{
-                        parameters.taskPublishBundleSizeArtifacts }}, true) )
-                      targetPath: >-
-                        ${{ parameters.buildDirectory
-                        }}/artifacts/bundleAnalysis
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                      targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
                       artifactname: bundleAnalysis
                       publishLocation: Container
                 
@@ -507,6 +520,7 @@ extends:
           - ${{ if eq(variables.componentDetection, true) }}:
               - job: CG
                 displayName: Component Detection
+                pool: Small-1ES
                 steps:
                   - checkout: self
                     clean: true
@@ -516,9 +530,7 @@ extends:
                   - task: ComponentGovernanceComponentDetection@0
                     displayName: Component Detection
                     inputs:
-                      sourceScanPath: >-
-                        ${{ parameters.buildDirectory }}/${{
-                        parameters.cgSubDirectory }}
+                      sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
                       verbosity: Verbose
                       scanType: Register
                       alertWarningLevel: High
@@ -541,6 +553,7 @@ extends:
         jobs:
           - job: upload_run_telemetry
             displayName: Upload pipeline run telemetry to Kusto
+            pool: Small-1ES
             variables:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
