@@ -1,23 +1,6 @@
 [
   {
     "type": "cycle",
-    "from": "src/domains/leafDomain.ts",
-    "to": "src/feature-libraries/index.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/index.ts",
-      "src/feature-libraries/simple-tree/index.ts",
-      "src/feature-libraries/simple-tree/node.ts",
-      "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/toMapTree.ts",
-      "src/domains/leafDomain.ts"
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/feature-libraries/flex-tree/context.ts",
     "to": "src/feature-libraries/flex-tree/lazyField.ts",
     "rule": {
@@ -123,39 +106,6 @@
     "cycle": [
       "src/feature-libraries/sequence-field/utils.ts",
       "src/feature-libraries/sequence-field/moveEffectTable.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/simple-tree/index.ts",
-    "to": "src/feature-libraries/simple-tree/objectFactory.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/simple-tree/objectFactory.ts",
-      "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/toMapTree.ts",
-      "src/domains/leafDomain.ts",
-      "src/feature-libraries/index.ts",
-      "src/feature-libraries/simple-tree/index.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/simple-tree/index.ts",
-    "to": "src/feature-libraries/simple-tree/proxies.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/toMapTree.ts",
-      "src/domains/leafDomain.ts",
-      "src/feature-libraries/index.ts",
-      "src/feature-libraries/simple-tree/index.ts"
     ]
   }
 ]
