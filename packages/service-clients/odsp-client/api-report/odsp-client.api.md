@@ -47,6 +47,7 @@ export interface OdspConnectionConfig {
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
+    fileName: () => string;
 }
 
 // @alpha
@@ -55,12 +56,6 @@ export interface OdspMember extends IMember {
     email: string;
     // (undocumented)
     name: string;
-}
-
-// @alpha
-export interface OdspServiceAttributes {
-    fileName: string;
-    itemId: string;
 }
 
 // (No @packageDocumentation comment for this package)

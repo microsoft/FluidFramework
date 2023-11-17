@@ -31,13 +31,7 @@ import type { ITokenResponse } from "@fluidframework/azure-client";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	OdspClientProps,
-	OdspContainerServices,
-	OdspContainerAttributes,
-	OdspAttachContainerProps,
-	OdspConnectionConfig,
-} from "./interfaces";
+import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { OdspAudience } from "./odspAudience";
 
 /**
@@ -158,14 +152,12 @@ export class OdspClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async (
-			attachProps: OdspAttachContainerProps,
-		): Promise<OdspContainerAttributes> => {
+		const attach = async (filePath?: string, fileName?: string): Promise<string> => {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				attachProps.folderPath ?? "",
-				attachProps.fileName ?? uuid(),
+				filePath ?? "",
+				fileName ?? uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
@@ -176,10 +168,12 @@ export class OdspClient {
 			}
 			await container.attach(createNewRequest);
 
-			return {
-				itemId: resolvedUrl.itemId,
-				fileName: resolvedUrl.fileName,
-			};
+			/**
+			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * a new `itemId` is created in the user's drive, which developers can use for various operations
+			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
+			 */
+			return resolvedUrl.itemId;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;
@@ -188,6 +182,13 @@ export class OdspClient {
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
 		return {
+			fileName: () => {
+				const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
+				if (resolvedUrl === undefined) {
+					throw new Error("Resolved Url not available on attached container");
+				}
+				return resolvedUrl.fileName;
+			},
 			audience: new OdspAudience(container),
 		};
 	}

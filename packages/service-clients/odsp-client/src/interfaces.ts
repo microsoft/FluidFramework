@@ -78,30 +78,14 @@ export interface OdspClientProps {
  */
 export interface OdspContainerServices {
 	/**
-	 * Provides an object that can be used to get the users that are present in this Fluid session and
-	 * listeners for when the roster has any changes from users joining/leaving the session
+	 * Retrieves the Fluid file name. If the specified file name already exists, it will be updated according to the conflict resolution policy in cases of duplicate file names.
+	 */
+	fileName: () => string;
+
+	/**
+	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
-}
-
-/**
- * Represents attributes specific to Fluid container.
- * Retrieves container-specific attributes associated with the ODSP service for the current Fluid container.
- * This includes information such as item Id and file name.
- * @alpha
- */
-export interface OdspContainerAttributes {
-	/**
-	 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
-	 * a new `itemId` is created in the user's drive, which developers can use for various operations
-	 * like updating, renaming, moving the Fluid file, changing permissions, and more.
-	 */
-	itemId: string;
-
-	/**
-	 * Fluid file name. If the file name already exists, there can be some string appended to passed file name
-	 */
-	fileName: string;
 }
 
 /**

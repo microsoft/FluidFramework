@@ -287,7 +287,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach(odspProps?: any): Promise<string | any> {
+	public async attach(filePath?: string, fileName?: string): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
