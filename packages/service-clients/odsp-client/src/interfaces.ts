@@ -30,11 +30,21 @@ export interface OdspConnectionConfig {
 	 * RaaS Drive Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
+}
+
+/**
+ * @alpha
+ */
+export interface OdspAttachContainerProps {
+	/**
+	 * Folder path where Fluid containers are created. If undefiend, file is created at the root
+	 */
+	folderPath: string | undefined;
 
 	/**
-	 * Folder path where Fluid containers are created
+	 * File name of Fluid file. If undefined, a uuid() is named as the file name
 	 */
-	folderPath: string;
+	fileName: string | undefined;
 }
 
 /**
@@ -68,15 +78,6 @@ export interface OdspClientProps {
  */
 export interface OdspContainerServices {
 	/**
-	 * Retrieves container-specific attributes associated with the ODSP service for the current Fluid container.
-	 * This includes information such as sharing URL and drive IDs.
-	 *
-	 * @returns A Promise that resolves after the container is attached, providing an object containing the `OdspServiceAttributes`.
-	 * If the attachment is not yet complete or encounters an error, the Promise will be rejected.
-	 */
-	tenantAttributes: () => Promise<OdspContainerAttributes>;
-
-	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
 	 * listeners for when the roster has any changes from users joining/leaving the session
 	 */
@@ -85,6 +86,8 @@ export interface OdspContainerServices {
 
 /**
  * Represents attributes specific to Fluid container.
+ * Retrieves container-specific attributes associated with the ODSP service for the current Fluid container.
+ * This includes information such as item Id and file name.
  * @alpha
  */
 export interface OdspContainerAttributes {
@@ -96,10 +99,9 @@ export interface OdspContainerAttributes {
 	itemId: string;
 
 	/**
-	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple
-	 * RaaS drives.
+	 * Fluid file name. If the file name already exists, there can be some string appended to passed file name
 	 */
-	driveId: string;
+	fileName: string;
 }
 
 /**
