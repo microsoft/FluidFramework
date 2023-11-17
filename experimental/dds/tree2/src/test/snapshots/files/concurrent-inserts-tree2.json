@@ -25,6 +25,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 1,
                                 "content": [
                                   {
@@ -54,6 +55,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 1,
                                 "count": 1,
                                 "content": [
                                   {
@@ -86,6 +88,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 2,
                                 "content": [
                                   {
@@ -122,6 +125,7 @@
                               },
                               {
                                 "type": "Insert",
+                                "id": 2,
                                 "count": 1,
                                 "content": [
                                   {
@@ -243,51 +247,54 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "x",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "y",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "a",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "b",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "c",
-                          []
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "x",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "y",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "a",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "b",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "c",
+                            []
+                          ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }

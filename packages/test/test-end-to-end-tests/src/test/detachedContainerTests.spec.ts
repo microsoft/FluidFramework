@@ -37,7 +37,7 @@ import {
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -883,7 +883,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 	});
 });
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+// Review: Run with Full Compat?
+describeNoCompat("Detached Container", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;

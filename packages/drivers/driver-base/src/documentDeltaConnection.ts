@@ -74,7 +74,7 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
-	private trackLatencyTimeout: number | undefined;
+	private trackLatencyTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -132,7 +132,7 @@ export class DocumentDeltaConnection
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
-					name,
+					name: name as string,
 				},
 				error,
 			);

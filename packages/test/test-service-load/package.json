@@ -21,7 +21,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
 		"debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
 		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
@@ -104,9 +104,9 @@
 		"tinylicious": "^2.0.2"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "0.28.0-210888",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "0.28.0-210888",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",

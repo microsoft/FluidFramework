@@ -7,8 +7,8 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
 	ForestType,
 	ISharedTree,
-	ITreeView,
 	SharedTreeFactory,
+	TreeView,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -23,7 +23,7 @@ const factory = new SharedTreeFactory({
 
 export class InventoryList extends DataObject {
 	#tree?: ISharedTree;
-	#view?: ITreeView<typeof treeConfiguration.schema.rootFieldSchema>;
+	#view?: TreeView<Inventory>;
 
 	public get inventory(): Inventory {
 		if (this.#view === undefined)

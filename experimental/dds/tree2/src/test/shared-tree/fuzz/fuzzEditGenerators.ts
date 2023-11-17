@@ -15,13 +15,13 @@ import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	ISharedTree,
 	ITreeCheckout,
-	ITreeView,
+	FlexTreeView,
 	SharedTreeFactory,
 	TreeContent,
 } from "../../../shared-tree";
 import { brand, fail, getOrCreate } from "../../../util";
 import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
-import { DownPath, TreeNode, toDownPath } from "../../../feature-libraries";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -43,17 +43,17 @@ import { FuzzNode, fuzzNode, fuzzSchema, fuzzViewFromTree } from "./fuzzUtils";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	// Schematized view of clients. Created lazily by viewFromState.
-	view2?: Map<ISharedTree, ITreeView<typeof fuzzSchema.rootFieldSchema>>;
+	view2?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
 }
 
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
-): ITreeView<typeof fuzzSchema.rootFieldSchema> {
+): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
 	state.view2 ??= new Map();
 	return getOrCreate(state.view2, client.channel, (tree) =>
-		tree.schematize({
+		tree.schematizeInternal({
 			initialTree,
 			schema: fuzzSchema,
 			allowedSchemaModifications: AllowedUpdateType.None,
@@ -476,7 +476,7 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
-function upPathFromNode(node: TreeNode): UpPath {
+function upPathFromNode(node: FlexTreeNode): UpPath {
 	const parentField = node.parentField.parent;
 
 	return {
@@ -486,11 +486,11 @@ function upPathFromNode(node: TreeNode): UpPath {
 	};
 }
 
-function downPathFromNode(node: TreeNode): DownPath {
+function downPathFromNode(node: FlexTreeNode): DownPath {
 	return toDownPath(upPathFromNode(node));
 }
 
-function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
+function maybeDownPathFromNode(node: FlexTreeNode | undefined): DownPath | undefined {
 	return node === undefined ? undefined : downPathFromNode(node);
 }
 
@@ -606,7 +606,7 @@ function selectField(
 }
 
 function trySelectTreeField(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
@@ -652,7 +652,7 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
