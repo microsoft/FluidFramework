@@ -463,10 +463,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				);
 			}
 
-			if (prunedFieldChange.newContent?.changes === undefined) {
-				delete prunedFieldChange.newContent?.changes;
-			}
-
 			prunedChange.fieldChange = change.fieldChange;
 		}
 
