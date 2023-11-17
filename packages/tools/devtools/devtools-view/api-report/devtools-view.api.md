@@ -29,7 +29,13 @@ export { ITelemetryBaseEvent }
 export { ITelemetryBaseLogger }
 
 // @public
-export function PopupView(): React_2.ReactElement;
+export function PopupView(props: PopupViewProps): React_2.ReactElement;
+
+// @public (undocumented)
+export interface PopupViewProps {
+    // (undocumented)
+    messageRelay: IMessageRelay;
+}
 
 // @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {

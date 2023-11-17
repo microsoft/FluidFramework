@@ -17,6 +17,7 @@
  */
 
 export type { DevtoolsPanelProps } from "./DevtoolsPanel";
+export type { PopupViewProps } from "./PopupView";
 export { PopupView } from "./PopupView";
 export { DevtoolsPanel } from "./DevtoolsPanel";
 export { WindowMessageRelay } from "./WindowMessageRelay";

@@ -7,6 +7,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
+	GetDevtoolsFeatures,
 } from "@fluid-experimental/devtools-core";
 
 import { browser } from "../Globals";
@@ -63,6 +64,15 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 				message,
 			);
 			return;
+		}
+		if (message.type === GetDevtoolsFeatures.MessageType) {
+			const port = chrome.runtime.connect({ name: "popup-background-communication" });
+			relayMessageToPort(
+				message,
+				"Devtools Script",
+				port,
+				backgroundScriptMessageLoggingOptions,
+			);
 		}
 
 		// The original connection event doesn't include the tab ID of the

@@ -22,6 +22,9 @@ import { MessageRelayContext } from "./MessageRelayContext";
 const getSupportedFeaturesMessage = GetDevtoolsFeatures.createMessage();
 const loggingContext = "INLINE(PopupView)";
 
+/**
+ * @public
+ */
 export interface PopupViewProps {
 	messageRelay: IMessageRelay;
 }
@@ -36,7 +39,6 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 		DevtoolsFeatureFlags | undefined
 	>();
 
-	// const messageRelay = useMessageRelay();
 	React.useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
@@ -66,8 +68,8 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
 			<div>
-				To use the EXTENSION Fluid Devtools, open the browser Devtools pane (F12) and click
-				the `Fluid Developer Tools` tab. ${supportedFeatures}
+				To use the Fluid Devtools, open the browser Devtools pane (F12) and click
+				the `Fluid Developer Tools` tab. {supportedFeatures}
 			</div>
 		</MessageRelayContext.Provider>
 	);

@@ -63,9 +63,18 @@ export class BackgroundConnection
 
 	public static async Initialize(): Promise<BackgroundConnection> {
 		const connection = new BackgroundConnection(extensionMessageSource);
-		await new Promise((resolve) => {
-			connection.once("tabConnected", resolve);
-		});
+		const initPromise =
+			connection.messageSource === extensionMessageSource
+				? new Promise((resolve) => {
+						connection.once("extensionConnected", resolve);
+				  })
+				: new Promise((resolve) => {
+						connection.once("tabConnected", resolve);
+				  });
+
+		connection.connectToBackgroundService();
+		await initPromise;
+		console.log("Initialization complete");
 		return connection;
 	}
 
@@ -81,8 +90,6 @@ export class BackgroundConnection
 		private readonly messageSource: string,
 	) {
 		super();
-
-		this.connectToBackgroundService();
 	}
 
 	/**
@@ -164,20 +171,22 @@ export class BackgroundConnection
 		this.backgroundServiceConnection = browser.runtime.connect({
 			name: "Devtools-Background-Port",
 		});
-
-		// Relay the tab ID to the background service worker.
-		const initMessage: DevToolsInitMessage = {
-			source: this.messageSource,
-			type: devToolsInitMessageType,
-			data: {
-				tabId: browser.devtools.inspectedWindow.tabId,
-			},
-		};
-		postMessageToPort(
-			initMessage,
-			this.backgroundServiceConnection,
-			devtoolsScriptMessageLoggingOptions,
-		);
+		if (this.messageSource === extensionMessageSource) {
+			this.emit("extensionConnected");
+		} else {
+			const initMessage: DevToolsInitMessage = {
+				source: this.messageSource,
+				type: devToolsInitMessageType,
+				data: {
+					tabId: browser.devtools.inspectedWindow.tabId,
+				},
+			};
+			postMessageToPort(
+				initMessage,
+				this.backgroundServiceConnection,
+				devtoolsScriptMessageLoggingOptions,
+			);
+		}
 
 		// Bind listeners
 		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
