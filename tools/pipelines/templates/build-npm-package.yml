@@ -63,6 +63,9 @@ parameters:
     type: string
   - name: tagName
     type: string
+  - name: isReleaseGroup
+    type: boolean
+    default: false
   - name: includeInternalVersions
     type: boolean
     default: false
@@ -484,6 +487,7 @@ extends:
             parameters:
               namespace: '${{ parameters.namespace }}'
               tagName: '${{ parameters.tagName }}'
+              isReleaseGroup: ${{ parameters.isReleaseGroup }}
               publishNonScopedPackages: '${{ variables.publishNonScopedPackages }}'
       - stage: upload_run_telemetry
         displayName: Upload pipeline run telemetry to Kusto
