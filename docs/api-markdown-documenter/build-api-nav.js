@@ -31,6 +31,10 @@ async function buildNavBar(documents) {
 					: ApiItemUtilities.getUnscopedPackageName(associatedPackage);
 
 			if (kind === ApiItemKind.Package) {
+				if (packageMap.hasOwnProperty(displayName)) {
+					throw new Error("Package name collision!");
+				}
+
 				packageMap[displayName] = packageName;
 			} else if (validKinds.has(kind)) {
 				allAPIs[packageName] = allAPIs[packageName] || {};

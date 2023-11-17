@@ -19,6 +19,10 @@
 {{ $categoryCapitalized := "" }}
 {{ $leafNodeFound := false }}
 
+{{/* 
+  This splits the URL into segments for breadcrumb generation. If url parameters are added/modified, breadcrumb may not behave correctly.
+*/}}
+
 {{ $fullURL := trim .Page.RelPermalink "/" }}
 {{ $urlSegments := split $fullURL "/" }}
 {{ $packageName := index $urlSegments 2 }}
