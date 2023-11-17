@@ -230,7 +230,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		updateQuantity(legacyTree1, 123);
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
-		const testObj2 = await container2.getEntryPoint() as TestDataObject;
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		await provider.ensureSynchronized();
 
@@ -275,7 +275,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const container3 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const testObj3 = await container3.getEntryPoint() as TestDataObject;
+		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
 		const view3 = getNewTreeView(newTree3);
@@ -393,7 +393,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 				[LoaderHeader.version]: summaryVersion,
 			},
 		);
-		const testObj2 = await container2.getEntryPoint() as TestDataObject;
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
 		const view2 = getNewTreeView(newTree2);
@@ -464,7 +464,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const container4 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const testObj4 = await container4.getEntryPoint() as TestDataObject;
+		const testObj4 = (await container4.getEntryPoint()) as TestDataObject;
 		const shim4 = testObj4.getTree<SharedTreeShim>();
 		const newTree4 = shim4.currentTree;
 		const view4 = getNewTreeView(newTree4);
