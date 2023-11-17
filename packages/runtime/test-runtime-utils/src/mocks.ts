@@ -838,9 +838,7 @@ export class MockFluidDataStoreRuntime
 		});
 	}
 
-	public async applyStashedOp(content: any) {
-		return;
-	}
+	public async applyStashedOp(content: any): Promise<void> {}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {
 		return;

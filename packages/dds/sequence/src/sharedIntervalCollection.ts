@@ -185,7 +185,7 @@ export class SharedIntervalCollection
 		return label;
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

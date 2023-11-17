@@ -83,11 +83,11 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	}
 
 	// We are not capable of applying stashed v1 ops.
-	public applyStashedOp(contents: unknown): unknown {
+	public applyStashedOp(contents: unknown): void {
 		if (this.shouldDropOp(contents as IOpContents)) {
 			return;
 		}
-		return this.handler.applyStashedOp(contents);
+		this.handler.applyStashedOp(contents);
 	}
 
 	/**

@@ -247,7 +247,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.submitCommit(commit);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,

@@ -393,7 +393,7 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

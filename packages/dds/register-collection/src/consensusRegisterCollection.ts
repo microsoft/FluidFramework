@@ -349,8 +349,5 @@ export class ConsensusRegisterCollection<T>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp() {
-		// empty implementation
-		return () => {};
-	}
+	protected applyStashedOp(): void {}
 }

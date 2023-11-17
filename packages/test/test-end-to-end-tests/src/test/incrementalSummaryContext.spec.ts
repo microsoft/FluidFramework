@@ -182,7 +182,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 	}
 
 	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: any): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -448,7 +448,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 	}
 
 	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: any): void {
 		throw new Error("Method not implemented.");
 	}
 }

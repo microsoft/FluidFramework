@@ -20,7 +20,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): () => void;
+    protected applyStashedOp(): void;
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusRegisterCollection<T>;
     static getFactory(): ConsensusRegisterCollectionFactory;
     // (undocumented)

@@ -41,7 +41,7 @@ class MySharedObject extends SharedObject {
 	protected onDisconnect() {
 		throw new Error("Method not implemented.");
 	}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: any): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -71,7 +71,7 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected onDisconnect() {
 		throw new Error("Method not implemented.");
 	}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: any): void {
 		throw new Error("Method not implemented.");
 	}
 	public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {

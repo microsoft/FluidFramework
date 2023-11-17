@@ -836,7 +836,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
-    protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
+    protected applyStashedOp(op: unknown): void;
     attributeNodeId(id: NodeId): AttributionId;
     get attributionId(): AttributionId;
     convertToNodeId(id: StableNodeId): NodeId;

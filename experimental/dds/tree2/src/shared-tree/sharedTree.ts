@@ -354,7 +354,7 @@ export class SharedTree
 		}
 	}
 
-	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+	protected override applyStashedOp(content: JsonCompatibleReadOnly): void {
 		if (!this.storedSchema.tryApplyStashedOp(content)) {
 			return super.applyStashedOp(content);
 		}

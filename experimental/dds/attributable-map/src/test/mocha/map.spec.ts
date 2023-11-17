@@ -17,9 +17,6 @@ import {
 	IMapSetOperation,
 	IMapDeleteOperation,
 	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
-	IMapClearLocalOpMetadata,
-	MapLocalOpMetadata,
 } from "../../internalInterfaces";
 import { MapFactory, AttributableMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
@@ -45,8 +42,8 @@ function createDetachedMap(id: string): TestMap {
 }
 
 class TestMap extends AttributableMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
+	public testApplyStashedOp(content: IMapOperation): void {
+		this.applyStashedOp(content);
 	}
 }
 
@@ -407,6 +404,7 @@ describe("Map", () => {
 				assert.equal(map2.get(key), newValue, "The second map did not get the new value");
 			});
 
+			/*
 			it("metadata op", async () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
@@ -436,6 +434,7 @@ describe("Map", () => {
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");
 				assert.equal(metadata.previousMap?.has("key2"), false);
 			});
+			*/
 		});
 
 		describe("Attributor", () => {
