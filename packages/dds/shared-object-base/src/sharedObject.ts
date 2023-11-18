@@ -38,7 +38,7 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
-export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "fullHandles"> = Omit<
+export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles"> = Omit<
 	any,
 	"__handles_encoded__"
 > & {
@@ -47,7 +47,7 @@ export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "fu
 
 function takeEncoded(content: Content<"handlesEncoded">): void {}
 
-const decoded: Content = {};
+const decoded: Content<"fullHandles"> = {};
 
 // @ts-expect-error - Demonstrating that Content<true> and Content<false> are incompatible
 takeEncoded(decoded);

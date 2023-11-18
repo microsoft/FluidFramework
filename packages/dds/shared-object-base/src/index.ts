@@ -8,6 +8,9 @@ export {
 	IFluidSerializer,
 	ISerializedHandle,
 	isSerializedHandle,
+	JsonString,
+	parseJson,
+	serializeJson,
 } from "./serializer";
 export { SharedObject, SharedObjectCore, Content } from "./sharedObject";
 export { SummarySerializer } from "./summarySerializer";
