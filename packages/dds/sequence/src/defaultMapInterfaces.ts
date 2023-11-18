@@ -32,7 +32,7 @@ export interface IValueOpEmitter {
 	/**
 	 * Called by the value type to emit a value type operation through the container type holding it.
 	 * @param opName - Name of the emitted operation
-	 * @param previousValue -  JSONable previous value as defined by the value type @deprecated unused
+	 * @param previousValue - JSONable previous value as defined by the value type @deprecated unused
 	 * @param params - JSONable params for the operation as defined by the value type
 	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
 	 * @internal
