@@ -9,6 +9,8 @@ import {
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
 	ICriticalContainerError,
@@ -22,12 +24,12 @@ import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	normalizeError,
-	logIfFalse,
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	UsageError,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
@@ -112,6 +114,30 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		default:
 			return false;
 	}
+}
+
+/**
+ * Like assert, but logs only if the condition is false, rather than throwing
+ * @param condition - The condition to attest too
+ * @param logger - The logger to log with
+ * @param event - The string or event to log
+ * @returns The outcome of the condition
+ */
+function logIfFalse(
+	condition: unknown,
+	logger: ITelemetryBaseLogger,
+	event: string | ITelemetryGenericEventExt,
+): condition is true {
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	if (condition) {
+		return true;
+	}
+	const newEvent: ITelemetryBaseEvent =
+		typeof event === "string"
+			? { eventName: event, category: "error" }
+			: { category: "error", ...event };
+	logger.send(newEvent);
+	return false;
 }
 
 /**
