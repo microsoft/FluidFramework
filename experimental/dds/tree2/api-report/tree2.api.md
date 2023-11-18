@@ -1856,9 +1856,13 @@ export interface TreeLocation {
 }
 
 // @alpha
-export interface TreeMapNode<TSchema extends MapNodeSchema> extends ReadonlyMap<string, TreeField<TSchema["info"], "sharedTree", "notEmpty">> {
+export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema> extends TreeMapNodeBase<TreeField<TSchema["info"], "sharedTree", "notEmpty">> {
+}
+
+// @alpha
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
     delete(key: string): void;
-    set(key: string, value: TreeField<TSchema["info"], "sharedTree", "notEmpty"> | undefined): void;
+    set(key: string, value: TIn | undefined): void;
 }
 
 // @alpha (undocumented)
@@ -1869,7 +1873,7 @@ export const enum TreeNavigationResult {
 }
 
 // @alpha
-export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
+export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 // @alpha (undocumented)
 export type TreeNodeSchema = TreeNodeSchemaBase;

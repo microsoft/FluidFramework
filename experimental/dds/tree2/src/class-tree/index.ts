@@ -4,4 +4,5 @@
  */
 
 export { ITree, TreeView, TreeConfiguration } from "./tree";
-export { SchemaFactory } from "./schemaFactory";
+export { SchemaFactory, TreeNodeSchema } from "./schemaFactory";
+export { nodeApi as Tree, TreeApi } from "./treeApi";

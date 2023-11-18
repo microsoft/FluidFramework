@@ -10,8 +10,6 @@ import {
 	Opaque,
 	RestrictiveReadonlyRecord,
 	_InlineTrick,
-	fail,
-	getOrAddInMap,
 	requireAssignableTo,
 } from "../util";
 // eslint-disable-next-line import/no-internal-modules
@@ -24,19 +22,15 @@ import {
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
-import { Unhydrated } from "../simple-tree";
-import { integerIndexable } from "./integerIndexable";
+import { TreeListNodeBase, Unhydrated, TreeMapNodeBase } from "../simple-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { createNodeProxy } from "../simple-tree/proxies";
+// eslint-disable-next-line import/no-internal-modules
 
 type UnhydratedData = unknown;
 
-const nodeSymbol = Symbol("node");
-
-class NodeBase {
-	protected [nodeSymbol]: FlexTreeObjectNode | UnhydratedData;
-	public constructor(node: FlexTreeObjectNode | UnhydratedData) {
-		this[nodeSymbol] = node;
-	}
-}
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class NodeBase {}
 
 /**
  * Type erased references to an internal tree representation.
@@ -118,28 +112,21 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		name: Name,
 		t: T,
 	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, T, ObjectFromSchema<T>> {
-		const schema = class extends this.nodeSchema(name, NodeKind.Object, t) {
-			readonly [x: string]: unknown;
-
-			public constructor(dummy: UnhydratedData) {
-				// TODO: needs to work for create (above) case, as well as some programmatic construction for hydrated nodes.
-				super(dummy);
+		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
+			public constructor(editNode: FlexTreeNode | UnhydratedData) {
+				super();
+				// TODO: handle unhydrated data case.
+				// TODO: make return value a proxy over this (or not a proxy).
+				return createNodeProxy(editNode as FlexTreeNode) as schema;
 			}
-		};
-		// TODO: add fields to instance type.
-		{
-			type _check = requireAssignableTo<
-				typeof schema,
-				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Object, T>
-			>;
 		}
 
-		const retyped = schema as TreeNodeSchemaCore<`${TScope}.${Name}`, NodeKind.Object, T> &
-			(new (dummy: UnhydratedData) => InstanceType<typeof schema> & {
-				[Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
-			});
-
-		return retyped;
+		return schema as TreeNodeSchemaClass<
+			`${TScope}.${Name}`,
+			NodeKind.Object,
+			T,
+			ObjectFromSchema<T>
+		>;
 	}
 
 	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
@@ -149,74 +136,45 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		T,
-		Map<TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
 	> {
-		const schema = class extends this.nodeSchema(name, NodeKind.Map, t) {
-			public get(key: string): TreeNodeFromImplicitAllowedTypes<T> | undefined {
-				fail("todo");
+		class schema extends this.nodeSchema(name, NodeKind.Map, t) {
+			public constructor(editNode: FlexTreeNode | UnhydratedData) {
+				super();
+				// TODO: handle unhydrated data case.
+				// TODO: make return value a proxy over this (or not a proxy).
+				return createNodeProxy(editNode as FlexTreeNode) as schema;
 			}
-			public set(key: string, value: TreeNodeFromImplicitAllowedTypes<T> | undefined): void {
-				fail("todo");
-			}
-		};
-		{
-			type _check = requireAssignableTo<
-				typeof schema,
-				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Map, T>
-			>;
 		}
-		return schema;
+
+		return schema as TreeNodeSchemaClass<
+			`${TScope}.${Name}`,
+			NodeKind.Map,
+			T,
+			TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+		>;
 	}
 
 	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		t: T,
-	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
-		NodeKind.List,
-		T,
-		List<TreeNodeFromImplicitAllowedTypes<T>>
-	> {
+	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		class schema
-			extends this.nodeSchema(name, NodeKind.List, t)
-			implements List<TreeNodeFromImplicitAllowedTypes<T>>
-		{
+		class schema extends this.nodeSchema(name, NodeKind.List, t) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
 			public constructor(node: FlexTreeObjectNode | UnhydratedData) {
-				super(node);
-				return integerIndexable(this, this);
-			}
-
-			public get length(): number {
-				return fail("todo");
-			}
-
-			public read(index: number): TreeNodeFromImplicitAllowedTypes<T> {
-				return fail("todo");
-			}
-
-			public write(
-				index: number,
-				value: Unhydrated<TreeNodeFromImplicitAllowedTypes<T>>,
-			): boolean {
-				return fail("todo");
-			}
-
-			public moveToEnd(key: number): void {
-				fail("todo");
-			}
-
-			public at(index: number): TreeNodeFromImplicitAllowedTypes<T> | undefined {
-				fail("todo");
-			}
-
-			public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
-				return fail("todo");
+				super();
+				// TODO: make return value a proxy over this (or not a proxy).
+				return createNodeProxy(node as FlexTreeObjectNode) as schema;
 			}
 		}
-		return schema;
+		return schema as unknown as TreeNodeSchemaClass<
+			`${TScope}.${Name}`,
+			NodeKind.List,
+			T,
+			TreeListNode<T>
+		>;
 	}
 
 	public optional<const T extends ImplicitAllowedTypes>(
@@ -239,21 +197,16 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
 
-export interface List<T> {
-	[x: number]: T;
-	readonly length: number;
-
-	moveToEnd(key: number): void;
-
-	at(index: number): T | undefined;
-
-	[Symbol.iterator](): IterableIterator<T>;
-}
-
-export interface Map<T> {
-	get(key: string): T | undefined;
-	set(key: string, value: T | undefined): void;
-}
+/**
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
+export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+	extends TreeListNodeBase<
+		TreeNodeFromImplicitAllowedTypes<TTypes>,
+		Unhydrated<TreeNodeFromImplicitAllowedTypes<TTypes>>, // TODO: insertion type.
+		TreeListNode
+	> {}
 
 export type ObjectFromSchema<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
 	[Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
@@ -417,28 +370,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends new (data: any)
 	? Result
 	: ReturnType<Assume<T, TreeNodeSchemaNonClass>["create"]>;
 
-/**
- * A symbol for storing TreeObjectNode schema on FlexTreeObjectNode.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export const simpleNode = new WeakMap<FlexTreeObjectNode, unknown>();
-
-export function getSimpleNode(node: FlexTreeObjectNode): unknown {
-	return getOrAddInMap(simpleNode, node, () => {
-		const schema = node.schema;
-		if (simpleSchemaSymbol in schema) {
-			const simpleSchema = schema[simpleSchemaSymbol] as new (
-				dummy: FlexTreeObjectNode,
-			) => unknown;
-			return new simpleSchema(node);
-		}
-		// Item without simple schema;
-		// TODO: implement fallback for this case??
-		fail("missing schema");
-	});
-}
-
+// TODO: unify this with logic in getOrCreateNodeProxy
 export function createTree<T extends TreeNodeSchema>(schema: T, data: unknown): NodeFromSchema<T> {
 	if (typeof schema === "function") {
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -446,6 +378,8 @@ export function createTree<T extends TreeNodeSchema>(schema: T, data: unknown): 
 	}
 	return schema.create(data) as NodeFromSchema<T>;
 }
+
+// Set simpleSchemaSymbol on view schema!
 
 /**
  * Ideas:

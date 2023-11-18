@@ -241,6 +241,7 @@ export {
 	TreeNode,
 	TreeObjectFactory,
 	FactoryTreeSchema,
+	TreeMapNodeBase,
 } from "./simple-tree";
 
 export {

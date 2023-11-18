@@ -37,6 +37,7 @@ import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
+import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	TreeField,
@@ -45,6 +46,7 @@ import {
 	TreeListNode,
 	TreeMapNode,
 	TreeObjectNode,
+	TreeNode,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 
@@ -91,33 +93,63 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 	}
 }
 
+/**
+ * A symbol for storing TreeObjectNode schema on FlexTreeObjectNode.
+ */
+export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
+
+export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
+	if (simpleSchemaSymbol in schema) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+	}
+	return undefined;
+}
+
 export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
-	editNode: FlexTreeNode,
+	flexNode: FlexTreeNode,
 ): TypedNode<TSchema> {
-	const cachedProxy = tryGetEditNodeTarget(editNode);
+	const cachedProxy = tryGetEditNodeTarget(flexNode);
 	if (cachedProxy !== undefined) {
 		return cachedProxy as TypedNode<TSchema>;
 	}
 
+	const schema = flexNode.schema;
+	let output: TypedNode<TSchema>;
+	const classSchema = getClassSchema(schema);
+	if (classSchema !== undefined) {
+		if (typeof classSchema === "function") {
+			const simpleSchema = classSchema as new (dummy: FlexTreeNode) => TypedNode<TSchema>;
+			output = new simpleSchema(flexNode);
+		} else {
+			output = (
+				schema as unknown as { create: (data: FlexTreeNode) => TypedNode<TSchema> }
+			).create(flexNode);
+		}
+	} else {
+		// Fallback to createNodeProxy if needed.
+		// TODO: maybe remove this fallback and error once migration to class based schema is done.
+		output = createNodeProxy<TSchema>(flexNode);
+	}
+
+	if (!schemaIsLeaf(flexNode.schema)) {
+		setEditNode(output as TreeNode, flexNode);
+	}
+	return output;
+}
+
+export function createNodeProxy<TSchema extends TreeNodeSchema>(
+	editNode: FlexTreeNode,
+): TypedNode<TSchema> {
 	const schema = editNode.schema;
 	if (schemaIsLeaf(schema)) {
 		return editNode.value as TypedNode<TSchema>;
-	}
-	if (schemaIsMap(schema)) {
-		return setEditNode(
-			createMapProxy(),
-			editNode as FlexTreeMapNode<MapNodeSchema>,
-		) as TypedNode<TSchema>;
+	} else if (schemaIsMap(schema)) {
+		return createMapProxy() as TypedNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
-		return setEditNode(
-			createListProxy(),
-			editNode as FlexTreeFieldNode<FieldNodeSchema>,
-		) as TypedNode<TSchema>;
+		return createListProxy() as TypedNode<TSchema>;
 	} else if (schemaIsObjectNode(schema)) {
-		return setEditNode(
-			createObjectProxy(schema),
-			editNode as FlexTreeObjectNode,
-		) as TypedNode<TSchema>;
+		return createObjectProxy(schema) as TypedNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -551,18 +583,18 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
-		value(this: TreeMapNode<MapNodeSchema>) {
+		value(this: TreeMapNode) {
 			return this.entries();
 		},
 	},
 	delete: {
-		value(this: TreeMapNode<MapNodeSchema>, key: string): void {
+		value(this: TreeMapNode, key: string): void {
 			const node = getEditNode(this);
 			node.delete(key);
 		},
 	},
 	entries: {
-		*value(this: TreeMapNode<MapNodeSchema>): IterableIterator<[string, unknown]> {
+		*value(this: TreeMapNode): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
 			for (const key of node.keys()) {
 				yield [key, getProxyForField(node.getBoxed(key))];
@@ -570,30 +602,30 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	get: {
-		value(this: TreeMapNode<MapNodeSchema>, key: string): unknown {
+		value(this: TreeMapNode, key: string): unknown {
 			const node = getEditNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
-		value(this: TreeMapNode<MapNodeSchema>, key: string): boolean {
+		value(this: TreeMapNode, key: string): boolean {
 			const node = getEditNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
-		value(this: TreeMapNode<MapNodeSchema>): IterableIterator<string> {
+		value(this: TreeMapNode): IterableIterator<string> {
 			const node = getEditNode(this);
 			return node.keys();
 		},
 	},
 	set: {
 		value(
-			this: TreeMapNode<MapNodeSchema>,
+			this: TreeMapNode,
 			key: string,
 			value: TreeNodeUnion<AllowedTypes, "javaScript">,
-		): TreeMapNode<MapNodeSchema> {
+		): TreeMapNode {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
@@ -606,12 +638,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	size: {
-		get(this: TreeMapNode<MapNodeSchema>) {
+		get(this: TreeMapNode) {
 			return getEditNode(this).size;
 		},
 	},
 	values: {
-		*value(this: TreeMapNode<MapNodeSchema>): IterableIterator<unknown> {
+		*value(this: TreeMapNode): IterableIterator<unknown> {
 			for (const [, value] of this.entries()) {
 				yield value;
 			}

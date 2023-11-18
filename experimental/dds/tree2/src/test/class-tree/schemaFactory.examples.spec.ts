@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaFactory } from "../../class-tree/schemaFactory";
-import { ITree, TreeConfiguration, TreeView } from "../../class-tree";
-import { Tree } from "../../simple-tree";
+import { SchemaFactory, ITree, TreeConfiguration, TreeView, Tree } from "../../class-tree";
 
 // Since this no longer follows the builder pattern its a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
