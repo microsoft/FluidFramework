@@ -32,38 +32,43 @@ import {
  * Using default parameters, this could be combined with TypedNode.
  * @alpha
  */
-export type TreeNode =
-	| TreeListNode<AllowedTypes>
-	| TreeObjectNode<ObjectNodeSchema>
-	| TreeMapNode<MapNodeSchema>;
+export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
-export interface TreeListNode<
-	TTypes extends AllowedTypes,
-	API extends "javaScript" | "sharedTree" = "sharedTree",
-> extends ReadonlyArray<TreeNodeUnion<TTypes, API>> {
+export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
+	extends TreeListNodeBase<
+		TreeNodeUnion<TTypes>,
+		TreeNodeUnion<TTypes, "javaScript">,
+		TreeListNode
+	> {}
+
+/**
+ * A generic List type, used to defined types like {@link TreeListNode}.
+ * @alpha
+ */
+export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAt(index: number, value: Iterable<TNew>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAtStart(value: Iterable<TNew>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAtEnd(value: Iterable<TNew>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -95,7 +100,7 @@ export interface TreeListNode<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToStart(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+	moveToStart(sourceIndex: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified item to the end of the list.
@@ -110,7 +115,7 @@ export interface TreeListNode<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToEnd(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+	moveToEnd(sourceIndex: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified item to the desired location in the list.
@@ -128,7 +133,7 @@ export interface TreeListNode<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
-	moveToIndex(index: number, sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the start of the list.
@@ -146,11 +151,7 @@ export interface TreeListNode<
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source: TreeListNode<AllowedTypes>,
-	): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the end of the list.
@@ -168,11 +169,7 @@ export interface TreeListNode<
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source: TreeListNode<AllowedTypes>,
-	): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
 	/**
 	 * Moves the specified items to the desired location within the list.
@@ -197,7 +194,7 @@ export interface TreeListNode<
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: TreeListNode<AllowedTypes>,
+		source: TMoveFrom,
 	): void;
 }
 
@@ -354,7 +351,7 @@ export type TypedNode<
 		: ReadonlyMap<string, TreeField<TSchema["info"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? TreeListNode<TSchema["info"]["allowedTypes"], API>
+		? TreeListNode<TSchema["info"]["allowedTypes"]>
 		: readonly TreeNodeUnion<TSchema["info"]["allowedTypes"], API>[]
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema, API>
