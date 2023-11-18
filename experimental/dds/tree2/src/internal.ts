@@ -42,3 +42,5 @@ export {
 	FactoryObjectNodeSchemaRecursive,
 	testRecursiveDomain,
 } from "./domains";
+
+export { TreeListNodeBase } from "./simple-tree";
