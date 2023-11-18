@@ -10582,6 +10582,7 @@ importers:
       '@types/mocha': ^9.1.1
       c8: ^7.7.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -10610,6 +10611,7 @@ importers:
       '@types/mocha': 9.1.1
       c8: 7.14.0
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -10799,6 +10801,7 @@ importers:
       '@types/mocha': ^9.1.1
       c8: ^7.7.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -10841,6 +10844,7 @@ importers:
       '@types/mocha': 9.1.1
       c8: 7.14.0
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -11032,6 +11036,7 @@ importers:
       chai: ^4.2.0
       chalk: ^2.4.2
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -11104,6 +11109,7 @@ importers:
       chai: 4.3.10
       chalk: 2.4.2
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -11282,6 +11288,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/json-stable-stringify': ^1.0.32
       '@types/node': ^16.18.38
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       json-stable-stringify: ^1.0.1
       prettier: ~3.0.3
@@ -11324,6 +11331,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/json-stable-stringify': 1.0.34
       '@types/node': 16.18.58
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -11363,6 +11371,7 @@ importers:
       axios: ^0.26.0
       buffer: ^6.0.3
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       express: ^4.16.3
@@ -11423,6 +11432,7 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       fs-extra: 9.1.0
