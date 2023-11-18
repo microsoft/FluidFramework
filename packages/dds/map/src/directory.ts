@@ -16,7 +16,12 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import {
+	Content,
+	IFluidSerializer,
+	SharedObject,
+	ValueType,
+} from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
 import {
@@ -205,9 +210,12 @@ export type IDirectorySubDirectoryOperation =
 /**
  * Any operation on a directory.
  *
+ * @remarks - Handles should be encoded in the payload so the op is ready to be serialized.
+ *
  * @public
  */
-export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) &
+	Content<"handlesEncoded">;
 
 /**
  * Create info for the subdirectory.

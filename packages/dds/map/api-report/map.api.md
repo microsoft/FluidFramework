@@ -4,6 +4,7 @@
 
 ```ts
 
+import { Content } from '@fluidframework/shared-object-base';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -115,7 +116,7 @@ export interface IDirectoryNewStorageFormat {
 }
 
 // @public
-export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) & Content<"handlesEncoded">;
 
 // @public
 export interface IDirectorySetOperation {

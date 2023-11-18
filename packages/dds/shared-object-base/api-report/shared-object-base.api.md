@@ -23,6 +23,11 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
+// @public (undocumented)
+export type Content<HandlesEncoded extends boolean = false> = Omit<any, "__handles_encoded__"> & {
+    __handles_encoded__: HandlesEncoded;
+};
+
 // @public
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
@@ -138,7 +143,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    protected submitLocalMessage(content: Content<true>, localOpMetadata?: unknown): void;
     // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }

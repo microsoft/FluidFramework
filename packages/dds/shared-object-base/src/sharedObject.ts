@@ -38,6 +38,20 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
+export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "fullHandles"> = Omit<
+	any,
+	"__handles_encoded__"
+> & {
+	__handles_encoded__?: HandlesStatus;
+};
+
+function takeEncoded(content: Content<"handlesEncoded">): void {}
+
+const decoded: Content = {};
+
+// @ts-expect-error - Demonstrating that Content<true> and Content<false> are incompatible
+takeEncoded(decoded);
+
 /**
  * Base class from which all shared objects derive.
  */
@@ -351,7 +365,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+	protected submitLocalMessage(
+		content: Content<"handlesEncoded">,
+		localOpMetadata: unknown = undefined,
+	): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

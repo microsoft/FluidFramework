@@ -9,7 +9,7 @@ export {
 	ISerializedHandle,
 	isSerializedHandle,
 } from "./serializer";
-export { SharedObject, SharedObjectCore } from "./sharedObject";
+export { SharedObject, SharedObjectCore, Content } from "./sharedObject";
 export { SummarySerializer } from "./summarySerializer";
 export { ISharedObject, ISharedObjectEvents } from "./types";
 export {
