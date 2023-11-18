@@ -23,9 +23,8 @@ export const connectedEventName = "connected";
  */
 export const disconnectedEventName = "disconnected";
 
+// eslint-disable-next-line jsdoc/require-description
 /**
- * TODO
- *
  * @internal
  */
 export function safeRaiseEvent(
