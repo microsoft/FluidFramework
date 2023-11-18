@@ -409,7 +409,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
 				const sourceNode = sourceField.boxedAt(sourceStart);
-				if (!this.schema.types.has(sourceNode.schema.name)) {
+				if (sourceNode === undefined || !this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}

@@ -527,12 +527,13 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 		get: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
+			const value = maybeIndex === undefined ? undefined : field.boxedAt(maybeIndex);
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
 			return maybeIndex !== undefined
-				? getOrCreateNodeProxy(field.boxedAt(maybeIndex))
+				? value && getOrCreateNodeProxy(value)
 				: // Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				  (Reflect.get(dispatch, key, proxy) as unknown);
 		},
@@ -562,13 +563,14 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
+				const val = field.boxedAt(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
 					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
 					//       inner field.
-					value: getOrCreateNodeProxy(field.boxedAt(maybeIndex)),
+					value: val === undefined ? val : getOrCreateNodeProxy(val),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
@@ -900,7 +902,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 function getListChildNode(
 	listNode: FlexTreeFieldNode<FieldNodeSchema>,
 	index: number,
-): FlexTreeNode {
+): FlexTreeNode | undefined {
 	const field = listNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,
