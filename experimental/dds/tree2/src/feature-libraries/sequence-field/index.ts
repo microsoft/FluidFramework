@@ -19,7 +19,6 @@ export {
 	MoveId,
 	ProtoNode,
 	Attach,
-	ReturnFrom,
 	NoopMark,
 	LineageEvent,
 	CellId,

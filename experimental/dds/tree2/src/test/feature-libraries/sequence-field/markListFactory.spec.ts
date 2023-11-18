@@ -105,7 +105,7 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [delete1, delete2]);
 	});
 
-	it("Can merge adjacent moves ", () => {
+	it("Can merge adjacent moves", () => {
 		const factory = new SF.MarkListFactory();
 		const moveOut1 = Mark.moveOut(1, brand(0));
 		const moveOut2 = Mark.moveOut(1, brand(1));
@@ -124,7 +124,7 @@ describe("SequenceField - MarkListFactory", () => {
 		]);
 	});
 
-	it("Can merge three adjacent moves ", () => {
+	it("Can merge three adjacent moves", () => {
 		const factory = new SF.MarkListFactory();
 		const moveOut1 = Mark.moveOut(1, brand(0));
 		const moveOut2 = Mark.moveOut(1, brand(1));
@@ -185,28 +185,28 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
-	it("Can merge consecutive return-from", () => {
+	it("Can merge consecutive move-out", () => {
 		const factory = new SF.MarkListFactory();
-		const return1 = Mark.returnFrom(1, brand(0), {
+		const return1 = Mark.moveOut(1, brand(0), {
 			detachIdOverride: { revision: detachedBy, localId: brand(10) },
 		});
-		const return2 = Mark.returnFrom(2, brand(1), {
+		const return2 = Mark.moveOut(2, brand(1), {
 			detachIdOverride: { revision: detachedBy, localId: brand(11) },
 		});
 		factory.pushContent(return1);
 		factory.pushContent(return2);
-		const expected = Mark.returnFrom(3, brand(0), {
+		const expected = Mark.moveOut(3, brand(0), {
 			detachIdOverride: { revision: detachedBy, localId: brand(10) },
 		});
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
-	it("Does not merge consecutive return-from with discontinuous detach overrides", () => {
+	it("Does not merge consecutive move-out with discontinuous detach overrides", () => {
 		const factory = new SF.MarkListFactory();
-		const return1 = Mark.returnFrom(1, brand(0), {
+		const return1 = Mark.moveOut(1, brand(0), {
 			detachIdOverride: { revision: detachedBy, localId: brand(10) },
 		});
-		const return2 = Mark.returnFrom(2, brand(1), {
+		const return2 = Mark.moveOut(2, brand(1), {
 			detachIdOverride: { revision: detachedBy, localId: brand(42) },
 		});
 		factory.pushContent(return1);

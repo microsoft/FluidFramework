@@ -284,29 +284,6 @@ function createMoveInMark(
 }
 
 /**
- * @param count - The number of nodes to be detached.
- * @param markId - The id to associate with the mark.
- * Defines how later edits refer the emptied cells.
- * @param overrides - Any additional properties to add to the mark.
- */
-function createReturnFromMark<TChange = never>(
-	count: number,
-	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.ReturnFrom, TChange>>,
-): SF.CellMark<SF.ReturnFrom, TChange> {
-	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.ReturnFrom, TChange> = {
-		type: "ReturnFrom",
-		count,
-		id: atomId.localId,
-	};
-	if (atomId.revision !== undefined) {
-		mark.revision = atomId.revision;
-	}
-	return { ...mark, ...overrides };
-}
-
-/**
  * @param count - The number of nodes to attach.
  * @param markId - The id to associate with the mark.
  * @param cellId - The cell to return the nodes to.
@@ -398,7 +375,6 @@ export const MarkMaker = {
 	modify: createModifyMark,
 	moveOut: createMoveOutMark,
 	moveIn: createMoveInMark,
-	returnFrom: createReturnFromMark,
 	returnTo: createReturnToMark,
 	attachAndDetach: createAttachAndDetachMark,
 };

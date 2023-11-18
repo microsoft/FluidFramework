@@ -11,7 +11,6 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ReturnFrom,
 	NoopMarkType,
 	MoveOut,
 	NoopMark,
@@ -140,8 +139,7 @@ function invertMark<TNodeChange>(
 			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
 			return [inverse];
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
+		case "MoveOut": {
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,
@@ -191,8 +189,8 @@ function invertMark<TNodeChange>(
 			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
-				type: "ReturnFrom",
+			const invertedMark: CellMark<MoveOut, TNodeChange> = {
+				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
 			};
@@ -310,7 +308,7 @@ function invertMark<TNodeChange>(
 }
 
 function applyMovedChanges<TNodeChange>(
-	mark: CellMark<MoveOut | ReturnFrom, TNodeChange>,
+	mark: CellMark<MoveOut, TNodeChange>,
 	revision: RevisionTag | undefined,
 	manager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {

@@ -561,11 +561,7 @@ describe("SequenceField - Rebase", () => {
 			revision: tag3,
 			localId: brand(0),
 		};
-		const move = [
-			Mark.returnTo(1, brand(0), cellId),
-			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
-		];
+		const move = [Mark.returnTo(1, brand(0), cellId), { count: 2 }, Mark.moveOut(1, brand(0))];
 		const expected = [Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
 		assert.deepEqual(rebased, expected);
@@ -576,11 +572,7 @@ describe("SequenceField - Rebase", () => {
 			revision: tag3,
 			localId: brand(0),
 		};
-		const move = [
-			Mark.returnFrom(1, brand(0)),
-			{ count: 2 },
-			Mark.returnTo(1, brand(0), cellId),
-		];
+		const move = [Mark.moveOut(1, brand(0)), { count: 2 }, Mark.returnTo(1, brand(0), cellId)];
 		const expected = [{ count: 2 }, Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
 		assert.deepEqual(rebased, expected);
@@ -597,11 +589,11 @@ describe("SequenceField - Rebase", () => {
 				localId: brand(0),
 			}),
 			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 		];
 		const return2 = [
 			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(0), {
 				revision: tag3,
@@ -609,7 +601,7 @@ describe("SequenceField - Rebase", () => {
 			}),
 		];
 		const expected = [
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 			{ count: 4 },
 			Mark.returnTo(1, brand(0), {
 				revision: tag3,
@@ -624,7 +616,7 @@ describe("SequenceField - Rebase", () => {
 		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
 		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
 		const expected = [
-			Mark.returnFrom(2, brand(0)),
+			Mark.moveOut(2, brand(0)),
 			{ count: 2 },
 			Mark.returnTo(2, brand(0), {
 				revision: tag1,
@@ -769,7 +761,7 @@ describe("SequenceField - Rebase", () => {
 				adjacentCells: [{ id: brand(1), count: 1 }],
 			}),
 			{ count: 1 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 		];
 		assert.deepEqual(rebased, expected);
 	});
@@ -796,7 +788,7 @@ describe("SequenceField - Rebase", () => {
 					localId: brand(2),
 					adjacentCells: [{ id: brand(2), count: 1 }],
 				},
-				Mark.returnFrom(1, brand(0)),
+				Mark.moveOut(1, brand(0)),
 			),
 		];
 		assert.deepEqual(rebased, expected);
@@ -861,7 +853,7 @@ describe("SequenceField - Rebase", () => {
 		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const cellDst: ChangeAtomId = { revision: tag3, localId: brand(0) };
 		const reviveAndMove = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst),
 		];
@@ -875,19 +867,19 @@ describe("SequenceField - Rebase", () => {
 		const cellDst1: ChangeAtomId = { revision: tag3, localId: brand(1) };
 		const cellDst2: ChangeAtomId = { revision: tag3, localId: brand(2) };
 		const reviveAndMove1 = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst1),
 		];
 		const reviveAndMove2 = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 4 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
 		const rebased = rebase(reviveAndMove2, reviveAndMove1);
 		const expected = [
 			{ count: 2 },
-			Mark.returnFrom(1, brand(1)),
+			Mark.moveOut(1, brand(1)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];

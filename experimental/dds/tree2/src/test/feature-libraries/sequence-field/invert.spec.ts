@@ -141,11 +141,11 @@ describe("SequenceField - Invert", () => {
 		const expected: TestChangeset = [
 			Mark.returnTo(2, brand(0), cellId),
 			{ count: 3 },
-			Mark.returnFrom(1, brand(0), {
+			Mark.moveOut(1, brand(0), {
 				detachIdOverride: cellId,
 				changes: inverseChildChange1,
 			}),
-			Mark.returnFrom(1, brand(1), {
+			Mark.moveOut(1, brand(1), {
 				detachIdOverride: { revision: tag1, localId: brand(1) },
 			}),
 		];
@@ -207,7 +207,7 @@ describe("SequenceField - Invert", () => {
 				Mark.delete(1, brand(0)),
 			),
 			{ count: 1 },
-			Mark.returnFrom(1, brand(1), { changes: inverseChildChange1 }),
+			Mark.moveOut(1, brand(1), { changes: inverseChildChange1 }),
 		];
 
 		assert.deepEqual(inverse, expected);
@@ -224,7 +224,7 @@ describe("SequenceField - Invert", () => {
 		const expected = [
 			Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			{ count: 1 },
-			Mark.returnFrom(1, brand(0), {
+			Mark.moveOut(1, brand(0), {
 				cellId: { revision: tag1, localId: brand(1) },
 				changes: inverseChildChange1,
 			}),
@@ -256,10 +256,10 @@ describe("SequenceField - Invert", () => {
 			{ count: 1 },
 			Mark.attachAndDetach(
 				Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
-				Mark.returnFrom(1, brand(0)),
+				Mark.moveOut(1, brand(0)),
 			),
 			{ count: 1 },
-			Mark.returnFrom(1, brand(1), {
+			Mark.moveOut(1, brand(1), {
 				changes: inverseChildChange1,
 				finalEndpoint: { localId: brand(0) },
 			}),

@@ -30,7 +30,6 @@ import {
 	Mark,
 	MoveIn,
 	MoveOut,
-	ReturnFrom,
 	NoopMark,
 	Changeset,
 	MoveId,
@@ -157,7 +156,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		getOverrideDetachId(mark) ?? {
+		mark.detachIdOverride ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -169,12 +168,6 @@ function getIntentionIfMetadataProvided(
 	metadata: RevisionMetadataSource | undefined,
 ): RevisionTag | undefined {
 	return metadata === undefined ? revision : getIntention(revision, metadata);
-}
-
-function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
-	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
-		? mark.detachIdOverride
-		: undefined;
 }
 
 /**
@@ -343,7 +336,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.cellId !== undefined;
 		case "Delete":
 		case "MoveOut":
-		case "ReturnFrom":
 		case "AttachAndDetach":
 			return true;
 		case "MoveIn":
@@ -379,7 +371,6 @@ export function isImpactful(
 		}
 		case "AttachAndDetach":
 		case "MoveOut":
-		case "ReturnFrom":
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
@@ -435,7 +426,7 @@ export function areOverlappingIdRanges(
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
-	return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
+	return type === "Delete" || type === "MoveOut";
 }
 
 export function isDeleteMark<TNodeChange>(
@@ -545,7 +536,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(getOverrideDetachId(lhs), lhsCount, getOverrideDetachId(rhs))
+		!areMergeableCellIds(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride)
 	) {
 		return undefined;
 	}
@@ -572,16 +563,11 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
+		case "MoveOut": {
+			const lhsMoveOut = lhs as MoveOut;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
-				haveMergeableIdOverrides(
-					lhsMoveOut as Partial<ReturnFrom>,
-					lhsCount,
-					rhs as Partial<ReturnFrom>,
-				) &&
+				haveMergeableIdOverrides(lhsMoveOut, lhsCount, rhs) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;
@@ -1032,21 +1018,12 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect1, effect2];
 		}
 		case "MoveOut": {
-			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveOut;
-			if (move2.finalEndpoint !== undefined) {
-				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
-			}
-
-			return [effect, effect2];
-		}
-		case "ReturnFrom": {
 			const effect2 = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
 
-			const return2 = effect2 as ReturnFrom;
+			const return2 = effect2 as MoveOut;
 
 			if (return2.detachIdOverride !== undefined) {
 				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);

@@ -101,14 +101,6 @@ describe("SequenceField - Compose", () => {
 				{ changes, cellId: { revision: tag1, localId: brand(2) } },
 			),
 			Mark.moveIn(1, { localId: brand(3) }),
-			Mark.returnFrom(1, { localId: brand(4) }, { changes }),
-			Mark.returnTo(1, { localId: brand(4) }, { revision: tag1, localId: brand(3) }),
-			Mark.returnFrom(
-				1,
-				{ localId: brand(5) },
-				{ changes, cellId: { revision: tag1, localId: brand(4) } },
-			),
-			Mark.returnTo(1, { localId: brand(5) }, { revision: tag1, localId: brand(5) }),
 			Mark.attachAndDetach(
 				Mark.insert(1, { localId: brand(6) }),
 				Mark.delete(1, { localId: brand(0) }),
@@ -121,7 +113,7 @@ describe("SequenceField - Compose", () => {
 			callCount += 1;
 			return changes;
 		});
-		assert.equal(callCount, 12);
+		assert.equal(callCount, 10);
 	});
 
 	it("delete ○ revive => Noop", () => {
@@ -800,7 +792,7 @@ describe("SequenceField - Compose", () => {
 			{ count: 4 },
 			Mark.attachAndDetach(
 				Mark.returnTo(1, { revision: tag3, localId: brand(0) }, cellId1),
-				Mark.returnFrom(1, { revision: tag4, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag4, localId: brand(0) }),
 			),
 		];
 		assert.deepEqual(actual, expected);
@@ -818,8 +810,8 @@ describe("SequenceField - Compose", () => {
 				{ revision: tag1, localId: brand(0) },
 			),
 			{ count: 3 },
-			Mark.returnFrom(1, brand(0), { revision: tag4, changes }),
-			Mark.returnFrom(1, brand(1), { revision: tag4 }),
+			Mark.moveOut(1, brand(0), { revision: tag4, changes }),
+			Mark.moveOut(1, brand(1), { revision: tag4 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -1051,7 +1043,7 @@ describe("SequenceField - Compose", () => {
 			[
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				{ count: 1 },
-				Mark.returnFrom(1, brand(0), {
+				Mark.moveOut(1, brand(0), {
 					detachIdOverride: { revision: tag1, localId: brand(0) },
 				}),
 			],
@@ -1159,7 +1151,7 @@ describe("SequenceField - Compose", () => {
 			{ count: 1 },
 			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag2, localId: brand(0) }),
-				Mark.returnFrom(1, { revision: tag3, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
 			),
 		];
 

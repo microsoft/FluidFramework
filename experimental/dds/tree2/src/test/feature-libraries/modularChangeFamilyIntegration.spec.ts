@@ -360,7 +360,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.returnFrom(1, brand(1), { changes: node2Expected }),
+				MarkMaker.moveOut(1, brand(1), { changes: node2Expected }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
@@ -372,7 +372,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.returnFrom(1, brand(0), { changes: node1Expected }),
+				MarkMaker.moveOut(1, brand(0), { changes: node1Expected }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];

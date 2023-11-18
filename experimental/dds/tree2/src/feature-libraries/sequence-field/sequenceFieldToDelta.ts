@@ -131,8 +131,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					}
 					break;
 				}
-				case "MoveOut":
-				case "ReturnFrom": {
+				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
 					if (inputCellId === undefined) {

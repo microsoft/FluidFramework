@@ -90,22 +90,11 @@ export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
 }
 
 export function isMoveSource(effect: MarkEffect): effect is MoveSource {
-	switch (effect.type) {
-		case "MoveOut":
-		case "ReturnFrom":
-			return true;
-		default:
-			return false;
-	}
+	return effect.type === "MoveOut";
 }
 
 export function isMoveDestination(effect: MarkEffect): effect is MoveDestination {
-	switch (effect.type) {
-		case "MoveIn":
-			return true;
-		default:
-			return false;
-	}
+	return effect.type === "MoveIn";
 }
 
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
@@ -362,8 +351,7 @@ export function applyMoveEffectsToMark<T>(
 	} else if (isMoveMark(mark)) {
 		const type = mark.type;
 		switch (type) {
-			case "MoveOut":
-			case "ReturnFrom": {
+			case "MoveOut": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
