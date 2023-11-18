@@ -395,7 +395,7 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
 
 // @internal @deprecated
 export interface IValueOpEmitter {
-    emit(opName: IntervalOpType, previousValue: unknown, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
+    emit(opName: IntervalOpType, previousValue: undefined, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
 // @alpha

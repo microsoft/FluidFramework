@@ -26,20 +26,20 @@ export interface IValueChanged {
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
  * @internal
- * @deprecated - will be remove from public api
+ *
  */
 export interface IValueOpEmitter {
 	/**
 	 * Called by the value type to emit a value type operation through the container type holding it.
 	 * @param opName - Name of the emitted operation
-	 * @param previousValue - JSONable previous value as defined by the value type
+	 * @param previousValue -  JSONable previous value as defined by the value type @deprecated unused
 	 * @param params - JSONable params for the operation as defined by the value type
 	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
 	 * @internal
 	 */
 	emit(
 		opName: IntervalOpType,
-		previousValue: unknown,
+		previousValue: undefined,
 		params: SerializedIntervalDelta,
 		localOpMetadata: IMapMessageLocalMetadata,
 	): void;
