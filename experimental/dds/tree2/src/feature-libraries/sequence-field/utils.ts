@@ -41,6 +41,7 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
+	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -268,42 +269,6 @@ export function isTransientEffect(effect: MarkEffect): effect is TransientEffect
 	return effect.type === "Transient";
 }
 
-/**
- * @returns The nested changes from `mark` if they apply to the content the mark refers to.
- */
-export function getEffectiveNodeChanges<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): TNodeChange | undefined {
-	const changes = mark.changes;
-	if (changes === undefined) {
-		return undefined;
-	}
-	const type = mark.type;
-	assert(type !== "MoveIn", 0x7dd /* MoveIn marks should not have changes */);
-	switch (type) {
-		case "Insert":
-			if (isNewAttach(mark)) {
-				return changes;
-			} else {
-				// So long as the input cell is populated, the nested changes are still effective
-				// (even if the revive is preempted) because the nested changes can only target the node in the populated
-				// cell.
-				return areInputCellsEmpty(mark) && !isActiveReattach(mark) ? undefined : changes;
-			}
-		case "Transient":
-			// TODO: Check if attach is active
-			return changes;
-		case NoopMarkType:
-		case "Placeholder":
-		case "Delete":
-		case "MoveOut":
-		case "ReturnFrom":
-			return areInputCellsEmpty(mark) ? undefined : changes;
-		default:
-			unreachableCase(type);
-	}
-}
-
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
 	return mark.cellId !== undefined;
 }
@@ -424,6 +389,14 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
+function haveMergeableIdOverrides(
+	lhs: InverseAttachFields,
+	lhsCount: number,
+	rhs: InverseAttachFields,
+): boolean {
+	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
+}
+
 function areMergeableCellIds(
 	lhs: CellId | undefined,
 	lhsCount: number,
@@ -516,17 +489,25 @@ function tryMergeEffects(
 			break;
 		}
 		case "Delete": {
-			const lhsDetach = lhs as Detach;
-			if ((lhsDetach.id as number) + lhsCount === rhs.id) {
+			const lhsDetach = lhs as Delete;
+			if (
+				(lhsDetach.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
+			) {
 				return lhsDetach;
 			}
 			break;
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut;
+			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(
+					lhsMoveOut as Partial<ReturnFrom>,
+					lhsCount,
+					rhs as Partial<ReturnFrom>,
+				) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;

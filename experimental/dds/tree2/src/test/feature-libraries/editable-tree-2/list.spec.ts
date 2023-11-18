@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { createTreeView2, pretty } from "./utils";
+import { viewWithContent } from "../../utils";
+import { pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
 
@@ -57,8 +58,11 @@ describe("List", () => {
 
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
 	function createTree() {
-		// Consider 'initializeTreeWithContent' for readonly tests?
-		const view = createTreeView2(schema, { numbers: { "": [] }, strings: { "": [] } });
+		// Consider 'readonlyTreeWithContent' for readonly tests?
+		const view = viewWithContent({
+			schema,
+			initialTree: { numbers: { "": [] }, strings: { "": [] } },
+		});
 		return view.root;
 	}
 
@@ -93,10 +97,9 @@ describe("List", () => {
 			) {
 				const array = init ?? [];
 				const expected = fn(array);
-				const subject = createStringList(array);
 
 				it(`${name}(${pretty(array)}) -> ${pretty(expected)}`, () => {
-					const actual = fn(subject);
+					const actual = fn(createStringList(array));
 					assert.deepEqual(actual, expected);
 				});
 			}
@@ -142,10 +145,8 @@ describe("List", () => {
 		function test1<U>(fn: (subject: readonly string[]) => U, init?: readonly string[]) {
 			const array = init ?? [];
 			const expected = fn(array);
-			const subject = createStringList(array);
-
 			it(`${pretty(array)} -> ${pretty(expected)}`, () => {
-				const actual = fn(subject);
+				const actual = fn(createStringList(array));
 				assert.deepEqual(actual, expected);
 			});
 		}
@@ -712,7 +713,7 @@ describe("List", () => {
 	// TODO: Post-MVP
 
 	describe("implements T[]", () => {
-		describe("Setting [index: number] is disallowed (for MVP)", () => {
+		it("Setting [index: number] is disallowed (for MVP)", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
@@ -726,7 +727,7 @@ describe("List", () => {
 			});
 		});
 
-		describe("Setting .length is disallowed (for MVP)", () => {
+		it("Setting .length is disallowed (for MVP)", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {

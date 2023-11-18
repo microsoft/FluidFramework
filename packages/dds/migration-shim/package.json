@@ -13,7 +13,14 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"main": "dist/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -75,10 +82,10 @@
 	},
 	"devDependencies": {
 		"@fluid-private/test-version-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.27.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.27.0",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",

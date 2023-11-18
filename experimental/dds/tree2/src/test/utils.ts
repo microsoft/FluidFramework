@@ -43,7 +43,7 @@ import {
 	runSynchronous,
 	SharedTreeContentSnapshot,
 	ITreeView,
-	TreeView,
+	CheckoutView,
 } from "../shared-tree";
 import {
 	Any,
@@ -62,10 +62,10 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	TypedField,
 	jsonableTreeFromForest,
-	nodeKeyFieldKey as defailtNodeKeyFieldKey,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 } from "../feature-libraries";
 import {
@@ -589,7 +589,7 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
-export function viewWithContent(
+export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -597,10 +597,10 @@ export function viewWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return view2WithContent(content, args).checkout;
+	return viewWithContent(content, args).checkout;
 }
 
-export function view2WithContent<TRoot extends TreeFieldSchema>(
+export function viewWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -616,11 +616,11 @@ export function view2WithContent<TRoot extends TreeFieldSchema>(
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new TreeView(
+	return new CheckoutView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -654,7 +654,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new TreeView(
+	const view = new CheckoutView(
 		branch,
 		content.schema,
 		manager,
@@ -695,7 +695,7 @@ export const emptyStringSequenceConfig = {
  */
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
 	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
-	const tree = viewWithContent({
+	const tree = checkoutWithContent({
 		schema: jsonSequenceRootSchema,
 		initialTree: cursors,
 	});
@@ -777,7 +777,7 @@ export function initializeTestTree(
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
+			const writeCursors = state.map(cursorForJsonableTreeNode);
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,

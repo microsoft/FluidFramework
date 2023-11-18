@@ -38,7 +38,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 }
 
 // @public
-export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
+export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
     constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
@@ -48,7 +48,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
-    get initialObjects(): LoadableObjectRecord;
+    get initialObjects(): InitialObjects<TContainerSchema>;
     // @internal
     readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
     get isDirty(): boolean;
@@ -61,7 +61,7 @@ export interface IConnection {
 }
 
 // @public
-export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
@@ -70,7 +70,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
-    readonly initialObjects: LoadableObjectRecord;
+    readonly initialObjects: InitialObjects<TContainerSchema>;
     readonly isDirty: boolean;
 }
 
@@ -88,6 +88,11 @@ export interface IMember {
     connections: IConnection[];
     userId: string;
 }
+
+// @public
+export type InitialObjects<T extends ContainerSchema> = {
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+};
 
 // @public
 export interface IRootDataObject {
