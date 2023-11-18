@@ -13,12 +13,14 @@ import { Content } from "./sharedObject";
 
 export type JsonString<T> = string & { __json__?: T & Content<"handlesEncoded"> };
 
-export function parseJson<T>(json: JsonString<T>): T & Content<"handlesEncoded"> {
-	return JSON.parse(json) as T & Content<"handlesEncoded">;
+//* The reviver may specify that it decodes handles, in which case the return type wouldn't be restricted to "handlesEncoded"
+export function parseJson<T>(json: JsonString<T>, reviver): T & Content<"handlesEncoded"> {
+	return JSON.parse(json, reviver) as T & Content<"handlesEncoded">;
 }
 
-export function serializeJson<T>(value: T & Content<"handlesEncoded">): JsonString<T> {
-	return JSON.stringify(value) as JsonString<T>;
+//* Not so - The input can be anything and the replacer needs to specify it encodes handles
+export function serializeJson<T>(value: T & Content<"handlesEncoded">, replacer): JsonString<T> {
+	return JSON.stringify(value, replacer) as JsonString<T>;
 }
 
 /**
@@ -47,7 +49,10 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	encode(value: Content<"fullHandles">, bind: IFluidHandle): Content<"handlesEncoded">;
+	encode(
+		value: Content<"fullHandles" | "handlesEncoded">,
+		bind: IFluidHandle,
+	): Content<"handlesEncoded">;
 
 	//* encode should take an indeterminate Content that may or may not have fullHandles?
 
@@ -65,7 +70,10 @@ export interface IFluidSerializer {
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify(value: Content<"fullHandles">, bind: IFluidHandle): JsonString<any>;
+	stringify(
+		value: Content<"fullHandles" | "handlesEncoded">,
+		bind: IFluidHandle,
+	): JsonString<any>;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
@@ -104,7 +112,10 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	public encode(input: Content<"fullHandles">, bind: IFluidHandle) {
+	public encode(
+		input: Content<"fullHandles" | "handlesEncoded">,
+		bind: IFluidHandle,
+	): Content<"handlesEncoded"> {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -143,7 +154,7 @@ export class FluidSerializer implements IFluidSerializer {
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	private readonly encodeValue = (
-		value: Content<"fullHandles"> | Content<"handlesEncoded">,
+		value: Content<"fullHandles" | "handlesEncoded">,
 		bind: IFluidHandle,
 	): Content<"handlesEncoded"> => {
 		// If 'value' is an IFluidHandle return its encoded form.
