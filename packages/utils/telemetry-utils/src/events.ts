@@ -14,15 +14,11 @@ import { ITelemetryLoggerExt } from "./telemetryTypes";
  */
 
 /**
- * TODO
- *
  * @internal
  */
 export const connectedEventName = "connected";
 
 /**
- * TODO
- *
  * @internal
  */
 export const disconnectedEventName = "disconnected";
