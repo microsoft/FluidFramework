@@ -98,18 +98,17 @@ export function numberFromString(str: string | null | undefined): string | numbe
 	return Number.isNaN(num) ? str : num;
 }
 
+// TODO: add docs
+// eslint-disable-next-line jsdoc/require-description
 /**
- * TODO
- *
  * @internal
  */
 export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+// TODO: add docs
 /**
- * TODO
- *
  * @internal
  */
 export const eventNamespaceSeparator = ":" as const;

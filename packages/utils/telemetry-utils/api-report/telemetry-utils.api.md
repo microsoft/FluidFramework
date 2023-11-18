@@ -32,7 +32,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 // @internal
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @internal
+// @internal (undocumented)
 export const connectedEventName = "connected";
 
 // @internal
@@ -69,7 +69,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
-// @internal
+// @internal (undocumented)
 export const disconnectedEventName = "disconnected";
 
 // @internal
@@ -79,7 +79,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @internal
+// @internal (undocumented)
 export const eventNamespaceSeparator: ":";
 
 // @internal
@@ -99,7 +99,7 @@ export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISeque
     messageTimestamp: number | undefined;
 };
 
-// @internal
+// @internal (undocumented)
 export function formatTick(tick: number): number;
 
 // @internal
@@ -353,7 +353,7 @@ export class PerformanceEvent {
 // @internal
 export function raiseConnectedEvent(logger: ITelemetryLoggerExt, emitter: EventEmitter, connected: boolean, clientId?: string, disconnectedReason?: string): void;
 
-// @internal
+// @internal (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerExt, event: string, ...args: unknown[]): void;
 
 // @internal
