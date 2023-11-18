@@ -24,13 +24,17 @@ import {
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
+import { Unhydrated } from "../simple-tree";
+import { integerIndexable } from "./integerIndexable";
 
 type UnhydratedData = unknown;
 
+const nodeSymbol = Symbol("node");
+
 class NodeBase {
-	#node: FlexTreeObjectNode | UnhydratedData;
+	protected [nodeSymbol]: FlexTreeObjectNode | UnhydratedData;
 	public constructor(node: FlexTreeObjectNode | UnhydratedData) {
-		this.#node = node;
+		this[nodeSymbol] = node;
 	}
 }
 
@@ -39,8 +43,6 @@ class NodeBase {
  * For use in APIs which leak into the package public API which need to reference internal tree types.
  */
 export interface TreeHandle extends Opaque<Brand<FlexTreeNode, "tree.TreeHandle">> {}
-
-class ObjectNodeBase extends NodeBase {}
 
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
@@ -84,17 +86,21 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public readonly null = makeLeaf(leaf.null);
 	public readonly handle = makeLeaf(leaf.handle);
 
-	private nodeSchema<Name extends TName, T>(name: Name, t: T) {
+	private nodeSchema<Name extends TName, TKind extends NodeKind, T>(
+		name: Name,
+		kind: TKind,
+		t: T,
+	) {
 		const identifier = this.scoped(name);
-		const schema = class extends ObjectNodeBase {
+		class schema extends NodeBase {
 			public static readonly identifier = identifier;
-			public static readonly kind = NodeKind.Object;
+			public static readonly kind = kind;
 			public static readonly info = t;
-		};
+		}
 		{
 			type _check = requireAssignableTo<
-				typeof schema & { create(data: any): unknown },
-				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Object, T>
+				typeof schema,
+				TreeNodeSchema<`${TScope}.${Name}`, TKind, T>
 			>;
 		}
 		return schema;
@@ -108,8 +114,11 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public object<
 		Name extends TName,
 		T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T) {
-		const schema = class extends this.nodeSchema(name, t) {
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, T, ObjectFromSchema<T>> {
+		const schema = class extends this.nodeSchema(name, NodeKind.Object, t) {
 			readonly [x: string]: unknown;
 
 			public constructor(dummy: UnhydratedData) {
@@ -133,12 +142,16 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		return retyped;
 	}
 
-	public map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, t: T) {
-		const schema = class extends this.nodeSchema(name, t) {
-			public constructor(dummy: UnhydratedData) {
-				// TODO: needs to work for create (above) case, as well as some programmatic construction for hydrated nodes.
-				super(dummy);
-			}
+	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.Map,
+		T,
+		Map<TreeNodeFromImplicitAllowedTypes<T>>
+	> {
+		const schema = class extends this.nodeSchema(name, NodeKind.Map, t) {
 			public get(key: string): TreeNodeFromImplicitAllowedTypes<T> | undefined {
 				fail("todo");
 			}
@@ -149,21 +162,48 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		{
 			type _check = requireAssignableTo<
 				typeof schema,
-				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Object, T>
+				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Map, T>
 			>;
 		}
 		return schema;
 	}
 
-	public list<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, t: T) {
-		// TODO: this class can extend one which returns a proxy from its constructor to handle numeric indexing.
+	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.List,
+		T,
+		List<TreeNodeFromImplicitAllowedTypes<T>>
+	> {
+		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		const schema = class extends this.nodeSchema(name, t) {
-			readonly [x: number]: TreeNodeFromImplicitAllowedTypes<T>;
-			public constructor(dummy: UnhydratedData) {
-				// TODO: needs to work for create (above) case, as well as some programmatic construction for hydrated nodes.
-				super(dummy);
+		class schema
+			extends this.nodeSchema(name, NodeKind.List, t)
+			implements List<TreeNodeFromImplicitAllowedTypes<T>>
+		{
+			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
+			public constructor(node: FlexTreeObjectNode | UnhydratedData) {
+				super(node);
+				return integerIndexable(this, this);
 			}
+
+			public get length(): number {
+				return fail("todo");
+			}
+
+			public read(index: number): TreeNodeFromImplicitAllowedTypes<T> {
+				return fail("todo");
+			}
+
+			public write(
+				index: number,
+				value: Unhydrated<TreeNodeFromImplicitAllowedTypes<T>>,
+			): boolean {
+				return fail("todo");
+			}
+
 			public moveToEnd(key: number): void {
 				fail("todo");
 			}
@@ -175,16 +215,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 				return fail("todo");
 			}
-
-			public get length(): number {
-				return fail("todo");
-			}
-		};
-		{
-			type _check = requireAssignableTo<
-				typeof schema,
-				TreeNodeSchema<`${TScope}.${Name}`, NodeKind.Object, T>
-			>;
 		}
 		return schema;
 	}
@@ -208,6 +238,26 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
+
+export interface List<T> {
+	[x: number]: T;
+	readonly length: number;
+
+	moveToEnd(key: number): void;
+
+	at(index: number): T | undefined;
+
+	[Symbol.iterator](): IterableIterator<T>;
+}
+
+export interface Map<T> {
+	get(key: string): T | undefined;
+	set(key: string, value: T | undefined): void;
+}
+
+export type ObjectFromSchema<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+	[Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+};
 
 /**
  * Interface which carries the runtime and compile type data (from the generic type parameter) in a member.

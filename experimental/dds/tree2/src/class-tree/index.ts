@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView } from "./tree";
+export { ITree, TreeView, TreeConfiguration } from "./tree";
 export { SchemaFactory } from "./schemaFactory";

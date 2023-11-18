@@ -14,15 +14,26 @@ The main differences from the old schema system (SchemaBuilder and its related t
    This has many benefits:
     1. Users don't have to use "typeof" or invoke any type meta-functions to get the node types they want to pass around: just use the class/schema name as the type.
     2. Recursive schema work inb d.ts files due to use of classes. See [Generated d.ts includes implicit any for recursive types](microsoft/TypeScript#55832).
-    3. Intelisense is much cleaner when referring to types defined in schema: It just uses the class name. or "typeof ClassName". (These simplifications are what resolve the d.ts issue noted above with recursive types)
+    3. Intellisense is much cleaner when referring to types defined in schema: It just uses the class name. or "typeof ClassName". (These simplifications are what resolve the d.ts issue noted above with recursive types)
     4. Normal JS/TS type narrowing with instanceof can be used with schema defined types.
     5. Its possible to add view/session local state to instances as properties, as well as adding methods by just putting them in the class like any other class.
-    6. Since the schema/class defines the API for the node, the implementation of the tree API implicitly gets defined in a way that is trivially extensible for adding new node kinds.
-    7. Implementing the APIs for these node kinds does not require redundantly defining an interface and an implementation: a single concrete implementation can be defined, with the types inferred from it: this should making implementing large API surfaces (like we have for list) cleaner.
-       Note that this may not end up being a benefit in practice depending on how the generated API docs turn out: explicit interfaces might end up being required anyway.
 
 Currently this implementation exposes the prototypes from these classes: this impacts some generic object based code.
 For example, this probably impacts Node's deep equals as follows:
 
 1. Two trees with the same "shape" but different types no longer compare equal.
 2. Trees no longer compare equal to plain objects with no prototypes.
+
+## Limitations
+
+Fields allowing `Any` can not be supported due to the requirement to traverse all types from the root.
+
+Returned classes from factory cannot have any private or protected members due to a [TypeScript limitation](https://github.com/microsoft/TypeScript/issues/36060).
+This means getting nominal typing (non-structural typing) of node will require explicit members (like a strongly typed schema or type name symbol) if nominal typing is desired.
+Private data can still be stored using `#` private fields, or via weak keyed maps or under symbols.
+Even regular private and protected fields can be used in the implementation and cases away from the type returned by the factory,
+though doing this risks name collisions with user added members.
+
+Recursive types are still somewhat sketchy.
+
+Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing the more APis for them) instead of plain literals .

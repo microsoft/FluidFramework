@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-
 import { strict as assert } from "node:assert";
 
+// eslint-disable-next-line import/no-internal-modules
 import { SchemaFactory } from "../../class-tree/schemaFactory";
-import { ITree } from "../../class-tree";
+import { ITree, TreeConfiguration, TreeView } from "../../class-tree";
 import { Tree } from "../../simple-tree";
-// eslint-disable-next-line import/no-unresolved
-import { TreeConfiguration, TreeView } from "../../class-tree/tree";
 
 // Since this no longer follows the builder pattern its a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
