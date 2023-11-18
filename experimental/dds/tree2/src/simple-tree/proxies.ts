@@ -32,7 +32,6 @@ import {
 	ContextuallyTypedNodeData,
 	typeNameSymbol,
 	isFluidHandle,
-	isPrimitiveValue,
 } from "../feature-libraries";
 import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
