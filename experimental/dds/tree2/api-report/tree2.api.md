@@ -966,7 +966,8 @@ declare namespace InternalTypes {
         Sequence,
         FactoryObjectNodeSchema,
         FactoryObjectNodeSchemaRecursive,
-        testRecursiveDomain
+        testRecursiveDomain,
+        TreeListNodeBase
     }
 }
 export { InternalTypes }
@@ -1829,23 +1830,27 @@ export interface TreeFieldStoredSchema {
 }
 
 // @alpha
-export interface TreeListNode<TTypes extends AllowedTypes> extends ReadonlyArray<TreeNodeUnion<TTypes>> {
-    inline: <T>(content: Iterable<T>) => InlineTreeListContent<T>;
-    insertAt(index: number, ...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
-    insertAtEnd(...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
-    insertAtStart(...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
+export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> extends TreeListNodeBase<TreeNodeUnion<TTypes>, TreeNodeUnion<TTypes, "javaScript">, TreeListNode> {
+}
+
+// @alpha
+interface TreeListNodeBase<out T, in out TNew, in TMoveFrom> extends ReadonlyArray<T> {
+    inline: (content: Iterable<TNew>) => InlineTreeListContent<TNew>;
+    insertAt(index: number, ...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-    moveRangeToStart(sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveToEnd(sourceIndex: number): void;
-    moveToEnd(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToEnd(sourceIndex: number, source: TMoveFrom): void;
     moveToIndex(index: number, sourceIndex: number): void;
-    moveToIndex(index: number, sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
     moveToStart(sourceIndex: number): void;
-    moveToStart(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
@@ -1872,7 +1877,7 @@ export const enum TreeNavigationResult {
 }
 
 // @alpha
-export type TreeNode = TreeListNode<AllowedTypes> | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
+export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
 
 // @alpha (undocumented)
 export type TreeNodeSchema = TreeNodeSchemaBase;
