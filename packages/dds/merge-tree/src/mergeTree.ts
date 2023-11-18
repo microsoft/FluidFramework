@@ -549,6 +549,8 @@ export class MergeTree {
 	 * By keeping track of all move seqs, we can significantly reduce the search
 	 * space we must traverse.
 	 *
+	 * Sequence numbers in `moveSeqs` are sorted to accelerate bookkeeping.
+	 *
 	 * See https://github.com/microsoft/FluidFramework/blob/main/packages/dds/merge-tree/docs/Obliterate.md#remote-perspective
 	 * for additional context
 	 */
@@ -1953,10 +1955,7 @@ export class MergeTree {
 	}
 
 	private getSmallestSeqMoveOp(): number | undefined {
-		return (
-			this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ??
-			(this.localMoveSeqs.size > 0 ? -1 : undefined)
-		);
+		return this.moveSeqs[0] ?? (this.localMoveSeqs.size > 0 ? -1 : undefined);
 	}
 
 	private insertingWalk(
@@ -2865,8 +2864,8 @@ export class MergeTree {
 	 *
 	 * A segment is visible if its length is greater than 0
 	 *
-	 * @param refSeq - The sequence number used to determine the range of segments
-	 * to iterate over.
+	 * @param refSeq - The sequence number used to determine the range (start
+	 * and end positions) of segments to iterate over.
 	 *
 	 * @param visibilitySeq - An additional sequence number to further configure
 	 * segment visibility during traversal. This is the same as refSeq, except

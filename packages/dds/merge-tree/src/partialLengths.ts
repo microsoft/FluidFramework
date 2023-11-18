@@ -157,9 +157,9 @@ export interface PartialSequenceLength {
 	 * corresponds to an op submitted by client 0 which:
 	 * - reduces the length of this block by 10 (it may have deleted a single segment of length 10,
 	 *     several segments totalling length 10, or even delete and add content for a total reduction of 10 length)
-	 * - was concurrent to an op submitted by client 1 that also removed some of the same segments,
+	 * - was concurrent to one or more ops submitted by client 1 that also removed some of the same segments,
 	 *     whose length totalled 5
-	 * - was concurrent to an op submitted by client 3 that removed some of the same segments,
+	 * - was concurrent to one or more ops submitted by client 3 that removed some of the same segments,
 	 *     whose length totalled 10
 	 */
 	overlapRemoveClients?: RedBlackTree<number, IOverlapClient>;
@@ -615,12 +615,18 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * Inserts length information about the insertion of `segment` into `combinedPartialLengths.partialLengths`.
+	 * Inserts length information about the insertion of `segment` into
+	 * `combinedPartialLengths.partialLengths`.
+	 *
 	 * Does not update the clientSeqNumbers field to account for this segment.
-	 * If `removalInfo` is defined, this operation updates the bookkeeping to account for the removal of this
-	 * segment at the removedSeq instead.
-	 * When the insertion or removal of the segment is un-acked and `combinedPartialLengths` is meant to compute
-	 * such records, this does the analogous addition to the bookkeeping for the local segment in
+	 *
+	 * If `removalInfo` or `moveInfo` are defined, this operation updates the
+	 * bookkeeping to account for the (re)moval of this segment at the (re)movedSeq
+	 * instead.
+	 *
+	 * When the insertion or (re)moval of the segment is un-acked and
+	 * `combinedPartialLengths` is meant to compute such records, this does the
+	 * analogous addition to the bookkeeping for the local segment in
 	 * `combinedPartialLengths.unsequencedRecords`.
 	 */
 	private static insertSegment(
@@ -701,8 +707,6 @@ export class PartialSequenceLengths {
 
 		// overlapping move and remove, remove happened first
 		if (moveInfo && removalInfo && removeHappenedFirst && !moveIsLocal) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const moveSeqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
 			const moveClientId = moveInfo.movedClientIds[0];
@@ -714,7 +718,7 @@ export class PartialSequenceLengths {
 				-segment.cachedLength,
 				segmentLen,
 				partials,
-				moveSeqOrLocalSeq,
+				moveInfo.movedSeq,
 				moveClientId,
 				undefined,
 				hasOverlap ? moveInfo.movedClientIds : undefined,

@@ -310,7 +310,7 @@ export class SnapshotV1 {
 					);
 				}
 
-				// Sanity check that we are preserving either the seq < minSeq or a (re)moved segment's info.
+				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
 						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined) ||
