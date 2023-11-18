@@ -393,8 +393,9 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
     findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
-// @internal @deprecated
+// @internal
 export interface IValueOpEmitter {
+    // @deprecated
     emit(opName: IntervalOpType, previousValue: undefined, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
