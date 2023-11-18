@@ -182,13 +182,6 @@ export class OdspClient {
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
 		return {
-			fileName: () => {
-				const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
-				if (resolvedUrl === undefined) {
-					throw new Error("Resolved Url not available on attached container");
-				}
-				return resolvedUrl.fileName;
-			},
 			audience: new OdspAudience(container),
 		};
 	}

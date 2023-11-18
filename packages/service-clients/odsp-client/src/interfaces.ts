@@ -35,14 +35,14 @@ export interface OdspConnectionConfig {
 /**
  * @alpha
  */
-export interface OdspAttachContainerProps {
+export interface OdspContainerAttachProps {
 	/**
-	 * Folder path where Fluid containers are created. If undefiend, file is created at the root
+	 * Folder path where Fluid containers are created. If undefined, file is created at the root
 	 */
 	folderPath: string | undefined;
 
 	/**
-	 * File name of Fluid file. If undefined, a uuid() is named as the file name
+	 * File name of Fluid file. If undefined, file is named with a guid
 	 */
 	fileName: string | undefined;
 }
@@ -77,11 +77,6 @@ export interface OdspClientProps {
  * @alpha
  */
 export interface OdspContainerServices {
-	/**
-	 * Retrieves the Fluid file name. If the specified file name already exists, it will be updated according to the conflict resolution policy in cases of duplicate file names.
-	 */
-	fileName: () => string;
-
 	/**
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */

@@ -47,7 +47,6 @@ export interface OdspConnectionConfig {
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
-    fileName: () => string;
 }
 
 // @alpha
