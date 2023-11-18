@@ -252,7 +252,13 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	at: {
 		value(this: TreeListNode, index: number): FlexTreeUnknownUnboxed | undefined {
 			const field = getSequenceField(this);
-			return getOrCreateNodeProxy(field.boxedAt(index)) as FlexTreeUnknownUnboxed;
+			const val = field.boxedAt(index);
+
+			if (val === undefined) {
+				return val;
+			}
+
+			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
 		},
 	},
 	insertAt: {
