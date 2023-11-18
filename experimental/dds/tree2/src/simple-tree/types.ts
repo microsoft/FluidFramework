@@ -38,30 +38,69 @@ export type TreeNode =
 	| TreeMapNode<MapNodeSchema>;
 
 /**
+ * Used to insert iterable content into a {@link TreeListNode}.
+ * @alpha
+ */
+export class InlineTreeListContent<T> implements Iterable<T> {
+	public constructor(private readonly content: Iterable<T>) {}
+	public [Symbol.iterator](): Iterator<T> {
+		return this.content[Symbol.iterator]();
+	}
+}
+
+/**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
 export interface TreeListNode<TTypes extends AllowedTypes>
 	extends ReadonlyArray<TreeNodeUnion<TTypes>> {
 	/**
+	 * Wrap an iterable of content to be inserted into this list.
+	 * @remarks
+	 * The object returned by this function can be inserted into this list as an element.
+	 * Its contents will be inserted sequentially in the corresponding location in the list.
+	 * @example
+	 * ```ts
+	 * list.insertAtEnd(list.inline(iterable))
+	 * ```
+	 */
+	inline: <T>(content: Iterable<T>) => InlineTreeListContent<T>;
+
+	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAt(
+		index: number,
+		...value: (
+			| TreeNodeUnion<TTypes, "javaScript">
+			| InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>
+		)[]
+	): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAtStart(
+		...value: (
+			| TreeNodeUnion<TTypes, "javaScript">
+			| InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>
+		)[]
+	): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+	insertAtEnd(
+		...value: (
+			| TreeNodeUnion<TTypes, "javaScript">
+			| InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>
+		)[]
+	): void;
 
 	/**
 	 * Removes the item at the specified location.

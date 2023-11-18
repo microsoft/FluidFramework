@@ -886,6 +886,13 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends TreeFieldSch
 }
 
 // @alpha
+export class InlineTreeListContent<T> implements Iterable<T> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<T>;
+    constructor(content: Iterable<T>);
+}
+
+// @alpha
 type _InlineTrick = 0;
 
 declare namespace InternalEditableTreeTypes {
@@ -1823,9 +1830,10 @@ export interface TreeFieldStoredSchema {
 
 // @alpha
 export interface TreeListNode<TTypes extends AllowedTypes> extends ReadonlyArray<TreeNodeUnion<TTypes>> {
-    insertAt(index: number, value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
-    insertAtEnd(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
-    insertAtStart(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+    inline: <T>(content: Iterable<T>) => InlineTreeListContent<T>;
+    insertAt(index: number, ...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
+    insertAtEnd(...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
+    insertAtStart(...value: (TreeNodeUnion<TTypes, "javaScript"> | InlineTreeListContent<TreeNodeUnion<TTypes, "javaScript">>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;

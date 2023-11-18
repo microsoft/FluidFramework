@@ -228,6 +228,7 @@ export {
 } from "./feature-libraries";
 
 export {
+	InlineTreeListContent,
 	TreeObjectNodeFields,
 	TreeField,
 	TreeFieldInner,
