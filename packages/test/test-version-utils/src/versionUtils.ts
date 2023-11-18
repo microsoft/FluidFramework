@@ -103,6 +103,9 @@ async function removeInstalled(version: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export function resolveVersion(requested: string, installed: boolean) {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
@@ -170,6 +173,9 @@ async function ensureModulePath(version: string, modulePath: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export async function ensureInstalled(
 	requested: string,
 	packageList: string[],
@@ -259,6 +265,9 @@ export async function ensureInstalled(
 	}
 }
 
+/**
+ * @internal
+ */
 export function checkInstalled(requested: string) {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
@@ -271,6 +280,9 @@ export function checkInstalled(requested: string) {
 	);
 }
 
+/**
+ * @internal
+ */
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
 	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
 
@@ -299,6 +311,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  * ```typescript
  * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
  * ```
+ *
+ * @internal
  */
 export function getRequestedVersion(
 	baseVersion: string,
@@ -411,6 +425,9 @@ function internalSchema(publicVersion: string, internalVersion: string, requeste
 	}.0.0`;
 }
 
+/**
+ * @internal
+ */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
 	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
 	return (

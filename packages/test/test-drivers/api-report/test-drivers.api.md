@@ -26,22 +26,22 @@ import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicio
 import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
-// @public (undocumented)
+// @internal (undocumented)
 export function assertOdspEndpoint(endpoint: string | undefined): asserts endpoint is OdspEndpoint | undefined;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function assertRouterliciousEndpoint(endpoint: string | undefined): asserts endpoint is RouterliciousEndpoint | undefined;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (config: infer P, ...args: any) => any ? P : never;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const DriverApi: DriverApiType;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface DriverApiType {
     // (undocumented)
     LocalDriverApi: LocalDriverApiType;
@@ -51,7 +51,7 @@ export interface DriverApiType {
     RouterliciousDriverApi: RouterliciousDriverApiType;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface FluidTestDriverConfig {
     // (undocumented)
     odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
@@ -59,10 +59,10 @@ export interface FluidTestDriverConfig {
     r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const generateOdspHostStoragePolicy: (seed: number) => HostStoragePolicy[];
 
-// @public (undocumented)
+// @internal (undocumented)
 export const LocalDriverApi: {
     version: string;
     LocalDocumentServiceFactory: typeof LocalDocumentServiceFactory;
@@ -71,10 +71,10 @@ export const LocalDriverApi: {
     createLocalResolverCreateNewRequest: typeof createLocalResolverCreateNewRequest;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export type LocalDriverApiType = typeof LocalDriverApi;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LocalServerTestDriver implements ITestDriver {
     constructor(api?: LocalDriverApiType);
     // (undocumented)
@@ -95,7 +95,7 @@ export class LocalServerTestDriver implements ITestDriver {
     get version(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const OdspDriverApi: {
     version: string;
     OdspDocumentServiceFactory: typeof OdspDocumentServiceFactory;
@@ -104,10 +104,10 @@ export const OdspDriverApi: {
     createOdspUrl: typeof createOdspUrl;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export type OdspDriverApiType = typeof OdspDriverApi;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class OdspTestDriver implements ITestDriver {
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
@@ -139,17 +139,17 @@ export class OdspTestDriver implements ITestDriver {
     get version(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const RouterliciousDriverApi: {
     version: string;
     modulePath: string;
     RouterliciousDocumentServiceFactory: typeof RouterliciousDocumentServiceFactory;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
     // (undocumented)
     createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string>;
@@ -171,7 +171,7 @@ export class RouterliciousTestDriver implements ITestDriver {
     get version(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class TinyliciousTestDriver implements ITestDriver {
     constructor(api?: RouterliciousDriverApiType);
     // (undocumented)
