@@ -32,9 +32,10 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 	RemovedTreesFromChild,
+	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
+import { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
 type ChangeId = ChangeAtomId | "self";
@@ -305,8 +306,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return inverse;
 	},
 
-	amendInvert: () => fail("Not implemented"),
-
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
@@ -445,31 +444,52 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return rebased;
 	},
 
-	amendRebase: (
-		change: OptionalChangeset,
-		overTagged: TaggedChange<OptionalChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	) => {
-		const amended = { ...change };
-		if (change.childChanges !== undefined) {
-			const overChildChanges = new ChildChangeMap<NodeChangeset>();
-			for (const [id, overChange] of overTagged?.change.childChanges ?? []) {
-				overChildChanges.set(id, overChange);
+	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
+		const prunedChange: OptionalChangeset = {};
+		if (change.fieldChange !== undefined) {
+			const prunedNodeChange =
+				change.fieldChange.newContent?.changes !== undefined
+					? pruneChild(change.fieldChange.newContent.changes)
+					: undefined;
+
+			const prunedFieldChange: OptionalFieldChange = {
+				...change.fieldChange,
+			};
+
+			if (prunedFieldChange.newContent?.changes !== undefined) {
+				prunedFieldChange.newContent = nodeUpdateWithNodeChange(
+					prunedFieldChange.newContent,
+					prunedNodeChange,
+				);
 			}
 
-			const childChanges: typeof change.childChanges = [];
+			prunedChange.fieldChange = change.fieldChange;
+		}
+
+		if (change.childChanges !== undefined) {
 			for (const [id, childChange] of change.childChanges) {
-				const rebasedChange = rebaseChild(childChange, overChildChanges.get(id));
-				if (rebasedChange !== undefined) {
-					childChanges.push([id, rebasedChange]);
+				const prunedNode = pruneChild(childChange);
+				if (prunedNode !== undefined) {
+					prunedChange.childChanges?.push([id, prunedNode]);
 				}
 			}
-
-			amended.childChanges = childChanges;
 		}
-		return amended;
+
+		return prunedChange;
 	},
 };
+
+function nodeUpdateWithNodeChange(
+	update: NodeUpdate,
+	change: NodeChangeset | undefined,
+): NodeUpdate {
+	const result: NodeUpdate = { ...update, changes: change };
+	if (change === undefined) {
+		delete result.changes;
+	}
+
+	return result;
+}
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**

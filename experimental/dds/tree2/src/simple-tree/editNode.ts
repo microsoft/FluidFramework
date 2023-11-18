@@ -79,7 +79,7 @@ export function setEditNode<T extends TreeObjectNode<ObjectNodeSchema>>(
 	target: T,
 	editNode: FlexTreeObjectNode,
 ): T;
-export function setEditNode<T extends TreeListNode<AllowedTypes>>(
+export function setEditNode<T extends TreeListNode>(
 	target: T,
 	editNode: FlexTreeFieldNode<FieldNodeSchema>,
 ): T;
