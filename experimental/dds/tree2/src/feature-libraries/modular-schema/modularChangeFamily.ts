@@ -1076,6 +1076,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
+		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 		for (const tree of content.map(jsonableTreeFromCursor)) {
 			assert(!innerMap.has(id), "Unexpected duplicate build ID");
 			innerMap.set(id, tree);
