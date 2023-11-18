@@ -15,7 +15,6 @@ import {
 	KeyName,
 	ISecretManager,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -23,6 +22,7 @@ import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-servic
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
+import { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * Tenant details stored to the document database
@@ -84,7 +84,7 @@ export class TenantManager {
 		Object.values(StorageRequestMetric),
 	);
 	constructor(
-		private readonly tenantsCollection: ICollection<ITenantDocument>,
+		private readonly tenantRepository: ITenantRepository,
 		private readonly baseOrdererUrl: string,
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
@@ -315,7 +315,7 @@ export class TenantManager {
 		}
 
 		const id = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.insertOne({
+			this.tenantRepository.insertOne({
 				_id: tenantId,
 				key: encryptedTenantKey1,
 				secondaryKey: encryptedTenantKey2,
@@ -335,7 +335,7 @@ export class TenantManager {
 	 */
 	public async updateStorage(tenantId: string, storage: ITenantStorage): Promise<ITenantStorage> {
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, { storage }, null),
+			this.tenantRepository.update({ _id: tenantId }, { storage }, null),
 		);
 
 		return (await this.getTenantDocument(tenantId)).storage;
@@ -345,7 +345,7 @@ export class TenantManager {
 	 * Updates the tenant configured orderer
 	 */
 	public async updateOrderer(tenantId: string, orderer: ITenantOrderer): Promise<ITenantOrderer> {
-		await this.tenantsCollection.update({ _id: tenantId }, { orderer }, null);
+		await this.tenantRepository.update({ _id: tenantId }, { orderer }, null);
 
 		return (await this.getTenantDocument(tenantId)).orderer;
 	}
@@ -362,7 +362,7 @@ export class TenantManager {
 			customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
 		}
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, { customData }, null),
+			this.tenantRepository.update({ _id: tenantId }, { customData }, null),
 		);
 		const tenantDocument = await this.getTenantDocument(tenantId, true);
 		if (tenantDocument.disabled) {
@@ -524,7 +524,7 @@ export class TenantManager {
 				? { secondaryKey: encryptedNewTenantKey }
 				: { key: encryptedNewTenantKey };
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, updateKey, null),
+			this.tenantRepository.update({ _id: tenantId }, updateKey, null),
 		);
 
 		return tenantKeys;
@@ -650,7 +650,7 @@ export class TenantManager {
 		includeDisabledTenant = false,
 	): Promise<ITenantDocument> {
 		const found = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.findOne({ _id: tenantId }),
+			this.tenantRepository.findOne({ _id: tenantId }),
 		);
 		if (!found || (found.disabled && !includeDisabledTenant)) {
 			return null;
@@ -666,7 +666,7 @@ export class TenantManager {
 	 */
 	private async getAllTenantDocuments(includeDisabledTenant = false): Promise<ITenantDocument[]> {
 		const allFound = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.findAll(),
+			this.tenantRepository.findAll(),
 		);
 
 		allFound.forEach((found) => {
@@ -691,7 +691,7 @@ export class TenantManager {
 			};
 
 			await this.runWithDatabaseRequestCounter(async () =>
-				this.tenantsCollection.update(
+				this.tenantRepository.update(
 					query,
 					{
 						disabled: true,
@@ -702,7 +702,7 @@ export class TenantManager {
 			);
 		} else {
 			await this.runWithDatabaseRequestCounter(async () =>
-				this.tenantsCollection.deleteOne({ _id: tenantId }),
+				this.tenantRepository.deleteOne({ _id: tenantId }),
 			);
 		}
 		// invalidate cache
