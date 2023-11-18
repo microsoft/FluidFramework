@@ -37,12 +37,12 @@ export interface OdspConnectionConfig {
  */
 export interface OdspContainerAttachProps {
 	/**
-	 * Folder path where Fluid containers are created. If undefined, file is created at the root
+	 * The folder path where Fluid containers are created. If undefined, the file is created at the root.
 	 */
 	folderPath: string | undefined;
 
 	/**
-	 * File name of Fluid file. If undefined, file is named with a guid
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
 	 */
 	fileName: string | undefined;
 }
