@@ -264,12 +264,10 @@ export type TreeObjectNodeFields<
 export type TreeObjectNodeFieldsJavaScript<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 > = {
-	// Filter for properties that optional; mark them `?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
-		? key
-		: never]?: TreeFieldJavaScript<TFields[key]>;
+	// Make all properties optional.
+	readonly [key in keyof TFields]?: TreeFieldJavaScript<TFields[key]>;
 } & {
-	// Filter for properties that are not optional `-?`.
+	// Require non-optional.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
 		? never
 		: key]-?: TreeFieldJavaScript<TFields[key]>;
@@ -323,11 +321,8 @@ export type TreeField<
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
 > = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
-export type TreeFieldJavaScript<
-	TSchema extends TreeFieldSchema = TreeFieldSchema,
-	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
-	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
-> = TreeFieldInnerJavaScript<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
+export type TreeFieldJavaScript<TSchema extends TreeFieldSchema = TreeFieldSchema> =
+	TreeFieldInnerJavaScript<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
@@ -352,13 +347,12 @@ export type TreeFieldInner<
 export type TreeFieldInnerJavaScript<
 	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
-	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
 	: Kind extends typeof FieldKinds.required
 	? TreeNodeUnionJavaScript<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? TreeNodeUnionJavaScript<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
+	? TreeNodeUnionJavaScript<TTypes> | undefined
 	: unknown;
 
 /**
@@ -426,7 +420,7 @@ export type TypedNodeJavaScript<TSchema extends TreeNodeSchema> = TSchema extend
 	? readonly TreeNodeUnionJavaScript<TSchema["info"]["allowedTypes"]>[]
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNodeJavaScript<TSchema>
-	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>
+	: // TODO: This type is used as input, and thus should not fallback to unknown when the types are not specific enough.
 	  unknown;
 
 /**
