@@ -78,7 +78,7 @@ function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.roo
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
 	newTree
-		.schematize({
+		.schematizeOld({
 			initialTree: {
 				quantity,
 			},

@@ -197,7 +197,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const handle = getHandle(legacyTree);
 			newTree
-				.schematize({
+				.schematizeOld({
 					initialTree: {
 						handle,
 					},

@@ -8,7 +8,7 @@ import {
 	ForestType,
 	ISharedTree,
 	SharedTreeFactory,
-	TreeView,
+	TreeViewOld,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -23,7 +23,7 @@ const factory = new SharedTreeFactory({
 
 export class InventoryList extends DataObject {
 	#tree?: ISharedTree;
-	#view?: TreeView<Inventory>;
+	#view?: TreeViewOld<Inventory>;
 
 	public get inventory(): Inventory {
 		if (this.#view === undefined)
@@ -46,7 +46,7 @@ export class InventoryList extends DataObject {
 	protected async hasInitialized() {
 		if (this.#tree === undefined)
 			throw new Error("tree should be initialized by initializing* methods");
-		this.#view = this.#tree.schematize(treeConfiguration);
+		this.#view = this.#tree.schematizeOld(treeConfiguration);
 	}
 }
 
