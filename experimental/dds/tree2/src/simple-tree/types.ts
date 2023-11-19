@@ -231,7 +231,7 @@ export type TreeObjectNodeFields<
 			: never
 		: never]?: TreeField<TFields[key]>;
 } & {
-	// Filter for properties that are assignable but are optional; mark them `-readonly` and `-?`.
+	// Filter for properties that are assignable but are not optional; mark them `-readonly` and `-?`.
 	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? TFields[key]["kind"] extends typeof FieldKinds.optional
 			? never
@@ -264,31 +264,13 @@ export type TreeObjectNodeFields<
 export type TreeObjectNodeFieldsJavaScript<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 > = {
-	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? key
-			: never
-		: never]?: TreeFieldJavaScript<TFields[key]>;
-} & {
-	// Filter for properties that are assignable but are optional; mark them `-readonly` and `-?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? never
-			: key
-		: never]-?: TreeFieldJavaScript<TFields[key]>;
-} & {
-	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
+	// Filter for properties that optional; mark them `?`.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
 		? key
 		: never]?: TreeFieldJavaScript<TFields[key]>;
 } & {
-	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
+	// Filter for properties that are not optional `-?`.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
 		? never
 		: key]-?: TreeFieldJavaScript<TFields[key]>;
 };
