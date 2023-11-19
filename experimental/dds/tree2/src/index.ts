@@ -168,7 +168,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes,
-	TreeNodeSchema,
+	TreeNodeSchema as FlexTreeNodeSchema,
 	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
@@ -242,6 +242,7 @@ export {
 	TreeObjectFactory,
 	FactoryTreeSchema,
 	TreeMapNodeBase,
+	Unhydrated,
 } from "./simple-tree";
 
 export {
@@ -260,13 +261,15 @@ export {
 	ForestType,
 	TypedTreeFactory,
 	TypedTreeOptions,
-	ITree,
+	ITree as ITreeOld,
 	SharedTreeContentSnapshot,
 	FlexTreeView,
-	TreeView,
+	TreeView as TreeViewOld,
 	ITreeViewFork,
 	buildTreeConfiguration,
 } from "./shared-tree";
+
+export { ITree, TreeNodeSchema, TreeConfiguration, TreeView } from "./class-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";

@@ -67,7 +67,7 @@ const rootType = builder.object("abc", {
 });
 const schema = builder.intoSchema(rootType);
 function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},

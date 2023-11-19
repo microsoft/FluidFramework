@@ -5,11 +5,11 @@
 
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events";
-import { IDisposable } from "../util";
-import { type CheckoutEvents } from "../shared-tree";
-import { type Unhydrated } from "../simple-tree";
+import { IDisposable, disposeSymbol } from "../util";
+import { FlexTreeView, type CheckoutEvents } from "../shared-tree";
+import { getProxyForField, type Unhydrated } from "../simple-tree";
+import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries";
 import { NodeFromSchema, TreeNodeSchema } from "./schemaFactory";
-
 /**
  * Channel for a Tree DDS.
  * @alpha
@@ -53,7 +53,10 @@ export interface ITree extends IChannel {
 	): TreeView<NodeFromSchema<TRoot>>;
 }
 
-export class TreeConfiguration<TSchema extends TreeNodeSchema> {
+/**
+ * @alpha
+ */
+export class TreeConfiguration<TSchema extends TreeNodeSchema = TreeNodeSchema> {
 	/**
 	 *
 	 * @param initialTree - Default tree content to initialize the tree with iff the tree is uninitialized
@@ -87,4 +90,27 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 * Events for the tree.
 	 */
 	readonly events: ISubscribable<CheckoutEvents>;
+}
+
+/**
+ * Implementation of TreeView wrapping a FlexTreeView.
+ */
+export class WrapperTreeView<
+	in out TSchema extends TreeNodeSchema,
+	TView extends FlexTreeView<FlexTreeFieldSchema>,
+> implements TreeView<NodeFromSchema<TSchema>>
+{
+	public constructor(public readonly view: TView) {}
+
+	public [disposeSymbol](): void {
+		this.view[disposeSymbol]();
+	}
+
+	public get events(): ISubscribable<CheckoutEvents> {
+		return this.view.checkout.events;
+	}
+
+	public get root(): NodeFromSchema<TSchema> {
+		return getProxyForField(this.view.editableTree) as NodeFromSchema<TSchema>;
+	}
 }

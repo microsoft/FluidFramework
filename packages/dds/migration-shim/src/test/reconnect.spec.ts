@@ -122,7 +122,7 @@ const schema = builder.intoSchema(quantityType);
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getNewTreeView(tree: ISharedTree) {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},

@@ -44,3 +44,13 @@ export {
 } from "./domains";
 
 export { TreeListNodeBase } from "./simple-tree";
+
+export {
+	NodeFromSchema,
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	TreeHandle,
+	UnhydratedData,
+} from "./class-tree";

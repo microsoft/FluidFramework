@@ -238,7 +238,7 @@ export class AppData extends DataObject {
 
 		const schema = builder.intoSchema(rootNodeSchema);
 
-		sharedTree.schematize({
+		sharedTree.schematizeOld({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: {

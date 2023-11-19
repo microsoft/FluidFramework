@@ -24,10 +24,13 @@ import { leaf } from "../domains";
 import { TreeValue } from "../core";
 import { TreeListNodeBase, Unhydrated, TreeMapNodeBase } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { createNodeProxy } from "../simple-tree/proxies";
-// eslint-disable-next-line import/no-internal-modules
+import { createNodeProxy, flexSchemaSymbol } from "../simple-tree/proxies";
 
-type UnhydratedData = unknown;
+/**
+ * @alpha
+ * TODO: replace this with proper schema based type.
+ */
+export type UnhydratedData = unknown;
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
@@ -35,6 +38,7 @@ export class NodeBase {}
 /**
  * Type erased references to an internal tree representation.
  * For use in APIs which leak into the package public API which need to reference internal tree types.
+ * @alpha
  */
 export interface TreeHandle extends Opaque<Brand<FlexTreeNode, "tree.TreeHandle">> {}
 
@@ -46,7 +50,7 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 /**
  * Instances of this class are schema for leaf nodes.
  */
-class LeafNodeSchema<T extends FlexLeafNodeSchema>
+export class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	implements
 		TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>>
 {
@@ -57,7 +61,8 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 		return data;
 	}
 
-	public constructor(public readonly schema: T) {
+	public constructor(schema: T) {
+		(this as any)[flexSchemaSymbol] = schema;
 		this.identifier = schema.name;
 		this.info = schema.info;
 	}
@@ -228,6 +233,9 @@ export type TreeNodeSchema<
 	| TreeNodeSchemaClass<Name, Kind, Specification, TNode>
 	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode>;
 
+/**
+ * @alpha
+ */
 export interface TreeNodeSchemaNonClass<
 	Name extends string = string,
 	Kind extends NodeKind = NodeKind,
@@ -237,6 +245,9 @@ export interface TreeNodeSchemaNonClass<
 	create(data: UnhydratedData | TreeHandle): TNode;
 }
 
+/**
+ * @alpha
+ */
 export interface TreeNodeSchemaClass<
 	Name extends string = string,
 	Kind extends NodeKind = NodeKind,
@@ -247,6 +258,9 @@ export interface TreeNodeSchemaClass<
 	new (data: UnhydratedData | TreeHandle): TNode;
 }
 
+/**
+ * @alpha
+ */
 export interface TreeNodeSchemaCore<
 	out Name extends string = string,
 	out Kind extends NodeKind = NodeKind,
@@ -265,11 +279,17 @@ export interface TreeNodeSchemaCore<
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
+/**
+ * @alpha
+ */
 export enum FieldKind {
 	Optional,
 	Required,
 }
 
+/**
+ * @alpha
+ */
 export enum NodeKind {
 	Map,
 	List,

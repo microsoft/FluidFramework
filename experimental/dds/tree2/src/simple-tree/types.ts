@@ -28,6 +28,7 @@ import {
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
+ * @alpha
  */
 export type Unhydrated<T> = T;
 
