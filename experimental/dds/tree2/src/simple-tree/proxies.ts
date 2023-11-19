@@ -41,10 +41,11 @@ import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	TreeField,
 	TypedNode,
-	TreeNodeUnion,
+	TreeNodeUnionJavaScript,
 	TreeListNode,
 	TreeMapNode,
 	TreeObjectNode,
+	TypedNodeJavaScript,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 
@@ -219,7 +220,7 @@ const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
-	iterable: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
+	iterable: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>,
 	insertedAtIndex: number,
 ): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
 	if (typeof iterable === "string") {
@@ -256,7 +257,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeListNode,
 			index: number,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
+			value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
 			modifyChildren(
@@ -267,10 +268,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	insertAtStart: {
-		value(
-			this: TreeListNode,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
-		): void {
+		value(this: TreeListNode, value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
 			modifyChildren(
 				getEditNode(this),
@@ -280,10 +278,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	insertAtEnd: {
-		value(
-			this: TreeListNode,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
-		): void {
+		value(this: TreeListNode, value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
 				value,
 				this.length,
@@ -592,7 +587,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode<MapNodeSchema>,
 			key: string,
-			value: TreeNodeUnion<AllowedTypes, "javaScript">,
+			value: TreeNodeUnionJavaScript<AllowedTypes>,
 		): TreeMapNode<MapNodeSchema> {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
@@ -633,7 +628,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(): TreeMapNode<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<TreeMapNode<TSchema>>(
-		new Map<string, TreeField<TSchema["info"], "sharedTree", "notEmpty">>(),
+		new Map<string, TreeField<TSchema["info"], "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -669,7 +664,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(): TreeMapNode<TSchema> {
  */
 export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
-	content: TypedNode<TSchema, "javaScript">,
+	content: TypedNodeJavaScript<TSchema>,
 ): TreeObjectNode<TSchema> {
 	// Shallow copy the content and then add the type name symbol to it.
 	const contentCopy = { ...content };
@@ -683,7 +678,7 @@ type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
-interface ExtractedFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScript">> {
+interface ExtractedFactoryContent<T extends TypedNodeJavaScript<TreeNodeSchema>> {
 	/** The content with the factory subtrees replaced. */
 	content: T;
 	/**
@@ -718,7 +713,7 @@ interface ExtractedFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScrip
  * }
  * ```
  */
-export function extractFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScript">>(
+export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSchema>>(
 	content: T,
 ): ExtractedFactoryContent<T> {
 	if (isFluidHandle(content)) {
@@ -740,7 +735,7 @@ export function extractFactoryContent<T extends TypedNode<TreeNodeSchema, "javaS
 /**
  * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
  */
-function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]>(
+function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>[]>(
 	input: T,
 	insertedAtIndex = 0,
 ): ExtractedFactoryContent<T> {
@@ -777,7 +772,7 @@ function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]
 	};
 }
 
-function extractContentMap<T extends Map<string, TypedNode<TreeNodeSchema, "javaScript">>>(
+function extractContentMap<T extends Map<string, TypedNodeJavaScript<TreeNodeSchema>>>(
 	input: T,
 ): ExtractedFactoryContent<T> {
 	const output = new Map() as T;
