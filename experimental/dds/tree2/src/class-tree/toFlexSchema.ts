@@ -114,7 +114,7 @@ export function convertNodeSchema(
 		switch (kind) {
 			case NodeKind.Leaf: {
 				assert(schema instanceof LeafNodeSchema, "invalid leaf schema");
-				return (flexSchemaSymbol as any)[flexSchemaSymbol] as FlexTreeNodeSchema;
+				return (schema as any)[flexSchemaSymbol] as FlexTreeNodeSchema;
 			}
 			case NodeKind.Map: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
@@ -137,13 +137,13 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexTreeFieldSchema> = Object.create(null);
-				for (const [key, value] of Object.keys(info)) {
+				for (const [key, value] of Object.entries(info)) {
 					// This code has to be careful to avoid assigned to __proto__ or similar built in fields.
 					Object.defineProperty(fields, key, {
 						enumerable: true,
 						configurable: false,
 						writable: false,
-						value,
+						value: convertField(schemaMap, value),
 					});
 				}
 				out = FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);

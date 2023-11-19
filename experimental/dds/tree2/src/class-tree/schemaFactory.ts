@@ -12,8 +12,12 @@ import {
 	_InlineTrick,
 	requireAssignableTo,
 } from "../util";
-// eslint-disable-next-line import/no-internal-modules
-import { ArrayHasFixedLength, LazyItem } from "../feature-libraries/typed-schema/flexList";
+import {
+	ArrayHasFixedLength,
+	LazyItem,
+	markEager,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/typed-schema/flexList";
 import {
 	FlexTreeObjectNode,
 	FlexTreeNode,
@@ -102,6 +106,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				TreeNodeSchema<`${TScope}.${Name}`, TKind, T>
 			>;
 		}
+		markEager(schema);
 		return schema;
 	}
 

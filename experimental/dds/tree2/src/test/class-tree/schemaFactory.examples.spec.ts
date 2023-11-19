@@ -83,6 +83,10 @@ function setup(tree: ITree): Note[] {
 	return items;
 }
 
-const factory = new TreeFactory({});
-const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
-setup(theTree);
+describe("Class based end to end example", () => {
+	it("test", () => {
+		const factory = new TreeFactory({});
+		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		setup(theTree);
+	});
+});
