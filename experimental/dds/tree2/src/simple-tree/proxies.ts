@@ -38,16 +38,9 @@ import { EmptyKey, FieldKey } from "../core";
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
-import {
-	TreeField,
-	TypedNode,
-	TreeNodeUnionFactoryInput,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	TypedNodeFactoryInput,
-} from "./types";
+import { TreeField, TypedNode, TreeListNode, TreeMapNode, TreeObjectNode } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
+import { TreeNodeUnionFactoryInput, TypedNodeFactoryInput } from "./factoryInputTypes";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(

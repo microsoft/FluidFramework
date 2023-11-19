@@ -6,7 +6,8 @@
 import { Assume } from "../util";
 import { ObjectNodeSchema, TreeNodeSchemaBase } from "../feature-libraries";
 import { createRawObjectProxy } from "./proxies";
-import { TypedNodeFactoryInput, TreeObjectNode } from "./types";
+import { TreeObjectNode } from "./types";
+import { TypedNodeFactoryInput } from "./factoryInputTypes";
 
 /**
  * Adds a factory function (`create`) to the given schema so that it satisfies the {@link TreeObjectFactory} interface.

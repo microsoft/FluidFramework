@@ -16,7 +16,15 @@ export {
 	TreeRoot,
 	TreeNode,
 	TreeListNodeBase,
-	TreeRootFactoryInput,
 } from "./types";
 export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { nodeApi as Tree, TreeApi } from "./node";
+export {
+	TreeRootFactoryInput,
+	TreeFieldFactoryInput,
+	TreeFieldInnerFactoryInput,
+	TreeNodeUnionFactoryInput,
+	TreeObjectNodeFactoryInput,
+	TreeObjectNodeFieldsFactoryInput,
+	TypedNodeFactoryInput,
+} from "./factoryInputTypes";

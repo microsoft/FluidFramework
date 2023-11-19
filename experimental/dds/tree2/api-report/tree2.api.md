@@ -960,7 +960,13 @@ declare namespace InternalTypes {
         FactoryObjectNodeSchema,
         FactoryObjectNodeSchemaRecursive,
         testRecursiveDomain,
-        TreeListNodeBase
+        TreeListNodeBase,
+        TreeFieldFactoryInput,
+        TreeFieldInnerFactoryInput,
+        TreeNodeUnionFactoryInput,
+        TreeObjectNodeFactoryInput,
+        TreeObjectNodeFieldsFactoryInput,
+        TypedNodeFactoryInput
     }
 }
 export { InternalTypes }
@@ -1796,7 +1802,13 @@ export interface TreeEvent {
 export type TreeField<TSchema extends TreeFieldSchema = TreeFieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 // @alpha
+type TreeFieldFactoryInput<TSchema extends TreeFieldSchema = TreeFieldSchema> = TreeFieldInnerFactoryInput<TSchema["kind"], TSchema["allowedTypes"]>;
+
+// @alpha
 export type TreeFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? TreeNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? TreeNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
+
+// @alpha
+type TreeFieldInnerFactoryInput<Kind extends FieldKind, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? TreeNodeUnionFactoryInput<TTypes> : Kind extends typeof FieldKinds.optional ? TreeNodeUnionFactoryInput<TTypes> | undefined : unknown;
 
 // @alpha @sealed
 export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> implements TreeFieldStoredSchema {
@@ -1911,12 +1923,20 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
 }[number];
 
 // @alpha
+type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes extends readonly [Any] ? unknown : {
+    [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeNodeSchema ? TypedNodeFactoryInput<InnerType> : never : never;
+}[number];
+
+// @alpha
 export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
     create(content: TypedNodeFactoryInput<Assume<TSchema, ObjectNodeSchema>>): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 // @alpha
 export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
+
+// @alpha
+type TreeObjectNodeFactoryInput<TSchema extends ObjectNodeSchema> = TreeObjectNodeFieldsFactoryInput<TSchema["objectNodeFieldsObject"]>;
 
 // @alpha
 export type TreeObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
@@ -1927,6 +1947,13 @@ export type TreeObjectNodeFields<TFields extends RestrictiveReadonlyRecord<strin
     readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : TFields[key]["kind"] extends typeof FieldKinds.optional ? key : never]?: TreeField<TFields[key]>;
 } & {
     readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : TFields[key]["kind"] extends typeof FieldKinds.optional ? never : key]-?: TreeField<TFields[key]>;
+};
+
+// @alpha
+type TreeObjectNodeFieldsFactoryInput<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
+    readonly [key in keyof TFields]?: TreeFieldFactoryInput<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional ? never : key]-?: TreeFieldFactoryInput<TFields[key]>;
 };
 
 // @alpha
@@ -2013,6 +2040,9 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode> = FlattenKeys<CollectOptions<Mode, TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<Mode, TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? TypedFields<Mode, {
     "": TField;
 }> : EmptyObject, TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined, TSchema["name"]>>;
+
+// @alpha
+type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? ReadonlyMap<string, TreeFieldFactoryInput<TSchema["info"]>> : TSchema extends FieldNodeSchema ? readonly TreeNodeUnionFactoryInput<TSchema["info"]["allowedTypes"]>[] : TSchema extends ObjectNodeSchema ? TreeObjectNodeFactoryInput<TSchema> : unknown;
 
 // @alpha
 export class TypedTreeFactory implements IChannelFactory {
