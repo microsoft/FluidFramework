@@ -5,7 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, ITree, TreeConfiguration, TreeView, Tree } from "../../class-tree";
+import { TreeFactory } from "../../treeFactory";
 
 // Since this no longer follows the builder pattern its a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
@@ -80,3 +82,7 @@ function setup(tree: ITree): Note[] {
 	const items: Note[] = [...stuff];
 	return items;
 }
+
+const factory = new TreeFactory({});
+const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+setup(theTree);
