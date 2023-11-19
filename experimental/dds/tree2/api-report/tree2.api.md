@@ -1823,7 +1823,7 @@ export interface TreeFieldStoredSchema {
 }
 
 // @alpha
-export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> extends TreeListNodeBase<TreeNodeUnion<TTypes>, TreeNodeUnionJavaScript<TTypes>, TreeListNode> {
+export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> extends TreeListNodeBase<TreeNodeUnion<TTypes>, TreeNodeUnionFactoryInput<TTypes>, TreeListNode> {
 }
 
 // @alpha
@@ -1912,7 +1912,7 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
 
 // @alpha
 export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
-    create(content: TypedNodeJavaScript<Assume<TSchema, ObjectNodeSchema>>): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
+    create(content: TypedNodeFactoryInput<Assume<TSchema, ObjectNodeSchema>>): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 // @alpha

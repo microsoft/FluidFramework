@@ -41,11 +41,11 @@ import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	TreeField,
 	TypedNode,
-	TreeNodeUnionJavaScript,
+	TreeNodeUnionFactoryInput,
 	TreeListNode,
 	TreeMapNode,
 	TreeObjectNode,
-	TypedNodeJavaScript,
+	TypedNodeFactoryInput,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 
@@ -220,7 +220,7 @@ const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
-	iterable: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>,
+	iterable: Iterable<TreeNodeUnionFactoryInput<AllowedTypes>>,
 	insertedAtIndex: number,
 ): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
 	if (typeof iterable === "string") {
@@ -257,7 +257,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeListNode,
 			index: number,
-			value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>,
+			value: Iterable<TreeNodeUnionFactoryInput<AllowedTypes>>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
 			modifyChildren(
@@ -268,7 +268,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	insertAtStart: {
-		value(this: TreeListNode, value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>): void {
+		value(this: TreeListNode, value: Iterable<TreeNodeUnionFactoryInput<AllowedTypes>>): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
 			modifyChildren(
 				getEditNode(this),
@@ -278,7 +278,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	insertAtEnd: {
-		value(this: TreeListNode, value: Iterable<TreeNodeUnionJavaScript<AllowedTypes>>): void {
+		value(this: TreeListNode, value: Iterable<TreeNodeUnionFactoryInput<AllowedTypes>>): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
 				value,
 				this.length,
@@ -587,7 +587,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode<MapNodeSchema>,
 			key: string,
-			value: TreeNodeUnionJavaScript<AllowedTypes>,
+			value: TreeNodeUnionFactoryInput<AllowedTypes>,
 		): TreeMapNode<MapNodeSchema> {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
@@ -664,7 +664,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(): TreeMapNode<TSchema> {
  */
 export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
-	content: TypedNodeJavaScript<TSchema>,
+	content: TypedNodeFactoryInput<TSchema>,
 ): TreeObjectNode<TSchema> {
 	// Shallow copy the content and then add the type name symbol to it.
 	const contentCopy = { ...content };
@@ -678,7 +678,7 @@ type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
-interface ExtractedFactoryContent<T extends TypedNodeJavaScript<TreeNodeSchema>> {
+interface ExtractedFactoryContent<T extends TypedNodeFactoryInput<TreeNodeSchema>> {
 	/** The content with the factory subtrees replaced. */
 	content: T;
 	/**
@@ -713,7 +713,7 @@ interface ExtractedFactoryContent<T extends TypedNodeJavaScript<TreeNodeSchema>>
  * }
  * ```
  */
-export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSchema>>(
+export function extractFactoryContent<T extends TypedNodeFactoryInput<TreeNodeSchema>>(
 	content: T,
 ): ExtractedFactoryContent<T> {
 	if (isFluidHandle(content)) {
@@ -735,7 +735,7 @@ export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSche
 /**
  * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
  */
-function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>>(
+function extractContentArray<T extends TypedNodeFactoryInput<TreeNodeSchema>>(
 	input: readonly T[],
 	insertedAtIndex = 0,
 ): ExtractedFactoryContent<T[]> {
@@ -772,7 +772,7 @@ function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>>(
 	};
 }
 
-function extractContentMap<T extends Map<string, TypedNodeJavaScript<TreeNodeSchema>>>(
+function extractContentMap<T extends Map<string, TypedNodeFactoryInput<TreeNodeSchema>>>(
 	input: T,
 ): ExtractedFactoryContent<T> {
 	const output = new Map() as T;

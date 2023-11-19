@@ -41,7 +41,7 @@ export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMap
 export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
 	extends TreeListNodeBase<
 		TreeNodeUnion<TTypes>,
-		TreeNodeUnionJavaScript<TTypes>,
+		TreeNodeUnionFactoryInput<TTypes>,
 		TreeListNode
 	> {}
 
@@ -210,8 +210,8 @@ export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeObjectNodeFie
  * An object which supports property-based access to fields.
  * @alpha
  */
-export type TreeObjectNodeJavaScript<TSchema extends ObjectNodeSchema> =
-	TreeObjectNodeFieldsJavaScript<TSchema["objectNodeFieldsObject"]>;
+export type TreeObjectNodeFactoryInput<TSchema extends ObjectNodeSchema> =
+	TreeObjectNodeFieldsFactoryInput<TSchema["objectNodeFieldsObject"]>;
 
 /**
  * Helper for generating the properties of a {@link TreeObjectNode}.
@@ -261,16 +261,16 @@ export type TreeObjectNodeFields<
  * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
  * @alpha
  */
-export type TreeObjectNodeFieldsJavaScript<
+export type TreeObjectNodeFieldsFactoryInput<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 > = {
 	// Make all properties optional.
-	readonly [key in keyof TFields]?: TreeFieldJavaScript<TFields[key]>;
+	readonly [key in keyof TFields]?: TreeFieldFactoryInput<TFields[key]>;
 } & {
 	// Require non-optional.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
 		? never
-		: key]-?: TreeFieldJavaScript<TFields[key]>;
+		: key]-?: TreeFieldFactoryInput<TFields[key]>;
 };
 
 /**
@@ -321,8 +321,12 @@ export type TreeField<
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
 > = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
-export type TreeFieldJavaScript<TSchema extends TreeFieldSchema = TreeFieldSchema> =
-	TreeFieldInnerJavaScript<TSchema["kind"], TSchema["allowedTypes"]>;
+/**
+ * Given a field's schema, return the corresponding object in the proxy-based API.
+ * @alpha
+ */
+export type TreeFieldFactoryInput<TSchema extends TreeFieldSchema = TreeFieldSchema> =
+	TreeFieldInnerFactoryInput<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
@@ -344,15 +348,15 @@ export type TreeFieldInner<
  * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
  * @alpha
  */
-export type TreeFieldInnerJavaScript<
+export type TreeFieldInnerFactoryInput<
 	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
 	: Kind extends typeof FieldKinds.required
-	? TreeNodeUnionJavaScript<TTypes>
+	? TreeNodeUnionFactoryInput<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? TreeNodeUnionJavaScript<TTypes> | undefined
+	? TreeNodeUnionFactoryInput<TTypes> | undefined
 	: unknown;
 
 /**
@@ -378,7 +382,7 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
  * Given multiple node schema types, return the corresponding object type union in the proxy-based API.
  * @alpha
  */
-export type TreeNodeUnionJavaScript<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
+export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
 	? unknown
 	: {
 			// TODO: Is the the best way to write this type function? Can it be simplified?
@@ -388,7 +392,7 @@ export type TreeNodeUnionJavaScript<TTypes extends AllowedTypes> = TTypes extend
 				infer InnerType
 			>
 				? InnerType extends TreeNodeSchema
-					? TypedNodeJavaScript<InnerType>
+					? TypedNodeFactoryInput<InnerType>
 					: never
 				: never;
 	  }[number];
@@ -412,16 +416,16 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
  * Given a node's schema, return the corresponding object in the proxy-based API.
  * @alpha
  */
-export type TypedNodeJavaScript<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+export type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
-	? ReadonlyMap<string, TreeFieldJavaScript<TSchema["info"]>>
+	? ReadonlyMap<string, TreeFieldFactoryInput<TSchema["info"]>>
 	: TSchema extends FieldNodeSchema
-	? readonly TreeNodeUnionJavaScript<TSchema["info"]["allowedTypes"]>[]
+	? readonly TreeNodeUnionFactoryInput<TSchema["info"]["allowedTypes"]>[]
 	: TSchema extends ObjectNodeSchema
-	? TreeObjectNodeJavaScript<TSchema>
+	? TreeObjectNodeFactoryInput<TSchema>
 	: // TODO: This should be `never` not `unknown` since this type is used as input, and thus should not fallback to unknown when the types are not specific enough.
-	  // As is, this use of `unknown` causes `TypedNodeJavaScript<TreeNodeSchema>` to just be `unknown` which makes some code much less type safe than it should be.
+	  // As is, this use of `unknown` causes `TypedNodeFactoryInput<TreeNodeSchema>` to just be `unknown` which makes some code much less type safe than it should be.
 	  unknown;
 
 /**
@@ -436,8 +440,8 @@ export type TreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
 /**
  * The root type (the type of the entire tree) for a given schema collection.
  * */
-export type TreeRootJavaScript<TSchema extends TreeSchema> = TSchema extends TreeSchema<
+export type TreeRootFactoryInput<TSchema extends TreeSchema> = TSchema extends TreeSchema<
 	infer TRootFieldSchema
 >
-	? TreeFieldJavaScript<TRootFieldSchema>
+	? TreeFieldFactoryInput<TRootFieldSchema>
 	: never;
