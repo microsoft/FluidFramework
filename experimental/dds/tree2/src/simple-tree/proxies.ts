@@ -738,7 +738,7 @@ export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSche
 function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>>(
 	input: readonly T[],
 	insertedAtIndex = 0,
-): ExtractedFactoryContent<readonly T[]> {
+): ExtractedFactoryContent<T[]> {
 	const output: T[] = [];
 	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
 	for (let i = 0; i < input.length; i++) {
