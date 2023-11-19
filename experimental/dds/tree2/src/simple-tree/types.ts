@@ -420,7 +420,8 @@ export type TypedNodeJavaScript<TSchema extends TreeNodeSchema> = TSchema extend
 	? readonly TreeNodeUnionJavaScript<TSchema["info"]["allowedTypes"]>[]
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNodeJavaScript<TSchema>
-	: // TODO: This type is used as input, and thus should not fallback to unknown when the types are not specific enough.
+	: // TODO: This should be `never` not `unknown` since this type is used as input, and thus should not fallback to unknown when the types are not specific enough.
+	  // As is, this use of `unknown` causes `TypedNodeJavaScript<TreeNodeSchema>` to just be `unknown` which makes some code much less type safe than it should be.
 	  unknown;
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail } from "../util";
+import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -718,8 +718,8 @@ export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSche
 ): ExtractedFactoryContent<T> {
 	if (isFluidHandle(content)) {
 		return { content, hydrateProxies: noopHydrator };
-	} else if (Array.isArray(content)) {
-		return extractContentArray(content);
+	} else if (isReadonlyArray(content)) {
+		return extractContentArray(content) as ExtractedFactoryContent<T>;
 	} else if (content instanceof Map) {
 		return extractContentMap(content);
 	} else if (content !== null && typeof content === "object") {
@@ -735,11 +735,11 @@ export function extractFactoryContent<T extends TypedNodeJavaScript<TreeNodeSche
 /**
  * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
  */
-function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>[]>(
-	input: T,
+function extractContentArray<T extends TypedNodeJavaScript<TreeNodeSchema>>(
+	input: readonly T[],
 	insertedAtIndex = 0,
-): ExtractedFactoryContent<T> {
-	const output = [] as unknown as T;
+): ExtractedFactoryContent<readonly T[]> {
+	const output: T[] = [];
 	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
 	for (let i = 0; i < input.length; i++) {
 		const { content, hydrateProxies } = extractFactoryContent(input[i]);
