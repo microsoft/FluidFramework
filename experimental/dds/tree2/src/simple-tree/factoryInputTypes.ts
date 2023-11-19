@@ -21,18 +21,14 @@ import {
 } from "../feature-libraries";
 
 /**
- * An object which supports property-based access to fields.
+ * Data from which a {@link TreeObjectNode} can be built.
  * @alpha
  */
 export type TreeObjectNodeFactoryInput<TSchema extends ObjectNodeSchema> =
 	TreeObjectNodeFieldsFactoryInput<TSchema["objectNodeFieldsObject"]>;
 
 /**
- * Helper for generating the properties of a {@link TreeObjectNode}.
- * @privateRemarks
- * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
- * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
- * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+ * Helper for generating the properties of a TreeObjectNodeFactoryInput.
  * @alpha
  */
 export type TreeObjectNodeFieldsFactoryInput<
@@ -48,14 +44,14 @@ export type TreeObjectNodeFieldsFactoryInput<
 };
 
 /**
- * Given a field's schema, return the corresponding object in the proxy-based API.
+ * Data from which a {@link TreeField} can be built.
  * @alpha
  */
 export type TreeFieldFactoryInput<TSchema extends TreeFieldSchema = TreeFieldSchema> =
 	TreeFieldInnerFactoryInput<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
- * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
+ * Helper for implementing TreeFieldFactoryInput.
  * @alpha
  */
 export type TreeFieldInnerFactoryInput<
@@ -70,7 +66,7 @@ export type TreeFieldInnerFactoryInput<
 	: unknown;
 
 /**
- * Given multiple node schema types, return the corresponding object type union in the proxy-based API.
+ * Given multiple node schema types, return the corresponding object type union from which the node could be built.
  * @alpha
  */
 export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
@@ -89,7 +85,7 @@ export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes exte
 	  }[number];
 
 /**
- * Given a node's schema, return the corresponding object in the proxy-based API.
+ * Given a node's schema, return the corresponding object from which the node could be built.
  * @alpha
  */
 export type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
@@ -105,8 +101,8 @@ export type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema exte
 	  unknown;
 
 /**
- * The root type (the type of the entire tree) for a given schema collection.
- * */
+ * Data which can be build into an entire tree matching the provided schema.
+ */
 export type TreeRootFactoryInput<TSchema extends TreeSchema> = TSchema extends TreeSchema<
 	infer TRootFieldSchema
 >
