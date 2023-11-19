@@ -103,6 +103,7 @@ export async function createNewFluidFile(
 		);
 	}
 
+	// `newFileInfo` has the file name
 	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
 	const resolver = new OdspDriverUrlResolver();
 	const odspResolvedUrl = await resolver.resolve({

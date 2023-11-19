@@ -14,6 +14,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 	containerPackageName?: string;
 	fileVersion?: string;
 	context?: string;
+	fileName?: string;
 }
 
 /**

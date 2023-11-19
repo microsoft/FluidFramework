@@ -137,9 +137,15 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}
-		const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(
-			request.url,
-		);
+		const {
+			siteUrl,
+			driveId,
+			itemId,
+			path,
+			fileName: fileAlias,
+			containerPackageName,
+			fileVersion,
+		} = decodeOdspUrl(request.url);
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
@@ -170,7 +176,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			driveId,
 			itemId,
 			dataStorePath: path,
-			fileName: "",
+			fileName: fileAlias ?? "",
 			summarizer,
 			codeHint: {
 				containerPackageName,
@@ -234,6 +240,7 @@ function decodeOdspUrl(url: string): {
 	driveId: string;
 	itemId: string;
 	path: string;
+	fileName?: string;
 	containerPackageName?: string;
 	fileVersion?: string;
 } {
@@ -246,6 +253,7 @@ function decodeOdspUrl(url: string): {
 	const path = searchParams.get("path");
 	const containerPackageName = searchParams.get("containerPackageName");
 	const fileVersion = searchParams.get("fileVersion");
+	const fileName = searchParams.get("fileName");
 
 	if (driveId === null) {
 		throw new Error("ODSP URL did not contain a drive id");
@@ -264,6 +272,7 @@ function decodeOdspUrl(url: string): {
 		driveId: decodeURIComponent(driveId),
 		itemId: decodeURIComponent(itemId),
 		path: decodeURIComponent(path),
+		fileName: fileName ?? "",
 		containerPackageName: containerPackageName
 			? decodeURIComponent(containerPackageName)
 			: undefined,

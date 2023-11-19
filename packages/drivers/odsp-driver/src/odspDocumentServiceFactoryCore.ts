@@ -210,7 +210,7 @@ export class OdspDocumentServiceFactoryCore
 								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 					  );
-				const docService = this.createDocumentServiceCore(
+				const docService = this.createDocumentServiceCore( // fileName is empty
 					odspResolvedUrl,
 					odspLogger,
 					cacheAndTracker,

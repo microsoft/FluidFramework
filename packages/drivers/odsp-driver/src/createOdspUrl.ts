@@ -24,6 +24,9 @@ export function createOdspUrl(l: OdspFluidDataStoreLocator): string {
 	if (l.fileVersion) {
 		odspUrl += `&fileVersion=${encodeURIComponent(l.fileVersion)}`;
 	}
+	if (l.fileName) {
+		odspUrl += `&fileName=${encodeURIComponent(l.fileName)}`;
+	}
 
 	return odspUrl;
 }
