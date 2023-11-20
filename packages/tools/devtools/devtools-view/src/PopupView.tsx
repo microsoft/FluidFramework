@@ -4,73 +4,47 @@
  */
 
 import React from "react";
-import {
-	DevtoolsFeatures,
-	handleIncomingMessage,
-	type DevtoolsFeatureFlags,
-	type InboundHandlers,
-	type ISourcedDevtoolsMessage,
-	type IMessageRelay,
-	GetDevtoolsFeatures,
-} from "@fluid-experimental/devtools-core";
+import { type DevtoolsFeatureFlags, GetDevtoolsFeatures } from "@fluid-experimental/devtools-core";
 
-import { MessageRelayContext } from "./MessageRelayContext";
-
-/**
- * Message sent to the webpage to query for the supported set of Devtools features.
- */
 const getSupportedFeaturesMessage = GetDevtoolsFeatures.createMessage();
-const loggingContext = "INLINE(PopupView)";
-
-/**
- * @public
- */
-export interface PopupViewProps {
-	messageRelay: IMessageRelay;
-}
 
 /**
  * Renders a popup element when the user clicks on the extension w into the provided target element.
  * @public
  */
-export function PopupView(props: PopupViewProps): React.ReactElement {
-	const { messageRelay } = props;
+export function PopupView(): React.ReactElement {
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
+	if (window === undefined) {
+		throw new Error("Window object is not defined.");
+	}
 
 	React.useEffect(() => {
-		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as DevtoolsFeatures.Message;
-				setSupportedFeatures(message.data.features);
-				return true;
-			},
-		};
-
-		/**
-		 * Event handler for messages coming from the Message Relay
-		 */
-		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
-			handleIncomingMessage(message, inboundMessageHandlers, {
-				context: loggingContext,
-			});
+		function handleMessage(event: MessageEvent) {
+			// Ensure the message is the type we're expecting
+			if (
+				event.source === window &&
+				event.data &&
+				event.data.type === GetDevtoolsFeatures.MessageType
+			) {
+				setSupportedFeatures(event.data.features);
+			}
 		}
+		window.addEventListener("message", handleMessage);
 
-		messageRelay.on("message", messageHandler);
-		// Query for supported feature set
-		messageRelay.postMessage(getSupportedFeaturesMessage);
+		// Post message to content script
+		window.postMessage(getSupportedFeaturesMessage, "*");
 
-		return (): void => {
-			messageRelay.off("message", messageHandler);
+		// Cleanup listener on unmount
+		return () => {
+			window.removeEventListener("message", handleMessage);
 		};
-	}, [messageRelay, setSupportedFeatures]);
+	}, [setSupportedFeatures]);
 	return (
-		<MessageRelayContext.Provider value={messageRelay}>
-			<div>
-				To use the Fluid Devtools, open the browser Devtools pane (F12) and click the `Fluid
-				Developer Tools` tab. {supportedFeatures}
-			</div>
-		</MessageRelayContext.Provider>
+		<div>
+			To use the Fluid Devtools, open the browser Devtools pane (F12) and click the `Fluid
+			Developer Tools` tab. {supportedFeatures}
+		</div>
 	);
 }
