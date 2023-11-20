@@ -159,7 +159,7 @@
 			// Require documentation on all package-exported API items.
 			"ae-undocumented": {
 				"logLevel": "error",
-				"addToApiReportFile": true // TODO: promote this to `false` once violations in consumers have been addressed.
+				"addToApiReportFile": false
 			},
 
 			// The @inheritDoc tag needs a TSDoc declaration reference.
