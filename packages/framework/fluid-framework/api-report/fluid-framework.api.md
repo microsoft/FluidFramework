@@ -8,9 +8,6 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { createDOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
-import { createFluidContainer } from '@fluidframework/fluid-static';
-import { createServiceAudience } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
@@ -97,12 +94,6 @@ export { ConnectionState }
 export { ContainerErrorType }
 
 export { ContainerSchema }
-
-export { createDOProviderContainerRuntimeFactory }
-
-export { createFluidContainer }
-
-export { createServiceAudience }
 
 export { DataObjectClass }
 
