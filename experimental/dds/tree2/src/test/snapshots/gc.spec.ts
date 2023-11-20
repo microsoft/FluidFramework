@@ -14,7 +14,7 @@ import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shar
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
-import { TreeField } from "../../feature-libraries";
+import { TreeField } from "../../simple-tree";
 
 const builder = new SchemaBuilder({ scope: "test" });
 const someType = builder.object("foo", {

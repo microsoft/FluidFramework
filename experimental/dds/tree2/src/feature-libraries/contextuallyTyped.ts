@@ -24,7 +24,7 @@ import {
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./default-field-kinds";
+import { fieldKinds } from "./default-schema";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import {
 	AllowedTypes,
@@ -600,7 +600,7 @@ export function applyTypesFromContext(
 	} else if (data instanceof Map) {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const [key, value] of data) {
-			assert(!fields.has(key), "Keys should not be duplicated");
+			assert(!fields.has(key), 0x7f0 /* Keys should not be duplicated */);
 			const childSchema = getFieldSchema(key, schema);
 			const children = applyFieldTypesFromContext(context, childSchema, value);
 

@@ -26,7 +26,7 @@ import {
 	TreeNodeSchemaBase,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
-import { defaultSchemaPolicy } from "./default-field-kinds";
+import { defaultSchemaPolicy } from "./default-schema";
 
 /**
  * Configuration for a SchemaBuilder.
