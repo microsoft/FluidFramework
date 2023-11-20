@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -30,8 +30,8 @@
 		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "concurrently npm:test:jest npm:test:mocha",
 		"test:coverage": "npm run test:jest:coverage",
