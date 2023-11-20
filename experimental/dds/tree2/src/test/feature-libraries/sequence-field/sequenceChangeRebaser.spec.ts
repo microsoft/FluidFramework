@@ -307,14 +307,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
 					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					if (
-						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&
-						nameC === "Delete"
-					) {
-						it.skip(title, () => {
-							// Some of these tests fail due to BUG 6155 where if a mark in changeA is moved by changeB,
-							// we may not rebase changeA over the delete in changeC due to handling the move of changeA in the amend pass.
-						});
-					} else if (
 						changesTargetingDetached.has(nameA) &&
 						changesTargetingDetached.has(nameB)
 					) {
