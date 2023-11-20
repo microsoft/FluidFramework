@@ -7,6 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidSerializer,
 	ISerializedHandle,
+	OpContent,
 	parseHandles,
 	serializeHandles,
 	ValueType,
@@ -19,7 +20,7 @@ import { ISerializableValue, ISerializedValue } from "./interfaces";
  *
  * @public
  */
-export interface ILocalValue {
+export interface ILocalValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
 	/**
 	 * Type indicator of the value stored within.
 	 */
@@ -28,9 +29,7 @@ export interface ILocalValue {
 	/**
 	 * The in-memory value stored within.
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly value: any;
+	readonly value: T;
 
 	/**
 	 * Retrieve the serialized form of the value stored within.
@@ -38,8 +37,10 @@ export interface ILocalValue {
 	 * @param bind - Container type's handle
 	 * @returns The serialized form of the contained value
 	 */
-	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue<T>;
 }
+
+//* NEXT STEP keep plumbing T around e.g. to ISerializableValue
 
 /**
  * Converts the provided `localValue` to its serialized form.
@@ -50,8 +51,8 @@ export interface ILocalValue {
  *
  * @see {@link ILocalValue.makeSerialized}
  */
-export function makeSerializable(
-	localValue: ILocalValue,
+export function makeSerializable<T extends OpContent<"fullHandles">>(
+	localValue: ILocalValue<T>,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 	// eslint-disable-next-line import/no-deprecated
@@ -67,12 +68,12 @@ export function makeSerializable(
 /**
  * Manages a contained plain value.  May also contain shared object handles.
  */
-export class PlainLocalValue implements ILocalValue {
+export class PlainLocalValue<T extends OpContent<"fullHandles">> implements ILocalValue<T> {
 	/**
 	 * Create a new PlainLocalValue.
 	 * @param value - The value to store, which may contain shared object handles
 	 */
-	public constructor(public readonly value: unknown) {}
+	public constructor(public readonly value: T) {}
 
 	/**
 	 * {@inheritDoc ILocalValue."type"}
@@ -84,7 +85,7 @@ export class PlainLocalValue implements ILocalValue {
 	/**
 	 * {@inheritDoc ILocalValue.makeSerialized}
 	 */
-	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue {
+	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue<T> {
 		// Stringify to convert to the serialized handle values - and then parse in order to create
 		// a POJO for the op
 		const value = serializeHandles(this.value, serializer, bind);
@@ -125,7 +126,10 @@ export class LocalValueMaker {
 			serializable.value = handle;
 		}
 
-		const translatedValue: unknown = parseHandles(serializable.value, this.serializer);
+		const translatedValue: OpContent<"fullHandles"> = parseHandles(
+			serializable.value,
+			this.serializer,
+		);
 
 		return new PlainLocalValue(translatedValue);
 	}

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import {
+	ISharedObject,
+	ISharedObjectEvents,
+	JsonString,
+	OpContent,
+	HandlesEncoded,
+} from "@fluidframework/shared-object-base";
 import {
 	IDisposable,
 	IEvent,
@@ -401,8 +407,7 @@ export interface ISerializableValue {
 	/**
 	 * The JSONable representation of the value.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
+	value: OpContent<"handlesEncoded"> | undefined; //* s/b Primitive
 }
 
 /**
@@ -410,7 +415,7 @@ export interface ISerializableValue {
  *
  * @public
  */
-export interface ISerializedValue {
+export interface ISerializedValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
@@ -421,5 +426,5 @@ export interface ISerializedValue {
 	 *
 	 * @remarks Will be undefined if the original value was undefined.
 	 */
-	value: string | undefined;
+	value: JsonString<HandlesEncoded<T>> | undefined;
 }

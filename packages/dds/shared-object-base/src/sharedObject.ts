@@ -48,23 +48,49 @@ export type OpContent<
 	HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles",
 > = Omit<unknown, "__handles_encoded__"> & {
 	__handles_encoded__?: HandlesStatus;
+	//* IN CASE WE NEED A "NOHANDLES" CASE: __handles_encoded__?: HandlesStatus extends "noHandles" ? undefined : HandlesStatus;
 };
+
+export type HandlesEncoded<T extends OpContent> = T extends OpContent<"fullHandles">
+	? Omit<T, "__handles_encoded__"> & OpContent<"handlesEncoded">
+	: T;
+
+export type HandlesDecoded<T extends OpContent<"handlesEncoded">> = Omit<T, "__handles_encoded__"> &
+	OpContent<"fullHandles">;
 
 function takeEncoded(content: OpContent<"handlesEncoded">): void {}
 function takeEither(content: OpContent): void {}
+// function takeNoHandles(content: OpContent<"noHandles">): void {}
 
 const decoded: OpContent<"fullHandles"> = {};
 const encoded: OpContent<"handlesEncoded"> = {};
 const either: OpContent = {};
+// const noHandles: OpContent<"noHandles"> = {};
+const something: { foo: number } = { foo: 42 };
 
 // @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
 takeEncoded(decoded);
 // @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
 takeEncoded(either);
 
+// takeEncoded(noHandles);
+takeEncoded(something);
+
 takeEither(encoded);
 takeEither(decoded);
 takeEither(either);
+// takeEither(noHandles);
+takeEither(something);
+
+// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
+takeNoHandles(encoded);
+// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
+takeNoHandles(decoded);
+// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
+takeNoHandles(either);
+
+// takeNoHandles(noHandles);
+// takeNoHandles(something);
 
 /**
  * Base class from which all shared objects derive.

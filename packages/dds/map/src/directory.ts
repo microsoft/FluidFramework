@@ -78,7 +78,7 @@ interface IDirectoryMessageHandler {
  *
  * @public
  */
-export interface IDirectorySetOperation {
+export interface IDirectorySetOperation extends OpContent<"handlesEncoded"> {
 	/**
 	 * String identifier of the operation type.
 	 */

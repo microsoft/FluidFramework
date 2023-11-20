@@ -9,21 +9,20 @@
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
-import { OpContent } from "./sharedObject";
+import { HandlesDecoded, HandlesEncoded, OpContent } from "./sharedObject";
 
 export type Primitive = string | number | boolean | undefined;
 
-export type JsonString<T> = string & { __json__?: T & OpContent<"handlesEncoded"> };
+//* T can't be undefined
+export type JsonString<T> = string & { __json__?: T };
 
-//* The reviver may specify that it decodes handles, in which case the return type wouldn't be restricted to "handlesEncoded"
-// export function parseJson<T>(json: JsonString<T>, reviver): T & OpContent<"handlesEncoded"> {
-// 	return JSON.parse(json, reviver) as T & OpContent<"handlesEncoded">;
-// }
+export function parseJson<T>(json: JsonString<T>): T {
+	return JSON.parse(json) as T;
+}
 
-// //* Not so - The input can be anything and the replacer needs to specify it encodes handles
-// export function serializeJson<T>(value: T & OpContent<"handlesEncoded">, replacer): JsonString<T> {
-// 	return JSON.stringify(value, replacer) as JsonString<T>;
-// }
+export function serializeJson<T>(value: T): JsonString<T> {
+	return JSON.stringify(value) as JsonString<T>;
+}
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -51,10 +50,10 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	encode(
-		value: OpContent | Primitive,
+	encode<T extends OpContent>(
+		value: T | Primitive,
 		bind: IFluidHandle,
-	): OpContent<"handlesEncoded"> | Primitive;
+	): HandlesEncoded<T> | Primitive;
 
 	//* encode should take an indeterminate Content that may or may not have fullHandles?
 
@@ -67,18 +66,23 @@ export interface IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	decode(input: OpContent<"handlesEncoded"> | Primitive): OpContent<"fullHandles"> | Primitive;
+	decode<T extends OpContent<"handlesEncoded">>(
+		input: T | Primitive,
+	): HandlesDecoded<T> | Primitive;
 
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify<T>(value: T, bind: IFluidHandle): JsonString<T & OpContent<"handlesEncoded">>;
+	stringify<T extends OpContent>(
+		value: T | Primitive,
+		bind: IFluidHandle,
+	): JsonString<HandlesEncoded<T> | Primitive>;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
 	 * handles will be realized as part of the parse
 	 */
-	parse<T>(value: JsonString<T>): T & OpContent<"fullHandles">;
+	parse<T extends OpContent<"handlesEncoded">>(value: JsonString<T>): HandlesDecoded<T>;
 }
 
 /**
@@ -111,10 +115,10 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	public encode(
-		input: OpContent | Primitive,
+	public encode<T extends OpContent>(
+		input: T | Primitive,
 		bind: IFluidHandle,
-	): OpContent<"handlesEncoded"> | Primitive {
+	): HandlesEncoded<T> | Primitive {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -132,9 +136,9 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	public decode(
-		input: OpContent<"handlesEncoded"> | Primitive,
-	): OpContent<"fullHandles"> | Primitive {
+	decode<T extends OpContent<"handlesEncoded">>(
+		input: T | Primitive,
+	): HandlesDecoded<T> | Primitive {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -143,12 +147,15 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify<T>(input: T, bind: IFluidHandle): JsonString<T & OpContent<"handlesEncoded">> {
+	public stringify<T extends OpContent>(
+		input: T | Primitive,
+		bind: IFluidHandle,
+	): JsonString<HandlesEncoded<T> | Primitive> {
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
-	public parse<T>(input: JsonString<T>): T & OpContent<"fullHandles"> {
+	public parse<T extends OpContent<"handlesEncoded">>(input: JsonString<T>): HandlesDecoded<T> {
 		return JSON.parse(input, (key, value) => this.decodeValue(value));
 	}
 

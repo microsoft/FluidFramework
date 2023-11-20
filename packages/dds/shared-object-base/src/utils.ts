@@ -6,7 +6,9 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer } from "./serializer";
+import { IFluidSerializer, JsonString, Primitive, serializeJson } from "./serializer";
+import { HandlesDecoded, HandlesEncoded } from "./sharedObject";
+import { OpContent } from ".";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -17,12 +19,11 @@ import { IFluidSerializer } from "./serializer";
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns Result of strigifying an object
  */
-export function serializeHandles(
-	value: any,
+export function serializeHandles<T extends OpContent>(
+	value: T | Primitive,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+): JsonString<HandlesEncoded<T> | Primitive> | undefined {
 	return value !== undefined ? serializer.stringify(value, bind) : value;
 }
 
@@ -38,12 +39,11 @@ export function serializeHandles(
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
-export function makeHandlesSerializable(
-	value: any,
+export function makeHandlesSerializable<T extends OpContent<"fullHandles">>(
+	value: T | Primitive,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+): HandlesEncoded<T> | Primitive {
 	return serializer.encode(value, bind);
 }
 
@@ -55,9 +55,11 @@ export function makeHandlesSerializable(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
-export function parseHandles(value: any, serializer: IFluidSerializer) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
+export function parseHandles<T extends OpContent<"handlesEncoded">>(
+	value: T,
+	serializer: IFluidSerializer,
+): HandlesDecoded<T> | Primitive {
+	return value !== undefined ? serializer.parse(serializeJson(value)) : value;
 }
 
 /**
