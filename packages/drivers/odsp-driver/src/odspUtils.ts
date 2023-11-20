@@ -309,7 +309,7 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
  * @public
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
-	return "odspResolvedUrl" in resolvedUrl;
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
