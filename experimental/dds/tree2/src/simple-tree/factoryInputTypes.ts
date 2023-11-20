@@ -101,7 +101,7 @@ export type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema exte
 	  unknown;
 
 /**
- * Data which can be build into an entire tree matching the provided schema.
+ * Data which can be built into an entire tree matching the provided schema.
  */
 export type TreeRootFactoryInput<TSchema extends TreeSchema> = TSchema extends TreeSchema<
 	infer TRootFieldSchema
