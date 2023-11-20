@@ -8,7 +8,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
-// @internal (undocumented)
+// @internal
 export const isOdspUrl: (url: string) => boolean;
 
 // @internal (undocumented)

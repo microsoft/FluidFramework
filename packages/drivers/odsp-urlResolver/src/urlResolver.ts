@@ -39,8 +39,9 @@ export class OdspUrlResolver implements IUrlResolver {
 	}
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Returns true if the given string is a valid SPO/ODB or ODC URL.
+ *
  * @internal
  */
 export const isOdspUrl = (url: string): boolean => {
