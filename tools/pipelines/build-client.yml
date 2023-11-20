@@ -138,7 +138,7 @@ extends:
     taskLint: false
     taskBuildDocs: true
     publishDocs: true
-    telemetry: true
+    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
     - webpack
     - ci:test:mocha
