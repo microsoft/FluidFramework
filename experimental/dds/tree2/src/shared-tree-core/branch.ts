@@ -24,6 +24,7 @@ import {
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
+import { rebaseChangeOverChanges } from "../core/rebase/utils";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -392,10 +393,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				ancestor === commit,
 				0x677 /* The head commit should be based off the undoable commit. */,
 			);
-			change = pathAfterUndoable.reduce(
-				(a, b) => this.changeFamily.rebaser.rebase(a, b),
-				change,
-			);
+			change = rebaseChangeOverChanges(this.changeFamily.rebaser, change, pathAfterUndoable);
 		}
 
 		return this.applyChange(

@@ -6,6 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { RevisionInfo, revisionMetadataSourceFromInfo } from "../../feature-libraries";
+import { Mutable } from "../../util";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -278,21 +280,50 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const changeRebasedToRef = sourcePath.reduceRight(
-		(newChange, branchCommit) =>
-			changeRebaser.rebase(newChange, inverseFromCommit(changeRebaser, branchCommit, true)),
-		change,
-	);
-
-	return targetPath.reduce((a, b) => changeRebaser.rebase(a, b), changeRebasedToRef);
+	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
 
-function rebaseChangeOverChanges<TChange>(
+export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
+	const revisionMetadata = revisionMetadataSourceFromInfo(
+		getRevInfoFromTaggedChanges(changesToRebaseOver),
+	);
+
+	return changesToRebaseOver.reduce(
+		(a, b) =>
+			changeRebaser.rebase(a, b, {
+				revisions: revisionMetadata,
+				numBaseRevisions: changesToRebaseOver.length,
+			}),
+		changeToRebase,
+	);
+}
+
+// TODO: Deduplicate
+function getRevInfoFromTaggedChanges(changes: TaggedChange<unknown>[]): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return revInfos;
+}
+
+// TODO: Deduplicate
+function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }
 
 function inverseFromCommit<TChange>(

@@ -111,6 +111,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		numBaseRevisions: number,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
 
@@ -228,6 +229,11 @@ export interface RevisionMetadataSource {
 	readonly getRevisions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
+}
+
+export interface RebaseRevisionMetadata {
+	revisions: RevisionMetadataSource;
+	numBaseRevisions: number;
 }
 
 /**

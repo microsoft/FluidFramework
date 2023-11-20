@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RebaseRevisionMetadata } from "../../feature-libraries/modular-schema/fieldChangeHandler";
 import { Invariant } from "../../util";
 import type { RevisionTag } from "./types";
 
@@ -74,7 +75,11 @@ export interface ChangeRebaser<TChangeset> {
 	 * - `rebase(a, compose([]))` is equal to `a`.
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
-	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
+	rebase(
+		change: TChangeset,
+		over: TaggedChange<TChangeset>,
+		revisionMetadata: RebaseRevisionMetadata,
+	): TChangeset;
 }
 
 /**

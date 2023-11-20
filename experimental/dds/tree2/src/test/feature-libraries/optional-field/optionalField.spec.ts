@@ -250,6 +250,7 @@ describe("optionalField", () => {
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([change1]),
+						1,
 					),
 					change2.change,
 				);
@@ -280,6 +281,7 @@ describe("optionalField", () => {
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([]),
+						0,
 					),
 					expected,
 				);
@@ -318,6 +320,7 @@ describe("optionalField", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([deletion]),
+					1,
 				);
 
 				const changeToRebase3 = optionalChangeRebaser.rebase(
@@ -327,6 +330,7 @@ describe("optionalField", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([revive]),
+					1,
 				);
 
 				assert.deepEqual(changeToRebase3, changeToRebase);
@@ -380,6 +384,7 @@ describe("optionalField", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
+					0,
 				);
 				assert.deepEqual(actual, expected);
 			});
@@ -578,6 +583,7 @@ describe("optionalField", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
+					1,
 				);
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedTrees(
@@ -649,6 +655,7 @@ describe("optionalField", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
+					1,
 				);
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedTrees(

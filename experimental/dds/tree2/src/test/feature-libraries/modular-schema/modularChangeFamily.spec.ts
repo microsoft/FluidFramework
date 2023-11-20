@@ -42,7 +42,10 @@ import {
 	testChangeReceiver,
 } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ModularChangeFamily,
+	revisionMetadataSourceFromInfo,
+} from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
@@ -563,28 +566,40 @@ describe("ModularChangeFamily", () => {
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
 			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
+				family.rebase(rootChange1b, makeAnonChange(rootChange1a), {
+					revisions: revisionMetadataSourceFromInfo([]),
+					numBaseRevisions: 0,
+				}),
 				rootChange2,
 			);
 		});
 
 		it("rebase specific ↷ generic", () => {
 			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
+				family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric), {
+					revisions: revisionMetadataSourceFromInfo([]),
+					numBaseRevisions: 0,
+				}),
 				rootChange2,
 			);
 		});
 
 		it("rebase generic ↷ specific", () => {
 			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
+				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a), {
+					revisions: revisionMetadataSourceFromInfo([]),
+					numBaseRevisions: 0,
+				}),
 				rootChange2,
 			);
 		});
 
 		it("rebase generic ↷ generic", () => {
 			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
+				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric), {
+					revisions: revisionMetadataSourceFromInfo([]),
+					numBaseRevisions: 0,
+				}),
 				rootChange2Generic,
 			);
 		});
@@ -812,7 +827,14 @@ describe("ModularChangeFamily", () => {
 		];
 		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
-		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
+		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA), {
+			revisions: revisionMetadataSourceFromInfo([
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, rollbackOf: rev2 },
+			]),
+			numBaseRevisions: 0,
+		});
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);

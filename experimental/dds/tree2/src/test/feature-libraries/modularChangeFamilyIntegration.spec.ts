@@ -26,7 +26,10 @@ import {
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ModularChangeFamily,
+	revisionMetadataSourceFromInfo,
+} from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
@@ -73,7 +76,10 @@ describe("ModularChangeFamily integration", () => {
 			editor.exitTransaction();
 
 			const [move, remove, expected] = getChanges();
-			const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
+			const rebased = family.rebase(remove, tagChange(move, tag1), {
+				revisions: revisionMetadataSourceFromInfo([{ revision: tag1 }]),
+				numBaseRevisions: 1,
+			});
 			const rebasedDelta = family.intoDelta(makeAnonChange(rebased));
 			const expectedDelta = family.intoDelta(makeAnonChange(expected));
 			assert.deepEqual(rebasedDelta, expectedDelta);
@@ -94,7 +100,10 @@ describe("ModularChangeFamily integration", () => {
 			const baseTag = mintRevisionTag();
 			const restore = family.invert(tagChange(remove, baseTag), false);
 			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
-			const rebased = family.rebase(move, tagChange(remove, baseTag));
+			const rebased = family.rebase(move, tagChange(remove, baseTag), {
+				revisions: revisionMetadataSourceFromInfo([{ revision: baseTag }]),
+				numBaseRevisions: 1,
+			});
 			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(rebasedDelta, expectedDelta);

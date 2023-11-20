@@ -198,6 +198,7 @@ describe("defaultFieldKinds", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
+					1,
 				),
 				change2.change,
 			);
@@ -224,6 +225,7 @@ describe("defaultFieldKinds", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([]),
+					1,
 				),
 				childChange3,
 			);

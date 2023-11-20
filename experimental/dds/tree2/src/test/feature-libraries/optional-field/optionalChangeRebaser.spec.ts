@@ -134,6 +134,7 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
+		1,
 		undefined,
 	);
 }
@@ -168,6 +169,7 @@ function rebaseComposed(
 		idAllocator,
 		moveEffects,
 		metadata,
+		baseChanges.length,
 		undefined,
 	);
 }

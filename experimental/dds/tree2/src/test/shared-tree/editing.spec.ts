@@ -457,6 +457,27 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["B"]);
 		});
 
+		it("concurrent insert with nested change", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 0, "a");
+			expectJsonTree(tree1, ["a"]);
+
+			tree2.editor
+				.sequenceField(rootField)
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			tree2.editor
+				.sequenceField({ parent: rootNode, field: brand("foo") })
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			expectJsonTree(tree2, [{ foo: {} }]);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [{ foo: {} }, "a"]);
+		});
+
 		it("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();

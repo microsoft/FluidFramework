@@ -956,8 +956,9 @@ function compareCellPositions(
 ): number {
 	const baseId = getInputCellId(baseMark, baseRevision, metadata);
 	const baseLength = baseMark.count;
-	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
+	assert(baseId?.revision !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getInputCellId(newMark, undefined, metadata);
+	assert(newId !== undefined, "newMark should have cell ID");
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
@@ -1002,16 +1003,26 @@ function compareCellPositions(
 		}
 	}
 
-	if (isNewAttach(newMark)) {
-		// When the marks are at the same position, we use the tiebreak of `newMark`.
-		// TODO: Use specified tiebreak instead of always tiebreaking left.
+	if (newId.revision === undefined) {
+		// An undefined revision must mean that the cell was created on the branch we are rebasing.
+		// Since it is newer than the `baseMark`'s cell, it should come first.
 		return Infinity;
 	}
 
-	assert(
-		isNewAttach(baseMark),
-		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
-	);
+	const baseRevisionIndex = metadata.getIndex(baseId.revision);
+	const newRevisionIndex = metadata.getIndex(newId.revision);
+
+	if (newRevisionIndex !== undefined && baseRevisionIndex !== undefined) {
+		return newRevisionIndex > baseRevisionIndex ? Infinity : -Infinity;
+	}
+
+	if (newRevisionIndex !== undefined) {
+		return Infinity;
+	}
+
+	if (baseRevisionIndex !== undefined) {
+		return -Infinity;
+	}
 
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
