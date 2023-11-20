@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	Assume,
 	Brand,
@@ -10,11 +11,14 @@ import {
 	Opaque,
 	RestrictiveReadonlyRecord,
 	_InlineTrick,
+	getOrCreate,
+	isReadonlyArray,
 	requireAssignableTo,
 } from "../util";
 import {
 	ArrayHasFixedLength,
 	LazyItem,
+	isLazy,
 	markEager,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/typed-schema/flexList";
@@ -77,9 +81,11 @@ export class LeafNodeSchema<T extends FlexLeafNodeSchema>
  * @sealed @alpha
  */
 export class SchemaFactory<TScope extends string, TName extends number | string = string> {
+	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
+
 	public constructor(public readonly scope: TScope) {}
 
-	private scoped<Name extends TName>(name: Name): `${TScope}.${Name}` {
+	private scoped<Name extends TName | string>(name: Name): `${TScope}.${Name}` {
 		return `${this.scope}.${name}`;
 	}
 
@@ -89,7 +95,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public readonly null = makeLeaf(leaf.null);
 	public readonly handle = makeLeaf(leaf.handle);
 
-	private nodeSchema<Name extends TName, TKind extends NodeKind, T>(
+	private nodeSchema<Name extends TName | string, TKind extends NodeKind, T>(
 		name: Name,
 		kind: TKind,
 		t: T,
@@ -165,13 +171,65 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		>;
 	}
 
+	/**
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 *
+	 * @remarks
+	 * The identifier for this List is defined as a function of the provided types.
+	 * It is still scoped to this SchemaFactory, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
+	 * This does not support recursive types.
+	 *
+	 * If using these structurally named lists, other types in this schema builder should avoid names of the form `List<${string}>`.
+	 *
+	 * If the returned class is subclassed, that subclass must be used for all matching lists or an error will occur when configuring the tree.
+	 *
+	 * @privateRemarks
+	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
+	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
+	 * For example attempts to narrow unions of structural lists by name won't work.
+	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
+	 * though there may still be some problematic cases even after that work is done.
+	 */
+	public list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
+		allowedTypes: T,
+	): TreeNodeSchemaClass<`${TScope}.List<${string}>`, NodeKind.List, T, TreeListNode<T>>;
+
+	/**
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
+	 *
+	 * The name must be unique among all TreeNodeSchema in the the document schema.
+	 */
 	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
-		t: T,
+		allowedTypes: T,
+	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>>;
+
+	public list<const T extends ImplicitAllowedTypes>(
+		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+		allowedTypes?: T,
+	): TreeNodeSchemaClass<`${TScope}.${string}`, NodeKind.List, T, TreeListNode<T>> {
+		if (allowedTypes === undefined) {
+			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const fullName = structuralName("List", types);
+			return getOrCreate(this.structuralTypes, fullName, () =>
+				this.namedList(fullName, nameOrAllowedTypes as T),
+			) as TreeNodeSchemaClass<`${TScope}.${string}`, NodeKind.List, T, TreeListNode<T>>;
+		}
+		return this.namedList(nameOrAllowedTypes as TName, allowedTypes);
+	}
+
+	/**
+	 * Define a {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 *
+	 * The name must be unique among all TreeNodeSchema in the the document schema.
+	 */
+	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
+		name: Name,
+		allowedTypes: T,
 	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		class schema extends this.nodeSchema(name, NodeKind.List, t) {
+		class schema extends this.nodeSchema(name, NodeKind.List, allowedTypes) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
 			public constructor(node: FlexTreeObjectNode | UnhydratedData) {
 				super();
@@ -404,11 +462,32 @@ export function createTree<T extends TreeNodeSchema>(schema: T, data: unknown): 
 	return schema.create(data) as NodeFromSchema<T>;
 }
 
-// Set simpleSchemaSymbol on view schema!
-
 /**
  * Ideas:
  *
  * allow class schema to override "serializeSessionState", to allow persisting things like selection? Maybe support via decorator?
  * override methods for events?
  */
+
+export function structuralName<const T extends string>(
+	collectionName: T,
+	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
+): `${T}<${string}>` {
+	let inner: string;
+	if (!isReadonlyArray(allowedTypes)) {
+		return structuralName(collectionName, [allowedTypes]);
+	} else {
+		const names = allowedTypes.map((t): string => {
+			// Ensure that lazy types (functions) don't slip through here.
+			assert(!isLazy(t), "invalid type provided");
+			return t.identifier;
+		});
+		// Ensure name is order independent
+		names.sort();
+		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
+		// Using JSON is a simple way to accomplish this.
+		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
+		inner = JSON.stringify(names);
+	}
+	return `${collectionName}<${inner}>`;
+}

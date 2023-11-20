@@ -108,7 +108,7 @@ export function convertNodeSchema(
 	schemaMap: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 	schema: TreeNodeSchema,
 ): FlexTreeNodeSchema {
-	return getOrCreate(schemaMap, schema.identifier, () => {
+	const final = getOrCreate(schemaMap, schema.identifier, () => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {
@@ -156,4 +156,9 @@ export function convertNodeSchema(
 		(out as any)[flexSchemaSymbol] = schema;
 		return out;
 	});
+	assert(
+		(final as any)[flexSchemaSymbol] === schema,
+		"multiple view schema for the same identifier",
+	);
+	return final;
 }
