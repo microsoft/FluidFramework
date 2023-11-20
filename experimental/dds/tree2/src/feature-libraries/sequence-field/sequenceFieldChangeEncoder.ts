@@ -23,7 +23,6 @@ function makeV0Codec<TNodeChange>(
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
-			case "ReturnFrom":
 				return { ...(effect as JsonCompatibleReadOnly & object) };
 			case "AttachAndDetach":
 				return {
@@ -46,7 +45,6 @@ function makeV0Codec<TNodeChange>(
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
-			case "ReturnFrom":
 				return { ...effect };
 			case "AttachAndDetach":
 				return {

@@ -20,9 +20,10 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
+import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
 
 /**
- * An non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
+ * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @privateRemarks
  * This is a union of all possible tree node types.
@@ -46,7 +47,25 @@ export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
 	> {}
 
 /**
- * A generic List type, used to defined types like {@link TreeListNode}.
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
+export const TreeListNode = {
+	/**
+	 * Wrap an iterable of content to be inserted into a list.
+	 * @remarks
+	 * The object returned by this function can be inserted into a list as an element.
+	 * Its contents will be inserted sequentially in the corresponding location in the list.
+	 * @example
+	 * ```ts
+	 * list.insertAtEnd(list.inline(iterable))
+	 * ```
+	 */
+	inline: <T>(content: Iterable<T>) => createIterableTreeListContent(content),
+};
+
+/**
+ * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
  * @alpha
  */
 export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
@@ -56,19 +75,19 @@ export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends Readonly
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<TNew>): void;
+	insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(value: Iterable<TNew>): void;
+	insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(value: Iterable<TNew>): void;
+	insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.
