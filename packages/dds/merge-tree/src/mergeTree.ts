@@ -1007,7 +1007,7 @@ export class MergeTree {
 		if (this.minSeqListeners) {
 			while (
 				this.minSeqListeners.count() > 0 &&
-				this.minSeqListeners.peek().value.minRequired <= this.collabWindow.minSeq
+				this.minSeqListeners.peek()!.value.minRequired <= this.collabWindow.minSeq
 			) {
 				const minListener = this.minSeqListeners.get()!;
 				minListener.onMinGE(this.collabWindow.minSeq);

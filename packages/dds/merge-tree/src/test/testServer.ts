@@ -99,18 +99,19 @@ export class TestServer extends TestClient {
 					return true;
 				}
 				if (this.clients) {
-					let minCli = this.clientSeqNumbers.peek().value;
+					let minCli = this.clientSeqNumbers.peek()?.value;
 					if (
 						minCli &&
 						minCli.clientId === msg.clientId &&
 						minCli.refSeq < msg.referenceSequenceNumber
 					) {
-						const cliSeq = this.clientSeqNumbers.get();
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const cliSeq = this.clientSeqNumbers.get()!;
 						const oldSeq = cliSeq.refSeq;
 						cliSeq.refSeq = msg.referenceSequenceNumber;
 						this.clientSeqNumbers.add(cliSeq);
-						minCli = this.clientSeqNumbers.peek().value;
-						if (minCli.refSeq > oldSeq) {
+						minCli = this.clientSeqNumbers.peek()?.value;
+						if (minCli && minCli.refSeq > oldSeq) {
 							msg.minimumSequenceNumber = minCli.refSeq;
 							this.minSeq = minCli.refSeq;
 						}
