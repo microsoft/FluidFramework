@@ -21,6 +21,9 @@ const factory = new SharedTreeFactory({
 	forest: ForestType.Reference,
 });
 
+/**
+ * @internal
+ */
 export class InventoryList extends DataObject {
 	#tree?: ISharedTree;
 	#view?: TreeView<Inventory>;
@@ -50,6 +53,9 @@ export class InventoryList extends DataObject {
 	}
 }
 
+/**
+ * @internal
+ */
 export const InventoryListFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
 	InventoryList,
