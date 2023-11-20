@@ -7,10 +7,6 @@ import { type IClient } from "@fluidframework/protocol-definitions";
 
 import { type OdspMember, OdspUser } from "./interfaces";
 
-/**
- * ODSP-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.
- * @alpha
- */
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as OdspUser;
 	assert(
