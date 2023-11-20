@@ -25,48 +25,48 @@ export type SummaryTree = ISummaryTree | ISummaryHandle;
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
 	/**
-     * @internal
-     */
-    export type Tree = 1;
+	 * @internal
+	 */
+	export type Tree = 1;
 	/**
-     * @internal
-     */
-    export type Blob = 2;
+	 * @internal
+	 */
+	export type Blob = 2;
 	/**
-     * @internal
-     */
-    export type Handle = 3;
+	 * @internal
+	 */
+	export type Handle = 3;
 	/**
-     * @internal
-     */
-    export type Attachment = 4;
+	 * @internal
+	 */
+	export type Attachment = 4;
 
 	/**
 	 * Represents a sub-tree in the summary.
-     * @internal
-     */
+	 * @internal
+	 */
 	export const Tree: Tree = 1 as const;
 
 	/**
 	 * Represents a blob of data that is added to the summary.
 	 * Such as the user data that is added to the DDS or metadata added by runtime
 	 * such as data store / channel attributes.
-     * @internal
-     */
+	 * @internal
+	 */
 	export const Blob: Blob = 2 as const;
 
 	/**
 	 * Path to a summary tree object from the last successful summary.
-     * @internal
-     */
+	 * @internal
+	 */
 	export const Handle: Handle = 3 as const;
 
 	/**
 	 * Unique identifier to larger blobs uploaded outside of the summary.
 	 * Ex. DDS has large images or video that will be uploaded by the BlobManager and
 	 * receive an Id that can be used in the summary.
-     * @internal
-     */
+	 * @internal
+	 */
 	export const Attachment: Attachment = 4 as const;
 }
 
