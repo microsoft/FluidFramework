@@ -13,7 +13,7 @@ import {
 	ITreeCursorSynchronous,
 } from "../../core";
 import { JsonCompatible } from "../../util";
-import { CursorAdapter, isPrimitiveValue, stackTreeNodeCursor } from "../../feature-libraries";
+import { CursorAdapter, isFluidHandle, stackTreeNodeCursor } from "../../feature-libraries";
 import { leaf } from "../leafDomain";
 import { jsonArray, jsonObject } from "./jsonDomainSchema";
 
@@ -109,8 +109,9 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case leaf.number.name:
 		case leaf.boolean.name:
 		case leaf.string.name:
-			assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
-			return reader.value as JsonCompatible;
+			assert(reader.value !== undefined, "out of schema: missing value");
+			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			return reader.value;
 		case jsonArray.name: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);

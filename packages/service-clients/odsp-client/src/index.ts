@@ -7,7 +7,6 @@ export type {
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
-	OdspContainerAttributes as OdspServiceAttributes,
 	IOdspAudience,
 	OdspMember,
 } from "./interfaces";

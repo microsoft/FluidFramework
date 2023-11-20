@@ -27,7 +27,6 @@ import {
 	getPrimaryField,
 	isFluidHandle,
 	Multiplicity,
-	type PrimitiveValue,
 	type TreeDataContext,
 	type TreeFieldSchema,
 	type TreeNodeSchema,
@@ -155,7 +154,7 @@ export function fieldDataToMapTrees(
 
 function valueToMapTree(
 	// eslint-disable-next-line @rushstack/no-new-null
-	value: PrimitiveValue | IFluidHandle | null,
+	value: boolean | number | string | IFluidHandle | null,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
