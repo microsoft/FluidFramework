@@ -414,7 +414,7 @@ extends:
                     env:
                       ADO_API_TOKEN: $(System.AccessToken)
                       DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-                      TARGET_BRANCH_NAME: '${{ variables.targetBranchName }}'
+                      TARGET_BRANCH_NAME: '$(targetBranchName)'
                     inputs:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
