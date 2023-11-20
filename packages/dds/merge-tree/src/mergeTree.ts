@@ -553,10 +553,6 @@ export class MergeTree {
 		}
 	}
 
-	private mapIdToMarker(id: string, marker: Marker) {
-		this.idToMarker.set(id, marker);
-	}
-
 	private addNode(block: IMergeBlock, node: IMergeNode) {
 		const index = block.childCount++;
 		block.assignChild(node, index, false);
@@ -1550,7 +1546,7 @@ export class MergeTree {
 				if (Marker.is(newSegment)) {
 					const markerId = newSegment.getId();
 					if (markerId) {
-						this.mapIdToMarker(markerId, newSegment);
+						this.idToMarker.set(markerId, newSegment);
 					}
 				}
 
@@ -2328,7 +2324,7 @@ export class MergeTree {
 				// Also in insertMarker but need for reload segs case
 				// can add option for this only from reload segs
 				if (markerId) {
-					this.mapIdToMarker(markerId, segment);
+					this.idToMarker.set(markerId, segment);
 				}
 				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
 					addTile(segment, rightmostTiles);
