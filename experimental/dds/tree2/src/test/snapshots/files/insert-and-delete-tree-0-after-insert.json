@@ -27,18 +27,21 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "42"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "42"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",

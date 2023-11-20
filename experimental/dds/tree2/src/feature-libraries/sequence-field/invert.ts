@@ -27,6 +27,7 @@ import {
 	extractMarkEffect,
 	getDetachOutputId,
 	getEndpoint,
+	getInputCellId,
 	getOutputCellId,
 	isAttach,
 	isDetach,
@@ -121,7 +122,7 @@ function invertMark<TNodeChange>(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							detachIdOverride: mark.cellId,
+							detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					  };
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
@@ -184,7 +185,7 @@ function invertMark<TNodeChange>(
 					detach: {
 						type: "Delete",
 						id: mark.id,
-						detachIdOverride: mark.cellId,
+						detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					},
 				};
 			}

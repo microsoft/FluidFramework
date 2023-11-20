@@ -74,7 +74,7 @@ function testTreeVisit(
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	testVisit(new Map([[rootKey, marks]]), expected, detachedFieldIndex);
+	testVisit({ fields: new Map([[rootKey, marks]]) }, expected, detachedFieldIndex);
 }
 
 const rootKey: FieldKey = brand("root");

@@ -21,16 +21,25 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 	isEmptyFieldChanges,
+	ITreeCursor,
+	ChangeAtomIdMap,
+	JsonableTree,
+	makeDetachedNodeId,
+	emptyDelta,
 } from "../../core";
 import {
 	brand,
+	forEachInNestedMap,
 	getOrAddEmptyToMap,
+	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	isReadonlyArray,
 	Mutable,
 } from "../../util";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
@@ -172,7 +181,35 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		return makeModularChangeset(composedFields, idState.maxId, revInfos);
+		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		for (const { revision, change } of changes) {
+			if (change.builds) {
+				for (const [revisionKey, innerMap] of change.builds) {
+					const setRevisionKey = revisionKey ?? revision;
+					const innerDstMap = getOrAddInMap(builds, setRevisionKey, new Map());
+					for (const [id, tree] of innerMap) {
+						// Check for duplicate builds and prefer earlier ones.
+						// There are two scenarios where we might get duplicate builds:
+						// - In compositions of rebase sandwiches:
+						// In that case, the trees are identical and it doesn't matter which one we pick.
+						// - In compositions of commits that needed to include repair data refreshers (e.g., undos):
+						// In that case, it's possible for the refreshers to contain different trees because the latter
+						// refresher may already reflect the changes made by the commit that includes the earlier
+						// refresher. This composition includes the changes made by the commit that includes the
+						// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+						// the produced changeset will build a tree one which those changes have already been applied
+						// and also try to apply the changes again, effectively applying them twice.
+						// Note that it would in principle be possible to adopt the later build and exclude from the
+						// composition all the changes already reflected on the tree, but that is not something we
+						// care to support at this time.
+						if (!innerDstMap.has(id)) {
+							innerDstMap.set(id, tree);
+						}
+					}
+				}
+			}
+		}
+		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, builds);
 	}
 
 	private composeFieldMaps(
@@ -479,6 +516,7 @@ export class ModularChangeFamily
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
+			change.builds,
 		);
 	}
 
@@ -665,11 +703,26 @@ export class ModularChangeFamily
 	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
-			return new Map();
+			return emptyDelta;
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		const rootDelta: Mutable<Delta.Root> = {};
+		const fieldDeltas = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		if (fieldDeltas.size > 0) {
+			rootDelta.fields = fieldDeltas;
+		}
+		if (change.builds && change.builds.size > 0) {
+			const builds: Delta.DetachedNodeBuild[] = [];
+			forEachInNestedMap(change.builds, (tree, major, minor) => {
+				builds.push({
+					id: makeDetachedNodeId(major ?? revision, minor),
+					trees: [cursorForJsonableTreeNode(tree)],
+				});
+			});
+			rootDelta.build = builds;
+		}
+		return rootDelta;
 	}
 
 	/**
@@ -682,7 +735,7 @@ export class ModularChangeFamily
 		change: FieldChangeMap,
 		revision: RevisionTag | undefined,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Root {
+	): Map<FieldKey, Delta.FieldChanges> {
 		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
 		for (const [field, fieldChange] of change) {
 			const fieldRevision = fieldChange.revision ?? revision;
@@ -961,6 +1014,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
+	builds?: ChangeAtomIdMap<JsonableTree>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -971,6 +1025,9 @@ function makeModularChangeset(
 	}
 	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
 		changeset.constraintViolationCount = constraintViolationCount;
+	}
+	if (builds !== undefined && builds.size > 0) {
+		changeset.builds = builds;
 	}
 	return changeset;
 }
@@ -1006,6 +1063,31 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(change);
 	}
 
+	public buildTrees(
+		firstId: ChangesetLocalId,
+		newContent: ITreeCursor | readonly ITreeCursor[],
+	): GlobalEditDescription {
+		const content = isReadonlyArray(newContent) ? newContent : [newContent];
+		const length = content.length;
+		if (length === 0) {
+			return { type: "global" };
+		}
+		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const innerMap = new Map();
+		builds.set(undefined, innerMap);
+		let id = firstId;
+		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+		for (const tree of content.map(jsonableTreeFromCursor)) {
+			assert(!innerMap.has(id), "Unexpected duplicate build ID");
+			innerMap.set(id, tree);
+			id = brand((id as number) + 1);
+		}
+		return {
+			type: "global",
+			builds,
+		};
+	}
+
 	/**
 	 * Adds a change to the edit builder
 	 * @param field - the field which is being edited
@@ -1026,9 +1108,17 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
-				makeModularChangeset(
-					this.buildChangeMap(change.field, change.fieldKind, change.change),
-				),
+				change.type === "global"
+					? makeModularChangeset(
+							new Map(),
+							undefined,
+							undefined,
+							undefined,
+							change.builds,
+					  )
+					: makeModularChangeset(
+							this.buildChangeMap(change.field, change.fieldKind, change.change),
+					  ),
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
@@ -1087,11 +1177,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 /**
  * @alpha
  */
-export interface EditDescription {
+export interface FieldEditDescription {
+	type: "field";
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
+
+/**
+ * @alpha
+ */
+export interface GlobalEditDescription {
+	type: "global";
+	builds?: ChangeAtomIdMap<JsonableTree>;
+}
+
+/**
+ * @alpha
+ */
+export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {
 	revInfos: RevisionInfo[];

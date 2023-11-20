@@ -60,19 +60,11 @@ describe("SequenceField - MarkListFactory", () => {
 		const id1: ChangesetLocalId = brand(1);
 		const id2: ChangesetLocalId = brand(2);
 		const factory = new SF.MarkListFactory();
-		const insert1 = Mark.insert([{ type, value: 1 }], id1);
-		const insert2 = Mark.insert([{ type, value: 2 }], id2);
+		const insert1 = Mark.insert(1, id1);
+		const insert2 = Mark.insert(1, id2);
 		factory.pushContent(insert1);
 		factory.pushContent(insert2);
-		assert.deepStrictEqual(factory.list, [
-			Mark.insert(
-				[
-					{ type, value: 1 },
-					{ type, value: 2 },
-				],
-				id1,
-			),
-		]);
+		assert.deepStrictEqual(factory.list, [Mark.insert(2, id1)]);
 	});
 
 	it("Can merge consecutive deletes", () => {

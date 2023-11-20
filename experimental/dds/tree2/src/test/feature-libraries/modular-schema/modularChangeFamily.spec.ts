@@ -324,6 +324,21 @@ describe("ModularChangeFamily", () => {
 			]),
 		};
 
+		it("prioritizes earlier build entries when faced with duplicates", () => {
+			const change1: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+			};
+			const change2: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+			};
+			assert.deepEqual(
+				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
+				change1,
+			);
+		});
+
 		it("compose specific ○ specific", () => {
 			const expectedCompose: ModularChangeset = {
 				fieldChanges: new Map([
@@ -594,10 +609,12 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = new Map([
-				[fieldA, nodeDelta],
-				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
-			]);
+			const expectedDelta: Delta.Root = {
+				fields: new Map([
+					[fieldA, nodeDelta],
+					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+				]),
+			};
 
 			const actual = family.intoDelta(makeAnonChange(rootChange1a));
 			assertDeltaEqual(actual, expectedDelta);
