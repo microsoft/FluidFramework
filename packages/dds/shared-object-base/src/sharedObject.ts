@@ -38,19 +38,33 @@ import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
-export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles"> = Omit<
-	any,
-	"__handles_encoded__"
-> & {
+/**
+ * A type alias for 'unknown' that specifies whether the content includes full handles or encoded handles.
+ * The default value is either, for when the handle status is unknown/unspecified.
+ *
+ * This type is used to ensure that op content types with differing handle status are incompatible.
+ */
+export type OpContent<
+	HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles",
+> = Omit<unknown, "__handles_encoded__"> & {
 	__handles_encoded__?: HandlesStatus;
 };
 
-function takeEncoded(content: Content<"handlesEncoded">): void {}
+function takeEncoded(content: OpContent<"handlesEncoded">): void {}
+function takeEither(content: OpContent): void {}
 
-const decoded: Content<"fullHandles"> = {};
+const decoded: OpContent<"fullHandles"> = {};
+const encoded: OpContent<"handlesEncoded"> = {};
+const either: OpContent = {};
 
-// @ts-expect-error - Demonstrating that Content<true> and Content<false> are incompatible
+// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
 takeEncoded(decoded);
+// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
+takeEncoded(either);
+
+takeEither(encoded);
+takeEither(decoded);
+takeEither(either);
 
 /**
  * Base class from which all shared objects derive.
@@ -366,7 +380,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(
-		content: Content<"handlesEncoded">,
+		content: OpContent<"handlesEncoded">,
 		localOpMetadata: unknown = undefined,
 	): void {
 		this.verifyNotClosed();

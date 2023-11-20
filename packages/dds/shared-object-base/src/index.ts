@@ -9,10 +9,10 @@ export {
 	ISerializedHandle,
 	isSerializedHandle,
 	JsonString,
-	parseJson,
-	serializeJson,
+	// parseJson,
+	// serializeJson,
 } from "./serializer";
-export { SharedObject, SharedObjectCore, Content } from "./sharedObject";
+export { SharedObject, SharedObjectCore, OpContent } from "./sharedObject";
 export { SummarySerializer } from "./summarySerializer";
 export { ISharedObject, ISharedObjectEvents } from "./types";
 export {

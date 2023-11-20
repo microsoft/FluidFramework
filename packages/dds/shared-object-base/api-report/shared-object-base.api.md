@@ -19,13 +19,15 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISerializedHandle as ISerializedHandle_2 } from './serializer';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { OpContent } from './sharedObject';
 
-// @public (undocumented)
-export type Content<HandlesEncoded extends boolean = false> = Omit<any, "__handles_encoded__"> & {
-    __handles_encoded__: HandlesEncoded;
+// @public
+export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles"> = Omit<unknown, "__handles_encoded__"> & {
+    __handles_encoded__?: HandlesStatus;
 };
 
 // @public
@@ -34,27 +36,24 @@ export function createSingleBlobSummary(key: string, content: string | Uint8Arra
 // @public
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
-    decode(input: any): any;
-    encode(input: any, bind: IFluidHandle): any;
+    decode(input: Content<"handlesEncoded">): any;
+    encode(input: Content<"fullHandles" | "handlesEncoded">, bind: IFluidHandle): Content<"handlesEncoded">;
     // (undocumented)
     get IFluidSerializer(): this;
     // (undocumented)
     parse(input: string): any;
     // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
-        type: string;
-        url: string;
-    };
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): ISerializedHandle & Content<"handlesEncoded">;
     // (undocumented)
     stringify(input: any, bind: IFluidHandle): string;
 }
 
 // @public (undocumented)
 export interface IFluidSerializer {
-    decode(input: any): any;
-    encode(value: any, bind: IFluidHandle): any;
-    parse(value: string): any;
-    stringify(value: any, bind: IFluidHandle): string;
+    decode(input: Content<"handlesEncoded">): Content<"fullHandles">;
+    encode(value: Content<"fullHandles" | "handlesEncoded">, bind: IFluidHandle): Content<"handlesEncoded">;
+    parse(value: JsonString<any>): Content<"fullHandles">;
+    stringify(value: Content<"fullHandles" | "handlesEncoded">, bind: IFluidHandle): JsonString<any>;
 }
 
 // @public
@@ -80,16 +79,29 @@ export interface ISharedObjectEvents extends IErrorEvent {
 }
 
 // @public (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
+export const isSerializedHandle: (value: any) => value is ISerializedHandle & Omit<unknown, "__handles_encoded__"> & {
+    __handles_encoded__?: "handlesEncoded" | undefined;
+};
+
+// @public (undocumented)
+export type JsonString<T> = string & {
+    __json__?: T & Content<"handlesEncoded">;
+};
 
 // @public
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
+export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): OpContent<"handlesEncoded">;
 
 // @public
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
+// @public (undocumented)
+export function parseJson<T>(json: JsonString<T>, reviver: any): T & Content<"handlesEncoded">;
+
 // @public
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
+
+// @public (undocumented)
+export function serializeJson<T>(value: T & Content<"handlesEncoded">, replacer: any): JsonString<T>;
 
 // @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
@@ -143,7 +155,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    protected submitLocalMessage(content: Content<true>, localOpMetadata?: unknown): void;
+    protected submitLocalMessage(content: Content<"handlesEncoded">, localOpMetadata?: unknown): void;
     // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
@@ -153,9 +165,8 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
     // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
-        type: string;
-        url: string;
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): ISerializedHandle_2 & Omit<unknown, "__handles_encoded__"> & {
+        __handles_encoded__?: "handlesEncoded" | undefined;
     };
 }
 

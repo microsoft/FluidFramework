@@ -9,19 +9,21 @@
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
-import { Content } from "./sharedObject";
+import { OpContent } from "./sharedObject";
 
-export type JsonString<T> = string & { __json__?: T & Content<"handlesEncoded"> };
+export type Primitive = string | number | boolean | undefined;
+
+export type JsonString<T> = string & { __json__?: T & OpContent<"handlesEncoded"> };
 
 //* The reviver may specify that it decodes handles, in which case the return type wouldn't be restricted to "handlesEncoded"
-export function parseJson<T>(json: JsonString<T>, reviver): T & Content<"handlesEncoded"> {
-	return JSON.parse(json, reviver) as T & Content<"handlesEncoded">;
-}
+// export function parseJson<T>(json: JsonString<T>, reviver): T & OpContent<"handlesEncoded"> {
+// 	return JSON.parse(json, reviver) as T & OpContent<"handlesEncoded">;
+// }
 
-//* Not so - The input can be anything and the replacer needs to specify it encodes handles
-export function serializeJson<T>(value: T & Content<"handlesEncoded">, replacer): JsonString<T> {
-	return JSON.stringify(value, replacer) as JsonString<T>;
-}
+// //* Not so - The input can be anything and the replacer needs to specify it encodes handles
+// export function serializeJson<T>(value: T & OpContent<"handlesEncoded">, replacer): JsonString<T> {
+// 	return JSON.stringify(value, replacer) as JsonString<T>;
+// }
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -36,9 +38,9 @@ export interface ISerializedHandle {
 
 export const isSerializedHandle = (
 	value: any,
-): value is ISerializedHandle & Content<"handlesEncoded"> => value?.type === "__fluid_handle__";
+): value is ISerializedHandle & OpContent<"handlesEncoded"> => value?.type === "__fluid_handle__";
 
-export const isFullHandle = (value: any): value is IFluidHandle & Content<"fullHandles"> =>
+export const isFullHandle = (value: any): value is IFluidHandle & OpContent<"fullHandles"> =>
 	value?.IFluidHandle !== undefined;
 
 export interface IFluidSerializer {
@@ -50,9 +52,9 @@ export interface IFluidSerializer {
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
 	encode(
-		value: Content<"fullHandles" | "handlesEncoded">,
+		value: OpContent | Primitive,
 		bind: IFluidHandle,
-	): Content<"handlesEncoded">;
+	): OpContent<"handlesEncoded"> | Primitive;
 
 	//* encode should take an indeterminate Content that may or may not have fullHandles?
 
@@ -65,21 +67,18 @@ export interface IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	decode(input: Content<"handlesEncoded">): Content<"fullHandles">;
+	decode(input: OpContent<"handlesEncoded"> | Primitive): OpContent<"fullHandles"> | Primitive;
 
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify(
-		value: Content<"fullHandles" | "handlesEncoded">,
-		bind: IFluidHandle,
-	): JsonString<any>;
+	stringify<T>(value: T, bind: IFluidHandle): JsonString<T & OpContent<"handlesEncoded">>;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
 	 * handles will be realized as part of the parse
 	 */
-	parse(value: JsonString<any>): Content<"fullHandles">;
+	parse<T>(value: JsonString<T>): T & OpContent<"fullHandles">;
 }
 
 /**
@@ -113,9 +112,9 @@ export class FluidSerializer implements IFluidSerializer {
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
 	public encode(
-		input: Content<"fullHandles" | "handlesEncoded">,
+		input: OpContent | Primitive,
 		bind: IFluidHandle,
-	): Content<"handlesEncoded"> {
+	): OpContent<"handlesEncoded"> | Primitive {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -133,7 +132,9 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	public decode(input: Content<"handlesEncoded">) {
+	public decode(
+		input: OpContent<"handlesEncoded"> | Primitive,
+	): OpContent<"fullHandles"> | Primitive {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -142,30 +143,30 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify(input: any, bind: IFluidHandle) {
+	public stringify<T>(input: T, bind: IFluidHandle): JsonString<T & OpContent<"handlesEncoded">> {
 		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
-	public parse(input: string) {
+	public parse<T>(input: JsonString<T>): T & OpContent<"fullHandles"> {
 		return JSON.parse(input, (key, value) => this.decodeValue(value));
 	}
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	private readonly encodeValue = (
-		value: Content<"fullHandles" | "handlesEncoded">,
+		value: OpContent,
 		bind: IFluidHandle,
-	): Content<"handlesEncoded"> => {
+	): OpContent<"handlesEncoded"> => {
 		// If 'value' is an IFluidHandle return its encoded form.
 		return isFullHandle(value)
 			? this.serializeHandle(value.IFluidHandle, bind)
-			: (value as Content<"handlesEncoded">); //* Too bad the type guard doesn't work for us here
+			: (value as OpContent<"handlesEncoded">); //* Too bad the type guard doesn't work for us here
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-	private readonly decodeValue = (value: Content<"handlesEncoded">) => {
+	private readonly decodeValue = (value: OpContent<"handlesEncoded"> | Primitive) => {
 		// If 'value' is a serialized IFluidHandle return the deserialized result.
 		if (isSerializedHandle(value)) {
 			// Old documents may have handles with relative path in their summaries. Convert these to absolute
@@ -233,7 +234,7 @@ export class FluidSerializer implements IFluidSerializer {
 	protected serializeHandle(
 		handle: IFluidHandle,
 		bind: IFluidHandle,
-	): ISerializedHandle & Content<"handlesEncoded"> {
+	): ISerializedHandle & OpContent<"handlesEncoded"> {
 		bind.bind(handle);
 		return {
 			type: "__fluid_handle__",

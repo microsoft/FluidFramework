@@ -4,7 +4,6 @@
 
 ```ts
 
-import { Content } from '@fluidframework/shared-object-base';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -21,6 +20,7 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { OpContent } from '@fluidframework/shared-object-base';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
@@ -116,7 +116,7 @@ export interface IDirectoryNewStorageFormat {
 }
 
 // @public
-export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) & Content<"handlesEncoded">;
+export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) & OpContent<"handlesEncoded">;
 
 // @public
 export interface IDirectorySetOperation {
