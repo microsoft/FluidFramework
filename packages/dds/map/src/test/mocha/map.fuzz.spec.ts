@@ -138,8 +138,8 @@ describe("Map fuzz tests", () => {
 			},
 			reconnectProbability: 0.1,
 			// Uncomment to replay a particular seed.
-			// replay: 0,
-			skip: [75],
+			replay: 75,
+			// skip: [75],
 			saveFailures: {
 				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
 			},

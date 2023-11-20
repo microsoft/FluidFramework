@@ -927,7 +927,8 @@ export class MapKernel {
 				//  2. The key has not been inserted and acked by other clients yet.
 				if (
 					op.type === "set" &&
-					!this.pendingDeleteTracker.has(op.key) &&
+					// this.data.has(op.key) &&
+					!this.isKeyFinallyDeleted(op.key) &&
 					!this.ackedKeysIndexTracker.has(op.key)
 				) {
 					this.ackedKeysIndexTracker.set(op.key, ++this.creationIndex);
@@ -941,6 +942,16 @@ export class MapKernel {
 
 		// If we don't have a NACK op on the key, we need to process the remote ops.
 		return !local;
+	}
+
+	private isKeyFinallyDeleted(key: string): boolean {
+		if (this.data.has(key)) {
+			return false;
+		}
+		if (!this.data.has(key) && this.pendingDeleteTracker.has(key)) {
+			return true;
+		}
+		return false;
 	}
 
 	private ackPendingSetOp(op: IMapKeyOperation, pendingMessageId?: number): void {
