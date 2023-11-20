@@ -456,6 +456,7 @@ export interface FieldAnchor {
 
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
+    // @deprecated
     readonly build?: readonly DetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DetachedNodeDestruction[];
     readonly global?: readonly DetachedNodeChanges<TTree>[];
@@ -959,7 +960,8 @@ declare namespace InternalTypes {
         Sequence,
         FactoryObjectNodeSchema,
         FactoryObjectNodeSchemaRecursive,
-        testRecursiveDomain
+        testRecursiveDomain,
+        TreeListNodeBase
     }
 }
 export { InternalTypes }
@@ -1022,6 +1024,14 @@ export function isNeverField(policy: FullSchemaPolicy, originalData: TreeStoredS
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @alpha
+export class IterableTreeListContent<T> implements Iterable<T> {
+    // (undocumented)
+    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+    // (undocumented)
+    [Symbol.iterator](): Iterator<T>;
 }
 
 // @alpha
@@ -1500,7 +1510,10 @@ export enum RevertResult {
 }
 
 // @alpha
-type Root<TTree = ProtoNode> = FieldMap<TTree>;
+interface Root<TTree = ProtoNode> {
+    readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly fields?: FieldMap<TTree>;
+}
 
 // @alpha
 export interface RootField {
@@ -1822,22 +1835,31 @@ export interface TreeFieldStoredSchema {
 }
 
 // @alpha
-export interface TreeListNode<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<TreeNodeUnion<TTypes, API>> {
-    insertAt(index: number, value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
-    insertAtEnd(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
-    insertAtStart(value: Iterable<TreeNodeUnion<TTypes, "javaScript">>): void;
+export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> extends TreeListNodeBase<TreeNodeUnion<TTypes>, TreeNodeUnion<TTypes, "javaScript">, TreeListNode> {
+}
+
+// @alpha
+export const TreeListNode: {
+    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+};
+
+// @alpha
+interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-    moveRangeToStart(sourceStart: number, sourceEnd: number, source: TreeListNode<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveToEnd(sourceIndex: number): void;
-    moveToEnd(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToEnd(sourceIndex: number, source: TMoveFrom): void;
     moveToIndex(index: number, sourceIndex: number): void;
-    moveToIndex(index: number, sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
     moveToStart(sourceIndex: number): void;
-    moveToStart(sourceIndex: number, source: TreeListNode<AllowedTypes>): void;
+    moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
@@ -1864,7 +1886,7 @@ export const enum TreeNavigationResult {
 }
 
 // @alpha
-export type TreeNode = TreeListNode<AllowedTypes> | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
+export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
 
 // @alpha (undocumented)
 export type TreeNodeSchema = TreeNodeSchemaBase;
@@ -2002,7 +2024,7 @@ TFields extends {
 ][_InlineTrick];
 
 // @alpha
-export type TypedNode<TSchema extends TreeNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? API extends "sharedTree" ? TreeMapNode<TSchema> : ReadonlyMap<string, TreeField<TSchema["info"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? TreeListNode<TSchema["info"]["allowedTypes"], API> : readonly TreeNodeUnion<TSchema["info"]["allowedTypes"], API>[] : TSchema extends ObjectNodeSchema ? TreeObjectNode<TSchema, API> : unknown;
+export type TypedNode<TSchema extends TreeNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? API extends "sharedTree" ? TreeMapNode<TSchema> : ReadonlyMap<string, TreeField<TSchema["info"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? TreeListNode<TSchema["info"]["allowedTypes"]> : readonly TreeNodeUnion<TSchema["info"]["allowedTypes"], API>[] : TSchema extends ObjectNodeSchema ? TreeObjectNode<TSchema, API> : unknown;
 
 // @alpha
 type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode> = FlattenKeys<CollectOptions<Mode, TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<Mode, TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? TypedFields<Mode, {
