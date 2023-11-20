@@ -9,6 +9,7 @@ import {
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
+	getOdspResolvedUrl,
 } from "@fluidframework/odsp-driver";
 import {
 	type ContainerSchema,
@@ -24,10 +25,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import {
-	IOdspResolvedUrl,
-	OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import type { ITokenResponse } from "@fluidframework/azure-client";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -165,10 +163,11 @@ export class OdspClient {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
-			const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
-			if (resolvedUrl === undefined) {
+
+			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
+			const resolvedUrl = getOdspResolvedUrl(container.resolvedUrl);
 			await container.attach(createNewRequest);
 
 			/**

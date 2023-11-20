@@ -31,22 +31,6 @@ export interface OdspConnectionConfig {
 	 */
 	driveId: string;
 }
-
-/**
- * @alpha
- */
-export interface OdspContainerAttachProps {
-	/**
-	 * The folder path where Fluid containers are created. If undefined, the file is created at the root.
-	 */
-	folderPath: string | undefined;
-
-	/**
-	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
-	 */
-	fileName: string | undefined;
-}
-
 /**
  * @alpha
  */
