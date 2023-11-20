@@ -33,7 +33,7 @@ import {
 	SharedTreeFactory,
 	disposeSymbol,
 	type TreeView,
-	type ProxyField,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -109,7 +109,7 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): TreeView<ProxyField<typeof inventoryFieldSchema>> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,

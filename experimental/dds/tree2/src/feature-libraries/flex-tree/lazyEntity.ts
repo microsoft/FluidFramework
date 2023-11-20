@@ -11,7 +11,7 @@ import {
 } from "../../core";
 import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
-import { FlexTreeEntity, TreeStatus, boxedIterator } from "./editableTreeTypes";
+import { FlexTreeEntity, TreeStatus, boxedIterator } from "./flexTreeTypes";
 
 /**
  * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.

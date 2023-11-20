@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { leaf } from "../domains";
 import {
 	Any,
 	FieldKind,
@@ -30,9 +29,10 @@ import {
 	TreeNodeSchemaBase,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
+import { leaf } from "./leafDomain";
 
 /**
- * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
+ * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link TreeObjectNode}s.
  * @privateRemarks
  * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
  * @alpha
@@ -113,7 +113,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link TreeList}.
+	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this List is defined as a function of the provided types.
@@ -137,7 +137,7 @@ export class SchemaBuilder<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
@@ -173,7 +173,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
@@ -197,7 +197,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link MapNodeSchema} for a {@link SharedTreeMap}.
+	 * Define (and add to this library if not already present) a structurally typed {@link MapNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
@@ -214,7 +214,7 @@ export class SchemaBuilder<
 	): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	/**
-	 * Define (and add to this library) a {@link MapNodeSchema} for a {@link SharedTreeMap}.
+	 * Define (and add to this library) a {@link MapNodeSchema} for a {@link TreeMapNode}.
 	 */
 	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
 		name: Name,
