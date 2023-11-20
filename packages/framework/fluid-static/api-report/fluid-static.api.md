@@ -40,7 +40,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 // @public
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
     constructor(container: IContainer, rootDataObject: IRootDataObject);
-    attach(filePath?: string, fileName?: string): Promise<string>;
+    attach(): Promise<string>;
     get attachState(): AttachState;
     connect(): Promise<void>;
     get connectionState(): ConnectionState;

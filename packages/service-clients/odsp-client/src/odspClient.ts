@@ -8,6 +8,7 @@ import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
+	createOdspUrl,
 } from "@fluidframework/odsp-driver";
 import {
 	type ContainerSchema,
@@ -99,12 +100,14 @@ export class OdspClient {
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.siteUrl);
-		url.searchParams.append("driveId", this.properties.connection.driveId);
-		url.searchParams.append("itemId", id);
-		url.searchParams.append("path", "");
-		url.searchParams.append("containerPackageName", "no-dynamic-package");
-		const container = await loader.resolve({ url: url.href });
+		const url = createOdspUrl({
+			siteUrl: this.properties.connection.siteUrl,
+			driveId: this.properties.connection.driveId,
+			itemId: id,
+			dataStorePath: "",
+			containerPackageName: "no-dynamic-package",
+		});
+		const container = await loader.resolve({ url });
 
 		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
@@ -152,12 +155,12 @@ export class OdspClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async (filePath?: string, fileName?: string): Promise<string> => {
+		const attach = async (): Promise<string> => {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				filePath ?? "",
-				fileName ?? uuid(),
+				"",
+				uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
