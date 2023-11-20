@@ -255,7 +255,7 @@ describe("SequenceField - Invert", () => {
 				}),
 			),
 			{ count: 1 },
-			Mark.returnFrom(1, detachId.localId, { changes: inverseChildChange1 }),
+			Mark.moveOut(1, detachId.localId, { changes: inverseChildChange1 }),
 		];
 		assert.deepEqual(inverse, expected);
 	});

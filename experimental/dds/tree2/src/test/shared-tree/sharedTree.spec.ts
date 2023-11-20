@@ -824,7 +824,7 @@ describe("SharedTree", () => {
 					validateTreeContent(tree2.view.checkout, content);
 
 					// edit subtree
-					tree2.root[0].insertAtEnd(["b"]);
+					tree2.root[0].insertAtEnd("b");
 					provider.processMessages();
 					assert.deepEqual(tree1.root, [["a", "b"]]);
 					assert.deepEqual(tree2.root, [["a", "b"]]);
