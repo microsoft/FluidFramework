@@ -47,9 +47,9 @@ export interface ReferencePosition {
 
 	/**
 	 * The direction for this reference position to slide when the segment it
-	 * points to is removed. See {@link SlidingPreference} for additional context.
+	 * points to is removed. See {@link (SlidingPreference:type)} for additional context.
 	 *
-	 * Defaults to {@link SlidingPreference.Forward}
+	 * Defaults to SlidingPreference.Forward
 	 */
 	slidingPreference?: SlidingPreference;
 
