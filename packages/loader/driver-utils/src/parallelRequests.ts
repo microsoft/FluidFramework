@@ -14,7 +14,8 @@ import { logNetworkFailure } from "./networkUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { calculateMaxWaitTime } from "./runWithRetry";
 
-const MissingFetchDelayInMs = 100;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const MissingFetchDelayInMs = 50;
 
 type WorkingState = "working" | "done" | "canceled";
 
@@ -494,8 +495,6 @@ async function getSingleOpBatch(
 				// It's game over scenario.
 				throw error;
 			}
-
-			waitTime = Math.max(retryAfter ?? 0, waitTime);
 		}
 
 		if (telemetryEvent === undefined) {
@@ -505,13 +504,14 @@ async function getSingleOpBatch(
 			});
 		}
 
+		waitTime = calculateMaxWaitTime(waitTime, lastError);
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
 			setTimeout(resolve, waitTime);
 		});
 
-		waitTime = Math.min(waitTime * 2, calculateMaxWaitTime(lastError));
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.

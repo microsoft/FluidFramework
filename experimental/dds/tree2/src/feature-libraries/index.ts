@@ -65,6 +65,7 @@ export {
 	normalizeNewFieldContent,
 	NewFieldContent,
 	assertAllowedValue,
+	isFluidHandle,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -97,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -172,7 +173,13 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -213,7 +220,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,
@@ -244,26 +251,9 @@ export {
 	Context,
 	TreeEvent,
 	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
 } from "./flex-tree";
-
-export {
-	getProxyForField,
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	TreeRoot,
-	Tree,
-	TreeApi,
-	TreeNode,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
-} from "./simple-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 

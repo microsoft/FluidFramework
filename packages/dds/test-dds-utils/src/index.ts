@@ -19,3 +19,4 @@ export {
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";
+export { MinimizationTransform } from "./minification";

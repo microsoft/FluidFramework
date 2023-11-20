@@ -824,7 +824,7 @@ describe("SharedTree", () => {
 					validateTreeContent(tree2.view.checkout, content);
 
 					// edit subtree
-					tree2.root[0].insertAtEnd(["b"]);
+					tree2.root[0].insertAtEnd("b");
 					provider.processMessages();
 					assert.deepEqual(tree1.root, [["a", "b"]]);
 					assert.deepEqual(tree2.root, [["a", "b"]]);
@@ -1135,6 +1135,23 @@ describe("SharedTree", () => {
 			"A",
 		]);
 	});
+
+	it("doesn't submit an op for a change that crashes", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [tree1, tree2] = provider.trees;
+
+		tree2.on("pre-op", () => {
+			assert.fail();
+		});
+
+		assert.throws(() =>
+			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 99),
+		);
+
+		provider.processMessages();
+	});
+
 	describe("Stashed ops", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);

@@ -90,7 +90,7 @@ export class BlobTreeEntry {
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
 // @public
-export function calculateMaxWaitTime(error: unknown): number;
+export function calculateMaxWaitTime(delayMs: number, error: unknown): number;
 
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;

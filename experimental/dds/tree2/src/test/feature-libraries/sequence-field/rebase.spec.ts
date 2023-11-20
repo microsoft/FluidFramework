@@ -45,6 +45,15 @@ describe("SequenceField - Rebase", () => {
 		}
 	});
 
+	describe("* ↷ pin", () => {
+		for (const [name, testCase] of Object.entries(cases)) {
+			it(`${name} ↷ pin`, () => {
+				const actual = rebase(testCase, cases.pin);
+				assert.deepEqual(actual, testCase);
+			});
+		}
+	});
+
 	it("modify ↷ modify", () => {
 		const change1 = Change.modify(0, TestChange.mint([0], 1));
 		const change2 = Change.modify(0, TestChange.mint([0], 2));
@@ -105,19 +114,19 @@ describe("SequenceField - Rebase", () => {
 
 	it("insert ↷ delete", () => {
 		const insert = composeAnonChanges([
-			Change.insert(0, 1, 1),
-			Change.insert(3, 1, 2),
-			Change.insert(8, 1, 3),
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+			Change.insert(8, 1, brand(3)),
 		]);
 		const deletion = Change.delete(1, 3);
 		const actual = rebase(insert, deletion);
 		const expected = composeAnonChanges([
 			// Earlier insert is unaffected
-			Change.insert(0, 1, 1),
+			Change.insert(0, 1, brand(1)),
 			// Overlapping insert has its index reduced
-			Change.insert(2, 1, 2),
+			Change.insert(2, 1, brand(2)),
 			// Later insert has its index reduced
-			Change.insert(5, 1, 3),
+			Change.insert(5, 1, brand(3)),
 		]);
 		checkDeltaEquality(actual, expected);
 	});
@@ -143,45 +152,65 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("redundant revive ↷ related delete", () => {
-		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) });
+	it("pin ↷ related delete", () => {
+		const pin = [Mark.pin(3, brand(0))];
 		const deletion = Change.delete(1, 1);
-		const actual = rebase(revive, deletion, tag2);
-		const expected = composeAnonChanges([
+		const actual = rebase(pin, deletion, tag2);
+		const expected = [
 			// Earlier revive is unaffected
-			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }),
-			// Overlapping revive is no longer redundant
-			Change.revive(1, 1, {
-				revision: tag2,
-				localId: brand(0),
-				adjacentCells: [{ id: brand(0), count: 1 }],
-			}),
+			Mark.pin(1, brand(0)),
+			// Overlapping pin is now a revive
+			Mark.revive(
+				1,
+				{
+					revision: tag2,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+				},
+				{ id: brand(1) },
+			),
 			// Later revive is unaffected
-			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }),
-		]);
+			Mark.pin(1, brand(2)),
+		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("delete ↷ overlapping delete", () => {
 		// Deletes ---DEFGH--
-		const deleteA = Change.delete(3, 5);
+		const deleteA = [{ count: 3 }, Mark.delete(5, brand(0))];
 		// Deletes --CD-F-HI
-		const deleteB = composeAnonChanges([
-			Change.delete(2, 2, brand(0)),
-			Change.delete(3, 1, brand(2)),
-			Change.delete(4, 2, brand(3)),
-		]);
+		const deleteB = [
+			{ count: 2 },
+			Mark.delete(2, brand(0)),
+			{ count: 1 },
+			Mark.delete(1, brand(2)),
+			{ count: 1 },
+			Mark.delete(2, brand(3)),
+		];
 		const actual = rebase(deleteA, deleteB, tag1);
-		// Deletes --E-G
+		// Deletes --dEfGh--
+		// Where lowercase letters denote nodes that are already deleted
+		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
+		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
+		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			{ count: 2 },
-			Mark.onEmptyCell({ revision: tag1, localId: brand(1) }, Mark.delete(1, brand(0))),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
+				Mark.delete(1, brand(0)),
+			),
 			Mark.delete(1, brand(1)),
-			Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.delete(1, brand(2))),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
+				Mark.delete(1, brand(2)),
+			),
 			Mark.delete(1, brand(3)),
-			Mark.onEmptyCell({ revision: tag1, localId: brand(3) }, Mark.delete(1, brand(4))),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
+				Mark.delete(1, brand(4)),
+			),
 		];
-		checkDeltaEquality(actual, expected);
+		assert.deepEqual(actual, expected);
 	});
 
 	it("delete ↷ earlier delete", () => {
@@ -206,34 +235,36 @@ describe("SequenceField - Rebase", () => {
 
 	it("move ↷ overlapping delete", () => {
 		// Moves ---DEFGH--
-		const move = Change.move(3, 5, 0);
+		const move = [Mark.moveIn(5, brand(0)), { count: 3 }, Mark.moveOut(5, brand(0))];
 		// Deletes --CD-F-HI
-		const deletion = composeAnonChanges([
-			Change.delete(2, 2, brand(0)),
-			Change.delete(3, 1, brand(2)),
-			Change.delete(4, 2, brand(3)),
-		]);
+		const deletion = [
+			{ count: 2 },
+			Mark.delete(2, brand(0)),
+			{ count: 1 },
+			Mark.delete(1, brand(2)),
+			{ count: 1 },
+			Mark.delete(2, brand(3)),
+		];
 		const actual = rebase(move, deletion, tag1);
-
-		// Moves --E-G
+		// Moves --dEfGh--
+		// Where lowercase letters denote nodes that are deleted
+		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
+		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
+		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
-			Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
-			Mark.moveIn(1, brand(1)),
-			Mark.moveIn(1, brand(2), { isSrcConflicted: true }),
-			Mark.moveIn(1, brand(3)),
-			Mark.moveIn(1, brand(4), { isSrcConflicted: true }),
+			Mark.moveIn(5, brand(0)),
 			{ count: 2 },
 			Mark.onEmptyCell(
 				{
 					revision: tag1,
 					localId: brand(1),
-					adjacentCells: [{ id: brand(0), count: 2 }],
+					adjacentCells: cellsCD,
 				},
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
 			Mark.onEmptyCell(
-				{ revision: tag1, localId: brand(2), adjacentCells: [{ id: brand(2), count: 1 }] },
+				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
 				Mark.moveOut(1, brand(2)),
 			),
 			Mark.moveOut(1, brand(3)),
@@ -241,7 +272,7 @@ describe("SequenceField - Rebase", () => {
 				{
 					revision: tag1,
 					localId: brand(3),
-					adjacentCells: [{ id: brand(3), count: 2 }],
+					adjacentCells: cellsHI,
 				},
 				Mark.moveOut(1, brand(4)),
 			),
@@ -254,7 +285,7 @@ describe("SequenceField - Rebase", () => {
 			Change.modify(0, TestChange.mint([0], 1)),
 			Change.modify(3, TestChange.mint([0], 2)),
 		]);
-		const insert = Change.insert(2, 1, 2);
+		const insert = Change.insert(2, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Modify at earlier index is unaffected
 			Change.modify(0, TestChange.mint([0], 1)),
@@ -273,7 +304,7 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(2, 1, brand(3)),
 		]);
 		// Inserts between C and D
-		const insert = Change.insert(3, 1, 2);
+		const insert = Change.insert(3, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Delete with earlier index is unaffected
 			Change.delete(0, 1, brand(0)),
@@ -288,10 +319,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ insert", () => {
-		const insertA = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
-		const insertB = Change.insert(1, 1, 3);
+		const insertA = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
+		const insertB = Change.insert(1, 1, brand(3));
 		const actual = rebase(insertA, insertB);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -362,10 +399,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ revive", () => {
-		const insert = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
+		const insert = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
 		const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) });
 		const actual = rebase(insert, revive);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -525,6 +568,78 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("return ↷ return (same destination, <=)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const move = [Mark.returnTo(1, brand(0), cellId), { count: 2 }, Mark.moveOut(1, brand(0))];
+		const expected = [Mark.pin(1, brand(0))];
+		const rebased = rebase(move, move);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("return ↷ return (same destination, =>)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const move = [Mark.moveOut(1, brand(0)), { count: 2 }, Mark.returnTo(1, brand(0), cellId)];
+		const expected = [{ count: 2 }, Mark.pin(1, brand(0))];
+		const rebased = rebase(move, move);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("return ↷ return (other destination)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const return1 = [
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(0),
+			}),
+			{ count: 2 },
+			Mark.moveOut(1, brand(0)),
+		];
+		const return2 = [
+			{ count: 2 },
+			Mark.moveOut(1, brand(0)),
+			{ count: 2 },
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(42),
+			}),
+		];
+		const expected = [
+			Mark.moveOut(1, brand(0)),
+			{ count: 4 },
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(42),
+			}),
+		];
+		const rebased = rebase(return2, return1);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("pin ↷ move", () => {
+		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
+		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
+		const expected = [
+			Mark.moveOut(2, brand(0)),
+			{ count: 2 },
+			Mark.returnTo(2, brand(0), {
+				revision: tag1,
+				localId: brand(0),
+				adjacentCells: [{ count: 2, id: brand(0) }],
+			}),
+		];
+		const rebased = rebase(pin, move);
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("delete ↷ composite move", () => {
 		const move1 = Change.move(0, 1, 2, brand(0));
 		const move2 = Change.move(1, 1, 3, brand(1));
@@ -544,10 +659,7 @@ describe("SequenceField - Rebase", () => {
 		});
 
 		const revive = [
-			Mark.transient(
-				Mark.revive(2, { revision: tag1, localId: brand(0) }),
-				Mark.delete(2, brand(2)),
-			),
+			Mark.delete(2, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
 		];
 
 		const rebased = rebase(modify, revive, tag2);
@@ -561,7 +673,9 @@ describe("SequenceField - Rebase", () => {
 
 	it("rebasing over transient adds lineage", () => {
 		const insert = Change.insert(0, 1);
-		const transient = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
+		const transient = [
+			Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
+		];
 		const rebased = rebase(insert, transient);
 		const expected = [
 			Mark.insert(1, {
@@ -577,7 +691,7 @@ describe("SequenceField - Rebase", () => {
 		const moveAndDelete = [
 			Mark.moveOut(1, brand(0)),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 		];
 
 		const del = Change.delete(0, 1);
@@ -596,10 +710,9 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
-	// TODO: Enable this once BUG 6155 is fixed
-	it.skip("delete ↷ [move, delete] (reverse move direction)", () => {
+	it("delete ↷ [move, delete] (reverse move direction)", () => {
 		const moveAndDelete = [
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
 		];
@@ -619,33 +732,77 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("move ↷ move and delete", () => {
+		const moveAndDelete = [
+			{ count: 1 },
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0)),
+		];
+
+		const move = Change.move(2, 1, 0);
+		const rebased = rebase(move, moveAndDelete);
+		const expected = [
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("revive ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
-		const revive = Change.revive(0, 1, cellId);
+		const revive = [Mark.revive(1, cellId)];
 		const rebased = rebase(revive, reviveAndMove, tag2);
-		const expected = Change.redundantRevive(1, 1, cellId);
+		const expected = [
+			Mark.returnTo(1, brand(0), {
+				revision: tag2,
+				localId: brand(1),
+				adjacentCells: [{ id: brand(1), count: 1 }],
+			}),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0)),
+		];
 		assert.deepEqual(rebased, expected);
 	});
 
 	it("revive ↷ [revive, move, delete]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveMoveDelete = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
 		];
-		const revive = Change.revive(0, 1, cellId);
+		const revive = [Mark.revive(1, cellId)];
 		const rebased = rebase(revive, reviveMoveDelete, tag2);
-		const expected = Change.revive(1, 1, {
-			revision: tag2,
-			localId: brand(2),
-			adjacentCells: [{ id: brand(2), count: 1 }],
-		});
+		const expected = [
+			Mark.returnTo(1, brand(0), {
+				revision: tag2,
+				localId: brand(1),
+				adjacentCells: [{ id: brand(1), count: 1 }],
+			}),
+			{ count: 1 },
+			Mark.onEmptyCell(
+				{
+					revision: tag2,
+					localId: brand(2),
+					adjacentCells: [{ id: brand(2), count: 1 }],
+				},
+				Mark.moveOut(1, brand(0)),
+			),
+		];
 		assert.deepEqual(rebased, expected);
 	});
 
@@ -656,7 +813,7 @@ describe("SequenceField - Rebase", () => {
 				finalEndpoint: { localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
 		];
@@ -672,33 +829,72 @@ describe("SequenceField - Rebase", () => {
 				finalEndpoint: { localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), {
 				finalEndpoint: { localId: brand(0) },
-				isSrcConflicted: true,
 			}),
 		];
 
 		assert.deepEqual(rebased, expected);
 	});
 
-	it("revive and move ↷ move", () => {
-		const reviveAndMove = [
-			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
+	it("[revive, move] ↷ [revive, move]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveAndMove1 = [
+			Mark.moveOut(1, brand(1), { cellId }),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+		const reviveAndMove2 = [
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 2 },
 			Mark.moveIn(1, brand(1)),
 		];
-
-		const move = Change.move(0, 1, 2);
-		const rebased = rebase(reviveAndMove, move);
+		const rebased = rebase(reviveAndMove2, reviveAndMove1);
 		const expected = [
 			{ count: 1 },
-			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1)),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
+		assert.deepEqual(rebased, expected);
+	});
 
+	it("[revive, return] ↷ [revive, return] (same destination)", () => {
+		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const cellDst: ChangeAtomId = { revision: tag3, localId: brand(0) };
+		const reviveAndMove = [
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
+			{ count: 2 },
+			Mark.returnTo(1, brand(1), cellDst),
+		];
+		const rebased = rebase(reviveAndMove, reviveAndMove);
+		const expected = [{ count: 2 }, Mark.pin(1, brand(1))];
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("[revive, return] ↷ [revive, return] (other destination)", () => {
+		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const cellDst1: ChangeAtomId = { revision: tag3, localId: brand(1) };
+		const cellDst2: ChangeAtomId = { revision: tag3, localId: brand(2) };
+		const reviveAndMove1 = [
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
+			{ count: 2 },
+			Mark.returnTo(1, brand(1), cellDst1),
+		];
+		const reviveAndMove2 = [
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
+			{ count: 4 },
+			Mark.returnTo(1, brand(1), cellDst2),
+		];
+		const rebased = rebase(reviveAndMove2, reviveAndMove1);
+		const expected = [
+			{ count: 2 },
+			Mark.moveOut(1, brand(1)),
+			{ count: 2 },
+			Mark.returnTo(1, brand(1), cellDst2),
+		];
 		assert.deepEqual(rebased, expected);
 	});
 

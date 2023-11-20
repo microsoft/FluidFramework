@@ -14,7 +14,7 @@ import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shar
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
-import { TreeField } from "../../feature-libraries";
+import { TreeField } from "../../simple-tree";
 
 const builder = new SchemaBuilder({ scope: "test" });
 const someType = builder.object("foo", {
@@ -94,7 +94,7 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.handles.insertAtEnd([subtree1.handle, subtree2.handle]);
+			this.tree1View.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

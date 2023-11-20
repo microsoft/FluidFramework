@@ -48,10 +48,8 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
-	TreeRoot,
-	getProxyForField,
-	TreeField,
 } from "../feature-libraries";
+import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { TreeView, type ITree } from "./simpleTree";
@@ -178,6 +176,7 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			options,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
@@ -210,7 +209,7 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> | undefined {
-		assert(this.hasView2 === false, "Cannot create second view from tree.");
+		assert(this.hasView2 === false, 0x7f1 /* Cannot create second view from tree. */);
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
@@ -228,7 +227,7 @@ export class SharedTree
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
 			() => {
-				assert(this.hasView2, "unexpected dispose");
+				assert(this.hasView2, 0x7f2 /* unexpected dispose */);
 				this.hasView2 = false;
 			},
 		);
@@ -268,7 +267,7 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> {
-		assert(this.hasView2 === false, "Cannot create second view from tree.");
+		assert(this.hasView2 === false, 0x7f3 /* Cannot create second view from tree. */);
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -288,7 +287,7 @@ export class SharedTree
 						const fieldEditor = this.editor.optionalField(field);
 						assert(
 							content.length <= 1,
-							"optional field content should normalize at most one item",
+							0x7f4 /* optional field content should normalize at most one item */,
 						);
 						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
 						break;
