@@ -17,7 +17,6 @@ export {
 	NodeChangeType,
 	CellCount as NodeCount,
 	MoveId,
-	ProtoNode,
 	Attach,
 	ReturnFrom,
 	NoopMark,

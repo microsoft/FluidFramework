@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { cursorForJsonableTreeNode } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -15,7 +14,6 @@ import {
 	getEndpoint,
 	getInputCellId,
 	getOutputCellId,
-	isNewAttach,
 	isAttachAndDetachEffect,
 	getDetachOutputId,
 } from "./utils";
@@ -77,12 +75,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
-				if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
-					build.push({
-						id: oldId,
-						trees: mark.attach.content.map(cursorForJsonableTreeNode),
-					});
-				}
 				rename.push({
 					count: mark.count,
 					oldId,
@@ -159,16 +151,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						// Nested changes are represented on the node in its starting location
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
-					}
-					if (isNewAttach(mark)) {
-						assert(
-							mark.content !== undefined,
-							0x7dc /* New insert must have content */,
-						);
-						build.push({
-							id: buildId,
-							trees: mark.content.map(cursorForJsonableTreeNode),
-						});
 					}
 					local.push(deltaMark);
 					break;
