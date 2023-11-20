@@ -6,6 +6,9 @@
 import { ILumberFormatter } from "./resources";
 import { Lumber } from "./lumber";
 
+/**
+ * @internal
+ */
 export class SanitizationLumberFormatter implements ILumberFormatter {
 	private readonly sensitiveKeys = [
 		/cookie/i,

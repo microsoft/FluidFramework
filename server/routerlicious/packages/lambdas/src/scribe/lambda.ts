@@ -50,6 +50,9 @@ import {
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 
+/**
+ * @internal
+ */
 export class ScribeLambda implements IPartitionLambda {
 	// Value of the last processed Kafka offset
 	private lastOffset: number;

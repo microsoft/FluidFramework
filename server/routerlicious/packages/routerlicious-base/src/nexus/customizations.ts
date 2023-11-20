@@ -11,6 +11,9 @@ import {
 	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export interface INexusResourcesCustomizations {
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;

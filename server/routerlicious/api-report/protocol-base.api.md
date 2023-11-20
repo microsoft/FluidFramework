@@ -21,16 +21,16 @@ import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @internal
 export function buildGitTreeHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
-// @public
+// @internal
 export function getGitMode(value: SummaryObject): string;
 
-// @public
+// @internal
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
@@ -48,7 +48,7 @@ export interface IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @public
+// @internal
 export interface IQuorumSnapshot {
     // (undocumented)
     members: QuorumClientsSnapshot;
@@ -58,7 +58,7 @@ export interface IQuorumSnapshot {
     values: QuorumProposalsSnapshot["values"];
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IScribeProtocolState {
     // (undocumented)
     members: [string, ISequencedClient][];
@@ -72,7 +72,7 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @public
+// @internal
 export class ProtocolOpHandler implements IProtocolHandler {
     constructor(minimumSequenceNumber: number, sequenceNumber: number, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     // (undocumented)
@@ -94,7 +94,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @public
+// @internal
 export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     constructor(members: QuorumClientsSnapshot, proposals: QuorumProposalsSnapshot["proposals"], values: QuorumProposalsSnapshot["values"], sendProposal: (key: string, value: any) => number);
     addMember(clientId: string, details: ISequencedClient): void;
@@ -119,7 +119,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
-// @public
+// @internal
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
     constructor(snapshot: QuorumClientsSnapshot);
     addMember(clientId: string, details: ISequencedClient): void;
@@ -133,10 +133,10 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     snapshot(): QuorumClientsSnapshot;
 }
 
-// @public
+// @internal
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
-// @public
+// @internal
 export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
     constructor(snapshot: QuorumProposalsSnapshot, sendProposal: (key: string, value: any) => number);
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
@@ -155,7 +155,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
-// @public
+// @internal
 export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];

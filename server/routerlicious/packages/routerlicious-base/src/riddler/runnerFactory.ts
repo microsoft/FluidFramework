@@ -25,6 +25,9 @@ import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
+/**
+ * @internal
+ */
 export class RiddlerResources implements IResources {
 	public webServerFactory: IWebServerFactory;
 
@@ -58,6 +61,9 @@ export class RiddlerResources implements IResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
 	public async create(config: Provider): Promise<RiddlerResources> {
 		// Cache connection
@@ -171,6 +177,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
