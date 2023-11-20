@@ -15,14 +15,12 @@ import {
 	Mark,
 	MoveId,
 	NodeChangeType,
-	ReturnFrom,
+	MoveOut,
 	MoveIn,
 	MarkList,
-	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { splitMark } from "./utils";
-import { MoveDestination } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset<never>;
@@ -127,8 +125,8 @@ export const sequenceFieldEditor = {
 		detachEvent: CellId,
 	): Changeset<never> {
 		const id = brand<MoveId>(0);
-		const returnFrom: CellMark<ReturnFrom, never> = {
-			type: "ReturnFrom",
+		const moveOut: CellMark<MoveOut, never> = {
+			type: "MoveOut",
 			id,
 			count,
 		};
@@ -140,7 +138,7 @@ export const sequenceFieldEditor = {
 			cellId: detachEvent,
 		};
 
-		return moveMarksToMarkList(sourceIndex, count, destIndex, returnFrom, returnTo);
+		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, returnTo);
 	},
 } satisfies SequenceFieldEditor;
 
@@ -148,8 +146,8 @@ function moveMarksToMarkList(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detach: CellMark<MoveSource, never>,
-	attach: CellMark<MoveDestination, never>,
+	detach: CellMark<MoveOut, never>,
+	attach: CellMark<MoveIn, never>,
 ): MarkList<never> {
 	if (count === 0) {
 		return [];
