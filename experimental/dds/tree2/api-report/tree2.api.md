@@ -886,13 +886,6 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends TreeFieldSch
 }
 
 // @alpha
-export class InlineTreeListContent<T> implements Iterable<T> {
-    // (undocumented)
-    [Symbol.iterator](): Iterator<T>;
-    constructor(content: Iterable<T>);
-}
-
-// @alpha
 type _InlineTrick = 0;
 
 declare namespace InternalEditableTreeTypes {
@@ -1030,6 +1023,14 @@ export function isNeverField(policy: FullSchemaPolicy, originalData: TreeStoredS
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @alpha
+export class IterableTreeListContent<T> implements Iterable<T> {
+    // (undocumented)
+    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+    // (undocumented)
+    [Symbol.iterator](): Iterator<T>;
 }
 
 // @alpha
@@ -1834,11 +1835,15 @@ export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> ex
 }
 
 // @alpha
-interface TreeListNodeBase<out T, in out TNew, in TMoveFrom> extends ReadonlyArray<T> {
-    inline: (content: Iterable<TNew>) => InlineTreeListContent<TNew>;
-    insertAt(index: number, ...value: (TNew | InlineTreeListContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+export const TreeListNode: {
+    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+};
+
+// @alpha
+interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
+    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;

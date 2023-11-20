@@ -45,9 +45,9 @@ import {
 	TreeListNode,
 	TreeMapNode,
 	TreeObjectNode,
-	InlineTreeListContent,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
+import { IterableTreeListContent } from "./iterableTreeListContent";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -223,12 +223,12 @@ function contextualizeInsertedListContent(
 	insertedAtIndex: number,
 	content: (
 		| TreeNodeUnion<AllowedTypes, "javaScript">
-		| InlineTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
+		| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 	)[],
 ): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
 	return extractContentArray(
 		content.flatMap((c) =>
-			c instanceof InlineTreeListContent ? Array.from(c) : c,
+			c instanceof IterableTreeListContent ? Array.from(c) : c,
 		) as ContextuallyTypedNodeData[],
 		insertedAtIndex,
 	);
@@ -259,7 +259,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			...value: (
 				| TreeNodeUnion<AllowedTypes, "javaScript">
-				| InlineTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
+				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
@@ -275,7 +275,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: TreeListNode,
 			...value: (
 				| TreeNodeUnion<AllowedTypes, "javaScript">
-				| InlineTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
+				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
@@ -291,7 +291,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: TreeListNode,
 			...value: (
 				| TreeNodeUnion<AllowedTypes, "javaScript">
-				| InlineTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
+				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
@@ -396,11 +396,6 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			} else {
 				getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
 			}
-		},
-	},
-	inline: {
-		value<T>(this: TreeListNode, content: Iterable<T>): InlineTreeListContent<T> {
-			return new InlineTreeListContent(content);
 		},
 	},
 };

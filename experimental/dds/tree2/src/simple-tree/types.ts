@@ -20,6 +20,7 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
+import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
 
 /**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
@@ -35,17 +36,6 @@ import {
 export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
 
 /**
- * Used to insert iterable content into a {@link TreeListNode}.
- * @alpha
- */
-export class InlineTreeListContent<T> implements Iterable<T> {
-	public constructor(private readonly content: Iterable<T>) {}
-	public [Symbol.iterator](): Iterator<T> {
-		return this.content[Symbol.iterator]();
-	}
-}
-
-/**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
@@ -57,41 +47,47 @@ export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
 	> {}
 
 /**
- * A generic List type, used to defined types like {@link TreeListNode}.
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
-export interface TreeListNodeBase<out T, in out TNew, in TMoveFrom> extends ReadonlyArray<T> {
+export const TreeListNode = {
 	/**
-	 * Wrap an iterable of content to be inserted into this list.
+	 * Wrap an iterable of content to be inserted into a list.
 	 * @remarks
-	 * The object returned by this function can be inserted into this list as an element.
+	 * The object returned by this function can be inserted into a list as an element.
 	 * Its contents will be inserted sequentially in the corresponding location in the list.
 	 * @example
 	 * ```ts
 	 * list.insertAtEnd(list.inline(iterable))
 	 * ```
 	 */
-	inline: (content: Iterable<TNew>) => InlineTreeListContent<TNew>;
+	inline: <T>(content: Iterable<T>) => createIterableTreeListContent(content),
+};
 
+/**
+ * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
+ * @alpha
+ */
+export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, ...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+	insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+	insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(...value: (TNew | InlineTreeListContent<TNew>)[]): void;
+	insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.

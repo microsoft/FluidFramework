@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../domains";
-import { TypedNode, TreeRoot, Tree } from "../../simple-tree";
+import { TypedNode, TreeRoot, Tree, TreeListNode } from "../../simple-tree";
 import { typeNameSymbol } from "../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
@@ -219,35 +219,35 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(_.list(_.number));
 
 		itWithRoot("insertAtStart()", schema, [], (list) => {
-			list.insertAtStart(list.inline([0, 1]));
+			list.insertAtStart(TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtStart(0, list.inline([1]), 2);
+			list.insertAtStart(0, TreeListNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtStart(0, 1, list.inline([2, 3]), 4, list.inline([5, 6]));
+			list.insertAtStart(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		itWithRoot("insertAtEnd()", schema, [], (list) => {
-			list.insertAtEnd(list.inline([0, 1]));
+			list.insertAtEnd(TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtEnd(0, list.inline([1]), 2);
+			list.insertAtEnd(0, TreeListNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtEnd(0, 1, list.inline([2, 3]), 4, list.inline([5, 6]));
+			list.insertAtEnd(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		itWithRoot("insertAt()", schema, [], (list) => {
-			list.insertAt(0, list.inline([0, 1]));
+			list.insertAt(0, TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAt(0, 0, list.inline([1]), 2);
+			list.insertAt(0, 0, TreeListNode.inline([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAt(0, 0, 1, list.inline([2, 3]), 4, list.inline([5, 6]));
+			list.insertAt(0, 0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 	});
