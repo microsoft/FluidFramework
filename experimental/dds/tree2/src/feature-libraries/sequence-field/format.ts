@@ -288,14 +288,11 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
-export type MoveSource = MoveOut;
-export const MoveSource = MoveOut;
-
 export type Attach = Insert | MoveIn;
 export const Attach = Type.Union([Insert, MoveIn]);
 
-export type Detach = Delete | MoveSource;
-export const Detach = Type.Union([Delete, MoveSource]);
+export type Detach = Delete | MoveOut;
+export const Detach = Type.Union([Delete, MoveOut]);
 
 /**
  * Mark used during compose to temporarily remember the position of nodes which were being moved

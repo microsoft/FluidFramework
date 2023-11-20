@@ -47,7 +47,6 @@ import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
-	MoveDestination,
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
@@ -998,7 +997,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 		}
 		case "MoveIn": {
 			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveDestination;
+			const move2 = effect2 as MoveIn;
 			if (move2.finalEndpoint !== undefined) {
 				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
 			}

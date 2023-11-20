@@ -19,11 +19,9 @@ import {
 	MoveOut,
 	MoveIn,
 	MarkList,
-	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { splitMark } from "./utils";
-import { MoveDestination } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	/**
@@ -159,8 +157,8 @@ function moveMarksToMarkList(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detach: CellMark<MoveSource, never>,
-	attach: CellMark<MoveDestination, never>,
+	detach: CellMark<MoveOut, never>,
+	attach: CellMark<MoveIn, never>,
 ): MarkList<never> {
 	if (count === 0) {
 		return [];

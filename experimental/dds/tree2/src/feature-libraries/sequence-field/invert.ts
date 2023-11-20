@@ -18,7 +18,6 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
-	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -325,7 +324,7 @@ function applyMovedChanges<TNodeChange>(
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
 			entry.value !== undefined
-				? withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
+				? withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(
 						mark1,
 						entry.value,
 				  )
@@ -336,10 +335,7 @@ function applyMovedChanges<TNodeChange>(
 
 	if (entry.value !== undefined) {
 		return [
-			withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
-				mark,
-				entry.value,
-			),
+			withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(mark, entry.value),
 		];
 	}
 

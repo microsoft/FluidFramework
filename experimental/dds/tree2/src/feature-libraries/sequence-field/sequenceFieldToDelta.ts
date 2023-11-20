@@ -19,7 +19,7 @@ import {
 	isAttachAndDetachEffect,
 	getDetachOutputId,
 } from "./utils";
-import { isMoveDestination, isMoveSource } from "./moveEffectTable";
+import { isMoveIn, isMoveOut } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
@@ -60,7 +60,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 			);
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
-			if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
+			if (isMoveIn(mark.attach) && isMoveOut(mark.detach)) {
 				assert(
 					mark.changes === undefined,
 					0x81f /* AttachAndDetach moves should not have changes */,
@@ -74,7 +74,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
 			);
 			const oldId = nodeIdFromChangeAtom(
-				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
+				isMoveIn(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
 				if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
