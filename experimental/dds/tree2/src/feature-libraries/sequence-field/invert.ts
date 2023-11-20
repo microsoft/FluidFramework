@@ -11,7 +11,6 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ReturnFrom,
 	NoopMarkType,
 	MoveOut,
 	NoopMark,
@@ -19,7 +18,6 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
-	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -27,6 +25,7 @@ import {
 	extractMarkEffect,
 	getDetachOutputId,
 	getEndpoint,
+	getInputCellId,
 	getOutputCellId,
 	isAttach,
 	isDetach,
@@ -121,7 +120,7 @@ function invertMark<TNodeChange>(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							detachIdOverride: mark.cellId,
+							detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					  };
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
@@ -140,8 +139,7 @@ function invertMark<TNodeChange>(
 			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
 			return [inverse];
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
+		case "MoveOut": {
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,
@@ -184,15 +182,15 @@ function invertMark<TNodeChange>(
 					detach: {
 						type: "Delete",
 						id: mark.id,
-						detachIdOverride: mark.cellId,
+						detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					},
 				};
 			}
 			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
-				type: "ReturnFrom",
+			const invertedMark: CellMark<MoveOut, TNodeChange> = {
+				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
 			};
@@ -310,7 +308,7 @@ function invertMark<TNodeChange>(
 }
 
 function applyMovedChanges<TNodeChange>(
-	mark: CellMark<MoveOut | ReturnFrom, TNodeChange>,
+	mark: CellMark<MoveOut, TNodeChange>,
 	revision: RevisionTag | undefined,
 	manager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
@@ -327,7 +325,7 @@ function applyMovedChanges<TNodeChange>(
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
 			entry.value !== undefined
-				? withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
+				? withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(
 						mark1,
 						entry.value,
 				  )
@@ -338,10 +336,7 @@ function applyMovedChanges<TNodeChange>(
 
 	if (entry.value !== undefined) {
 		return [
-			withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
-				mark,
-				entry.value,
-			),
+			withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(mark, entry.value),
 		];
 	}
 
