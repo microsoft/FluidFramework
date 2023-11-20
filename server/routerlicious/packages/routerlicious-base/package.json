@@ -130,9 +130,7 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_RiddlerResources": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
