@@ -32,6 +32,17 @@ import {
 import { type TreeField, type TypedNode } from "./types";
 
 /**
+ * Module notes:
+ *
+ * The flow of the below code is in terms of the structure of the input data. We then verify that the associated
+ * schema is appropriate for that kind of data. This is fine while we have a 1:1 mapping of kind of input data to
+ * the kind of schema we expect for it (e.g. an input that is an array always need to be associated with a sequence in
+ * the schema). If/when we begin accepting kinds of input data that are ambiguous (e.g. accepting an input that is an
+ * array of key/value tuples to instantiate a map) we may need to rethink the structure here to be based more on the
+ * schema than on the input data.
+ */
+
+/**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
  * @param data - The input tree to be converted.
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
