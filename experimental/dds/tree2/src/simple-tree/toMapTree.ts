@@ -18,6 +18,9 @@ import { brand, fail } from "../util";
 import {
 	allowsValue,
 	type ContextuallyTypedNodeData,
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
+	type CursorWithNode,
 	getFieldKind,
 	getFieldSchema,
 	getPossibleTypes,
@@ -41,6 +44,35 @@ import { type TreeField, type TypedNode } from "./types";
  * array of key/value tuples to instantiate a map) we may need to rethink the structure here to be based more on the
  * schema than on the input data.
  */
+
+/**
+ * Transforms an input {@link TypedNode} tree to a {@link MapTree}, and wraps the tree in a {@link CursorWithNode}.
+ * @param data - The input tree to be converted.
+ * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
+ * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
+ */
+export function cursorFromNodeData(
+	data: TypedNode<TreeNodeSchema, "javaScript">,
+	context: TreeDataContext,
+	typeSet: TreeTypeSet,
+): CursorWithNode<MapTree> {
+	const mappedContent = nodeDataToMapTree(data, context, typeSet);
+	return cursorForMapTreeNode(mappedContent);
+}
+
+/**
+ * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
+ * @param data - The input tree to be converted.
+ * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
+ */
+export function cursorFromFieldData(
+	data: TreeField<TreeFieldSchema, "javaScript">,
+	context: TreeDataContext,
+	fieldSchema: TreeFieldStoredSchema,
+): CursorWithNode<MapTree> {
+	const mappedContent = fieldDataToMapTrees(data, context, fieldSchema);
+	return cursorForMapTreeField(mappedContent);
+}
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.

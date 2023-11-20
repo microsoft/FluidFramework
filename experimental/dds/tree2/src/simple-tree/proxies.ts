@@ -32,8 +32,6 @@ import {
 	ContextuallyTypedNodeData,
 	typeNameSymbol,
 	isFluidHandle,
-	cursorForMapTreeNode,
-	cursorForMapTreeField,
 } from "../feature-libraries";
 import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
@@ -50,7 +48,7 @@ import {
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 import { IterableTreeListContent } from "./iterableTreeListContent";
-import { fieldDataToMapTrees, nodeDataToMapTree } from "./toMapTree";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -175,12 +173,11 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						if (content === undefined) {
 							typedField.content = undefined;
 						} else {
-							const mappedContent = nodeDataToMapTree(
+							const cursor = cursorFromNodeData(
 								content,
 								editNode.context,
 								fieldSchema.types,
 							);
-							const cursor = cursorForMapTreeNode(mappedContent);
 							modifyChildren(
 								editNode,
 								() => {
@@ -279,12 +276,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
-			const mappedContent = fieldDataToMapTrees(
+			const cursor = cursorFromFieldData(
 				content,
 				sequenceField.context,
 				sequenceField.schema,
 			);
-			const cursor = cursorForMapTreeField(mappedContent);
 
 			modifyChildren(
 				getEditNode(this),
@@ -304,12 +300,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
-			const mappedContent = fieldDataToMapTrees(
+			const cursor = cursorFromFieldData(
 				content,
 				sequenceField.context,
 				sequenceField.schema,
 			);
-			const cursor = cursorForMapTreeField(mappedContent);
 
 			modifyChildren(
 				getEditNode(this),
@@ -332,12 +327,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				this.length,
 				value,
 			);
-			const mappedContent = fieldDataToMapTrees(
+			const cursor = cursorFromFieldData(
 				content,
 				sequenceField.context,
 				sequenceField.schema,
 			);
-			const cursor = cursorForMapTreeField(mappedContent);
 
 			modifyChildren(
 				getEditNode(this),
@@ -653,12 +647,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			if (content === undefined) {
 				node.set(key, undefined);
 			} else {
-				const mappedContent = nodeDataToMapTree(
+				const cursor = cursorFromNodeData(
 					content,
 					node.context,
 					node.schema.mapFields.types,
 				);
-				const cursor = cursorForMapTreeNode(mappedContent);
 				modifyChildren(
 					node,
 					(mapNode) => mapNode.set(key, cursor),
