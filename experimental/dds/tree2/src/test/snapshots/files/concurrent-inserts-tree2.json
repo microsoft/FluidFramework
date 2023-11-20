@@ -38,8 +38,28 @@
                           [
                             0,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "y"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "y",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -71,8 +91,28 @@
                           [
                             1,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "x"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "x",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -107,15 +147,55 @@
                           [
                             0,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "a"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "a",
+                                  []
+                                ]
+                              ]
                             }
                           ],
                           [
                             1,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "c"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "c",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -150,8 +230,28 @@
                           [
                             2,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "b"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "b",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]

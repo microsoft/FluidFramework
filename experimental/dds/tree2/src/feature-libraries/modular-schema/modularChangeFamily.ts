@@ -26,6 +26,8 @@ import {
 	JsonableTree,
 	makeDetachedNodeId,
 	emptyDelta,
+	ITreeCursorSynchronous,
+	mapCursorField,
 } from "../../core";
 import {
 	brand,
@@ -68,6 +70,13 @@ import {
 	NodeExistsConstraint,
 	RevisionInfo,
 } from "./modularChangeTypes";
+import {
+	EncodedChunk,
+	chunkTree,
+	decode,
+	defaultChunkPolicy,
+	uncompressedEncode,
+} from "../chunked-forest";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -181,7 +190,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
 		for (const { revision, change } of changes) {
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
@@ -715,9 +724,12 @@ export class ModularChangeFamily
 		if (change.builds && change.builds.size > 0) {
 			const builds: Delta.DetachedNodeBuild[] = [];
 			forEachInNestedMap(change.builds, (tree, major, minor) => {
+				const cursor = decode(tree).cursor();
+				assert(cursor.getFieldLength() === 1, "should only contain 1 node");
+				cursor.enterNode(0);
 				builds.push({
 					id: makeDetachedNodeId(major ?? revision, minor),
-					trees: [cursorForJsonableTreeNode(tree)],
+					trees: [cursor],
 				});
 			});
 			rootDelta.build = builds;
@@ -1014,7 +1026,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<JsonableTree>,
+	builds?: ChangeAtomIdMap<EncodedChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1072,12 +1084,19 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of content.map(jsonableTreeFromCursor)) {
+		const fieldCursors = content.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
+		);
+		const nodeCursors = fieldCursors
+			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
+			.flat();
+		const encodedTrees = nodeCursors.map(uncompressedEncode);
+		for (const tree of encodedTrees) {
 			assert(!innerMap.has(id), "Unexpected duplicate build ID");
 			innerMap.set(id, tree);
 			id = brand((id as number) + 1);
@@ -1189,7 +1208,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<JsonableTree>;
+	builds?: ChangeAtomIdMap<EncodedChunk>;
 }
 
 /**

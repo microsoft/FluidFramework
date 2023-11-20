@@ -24,7 +24,7 @@ import {
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
-import { testChangeReceiver } from "../utils";
+import { assertDeltaEqual, testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
@@ -219,7 +219,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const delta = family.intoDelta(makeAnonChange(composed));
-			assert.deepEqual(delta, expected);
+			assertDeltaEqual(delta, expected);
 		});
 
 		it("cross-field move and inverse with nested changes", () => {
@@ -284,7 +284,7 @@ describe("ModularChangeFamily integration", () => {
 					],
 				]),
 			};
-			assert.deepEqual(actual, expected);
+			assertDeltaEqual(actual, expected);
 		});
 
 		it("two cross-field moves of same node", () => {
