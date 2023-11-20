@@ -36,6 +36,9 @@ export {
 	DOProviderContainerRuntimeFactory,
 	FluidContainer,
 	ServiceAudience,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 export type {
 	IDirectory,

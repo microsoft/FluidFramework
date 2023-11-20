@@ -11,10 +11,11 @@ import {
 } from "@fluidframework/odsp-driver";
 import {
 	type ContainerSchema,
-	DOProviderContainerRuntimeFactory,
+	createDOProviderContainerRuntimeFactory,
 	IFluidContainer,
-	FluidContainer,
+	createFluidContainer,
 	IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
 	AttachState,
@@ -37,7 +38,7 @@ import {
 	OdspContainerServices,
 	OdspContainerAttributes,
 } from "./interfaces";
-import { OdspAudience } from "./odspAudience";
+import { createOdspAudienceMember } from "./odspAudience";
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
@@ -108,13 +109,13 @@ export class OdspClient {
 
 		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer(container, rootDataObject);
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
 
 	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+		const runtimeFactory = createDOProviderContainerRuntimeFactory(containerSchema);
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -173,7 +174,7 @@ export class OdspClient {
 			 */
 			return absoluteUrl;
 		};
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
@@ -193,7 +194,7 @@ export class OdspClient {
 
 		return {
 			tenantAttributes: getAttributes,
-			audience: new OdspAudience(container),
+			audience: createServiceAudience(container, createOdspAudienceMember),
 		};
 	}
 }

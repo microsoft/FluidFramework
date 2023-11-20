@@ -5,7 +5,6 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -13,7 +12,6 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 
 export { ITelemetryBaseEvent }
 
@@ -21,12 +19,6 @@ export { ITelemetryBaseLogger }
 
 // @public
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
-
-// @public
-export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
-    // @internal (undocumented)
-    protected createServiceMember(audienceMember: IClient): TinyliciousMember;
-}
 
 // @public
 class TinyliciousClient {

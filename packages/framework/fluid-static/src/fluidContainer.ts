@@ -208,6 +208,13 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	dispose(): void;
 }
 
+export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(
+	container: IContainer,
+	rootDataObject: IRootDataObject,
+): IFluidContainer<TContainerSchema> {
+	return new FluidContainer<TContainerSchema>(container, rootDataObject);
+}
+
 /**
  * Base {@link IFluidContainer} implementation.
  *
@@ -216,6 +223,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
+ * @deprecated - use createFluidContainer and IFluidContainer instead
  */
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
