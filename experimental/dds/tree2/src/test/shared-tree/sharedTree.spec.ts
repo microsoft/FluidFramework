@@ -803,62 +803,63 @@ describe("SharedTree", () => {
 		 * the collab window includes all sequenced edits after the minimum sequence number
 		 * these tests test that undoing edits beind the minimum sequence number works
 		 */
-		describe("out of collab window", () => {
-			for (const opNumber of [20, 40, 100]) {
-				it(`an insert ${opNumber} edits behind`, () => {
-					const provider = new TestTreeProviderLite(2);
-					const content = {
-						schema: stringSequenceRootSchema,
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: ["A", "B", "C", "D"],
-					} satisfies InitializeAndSchematizeConfiguration;
-					const tree1 = provider.trees[0].schematizeInternal(content);
+		it("out of collab window", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C", "D"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
 
-					const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-						tree1.checkout.events,
-					);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
 
-					provider.processMessages();
-					const tree2 = provider.trees[1].schematizeInternal(content);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(content);
 
-					const root1 = tree1.editableTree;
-					const root2 = tree2.editableTree;
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
 
-					// insert in first tree
-					root1.insertAt(0, ["x"]);
+			// insert in first tree
+			root1.removeAt(0);
 
-					provider.processMessages();
-					assert.deepEqual(root1.asArray, ["x", "A", "B", "C", "D"]);
-					assert.deepEqual(root2.asArray, ["x", "A", "B", "C", "D"]);
+			provider.processMessages();
+			const minimumSequenceNumber = provider.minimumSequenceNumber;
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
 
-					// lots of inserts and deletes on the second tree
-					for (let i = 0; i < opNumber / 2; i++) {
-						root2.insertAt(3, ["y"]);
-						root2.removeAt(3);
-					}
-
-					// process messages to move the collab window up
-					provider.processMessages();
-					assert.deepEqual(root1.asArray, ["x", "A", "B", "C", "D"]);
-					assert.deepEqual(root2.asArray, ["x", "A", "B", "C", "D"]);
-
-					assert.equal(undoStack.length, 1);
-					undoStack.pop()?.revert();
-
-					provider.processMessages();
-					assert.deepEqual(root1.asArray, ["A", "B", "C", "D"]);
-					assert.deepEqual(root2.asArray, ["A", "B", "C", "D"]);
-
-					assert.equal(redoStack.length, 1);
-					redoStack.pop()?.revert();
-
-					provider.processMessages();
-					assert.deepEqual(root1.asArray, ["x", "A", "B", "C", "D"]);
-					assert.deepEqual(root2.asArray, ["x", "A", "B", "C", "D"]);
-
-					unsubscribe();
-				});
+			// some more inserts and deletes on the second tree
+			for (let i = 0; i < 5; i++) {
+				root2.insertAt(3, ["y"]);
+				root2.removeAt(3);
 			}
+			provider.processMessages();
+
+			// send edits from the first tree to move the collab window up
+			root1.insertAt(3, ["y"]);
+			root1.removeAt(3);
+			provider.processMessages();
+
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			assert(minimumSequenceNumber < provider.minimumSequenceNumber);
+			undoStack[0]?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["A", "B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "D"]);
+
+			assert.equal(redoStack.length, 1);
+			redoStack.pop()?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			unsubscribe();
 		});
 
 		describe("can concurrently restore and edit removed tree", () => {
