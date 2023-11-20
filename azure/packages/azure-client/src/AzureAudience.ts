@@ -14,7 +14,7 @@ import { type AzureMember, type AzureUser, type IAzureAudience } from "./interfa
  * @remarks Operates in terms of {@link AzureMember}s.
  *
  * @public
- * @deprecated - class will no longer be exposed. use IAzureAudience instead
+ * @deprecated This class will no longer be exposed. use {@link IAzureAudience} instead
  */
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
 	/**
