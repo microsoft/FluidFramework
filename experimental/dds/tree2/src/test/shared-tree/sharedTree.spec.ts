@@ -803,7 +803,7 @@ describe("SharedTree", () => {
 		 * the collab window includes all sequenced edits after the minimum sequence number
 		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
 		 */
-		it("out of collab window", () => {
+		it("refresher for repair data out of collab window", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
