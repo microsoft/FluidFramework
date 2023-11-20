@@ -219,9 +219,5 @@ function getType(
 }
 
 function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
-	const schema = context.schema.nodeSchema.get(type);
-	if (schema === undefined) {
-		fail("Requested type does not exist in schema.");
-	}
-	return schema;
+	return context.schema.nodeSchema.get(type) ?? fail("Requested type does not exist in schema.");
 }
