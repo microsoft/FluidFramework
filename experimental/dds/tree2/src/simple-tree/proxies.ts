@@ -136,28 +136,28 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 		// TODO: maybe remove this fallback and error once migration to class based schema is done.
 		output = createNodeProxy<TSchema>(flexNode);
 	}
-
-	if (!schemaIsLeaf(flexNode.schema)) {
-		setEditNode(output as TreeNode, flexNode);
-	}
 	return output;
 }
 
 export function createNodeProxy<TSchema extends TreeNodeSchema>(
-	editNode: FlexTreeNode,
+	flexNode: FlexTreeNode,
 ): TypedNode<TSchema> {
-	const schema = editNode.schema;
+	const schema = flexNode.schema;
 	if (schemaIsLeaf(schema)) {
-		return editNode.value as TypedNode<TSchema>;
-	} else if (schemaIsMap(schema)) {
-		return createMapProxy() as TypedNode<TSchema>;
+		return flexNode.value as TypedNode<TSchema>;
+	}
+	let proxy: TypedNode<TSchema>;
+	if (schemaIsMap(schema)) {
+		proxy = createMapProxy() as TypedNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
-		return createListProxy() as TypedNode<TSchema>;
+		proxy = createListProxy() as TypedNode<TSchema>;
 	} else if (schemaIsObjectNode(schema)) {
-		return createObjectProxy(schema) as TypedNode<TSchema>;
+		proxy = createObjectProxy(schema) as TypedNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
+	setEditNode(proxy as TreeNode, flexNode);
+	return proxy;
 }
 
 function createObjectProxy<TSchema extends ObjectNodeSchema>(
