@@ -12,7 +12,7 @@ import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./inte
  * {@inheritDoc ITinyliciousAudience}
  *
  * @public
- * @deprecated - use createServiceAudience and createTinyliciousAudienceServiceMember instead
+ * @deprecated  use ITinyliciousAudience instead
  */
 export class TinyliciousAudience
 	extends ServiceAudience<TinyliciousMember>
