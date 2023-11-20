@@ -29,7 +29,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -66,8 +86,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "1"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "1",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -112,8 +152,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "2"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "2",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -158,8 +218,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "3"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "3",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -201,8 +281,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "4"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "4",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -247,8 +347,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "5"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "5",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -293,8 +413,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "6"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "6",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -336,8 +476,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "7"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "7",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -382,8 +542,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "8"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "8",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -428,8 +608,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "9"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "9",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -466,7 +666,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -503,8 +723,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "10"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "10",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -549,8 +789,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "11"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "11",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -595,8 +855,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "12"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "12",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -638,8 +918,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "13"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "13",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -684,8 +984,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "14"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "14",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -730,8 +1050,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "15"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "15",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -773,8 +1113,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "16"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "16",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -819,8 +1179,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "17"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "17",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -865,8 +1245,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "18"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "18",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -903,7 +1303,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -940,8 +1360,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "19"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "19",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -986,8 +1426,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "20"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "20",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1032,8 +1492,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "21"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "21",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1075,8 +1555,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "22"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "22",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1121,8 +1621,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "23"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "23",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1167,8 +1687,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "24"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "24",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1210,8 +1750,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "25"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "25",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1256,8 +1816,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "26"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "26",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1302,8 +1882,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "27"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "27",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1337,7 +1937,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -1374,8 +1994,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "28"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "28",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1420,8 +2060,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "29"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "29",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1466,8 +2126,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "30"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "30",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1509,8 +2189,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "31"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "31",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1555,8 +2255,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "32"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "32",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1601,8 +2321,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "33"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "33",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1644,8 +2384,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "34"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "34",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1690,8 +2450,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "35"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "35",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1736,8 +2516,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "36"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "36",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1774,7 +2574,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -1811,8 +2631,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "37"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "37",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1857,8 +2697,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "38"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "38",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1903,8 +2763,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "39"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "39",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1946,8 +2826,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "40"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "40",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -1992,8 +2892,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "41"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "41",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2038,8 +2958,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "42"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "42",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2081,8 +3021,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "43"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "43",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2127,8 +3087,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "44"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "44",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2173,8 +3153,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "45"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "45",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2211,7 +3211,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -2248,8 +3268,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "46"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "46",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2294,8 +3334,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "47"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "47",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2340,8 +3400,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "48"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "48",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2383,8 +3463,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "49"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "49",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2429,8 +3529,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "50"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "50",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2475,8 +3595,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "51"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "51",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2518,8 +3658,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "52"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "52",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2564,8 +3724,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "53"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "53",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2610,8 +3790,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "54"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "54",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2645,7 +3845,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -2682,8 +3902,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "55"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "55",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2728,8 +3968,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "56"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "56",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2774,8 +4034,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "57"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "57",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2817,8 +4097,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "58"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "58",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2863,8 +4163,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "59"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "59",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2909,8 +4229,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "60"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "60",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2952,8 +4292,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "61"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "61",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -2998,8 +4358,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "62"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "62",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3044,8 +4424,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "63"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "63",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3082,7 +4482,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -3119,8 +4539,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "64"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "64",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3165,8 +4605,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "65"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "65",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3211,8 +4671,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "66"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "66",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3254,8 +4734,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "67"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "67",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3300,8 +4800,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "68"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "68",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3346,8 +4866,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "69"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "69",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3389,8 +4929,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "70"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "70",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3435,8 +4995,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "71"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "71",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3481,8 +5061,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "72"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "72",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3519,7 +5119,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "test trees.TestInner"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "test trees.TestInner",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -3556,8 +5176,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "73"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "73",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3602,8 +5242,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "74"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "74",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3648,8 +5308,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "75"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "75",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3691,8 +5371,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "76"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "76",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3737,8 +5437,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "77"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "77",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3783,8 +5503,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "78"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "78",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3826,8 +5566,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "79"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "79",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3872,8 +5632,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "80"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "80",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {
@@ -3918,8 +5698,28 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "com.fluidframework.leaf.string",
-                                              "value": "81"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "81",
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {

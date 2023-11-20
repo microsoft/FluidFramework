@@ -4,7 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import {
+	EncodedChunk,
+	SequenceField as SF,
+	chunkTree,
+	cursorForJsonableTreeNode,
+	defaultChunkPolicy,
+	uncompressedEncode,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -155,15 +162,15 @@ function createModifyDetachedChangeset<TNodeChange>(
  * @param overrides - Any additional properties to add to the mark.
  */
 function createInsertMark<TChange = never>(
-	countOrContent: number | JsonableTree[],
+	countOrContent: number | EncodedChunk[],
 	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
-): SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } {
+): SF.CellMark<SF.Insert, TChange> & { content: EncodedChunk[] } {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
-		: generateJsonables(countOrContent);
+		: jsonableTreeToEncodedChunk(generateJsonables(countOrContent));
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } = {
+	const mark: SF.CellMark<SF.Insert, TChange> & { content: EncodedChunk[] } = {
 		type: "Insert",
 		content,
 		count: content.length,
@@ -174,6 +181,13 @@ function createInsertMark<TChange = never>(
 		mark.revision = cellIdObject.revision;
 	}
 	return { ...mark, ...overrides };
+}
+
+export function jsonableTreeToEncodedChunk(data: JsonableTree[]): EncodedChunk[] {
+	return data
+		.map(cursorForJsonableTreeNode)
+		.map((cursor) => chunkTree(cursor, defaultChunkPolicy).cursor())
+		.map(uncompressedEncode);
 }
 
 /**

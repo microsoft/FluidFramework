@@ -29,8 +29,28 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "y"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "y",
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -59,8 +79,28 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "x"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "x",
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -92,12 +132,52 @@
                                 "count": 2,
                                 "content": [
                                   {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "a"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "a",
+                                        []
+                                      ]
+                                    ]
                                   },
                                   {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "c"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "c",
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -129,8 +209,28 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "b"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "com.fluidframework.leaf.string",
+                                        true,
+                                        "b",
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {

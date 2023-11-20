@@ -29,7 +29,27 @@
                                 "count": 1,
                                 "content": [
                                   {
-                                    "type": "has-sequence-map.SeqMap"
+                                    "version": 1,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1,
+                                          "fields": []
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      1,
+                                      [
+                                        "has-sequence-map.SeqMap",
+                                        false,
+                                        []
+                                      ]
+                                    ]
                                   }
                                 ],
                                 "cellId": {
@@ -47,7 +67,27 @@
                                           "count": 1,
                                           "content": [
                                             {
-                                              "type": "has-sequence-map.SeqMap"
+                                              "version": 1,
+                                              "identifiers": [],
+                                              "shapes": [
+                                                {
+                                                  "c": {
+                                                    "extraFields": 1,
+                                                    "fields": []
+                                                  }
+                                                },
+                                                {
+                                                  "a": 0
+                                                }
+                                              ],
+                                              "data": [
+                                                1,
+                                                [
+                                                  "has-sequence-map.SeqMap",
+                                                  false,
+                                                  []
+                                                ]
+                                              ]
                                             }
                                           ],
                                           "cellId": {

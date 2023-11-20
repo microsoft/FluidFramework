@@ -12,7 +12,7 @@ import {
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { MarkMaker as Mark } from "./testEdits";
+import { jsonableTreeToEncodedChunk, MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
 const type: TreeNodeSchemaIdentifier = brand("Node");
@@ -60,16 +60,16 @@ describe("SequenceField - MarkListFactory", () => {
 		const id1: ChangesetLocalId = brand(1);
 		const id2: ChangesetLocalId = brand(2);
 		const factory = new SF.MarkListFactory();
-		const insert1 = Mark.insert([{ type, value: 1 }], id1);
-		const insert2 = Mark.insert([{ type, value: 2 }], id2);
+		const insert1 = Mark.insert(jsonableTreeToEncodedChunk([{ type, value: 1 }]), id1);
+		const insert2 = Mark.insert(jsonableTreeToEncodedChunk([{ type, value: 2 }]), id2);
 		factory.pushContent(insert1);
 		factory.pushContent(insert2);
 		assert.deepStrictEqual(factory.list, [
 			Mark.insert(
-				[
+				jsonableTreeToEncodedChunk([
 					{ type, value: 1 },
 					{ type, value: 2 },
-				],
+				]),
 				id1,
 			),
 		]);

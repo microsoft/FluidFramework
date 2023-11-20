@@ -10,7 +10,7 @@ import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
-import { TestChangeset, MarkMaker as Mark } from "./testEdits";
+import { TestChangeset, MarkMaker as Mark, jsonableTreeToEncodedChunk } from "./testEdits";
 
 const id: ChangesetLocalId = brand(0);
 const nodeX = { type: leaf.string.name, value: "X" };
@@ -29,13 +29,19 @@ describe("SequenceField - Editor", () => {
 
 	it("insert one node", () => {
 		const actual = SF.sequenceFieldEditor.insert(42, [content[0]], id);
-		const expected: SF.Changeset = [{ count: 42 }, Mark.insert([nodeX], id)];
+		const expected: SF.Changeset = [
+			{ count: 42 },
+			Mark.insert(jsonableTreeToEncodedChunk([nodeX]), id),
+		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert multiple nodes", () => {
 		const actual = SF.sequenceFieldEditor.insert(42, content, id);
-		const expected: SF.Changeset = [{ count: 42 }, Mark.insert([nodeX, nodeY], id)];
+		const expected: SF.Changeset = [
+			{ count: 42 },
+			Mark.insert(jsonableTreeToEncodedChunk([nodeX, nodeY]), id),
+		];
 		assert.deepEqual(actual, expected);
 	});
 

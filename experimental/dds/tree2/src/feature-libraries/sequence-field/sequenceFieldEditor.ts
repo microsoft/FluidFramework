@@ -4,10 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ChangesetLocalId, ITreeCursor } from "../../core";
-import { FieldEditor } from "../modular-schema";
+import {
+	ChangesetLocalId,
+	ITreeCursor,
+	ITreeCursorSynchronous,
+	StoredSchemaCollection,
+	mapCursorField,
+} from "../../core";
+import { FieldEditor, FullSchemaPolicy } from "../modular-schema";
 import { brand } from "../../util";
+import {
+	chunkTree,
+	defaultChunkPolicy,
+	schemaCompressedEncode,
+	uncompressedEncode,
+} from "../chunked-forest";
 import {
 	CellId,
 	CellMark,
@@ -31,7 +42,12 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 * @privateRemarks
 	 * TODO: this should take a single cursor in fields mode.
 	 */
-	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
+	insert(
+		index: number,
+		cursor: readonly ITreeCursor[],
+		id: ChangesetLocalId,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
+	): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
@@ -68,12 +84,24 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): Changeset<never> => {
+		const fieldCursors = cursors.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
+		);
+		const nodeCursors = fieldCursors
+			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
+			.flat();
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			id,
 			count: cursors.length,
-			content: cursors.map(jsonableTreeFromCursor),
+			content:
+				shapeInfo !== undefined
+					? nodeCursors.map((cursor) =>
+							schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
+					  )
+					: nodeCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);

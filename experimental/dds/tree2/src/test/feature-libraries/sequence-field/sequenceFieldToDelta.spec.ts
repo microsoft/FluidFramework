@@ -27,7 +27,12 @@ import {
 import { brand, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+import {
+	ChangeMaker as Change,
+	MarkMaker as Mark,
+	TestChangeset,
+	jsonableTreeToEncodedChunk,
+} from "./testEdits";
 import { composeAnonChanges, toDelta } from "./utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
@@ -95,7 +100,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.insert(0, 1);
 		const expected = deltaForSet(contentCursor, { minor: 0 });
 		const actual = toDelta(changeset);
-		assert.deepStrictEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("revive => restore", () => {
@@ -262,7 +267,7 @@ describe("SequenceField - toDelta", () => {
 			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
-		assert.deepStrictEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("insert and modify => insert", () => {
@@ -313,7 +318,9 @@ describe("SequenceField - toDelta", () => {
 		const nodeChange = {
 			fieldChanges: new Map([[fooField, nestedChange]]),
 		};
-		const changeset = [Mark.insert(content, brand(0), { changes: nodeChange })];
+		const changeset = [
+			Mark.insert(jsonableTreeToEncodedChunk(content), brand(0), { changes: nodeChange }),
+		];
 		const nestedMoveDelta = new Map([
 			[fooField, { local: [{ attach: { minor: moveId }, count: 42 }] }],
 		]);
@@ -345,7 +352,10 @@ describe("SequenceField - toDelta", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
 		it("insert & delete", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(
+					Mark.insert(jsonableTreeToEncodedChunk(content2), brand(0)),
+					Mark.delete(2, brand(2)),
+				),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -358,7 +368,10 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(
+					Mark.insert(jsonableTreeToEncodedChunk(content2), brand(0)),
+					Mark.moveOut(2, brand(2)),
+				),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
@@ -391,7 +404,10 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move & delete", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(
+					Mark.insert(jsonableTreeToEncodedChunk(content2), brand(0)),
+					Mark.moveOut(2, brand(2)),
+				),
 				{ count: 1 },
 				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
