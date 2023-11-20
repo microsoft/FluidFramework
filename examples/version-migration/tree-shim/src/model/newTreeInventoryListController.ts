@@ -9,8 +9,9 @@ import {
 	AllowedUpdateType,
 	ISharedTree,
 	Tree,
-	ProxyNode,
+	TypedNode,
 	SchemaBuilder,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -30,10 +31,10 @@ const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// The number in stock
 	quantity: builder.number,
 });
-type InventoryItemNode = ProxyNode<typeof inventoryItemSchema>;
+type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
 
 const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = ProxyNode<typeof inventoryItemList>;
+type InventoryItemList = TypedNode<typeof inventoryItemList>;
 
 const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList,
@@ -84,9 +85,10 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
-	public static initializeTree(tree: ISharedTree): void {
-		tree.schematize({
-			initialTree: {
+	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
+	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
+		const view = tree.schematize({
+			initialTree: initialTree ?? {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
 					"": [
@@ -106,6 +108,11 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
 		});
+
+		// This is required because schematizing the tree twice will result in an error
+		if (initialTree !== undefined) {
+			view[disposeSymbol]();
+		}
 	}
 
 	private readonly _inventoryItemList: InventoryItemList;

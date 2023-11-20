@@ -31,8 +31,9 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ITreeView,
+	type TreeView,
 	disposeSymbol,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -122,7 +123,7 @@ const quantityType = builder.object("quantityObj", {
 });
 const schema = builder.intoSchema(quantityType);
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,

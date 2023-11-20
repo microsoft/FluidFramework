@@ -28,7 +28,7 @@ import {
 	createTestUndoRedoStacks,
 } from "../utils";
 import { ITreeCheckout } from "../../shared-tree";
-import { singleTextCursor } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -165,7 +165,7 @@ describe("Editing", () => {
 			const expectedState = [
 				{
 					foo: ["a"],
-					bar: ["d", "b", "e"],
+					bar: ["d", "b", "c", "e"],
 				},
 			];
 
@@ -207,10 +207,13 @@ describe("Editing", () => {
 			insert(tree2, 1, "C");
 			tree3.editor
 				.sequenceField(rootField)
-				.insert(0, singleTextCursor({ type: jsonObject.name, fields: { foo: [] } }));
+				.insert(
+					0,
+					cursorForJsonableTreeNode({ type: jsonObject.name, fields: { foo: [] } }),
+				);
 
 			const aEditor = tree3.editor.sequenceField({ parent: rootNode, field: brand("foo") });
-			aEditor.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+			aEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }));
 
 			tree1.merge(tree2, false);
 			tree1.merge(tree3, false);
@@ -299,13 +302,13 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] });
 			const tree2 = tree1.fork();
 
-			const { undoStack } = createTestUndoRedoStacks(tree1);
+			const { undoStack } = createTestUndoRedoStacks(tree1.events);
 			remove(tree1, 0, 1);
 			const removal = undoStack.pop();
 
 			const listEditor = tree2.editor.sequenceField({ parent: fooList, field: brand("") });
 			listEditor.move(2, 1, 1);
-			listEditor.insert(3, singleTextCursor({ type: leaf.string.name, value: "D" }));
+			listEditor.insert(3, cursorForJsonableTreeNode({ type: leaf.string.name, value: "D" }));
 			listEditor.delete(0, 1);
 			expectJsonTree(tree2, [{ foo: ["C", "B", "D"] }]);
 
@@ -438,16 +441,29 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		// This test fails due to the rebaser incorrectly ordering the cell created by the insert of C before the cell
-		// targeted by move-in of A. This happens during tree2.rebaseOnto(tree1).
+		// This test fails due to the sequence rebaser failing to line up the removal of A with the insert of A.
 		// See BUG 5351
-		it.skip("can rebase intra-field move over insert", () => {
+		it.skip("can rebase insert and delete over insert in the same gap", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 0, "B");
+
+			insert(tree2, 0, "A");
+			remove(tree2, 0, 1);
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+			expectJsonTree([tree1, tree2], ["B"]);
+		});
+
+		it("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();
 
 			insert(tree1, 2, "C");
 
-			tree2.editor.sequenceField(rootField).move(0, 1, 1);
+			tree2.editor.sequenceField(rootField).move(0, 1, 2);
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -461,7 +477,7 @@ describe("Editing", () => {
 
 			const parent = { parent: undefined, parentField: rootFieldKey, parentIndex: 1 };
 			const editor = tree1.editor.valueField({ parent, field: brand("foo") });
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
 			// Move B before A.
 			tree2.editor.move(rootField, 1, 1, rootField, 0);
@@ -482,7 +498,7 @@ describe("Editing", () => {
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
 
 			const editor = tree1.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -507,7 +523,7 @@ describe("Editing", () => {
 				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
 				field: brand("baz"),
 			});
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
 			// Move A after B.
 			tree2.editor.move(
@@ -656,7 +672,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack } = createTestUndoRedoStacks(tree);
+			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 			// Delete destination's ancestor concurrently
@@ -699,7 +715,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack } = createTestUndoRedoStacks(tree);
+			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 			// Delete source's ancestor concurrently
@@ -729,7 +745,7 @@ describe("Editing", () => {
 		it("ancestor of move source deleted then revived", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -768,7 +784,7 @@ describe("Editing", () => {
 		it("node being concurrently moved and deleted with source ancestor revived", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -782,14 +798,15 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
-
 			// Delete source's ancestor concurrently
-			sequence.delete(0, 1);
+			tree.editor.sequenceField(rootField).delete(0, 1);
+			expectJsonTree(tree, [{}]);
 			// Revive source's ancestor
 			undoStack.pop()?.revert();
-			// Delete "a"
+			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
+			// Delete ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+			expectJsonTree(tree, [{}, {}]);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -802,14 +819,14 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}, {}]);
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
 			unsubscribe();
 		});
 
-		it.skip("node being concurrently moved and revived with source ancestor deleted", () => {
+		it("node being concurrently moved and revived with source ancestor deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -823,14 +840,15 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
-
-			// Delete "a"
+			// Delete ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
-			// Revive "a"
+			expectJsonTree(tree, [{}, {}]);
+			// Revive ["a"]
 			undoStack.pop()?.revert();
+			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
 			// Delete source's ancestor concurrently
-			sequence.delete(0, 1);
+			tree.editor.sequenceField(rootField).delete(0, 1);
+			expectJsonTree(tree, [{}]);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -843,7 +861,7 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}]);
+			expectJsonTree([tree, tree2], [{ bar: ["a"] }]);
 			unsubscribe();
 		});
 
@@ -872,8 +890,8 @@ describe("Editing", () => {
 
 			const tree2 = tree.fork();
 
-			const undoTree1 = createTestUndoRedoStacks(tree);
-			const undoTree2 = createTestUndoRedoStacks(tree2);
+			const undoTree1 = createTestUndoRedoStacks(tree.events);
+			const undoTree2 = createTestUndoRedoStacks(tree2.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 
@@ -911,7 +929,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
 			tree.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -1036,9 +1054,9 @@ describe("Editing", () => {
 			tree.transaction.start();
 			// inserts nodes to move
 			const field = tree.editor.sequenceField({ parent: fooList, field: brand("") });
-			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "C" }));
-			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "B" }));
-			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "A" }));
+			field.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
+			field.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "B" }));
+			field.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "A" }));
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1330,7 +1348,7 @@ describe("Editing", () => {
 				parent: rootNode,
 				field: brand("src"),
 			});
-			field.set(singleTextCursor({ type: jsonObject.name }));
+			field.set(cursorForJsonableTreeNode({ type: jsonObject.name }));
 			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [{ src: {}, dst: ["A", "B"] }];
@@ -1472,7 +1490,7 @@ describe("Editing", () => {
 
 			tree1.editor
 				.valueField({ parent: nodeB, field: brand("baz") })
-				.set(singleTextCursor({ type: leaf.string.name, value: "b" }));
+				.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }));
 			tree2.editor.sequenceField({ parent: foo1, field: brand("bar") }).delete(0, 1);
 
 			tree.merge(tree1, false);
@@ -1483,6 +1501,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
+		// Skipped because we don't currently support undoing edits from a parent branch
 		it.skip("undo restores a removed node even when that node was never present on the branch", () => {
 			const tree = makeTreeFromJson([]);
 			const tree2 = tree.fork();
@@ -1491,7 +1510,7 @@ describe("Editing", () => {
 			tree.editor.sequenceField(rootField).delete(0, 1);
 
 			const tree3 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
 			undoStack.pop()?.revert(); // Restores "43"
 
 			tree.merge(tree3, false);
@@ -1553,7 +1572,7 @@ describe("Editing", () => {
 				parent: rootNode,
 				field: brand("foo"),
 			});
-			field.insert(1, [singleTextCursor({ type: leaf.string.name, value: "C" })]);
+			field.insert(1, [cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" })]);
 			assert.equal(valueAfterInsert, "C");
 			unsubscribePathVisitor();
 		});
@@ -1710,7 +1729,9 @@ describe("Editing", () => {
 
 					const tree = makeTreeFromJson(startState);
 					const peers = makeArray(nbPeers, () => tree.fork());
-					const peerUndoStacks = peers.map((peer) => createTestUndoRedoStacks(peer));
+					const peerUndoStacks = peers.map((peer) =>
+						createTestUndoRedoStacks(peer.events),
+					);
 					for (const step of scenario) {
 						const iPeer = step.peer;
 						const peer = peers[iPeer];
@@ -1783,7 +1804,7 @@ describe("Editing", () => {
 			tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "43" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "43" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1803,7 +1824,7 @@ describe("Editing", () => {
 				.set(singleJsonCursor("456"), false);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "42" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "42" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1814,14 +1835,14 @@ describe("Editing", () => {
 		it.skip("can rebase a node edit over the node being replaced and restored", () => {
 			const tree1 = makeTreeFromJson([{ foo: "40" }]);
 			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor({ foo: "41" }), false);
 
 			undoStack.pop()?.revert();
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: leaf.string.name, value: "42" }));
+			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "42" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1846,7 +1867,7 @@ describe("Editing", () => {
 
 		it("can replace and restore a node", () => {
 			const tree1 = makeTreeFromJson(["42"]);
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
 
@@ -1883,7 +1904,7 @@ describe("Editing", () => {
 		it.skip("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
 
@@ -1909,7 +1930,7 @@ describe("Editing", () => {
 			tree.editor.optionalField(rootField).set(singleJsonCursor("44"), false);
 
 			const tree3 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
 			undoStack.pop()?.revert(); // Restores "43"
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
@@ -1981,15 +2002,18 @@ describe("Editing", () => {
 		describe("Node existence constraint", () => {
 			it("handles ancestor revive", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				rootSequence.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 				const treeSequence = tree.editor.sequenceField({
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				treeSequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "bar" }));
+				treeSequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "bar" }),
+				);
 
 				const tree2 = tree.fork();
 
@@ -2021,12 +2045,15 @@ describe("Editing", () => {
 				const tree = makeTreeFromJson([]);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				rootSequence.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 				const treeSequence = tree.editor.sequenceField({
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				treeSequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "bar" }));
+				treeSequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "bar" }),
+				);
 
 				const tree2 = tree.fork();
 
@@ -2041,7 +2068,10 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
-				tree2Sequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
+				tree2Sequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
+				);
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -2071,7 +2101,7 @@ describe("Editing", () => {
 				// Should not be inserted because b has been concurrently deleted
 				tree2RootSequence.insert(
 					0,
-					singleTextCursor({ type: leaf.string.name, value: "c" }),
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
 				);
 				tree2.transaction.commit();
 
@@ -2083,7 +2113,7 @@ describe("Editing", () => {
 
 			it("revived sequence field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const bPath = {
 					parent: undefined,
 					parentField: rootFieldKey,
@@ -2100,7 +2130,10 @@ describe("Editing", () => {
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint(bPath);
 				const sequence = tree2.editor.sequenceField(rootField);
-				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "c" }));
+				sequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
+				);
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -2113,12 +2146,15 @@ describe("Editing", () => {
 			it("optional field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				rootSequence.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 				const optional = tree.editor.optionalField({
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				optional.set(singleTextCursor({ type: leaf.string.name, value: "x" }), true);
+				optional.set(
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" }),
+					true,
+				);
 
 				const tree2 = tree.fork();
 
@@ -2144,15 +2180,18 @@ describe("Editing", () => {
 
 			it.skip("revived optional field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
+				rootSequence.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 
 				const optional = tree.editor.optionalField({
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				optional.set(singleTextCursor({ type: leaf.string.name, value: "x" }), true);
+				optional.set(
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" }),
+					true,
+				);
 
 				const tree2 = tree.fork();
 
@@ -2184,14 +2223,20 @@ describe("Editing", () => {
 				// Insert "a"
 				// State should be: ["a"]
 				const sequence = tree.editor.sequenceField(rootField);
-				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+				sequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }),
+				);
 
 				// Insert "b" after "a" with constraint that "a" exists.
 				// State should be: ["a", "b"]
 				tree.transaction.start();
 				tree.editor.addNodeExistsConstraint(rootNode);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
+				rootSequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
+				);
 				tree.transaction.commit();
 
 				// Make a concurrent edit to rebase over that inserts into root sequence
@@ -2199,7 +2244,7 @@ describe("Editing", () => {
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				tree2RootSequence.insert(
 					0,
-					singleTextCursor({ type: leaf.string.name, value: "c" }),
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
 				);
 
 				tree.merge(tree2, false);
@@ -2219,7 +2264,10 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+				sequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }),
+				);
 
 				tree.editor.addNodeExistsConstraint({
 					parent: rootNode,
@@ -2227,13 +2275,19 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
+				rootSequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
+				);
 				tree.transaction.commit();
 
 				// Insert "c" concurrently so that we rebase over something
 				// State should be (to tree2): [{}, "c"]
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
-				tree2Sequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "c" }));
+				tree2Sequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
+				);
 
 				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
@@ -2259,7 +2313,10 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+				sequence.insert(
+					0,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }),
+				);
 
 				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
@@ -2267,7 +2324,10 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const rootSequence = tree2.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
+				rootSequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
+				);
 				tree2.transaction.commit();
 
 				tree.merge(tree2);
@@ -2314,7 +2374,7 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
-				tree2RootSequence.insert(2, singleTextCursor({ type: jsonObject.name }));
+				tree2RootSequence.insert(2, cursorForJsonableTreeNode({ type: jsonObject.name }));
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -2369,7 +2429,7 @@ describe("Editing", () => {
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				tree2RootSequence.insert(
 					2,
-					singleTextCursor({ type: leaf.string.name, value: "b" }),
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
 				);
 				tree2.transaction.commit();
 
@@ -2394,7 +2454,7 @@ describe("Editing", () => {
 
 		// Fork the tree so we can undo the removal of the root without undoing later changes
 		const restoreRoot = tree.fork();
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(restoreRoot);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(restoreRoot.events);
 		undoStack.pop()?.revert();
 
 		// Get access to the removed node
@@ -2442,16 +2502,19 @@ describe("Editing", () => {
 				getInnerSequenceFieldPath({ parent: root1Path, field: brand("foo") }),
 			);
 			foo0.delete(1, 1);
-			foo0.insert(1, singleTextCursor({ type: brand("Number"), value: 41 }));
+			foo0.insert(1, cursorForJsonableTreeNode({ type: brand("Number"), value: 41 }));
 			foo0.delete(2, 1);
-			foo0.insert(2, singleTextCursor({ type: brand("Number"), value: 42 }));
+			foo0.insert(2, cursorForJsonableTreeNode({ type: brand("Number"), value: 42 }));
 			foo0.delete(0, 1);
-			rootSequence.insert(0, singleTextCursor({ type: brand("Test") }));
+			rootSequence.insert(0, cursorForJsonableTreeNode({ type: brand("Test") }));
 			foo1.delete(0, 1);
-			foo1.insert(0, singleTextCursor({ type: brand("Number"), value: "RootValue2" }));
-			foo1.insert(0, singleTextCursor({ type: brand("Test") }));
+			foo1.insert(
+				0,
+				cursorForJsonableTreeNode({ type: brand("Number"), value: "RootValue2" }),
+			);
+			foo1.insert(0, cursorForJsonableTreeNode({ type: brand("Test") }));
 			foo1.delete(1, 1);
-			foo1.insert(1, singleTextCursor({ type: brand("Number"), value: 82 }));
+			foo1.insert(1, cursorForJsonableTreeNode({ type: brand("Number"), value: 82 }));
 
 			// Aborting the transaction should restore the forest
 			branch.transaction.abort();

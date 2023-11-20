@@ -20,7 +20,7 @@ import {
 	FieldKinds,
 	FieldKindWithEditor,
 	ModularChangeset,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
@@ -29,7 +29,7 @@ import { testChangeReceiver } from "../utils";
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
 
@@ -90,18 +90,77 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldB },
 				2,
 			);
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				1,
-				1,
-				{ parent: undefined, field: fieldB },
-				2,
-			);
-			const [remove, move, expected] = getChanges();
-			const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
+			const [remove, move] = getChanges();
+			const baseTag = mintRevisionTag();
+			const restore = family.invert(tagChange(remove, baseTag), false);
+			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
+			const rebased = family.rebase(move, tagChange(remove, baseTag));
 			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(rebasedDelta, expectedDelta);
+		});
+
+		it("Nested moves both requiring a second pass", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+
+			// Note that these are the paths before any edits have happened.
+			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 1 };
+			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 1 };
+
+			editor.enterTransaction();
+
+			// Moves node2, which is a child of node1 to an earlier position in its field
+			editor
+				.sequenceField({
+					parent: node1Path,
+					field: fieldB,
+				})
+				.move(1, 1, 0);
+
+			// Moves node1 to an earlier position in the field
+			editor.sequenceField(fieldAPath).move(1, 1, 0);
+
+			// Modifies node2 so that both fieldA and fieldB have changes that need to be transferred
+			// from a move source to a destination during rebase.
+			editor
+				.sequenceField({
+					parent: node2Path,
+					field: fieldC,
+				})
+				.delete(0, 1);
+
+			editor.exitTransaction();
+			const [move1, move2, modify] = getChanges();
+			const moves = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+
+			const rebased = family.rebase(modify, tagChange(moves, tag1));
+			const fieldCExpected = [MarkMaker.delete(1, brand(2))];
+			const node2Expected = {
+				fieldChanges: new Map([
+					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+				]),
+			};
+
+			const fieldBExpected = [{ count: 1, changes: node2Expected }];
+
+			const node1Expected = {
+				fieldChanges: new Map([
+					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+				]),
+			};
+
+			const fieldAExpected = [{ count: 1, changes: node1Expected }];
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
+				]),
+			};
+
+			assert.deepEqual(rebased, expected);
 		});
 	});
 
@@ -118,7 +177,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -173,7 +232,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -251,6 +310,80 @@ describe("ModularChangeFamily integration", () => {
 			const actualDelta = normalizeDelta(family.intoDelta(makeAnonChange(composed)));
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(actualDelta, expectedDelta);
+		});
+	});
+
+	describe("invert", () => {
+		it("Nested moves both requiring a second pass", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.enterTransaction();
+
+			// Moves node1 to an earlier position in the field
+			editor.sequenceField(fieldAPath).move(1, 1, 0);
+			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 0 };
+
+			// Moves node2, which is a child of node1 to an earlier position in its field
+			editor
+				.sequenceField({
+					parent: node1Path,
+					field: fieldB,
+				})
+				.move(1, 1, 0);
+
+			// Modifies node2 so that both fieldA and fieldB have changes that need to be transfered
+			// from a move source to a destination during invert.
+			editor
+				.sequenceField({
+					parent: node2Path,
+					field: fieldC,
+				})
+				.delete(0, 1);
+
+			editor.exitTransaction();
+			const [move1, move2, modify] = getChanges();
+			const moves = family.compose([
+				makeAnonChange(move1),
+				makeAnonChange(move2),
+				makeAnonChange(modify),
+			]);
+
+			const inverse = family.invert(tagChange(moves, tag1), false);
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(2) })];
+			const node2Expected = {
+				fieldChanges: new Map([
+					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+				]),
+			};
+
+			const fieldBExpected = [
+				MarkMaker.returnFrom(1, brand(1), { changes: node2Expected }),
+				{ count: 1 },
+				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+			];
+
+			const node1Expected = {
+				fieldChanges: new Map([
+					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+				]),
+			};
+
+			const fieldAExpected = [
+				MarkMaker.returnFrom(1, brand(0), { changes: node1Expected }),
+				{ count: 1 },
+				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+			];
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
+				]),
+			};
+
+			assert.deepEqual(inverse, expected);
 		});
 	});
 
@@ -379,7 +512,9 @@ function normalizeDeltaDetachedNodeId(
 	genId: IdAllocator,
 	idMap: Map<number, number>,
 ): Delta.DetachedNodeId {
-	assert(delta.major === undefined, "Normalize only supports minor detached node IDs");
+	if (delta.major !== undefined) {
+		return delta;
+	}
 	const minor = idMap.get(delta.minor) ?? genId.allocate();
 	idMap.set(delta.minor, minor);
 	return { minor };

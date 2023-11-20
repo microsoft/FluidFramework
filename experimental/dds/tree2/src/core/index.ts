@@ -102,6 +102,7 @@ export {
 	DetachedFieldIndex,
 	ForestRootId,
 	getDetachedFieldContainingPath,
+	aboveRootPlaceholder,
 } from "./tree";
 
 export {

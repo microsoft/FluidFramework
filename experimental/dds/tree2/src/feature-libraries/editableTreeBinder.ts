@@ -17,7 +17,7 @@ import {
 } from "../core";
 import { Events, ISubscribable } from "../events";
 import { brand, getOrCreate } from "../util";
-import { TreeNode } from "./editable-tree-2";
+import { FlexTreeNode } from "./flex-tree";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
@@ -124,7 +124,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 * @param listener - The listener to register
 	 */
 	register<K extends keyof Events<B>>(
-		anchor: TreeNode,
+		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
 		listener?: B[K],
@@ -717,16 +717,16 @@ class AbstractDataBinder<
 	O extends BinderOptions,
 > implements DataBinder<B>
 {
-	protected readonly visitors = new Map<TreeNode, V>();
+	protected readonly visitors = new Map<FlexTreeNode, V>();
 	protected readonly visitorLocations = new Map<V, UpPath>();
 	protected readonly unregisterHandles = new Set<() => void>();
 	public constructor(
 		protected readonly options: O,
-		protected readonly visitorFactory: (anchor: TreeNode) => V,
+		protected readonly visitorFactory: (anchor: FlexTreeNode) => V,
 	) {}
 
 	public register<K extends keyof Events<B>>(
-		anchor: TreeNode,
+		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
 		listener: B[K],
@@ -784,7 +784,7 @@ class BufferingDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		super(options, (anchor: TreeNode) => new BufferingPathVisitor(options));
+		super(options, (anchor: FlexTreeNode) => new BufferingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {
@@ -825,7 +825,7 @@ class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 	BinderOptions
 > {
 	public constructor(view: ISubscribable<E>, options: BinderOptions) {
-		super(options, (anchor: TreeNode) => new DirectPathVisitor(options));
+		super(options, (anchor: FlexTreeNode) => new DirectPathVisitor(options));
 	}
 }
 
@@ -840,7 +840,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		super(options, (anchor: TreeNode) => new InvalidatingPathVisitor(options));
+		super(options, (anchor: FlexTreeNode) => new InvalidatingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {
