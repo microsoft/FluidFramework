@@ -42,8 +42,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	runSynchronous,
 	SharedTreeContentSnapshot,
-	ITreeView,
-	TreeView,
+	CheckoutFlexTreeView,
 } from "../shared-tree";
 import {
 	Any,
@@ -62,11 +61,12 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	singleTextCursor,
-	TypedField,
+	cursorForJsonableTreeNode,
+	FlexTreeTypedField,
 	jsonableTreeFromForest,
-	nodeKeyFieldKey as defailtNodeKeyFieldKey,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
+	mapRootChanges,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -111,6 +111,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { WrapperTreeView } from "../shared-tree/sharedTree";
 
 // Testing utilities
 
@@ -477,9 +479,18 @@ export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
+export function assertDeltaFieldMapEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
 	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * Assert two Delta are equal, handling cursors.
+ */
+export function assertDeltaEqual(a: Delta.Root, b: Delta.Root): void {
+	const aTree = mapRootChanges(a, mapTreeFromCursor);
+	const bTree = mapRootChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -590,7 +601,7 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
-export function viewWithContent(
+export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -598,10 +609,10 @@ export function viewWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return view2WithContent(content, args).checkout;
+	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function view2WithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -610,19 +621,35 @@ export function view2WithContent<TRoot extends TreeFieldSchema>(
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 	},
-): ITreeView<TRoot> {
+): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
 	const view = createTreeCheckout(mintRevisionTag, {
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new TreeView(
+	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
+}
+
+export function treeViewWithContent<TRoot extends TreeFieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+	},
+): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
+	const view: WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> = new WrapperTreeView(
+		flexTreeViewWithContent(content, args),
+	);
+	return view;
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
@@ -647,7 +674,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): TypedField<TRoot> {
+): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
 	const branch = createTreeCheckout(mintRevisionTag, {
 		...args,
@@ -655,7 +682,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new TreeView(
+	const view = new CheckoutFlexTreeView(
 		branch,
 		content.schema,
 		manager,
@@ -696,7 +723,7 @@ export const emptyStringSequenceConfig = {
  */
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
 	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
-	const tree = viewWithContent({
+	const tree = checkoutWithContent({
 		schema: jsonSequenceRootSchema,
 		initialTree: cursors,
 	});
@@ -778,7 +805,7 @@ export function initializeTestTree(
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
+			const writeCursors = state.map(cursorForJsonableTreeNode);
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,
@@ -946,22 +973,26 @@ export const wrongSchema = new SchemaBuilder({
 }).intoSchema(SchemaBuilder.sequence(Any));
 
 export function applyTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	applyDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function announceTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ITreeCheckout): {
+export function createTestUndoRedoStacks(
+	events: ISubscribable<{ revertible(type: Revertible): void }>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -969,7 +1000,7 @@ export function createTestUndoRedoStacks(view: ITreeCheckout): {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = view.events.on("revertible", (revertible) => {
+	const unsubscribe = events.on("revertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {

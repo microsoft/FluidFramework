@@ -19,7 +19,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { noopValidator } from "../../codec";
@@ -184,9 +184,9 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Ensure that the change event is emitted once for each change applied
 		change(branch);
-		assert.equal(changeEventCount, 1);
-		change(branch);
 		assert.equal(changeEventCount, 2);
+		change(branch);
+		assert.equal(changeEventCount, 4);
 	});
 
 	it("emit a change event after rebasing", () => {
@@ -204,7 +204,7 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Rebase the parent onto the child and ensure another change event is emitted
 		parent.rebaseOnto(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("do not emit a change event after a rebase with no effect", () => {
@@ -236,10 +236,10 @@ describe("Branches", () => {
 		// Apply changes to both branches
 		change(parent);
 		change(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 		// Merge the child into the parent and ensure another change event is emitted
 		parent.merge(child);
-		assert.equal(changeEventCount, 2);
+		assert.equal(changeEventCount, 4);
 	});
 
 	it("do not emit a change event after a merge with no effect", () => {
@@ -253,10 +253,10 @@ describe("Branches", () => {
 		const child = parent.fork();
 		// Apply a change to the parent
 		change(parent);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 		// Merge the child into the parent and ensure no change is emitted since the child has no new commits
 		parent.merge(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("emit correct change events during and after committing a transaction", () => {
@@ -274,14 +274,14 @@ describe("Branches", () => {
 		branch.startTransaction();
 		// Ensure that the correct change is emitted when applying changes in a transaction
 		change(branch);
-		assert.equal(changeEventCount, 1);
-		change(branch);
 		assert.equal(changeEventCount, 2);
+		change(branch);
+		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 0);
 		// Commit the transaction. No change event should be emitted since the commits, though squashed, are still equivalent
 		branch.commitTransaction();
-		assert.equal(changeEventCount, 2);
-		assert.equal(replaceEventCount, 1);
+		assert.equal(changeEventCount, 4);
+		assert.equal(replaceEventCount, 2);
 	});
 
 	it("do not emit a change event after committing an empty transaction", () => {
@@ -313,7 +313,7 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Abort the transaction. A new change event should be emitted since the state rolls back to before the transaction
 		branch.abortTransaction();
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("do not emit a change event after aborting an empty transaction", () => {
@@ -551,9 +551,16 @@ describe("Branches", () => {
 		};
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
-		if (onChange !== undefined) {
-			branch.on("change", onChange);
-		}
+		let head = branch.getHead();
+		branch.on("beforeChange", (c) => {
+			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
+			assert.equal(branch.getHead(), head);
+			onChange?.(c);
+		});
+		branch.on("afterChange", (c) => {
+			head = branch.getHead();
+			onChange?.(c);
+		});
 
 		return branch;
 	}
@@ -565,7 +572,7 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
+		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value: changeValue });
 		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}

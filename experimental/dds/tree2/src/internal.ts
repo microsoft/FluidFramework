@@ -34,7 +34,7 @@ export {
 	Optional,
 	NodeKeyFieldKind,
 	Forbidden,
-	SequenceFieldKind,
+	Sequence,
 } from "./feature-libraries";
 
 export {
@@ -42,3 +42,5 @@ export {
 	FactoryObjectNodeSchemaRecursive,
 	testRecursiveDomain,
 } from "./domains";
+
+export { TreeListNodeBase } from "./simple-tree";

@@ -23,9 +23,8 @@ function makeV0Codec<TNodeChange>(
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
-			case "ReturnFrom":
 				return { ...(effect as JsonCompatibleReadOnly & object) };
-			case "Transient":
+			case "AttachAndDetach":
 				return {
 					...effect,
 					attach: encodeEffect(effect.attach),
@@ -46,9 +45,8 @@ function makeV0Codec<TNodeChange>(
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
-			case "ReturnFrom":
 				return { ...effect };
-			case "Transient":
+			case "AttachAndDetach":
 				return {
 					...effect,
 					attach: decodeEffect(effect.attach) as Attach,

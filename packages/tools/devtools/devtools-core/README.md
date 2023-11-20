@@ -6,6 +6,15 @@ It is used to power our associated [browser extension][browser-extension].
 -   Chrome: <https://aka.ms/fluid/devtool/chrome>
 -   Edge: <https://aka.ms/fluid/devtool/edge>
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -186,8 +195,7 @@ Thank you!
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

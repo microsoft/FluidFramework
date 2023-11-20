@@ -34,7 +34,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 // Test UnbrandedName
 {
-	type BrandedName = "X" & TreeNodeSchemaIdentifier;
+	type BrandedName = TreeNodeSchemaIdentifier<"X">;
 	type Unbranded = UnbrandedName<BrandedName>;
 	type _check = requireTrue<areSafelyAssignable<Unbranded, "X">>;
 }

@@ -165,9 +165,11 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const nodeSchema = builder.objectRecursive("node", {
+			const recursiveReference = () => nodeSchema;
+			builder.fixRecursiveReference(recursiveReference);
+			const nodeSchema = builder.object("node", {
 				foo: builder.required(leaf.string),
-				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));

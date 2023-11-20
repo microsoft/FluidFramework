@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_ChannelFactoryRegistry():
     TypeOnly<old.ChannelFactoryRegistry>;
 declare function use_current_TypeAliasDeclaration_ChannelFactoryRegistry(
-    use: TypeOnly<current.ChannelFactoryRegistry>);
+    use: TypeOnly<current.ChannelFactoryRegistry>): void;
 use_current_TypeAliasDeclaration_ChannelFactoryRegistry(
     get_old_TypeAliasDeclaration_ChannelFactoryRegistry());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_ChannelFactoryRegistry(
 declare function get_current_TypeAliasDeclaration_ChannelFactoryRegistry():
     TypeOnly<current.ChannelFactoryRegistry>;
 declare function use_old_TypeAliasDeclaration_ChannelFactoryRegistry(
-    use: TypeOnly<old.ChannelFactoryRegistry>);
+    use: TypeOnly<old.ChannelFactoryRegistry>): void;
 use_old_TypeAliasDeclaration_ChannelFactoryRegistry(
     get_current_TypeAliasDeclaration_ChannelFactoryRegistry());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_ChannelFactoryRegistry(
 declare function get_old_EnumDeclaration_DataObjectFactoryType():
     TypeOnly<old.DataObjectFactoryType>;
 declare function use_current_EnumDeclaration_DataObjectFactoryType(
-    use: TypeOnly<current.DataObjectFactoryType>);
+    use: TypeOnly<current.DataObjectFactoryType>): void;
 use_current_EnumDeclaration_DataObjectFactoryType(
     get_old_EnumDeclaration_DataObjectFactoryType());
 
@@ -65,7 +65,7 @@ use_current_EnumDeclaration_DataObjectFactoryType(
 declare function get_current_EnumDeclaration_DataObjectFactoryType():
     TypeOnly<current.DataObjectFactoryType>;
 declare function use_old_EnumDeclaration_DataObjectFactoryType(
-    use: TypeOnly<old.DataObjectFactoryType>);
+    use: TypeOnly<old.DataObjectFactoryType>): void;
 use_old_EnumDeclaration_DataObjectFactoryType(
     get_current_EnumDeclaration_DataObjectFactoryType());
 
@@ -77,7 +77,7 @@ use_old_EnumDeclaration_DataObjectFactoryType(
 declare function get_old_ClassDeclaration_EventAndErrorTrackingLogger():
     TypeOnly<old.EventAndErrorTrackingLogger>;
 declare function use_current_ClassDeclaration_EventAndErrorTrackingLogger(
-    use: TypeOnly<current.EventAndErrorTrackingLogger>);
+    use: TypeOnly<current.EventAndErrorTrackingLogger>): void;
 use_current_ClassDeclaration_EventAndErrorTrackingLogger(
     get_old_ClassDeclaration_EventAndErrorTrackingLogger());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_EventAndErrorTrackingLogger(
 declare function get_current_ClassDeclaration_EventAndErrorTrackingLogger():
     TypeOnly<current.EventAndErrorTrackingLogger>;
 declare function use_old_ClassDeclaration_EventAndErrorTrackingLogger(
-    use: TypeOnly<old.EventAndErrorTrackingLogger>);
+    use: TypeOnly<old.EventAndErrorTrackingLogger>): void;
 use_old_ClassDeclaration_EventAndErrorTrackingLogger(
     get_current_ClassDeclaration_EventAndErrorTrackingLogger());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_EventAndErrorTrackingLogger(
 declare function get_old_InterfaceDeclaration_IOpProcessingController():
     TypeOnly<old.IOpProcessingController>;
 declare function use_current_InterfaceDeclaration_IOpProcessingController(
-    use: TypeOnly<current.IOpProcessingController>);
+    use: TypeOnly<current.IOpProcessingController>): void;
 use_current_InterfaceDeclaration_IOpProcessingController(
     get_old_InterfaceDeclaration_IOpProcessingController());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IOpProcessingController(
 declare function get_current_InterfaceDeclaration_IOpProcessingController():
     TypeOnly<current.IOpProcessingController>;
 declare function use_old_InterfaceDeclaration_IOpProcessingController(
-    use: TypeOnly<old.IOpProcessingController>);
+    use: TypeOnly<old.IOpProcessingController>): void;
 use_old_InterfaceDeclaration_IOpProcessingController(
     get_current_InterfaceDeclaration_IOpProcessingController());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IOpProcessingController(
 declare function get_old_InterfaceDeclaration_IProvideTestFluidObject():
     TypeOnly<old.IProvideTestFluidObject>;
 declare function use_current_InterfaceDeclaration_IProvideTestFluidObject(
-    use: TypeOnly<current.IProvideTestFluidObject>);
+    use: TypeOnly<current.IProvideTestFluidObject>): void;
 use_current_InterfaceDeclaration_IProvideTestFluidObject(
     get_old_InterfaceDeclaration_IProvideTestFluidObject());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IProvideTestFluidObject(
 declare function get_current_InterfaceDeclaration_IProvideTestFluidObject():
     TypeOnly<current.IProvideTestFluidObject>;
 declare function use_old_InterfaceDeclaration_IProvideTestFluidObject(
-    use: TypeOnly<old.IProvideTestFluidObject>);
+    use: TypeOnly<old.IProvideTestFluidObject>): void;
 use_old_InterfaceDeclaration_IProvideTestFluidObject(
     get_current_InterfaceDeclaration_IProvideTestFluidObject());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IProvideTestFluidObject(
 declare function get_old_InterfaceDeclaration_ITestContainerConfig():
     TypeOnly<old.ITestContainerConfig>;
 declare function use_current_InterfaceDeclaration_ITestContainerConfig(
-    use: TypeOnly<current.ITestContainerConfig>);
+    use: TypeOnly<current.ITestContainerConfig>): void;
 use_current_InterfaceDeclaration_ITestContainerConfig(
     get_old_InterfaceDeclaration_ITestContainerConfig());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ITestContainerConfig(
 declare function get_current_InterfaceDeclaration_ITestContainerConfig():
     TypeOnly<current.ITestContainerConfig>;
 declare function use_old_InterfaceDeclaration_ITestContainerConfig(
-    use: TypeOnly<old.ITestContainerConfig>);
+    use: TypeOnly<old.ITestContainerConfig>): void;
 use_old_InterfaceDeclaration_ITestContainerConfig(
     get_current_InterfaceDeclaration_ITestContainerConfig());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ITestContainerConfig(
 declare function get_old_InterfaceDeclaration_ITestFluidObject():
     TypeOnly<old.ITestFluidObject>;
 declare function use_current_InterfaceDeclaration_ITestFluidObject(
-    use: TypeOnly<current.ITestFluidObject>);
+    use: TypeOnly<current.ITestFluidObject>): void;
 use_current_InterfaceDeclaration_ITestFluidObject(
     get_old_InterfaceDeclaration_ITestFluidObject());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_ITestFluidObject(
 declare function get_current_InterfaceDeclaration_ITestFluidObject():
     TypeOnly<current.ITestFluidObject>;
 declare function use_old_InterfaceDeclaration_ITestFluidObject(
-    use: TypeOnly<old.ITestFluidObject>);
+    use: TypeOnly<old.ITestFluidObject>): void;
 use_old_InterfaceDeclaration_ITestFluidObject(
     get_current_InterfaceDeclaration_ITestFluidObject());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_ITestFluidObject(
 declare function get_old_InterfaceDeclaration_ITestObjectProvider():
     TypeOnly<old.ITestObjectProvider>;
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
-    use: TypeOnly<current.ITestObjectProvider>);
+    use: TypeOnly<current.ITestObjectProvider>): void;
 use_current_InterfaceDeclaration_ITestObjectProvider(
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_ITestObjectProvider(
 declare function get_current_InterfaceDeclaration_ITestObjectProvider():
     TypeOnly<current.ITestObjectProvider>;
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
-    use: TypeOnly<old.ITestObjectProvider>);
+    use: TypeOnly<old.ITestObjectProvider>): void;
 use_old_InterfaceDeclaration_ITestObjectProvider(
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_ITestObjectProvider(
 declare function get_old_ClassDeclaration_LoaderContainerTracker():
     TypeOnly<old.LoaderContainerTracker>;
 declare function use_current_ClassDeclaration_LoaderContainerTracker(
-    use: TypeOnly<current.LoaderContainerTracker>);
+    use: TypeOnly<current.LoaderContainerTracker>): void;
 use_current_ClassDeclaration_LoaderContainerTracker(
     get_old_ClassDeclaration_LoaderContainerTracker());
 
@@ -233,7 +233,7 @@ use_current_ClassDeclaration_LoaderContainerTracker(
 declare function get_current_ClassDeclaration_LoaderContainerTracker():
     TypeOnly<current.LoaderContainerTracker>;
 declare function use_old_ClassDeclaration_LoaderContainerTracker(
-    use: TypeOnly<old.LoaderContainerTracker>);
+    use: TypeOnly<old.LoaderContainerTracker>): void;
 use_old_ClassDeclaration_LoaderContainerTracker(
     get_current_ClassDeclaration_LoaderContainerTracker());
 
@@ -245,7 +245,7 @@ use_old_ClassDeclaration_LoaderContainerTracker(
 declare function get_old_ClassDeclaration_LocalCodeLoader():
     TypeOnly<old.LocalCodeLoader>;
 declare function use_current_ClassDeclaration_LocalCodeLoader(
-    use: TypeOnly<current.LocalCodeLoader>);
+    use: TypeOnly<current.LocalCodeLoader>): void;
 use_current_ClassDeclaration_LocalCodeLoader(
     get_old_ClassDeclaration_LocalCodeLoader());
 
@@ -257,7 +257,7 @@ use_current_ClassDeclaration_LocalCodeLoader(
 declare function get_current_ClassDeclaration_LocalCodeLoader():
     TypeOnly<current.LocalCodeLoader>;
 declare function use_old_ClassDeclaration_LocalCodeLoader(
-    use: TypeOnly<old.LocalCodeLoader>);
+    use: TypeOnly<old.LocalCodeLoader>): void;
 use_old_ClassDeclaration_LocalCodeLoader(
     get_current_ClassDeclaration_LocalCodeLoader());
 
@@ -269,7 +269,7 @@ use_old_ClassDeclaration_LocalCodeLoader(
 declare function get_old_TypeAliasDeclaration_SupportedExportInterfaces():
     TypeOnly<old.SupportedExportInterfaces>;
 declare function use_current_TypeAliasDeclaration_SupportedExportInterfaces(
-    use: TypeOnly<current.SupportedExportInterfaces>);
+    use: TypeOnly<current.SupportedExportInterfaces>): void;
 use_current_TypeAliasDeclaration_SupportedExportInterfaces(
     get_old_TypeAliasDeclaration_SupportedExportInterfaces());
 
@@ -281,7 +281,7 @@ use_current_TypeAliasDeclaration_SupportedExportInterfaces(
 declare function get_current_TypeAliasDeclaration_SupportedExportInterfaces():
     TypeOnly<current.SupportedExportInterfaces>;
 declare function use_old_TypeAliasDeclaration_SupportedExportInterfaces(
-    use: TypeOnly<old.SupportedExportInterfaces>);
+    use: TypeOnly<old.SupportedExportInterfaces>): void;
 use_old_TypeAliasDeclaration_SupportedExportInterfaces(
     get_current_TypeAliasDeclaration_SupportedExportInterfaces());
 
@@ -293,7 +293,7 @@ use_old_TypeAliasDeclaration_SupportedExportInterfaces(
 declare function get_old_VariableDeclaration_TestContainerRuntimeFactory():
     TypeOnly<typeof old.TestContainerRuntimeFactory>;
 declare function use_current_VariableDeclaration_TestContainerRuntimeFactory(
-    use: TypeOnly<typeof current.TestContainerRuntimeFactory>);
+    use: TypeOnly<typeof current.TestContainerRuntimeFactory>): void;
 use_current_VariableDeclaration_TestContainerRuntimeFactory(
     get_old_VariableDeclaration_TestContainerRuntimeFactory());
 
@@ -305,7 +305,7 @@ use_current_VariableDeclaration_TestContainerRuntimeFactory(
 declare function get_current_VariableDeclaration_TestContainerRuntimeFactory():
     TypeOnly<typeof current.TestContainerRuntimeFactory>;
 declare function use_old_VariableDeclaration_TestContainerRuntimeFactory(
-    use: TypeOnly<typeof old.TestContainerRuntimeFactory>);
+    use: TypeOnly<typeof old.TestContainerRuntimeFactory>): void;
 use_old_VariableDeclaration_TestContainerRuntimeFactory(
     get_current_VariableDeclaration_TestContainerRuntimeFactory());
 
@@ -317,7 +317,7 @@ use_old_VariableDeclaration_TestContainerRuntimeFactory(
 declare function get_old_ClassDeclaration_TestFluidObject():
     TypeOnly<old.TestFluidObject>;
 declare function use_current_ClassDeclaration_TestFluidObject(
-    use: TypeOnly<current.TestFluidObject>);
+    use: TypeOnly<current.TestFluidObject>): void;
 use_current_ClassDeclaration_TestFluidObject(
     get_old_ClassDeclaration_TestFluidObject());
 
@@ -329,7 +329,7 @@ use_current_ClassDeclaration_TestFluidObject(
 declare function get_current_ClassDeclaration_TestFluidObject():
     TypeOnly<current.TestFluidObject>;
 declare function use_old_ClassDeclaration_TestFluidObject(
-    use: TypeOnly<old.TestFluidObject>);
+    use: TypeOnly<old.TestFluidObject>): void;
 use_old_ClassDeclaration_TestFluidObject(
     get_current_ClassDeclaration_TestFluidObject());
 
@@ -341,7 +341,7 @@ use_old_ClassDeclaration_TestFluidObject(
 declare function get_old_ClassDeclaration_TestFluidObjectFactory():
     TypeOnly<old.TestFluidObjectFactory>;
 declare function use_current_ClassDeclaration_TestFluidObjectFactory(
-    use: TypeOnly<current.TestFluidObjectFactory>);
+    use: TypeOnly<current.TestFluidObjectFactory>): void;
 use_current_ClassDeclaration_TestFluidObjectFactory(
     get_old_ClassDeclaration_TestFluidObjectFactory());
 
@@ -353,7 +353,7 @@ use_current_ClassDeclaration_TestFluidObjectFactory(
 declare function get_current_ClassDeclaration_TestFluidObjectFactory():
     TypeOnly<current.TestFluidObjectFactory>;
 declare function use_old_ClassDeclaration_TestFluidObjectFactory(
-    use: TypeOnly<old.TestFluidObjectFactory>);
+    use: TypeOnly<old.TestFluidObjectFactory>): void;
 use_old_ClassDeclaration_TestFluidObjectFactory(
     get_current_ClassDeclaration_TestFluidObjectFactory());
 
@@ -365,7 +365,7 @@ use_old_ClassDeclaration_TestFluidObjectFactory(
 declare function get_old_ClassDeclaration_TestObjectProvider():
     TypeOnly<old.TestObjectProvider>;
 declare function use_current_ClassDeclaration_TestObjectProvider(
-    use: TypeOnly<current.TestObjectProvider>);
+    use: TypeOnly<current.TestObjectProvider>): void;
 use_current_ClassDeclaration_TestObjectProvider(
     get_old_ClassDeclaration_TestObjectProvider());
 
@@ -377,7 +377,7 @@ use_current_ClassDeclaration_TestObjectProvider(
 declare function get_current_ClassDeclaration_TestObjectProvider():
     TypeOnly<current.TestObjectProvider>;
 declare function use_old_ClassDeclaration_TestObjectProvider(
-    use: TypeOnly<old.TestObjectProvider>);
+    use: TypeOnly<old.TestObjectProvider>): void;
 use_old_ClassDeclaration_TestObjectProvider(
     get_current_ClassDeclaration_TestObjectProvider());
 
@@ -389,7 +389,7 @@ use_old_ClassDeclaration_TestObjectProvider(
 declare function get_old_InterfaceDeclaration_TimeoutWithError():
     TypeOnly<old.TimeoutWithError>;
 declare function use_current_InterfaceDeclaration_TimeoutWithError(
-    use: TypeOnly<current.TimeoutWithError>);
+    use: TypeOnly<current.TimeoutWithError>): void;
 use_current_InterfaceDeclaration_TimeoutWithError(
     get_old_InterfaceDeclaration_TimeoutWithError());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_TimeoutWithError(
 declare function get_current_InterfaceDeclaration_TimeoutWithError():
     TypeOnly<current.TimeoutWithError>;
 declare function use_old_InterfaceDeclaration_TimeoutWithError(
-    use: TypeOnly<old.TimeoutWithError>);
+    use: TypeOnly<old.TimeoutWithError>): void;
 use_old_InterfaceDeclaration_TimeoutWithError(
     get_current_InterfaceDeclaration_TimeoutWithError());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_TimeoutWithError(
 declare function get_old_InterfaceDeclaration_TimeoutWithValue():
     TypeOnly<old.TimeoutWithValue>;
 declare function use_current_InterfaceDeclaration_TimeoutWithValue(
-    use: TypeOnly<current.TimeoutWithValue>);
+    use: TypeOnly<current.TimeoutWithValue>): void;
 use_current_InterfaceDeclaration_TimeoutWithValue(
     get_old_InterfaceDeclaration_TimeoutWithValue());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_TimeoutWithValue(
 declare function get_current_InterfaceDeclaration_TimeoutWithValue():
     TypeOnly<current.TimeoutWithValue>;
 declare function use_old_InterfaceDeclaration_TimeoutWithValue(
-    use: TypeOnly<old.TimeoutWithValue>);
+    use: TypeOnly<old.TimeoutWithValue>): void;
 use_old_InterfaceDeclaration_TimeoutWithValue(
     get_current_InterfaceDeclaration_TimeoutWithValue());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_TimeoutWithValue(
 declare function get_old_FunctionDeclaration_createAndAttachContainer():
     TypeOnly<typeof old.createAndAttachContainer>;
 declare function use_current_FunctionDeclaration_createAndAttachContainer(
-    use: TypeOnly<typeof current.createAndAttachContainer>);
+    use: TypeOnly<typeof current.createAndAttachContainer>): void;
 use_current_FunctionDeclaration_createAndAttachContainer(
     get_old_FunctionDeclaration_createAndAttachContainer());
 
@@ -449,7 +449,7 @@ use_current_FunctionDeclaration_createAndAttachContainer(
 declare function get_current_FunctionDeclaration_createAndAttachContainer():
     TypeOnly<typeof current.createAndAttachContainer>;
 declare function use_old_FunctionDeclaration_createAndAttachContainer(
-    use: TypeOnly<typeof old.createAndAttachContainer>);
+    use: TypeOnly<typeof old.createAndAttachContainer>): void;
 use_old_FunctionDeclaration_createAndAttachContainer(
     get_current_FunctionDeclaration_createAndAttachContainer());
 
@@ -461,7 +461,7 @@ use_old_FunctionDeclaration_createAndAttachContainer(
 declare function get_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore():
     TypeOnly<typeof old.createContainerRuntimeFactoryWithDefaultDataStore>;
 declare function use_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
-    use: TypeOnly<typeof current.createContainerRuntimeFactoryWithDefaultDataStore>);
+    use: TypeOnly<typeof current.createContainerRuntimeFactoryWithDefaultDataStore>): void;
 use_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
     get_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore());
 
@@ -473,7 +473,7 @@ use_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStor
 declare function get_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore():
     TypeOnly<typeof current.createContainerRuntimeFactoryWithDefaultDataStore>;
 declare function use_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
-    use: TypeOnly<typeof old.createContainerRuntimeFactoryWithDefaultDataStore>);
+    use: TypeOnly<typeof old.createContainerRuntimeFactoryWithDefaultDataStore>): void;
 use_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
     get_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore());
 
@@ -485,7 +485,7 @@ use_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
 declare function get_old_VariableDeclaration_createDocumentId():
     TypeOnly<typeof old.createDocumentId>;
 declare function use_current_VariableDeclaration_createDocumentId(
-    use: TypeOnly<typeof current.createDocumentId>);
+    use: TypeOnly<typeof current.createDocumentId>): void;
 use_current_VariableDeclaration_createDocumentId(
     get_old_VariableDeclaration_createDocumentId());
 
@@ -497,7 +497,7 @@ use_current_VariableDeclaration_createDocumentId(
 declare function get_current_VariableDeclaration_createDocumentId():
     TypeOnly<typeof current.createDocumentId>;
 declare function use_old_VariableDeclaration_createDocumentId(
-    use: TypeOnly<typeof old.createDocumentId>);
+    use: TypeOnly<typeof old.createDocumentId>): void;
 use_old_VariableDeclaration_createDocumentId(
     get_current_VariableDeclaration_createDocumentId());
 
@@ -509,7 +509,7 @@ use_old_VariableDeclaration_createDocumentId(
 declare function get_old_FunctionDeclaration_createLoader():
     TypeOnly<typeof old.createLoader>;
 declare function use_current_FunctionDeclaration_createLoader(
-    use: TypeOnly<typeof current.createLoader>);
+    use: TypeOnly<typeof current.createLoader>): void;
 use_current_FunctionDeclaration_createLoader(
     get_old_FunctionDeclaration_createLoader());
 
@@ -521,7 +521,7 @@ use_current_FunctionDeclaration_createLoader(
 declare function get_current_FunctionDeclaration_createLoader():
     TypeOnly<typeof current.createLoader>;
 declare function use_old_FunctionDeclaration_createLoader(
-    use: TypeOnly<typeof old.createLoader>);
+    use: TypeOnly<typeof old.createLoader>): void;
 use_old_FunctionDeclaration_createLoader(
     get_current_FunctionDeclaration_createLoader());
 
@@ -533,7 +533,7 @@ use_old_FunctionDeclaration_createLoader(
 declare function get_old_FunctionDeclaration_createSummarizer():
     TypeOnly<typeof old.createSummarizer>;
 declare function use_current_FunctionDeclaration_createSummarizer(
-    use: TypeOnly<typeof current.createSummarizer>);
+    use: TypeOnly<typeof current.createSummarizer>): void;
 use_current_FunctionDeclaration_createSummarizer(
     get_old_FunctionDeclaration_createSummarizer());
 
@@ -545,7 +545,7 @@ use_current_FunctionDeclaration_createSummarizer(
 declare function get_current_FunctionDeclaration_createSummarizer():
     TypeOnly<typeof current.createSummarizer>;
 declare function use_old_FunctionDeclaration_createSummarizer(
-    use: TypeOnly<typeof old.createSummarizer>);
+    use: TypeOnly<typeof old.createSummarizer>): void;
 use_old_FunctionDeclaration_createSummarizer(
     get_current_FunctionDeclaration_createSummarizer());
 
@@ -557,7 +557,7 @@ use_old_FunctionDeclaration_createSummarizer(
 declare function get_old_FunctionDeclaration_createSummarizerFromFactory():
     TypeOnly<typeof old.createSummarizerFromFactory>;
 declare function use_current_FunctionDeclaration_createSummarizerFromFactory(
-    use: TypeOnly<typeof current.createSummarizerFromFactory>);
+    use: TypeOnly<typeof current.createSummarizerFromFactory>): void;
 use_current_FunctionDeclaration_createSummarizerFromFactory(
     get_old_FunctionDeclaration_createSummarizerFromFactory());
 
@@ -569,7 +569,7 @@ use_current_FunctionDeclaration_createSummarizerFromFactory(
 declare function get_current_FunctionDeclaration_createSummarizerFromFactory():
     TypeOnly<typeof current.createSummarizerFromFactory>;
 declare function use_old_FunctionDeclaration_createSummarizerFromFactory(
-    use: TypeOnly<typeof old.createSummarizerFromFactory>);
+    use: TypeOnly<typeof old.createSummarizerFromFactory>): void;
 use_old_FunctionDeclaration_createSummarizerFromFactory(
     get_current_FunctionDeclaration_createSummarizerFromFactory());
 
@@ -581,7 +581,7 @@ use_old_FunctionDeclaration_createSummarizerFromFactory(
 declare function get_old_VariableDeclaration_createTestContainerRuntimeFactory():
     TypeOnly<typeof old.createTestContainerRuntimeFactory>;
 declare function use_current_VariableDeclaration_createTestContainerRuntimeFactory(
-    use: TypeOnly<typeof current.createTestContainerRuntimeFactory>);
+    use: TypeOnly<typeof current.createTestContainerRuntimeFactory>): void;
 use_current_VariableDeclaration_createTestContainerRuntimeFactory(
     get_old_VariableDeclaration_createTestContainerRuntimeFactory());
 
@@ -593,7 +593,7 @@ use_current_VariableDeclaration_createTestContainerRuntimeFactory(
 declare function get_current_VariableDeclaration_createTestContainerRuntimeFactory():
     TypeOnly<typeof current.createTestContainerRuntimeFactory>;
 declare function use_old_VariableDeclaration_createTestContainerRuntimeFactory(
-    use: TypeOnly<typeof old.createTestContainerRuntimeFactory>);
+    use: TypeOnly<typeof old.createTestContainerRuntimeFactory>): void;
 use_old_VariableDeclaration_createTestContainerRuntimeFactory(
     get_current_VariableDeclaration_createTestContainerRuntimeFactory());
 
@@ -605,7 +605,7 @@ use_old_VariableDeclaration_createTestContainerRuntimeFactory(
 declare function get_old_VariableDeclaration_defaultTimeoutDurationMs():
     TypeOnly<typeof old.defaultTimeoutDurationMs>;
 declare function use_current_VariableDeclaration_defaultTimeoutDurationMs(
-    use: TypeOnly<typeof current.defaultTimeoutDurationMs>);
+    use: TypeOnly<typeof current.defaultTimeoutDurationMs>): void;
 use_current_VariableDeclaration_defaultTimeoutDurationMs(
     get_old_VariableDeclaration_defaultTimeoutDurationMs());
 
@@ -617,7 +617,7 @@ use_current_VariableDeclaration_defaultTimeoutDurationMs(
 declare function get_current_VariableDeclaration_defaultTimeoutDurationMs():
     TypeOnly<typeof current.defaultTimeoutDurationMs>;
 declare function use_old_VariableDeclaration_defaultTimeoutDurationMs(
-    use: TypeOnly<typeof old.defaultTimeoutDurationMs>);
+    use: TypeOnly<typeof old.defaultTimeoutDurationMs>): void;
 use_old_VariableDeclaration_defaultTimeoutDurationMs(
     get_current_VariableDeclaration_defaultTimeoutDurationMs());
 
@@ -629,7 +629,7 @@ use_old_VariableDeclaration_defaultTimeoutDurationMs(
 declare function get_old_TypeAliasDeclaration_fluidEntryPoint():
     TypeOnly<old.fluidEntryPoint>;
 declare function use_current_TypeAliasDeclaration_fluidEntryPoint(
-    use: TypeOnly<current.fluidEntryPoint>);
+    use: TypeOnly<current.fluidEntryPoint>): void;
 use_current_TypeAliasDeclaration_fluidEntryPoint(
     get_old_TypeAliasDeclaration_fluidEntryPoint());
 
@@ -641,7 +641,7 @@ use_current_TypeAliasDeclaration_fluidEntryPoint(
 declare function get_current_TypeAliasDeclaration_fluidEntryPoint():
     TypeOnly<current.fluidEntryPoint>;
 declare function use_old_TypeAliasDeclaration_fluidEntryPoint(
-    use: TypeOnly<old.fluidEntryPoint>);
+    use: TypeOnly<old.fluidEntryPoint>): void;
 use_old_TypeAliasDeclaration_fluidEntryPoint(
     get_current_TypeAliasDeclaration_fluidEntryPoint());
 
@@ -653,7 +653,7 @@ use_old_TypeAliasDeclaration_fluidEntryPoint(
 declare function get_old_FunctionDeclaration_getUnexpectedLogErrorException():
     TypeOnly<typeof old.getUnexpectedLogErrorException>;
 declare function use_current_FunctionDeclaration_getUnexpectedLogErrorException(
-    use: TypeOnly<typeof current.getUnexpectedLogErrorException>);
+    use: TypeOnly<typeof current.getUnexpectedLogErrorException>): void;
 use_current_FunctionDeclaration_getUnexpectedLogErrorException(
     get_old_FunctionDeclaration_getUnexpectedLogErrorException());
 
@@ -665,7 +665,7 @@ use_current_FunctionDeclaration_getUnexpectedLogErrorException(
 declare function get_current_FunctionDeclaration_getUnexpectedLogErrorException():
     TypeOnly<typeof current.getUnexpectedLogErrorException>;
 declare function use_old_FunctionDeclaration_getUnexpectedLogErrorException(
-    use: TypeOnly<typeof old.getUnexpectedLogErrorException>);
+    use: TypeOnly<typeof old.getUnexpectedLogErrorException>): void;
 use_old_FunctionDeclaration_getUnexpectedLogErrorException(
     get_current_FunctionDeclaration_getUnexpectedLogErrorException());
 
@@ -677,7 +677,7 @@ use_old_FunctionDeclaration_getUnexpectedLogErrorException(
 declare function get_old_VariableDeclaration_mockConfigProvider():
     TypeOnly<typeof old.mockConfigProvider>;
 declare function use_current_VariableDeclaration_mockConfigProvider(
-    use: TypeOnly<typeof current.mockConfigProvider>);
+    use: TypeOnly<typeof current.mockConfigProvider>): void;
 use_current_VariableDeclaration_mockConfigProvider(
     get_old_VariableDeclaration_mockConfigProvider());
 
@@ -689,7 +689,7 @@ use_current_VariableDeclaration_mockConfigProvider(
 declare function get_current_VariableDeclaration_mockConfigProvider():
     TypeOnly<typeof current.mockConfigProvider>;
 declare function use_old_VariableDeclaration_mockConfigProvider(
-    use: TypeOnly<typeof old.mockConfigProvider>);
+    use: TypeOnly<typeof old.mockConfigProvider>): void;
 use_old_VariableDeclaration_mockConfigProvider(
     get_current_VariableDeclaration_mockConfigProvider());
 
@@ -701,7 +701,7 @@ use_old_VariableDeclaration_mockConfigProvider(
 declare function get_old_VariableDeclaration_retryWithEventualValue():
     TypeOnly<typeof old.retryWithEventualValue>;
 declare function use_current_VariableDeclaration_retryWithEventualValue(
-    use: TypeOnly<typeof current.retryWithEventualValue>);
+    use: TypeOnly<typeof current.retryWithEventualValue>): void;
 use_current_VariableDeclaration_retryWithEventualValue(
     get_old_VariableDeclaration_retryWithEventualValue());
 
@@ -713,7 +713,7 @@ use_current_VariableDeclaration_retryWithEventualValue(
 declare function get_current_VariableDeclaration_retryWithEventualValue():
     TypeOnly<typeof current.retryWithEventualValue>;
 declare function use_old_VariableDeclaration_retryWithEventualValue(
-    use: TypeOnly<typeof old.retryWithEventualValue>);
+    use: TypeOnly<typeof old.retryWithEventualValue>): void;
 use_old_VariableDeclaration_retryWithEventualValue(
     get_current_VariableDeclaration_retryWithEventualValue());
 
@@ -725,7 +725,7 @@ use_old_VariableDeclaration_retryWithEventualValue(
 declare function get_old_FunctionDeclaration_summarizeNow():
     TypeOnly<typeof old.summarizeNow>;
 declare function use_current_FunctionDeclaration_summarizeNow(
-    use: TypeOnly<typeof current.summarizeNow>);
+    use: TypeOnly<typeof current.summarizeNow>): void;
 use_current_FunctionDeclaration_summarizeNow(
     get_old_FunctionDeclaration_summarizeNow());
 
@@ -737,7 +737,7 @@ use_current_FunctionDeclaration_summarizeNow(
 declare function get_current_FunctionDeclaration_summarizeNow():
     TypeOnly<typeof current.summarizeNow>;
 declare function use_old_FunctionDeclaration_summarizeNow(
-    use: TypeOnly<typeof old.summarizeNow>);
+    use: TypeOnly<typeof old.summarizeNow>): void;
 use_old_FunctionDeclaration_summarizeNow(
     get_current_FunctionDeclaration_summarizeNow());
 
@@ -749,7 +749,7 @@ use_old_FunctionDeclaration_summarizeNow(
 declare function get_old_FunctionDeclaration_timeoutAwait():
     TypeOnly<typeof old.timeoutAwait>;
 declare function use_current_FunctionDeclaration_timeoutAwait(
-    use: TypeOnly<typeof current.timeoutAwait>);
+    use: TypeOnly<typeof current.timeoutAwait>): void;
 use_current_FunctionDeclaration_timeoutAwait(
     get_old_FunctionDeclaration_timeoutAwait());
 
@@ -761,7 +761,7 @@ use_current_FunctionDeclaration_timeoutAwait(
 declare function get_current_FunctionDeclaration_timeoutAwait():
     TypeOnly<typeof current.timeoutAwait>;
 declare function use_old_FunctionDeclaration_timeoutAwait(
-    use: TypeOnly<typeof old.timeoutAwait>);
+    use: TypeOnly<typeof old.timeoutAwait>): void;
 use_old_FunctionDeclaration_timeoutAwait(
     get_current_FunctionDeclaration_timeoutAwait());
 
@@ -773,7 +773,7 @@ use_old_FunctionDeclaration_timeoutAwait(
 declare function get_old_FunctionDeclaration_timeoutPromise():
     TypeOnly<typeof old.timeoutPromise>;
 declare function use_current_FunctionDeclaration_timeoutPromise(
-    use: TypeOnly<typeof current.timeoutPromise>);
+    use: TypeOnly<typeof current.timeoutPromise>): void;
 use_current_FunctionDeclaration_timeoutPromise(
     get_old_FunctionDeclaration_timeoutPromise());
 
@@ -785,7 +785,7 @@ use_current_FunctionDeclaration_timeoutPromise(
 declare function get_current_FunctionDeclaration_timeoutPromise():
     TypeOnly<typeof current.timeoutPromise>;
 declare function use_old_FunctionDeclaration_timeoutPromise(
-    use: TypeOnly<typeof old.timeoutPromise>);
+    use: TypeOnly<typeof old.timeoutPromise>): void;
 use_old_FunctionDeclaration_timeoutPromise(
     get_current_FunctionDeclaration_timeoutPromise());
 
@@ -797,7 +797,7 @@ use_old_FunctionDeclaration_timeoutPromise(
 declare function get_old_FunctionDeclaration_waitForContainerConnection():
     TypeOnly<typeof old.waitForContainerConnection>;
 declare function use_current_FunctionDeclaration_waitForContainerConnection(
-    use: TypeOnly<typeof current.waitForContainerConnection>);
+    use: TypeOnly<typeof current.waitForContainerConnection>): void;
 use_current_FunctionDeclaration_waitForContainerConnection(
     get_old_FunctionDeclaration_waitForContainerConnection());
 
@@ -809,7 +809,7 @@ use_current_FunctionDeclaration_waitForContainerConnection(
 declare function get_current_FunctionDeclaration_waitForContainerConnection():
     TypeOnly<typeof current.waitForContainerConnection>;
 declare function use_old_FunctionDeclaration_waitForContainerConnection(
-    use: TypeOnly<typeof old.waitForContainerConnection>);
+    use: TypeOnly<typeof old.waitForContainerConnection>): void;
 use_old_FunctionDeclaration_waitForContainerConnection(
     get_current_FunctionDeclaration_waitForContainerConnection());
 
@@ -821,7 +821,7 @@ use_old_FunctionDeclaration_waitForContainerConnection(
 declare function get_old_FunctionDeclaration_wrapDocumentService():
     TypeOnly<typeof old.wrapDocumentService>;
 declare function use_current_FunctionDeclaration_wrapDocumentService(
-    use: TypeOnly<typeof current.wrapDocumentService>);
+    use: TypeOnly<typeof current.wrapDocumentService>): void;
 use_current_FunctionDeclaration_wrapDocumentService(
     get_old_FunctionDeclaration_wrapDocumentService());
 
@@ -833,7 +833,7 @@ use_current_FunctionDeclaration_wrapDocumentService(
 declare function get_current_FunctionDeclaration_wrapDocumentService():
     TypeOnly<typeof current.wrapDocumentService>;
 declare function use_old_FunctionDeclaration_wrapDocumentService(
-    use: TypeOnly<typeof old.wrapDocumentService>);
+    use: TypeOnly<typeof old.wrapDocumentService>): void;
 use_old_FunctionDeclaration_wrapDocumentService(
     get_current_FunctionDeclaration_wrapDocumentService());
 
@@ -845,7 +845,7 @@ use_old_FunctionDeclaration_wrapDocumentService(
 declare function get_old_FunctionDeclaration_wrapDocumentServiceFactory():
     TypeOnly<typeof old.wrapDocumentServiceFactory>;
 declare function use_current_FunctionDeclaration_wrapDocumentServiceFactory(
-    use: TypeOnly<typeof current.wrapDocumentServiceFactory>);
+    use: TypeOnly<typeof current.wrapDocumentServiceFactory>): void;
 use_current_FunctionDeclaration_wrapDocumentServiceFactory(
     get_old_FunctionDeclaration_wrapDocumentServiceFactory());
 
@@ -857,7 +857,7 @@ use_current_FunctionDeclaration_wrapDocumentServiceFactory(
 declare function get_current_FunctionDeclaration_wrapDocumentServiceFactory():
     TypeOnly<typeof current.wrapDocumentServiceFactory>;
 declare function use_old_FunctionDeclaration_wrapDocumentServiceFactory(
-    use: TypeOnly<typeof old.wrapDocumentServiceFactory>);
+    use: TypeOnly<typeof old.wrapDocumentServiceFactory>): void;
 use_old_FunctionDeclaration_wrapDocumentServiceFactory(
     get_current_FunctionDeclaration_wrapDocumentServiceFactory());
 
@@ -869,7 +869,7 @@ use_old_FunctionDeclaration_wrapDocumentServiceFactory(
 declare function get_old_FunctionDeclaration_wrapDocumentStorageService():
     TypeOnly<typeof old.wrapDocumentStorageService>;
 declare function use_current_FunctionDeclaration_wrapDocumentStorageService(
-    use: TypeOnly<typeof current.wrapDocumentStorageService>);
+    use: TypeOnly<typeof current.wrapDocumentStorageService>): void;
 use_current_FunctionDeclaration_wrapDocumentStorageService(
     get_old_FunctionDeclaration_wrapDocumentStorageService());
 
@@ -881,6 +881,6 @@ use_current_FunctionDeclaration_wrapDocumentStorageService(
 declare function get_current_FunctionDeclaration_wrapDocumentStorageService():
     TypeOnly<typeof current.wrapDocumentStorageService>;
 declare function use_old_FunctionDeclaration_wrapDocumentStorageService(
-    use: TypeOnly<typeof old.wrapDocumentStorageService>);
+    use: TypeOnly<typeof old.wrapDocumentStorageService>): void;
 use_old_FunctionDeclaration_wrapDocumentStorageService(
     get_current_FunctionDeclaration_wrapDocumentStorageService());
