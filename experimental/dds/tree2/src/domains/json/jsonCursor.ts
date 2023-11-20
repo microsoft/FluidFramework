@@ -110,7 +110,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case leaf.boolean.name:
 		case leaf.string.name:
 			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(!isFluidHandle(reader.value), "out of schema: unexpected fluid handle");
+			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
 			return reader.value;
 		case jsonArray.name: {
 			reader.enterField(EmptyKey);

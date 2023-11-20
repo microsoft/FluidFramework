@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Value, ValueSchema, TreeValue } from "../core";
@@ -71,7 +76,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is Value {
-	assert(isAllowedValue(value), 1903 /* invalid value */);
+	assert(isAllowedValue(value), "invalid value");
 }
 
 export function isAllowedValue(value: undefined | FluidSerializableReadOnly): value is Value {
