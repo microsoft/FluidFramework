@@ -62,7 +62,6 @@ interface ISetOpMetadata {
 	rowsRefSeq: number;
 	colsRefSeq: number;
 	referenceSeqNumber: number;
-	clientId: string | undefined;
 }
 
 interface ISetCellChangePolicyOp {
@@ -374,7 +373,6 @@ export class SharedMatrix<T = any>
 			rowsRefSeq,
 			colsRefSeq,
 			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
-			clientId: this.runtime.clientId,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -637,7 +635,6 @@ export class SharedMatrix<T = any>
 					rowsRefSeq,
 					colsRefSeq,
 					referenceSeqNumber,
-					clientId,
 				} = localOpMetadata as ISetOpMetadata;
 
 				// Policy is not FWW. So behave accordingly.
@@ -649,11 +646,10 @@ export class SharedMatrix<T = any>
 							rowHandle,
 							colHandle,
 						);
-						// If we generated this op, after seeing the last set op, or it was from this client only
-						// then regenerate the op, otherwise raise conflict.
+						// If we generated this op, after seeing the last set op, or it is the first
+						// set op for the cell, then regenerate the op, otherwise raise conflict.
 						if (
 							lastCellModificationDetails === undefined ||
-							clientId === this.runtime.clientId ||
 							referenceSeqNumber >= lastCellModificationDetails.seqNum
 						) {
 							this.sendSetCellOp(
@@ -743,7 +739,7 @@ export class SharedMatrix<T = any>
 	}
 
 	/**
-	 * Tells whether the op should be applied or not based on First Write Win policy.
+	 * Tells whether the setCell op should be applied or not based on First Write Win policy.
 	 */
 	private shouldSetCellBasedOnFWW(
 		rowHandle: Handle,
@@ -765,7 +761,7 @@ export class SharedMatrix<T = any>
 	}
 
 	/**
-	 * Tells whether the client process this op according to First Write Win or not.
+	 * Tells whether the client made the op in First Write Win mode or not.
 	 * @param message - Op to process.
 	 */
 	private isSetCellOpMadeInFWWPolicy(message: ISequencedDocumentMessage) {
@@ -1042,7 +1038,6 @@ export class SharedMatrix<T = any>
 				rowsRefSeq,
 				colsRefSeq,
 				referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
-				clientId: this.runtime.clientId,
 			};
 
 			this.pending.setCell(rowHandle, colHandle, localSeq);
