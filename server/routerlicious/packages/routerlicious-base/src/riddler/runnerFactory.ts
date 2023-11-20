@@ -117,7 +117,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const db: IDb = await mongoManager.getDatabase();
 
 		const collection = db.collection<ITenantDocument>(tenantsCollectionName);
-		const tenantRepository = customizations?.tenantRepository ?? new MongoTenantRepository(collection);
+		const tenantRepository =
+			customizations?.tenantRepository ?? new MongoTenantRepository(collection);
 		const tenants = config.get("tenantConfig") as any[];
 		const upsertP = tenants.map(async (tenant) => {
 			tenant.key = secretManager.encryptSecret(tenant.key);
