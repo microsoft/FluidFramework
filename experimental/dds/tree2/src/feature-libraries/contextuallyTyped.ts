@@ -24,7 +24,7 @@ import {
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./default-field-kinds";
+import { fieldKinds } from "./default-schema";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import {
 	AllowedTypes,
@@ -32,7 +32,7 @@ import {
 	TreeNodeSchema,
 	allowedTypesToTypeSet,
 } from "./typed-schema";
-import { singleMapTreeCursor } from "./mapTreeCursor";
+import { cursorForMapTreeNode } from "./mapTreeCursor";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
@@ -476,6 +476,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorFromContextualData(
@@ -484,11 +485,12 @@ export function cursorFromContextualData(
 	data: ContextuallyTypedNodeData,
 ): ITreeCursorSynchronous {
 	const mapTree = applyTypesFromContext(context, typeSet, data);
-	return singleMapTreeCursor(mapTree);
+	return cursorForMapTreeNode(mapTree);
 }
 
 /**
- * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema
+ * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
@@ -505,6 +507,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
@@ -531,7 +534,7 @@ export function cursorsFromContextualData(
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(context, field, data);
-	return mapTrees.map(singleMapTreeCursor);
+	return mapTrees.map(cursorForMapTreeNode);
 }
 
 /**
@@ -597,7 +600,7 @@ export function applyTypesFromContext(
 	} else if (data instanceof Map) {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const [key, value] of data) {
-			assert(!fields.has(key), "Keys should not be duplicated");
+			assert(!fields.has(key), 0x7f0 /* Keys should not be duplicated */);
 			const childSchema = getFieldSchema(key, schema);
 			const children = applyFieldTypesFromContext(context, childSchema, value);
 
