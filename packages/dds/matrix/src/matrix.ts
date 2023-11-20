@@ -155,6 +155,8 @@ export class SharedMatrix<T = any>
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellPolicySwitchOpSeqNumber: number;
+	// Used to track if there is any reentrancy in setCell code.
+	private reentrantCount: number = 0;
 
 	/**
 	 * Constructor for the Shared Matrix
@@ -335,7 +337,9 @@ export class SharedMatrix<T = any>
 		this.cells.setCell(rowHandle, colHandle, value);
 
 		if (this.isAttached()) {
-			this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+			this.protectAgainstReentrancy(() =>
+				this.sendSetCellOp(row, col, value, rowHandle, colHandle),
+			);
 		}
 
 		// Avoid reentrancy by raising change notifications after the op is queued.
@@ -379,6 +383,14 @@ export class SharedMatrix<T = any>
 		this.pending.setCell(rowHandle, colHandle, localSeq);
 	}
 
+	private protectAgainstReentrancy(callback: () => void) {
+		assert(this.reentrantCount === 0, "reentrant code");
+		this.reentrantCount++;
+		callback();
+		this.reentrantCount--;
+		assert(this.reentrantCount === 0, "reentrant code on exit");
+	}
+
 	private submitVectorMessage(
 		currentVector: PermutationVector,
 		oppositeVector: PermutationVector,
@@ -420,11 +432,15 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertCols(colStart: number, count: number) {
-		this.submitColMessage(this.cols.insert(colStart, count));
+		this.protectAgainstReentrancy(() =>
+			this.submitColMessage(this.cols.insert(colStart, count)),
+		);
 	}
 
 	public removeCols(colStart: number, count: number) {
-		this.submitColMessage(this.cols.remove(colStart, count));
+		this.protectAgainstReentrancy(() =>
+			this.submitColMessage(this.cols.remove(colStart, count)),
+		);
 	}
 
 	private submitRowMessage(message: any) {
@@ -432,11 +448,15 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertRows(rowStart: number, count: number) {
-		this.submitRowMessage(this.rows.insert(rowStart, count));
+		this.protectAgainstReentrancy(() =>
+			this.submitRowMessage(this.rows.insert(rowStart, count)),
+		);
 	}
 
 	public removeRows(rowStart: number, count: number) {
-		this.submitRowMessage(this.rows.remove(rowStart, count));
+		this.protectAgainstReentrancy(() =>
+			this.submitRowMessage(this.rows.remove(rowStart, count)),
+		);
 	}
 
 	/** @internal */ public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
