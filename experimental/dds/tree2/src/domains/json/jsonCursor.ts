@@ -13,7 +13,7 @@ import {
 	ITreeCursorSynchronous,
 } from "../../core";
 import { JsonCompatible } from "../../util";
-import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
+import { CursorAdapter, isPrimitiveValue, stackTreeNodeCursor } from "../../feature-libraries";
 import { leaf } from "../leafDomain";
 import { jsonArray, jsonObject } from "./jsonDomainSchema";
 
@@ -94,7 +94,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
  * @alpha
  */
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
-	return singleStackTreeCursor(root, adapter);
+	return stackTreeNodeCursor(adapter, root);
 }
 
 /**

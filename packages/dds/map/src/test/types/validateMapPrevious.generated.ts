@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_DirectoryFactory():
     TypeOnly<old.DirectoryFactory>;
 declare function use_current_ClassDeclaration_DirectoryFactory(
-    use: TypeOnly<current.DirectoryFactory>);
+    use: TypeOnly<current.DirectoryFactory>): void;
 use_current_ClassDeclaration_DirectoryFactory(
     get_old_ClassDeclaration_DirectoryFactory());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_DirectoryFactory(
 declare function get_current_ClassDeclaration_DirectoryFactory():
     TypeOnly<current.DirectoryFactory>;
 declare function use_old_ClassDeclaration_DirectoryFactory(
-    use: TypeOnly<old.DirectoryFactory>);
+    use: TypeOnly<old.DirectoryFactory>): void;
 use_old_ClassDeclaration_DirectoryFactory(
     get_current_ClassDeclaration_DirectoryFactory());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_DirectoryFactory(
 declare function get_old_InterfaceDeclaration_ICreateInfo():
     TypeOnly<old.ICreateInfo>;
 declare function use_current_InterfaceDeclaration_ICreateInfo(
-    use: TypeOnly<current.ICreateInfo>);
+    use: TypeOnly<current.ICreateInfo>): void;
 use_current_InterfaceDeclaration_ICreateInfo(
     get_old_InterfaceDeclaration_ICreateInfo());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ICreateInfo(
 declare function get_current_InterfaceDeclaration_ICreateInfo():
     TypeOnly<current.ICreateInfo>;
 declare function use_old_InterfaceDeclaration_ICreateInfo(
-    use: TypeOnly<old.ICreateInfo>);
+    use: TypeOnly<old.ICreateInfo>): void;
 use_old_InterfaceDeclaration_ICreateInfo(
     get_current_InterfaceDeclaration_ICreateInfo());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ICreateInfo(
 declare function get_old_InterfaceDeclaration_IDirectory():
     TypeOnly<old.IDirectory>;
 declare function use_current_InterfaceDeclaration_IDirectory(
-    use: TypeOnly<current.IDirectory>);
+    use: TypeOnly<current.IDirectory>): void;
 use_current_InterfaceDeclaration_IDirectory(
     get_old_InterfaceDeclaration_IDirectory());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IDirectory(
 declare function get_current_InterfaceDeclaration_IDirectory():
     TypeOnly<current.IDirectory>;
 declare function use_old_InterfaceDeclaration_IDirectory(
-    use: TypeOnly<old.IDirectory>);
+    use: TypeOnly<old.IDirectory>): void;
 use_old_InterfaceDeclaration_IDirectory(
     get_current_InterfaceDeclaration_IDirectory());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IDirectory(
 declare function get_old_InterfaceDeclaration_IDirectoryClearOperation():
     TypeOnly<old.IDirectoryClearOperation>;
 declare function use_current_InterfaceDeclaration_IDirectoryClearOperation(
-    use: TypeOnly<current.IDirectoryClearOperation>);
+    use: TypeOnly<current.IDirectoryClearOperation>): void;
 use_current_InterfaceDeclaration_IDirectoryClearOperation(
     get_old_InterfaceDeclaration_IDirectoryClearOperation());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IDirectoryClearOperation(
 declare function get_current_InterfaceDeclaration_IDirectoryClearOperation():
     TypeOnly<current.IDirectoryClearOperation>;
 declare function use_old_InterfaceDeclaration_IDirectoryClearOperation(
-    use: TypeOnly<old.IDirectoryClearOperation>);
+    use: TypeOnly<old.IDirectoryClearOperation>): void;
 use_old_InterfaceDeclaration_IDirectoryClearOperation(
     get_current_InterfaceDeclaration_IDirectoryClearOperation());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IDirectoryClearOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
     TypeOnly<old.IDirectoryCreateSubDirectoryOperation>;
 declare function use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    use: TypeOnly<current.IDirectoryCreateSubDirectoryOperation>);
+    use: TypeOnly<current.IDirectoryCreateSubDirectoryOperation>): void;
 use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
     get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
 declare function get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
     TypeOnly<current.IDirectoryCreateSubDirectoryOperation>;
 declare function use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    use: TypeOnly<old.IDirectoryCreateSubDirectoryOperation>);
+    use: TypeOnly<old.IDirectoryCreateSubDirectoryOperation>): void;
 use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
     get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryDataObject():
     TypeOnly<old.IDirectoryDataObject>;
 declare function use_current_InterfaceDeclaration_IDirectoryDataObject(
-    use: TypeOnly<current.IDirectoryDataObject>);
+    use: TypeOnly<current.IDirectoryDataObject>): void;
 use_current_InterfaceDeclaration_IDirectoryDataObject(
     get_old_InterfaceDeclaration_IDirectoryDataObject());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IDirectoryDataObject(
 declare function get_current_InterfaceDeclaration_IDirectoryDataObject():
     TypeOnly<current.IDirectoryDataObject>;
 declare function use_old_InterfaceDeclaration_IDirectoryDataObject(
-    use: TypeOnly<old.IDirectoryDataObject>);
+    use: TypeOnly<old.IDirectoryDataObject>): void;
 use_old_InterfaceDeclaration_IDirectoryDataObject(
     get_current_InterfaceDeclaration_IDirectoryDataObject());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IDirectoryDataObject(
 declare function get_old_InterfaceDeclaration_IDirectoryDeleteOperation():
     TypeOnly<old.IDirectoryDeleteOperation>;
 declare function use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
-    use: TypeOnly<current.IDirectoryDeleteOperation>);
+    use: TypeOnly<current.IDirectoryDeleteOperation>): void;
 use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
     get_old_InterfaceDeclaration_IDirectoryDeleteOperation());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
 declare function get_current_InterfaceDeclaration_IDirectoryDeleteOperation():
     TypeOnly<current.IDirectoryDeleteOperation>;
 declare function use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
-    use: TypeOnly<old.IDirectoryDeleteOperation>);
+    use: TypeOnly<old.IDirectoryDeleteOperation>): void;
 use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
     get_current_InterfaceDeclaration_IDirectoryDeleteOperation());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
     TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>;
 declare function use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    use: TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>);
+    use: TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>): void;
 use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
     get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
 declare function get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
     TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>;
 declare function use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    use: TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>);
+    use: TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>): void;
 use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
     get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryEvents():
     TypeOnly<old.IDirectoryEvents>;
 declare function use_current_InterfaceDeclaration_IDirectoryEvents(
-    use: TypeOnly<current.IDirectoryEvents>);
+    use: TypeOnly<current.IDirectoryEvents>): void;
 use_current_InterfaceDeclaration_IDirectoryEvents(
     get_old_InterfaceDeclaration_IDirectoryEvents());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IDirectoryEvents(
 declare function get_current_InterfaceDeclaration_IDirectoryEvents():
     TypeOnly<current.IDirectoryEvents>;
 declare function use_old_InterfaceDeclaration_IDirectoryEvents(
-    use: TypeOnly<old.IDirectoryEvents>);
+    use: TypeOnly<old.IDirectoryEvents>): void;
 use_old_InterfaceDeclaration_IDirectoryEvents(
     get_current_InterfaceDeclaration_IDirectoryEvents());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IDirectoryEvents(
 declare function get_old_TypeAliasDeclaration_IDirectoryKeyOperation():
     TypeOnly<old.IDirectoryKeyOperation>;
 declare function use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
-    use: TypeOnly<current.IDirectoryKeyOperation>);
+    use: TypeOnly<current.IDirectoryKeyOperation>): void;
 use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
     get_old_TypeAliasDeclaration_IDirectoryKeyOperation());
 
@@ -257,7 +257,7 @@ use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
 declare function get_current_TypeAliasDeclaration_IDirectoryKeyOperation():
     TypeOnly<current.IDirectoryKeyOperation>;
 declare function use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
-    use: TypeOnly<old.IDirectoryKeyOperation>);
+    use: TypeOnly<old.IDirectoryKeyOperation>): void;
 use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
     get_current_TypeAliasDeclaration_IDirectoryKeyOperation());
 
@@ -269,7 +269,7 @@ use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryNewStorageFormat():
     TypeOnly<old.IDirectoryNewStorageFormat>;
 declare function use_current_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    use: TypeOnly<current.IDirectoryNewStorageFormat>);
+    use: TypeOnly<current.IDirectoryNewStorageFormat>): void;
 use_current_InterfaceDeclaration_IDirectoryNewStorageFormat(
     get_old_InterfaceDeclaration_IDirectoryNewStorageFormat());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IDirectoryNewStorageFormat(
 declare function get_current_InterfaceDeclaration_IDirectoryNewStorageFormat():
     TypeOnly<current.IDirectoryNewStorageFormat>;
 declare function use_old_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    use: TypeOnly<old.IDirectoryNewStorageFormat>);
+    use: TypeOnly<old.IDirectoryNewStorageFormat>): void;
 use_old_InterfaceDeclaration_IDirectoryNewStorageFormat(
     get_current_InterfaceDeclaration_IDirectoryNewStorageFormat());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IDirectoryNewStorageFormat(
 declare function get_old_TypeAliasDeclaration_IDirectoryOperation():
     TypeOnly<old.IDirectoryOperation>;
 declare function use_current_TypeAliasDeclaration_IDirectoryOperation(
-    use: TypeOnly<current.IDirectoryOperation>);
+    use: TypeOnly<current.IDirectoryOperation>): void;
 use_current_TypeAliasDeclaration_IDirectoryOperation(
     get_old_TypeAliasDeclaration_IDirectoryOperation());
 
@@ -305,7 +305,7 @@ use_current_TypeAliasDeclaration_IDirectoryOperation(
 declare function get_current_TypeAliasDeclaration_IDirectoryOperation():
     TypeOnly<current.IDirectoryOperation>;
 declare function use_old_TypeAliasDeclaration_IDirectoryOperation(
-    use: TypeOnly<old.IDirectoryOperation>);
+    use: TypeOnly<old.IDirectoryOperation>): void;
 use_old_TypeAliasDeclaration_IDirectoryOperation(
     get_current_TypeAliasDeclaration_IDirectoryOperation());
 
@@ -317,7 +317,7 @@ use_old_TypeAliasDeclaration_IDirectoryOperation(
 declare function get_old_InterfaceDeclaration_IDirectorySetOperation():
     TypeOnly<old.IDirectorySetOperation>;
 declare function use_current_InterfaceDeclaration_IDirectorySetOperation(
-    use: TypeOnly<current.IDirectorySetOperation>);
+    use: TypeOnly<current.IDirectorySetOperation>): void;
 use_current_InterfaceDeclaration_IDirectorySetOperation(
     get_old_InterfaceDeclaration_IDirectorySetOperation());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_IDirectorySetOperation(
 declare function get_current_InterfaceDeclaration_IDirectorySetOperation():
     TypeOnly<current.IDirectorySetOperation>;
 declare function use_old_InterfaceDeclaration_IDirectorySetOperation(
-    use: TypeOnly<old.IDirectorySetOperation>);
+    use: TypeOnly<old.IDirectorySetOperation>): void;
 use_old_InterfaceDeclaration_IDirectorySetOperation(
     get_current_InterfaceDeclaration_IDirectorySetOperation());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_IDirectorySetOperation(
 declare function get_old_TypeAliasDeclaration_IDirectoryStorageOperation():
     TypeOnly<old.IDirectoryStorageOperation>;
 declare function use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
-    use: TypeOnly<current.IDirectoryStorageOperation>);
+    use: TypeOnly<current.IDirectoryStorageOperation>): void;
 use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
     get_old_TypeAliasDeclaration_IDirectoryStorageOperation());
 
@@ -353,7 +353,7 @@ use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
 declare function get_current_TypeAliasDeclaration_IDirectoryStorageOperation():
     TypeOnly<current.IDirectoryStorageOperation>;
 declare function use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
-    use: TypeOnly<old.IDirectoryStorageOperation>);
+    use: TypeOnly<old.IDirectoryStorageOperation>): void;
 use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
     get_current_TypeAliasDeclaration_IDirectoryStorageOperation());
 
@@ -365,7 +365,7 @@ use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
 declare function get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
     TypeOnly<old.IDirectorySubDirectoryOperation>;
 declare function use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    use: TypeOnly<current.IDirectorySubDirectoryOperation>);
+    use: TypeOnly<current.IDirectorySubDirectoryOperation>): void;
 use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
     get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
@@ -377,7 +377,7 @@ use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
 declare function get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
     TypeOnly<current.IDirectorySubDirectoryOperation>;
 declare function use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    use: TypeOnly<old.IDirectorySubDirectoryOperation>);
+    use: TypeOnly<old.IDirectorySubDirectoryOperation>): void;
 use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
     get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
@@ -389,7 +389,7 @@ use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
 declare function get_old_InterfaceDeclaration_IDirectoryValueChanged():
     TypeOnly<old.IDirectoryValueChanged>;
 declare function use_current_InterfaceDeclaration_IDirectoryValueChanged(
-    use: TypeOnly<current.IDirectoryValueChanged>);
+    use: TypeOnly<current.IDirectoryValueChanged>): void;
 use_current_InterfaceDeclaration_IDirectoryValueChanged(
     get_old_InterfaceDeclaration_IDirectoryValueChanged());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IDirectoryValueChanged(
 declare function get_current_InterfaceDeclaration_IDirectoryValueChanged():
     TypeOnly<current.IDirectoryValueChanged>;
 declare function use_old_InterfaceDeclaration_IDirectoryValueChanged(
-    use: TypeOnly<old.IDirectoryValueChanged>);
+    use: TypeOnly<old.IDirectoryValueChanged>): void;
 use_old_InterfaceDeclaration_IDirectoryValueChanged(
     get_current_InterfaceDeclaration_IDirectoryValueChanged());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IDirectoryValueChanged(
 declare function get_old_InterfaceDeclaration_ILocalValue():
     TypeOnly<old.ILocalValue>;
 declare function use_current_InterfaceDeclaration_ILocalValue(
-    use: TypeOnly<current.ILocalValue>);
+    use: TypeOnly<current.ILocalValue>): void;
 use_current_InterfaceDeclaration_ILocalValue(
     get_old_InterfaceDeclaration_ILocalValue());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_ILocalValue(
 declare function get_current_InterfaceDeclaration_ILocalValue():
     TypeOnly<current.ILocalValue>;
 declare function use_old_InterfaceDeclaration_ILocalValue(
-    use: TypeOnly<old.ILocalValue>);
+    use: TypeOnly<old.ILocalValue>): void;
 use_old_InterfaceDeclaration_ILocalValue(
     get_current_InterfaceDeclaration_ILocalValue());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_ILocalValue(
 declare function get_old_InterfaceDeclaration_ISerializableValue():
     TypeOnly<old.ISerializableValue>;
 declare function use_current_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<current.ISerializableValue>);
+    use: TypeOnly<current.ISerializableValue>): void;
 use_current_InterfaceDeclaration_ISerializableValue(
     get_old_InterfaceDeclaration_ISerializableValue());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_ISerializableValue(
 declare function get_current_InterfaceDeclaration_ISerializableValue():
     TypeOnly<current.ISerializableValue>;
 declare function use_old_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<old.ISerializableValue>);
+    use: TypeOnly<old.ISerializableValue>): void;
 use_old_InterfaceDeclaration_ISerializableValue(
     get_current_InterfaceDeclaration_ISerializableValue());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_ISerializableValue(
 declare function get_old_InterfaceDeclaration_ISerializedValue():
     TypeOnly<old.ISerializedValue>;
 declare function use_current_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<current.ISerializedValue>);
+    use: TypeOnly<current.ISerializedValue>): void;
 use_current_InterfaceDeclaration_ISerializedValue(
     get_old_InterfaceDeclaration_ISerializedValue());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_ISerializedValue(
 declare function get_current_InterfaceDeclaration_ISerializedValue():
     TypeOnly<current.ISerializedValue>;
 declare function use_old_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<old.ISerializedValue>);
+    use: TypeOnly<old.ISerializedValue>): void;
 use_old_InterfaceDeclaration_ISerializedValue(
     get_current_InterfaceDeclaration_ISerializedValue());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_ISerializedValue(
 declare function get_old_InterfaceDeclaration_ISharedDirectory():
     TypeOnly<old.ISharedDirectory>;
 declare function use_current_InterfaceDeclaration_ISharedDirectory(
-    use: TypeOnly<current.ISharedDirectory>);
+    use: TypeOnly<current.ISharedDirectory>): void;
 use_current_InterfaceDeclaration_ISharedDirectory(
     get_old_InterfaceDeclaration_ISharedDirectory());
 
@@ -497,7 +497,7 @@ use_current_InterfaceDeclaration_ISharedDirectory(
 declare function get_current_InterfaceDeclaration_ISharedDirectory():
     TypeOnly<current.ISharedDirectory>;
 declare function use_old_InterfaceDeclaration_ISharedDirectory(
-    use: TypeOnly<old.ISharedDirectory>);
+    use: TypeOnly<old.ISharedDirectory>): void;
 use_old_InterfaceDeclaration_ISharedDirectory(
     get_current_InterfaceDeclaration_ISharedDirectory());
 
@@ -509,7 +509,7 @@ use_old_InterfaceDeclaration_ISharedDirectory(
 declare function get_old_InterfaceDeclaration_ISharedDirectoryEvents():
     TypeOnly<old.ISharedDirectoryEvents>;
 declare function use_current_InterfaceDeclaration_ISharedDirectoryEvents(
-    use: TypeOnly<current.ISharedDirectoryEvents>);
+    use: TypeOnly<current.ISharedDirectoryEvents>): void;
 use_current_InterfaceDeclaration_ISharedDirectoryEvents(
     get_old_InterfaceDeclaration_ISharedDirectoryEvents());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_ISharedDirectoryEvents(
 declare function get_current_InterfaceDeclaration_ISharedDirectoryEvents():
     TypeOnly<current.ISharedDirectoryEvents>;
 declare function use_old_InterfaceDeclaration_ISharedDirectoryEvents(
-    use: TypeOnly<old.ISharedDirectoryEvents>);
+    use: TypeOnly<old.ISharedDirectoryEvents>): void;
 use_old_InterfaceDeclaration_ISharedDirectoryEvents(
     get_current_InterfaceDeclaration_ISharedDirectoryEvents());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_ISharedDirectoryEvents(
 declare function get_old_InterfaceDeclaration_ISharedMap():
     TypeOnly<old.ISharedMap>;
 declare function use_current_InterfaceDeclaration_ISharedMap(
-    use: TypeOnly<current.ISharedMap>);
+    use: TypeOnly<current.ISharedMap>): void;
 use_current_InterfaceDeclaration_ISharedMap(
     get_old_InterfaceDeclaration_ISharedMap());
 
@@ -545,7 +545,7 @@ use_current_InterfaceDeclaration_ISharedMap(
 declare function get_current_InterfaceDeclaration_ISharedMap():
     TypeOnly<current.ISharedMap>;
 declare function use_old_InterfaceDeclaration_ISharedMap(
-    use: TypeOnly<old.ISharedMap>);
+    use: TypeOnly<old.ISharedMap>): void;
 use_old_InterfaceDeclaration_ISharedMap(
     get_current_InterfaceDeclaration_ISharedMap());
 
@@ -557,7 +557,7 @@ use_old_InterfaceDeclaration_ISharedMap(
 declare function get_old_InterfaceDeclaration_ISharedMapEvents():
     TypeOnly<old.ISharedMapEvents>;
 declare function use_current_InterfaceDeclaration_ISharedMapEvents(
-    use: TypeOnly<current.ISharedMapEvents>);
+    use: TypeOnly<current.ISharedMapEvents>): void;
 use_current_InterfaceDeclaration_ISharedMapEvents(
     get_old_InterfaceDeclaration_ISharedMapEvents());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_ISharedMapEvents(
 declare function get_current_InterfaceDeclaration_ISharedMapEvents():
     TypeOnly<current.ISharedMapEvents>;
 declare function use_old_InterfaceDeclaration_ISharedMapEvents(
-    use: TypeOnly<old.ISharedMapEvents>);
+    use: TypeOnly<old.ISharedMapEvents>): void;
 use_old_InterfaceDeclaration_ISharedMapEvents(
     get_current_InterfaceDeclaration_ISharedMapEvents());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_ISharedMapEvents(
 declare function get_old_InterfaceDeclaration_IValueChanged():
     TypeOnly<old.IValueChanged>;
 declare function use_current_InterfaceDeclaration_IValueChanged(
-    use: TypeOnly<current.IValueChanged>);
+    use: TypeOnly<current.IValueChanged>): void;
 use_current_InterfaceDeclaration_IValueChanged(
     get_old_InterfaceDeclaration_IValueChanged());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_IValueChanged(
 declare function get_current_InterfaceDeclaration_IValueChanged():
     TypeOnly<current.IValueChanged>;
 declare function use_old_InterfaceDeclaration_IValueChanged(
-    use: TypeOnly<old.IValueChanged>);
+    use: TypeOnly<old.IValueChanged>): void;
 use_old_InterfaceDeclaration_IValueChanged(
     get_current_InterfaceDeclaration_IValueChanged());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_IValueChanged(
 declare function get_old_ClassDeclaration_LocalValueMaker():
     TypeOnly<old.LocalValueMaker>;
 declare function use_current_ClassDeclaration_LocalValueMaker(
-    use: TypeOnly<current.LocalValueMaker>);
+    use: TypeOnly<current.LocalValueMaker>): void;
 use_current_ClassDeclaration_LocalValueMaker(
     get_old_ClassDeclaration_LocalValueMaker());
 
@@ -617,7 +617,7 @@ use_current_ClassDeclaration_LocalValueMaker(
 declare function get_current_ClassDeclaration_LocalValueMaker():
     TypeOnly<current.LocalValueMaker>;
 declare function use_old_ClassDeclaration_LocalValueMaker(
-    use: TypeOnly<old.LocalValueMaker>);
+    use: TypeOnly<old.LocalValueMaker>): void;
 use_old_ClassDeclaration_LocalValueMaker(
     get_current_ClassDeclaration_LocalValueMaker());
 
@@ -629,7 +629,7 @@ use_old_ClassDeclaration_LocalValueMaker(
 declare function get_old_ClassDeclaration_MapFactory():
     TypeOnly<old.MapFactory>;
 declare function use_current_ClassDeclaration_MapFactory(
-    use: TypeOnly<current.MapFactory>);
+    use: TypeOnly<current.MapFactory>): void;
 use_current_ClassDeclaration_MapFactory(
     get_old_ClassDeclaration_MapFactory());
 
@@ -641,7 +641,7 @@ use_current_ClassDeclaration_MapFactory(
 declare function get_current_ClassDeclaration_MapFactory():
     TypeOnly<current.MapFactory>;
 declare function use_old_ClassDeclaration_MapFactory(
-    use: TypeOnly<old.MapFactory>);
+    use: TypeOnly<old.MapFactory>): void;
 use_old_ClassDeclaration_MapFactory(
     get_current_ClassDeclaration_MapFactory());
 
@@ -653,7 +653,7 @@ use_old_ClassDeclaration_MapFactory(
 declare function get_old_ClassDeclaration_SharedDirectory():
     TypeOnly<old.SharedDirectory>;
 declare function use_current_ClassDeclaration_SharedDirectory(
-    use: TypeOnly<current.SharedDirectory>);
+    use: TypeOnly<current.SharedDirectory>): void;
 use_current_ClassDeclaration_SharedDirectory(
     get_old_ClassDeclaration_SharedDirectory());
 
@@ -665,7 +665,7 @@ use_current_ClassDeclaration_SharedDirectory(
 declare function get_current_ClassDeclaration_SharedDirectory():
     TypeOnly<current.SharedDirectory>;
 declare function use_old_ClassDeclaration_SharedDirectory(
-    use: TypeOnly<old.SharedDirectory>);
+    use: TypeOnly<old.SharedDirectory>): void;
 use_old_ClassDeclaration_SharedDirectory(
     get_current_ClassDeclaration_SharedDirectory());
 
@@ -677,7 +677,7 @@ use_old_ClassDeclaration_SharedDirectory(
 declare function get_old_ClassDeclaration_SharedMap():
     TypeOnly<old.SharedMap>;
 declare function use_current_ClassDeclaration_SharedMap(
-    use: TypeOnly<current.SharedMap>);
+    use: TypeOnly<current.SharedMap>): void;
 use_current_ClassDeclaration_SharedMap(
     get_old_ClassDeclaration_SharedMap());
 
@@ -689,6 +689,6 @@ use_current_ClassDeclaration_SharedMap(
 declare function get_current_ClassDeclaration_SharedMap():
     TypeOnly<current.SharedMap>;
 declare function use_old_ClassDeclaration_SharedMap(
-    use: TypeOnly<old.SharedMap>);
+    use: TypeOnly<old.SharedMap>): void;
 use_old_ClassDeclaration_SharedMap(
     get_current_ClassDeclaration_SharedMap());

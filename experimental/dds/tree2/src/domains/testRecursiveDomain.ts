@@ -47,3 +47,17 @@ type _1 = requireTrue<
  * @alpha
  */
 export const library = builder.intoLibrary();
+
+{
+	const b = new SchemaBuilder({ scope: "Test Recursive Domain" });
+	const node = b.objectRecursive("object", {
+		child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node]),
+	});
+	const _field = TreeFieldSchema.createUnsafe(FieldKinds.optional, [node]);
+	// All these cause TSC to "RangeError: Maximum call stack size exceeded"
+	// const _field4 = TreeFieldSchema.create(FieldKinds.optional, [node]);
+	// const _field2 = b.optional(node);
+	// const _field3 = SchemaBuilder.optional(node);
+	// const schema = b.intoSchema(field);
+	// const schema = b.intoSchema(_field);
+}

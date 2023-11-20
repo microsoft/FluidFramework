@@ -24,8 +24,9 @@ import {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	throwOnTombstoneLoadKey,
+	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
+	gcThrowOnTombstoneLoadOptionName,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
@@ -168,8 +169,13 @@ export function generateGCConfigs(
 		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
 		createParams.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 	);
+
+	const throwOnTombstoneLoadConfig =
+		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
+		createParams.gcOptions[gcThrowOnTombstoneLoadOptionName] ??
+		false;
 	const throwOnTombstoneLoad =
-		mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
+		throwOnTombstoneLoadConfig &&
 		tombstoneEnforcementAllowed &&
 		!createParams.isSummarizerClient;
 	const throwOnTombstoneUsage =

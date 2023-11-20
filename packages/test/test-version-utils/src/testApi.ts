@@ -4,7 +4,7 @@
  */
 
 // Driver API
-import { DriverApi } from "@fluid-internal/test-drivers";
+import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
 import { Loader } from "@fluidframework/container-loader";
@@ -36,7 +36,7 @@ import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
 	ensureInstalled,
-	getRequestedRange,
+	getRequestedVersion,
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
@@ -70,7 +70,11 @@ export const ensurePackageInstalled = async (
 	version: number | string,
 	force: boolean,
 ): Promise<InstalledPackage | undefined> => {
-	const pkg = await ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
+	const pkg = await ensureInstalled(
+		getRequestedVersion(baseVersion, version),
+		packageList,
+		force,
+	);
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
@@ -119,7 +123,7 @@ const DataRuntimeApi = {
 };
 
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -138,7 +142,7 @@ async function loadContainerRuntime(
 	baseVersion: string,
 	requested?: number | string,
 ): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -158,7 +162,7 @@ async function loadContainerRuntime(
 }
 
 async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -220,7 +224,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 }
 
 async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -279,7 +283,7 @@ function throwNotFound(layer: string, version: string): never {
 }
 
 export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -295,7 +299,7 @@ export function getContainerRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
 ): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -307,7 +311,7 @@ export function getDataRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
 ): typeof DataRuntimeApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -316,7 +320,7 @@ export function getDataRuntimeApi(
 }
 
 export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {

@@ -17,8 +17,9 @@ import {
 import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
 import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
+import { StampDeltaConnection } from "./shimDeltaConnection.js";
 import { ShimHandle } from "./shimHandle.js";
 import { type IShim } from "./types.js";
 
@@ -27,8 +28,8 @@ import { type IShim } from "./types.js";
  *
  * @remarks
  *
- * Its sole responsibility should be to drop v1 &
- * migrate ops. It should not be responsible for any other migration logic. This should make the class easier to reason
+ * Its sole responsibility should be to drop v1 & migrate ops. It should not be responsible for any other migration
+ * logic. This should make the classes easier to reason about.
  * about.
  *
  * @internal
@@ -39,12 +40,12 @@ export class SharedTreeShim implements IShim {
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly sharedTreeFactory: SharedTreeFactory,
 	) {
-		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler();
+		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 		this.handle = new ShimHandle<SharedTreeShim>(this);
 	}
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
-	private services?: ShimChannelServices;
+	private services?: IChannelServices;
 	private _currentTree?: ISharedTree;
 	public get currentTree(): ISharedTree {
 		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
@@ -52,7 +53,6 @@ export class SharedTreeShim implements IShim {
 	}
 
 	public get attributes(): IChannelAttributes {
-		// TODO: investigate if we need to add the shim attributes to denote the transition from v1 -> v2 with v1 ops -> v2 ops
 		return this.currentTree.attributes;
 	}
 
@@ -84,7 +84,6 @@ export class SharedTreeShim implements IShim {
 		return this.currentTree.isAttached();
 	}
 	public connect(services: IChannelServices): void {
-		// TODO: wrap services before passing it down to currentTree with the appropriate IDeltaHandler.
 		const shimServices = this.generateShimServicesOnce(services);
 		return this.currentTree.connect(shimServices);
 	}
@@ -106,14 +105,21 @@ export class SharedTreeShim implements IShim {
 	}
 
 	public create(): void {
-		// TODO: Should we be allowing the creation of legacy shared trees?
 		this._currentTree = this.sharedTreeFactory.create(this.runtime, this.id);
 	}
 
-	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
+	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(this.services === undefined, 0x7ee /* Already connected */);
-		this.services = new ShimChannelServices(services, this.newTreeShimDeltaHandler);
-		return this.services;
+		this.services = services;
+		const shimServices = {
+			objectStorage: this.services.objectStorage,
+			deltaConnection: new StampDeltaConnection(
+				this.services.deltaConnection,
+				this.newTreeShimDeltaHandler,
+				this.sharedTreeFactory.attributes,
+			),
+		};
+		return shimServices;
 	}
 
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {

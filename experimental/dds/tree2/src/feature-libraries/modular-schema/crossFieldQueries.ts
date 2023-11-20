@@ -5,9 +5,9 @@
 
 import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
-	RangeEntry,
 	RangeMap,
-	getFirstFromRangeMap,
+	RangeQueryResult,
+	getFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util";
@@ -39,8 +39,8 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeEntry<T> | undefined {
-	return getFirstFromRangeMap(map.get(revision) ?? [], id, count);
+): RangeQueryResult<T> {
+	return getFromRangeMap(map.get(revision) ?? [], id, count);
 }
 
 /**
@@ -67,12 +67,12 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeEntry<T> | undefined;
+	): RangeQueryResult<T>;
 
 	/**
-	 * If there is no data for this key, sets the value to `newValue`, then returns the data for this key.
+	 * Sets the range of keys to `newValue`.
 	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
-	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose` as appropriate.
+	 * and will be given a chance to address the new data in `amendCompose`, or a second pass of `rebase` or `invert` as appropriate.
 	 */
 	set(
 		target: CrossFieldTarget,

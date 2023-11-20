@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { delay } from "@fluidframework/core-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
 import {
 	benchmarkAll,
 	createDocument,

@@ -178,7 +178,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-internal/getkeys",
 			"@fluidframework/test-tools",
-			"tinylicious",
 		]);
 	});
 

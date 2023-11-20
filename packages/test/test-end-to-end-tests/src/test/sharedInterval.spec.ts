@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -20,7 +20,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
