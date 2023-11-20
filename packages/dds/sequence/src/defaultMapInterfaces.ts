@@ -143,7 +143,9 @@ export interface IValueOperation<T> {
 		value: T,
 		op: IValueTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
-	): { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata };
+	):
+		| { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata }
+		| undefined;
 }
 
 /**
@@ -229,5 +231,5 @@ export interface IValueTypeOperationValue {
 	/**
 	 * The payload that is submitted along with the operation.
 	 */
-	value: SerializedIntervalDelta | undefined;
+	value: SerializedIntervalDelta;
 }

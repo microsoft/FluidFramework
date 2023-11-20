@@ -411,12 +411,11 @@ export class DefaultMap<T> {
 				assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
 
 				const handler = localValue.getOpHandler(op.value.opName);
-				const { rebasedOp, rebasedLocalOpMetadata } = handler.rebase(
-					localValue.value,
-					op.value,
-					localOpMetadata,
-				);
-				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+				const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
+				if (rebased !== undefined) {
+					const { rebasedOp, rebasedLocalOpMetadata } = rebased;
+					this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+				}
 			},
 			getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
 				assert(

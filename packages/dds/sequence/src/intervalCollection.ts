@@ -570,8 +570,10 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		localOpMetadata,
 	) => {
 		const { localSeq } = localOpMetadata;
-		assert(op.value !== undefined, "op must have value");
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+		if (rebasedValue === undefined) {
+			return undefined;
+		}
 		const rebasedOp = { ...op, value: rebasedValue };
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
