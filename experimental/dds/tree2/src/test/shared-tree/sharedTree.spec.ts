@@ -801,7 +801,7 @@ describe("SharedTree", () => {
 
 		/**
 		 * the collab window includes all sequenced edits after the minimum sequence number
-		 * these tests test that undoing edits behind (i.e., with a seq# < to) the minimum sequence number works
+		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
 		 */
 		it("out of collab window", () => {
 			const provider = new TestTreeProviderLite(2);
@@ -826,26 +826,25 @@ describe("SharedTree", () => {
 			root1.removeAt(0);
 
 			provider.processMessages();
-			const minimumSequenceNumber = provider.minimumSequenceNumber;
+			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
 			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
 
-			// some more inserts and deletes on the second tree
-			for (let i = 0; i < 5; i++) {
-				root2.insertAt(3, ["y"]);
-				root2.removeAt(3);
-			}
+			// send edits to move the collab window up
+			root2.insertAt(3, ["y"]);
 			provider.processMessages();
-
-			// send edits from the first tree to move the collab window up
-			root1.insertAt(3, ["y"]);
+			root1.removeAt(3);
+			provider.processMessages();
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
 			root1.removeAt(3);
 			provider.processMessages();
 
 			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
 			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
 
-			assert(minimumSequenceNumber < provider.minimumSequenceNumber);
+			// ensure the remove is out of the collab window
+			assert(removeSequenceNumber < provider.minimumSequenceNumber);
 			undoStack[0]?.revert();
 
 			provider.processMessages();
