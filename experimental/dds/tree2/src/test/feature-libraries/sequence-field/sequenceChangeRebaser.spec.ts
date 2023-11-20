@@ -354,51 +354,230 @@ describe("SequenceField - Rebaser Axioms", () => {
 	});
 });
 
-type SequenceFieldTestState = FieldStateTree<number[] | undefined, TestChangeset>;
+type SequenceFieldTestState = FieldStateTree<number, TestChangeset>;
 
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<number[] | undefined, TestChangeset> = function* (
+const generateChildStates: ChildStateGenerator<number, TestChangeset> = function* (
 	state: SequenceFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
 	const intention = mintIntention();
-	if (state.content === undefined) {
-		yield {
-			content: [1],
-			mostRecentEdit: {
-				changeset: tagChange(Change.insert(0, 1, 1), tagFromIntention(intention)),
-				intention,
-				description: `Insert`,
-			},
-			parent: state,
-		};
-	}
 
-	const another = mintIntention();
+	// Insert
 	yield {
-		content: [1, 2],
+		content: state.content + 1,
 		mostRecentEdit: {
-			changeset: tagChange(Change.insert(1, 1, 2), tagFromIntention(another)),
-			intention: another,
-			description: `AnotherInsert`,
+			changeset: tagChange(Change.insert(state.content, 2, 42), tagFromIntention(intention)),
+			intention,
+			description: `InsertAt${state.content}`,
 		},
 		parent: state,
 	};
+
+	/*
+	// Nested change
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				Change.modify(state.content, TestChange.mint([], 1)),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `NestedChangeAt${state.content}`,
+		},
+		parent: state,
+	};
+
+	// Nested Change Under Removed Node
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				[
+					...(state.content > 0 ? [{ count: state.content }] : []),
+					Mark.modify(TestChange.mint([], 1), {
+						revision: tag1,
+						localId: brand(state.content),
+						adjacentCells: generateAdjacentCells(4),
+					}),
+				],
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `NestedChangeUnderRemovedNodeAt${state.content}`,
+		},
+		parent: state,
+	};
+
+	// Modify and Insert
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				composeAnonChanges([
+					Change.insert(state.content, 1, 42),
+					Change.modify(state.content, TestChange.mint([], 2)),
+				]),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `ModifyAndInsertAt${state.content}`,
+		},
+	};
+
+	// Transient insert
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				composeAnonChanges([
+					Change.insert(state.content, 1),
+					Change.delete(state.content, 1),
+				]),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `TransientInsertAt${state.content}`,
+		},
+	};
+
+	// Delete
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(Change.delete(state.content, 2), tagFromIntention(intention)),
+			intention,
+			description: `DeleteAt${state.content}`,
+		},
+	};
+
+	// Revive
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				Change.revive(2, 2, {
+					revision: tag1,
+					localId: brand(state.content),
+					adjacentCells: generateAdjacentCells(4),
+				}),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `ReviveAt${state.content}`,
+		},
+	};
+
+	// Transient Revive
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				composeAnonChanges([
+					Change.revive(state.content, 1, {
+						revision: tag1,
+						localId: brand(0),
+					}),
+					Change.delete(state.content, 1),
+				]),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `TransientReviveAt${state.content}`,
+		},
+	};
+
+	// Conflicted Revive
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				Change.redundantRevive(2, 2, { revision: tag2, localId: brand(state.content) }),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `ConflictedReviveAt${state.content}`,
+		},
+	};
+
+	// Move Out
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(Change.move(state.content, 2, 1), tagFromIntention(intention)),
+			intention,
+			description: `MoveOutAt${state.content}`,
+		},
+	};
+
+	// Move In
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(Change.move(1, 2, state.content), tagFromIntention(intention)),
+			intention,
+			description: `MoveInAt${state.content}`,
+		},
+	};
+
+	// Return From
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				Change.return(state.content, 2, 1, {
+					revision: tag4,
+					localId: brand(state.content),
+					adjacentCells: generateAdjacentCells(4),
+				}),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `ReturnFromAt${state.content}`,
+		},
+	};
+
+	// Return To
+	yield {
+		content: state.content + 1,
+		mostRecentEdit: {
+			changeset: tagChange(
+				Change.return(1, 2, state.content, {
+					revision: tag4,
+					localId: brand(state.content),
+					adjacentCells: generateAdjacentCells(4),
+				}),
+				tagFromIntention(intention),
+			),
+			intention,
+			description: `ReturnToAt${state.content}`,
+		},
+	};
+	*/
 };
 
 describe.only("SequenceField - State-based Rebaser Axioms", () => {
-	runExhaustiveComposeRebaseSuite([{ content: undefined }], generateChildStates, {
-		rebase,
-		invert,
-		compose: (changes, metadata) => compose(changes),
-		rebaseComposed: (metadata, change, ...baseChanges) => {
-			const composedChanges = compose(baseChanges);
-			return rebase(change, makeAnonChange(composedChanges));
+	runExhaustiveComposeRebaseSuite(
+		[{ content: 0 }],
+		generateChildStates,
+		{
+			rebase,
+			invert,
+			compose: (changes, metadata) => compose(changes),
+			rebaseComposed: (metadata, change, ...baseChanges) => {
+				const composedChanges = compose(baseChanges);
+				return rebase(change, makeAnonChange(composedChanges));
+			},
 		},
-	});
+		{
+			numberOfEditsToRebase: 2,
+			numberOfEditsToRebaseOver: 2,
+		},
+	);
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {
