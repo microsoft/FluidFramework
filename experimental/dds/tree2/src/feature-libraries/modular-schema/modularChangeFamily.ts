@@ -23,7 +23,6 @@ import {
 	isEmptyFieldChanges,
 	ITreeCursor,
 	ChangeAtomIdMap,
-	JsonableTree,
 	makeDetachedNodeId,
 	emptyDelta,
 	ITreeCursorSynchronous,
@@ -41,8 +40,14 @@ import {
 	isReadonlyArray,
 	Mutable,
 } from "../../util";
-import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
+import {
+	EncodedChunk,
+	chunkTree,
+	decode,
+	defaultChunkPolicy,
+	uncompressedEncode,
+} from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -70,13 +75,6 @@ import {
 	NodeExistsConstraint,
 	RevisionInfo,
 } from "./modularChangeTypes";
-import {
-	EncodedChunk,
-	chunkTree,
-	decode,
-	defaultChunkPolicy,
-	uncompressedEncode,
-} from "../chunked-forest";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
