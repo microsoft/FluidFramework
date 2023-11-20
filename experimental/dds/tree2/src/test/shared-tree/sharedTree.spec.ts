@@ -822,7 +822,7 @@ describe("SharedTree", () => {
 			const root1 = tree1.editableTree;
 			const root2 = tree2.editableTree;
 
-			// insert in first tree
+			// remove in first tree
 			root1.removeAt(0);
 
 			provider.processMessages();
