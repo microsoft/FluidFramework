@@ -172,11 +172,30 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
-      
+
       # Install / Build / Test Stage
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
+        variables:
+          # We use 'chalk' to colorize output, which auto-detects color support in the
+          # running terminal. The log output shown in Azure DevOps job runs only has
+          # basic ANSI color support though, so force that in the pipeline
+          - name: FORCE_COLOR
+            value: 1
+          - template: /tools/pipelines/templates/1ES/include-vars.yml@self
+            parameters:
+              publishOverride: '${{ parameters.publishOverride }}'
+              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+              buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+              nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+          # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
+          # places in the pipeline to push custom telemetry to Kusto.
+          - name: absolutePathToTelemetryGenerator
+            value: $(Build.SourcesDirectory)/tools/telemetry-generator
+            readonly: true
+          - group: ado-feeds
+
         jobs:
           # Job - Build
           - job: build
@@ -283,7 +302,7 @@ extends:
                         exit -1;
                       fi
                     fi
-              
+
               - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
               - template: /tools/pipelines/templates/1ES/include-install.yml@self
                 parameters:
@@ -303,26 +322,26 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
-              
+
               - template: /tools/pipelines/templates/1ES/include-build-lint.yml@self
                 parameters:
                   taskBuild: '${{ parameters.taskBuild }}'
                   taskLint: '${{ parameters.taskLint }}'
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
-              
+
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
                   # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
                   - script: |
                       echo "##vso[task.setvariable variable=startTest]true"
                     displayName: Start Test
-                  
+
                   - ${{ each taskTestStep in parameters.taskTest }}:
                       - template: /tools/pipelines/templates/1ES/include-test-task.yml@self
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                  
+
                   # Test - Upload coverage results
                   # Some webpacked file using externals introduce file name with quotes in them
                   # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
@@ -352,7 +371,7 @@ extends:
                           reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                  
+
                   # Here we wanted to publish tinylicious.log artifact, but as part of 1ES migration
                   # It is now part of templateContext below.
                   - template: /tools/pipelines/templates/1ES/include-process-test-results.yml@self
@@ -426,7 +445,7 @@ extends:
                             echo "Report Size:"
                             ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
-              
+
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
                   - task: Npm@1
@@ -435,7 +454,7 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
-              
+
               # Here we wanted to publish docs artifact, but as part of 1ES migration
               # it is now part of templateContext below.
               - ${{ if eq(parameters.packageManager, 'pnpm') }}:
@@ -450,7 +469,7 @@ extends:
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
                       git checkout HEAD -- pnpm-lock.yaml
-                
+
                 # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
                 - task: Bash@3
                   displayName: Prune pnpm store
@@ -459,7 +478,7 @@ extends:
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
                       pnpm store prune
-              
+
               - task: Bash@3
                 displayName: Check for extraneous modified files
                 inputs:
@@ -471,11 +490,11 @@ extends:
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
                       exit -1;
                     fi
-              
+
               # This additional build step is used to run step not part of the main build. In build client pipeline,
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
-            
+
             templateContext:
               outputs:
                 - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
@@ -487,20 +506,20 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
                       continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-                
+
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - pack
                       targetPath: $(Build.ArtifactStagingDirectory)/pack
                       artifactName: pack
                       publishLocation: pipeline
-                
+
                     - output: pipelineArtifact
                       displayName: Publish Artifact - Test Files
                       targetPath: $(Build.ArtifactStagingDirectory)/test-files
                       artifactName: test-files
                       publishLocation: pipeline
-                
+
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
@@ -508,14 +527,14 @@ extends:
                       targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
                       artifactname: bundleAnalysis
                       publishLocation: Container
-                
+
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
                       targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
                       artifactName: _api-extractor-temp
                       publishLocation: pipeline
-          
+
           # Job - Component detection
           - ${{ if eq(variables.componentDetection, true) }}:
               - job: CG
@@ -534,7 +553,7 @@ extends:
                       verbosity: Verbose
                       scanType: Register
                       alertWarningLevel: High
-      
+
       # Publish stage
       - ${{ if eq(variables.publish, true) }}:
           - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
@@ -543,7 +562,11 @@ extends:
               tagName: '${{ parameters.tagName }}'
               isReleaseGroup: ${{ parameters.isReleaseGroup }}
               publishNonScopedPackages: '${{ variables.publishNonScopedPackages }}'
-      
+              publishOverride: '${{ parameters.publishOverride }}'
+              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+              buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+              nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+
       # Capture per-pipeline stage results
       - stage: upload_run_telemetry
         displayName: Upload pipeline run telemetry to Kusto
@@ -557,6 +580,11 @@ extends:
             variables:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
+              # places in the pipeline to push custom telemetry to Kusto.
+              - name: absolutePathToTelemetryGenerator
+                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
             steps:
               - template: /tools/pipelines/templates/1ES/include-telemetry-setup.yml@self
                 parameters:

@@ -117,8 +117,6 @@ pr:
     - tools/pipelines/templates/1ES/include-use-node-version.yml
     - tools/pipelines/templates/1ES/include-process-test-results.yml
     - scripts/*
-variables:
-- template: Variables.yml@self
 
 extends:
   template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
