@@ -1424,7 +1424,7 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 // @alpha
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type PrimitiveValue = string | boolean | number;
 
 // @alpha
