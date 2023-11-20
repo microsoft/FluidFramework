@@ -251,7 +251,6 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("boxedAt", () => {
-			// Invalid to request the value if there isn't one.
 			assert.equal(field.boxedAt(0), undefined);
 		});
 
