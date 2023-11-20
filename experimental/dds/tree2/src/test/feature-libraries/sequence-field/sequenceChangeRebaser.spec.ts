@@ -62,9 +62,12 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"MInsert",
 		(i) =>
-			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
+			composeAnonChanges([
+				Change.insert(i, 1, brand(42)),
+				Change.modify(i, TestChange.mint([], 2)),
+			]),
 	],
-	["Insert", (i) => Change.insert(i, 2, 42)],
+	["Insert", (i) => Change.insert(i, 2, brand(42))],
 	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
