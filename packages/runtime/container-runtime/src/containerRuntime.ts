@@ -963,7 +963,7 @@ export class ContainerRuntime
 	}
 
 	public readonly options: ILoaderOptions;
-	private waitBlobsToAttach: boolean | undefined;
+	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -2607,7 +2607,7 @@ export class ContainerRuntime
 		return (
 			this.connected &&
 			!this.innerDeltaManager.readOnlyInfo.readonly &&
-			!this.waitBlobsToAttach
+			!this.imminentClosure
 		);
 	}
 
@@ -3968,7 +3968,7 @@ export class ContainerRuntime
 			},
 			async (event) => {
 				this.verifyNotClosed();
-				this.waitBlobsToAttach = props?.notifyImminentClosure;
+				this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
 				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
@@ -3977,7 +3977,7 @@ export class ContainerRuntime
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
-				const pendingAttachmentBlobs = this.waitBlobsToAttach
+				const pendingAttachmentBlobs = this.imminentClosure
 					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();
