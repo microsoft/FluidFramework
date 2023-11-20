@@ -889,6 +889,7 @@ function modifyChildren<T extends TreeNode>(
 ): void {
 	const offNextChange = parent[onNextChange](() => after?.(parent));
 	modify(parent);
+
 	// `onNextChange` unsubscribes itself after firing once. However, there is no guarantee that it will fire.
 	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
 	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
