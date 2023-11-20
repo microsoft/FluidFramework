@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable tsdoc/syntax */
 
 import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -391,7 +390,7 @@ interface SequenceData {
 /**
  * A utility class for tracking associations between keys and their creation indices.
  * This is relevant to support map iteration in insertion order, see
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/@@iterator
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/%40%40iterator
  *
  * TODO: It can be combined with the creation tracker utilized in SharedMap
  */
