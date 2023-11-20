@@ -297,15 +297,19 @@ export function isNewFileInfo(
 	return fileInfo.type === undefined || fileInfo.type === "New";
 }
 
-/**
- * @public
- */
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
 	assert(
 		(resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true,
 		0x1de /* "Not an ODSP resolved url" */,
 	);
 	return resolvedUrl as IOdspResolvedUrl;
+}
+
+/**
+ * @public
+ */
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl;
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>

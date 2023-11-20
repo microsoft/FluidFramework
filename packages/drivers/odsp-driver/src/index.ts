@@ -56,6 +56,6 @@ export {
 	IPrefetchSnapshotContents,
 } from "./odspCache";
 export { ICacheAndTracker, type EpochTracker, FetchType, FetchTypeInternal } from "./epochTracker";
-export { IOdspResponse, getOdspResolvedUrl } from "./odspUtils";
+export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils";
 export { SnapshotFormatSupportType } from "./fetchSnapshot";
 export { ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";

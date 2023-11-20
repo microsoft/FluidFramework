@@ -9,7 +9,7 @@ import {
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
-	getOdspResolvedUrl,
+	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver";
 import {
 	type ContainerSchema,
@@ -163,10 +163,11 @@ export class OdspClient {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
 
-			if (container.resolvedUrl === undefined) {
+			const resolvedUrl = container.resolvedUrl;
+
+			if (resolvedUrl === undefined || !isOdspResolvedUrl(resolvedUrl)) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			const resolvedUrl = getOdspResolvedUrl(container.resolvedUrl);
 			await container.attach(createNewRequest);
 
 			/**
