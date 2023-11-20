@@ -48,26 +48,26 @@ use_old_InterfaceDeclaration_ContainerSchema(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"forwardCompat": false}
+* "ClassDeclaration_DOProviderContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DOProviderContainerRuntimeFactory():
     TypeOnly<old.DOProviderContainerRuntimeFactory>;
-declare function use_current_RemovedClassDeclaration_DOProviderContainerRuntimeFactory(
+declare function use_current_ClassDeclaration_DOProviderContainerRuntimeFactory(
     use: TypeOnly<current.DOProviderContainerRuntimeFactory>): void;
-use_current_RemovedClassDeclaration_DOProviderContainerRuntimeFactory(
+use_current_ClassDeclaration_DOProviderContainerRuntimeFactory(
     get_old_ClassDeclaration_DOProviderContainerRuntimeFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"backCompat": false}
+* "ClassDeclaration_DOProviderContainerRuntimeFactory": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_DOProviderContainerRuntimeFactory():
+declare function get_current_ClassDeclaration_DOProviderContainerRuntimeFactory():
     TypeOnly<current.DOProviderContainerRuntimeFactory>;
 declare function use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
     use: TypeOnly<old.DOProviderContainerRuntimeFactory>): void;
 use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
-    get_current_RemovedClassDeclaration_DOProviderContainerRuntimeFactory());
+    get_current_ClassDeclaration_DOProviderContainerRuntimeFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -96,26 +96,26 @@ use_old_TypeAliasDeclaration_DataObjectClass(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_FluidContainer": {"forwardCompat": false}
+* "ClassDeclaration_FluidContainer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidContainer():
     TypeOnly<old.FluidContainer>;
-declare function use_current_RemovedClassDeclaration_FluidContainer(
+declare function use_current_ClassDeclaration_FluidContainer(
     use: TypeOnly<current.FluidContainer>): void;
-use_current_RemovedClassDeclaration_FluidContainer(
+use_current_ClassDeclaration_FluidContainer(
     get_old_ClassDeclaration_FluidContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_FluidContainer": {"backCompat": false}
+* "ClassDeclaration_FluidContainer": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_FluidContainer():
+declare function get_current_ClassDeclaration_FluidContainer():
     TypeOnly<current.FluidContainer>;
 declare function use_old_ClassDeclaration_FluidContainer(
     use: TypeOnly<old.FluidContainer>): void;
 use_old_ClassDeclaration_FluidContainer(
-    get_current_RemovedClassDeclaration_FluidContainer());
+    get_current_ClassDeclaration_FluidContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -432,26 +432,26 @@ use_old_TypeAliasDeclaration_Myself(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ServiceAudience": {"forwardCompat": false}
+* "ClassDeclaration_ServiceAudience": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ServiceAudience():
     TypeOnly<old.ServiceAudience>;
-declare function use_current_RemovedClassDeclaration_ServiceAudience(
+declare function use_current_ClassDeclaration_ServiceAudience(
     use: TypeOnly<current.ServiceAudience>): void;
-use_current_RemovedClassDeclaration_ServiceAudience(
+use_current_ClassDeclaration_ServiceAudience(
     get_old_ClassDeclaration_ServiceAudience());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ServiceAudience": {"backCompat": false}
+* "ClassDeclaration_ServiceAudience": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_ServiceAudience():
+declare function get_current_ClassDeclaration_ServiceAudience():
     TypeOnly<current.ServiceAudience>;
 declare function use_old_ClassDeclaration_ServiceAudience(
     use: TypeOnly<old.ServiceAudience>): void;
 use_old_ClassDeclaration_ServiceAudience(
-    get_current_RemovedClassDeclaration_ServiceAudience());
+    get_current_ClassDeclaration_ServiceAudience());
 
 /*
 * Validate forward compat by using old type in place of current type

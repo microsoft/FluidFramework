@@ -24,26 +24,26 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_AzureAudience": {"forwardCompat": false}
+* "ClassDeclaration_AzureAudience": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AzureAudience():
     TypeOnly<old.AzureAudience>;
-declare function use_current_RemovedClassDeclaration_AzureAudience(
+declare function use_current_ClassDeclaration_AzureAudience(
     use: TypeOnly<current.AzureAudience>): void;
-use_current_RemovedClassDeclaration_AzureAudience(
+use_current_ClassDeclaration_AzureAudience(
     get_old_ClassDeclaration_AzureAudience());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_AzureAudience": {"backCompat": false}
+* "ClassDeclaration_AzureAudience": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_AzureAudience():
+declare function get_current_ClassDeclaration_AzureAudience():
     TypeOnly<current.AzureAudience>;
 declare function use_old_ClassDeclaration_AzureAudience(
     use: TypeOnly<old.AzureAudience>): void;
 use_old_ClassDeclaration_AzureAudience(
-    get_current_RemovedClassDeclaration_AzureAudience());
+    get_current_ClassDeclaration_AzureAudience());
 
 /*
 * Validate forward compat by using old type in place of current type
