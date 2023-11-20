@@ -170,25 +170,21 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| FlexTreeOptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						if (content === undefined) {
-							typedField.content = undefined;
-						} else {
-							const cursor = cursorFromNodeData(
-								content,
-								editNode.context,
-								fieldSchema.types,
-							);
-							modifyChildren(
-								editNode,
-								() => {
-									typedField.content = cursor;
-								},
-								() => hydrateProxies(typedField.boxedContent),
-							);
-						}
-
+						const cursor = cursorFromNodeData(
+							content,
+							editNode.context,
+							fieldSchema.types,
+						);
+						modifyChildren(
+							editNode,
+							() => {
+								typedField.content = cursor;
+							},
+							() => hydrateProxies(typedField.boxedContent),
+						);
 						break;
 					}
+
 					default:
 						fail("invalid FieldKind");
 				}
@@ -644,21 +640,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			if (content === undefined) {
-				node.set(key, undefined);
-			} else {
-				const cursor = cursorFromNodeData(
-					content,
-					node.context,
-					node.schema.mapFields.types,
-				);
-				modifyChildren(
-					node,
-					(mapNode) => mapNode.set(key, cursor),
-					(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
-				);
-			}
-
+			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
+			modifyChildren(
+				node,
+				(mapNode) => mapNode.set(key, cursor),
+				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
+			);
 			return this;
 		},
 	},
