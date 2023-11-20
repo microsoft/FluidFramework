@@ -401,7 +401,7 @@ describe("LazySequence", () => {
 		assert.equal(boxedResultNeg1.value, 42);
 
 		assert.equal(sequence.boxedAt(2), undefined);
-		assert.equal(sequence.boxedAt(-2), undefined);
+		assert.equal(sequence.boxedAt(-2).value, 37);
 	});
 
 	it("length", () => {

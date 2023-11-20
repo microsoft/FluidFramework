@@ -222,7 +222,7 @@ describe("SharedTreeList", () => {
 		itWithRoot("at() with negative", schema, [{ id: "B" }], (list) => {
 			assert.equal(list.at(-1), list[0]);
 			const newItem = obj.create({ id: "C" });
-			list.insertAt(1, [newItem]);
+			list.insertAt(1, newItem);
 			assert.equal(list.at(-1), list[1]);
 			assert.equal(list.at(-1), list.at(1));
 			assert.equal(list.at(-1), newItem);
