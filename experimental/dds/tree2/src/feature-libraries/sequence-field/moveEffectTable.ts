@@ -115,7 +115,7 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 
 	const adjusted = { ...effect, basis: newBasis };
 	const basisShift = newBasis - effect.basis;
-	assert(basisShift > 0, "Expected basis shift to be positive");
+	assert(basisShift > 0, 0x812 /* Expected basis shift to be positive */);
 
 	if (effect.endpoint !== undefined) {
 		adjusted.endpoint = {
@@ -315,7 +315,7 @@ export function applyMoveEffectsToMark<T>(
 				if (newFirstChanges !== undefined) {
 					assert(
 						composeChildren !== undefined,
-						"Must provide a change composer if modifying moves",
+						0x813 /* Must provide a change composer if modifying moves */,
 					);
 					firstMark.changes = composeChildren(firstMark.changes, newFirstChanges);
 				}
@@ -352,7 +352,7 @@ export function applyMoveEffectsToMark<T>(
 			if (newChanges !== undefined) {
 				assert(
 					composeChildren !== undefined,
-					"Must provide a change composer if modifying moves",
+					0x814 /* Must provide a change composer if modifying moves */,
 				);
 				newMark.changes = composeChildren(mark.changes, newChanges);
 			}
@@ -479,7 +479,7 @@ function getEndpoint(
 	consumeEffect: boolean = true,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, "Expected effect to cover entire mark");
+	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
 	if (effect.value?.endpoint === undefined) {
 		return undefined;
 	}

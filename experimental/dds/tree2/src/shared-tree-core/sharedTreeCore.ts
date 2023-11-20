@@ -100,7 +100,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
 		this.editManager = new EditManager(changeFamily, localSessionId);
-		this.editManager.localBranch.on("change", (args) => {
+		this.editManager.localBranch.on("afterChange", (args) => {
 			const { type } = args;
 			switch (type) {
 				case "append":

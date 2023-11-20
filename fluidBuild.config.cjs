@@ -157,8 +157,10 @@ module.exports = {
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
+				"^packages/dds/.*/package.json",
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
+				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
