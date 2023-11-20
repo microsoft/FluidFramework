@@ -27,13 +27,21 @@ export interface ContainerSchema {
 }
 
 // @public (undocumented)
-export function createDOProviderContainerRuntimeFactory(schema: ContainerSchema): IRuntimeFactory;
+export function createDOProviderContainerRuntimeFactory(props: {
+    schema: ContainerSchema;
+}): IRuntimeFactory;
 
 // @public (undocumented)
-export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(container: IContainer, rootDataObject: IRootDataObject): IFluidContainer<TContainerSchema>;
+export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
+    container: IContainer;
+    rootDataObject: IRootDataObject;
+}): IFluidContainer<TContainerSchema>;
 
 // @public (undocumented)
-export function createServiceAudience<M extends IMember = IMember>(container: IContainer, createServiceMember: (audienceMember: IClient) => M): IServiceAudience<M>;
+export function createServiceAudience<M extends IMember = IMember>(props: {
+    container: IContainer;
+    createServiceMember: (audienceMember: IClient) => M;
+}): IServiceAudience<M>;
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {

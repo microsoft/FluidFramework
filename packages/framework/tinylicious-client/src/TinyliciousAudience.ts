@@ -22,11 +22,11 @@ export class TinyliciousAudience
 	 * @internal
 	 */
 	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
-		return createTinyliciousAudienceServiceMember(audienceMember);
+		return createTinyliciousAudienceMember(audienceMember);
 	}
 }
 
-export function createTinyliciousAudienceServiceMember(audienceMember: IClient): TinyliciousMember {
+export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
 	const tinyliciousUser = audienceMember.user as TinyliciousUser;
 	assert(
 		tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",

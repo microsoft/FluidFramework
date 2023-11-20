@@ -189,7 +189,10 @@ export class AzureClient {
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
 		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
-		const fluidContainer = createFluidContainer<TContainerSchema>(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -232,12 +235,15 @@ export class AzureClient {
 
 	private getContainerServices(container: IContainer): AzureContainerServices {
 		return {
-			audience: createServiceAudience(container, createAzureAudienceMember),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createAzureAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -290,7 +296,10 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = createFluidContainer<TContainerSchema>(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}

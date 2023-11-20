@@ -109,13 +109,13 @@ export class OdspClient {
 
 		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = createFluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
 
-	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -174,7 +174,7 @@ export class OdspClient {
 			 */
 			return absoluteUrl;
 		};
-		const fluidContainer = createFluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
@@ -194,7 +194,10 @@ export class OdspClient {
 
 		return {
 			tenantAttributes: getAttributes,
-			audience: createServiceAudience(container, createOdspAudienceMember),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createOdspAudienceMember,
+			}),
 		};
 	}
 }

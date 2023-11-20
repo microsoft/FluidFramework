@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
-import { createTinyliciousAudienceServiceMember } from "./TinyliciousAudience";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -91,7 +91,10 @@ export class TinyliciousClient {
 			return container.resolvedUrl.id;
 		};
 
-		const fluidContainer = createFluidContainer<TContainerSchema>(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 
 		const services = this.getContainerServices(container);
@@ -114,7 +117,10 @@ export class TinyliciousClient {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
-		const fluidContainer = createFluidContainer<TContainerSchema>(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -122,12 +128,17 @@ export class TinyliciousClient {
 	// #region private
 	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
-			audience: createServiceAudience(container, createTinyliciousAudienceServiceMember),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createTinyliciousAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema) {
-		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema) {
+		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: containerRuntimeFactory },

@@ -8,11 +8,11 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
-export function createServiceAudience<M extends IMember = IMember>(
-	container: IContainer,
-	createServiceMember: (audienceMember: IClient) => M,
-): IServiceAudience<M> {
-	return new NewServiceAudience<M>(container, createServiceMember);
+export function createServiceAudience<M extends IMember = IMember>(props: {
+	container: IContainer;
+	createServiceMember: (audienceMember: IClient) => M;
+}): IServiceAudience<M> {
+	return new NewServiceAudience<M>(props.container, props.createServiceMember);
 }
 
 /**

@@ -44,7 +44,10 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		const signaler = await getDataStoreEntryPoint<Signaler>(runtime, signalerId);
 
-		const audience = createServiceAudience(container, createMockServiceMember);
+		const audience = createServiceAudience({
+			container,
+			createServiceMember: createMockServiceMember,
+		});
 
 		const focusTracker = new FocusTracker(container, audience, signaler);
 

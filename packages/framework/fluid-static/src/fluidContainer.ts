@@ -208,11 +208,13 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	dispose(): void;
 }
 
-export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(
-	container: IContainer,
-	rootDataObject: IRootDataObject,
-): IFluidContainer<TContainerSchema> {
-	return new FluidContainer<TContainerSchema>(container, rootDataObject);
+export function createFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+>(props: {
+	container: IContainer;
+	rootDataObject: IRootDataObject;
+}): IFluidContainer<TContainerSchema> {
+	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
 }
 
 /**

@@ -140,8 +140,10 @@ class RootDataObject
 
 const rootDataStoreId = "rootDOId";
 
-export function createDOProviderContainerRuntimeFactory(schema: ContainerSchema): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(schema);
+export function createDOProviderContainerRuntimeFactory(props: {
+	schema: ContainerSchema;
+}): IRuntimeFactory {
+	return new DOProviderContainerRuntimeFactory(props.schema);
 }
 
 /**
