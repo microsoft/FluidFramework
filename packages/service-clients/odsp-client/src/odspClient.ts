@@ -103,7 +103,6 @@ export class OdspClient {
 			driveId: this.properties.connection.driveId,
 			itemId: id,
 			dataStorePath: "",
-			containerPackageName: "no-dynamic-package",
 		});
 		const container = await loader.resolve({ url });
 

@@ -297,6 +297,9 @@ export function isNewFileInfo(
 	return fileInfo.type === undefined || fileInfo.type === "New";
 }
 
+/**
+ * @public
+ */
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
 	assert(
 		(resolvedUrl as IOdspResolvedUrl).odspResolvedUrl === true,

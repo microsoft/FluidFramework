@@ -106,6 +106,9 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 // @public
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
+// @public (undocumented)
+export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl;
+
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
 
