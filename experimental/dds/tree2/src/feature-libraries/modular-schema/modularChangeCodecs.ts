@@ -159,6 +159,9 @@ function makeV0Codec(
 			return undefined;
 		}
 		const encoded: EncodedBuilds = nestedMapToFlatList(builds).map(([r, i, t]) =>
+			// `undefined` does not round-trip through JSON strings, so it needs special handling.
+			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
+			// We therefore optimize for the common case by omitting the revision when it is undefined.
 			r !== undefined ? [r, i, t] : [i, t],
 		);
 		return encoded.length === 0 ? undefined : encoded;
