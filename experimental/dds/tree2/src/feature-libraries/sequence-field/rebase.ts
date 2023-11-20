@@ -48,7 +48,7 @@ import {
 	CellMark,
 	CellId,
 	MarkEffect,
-	ReturnFrom,
+	MoveOut,
 	MoveIn,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -58,8 +58,8 @@ import {
 	isMoveMark,
 	MoveEffect,
 	MoveEffectTable,
-	isMoveSource,
-	isMoveDestination,
+	isMoveOut,
+	isMoveIn,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -204,7 +204,7 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 function isInverseAttach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
-		case "ReturnFrom":
+		case "MoveOut":
 			return effect.detachIdOverride !== undefined;
 		case "AttachAndDetach":
 			return isInverseAttach(effect.detach);
@@ -343,7 +343,7 @@ class RebaseQueue<T> {
 }
 
 function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
-	if (isMoveDestination(newMark) && movedMark.type === "ReturnFrom") {
+	if (isMoveIn(newMark) && isMoveOut(movedMark)) {
 		const fusedMark: Mark<T> = {
 			type: "Insert",
 			count: newMark.count,
@@ -414,7 +414,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		);
 		const baseCellId = getDetachOutputId(baseMark, baseRevision, metadata);
 
-		if (isMoveSource(baseMark)) {
+		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
 			assert(
 				!isNewAttach(currMark),
@@ -474,7 +474,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 	switch (type) {
 		case "Delete":
 		case "MoveOut":
-		case "ReturnFrom":
 			return { follows: mark };
 		case "AttachAndDetach":
 			return { follows: mark.detach, remains: mark.attach };
@@ -483,8 +482,8 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 		case NoopMarkType:
 			return {};
 		case "Insert": {
-			const follows: ReturnFrom = {
-				type: "ReturnFrom",
+			const follows: MoveOut = {
+				type: "MoveOut",
 				id: mark.id,
 			};
 			const remains: MoveIn = {
@@ -590,14 +589,14 @@ function getMovedMarkFromBaseMark<T>(
 	baseMark: Mark<T>,
 	baseRevision: RevisionTag | undefined,
 ): Mark<T> | undefined {
-	if (isMoveDestination(baseMark)) {
+	if (isMoveIn(baseMark)) {
 		return getMovedMark(
 			moveEffects,
 			baseMark.revision ?? baseRevision,
 			baseMark.id,
 			baseMark.count,
 		);
-	} else if (isAttachAndDetachEffect(baseMark) && isMoveDestination(baseMark.attach)) {
+	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
 		return getMovedMark(
 			moveEffects,
 			baseMark.attach.revision ?? baseRevision,

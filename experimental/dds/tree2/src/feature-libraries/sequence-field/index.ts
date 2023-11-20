@@ -18,7 +18,6 @@ export {
 	CellCount as NodeCount,
 	MoveId,
 	Attach,
-	ReturnFrom,
 	NoopMark,
 	LineageEvent,
 	CellId,

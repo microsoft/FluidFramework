@@ -256,12 +256,13 @@ export const Delete = Type.Composite(
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields {
+export interface MoveOut extends HasMoveFields, InverseAttachFields {
 	type: "MoveOut";
 }
 export const MoveOut = Type.Composite(
 	[
 		HasMoveFields,
+		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("MoveOut"),
 		}),
@@ -269,37 +270,11 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
-/**
- * Removes nodes from their cells so they can be moved into other cells.
- * Always brings about the desired outcome: the targeted nodes are removed from their cells.
- * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
- *
- * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can cause it to clear a different set of cells.
- * TODO: unify with `MoveOut`.
- */
-export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
-	type: "ReturnFrom";
-}
-export const ReturnFrom = Type.Composite(
-	[
-		HasMoveFields,
-		InverseAttachFields,
-		Type.Object({
-			type: Type.Literal("ReturnFrom"),
-		}),
-	],
-	noAdditionalProps,
-);
-
-export type MoveSource = MoveOut | ReturnFrom;
-export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
-
 export type Attach = Insert | MoveIn;
 export const Attach = Type.Union([Insert, MoveIn]);
 
-export type Detach = Delete | MoveSource;
-export const Detach = Type.Union([Delete, MoveSource]);
+export type Detach = Delete | MoveOut;
+export const Detach = Type.Union([Delete, MoveOut]);
 
 /**
  * Mark used during compose to temporarily remember the position of nodes which were being moved

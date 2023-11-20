@@ -7,9 +7,9 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveSource } from "./format";
+import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./format";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
-import { MoveDestination, MoveMarkEffect } from "./helperTypes";
+import { MoveMarkEffect } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -86,26 +86,15 @@ export function getMoveEffect<T>(
 export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
 
 export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
-	return isMoveSource(effect) || isMoveDestination(effect);
+	return isMoveOut(effect) || isMoveIn(effect);
 }
 
-export function isMoveSource(effect: MarkEffect): effect is MoveSource {
-	switch (effect.type) {
-		case "MoveOut":
-		case "ReturnFrom":
-			return true;
-		default:
-			return false;
-	}
+export function isMoveOut(effect: MarkEffect): effect is MoveOut {
+	return effect.type === "MoveOut";
 }
 
-export function isMoveDestination(effect: MarkEffect): effect is MoveDestination {
-	switch (effect.type) {
-		case "MoveIn":
-			return true;
-		default:
-			return false;
-	}
+export function isMoveIn(effect: MarkEffect): effect is MoveIn {
+	return effect.type === "MoveIn";
 }
 
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
@@ -133,7 +122,7 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 }
 
 function applyMoveEffectsToDest(
-	markEffect: MoveDestination,
+	markEffect: MoveIn,
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
@@ -150,7 +139,7 @@ function applyMoveEffectsToDest(
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: CellMark<MoveSource, T>,
+	mark: CellMark<MoveOut, T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
@@ -185,7 +174,7 @@ function applyMoveEffectsToSource<T>(
 }
 
 function applySourceEffects(
-	markEffect: MoveSource,
+	markEffect: MoveOut,
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
@@ -229,8 +218,8 @@ export function applyMoveEffectsToMark<T>(
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
 	if (isAttachAndDetachEffect(mark)) {
-		if (isMoveDestination(mark.attach)) {
-			if (isMoveSource(mark.detach)) {
+		if (isMoveIn(mark.attach)) {
+			if (isMoveOut(mark.detach)) {
 				// Move effects should not be applied to intermediate move locations.
 				return [mark];
 			}
@@ -245,7 +234,7 @@ export function applyMoveEffectsToMark<T>(
 
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				const updatedAttach = firstMark.attach as MoveDestination;
+				const updatedAttach = firstMark.attach as MoveIn;
 				applyMoveEffectsToDest(
 					updatedAttach,
 					firstMark.count,
@@ -284,7 +273,7 @@ export function applyMoveEffectsToMark<T>(
 			}
 		}
 
-		if (isMoveSource(mark.detach)) {
+		if (isMoveOut(mark.detach)) {
 			const detachRevision = mark.detach.revision ?? revision;
 			const effect = getMoveEffect(
 				effects,
@@ -297,7 +286,7 @@ export function applyMoveEffectsToMark<T>(
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
 				applySourceEffects(
-					firstMark.detach as MoveSource,
+					firstMark.detach as MoveOut,
 					firstMark.count,
 					detachRevision,
 					effects,
@@ -334,7 +323,7 @@ export function applyMoveEffectsToMark<T>(
 
 			const newMark = cloneMark(mark);
 			applySourceEffects(
-				newMark.detach as MoveSource,
+				newMark.detach as MoveOut,
 				mark.count,
 				detachRevision,
 				effects,
@@ -362,8 +351,7 @@ export function applyMoveEffectsToMark<T>(
 	} else if (isMoveMark(mark)) {
 		const type = mark.type;
 		switch (type) {
-			case "MoveOut":
-			case "ReturnFrom": {
+			case "MoveOut": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
