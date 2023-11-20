@@ -398,6 +398,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			}
 		},
 	},
+	inline: {
+		value<T>(this: TreeListNode, content: Iterable<T>): InlineTreeListContent<T> {
+			return new InlineTreeListContent(content);
+		},
+	},
 };
 
 /* eslint-disable @typescript-eslint/unbound-method */
