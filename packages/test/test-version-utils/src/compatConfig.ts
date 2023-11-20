@@ -35,7 +35,17 @@ export interface CompatConfig {
 	driver?: string | number;
 	containerRuntime?: string | number;
 	dataRuntime?: string | number;
+	/**
+	 * Cross Version Compat Only
+	 * Version that the `TestObjectProviderWithVersionedLoad` will use to create the container with.
+	 * (Same version will be used across all layers).
+	 */
 	createWith?: CompatVersion;
+	/**
+	 * Cross Version Compat Only
+	 * Version that the `TestObjectProviderWithVersionedLoad` will use to load the container with.
+	 * (Same version will be used across all layers).
+	 */
 	loadWith?: CompatVersion;
 }
 
@@ -183,39 +193,51 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+/**
+ * Generates the cross version compat config permutations.
+ * This will resolve to one permutation where `CompatConfig.createWith` is set to the current version and
+ * `CompatConfig.loadWith` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createWith`
+ * is set to the delta (N-1) version and `CompatConfig.loadWith` is set to the current version.
+ *
+ * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
+ * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
+ */
 export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
 		base: pkgVersion,
 		delta,
 	}));
 
-	return allDefaultDeltaVersions
-		.map((createVersion) =>
-			allDefaultDeltaVersions.map((loadVersion) => {
-				const resolvedCreateVersion = getRequestedVersion(
-					createVersion.base,
-					createVersion.delta,
-					/** adjustMajorPublic */ true,
-				);
-				const resolvedLoadVersion = getRequestedVersion(
-					loadVersion.base,
-					loadVersion.delta,
-					/** adjustMajorPublic */ true,
-				);
-				return {
-					name: `compat cross version - create with ${resolvedCreateVersion} + load with ${resolvedLoadVersion}`,
-					createWith: createVersion,
-					loadWith: loadVersion,
-					kind: CompatKind.CrossVersion,
-					// Note: `compatVersion` is used to determine what versions are needed to be installed.
-					// By setting it to `resolvedCreateVersion`, we ensure both versions will be installed, since
-					// resolvedCreateVersion will resolve to both the base and delta versions.
-					compatVersion: resolvedCreateVersion,
-				};
-			}),
-		)
-		.reduce((a, b) => a.concat(b))
-		.filter((config) => config.createWith !== config.loadWith);
+	return (
+		allDefaultDeltaVersions
+			.map((createVersion) =>
+				allDefaultDeltaVersions.map((loadVersion) => {
+					const resolvedCreateVersion = getRequestedVersion(
+						createVersion.base,
+						createVersion.delta,
+						/** adjustMajorPublic */ true,
+					);
+					const resolvedLoadVersion = getRequestedVersion(
+						loadVersion.base,
+						loadVersion.delta,
+						/** adjustMajorPublic */ true,
+					);
+					return {
+						name: `compat cross version - create with ${resolvedCreateVersion} + load with ${resolvedLoadVersion}`,
+						kind: CompatKind.CrossVersion,
+						// Note: `compatVersion` is used to determine what versions are needed to be installed.
+						// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
+						// installed, since we switch the create/load versions in the test permutations.
+						compatVersion: resolvedCreateVersion,
+						createWith: createVersion,
+						loadWith: loadVersion,
+					};
+				}),
+			)
+			.reduce((a, b) => a.concat(b))
+			// Filter to ensure we don't create/load with the same version.
+			.filter((config) => config.createWith !== config.loadWith)
+	);
 };
 
 export const configList = new Lazy<readonly CompatConfig[]>(() => {

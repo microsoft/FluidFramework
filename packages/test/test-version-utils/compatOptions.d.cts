@@ -20,9 +20,12 @@ export const CompatKind: {
 	NewDataRuntime: "NewDataRuntime";
 	LoaderDriver: "LoaderDriver";
 	/**
-	 * CrossVersion tests are used to test compatibility between the current version and the most recent major public release.
-	 * For example, at the time of writing, main is on version 2.0.0-internal.7.3.0, so we would test 2.0.0-internal.7.3.0
-	 * against the latest public release 1.3.7 instead of the latest internal major release (2.0.0-internal.6.4.0).
+	 * CrossVersion tests are used to test compatibility when two differently versioned clients connect to the same container.
+	 * This is done by varying the version that the `TestObjectProviderWithVersionedLoad` uses to create and load containers.
+	 *
+	 * Note: Each individual client will use the same version for all layers (loader/driver/runtime/etc). For example, if Client A
+	 * is running version 1.0 and Client B is running version 2.0, then Client A will use version 1.0 for all layers and Client B
+	 * will be use version 2.0 for all layers.
 	 */
 	CrossVersion: "CrossVersion";
 };
