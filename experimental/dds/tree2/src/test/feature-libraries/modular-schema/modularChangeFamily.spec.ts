@@ -54,8 +54,7 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
-	amendInvert: () => fail("Not supported"),
-	amendRebase: (change, base, rebaseChild) => change,
+	prune: (change) => change,
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -562,31 +561,23 @@ describe("ModularChangeFamily", () => {
 
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1a));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase specific ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
-				rootChange2Generic,
-			);
+			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric));
+			assert.deepEqual(rebased, rootChange2Generic);
 		});
 	});
 
@@ -747,8 +738,8 @@ describe("ModularChangeFamily", () => {
 			rebaser: {
 				compose,
 				rebase,
-				amendRebase: (change: RevisionTag[]) => change,
 				invert,
+				prune: (change: RevisionTag[]) => change,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
