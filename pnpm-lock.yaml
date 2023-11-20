@@ -9634,6 +9634,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -9666,6 +9667,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
