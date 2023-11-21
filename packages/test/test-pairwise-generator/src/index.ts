@@ -7,9 +7,9 @@ import random from "random-js";
 
 /**
  * Converts all properties of an object to arrays of the
- *	properties potential values. This will be used by generatePairwiseOptions
- *	to compute original objects that contain pairwise combinations of all property values
- *	@internal
+ * properties potential values. This will be used by generatePairwiseOptions
+ * to compute original objects that contain pairwise combinations of all property values
+ * @internal
  */
 export type OptionsMatrix<T extends Record<string, any>> = Required<{
 	[K in keyof T]: readonly T[K][];
