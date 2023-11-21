@@ -27,6 +27,28 @@ import { EditableTreeEvents } from "./treeEvents";
 import { FlexTreeContext } from "./context";
 
 /**
+ * Allows boxed iteration of a tree/field.
+ * @alpha
+ */
+export const flexTreeMarker = Symbol("flexTreeMarker");
+
+export function isFlexTreeEntity(t: unknown): t is FlexTreeEntity {
+	return typeof t === "object" && t !== null && flexTreeMarker in t;
+}
+
+export function isFlexTreeNode(t: unknown): t is FlexTreeNode {
+	return isFlexTreeEntity(t) && t[flexTreeMarker] === FlexTreeEntityKind.Node;
+}
+
+/**
+ * @alpha
+ */
+export enum FlexTreeEntityKind {
+	Node,
+	Field,
+}
+
+/**
  * Allows boxed iteration of a tree/field
  */
 export const boxedIterator = Symbol();
@@ -48,6 +70,8 @@ export const boxedIterator = Symbol();
  * @alpha
  */
 export interface FlexTreeEntity<out TSchema = unknown> {
+	readonly [flexTreeMarker]: FlexTreeEntityKind;
+
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -121,6 +145,8 @@ export const onNextChange = Symbol("onNextChange");
  * @alpha
  */
 export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
+	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
+
 	/**
 	 * Value stored on this node.
 	 */
@@ -197,6 +223,8 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
  * @alpha
  */
 export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
+	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
+
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.

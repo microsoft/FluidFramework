@@ -113,7 +113,9 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	const classSchema = getClassSchema(schema);
 	if (classSchema !== undefined) {
 		if (typeof classSchema === "function") {
-			const simpleSchema = classSchema as new (dummy: FlexTreeNode) => TypedNode<TSchema>;
+			const simpleSchema = classSchema as unknown as new (
+				dummy: FlexTreeNode,
+			) => TypedNode<TSchema>;
 			output = new simpleSchema(flexNode);
 		} else {
 			output = (

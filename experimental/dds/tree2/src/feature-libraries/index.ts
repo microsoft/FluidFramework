@@ -254,6 +254,7 @@ export {
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	isFlexTreeNode,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";

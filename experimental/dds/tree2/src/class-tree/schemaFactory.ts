@@ -5,46 +5,37 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	Assume,
 	Brand,
 	MakeNominal,
 	Opaque,
 	RestrictiveReadonlyRecord,
-	_InlineTrick,
 	getOrCreate,
 	isReadonlyArray,
 	requireAssignableTo,
 } from "../util";
 import {
-	ArrayHasFixedLength,
 	LazyItem,
 	isLazy,
 	markEager,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/typed-schema/flexList";
 import {
-	FlexTreeObjectNode,
 	FlexTreeNode,
 	InternalTypedSchemaTypes,
 	LeafNodeSchema as FlexLeafNodeSchema,
+	isFlexTreeNode,
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
 import { TreeListNodeBase, Unhydrated, TreeMapNodeBase } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { createNodeProxy } from "../simple-tree/proxies";
+import { createNodeProxy, getClassSchema } from "../simple-tree/proxies";
 
 /**
  * A symbol for storing FlexTreeSchema on TreeNodeSchema.
  * Only set when TreeNodeSchema are wrapping existing FlexTreeSchema (done for as with leaves).
  */
 export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
-
-/**
- * @alpha
- * TODO: replace this with proper schema based type.
- */
-export type UnhydratedData = unknown;
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
@@ -111,6 +102,21 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
+			public constructor(input: FlexTreeNode | unknown) {
+				super();
+				// Currently this just does validation. All other logic is in the subclass.
+				if (isFlexTreeNode(input)) {
+					assert(
+						getClassSchema(input.schema) === schema,
+						"building node with wrong schema",
+					);
+				}
+				// TODO: make this a better user facing error, and explain how to copy explicitly.
+				assert(
+					!(input instanceof NodeBase),
+					"Existing nodes cannot be used as new content to insert. THey must either be moved or explicitly copied",
+				);
+			}
 		}
 		{
 			type _check = requireAssignableTo<
@@ -128,18 +134,27 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * The name must be unique among all TreeSchema in the the document schema.
 	 */
 	public object<
-		Name extends TName,
-		T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const Name extends TName,
+		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(
 		name: Name,
 		t: T,
-	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, T, ObjectFromSchema<T>> {
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.Object,
+		T,
+		ObjectFromSchemaRecord<T>,
+		ObjectFromSchemaRecord<T>
+	> {
 		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
-			public constructor(editNode: FlexTreeNode | UnhydratedData) {
-				super();
-				// TODO: handle unhydrated data case.
-				// TODO: make return value a proxy over this (or not a proxy).
-				return createNodeProxy(editNode as FlexTreeNode) as schema;
+			public constructor(input: ObjectFromSchemaRecord<T>) {
+				super(input);
+				if (isFlexTreeNode(input)) {
+					// TODO: make return a proxy over this (or not a proxy).
+					return createNodeProxy(input) as schema;
+				} else {
+					// unhydrated data case.
+				}
 			}
 		}
 
@@ -147,7 +162,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.Object,
 			T,
-			ObjectFromSchema<T>
+			ObjectFromSchemaRecord<T>,
+			ObjectFromSchemaRecord<T>
 		>;
 	}
 
@@ -171,7 +187,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.Map<${string}>`,
 		NodeKind.Map,
 		T,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	/**
@@ -184,7 +201,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		T,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
@@ -194,7 +212,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${string}`,
 		NodeKind.Map,
 		T,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -207,7 +226,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				`${TScope}.${string}`,
 				NodeKind.Map,
 				T,
-				TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+				TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+				ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
 		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes);
@@ -220,14 +240,18 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		T,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes) {
-			public constructor(editNode: FlexTreeNode | UnhydratedData) {
-				super();
-				// TODO: handle unhydrated data case.
-				// TODO: make return value a proxy over this (or not a proxy).
-				return createNodeProxy(editNode as FlexTreeNode) as schema;
+			public constructor(input: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) {
+				super(input);
+				if (isFlexTreeNode(input)) {
+					// TODO: make return a proxy over this (or not a proxy).
+					return createNodeProxy(input) as schema;
+				} else {
+					// unhydrated data case.
+				}
 			}
 		}
 
@@ -235,7 +259,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.Map,
 			T,
-			TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+			TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+			ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 
@@ -260,28 +285,52 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 */
 	public list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchemaClass<`${TScope}.List<${string}>`, NodeKind.List, T, TreeListNode<T>>;
+	): TreeNodeSchemaClass<
+		`${TScope}.List<${string}>`,
+		NodeKind.List,
+		T,
+		TreeListNode<T>,
+		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+	>;
 
 	/**
 	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
-	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public list<const Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>>;
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.List,
+		T,
+		TreeListNode<T>,
+		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchemaClass<`${TScope}.${string}`, NodeKind.List, T, TreeListNode<T>> {
+	): TreeNodeSchemaClass<
+		`${TScope}.${string}`,
+		NodeKind.List,
+		T,
+		TreeListNode<T>,
+		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
-			) as TreeNodeSchemaClass<`${TScope}.${string}`, NodeKind.List, T, TreeListNode<T>>;
+			) as TreeNodeSchemaClass<
+				`${TScope}.${string}`,
+				NodeKind.List,
+				T,
+				TreeListNode<T>,
+				Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+			>;
 		}
 		return this.namedList(nameOrAllowedTypes as TName, allowedTypes);
 	}
@@ -294,26 +343,39 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>> {
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.List,
+		T,
+		TreeListNode<T>,
+		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+	> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
 		class schema extends this.nodeSchema(name, NodeKind.List, allowedTypes) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
-			public constructor(node: FlexTreeObjectNode | UnhydratedData) {
-				super();
-				// TODO: make return value a proxy over this (or not a proxy).
-				// TODO: support UnhydratedData
-				return createNodeProxy(node as FlexTreeObjectNode) as schema;
+			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
+				super(input);
+				if (isFlexTreeNode(input)) {
+					// TODO: make return a proxy over this (or not a proxy).
+					return createNodeProxy(input) as schema;
+				} else {
+					// unhydrated data case.
+				}
 			}
 		}
 		return schema as unknown as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.List,
 			T,
-			TreeListNode<T>
+			TreeListNode<T>,
+			Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 
+	/**
+	 * Make a field optional instead of the default which is required.
+	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
 	): FieldSchema<FieldKind.Optional, T> {
@@ -345,7 +407,18 @@ export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllo
 		TreeListNode
 	> {}
 
-export type ObjectFromSchema<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+/**
+ * Helper used to produce types for:
+ * 1. Actual hydrated object nodes.
+ * 2. Insertable content which can be used to construct an object node.
+ * 3. Insertable content which is an unhydrated object node.
+ * 4. Union of 2 and 3.
+ *
+ * TODO: consider separating these cases into different types.
+ */
+export type ObjectFromSchemaRecord<
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+> = {
 	[Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
 
@@ -361,33 +434,35 @@ export type TreeNodeSchema<
 	Kind extends NodeKind = NodeKind,
 	Specification = unknown,
 	TNode = unknown,
+	TInsertable = never,
 > =
-	| TreeNodeSchemaClass<Name, Kind, Specification, TNode>
-	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode>;
+	| TreeNodeSchemaClass<Name, Kind, Specification, TNode, TInsertable>
+	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TInsertable>;
 
 /**
  * @alpha
  */
 export interface TreeNodeSchemaNonClass<
-	Name extends string = string,
-	Kind extends NodeKind = NodeKind,
-	Specification = unknown,
-	TNode = unknown,
+	out Name extends string = string,
+	out Kind extends NodeKind = NodeKind,
+	out Specification = unknown,
+	out TNode = unknown,
+	in TInsertable = never,
 > extends TreeNodeSchemaCore<Name, Kind, Specification> {
-	create(data: UnhydratedData | TreeHandle): TNode;
+	create(data: TInsertable): TNode;
 }
 
 /**
  * @alpha
  */
 export interface TreeNodeSchemaClass<
-	Name extends string = string,
-	Kind extends NodeKind = NodeKind,
-	Specification = unknown,
-	TNode = unknown,
+	out Name extends string = string,
+	out Kind extends NodeKind = NodeKind,
+	out Specification = unknown,
+	out TNode = unknown,
+	in TInsertable = never,
 > extends TreeNodeSchemaCore<Name, Kind, Specification> {
-	// TODO: better types for this input
-	new (data: UnhydratedData | TreeHandle): TNode;
+	new (data: TInsertable): TNode;
 }
 
 /**
@@ -479,64 +554,60 @@ export type TreeNodeFromImplicitAllowedTypes<
 	? TreeNodeFromAllowedTypes<TSchema>
 	: unknown;
 
-export type TreeNodeFromAllowedTypes<TTypes extends AllowedTypes = AllowedTypes> =
-	InternalTypedSchemaTypes.ArrayToUnion<
-		TypeArrayToTypedFlexTreeArray<
-			Assume<
-				InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>,
-				readonly TreeNodeSchema[]
-			>
-		>
-	>;
+export type TreeNodeFromAllowedTypes<TTypes extends AllowedTypes = AllowedTypes> = NodeFromSchema<
+	InternalTypedSchemaTypes.FlexListToUnion<TTypes>
+>;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
-export type TypeArrayToTypedFlexTreeArray<T extends readonly TreeNodeSchema[]> = [
-	ArrayHasFixedLength<T> extends false
-		? T extends readonly (infer InnerT)[]
-			? [NodeFromSchema<Assume<InnerT, TreeNodeSchema>>]
-			: never
-		: FixedSizeTypeArrayToTypedFlexTree<T>,
-][_InlineTrick];
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
+	any,
+	any,
+	any,
+	infer TNode
+>
+	? TNode
+	: never;
 
 /**
- * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
+ * Given a node's schema, return the corresponding object from which the node could be built.
+ * @privateRemarks
+ * Currently this assumes factory functions take exactly one argument.
+ * This could be changed if needed.
+ *
+ * These factory function can also take an FlexTreeNode, but this is not exposed in the public facing types.
  * @alpha
  */
-export type FixedSizeTypeArrayToTypedFlexTree<T extends readonly TreeNodeSchema[]> = [
-	T extends readonly [infer Head, ...infer Tail]
-		? [
-				NodeFromSchema<Assume<Head, TreeNodeSchema>>,
-				...FixedSizeTypeArrayToTypedFlexTree<Assume<Tail, readonly TreeNodeSchema[]>>,
-		  ]
-		: [],
-][_InlineTrick];
-
-/**
- * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
- * @alpha
- */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends new (data: any) => infer Result
-	? Result
-	: ReturnType<Assume<T, TreeNodeSchemaNonClass>["create"]>;
+export type InsertableTypedNode<T extends TreeNodeSchema> = T extends TreeNodeSchema<
+	any,
+	any,
+	any,
+	any,
+	infer TInsertable
+>
+	? TInsertable
+	: never;
 
 // TODO: unify this with logic in getOrCreateNodeProxy
-export function createTree<T extends TreeNodeSchema>(schema: T, data: unknown): NodeFromSchema<T> {
+export function createTree<T extends TreeNodeSchema>(
+	schema: T,
+	data: InsertableTypedNode<T> | FlexTreeNode,
+): NodeFromSchema<T> {
 	if (typeof schema === "function") {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		return new (schema as TreeNodeSchemaClass)(data) as NodeFromSchema<T>;
+		return new (schema as TreeNodeSchemaClass<
+			any,
+			any,
+			any,
+			any,
+			InsertableTypedNode<T> | FlexTreeNode
+		>)(data) as NodeFromSchema<T>;
 	}
-	return schema.create(data) as NodeFromSchema<T>;
+	return (
+		schema as TreeNodeSchemaNonClass<any, any, any, any, InsertableTypedNode<T> | FlexTreeNode>
+	).create(data) as NodeFromSchema<T>;
 }
-
-/**
- * Ideas:
- *
- * allow class schema to override "serializeSessionState", to allow persisting things like selection? Maybe support via decorator?
- * override methods for events?
- */
 
 export function structuralName<const T extends string>(
 	collectionName: T,

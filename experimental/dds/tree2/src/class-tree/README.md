@@ -37,3 +37,7 @@ though doing this risks name collisions with user added members.
 Recursive types are still somewhat sketchy.
 
 Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing the more APis for them) instead of plain literals .
+
+## Ideas to consider in the future
+
+1. allow class schema to override "serializeSessionState", to allow persisting things like selection? Maybe support via decorator? override methods for events?

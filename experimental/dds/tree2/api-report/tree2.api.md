@@ -578,17 +578,32 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true ? ConstantFlexListToNonLazyArray<List> : NormalizedFlexList<ExtractListItemType<List>>;
 
 // @alpha
+type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+
+// @alpha
 export interface FlexTreeEntity<out TSchema = unknown> {
     [boxedIterator](): IterableIterator<FlexTreeEntity>;
+    // (undocumented)
+    readonly [flexTreeMarker]: FlexTreeEntityKind;
     readonly context: TreeContext;
     readonly schema: TSchema;
     treeStatus(): TreeStatus;
+}
+
+// @alpha (undocumented)
+enum FlexTreeEntityKind {
+    // (undocumented)
+    Field = 1,
+    // (undocumented)
+    Node = 0
 }
 
 // @alpha
 export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<FlexTreeNode>;
+    // (undocumented)
+    readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
     is<TSchema extends TreeFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
     isSameAs(other: FlexTreeField): boolean;
     readonly key: FieldKey;
@@ -636,9 +651,14 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
 }
 
 // @alpha
+const flexTreeMarker: unique symbol;
+
+// @alpha
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<FlexTreeField>;
+    // (undocumented)
+    readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
     // (undocumented)
@@ -931,6 +951,8 @@ declare namespace InternalEditableTreeTypes {
         FixedSizeTypeArrayToTypedFlexTree,
         FlexTreeTypedNodeUnionHelper,
         FlexibleNodeSubSequence,
+        flexTreeMarker,
+        FlexTreeEntityKind,
         NodeKeys
     }
 }
@@ -954,7 +976,8 @@ declare namespace InternalTypedSchemaTypes {
         NormalizedFlexList,
         ExtractItemType,
         ArrayHasFixedLength,
-        ExtractListItemType
+        ExtractListItemType,
+        FlexListToUnion
     }
 }
 export { InternalTypedSchemaTypes }
@@ -994,7 +1017,6 @@ declare namespace InternalTypes {
         TreeNodeSchemaNonClass,
         TreeNodeSchemaCore,
         TreeHandle,
-        UnhydratedData,
         TreeListNodeBase,
         InsertableTreeField,
         InsertableTreeFieldInner,
@@ -1332,7 +1354,7 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-type NodeFromSchema<T extends TreeNodeSchema> = T extends new (data: any) => infer Result ? Result : ReturnType<Assume<T, TreeNodeSchemaNonClass>["create"]>;
+type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<any, any, any, infer TNode> ? TNode : never;
 
 // @alpha
 export type NodeIndex = number;
@@ -1966,7 +1988,7 @@ export const enum TreeNavigationResult {
 export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 // @alpha
-export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, Specification = unknown, TNode = unknown> = TreeNodeSchemaClass<Name, Kind, Specification, TNode> | TreeNodeSchemaNonClass<Name, Kind, Specification, TNode>;
+export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, Specification = unknown, TNode = unknown, TInsertable = never> = TreeNodeSchemaClass<Name, Kind, Specification, TNode, TInsertable> | TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TInsertable>;
 
 // @alpha
 export abstract class TreeNodeSchemaBase<const out Name extends string = string, const out Specification = unknown> implements TreeNodeStoredSchema {
@@ -1990,9 +2012,9 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
 }
 
 // @alpha (undocumented)
-interface TreeNodeSchemaClass<Name extends string = string, Kind extends NodeKind = NodeKind, Specification = unknown, TNode = unknown> extends TreeNodeSchemaCore<Name, Kind, Specification> {
+interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out Specification = unknown, out TNode = unknown, in TInsertable = never> extends TreeNodeSchemaCore<Name, Kind, Specification> {
     // (undocumented)
-    new (data: UnhydratedData | TreeHandle): TNode;
+    new (data: TInsertable): TNode;
 }
 
 // @alpha (undocumented)
@@ -2009,9 +2031,9 @@ interface TreeNodeSchemaCore<out Name extends string = string, out Kind extends 
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<TName, "tree.TreeNodeSchemaIdentifier">;
 
 // @alpha (undocumented)
-interface TreeNodeSchemaNonClass<Name extends string = string, Kind extends NodeKind = NodeKind, Specification = unknown, TNode = unknown> extends TreeNodeSchemaCore<Name, Kind, Specification> {
+interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out Specification = unknown, out TNode = unknown, in TInsertable = never> extends TreeNodeSchemaCore<Name, Kind, Specification> {
     // (undocumented)
-    create(data: UnhydratedData | TreeHandle): TNode;
+    create(data: TInsertable): TNode;
 }
 
 // @alpha (undocumented)
@@ -2176,9 +2198,6 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @alpha
 export type Unhydrated<T> = T;
-
-// @alpha
-type UnhydratedData = unknown;
 
 // @alpha
 type UntypedApi<Mode extends ApiMode> = {

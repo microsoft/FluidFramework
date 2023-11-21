@@ -50,7 +50,6 @@ export {
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
 	TreeHandle,
-	UnhydratedData,
 } from "./class-tree";
 
 export {

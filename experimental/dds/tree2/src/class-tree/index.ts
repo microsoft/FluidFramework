@@ -12,7 +12,6 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	UnhydratedData,
 	TreeHandle,
 } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi } from "./treeApi";
