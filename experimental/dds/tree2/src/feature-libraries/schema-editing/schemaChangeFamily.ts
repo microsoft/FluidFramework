@@ -11,6 +11,7 @@ import {
 	EditBuilder,
 	Delta,
 	TreeStoredSchema,
+	emptyDelta,
 } from "../../core";
 import { makeSchemaChangeCodecFamily } from "./schemaChangeCodecs";
 import { SchemaChange } from "./schemaChangeTypes";
@@ -68,7 +69,7 @@ export class SchemaChangeFamily
 	public intoDelta(change: TaggedChange<SchemaChange>): Delta.Root {
 		// TODO: This is correct, technically, since schema changes don't change the forest, but it's strange to require this to be implemented here.
 		// TODO: does the forest need to be notified for chunking?
-		return new Map();
+		return emptyDelta;
 	}
 
 	public get rebaser(): ChangeRebaser<SchemaChange> {

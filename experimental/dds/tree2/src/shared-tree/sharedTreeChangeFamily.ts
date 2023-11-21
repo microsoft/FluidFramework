@@ -4,7 +4,7 @@
  */
 
 import { ICodecFamily, ICodecOptions } from "../codec";
-import { ChangeFamily, ChangeRebaser, Delta, FieldKey, TaggedChange } from "../core";
+import { ChangeFamily, ChangeRebaser, Delta, TaggedChange, emptyDelta } from "../core";
 import {
 	fieldKinds,
 	ModularChangeset,
@@ -127,24 +127,24 @@ export class SharedTreeChangeFamily
 	}
 
 	public intoDelta(change: TaggedChange<SharedTreeChange>): Delta.Root {
-		const map = new Map<FieldKey, Delta.FieldChanges>();
-		if (change.change.modularChange !== undefined) {
-			for (const [field, mark] of this.modularChangeFamily.intoDelta({
-				change: change.change.modularChange,
-				revision: change.revision,
-			})) {
-				map.set(field, mark);
-			}
-		}
-		if (change.change.schemaChange !== undefined) {
-			for (const [field, mark] of this.schemaChangeFamily.intoDelta({
-				change: change.change.schemaChange,
-				revision: change.revision,
-			})) {
-				map.set(field, mark);
-			}
-		}
-		return map;
+		// const map = new Map<FieldKey, Delta.FieldChanges>();
+		// if (change.change.modularChange !== undefined) {
+		// 	for (const [field, mark] of this.modularChangeFamily.intoDelta({
+		// 		change: change.change.modularChange,
+		// 		revision: change.revision,
+		// 	})) {
+		// 		map.set(field, mark);
+		// 	}
+		// }
+		// if (change.change.schemaChange !== undefined) {
+		// 	for (const [field, mark] of this.schemaChangeFamily.intoDelta({
+		// 		change: change.change.schemaChange,
+		// 		revision: change.revision,
+		// 	})) {
+		// 		map.set(field, mark);
+		// 	}
+		// }
+		return emptyDelta;
 	}
 
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {
