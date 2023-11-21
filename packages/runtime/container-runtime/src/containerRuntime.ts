@@ -3966,7 +3966,11 @@ export class ContainerRuntime
 			},
 			async (event) => {
 				this.verifyNotClosed();
-				this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
+				// in case imminentClosure is set to true by future code, we don't
+				// try to change its value
+				if (!this.imminentClosure) {
+					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
+				}
 				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
