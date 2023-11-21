@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { Loader } from "@fluidframework/container-loader";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
@@ -69,7 +68,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				});
 
 				const container = await loader.createDetachedContainer(codeDetails);
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -94,7 +93,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -152,7 +151,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 				await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
 			}
@@ -185,7 +184,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			});
 
 			const container = await loader.createDetachedContainer(codeDetails);
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();
@@ -231,7 +230,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			const container = await loader.resolve({
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
 			});
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();

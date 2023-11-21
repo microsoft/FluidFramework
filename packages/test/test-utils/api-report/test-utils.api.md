@@ -135,6 +135,9 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 
+// @public
+export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
+
 // @public (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
