@@ -98,6 +98,10 @@ const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
 const driverCache = new Map<string, typeof DriverApi>();
 
 // #region Current versions of the APIs
+
+/**
+ * @internal
+ */
 export const LoaderApi = {
 	version: pkgVersion,
 	Loader,

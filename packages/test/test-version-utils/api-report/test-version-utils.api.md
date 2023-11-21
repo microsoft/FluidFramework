@@ -285,7 +285,7 @@ export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWi
 // @internal
 export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType;
 
-// @internal
+// @internal (undocumented)
 export const LoaderApi: {
     version: string;
     Loader: typeof Loader;
