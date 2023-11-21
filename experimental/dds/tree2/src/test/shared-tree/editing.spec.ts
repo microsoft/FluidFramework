@@ -1440,8 +1440,7 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		// TODO: Enable once optional field applies nested changes to removed subtrees
-		it.skip("can rebase a move over the deletion of the source parent", () => {
+		it("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
 
@@ -1660,7 +1659,7 @@ describe("Editing", () => {
 			const nbNodes = 3;
 			const nbPeers = 2;
 			const testRemoveRevive = true;
-			const testMoveReturn = false;
+			const testMoveReturn = true;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
 
 			const [outerFixture, innerFixture] = individualTests
