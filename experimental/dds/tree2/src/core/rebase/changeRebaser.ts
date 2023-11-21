@@ -66,6 +66,9 @@ export interface ChangeRebaser<TChangeset> {
 	 * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
 	 * except be valid to apply after `over` instead of before it.
 	 *
+	 * When rebasing `change` onto a new branch, `revisionMetadata` should include entries for all changesets
+	 * from the source which are being rebased onto the target branch.
+	 *
 	 * Requirements:
 	 * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
 	 * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
