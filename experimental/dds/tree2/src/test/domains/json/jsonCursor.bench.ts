@@ -19,8 +19,8 @@ import {
 	buildForest,
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
-	singleMapTreeCursor,
-	singleTextCursor,
+	cursorForMapTreeNode,
+	cursorForJsonableTreeNode,
 	buildChunkedForest,
 } from "../../../feature-libraries";
 import {
@@ -93,16 +93,19 @@ function bench(
 
 			const cursorFactories: [string, () => ITreeCursor][] = [
 				["JsonCursor", () => singleJsonCursor(json)],
-				["TextCursor", () => singleTextCursor(encodedTree)],
+				["TextCursor", () => cursorForJsonableTreeNode(encodedTree)],
 				[
 					"MapCursor",
-					() => singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(encodedTree))),
+					() =>
+						cursorForMapTreeNode(
+							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
+						),
 				],
 				[
 					"object-forest Cursor",
 					() => {
 						const forest = buildForest();
-						initializeForest(forest, [singleTextCursor(encodedTree)]);
+						initializeForest(forest, [cursorForJsonableTreeNode(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());
@@ -112,7 +115,7 @@ function bench(
 				[
 					"BasicChunkCursor",
 					() => {
-						const input = singleTextCursor(encodedTree);
+						const input = cursorForJsonableTreeNode(encodedTree);
 						const chunk = basicChunkTree(input, defaultChunkPolicy);
 						const cursor = chunk.cursor();
 						cursor.enterNode(0);
@@ -125,7 +128,7 @@ function bench(
 						const forest = buildChunkedForest(
 							makeTreeChunker(schema, defaultSchemaPolicy),
 						);
-						initializeForest(forest, [singleTextCursor(encodedTree)]);
+						initializeForest(forest, [cursorForJsonableTreeNode(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						assert(cursor.firstNode());

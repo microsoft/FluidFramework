@@ -83,7 +83,10 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [],
+                "content": {
+                  "version": 1,
+                  "data": []
+                },
                 "encoding": "utf-8"
               }
             }

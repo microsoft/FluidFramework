@@ -11,7 +11,6 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver";
 import { SharedString } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
@@ -95,7 +94,7 @@ describe("No Delta Stream", () => {
 
 		// Create a Container for the first client.
 		const container = await createContainer();
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 		assert.strictEqual(container.deltaManager.active, false, "active");
 		assert.strictEqual(container.deltaManager.readOnlyInfo.readonly, false, "readonly");
@@ -133,7 +132,7 @@ describe("No Delta Stream", () => {
 		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
 		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
 		assert.strictEqual(
 			dataObject.runtime.clientId,
@@ -150,14 +149,8 @@ describe("No Delta Stream", () => {
 		await loadContainer(true);
 		const normalContainer1 = await loadContainer(false);
 		const normalContainer2 = await loadContainer(false);
-		const normalDataObject1 = await requestFluidObject<ITestFluidObject>(
-			normalContainer1,
-			"default",
-		);
-		const normalDataObject2 = await requestFluidObject<ITestFluidObject>(
-			normalContainer2,
-			"default",
-		);
+		const normalDataObject1 = (await normalContainer1.getEntryPoint()) as ITestFluidObject;
+		const normalDataObject2 = (await normalContainer2.getEntryPoint()) as ITestFluidObject;
 		normalDataObject1.root.set("fluid", "great");
 		normalDataObject2.root.set("prague", "a city in europe");
 		await loaderContainerTracker.ensureSynchronized();
@@ -165,10 +158,8 @@ describe("No Delta Stream", () => {
 		assert.strictEqual(normalDataObject2.root.get("fluid"), "great");
 
 		const storageOnlyContainer = await loadContainer(true);
-		const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-			storageOnlyContainer,
-			"default",
-		);
+		const storageOnlyDataObject =
+			(await storageOnlyContainer.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(storageOnlyDataObject.root.get("prague"), "a city in europe");
 		assert.strictEqual(storageOnlyDataObject.root.get("fluid"), "great");
 	});
@@ -208,7 +199,7 @@ describe("No Delta Stream", () => {
 		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
 		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
 		assert.strictEqual(
 			dataObject.runtime.clientId,

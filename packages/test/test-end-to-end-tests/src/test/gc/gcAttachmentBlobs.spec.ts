@@ -9,7 +9,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -117,10 +116,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		async function createSummarizerRuntime() {
 			const summarizerContainer = await loadContainer();
-			const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(
-				summarizerContainer,
-				"/",
-			);
+			const summarizerDefaultDataStore =
+				(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
@@ -135,7 +132,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		});
 
 		it("collects blobs uploaded in attached container", async () => {
@@ -198,7 +195,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a second container.
 			const container2 = await loadContainer();
-			const defaultDataStore2 = await requestFluidObject<ITestDataObject>(container2, "/");
+			const defaultDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 			// Validate the blob handle's path is the same as the one in the first container.
 			const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
@@ -426,7 +423,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a new container and disconnect it.
 			const container2 = await loadContainer();
-			const container2DataStore = await requestFluidObject<ITestDataObject>(container2, "/");
+			const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			container2.disconnect();
 
 			// Upload an attachment blob when disconnected. We should get a handle with a localId for the blob. Mark it
