@@ -29,8 +29,8 @@ export type AllowedTypes = readonly [Any] | readonly LazyItem<TreeNodeSchema>[];
 export type AllowedTypeSet = Any | ReadonlySet<TreeNodeSchema>;
 
 // @alpha
-type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeNodeSchema[]>>> : UntypedApi<Mode>
+type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
+T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeNodeSchema[]>>> : ContextuallyTypedNodeData
 ][_InlineTrick];
 
 // @alpha
@@ -125,13 +125,7 @@ export const Any: "Any";
 export type Any = typeof Any;
 
 // @alpha
-const enum ApiMode {
-    Flexible = 0,
-    Simple = 1
-}
-
-// @alpha
-type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, _Mode extends ApiMode> = {
+type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: undefined | TypedChild;
     [Multiplicity.Sequence]: TypedChild[];
@@ -217,10 +211,7 @@ export interface ChildLocation {
 }
 
 // @alpha
-type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema | undefined, TName> = {
-    [ApiMode.Flexible]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
-    [ApiMode.Simple]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
-}[Mode];
+type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | undefined, TName> = TValueSchema extends undefined ? FlexibleObject<TValueSchema, TName> & TTypedFields : TypedValueOrUndefined<TValueSchema>;
 
 // @alpha
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
@@ -273,7 +264,7 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
-export function cursorForTypedTreeData<T extends TreeNodeSchema>(context: TreeDataContext, schema: T, data: TypedNode_2<T, ApiMode.Simple>): ITreeCursorSynchronous;
+export function cursorForTypedTreeData<T extends TreeNodeSchema>(context: TreeDataContext, schema: T, data: TypedNode_2<T>): ITreeCursorSynchronous;
 
 // @alpha
 export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
@@ -556,13 +547,13 @@ type FlattenKeys<T> = [{
 }][_InlineTrick];
 
 // @alpha
-export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible> | ITreeCursorSynchronous;
+export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<TSchema> | ITreeCursorSynchronous;
 
 // @alpha
-export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes> | ITreeCursorSynchronous;
+export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<TTypes> | ITreeCursorSynchronous;
 
 // @alpha
-type FlexibleNodeSubSequence<TTypes extends AllowedTypes> = Iterable<SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>> | ITreeCursorSynchronous;
+type FlexibleNodeSubSequence<TTypes extends AllowedTypes> = Iterable<SchemaAware.AllowedTypesToTypedTrees<TTypes>> | ITreeCursorSynchronous;
 
 // @alpha
 type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
@@ -977,7 +968,6 @@ declare namespace InternalTypes_2 {
         TypedField,
         UnbrandedName,
         TypeArrayToTypedTreeArray,
-        UntypedApi,
         EmptyObject,
         ValuesOf,
         TypedValueOrUndefined
@@ -1532,7 +1522,6 @@ export function runSynchronous(view: ITreeCheckout, transaction: (view: ITreeChe
 
 declare namespace SchemaAware {
     export {
-        ApiMode,
         TypedNode_2 as TypedNode,
         TypedField,
         AllowedTypesToTypedTrees,
@@ -1782,7 +1771,7 @@ export enum TreeCompressionStrategy {
 
 // @alpha
 export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema> extends SchemaConfiguration<TRoot> {
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
+    readonly initialTree: SchemaAware.TypedField<TRoot> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha
@@ -1997,10 +1986,10 @@ ArrayHasFixedLength<T> extends false ? T extends readonly (infer InnerT)[] ? [Fl
 ][_InlineTrick];
 
 // @alpha
-type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeNodeSchema[]> = [
+type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
-TypedNode_2<Assume<Head, TreeNodeSchema>, Mode>,
-...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeNodeSchema[]>>
+TypedNode_2<Assume<Head, TreeNodeSchema>>,
+...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>
 ] : []
 ][_InlineTrick];
 
@@ -2008,18 +1997,18 @@ TypedNode_2<Assume<Head, TreeNodeSchema>, Mode>,
 export const typeboxValidator: JsonValidator;
 
 // @alpha
-type TypedField<TField extends TreeFieldSchema, Mode extends ApiMode> = [
-ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode>
+type TypedField<TField extends TreeFieldSchema> = [
+ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<TField["allowedTypes"]>>
 ][_InlineTrick];
 
 // @alpha
-type TypedFields<Mode extends ApiMode, TFields extends undefined | {
+type TypedFields<TFields extends undefined | {
     readonly [key: string]: TreeFieldSchema;
 }> = [
 TFields extends {
     [key: string]: TreeFieldSchema;
 } ? {
-    -readonly [key in keyof TFields]: TypedField<TFields[key], Mode>;
+    -readonly [key in keyof TFields]: TypedField<TFields[key]>;
 } : EmptyObject
 ][_InlineTrick];
 
@@ -2027,9 +2016,11 @@ TFields extends {
 export type TypedNode<TSchema extends TreeNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? API extends "sharedTree" ? TreeMapNode<TSchema> : ReadonlyMap<string, TreeField<TSchema["info"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? TreeListNode<TSchema["info"]["allowedTypes"]> : readonly TreeNodeUnion<TSchema["info"]["allowedTypes"], API>[] : TSchema extends ObjectNodeSchema ? TreeObjectNode<TSchema, API> : unknown;
 
 // @alpha
-type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode> = FlattenKeys<CollectOptions<Mode, TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<Mode, TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? TypedFields<Mode, {
-    "": TField;
-}> : EmptyObject, TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined, TSchema["name"]>>;
+type TypedNode_2<TSchema extends TreeNodeSchema> = FlattenKeys<CollectOptions<TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? {
+    "": TypedField<TField>;
+} : TSchema extends MapNodeSchema<string, infer TField extends TreeFieldSchema> ? {
+    readonly [P in string]: TypedField<TField>;
+} : EmptyObject, TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined, TSchema["name"]>>;
 
 // @alpha
 export class TypedTreeFactory implements IChannelFactory {
@@ -2068,12 +2059,6 @@ type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
 
 // @alpha
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
-
-// @alpha
-type UntypedApi<Mode extends ApiMode> = {
-    [ApiMode.Flexible]: ContextuallyTypedNodeData;
-    [ApiMode.Simple]: ContextuallyTypedNodeData;
-}[Mode];
 
 // @alpha
 export interface UpPath<TParent = UpPathDefault> {
