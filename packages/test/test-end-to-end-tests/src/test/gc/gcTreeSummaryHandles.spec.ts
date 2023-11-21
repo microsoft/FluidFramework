@@ -22,7 +22,6 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -75,12 +74,9 @@ async function loadSummarizer(
 		);
 	});
 
-	const defaultDataStore = await requestFluidObject<ITestFluidObject>(
-		summarizerContainer,
-		"default",
-	);
+	const summarizer = await summarizerContainer.getEntryPoint();
 	return {
-		containerRuntime: defaultDataStore.context.containerRuntime as ContainerRuntime,
+		containerRuntime: (summarizer as any).runtime as ContainerRuntime,
 		summaryCollection,
 	};
 }
@@ -190,7 +186,6 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	// TODO:#4670: Make this compat-version-specific.
 	const defaultFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
-		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -305,18 +300,17 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 			);
 
 			mainContainer = await createContainer();
-			dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+			dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 
 			// Create data stores B and C, and mark them as referenced.
-			dataStoreB = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
-				"",
-			);
+			const containerRuntime = dataStoreA.context.containerRuntime;
+			dataStoreB = (await (
+				await containerRuntime.createDataStore(defaultFactory.type)
+			).entryPoint.get()) as ITestFluidObject;
 			dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-			dataStoreC = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
-				"",
-			);
+			dataStoreC = (await (
+				await containerRuntime.createDataStore(defaultFactory.type)
+			).entryPoint.get()) as ITestFluidObject;
 			dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
 			await waitForContainerConnection(mainContainer);

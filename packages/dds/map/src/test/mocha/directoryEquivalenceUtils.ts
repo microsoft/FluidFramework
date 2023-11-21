@@ -56,4 +56,9 @@ function assertEventualConsistencyCore(
 		);
 		assertEventualConsistencyCore(subDirectory1, subDirectory2);
 	}
+
+	// Check for consistency of subdirectories ordering of both directories
+	const firstSubdirNames = Array.from(first.subdirectories()).map(([dirName, _]) => dirName);
+	const secondSubdirNames = Array.from(second.subdirectories()).map(([dirName, _]) => dirName);
+	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
 }

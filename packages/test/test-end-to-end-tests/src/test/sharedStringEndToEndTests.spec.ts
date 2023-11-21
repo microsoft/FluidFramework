@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -16,6 +15,7 @@ import {
 	ITestFluidObject,
 	createSummarizer,
 	summarizeNow,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 
@@ -42,11 +42,11 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 
 	beforeEach(async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 
@@ -80,7 +80,7 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 
 		// Create a initialize a new container with the same id.
 		const newContainer = await provider.loadTestContainer(testContainerConfig);
-		const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
+		const newComponent = await getContainerEntryPointBackCompat<ITestFluidObject>(newContainer);
 		const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
 
 		// Wait for the ops to to be submitted and processed across the containers.
@@ -133,7 +133,7 @@ describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
 
 	it("can load summarized grouped batch at min seqnum", async () => {
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const text = "syncSharedString";
@@ -152,7 +152,7 @@ describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
 		await summarizeNow(summarizer);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
 		// These calls ensures assert 0x072 isn't hit
@@ -162,7 +162,7 @@ describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
 
 	it("can load summarized grouped batch", async () => {
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const text = "syncSharedString";
@@ -178,7 +178,7 @@ describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
 		await summarizeNow(summarizer);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
 		// These calls ensures assert 0x072 isn't hit
