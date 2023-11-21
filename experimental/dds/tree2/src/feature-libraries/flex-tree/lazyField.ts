@@ -20,6 +20,7 @@ import {
 	mapCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
+// TODO: stop depending on contextuallyTyped
 import { cursorFromContextualData } from "../contextuallyTyped";
 import {
 	FieldKinds,
