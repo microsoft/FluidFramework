@@ -432,7 +432,10 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
+	public createChannel(channel: IChannel): void;
+	public createChannel(id: string | undefined, type: string): IChannel;
+	createChannel(idOrChannel: string | IChannel = uuid(), maybeType?: string): IChannel | void {
+		const id = typeof idOrChannel === "string" ? idOrChannel : idOrChannel.id;
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
@@ -440,11 +443,19 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const type = typeof idOrChannel === "string" ? maybeType! : idOrChannel.attributes.type;
+		const factory = this.sharedObjectRegistry.get(type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		const channel = typeof idOrChannel === "string" ? factory.create(this, id) : idOrChannel;
+
 		this.notBoundedChannelContextSet.add(id);
 		const context = new LocalChannelContext(
-			id,
-			this.sharedObjectRegistry,
-			type,
+			channel,
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
@@ -457,9 +468,15 @@ export class FluidDataStoreRuntime
 		this.contexts.set(id, context);
 
 		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+		this.identifyLocalChangeInSummarizer(
+			"DDSCreatedInSummarizer",
+			id,
+			context.channel.attributes.type,
+		);
 
-		return context.channel;
+		if (typeof idOrChannel === "string") {
+			return context.channel;
+		}
 	}
 
 	/**
