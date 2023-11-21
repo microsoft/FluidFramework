@@ -128,7 +128,7 @@ export async function verifyEqualPastSnapshot(
 	const tree = serializeTree(".handle", data, ".app");
 	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");
-	await fs.writeFile(path, dataStr);
+
 	assert.equal(dataStr, pastDataStr, `snapshot different for ${testName}`);
 }
 

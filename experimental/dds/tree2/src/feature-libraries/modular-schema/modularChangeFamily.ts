@@ -27,6 +27,7 @@ import {
 	emptyDelta,
 	ITreeCursorSynchronous,
 	mapCursorField,
+	StoredSchemaCollection,
 } from "../../core";
 import {
 	brand,
@@ -46,6 +47,7 @@ import {
 	chunkTree,
 	decode,
 	defaultChunkPolicy,
+	schemaCompressedEncode,
 	uncompressedEncode,
 } from "../chunked-forest";
 import {
@@ -62,7 +64,7 @@ import {
 	RevisionMetadataSource,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, FullSchemaPolicy, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
@@ -723,7 +725,10 @@ export class ModularChangeFamily
 			const builds: Delta.DetachedNodeBuild[] = [];
 			forEachInNestedMap(change.builds, (tree, major, minor) => {
 				const cursor = decode(tree).cursor();
-				assert(cursor.getFieldLength() === 1, "should only contain 1 node");
+				assert(
+					cursor.getFieldLength() === 1,
+					"each encoded chunk should only contain 1 node.",
+				);
 				cursor.enterNode(0);
 				builds.push({
 					id: makeDetachedNodeId(major ?? revision, minor),
@@ -1076,6 +1081,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		newContent: ITreeCursor | readonly ITreeCursor[],
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): GlobalEditDescription {
 		const content = isReadonlyArray(newContent) ? newContent : [newContent];
 		const length = content.length;
@@ -1086,14 +1092,21 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
-		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+
 		const fieldCursors = content.map((cursor) =>
 			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
 		);
 		const nodeCursors = fieldCursors
 			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
 			.flat();
-		const encodedTrees = nodeCursors.map(uncompressedEncode);
+		const encodedTrees =
+			shapeInfo !== undefined
+				? nodeCursors.map((cursor) =>
+						schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
+				  )
+				: nodeCursors.map(uncompressedEncode);
+
+		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 		for (const tree of encodedTrees) {
 			assert(!innerMap.has(id), "Unexpected duplicate build ID");
 			innerMap.set(id, tree);
