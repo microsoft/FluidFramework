@@ -1173,7 +1173,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		assertIntervals(sharedString, collection, []);
+		assertSequenceIntervals(sharedString, collection, []);
 	});
 
 	it("fails to revert interval change to stickiness reversed endpoints", () => {
@@ -1196,7 +1196,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		collection.change(id, 1, 6);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		assertIntervals(sharedString, collection, [{ start: 1, end: 6 }]);
+		assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 6 }]);
 	});
 
 	it("reverts remove range that reverses endpoints", () => {
