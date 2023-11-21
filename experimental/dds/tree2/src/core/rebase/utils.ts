@@ -4,11 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
-import { RevisionInfo } from "../../feature-libraries";
 import { Mutable } from "../../util";
-import { rebaseRevisionMetadataFromInfo } from "../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ChangeRebaser,
+	RevisionInfo,
+	RevisionMetadataSource,
+	TaggedChange,
+	tagRollbackInverse,
+} from "./changeRebaser";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -285,14 +289,34 @@ export function rebaseChange<TChange>(
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
 
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index >= 0 ? index : undefined;
+	};
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+	};
+
+	return { getIndex, tryGetInfo };
+}
+
 export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	const revisionMetadata = rebaseRevisionMetadataFromInfo(
+	const revisionMetadata = revisionMetadataSourceFromInfo(
 		getRevInfoFromTaggedChanges(changesToRebaseOver),
-		changesToRebaseOver.map((change) => change.revision),
 	);
 
 	return changesToRebaseOver.reduce(

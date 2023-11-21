@@ -34,6 +34,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
+// eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 /**

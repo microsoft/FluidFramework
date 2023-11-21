@@ -24,7 +24,8 @@ import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
 import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema";
 
 /**
  * A change to a child encoding as a simple placeholder string.

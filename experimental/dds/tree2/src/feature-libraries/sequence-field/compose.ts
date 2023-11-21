@@ -4,14 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import {
-	CrossFieldManager,
-	CrossFieldTarget,
-	getIntention,
+	ChangeAtomId,
+	makeAnonChange,
 	RevisionMetadataSource,
-} from "../modular-schema";
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+} from "../../core";
+import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
+import { CrossFieldManager, CrossFieldTarget, getIntention } from "../modular-schema";
 import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";

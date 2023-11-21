@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	checkDeltaEquality,
 	composeAnonChanges,
@@ -17,7 +19,6 @@ import {
 	rebaseOverComposition,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

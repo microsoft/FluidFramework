@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { RebaseRevisionMetadata } from "../../feature-libraries/modular-schema/fieldChangeHandler";
 import { Invariant } from "../../util";
 import type { RevisionTag } from "./types";
 
@@ -78,7 +77,7 @@ export interface ChangeRebaser<TChangeset> {
 	rebase(
 		change: TChangeset,
 		over: TaggedChange<TChangeset>,
-		revisionMetadata: RebaseRevisionMetadata,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 }
 
@@ -93,6 +92,39 @@ export interface TaggedChange<TChangeset> {
 	 */
 	readonly rollbackOf?: RevisionTag;
 	readonly change: TChangeset;
+}
+
+/**
+ * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
+ * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
+ *
+ * During composition, the index reflects the order of the changeset within the overall composed changeset that is
+ * being produced.
+ *
+ * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
+ * @alpha
+ */
+export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
+
+/**
+ * @alpha
+ */
+export interface RevisionMetadataSource {
+	readonly getIndex: RevisionIndexer;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
+}
+
+/**
+ * @alpha
+ */
+export interface RevisionInfo {
+	readonly revision: RevisionTag;
+	/**
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
+	 */
+	readonly rollbackOf?: RevisionTag;
 }
 
 export function tagChange<T>(change: T, revision: RevisionTag | undefined): TaggedChange<T> {

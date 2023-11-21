@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
 	areEqualChangeAtomIds,
@@ -18,7 +19,6 @@ import {
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	getIntention,
-	RevisionMetadataSource,
 	setInCrossFieldMap,
 } from "../modular-schema";
 import {

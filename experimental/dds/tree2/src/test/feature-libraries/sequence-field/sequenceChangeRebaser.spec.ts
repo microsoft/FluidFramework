@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
@@ -18,6 +18,8 @@ import {
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	compose,
 	composeAnonChanges,
@@ -29,7 +31,6 @@ import {
 	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

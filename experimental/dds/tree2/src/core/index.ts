@@ -170,6 +170,9 @@ export {
 	mintRevisionTag,
 	rebaseBranch,
 	rebaseChange,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "./rebase";
 
 export {

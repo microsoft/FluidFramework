@@ -21,6 +21,9 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 	isEmptyFieldChanges,
+	RevisionMetadataSource,
+	RevisionInfo,
+	revisionMetadataSourceFromInfo,
 } from "../../core";
 import {
 	brand,
@@ -43,7 +46,6 @@ import {
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	RevisionMetadataSource,
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
@@ -59,7 +61,6 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 	NodeExistsConstraint,
-	RevisionInfo,
 } from "./modularChangeTypes";
 
 /**
@@ -417,7 +418,7 @@ export class ModularChangeFamily
 	public rebase(
 		change: ModularChangeset,
 		over: TaggedChange<ModularChangeset>,
-		revisionMetadata: RebaseRevisionMetadata,
+		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
@@ -430,13 +431,22 @@ export class ModularChangeFamily
 		};
 
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+
+		const getBaseRevisions = () =>
+			revisionInfoFromTaggedChange(over).map((info) => info.revision);
+
+		const rebaseMetadata = {
+			...revisionMetadata,
+			getBaseRevisions,
+		};
+
 		const rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
 			tagChange(over.change.fieldChanges, over.revision),
 			genId,
 			crossFieldTable,
 			() => true,
-			revisionMetadata,
+			rebaseMetadata,
 			constraintState,
 		);
 
@@ -457,7 +467,7 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			() => true,
-			revisionMetadata,
+			rebaseMetadata,
 			constraintState,
 			true,
 		);
@@ -745,27 +755,6 @@ export class ModularChangeFamily
 	}
 }
 
-/**
- * @alpha
- */
-export function revisionMetadataSourceFromInfo(
-	revInfos: readonly RevisionInfo[],
-): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number | undefined => {
-		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		return index >= 0 ? index : undefined;
-	};
-	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
-		if (revision === undefined) {
-			return undefined;
-		}
-		const index = getIndex(revision);
-		return index === undefined ? undefined : revInfos[index];
-	};
-
-	return { getIndex, tryGetInfo };
-}
-
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
 	baseRevisions: (RevisionTag | undefined)[],
@@ -777,10 +766,10 @@ export function rebaseRevisionMetadataFromInfo(
 		}
 	}
 
-	const getRevisions = () => filteredRevisions;
+	const getBaseRevisions = () => filteredRevisions;
 	return {
 		...revisionMetadataSourceFromInfo(revInfos),
-		getRevisions,
+		getBaseRevisions,
 	};
 }
 

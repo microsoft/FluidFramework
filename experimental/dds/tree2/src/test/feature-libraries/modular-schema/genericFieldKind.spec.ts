@@ -27,8 +27,9 @@ import {
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/fieldChangeHandler";
 
 const valueFieldKey: FieldKey = brand("Value");
 
@@ -68,7 +69,7 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
-	getRevisions: () => assert.fail("Unexpected revision index query"),
+	getBaseRevisions: () => assert.fail("Unexpected revision index query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 };

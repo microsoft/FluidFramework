@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionMetadataSource, cursorForJsonableTreeNode } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import {
 	makeAnonChange,
 	FieldKey,
@@ -13,6 +13,7 @@ import {
 	deltaForSet,
 	RevisionTag,
 	TaggedChange,
+	RevisionMetadataSource,
 } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";

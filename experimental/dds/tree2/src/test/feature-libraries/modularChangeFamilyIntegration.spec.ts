@@ -10,6 +10,7 @@ import {
 	FieldKindIdentifier,
 	makeAnonChange,
 	mintRevisionTag,
+	revisionMetadataSourceFromInfo,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
@@ -26,10 +27,7 @@ import {
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	ModularChangeFamily,
-	rebaseRevisionMetadataFromInfo,
-} from "../../feature-libraries/modular-schema/modularChangeFamily";
+import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
@@ -79,7 +77,7 @@ describe("ModularChangeFamily integration", () => {
 			const rebased = family.rebase(
 				remove,
 				tagChange(move, tag1),
-				rebaseRevisionMetadataFromInfo([{ revision: tag1 }], [tag1]),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
 			);
 			const rebasedDelta = family.intoDelta(makeAnonChange(rebased));
 			const expectedDelta = family.intoDelta(makeAnonChange(expected));
@@ -104,7 +102,7 @@ describe("ModularChangeFamily integration", () => {
 			const rebased = family.rebase(
 				move,
 				tagChange(remove, baseTag),
-				rebaseRevisionMetadataFromInfo([{ revision: baseTag }], [baseTag]),
+				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));

@@ -6,12 +6,18 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
 import { IdAllocator, fail, fakeIdAllocator, getOrAddEmptyToMap } from "../../util";
-import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
+import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionMetadataSource,
+	RevisionTag,
+	TaggedChange,
+} from "../../core";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	NodeExistenceState,
-	RevisionMetadataSource,
+	RebaseRevisionMetadata,
 	getIntention,
 } from "../modular-schema";
 import {
@@ -64,7 +70,6 @@ import {
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
-import { RebaseRevisionMetadata } from "../modular-schema/fieldChangeHandler";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -721,7 +726,7 @@ function handleLineage(
 	metadata: RebaseRevisionMetadata,
 ) {
 	const baseRevisions = metadata
-		.getRevisions()
+		.getBaseRevisions()
 		.map((r) => getIntention(r, metadata) ?? fail("Intention should be defined"));
 
 	removeLineageEvents(cellId, new Set(baseRevisions));
@@ -747,7 +752,7 @@ function getRevisionIndex(metadata: RebaseRevisionMetadata, revision: RevisionTa
 		return index;
 	}
 
-	const revisions = metadata.getRevisions();
+	const revisions = metadata.getBaseRevisions();
 	const rollbackIndex = revisions.findIndex(
 		(r) => metadata.tryGetInfo(r)?.rollbackOf === revision,
 	);

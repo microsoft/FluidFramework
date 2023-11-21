@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import {
 	CrossFieldManager,
 	NodeChangeset,
-	RevisionMetadataSource,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	Delta,
 	makeAnonChange,
+	RevisionMetadataSource,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
@@ -46,8 +46,11 @@ import {
 	ChildStateGenerator,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/fieldChangeHandler";
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	RebaseRevisionMetadata,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema";
 
 type RevisionTagMinter = () => RevisionTag;
 

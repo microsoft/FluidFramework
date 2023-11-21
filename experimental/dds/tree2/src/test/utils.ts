@@ -58,9 +58,6 @@ import {
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	normalizeNewFieldContent,
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
 	cursorForJsonableTreeNode,
 	FlexTreeTypedField,
 	jsonableTreeFromForest,
@@ -96,6 +93,9 @@ import {
 	FieldKey,
 	Revertible,
 	RevertibleKind,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";

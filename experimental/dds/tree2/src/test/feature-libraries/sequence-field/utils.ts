@@ -4,18 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import {
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
-	SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	Delta,
+	RevisionInfo,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
@@ -26,9 +23,11 @@ import {
 	defaultRevisionMetadataFromChanges,
 } from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
-import { TestChangeset } from "./testEdits";
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/fieldChangeHandler";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
+// eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
 	return compose(changes.map(makeAnonChange));

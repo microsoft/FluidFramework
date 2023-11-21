@@ -13,7 +13,6 @@ import {
 	genericFieldKind,
 	FieldChange,
 	ModularChangeset,
-	RevisionInfo,
 	FieldKindWithEditor,
 	NodeChangeInverter,
 } from "../../../feature-libraries";
@@ -30,6 +29,8 @@ import {
 	tagRollbackInverse,
 	assertIsRevisionTag,
 	deltaForSet,
+	RevisionInfo,
+	revisionMetadataSourceFromInfo,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -42,10 +43,7 @@ import {
 	testChangeReceiver,
 } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	ModularChangeFamily,
-	rebaseRevisionMetadataFromInfo,
-} from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import { ModularChangeFamily } from "../../../feature-libraries/modular-schema";
 import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
@@ -569,7 +567,7 @@ describe("ModularChangeFamily", () => {
 				family.rebase(
 					rootChange1b,
 					makeAnonChange(rootChange1a),
-					rebaseRevisionMetadataFromInfo([], []),
+					revisionMetadataSourceFromInfo([]),
 				),
 				rootChange2,
 			);
@@ -580,7 +578,7 @@ describe("ModularChangeFamily", () => {
 				family.rebase(
 					rootChange1b,
 					makeAnonChange(rootChange1aGeneric),
-					rebaseRevisionMetadataFromInfo([], []),
+					revisionMetadataSourceFromInfo([]),
 				),
 				rootChange2,
 			);
@@ -591,7 +589,7 @@ describe("ModularChangeFamily", () => {
 				family.rebase(
 					rootChange1bGeneric,
 					makeAnonChange(rootChange1a),
-					rebaseRevisionMetadataFromInfo([], []),
+					revisionMetadataSourceFromInfo([]),
 				),
 				rootChange2,
 			);
@@ -602,7 +600,7 @@ describe("ModularChangeFamily", () => {
 				family.rebase(
 					rootChange1bGeneric,
 					makeAnonChange(rootChange1aGeneric),
-					rebaseRevisionMetadataFromInfo([], []),
+					revisionMetadataSourceFromInfo([]),
 				),
 				rootChange2Generic,
 			);
@@ -834,10 +832,11 @@ describe("ModularChangeFamily", () => {
 		const rebased = dummyFamily.rebase(
 			changeC,
 			makeAnonChange(changeA),
-			rebaseRevisionMetadataFromInfo(
-				[{ revision: rev1 }, { revision: rev2 }, { revision: rev4, rollbackOf: rev2 }],
-				[rev1, rev2],
-			),
+			revisionMetadataSourceFromInfo([
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, rollbackOf: rev2 },
+			]),
 		);
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);

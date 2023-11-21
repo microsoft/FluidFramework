@@ -3,20 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	ChangesetLocalId,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core";
 import { Brand } from "../../util";
-
-/**
- * @alpha
- */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
-	/**
-	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
-	 * The value corresponds to the `revision` of the original changeset being rolled back.
-	 */
-	readonly rollbackOf?: RevisionTag;
-}
 
 /**
  * @alpha
