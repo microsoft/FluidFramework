@@ -355,11 +355,13 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			);
 
 			const runtime = (summarizer as any).runtime as ContainerRuntime;
-			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+			const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}
-			const defaultDataStore1 = (await entryPoint.get()) as ITestDataObject;
+			const defaultDataStore1 = await entryPoint.get();
 
 			// Pause op processing and send ops so there are pending ops in the summarizer.
 			const pendingOpCount = 10;

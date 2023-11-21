@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ITestObjectProvider,
@@ -18,7 +18,6 @@ import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/tes
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
@@ -69,9 +68,9 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		const blobId = blobNodePath.split("/")[2];
 		const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 		const runtime = isSummarizerContainer
-			? ((entryPoint as any).runtime as IContainerRuntimeBase)
+			? (entryPoint as any).runtime
 			: entryPoint._context.containerRuntime;
-		const response = await (runtime as any).resolveHandle({
+		const response = await (runtime as ContainerRuntime).resolveHandle({
 			url: blobNodePath,
 		});
 		assert.strictEqual(response?.status, 404, `${messagePrefix}: Expecting a 404 response`);
