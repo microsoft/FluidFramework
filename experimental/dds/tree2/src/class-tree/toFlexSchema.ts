@@ -19,10 +19,11 @@ import {
 } from "../feature-libraries";
 import { brand, fail, getOrCreate, isReadonlyArray } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
-import { simpleSchemaSymbol } from "../simple-tree/proxies";
+import { extractFactoryContent, simpleSchemaSymbol } from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
 import { TreeNode, Unhydrated } from "../simple-tree";
+import { cursorFromNodeData } from "../simple-tree/toMapTree";
 import {
 	FieldKind,
 	FieldSchema,
@@ -31,18 +32,35 @@ import {
 	LeafNodeSchema,
 	NodeKind,
 	TreeNodeSchema,
-	flexSchemaSymbol,
 } from "./schemaFactory";
 import { TreeConfiguration } from "./tree";
+import {
+	cachedFlexSchemaFromClassSchema,
+	flexSchemaSymbol,
+	setFlexSchemaFromClassSchema,
+} from "./cachedFlexSchemaFromClassSchema";
 
-export function cursorFromUnhydrated(tree: Unhydrated<TreeNode>): ITreeCursorSynchronous {
-	fail("TODO");
+/**
+ * @remarks
+ * Ideally this would work on any node, not just the root,
+ * and the schema would come from the unhydrated node.
+ * For now though, this is the only case thats needed, and we do have the data to make it work, so this is fine.
+ */
+export function cursorFromUnhydratedRoot(
+	schema: TreeSchema,
+	tree: Unhydrated<TreeNode>,
+): ITreeCursorSynchronous {
+	const data = extractFactoryContent(tree);
+	return (
+		cursorFromNodeData(data.content, { schema }, schema.rootFieldSchema.types) ??
+		fail("failed to decode tree")
+	);
 }
 
 export function toFlexConfig(config: TreeConfiguration): InitializeAndSchematizeConfiguration {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
-	const initialTree = [cursorFromUnhydrated(unhydrated as Unhydrated<TreeNode>)];
+	const initialTree = [cursorFromUnhydratedRoot(schema, unhydrated as Unhydrated<TreeNode>)];
 	return {
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
@@ -124,7 +142,9 @@ export function convertNodeSchema(
 					FieldKinds.optional,
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
-				out = FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
+				// Lookup of cached schema is done here instead of before since walking the schema recursively to populate schemaMap is still required.
+				const cached = cachedFlexSchemaFromClassSchema(schema);
+				out = cached ?? FlexMapNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
 			case NodeKind.List: {
@@ -133,7 +153,9 @@ export function convertNodeSchema(
 					FieldKinds.optional,
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
-				out = FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				const cached = cachedFlexSchemaFromClassSchema(schema);
+				out =
+					cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
 			case NodeKind.Object: {
@@ -148,14 +170,27 @@ export function convertNodeSchema(
 						value: convertField(schemaMap, value),
 					});
 				}
-				out = FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
+				const cached = cachedFlexSchemaFromClassSchema(schema);
+				out =
+					cached ??
+					FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:
 				unreachableCase(kind);
 		}
 		assert(out instanceof FlexTreeNodeSchemaBase, "invalid schema produced");
-
+		{
+			const cached = cachedFlexSchemaFromClassSchema(schema);
+			if (cached !== undefined) {
+				assert(
+					cachedFlexSchemaFromClassSchema(schema) === out,
+					"incorrect flexSchemaSymbol",
+				);
+			} else {
+				setFlexSchemaFromClassSchema(schema, out);
+			}
+		}
 		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
 	});

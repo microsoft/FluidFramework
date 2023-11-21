@@ -9,6 +9,7 @@ import {
 	MakeNominal,
 	Opaque,
 	RestrictiveReadonlyRecord,
+	fail,
 	getOrCreate,
 	isReadonlyArray,
 	requireAssignableTo,
@@ -24,18 +25,17 @@ import {
 	InternalTypedSchemaTypes,
 	LeafNodeSchema as FlexLeafNodeSchema,
 	isFlexTreeNode,
+	ObjectNodeSchema,
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
 import { TreeListNodeBase, Unhydrated, TreeMapNodeBase } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { createNodeProxy, getClassSchema } from "../simple-tree/proxies";
-
-/**
- * A symbol for storing FlexTreeSchema on TreeNodeSchema.
- * Only set when TreeNodeSchema are wrapping existing FlexTreeSchema (done for as with leaves).
- */
-export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
+import { createNodeProxy, createRawObjectProxy, getClassSchema } from "../simple-tree/proxies";
+import {
+	cachedFlexSchemaFromClassSchema,
+	flexSchemaSymbol,
+} from "./cachedFlexSchemaFromClassSchema";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
@@ -107,7 +107,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getClassSchema(input.schema) === schema,
+						getClassSchema(input.schema) === this.constructor,
 						"building node with wrong schema",
 					);
 				}
@@ -151,9 +151,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				super(input);
 				if (isFlexTreeNode(input)) {
 					// TODO: make return a proxy over this (or not a proxy).
-					return createNodeProxy(input) as schema;
+					return createNodeProxy(input, this) as schema;
 				} else {
-					// unhydrated data case.
+					const cached =
+						cachedFlexSchemaFromClassSchema(this.constructor as TreeNodeSchema) ??
+						fail("missing cached schema");
+					return createRawObjectProxy(cached as ObjectNodeSchema, input, this) as schema;
 				}
 			}
 		}
@@ -248,9 +251,10 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				super(input);
 				if (isFlexTreeNode(input)) {
 					// TODO: make return a proxy over this (or not a proxy).
-					return createNodeProxy(input) as schema;
+					return createNodeProxy(input, this) as schema;
 				} else {
 					// unhydrated data case.
+					fail("todo");
 				}
 			}
 		}
@@ -354,13 +358,17 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
 		class schema extends this.nodeSchema(name, NodeKind.List, allowedTypes) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
+			public get length(): number {
+				return fail("this exists only to make proxy valid");
+			}
 			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
 					// TODO: make return a proxy over this (or not a proxy).
-					return createNodeProxy(input) as schema;
+					return createNodeProxy(input, this) as schema;
 				} else {
 					// unhydrated data case.
+					fail("todo");
 				}
 			}
 		}
