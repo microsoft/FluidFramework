@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Content, IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -191,10 +191,7 @@ export class AttributableMapKernel {
 	public constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (
-			op: Content<"handlesEncoded">,
-			localOpMetadata: unknown,
-		) => void,
+		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
