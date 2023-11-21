@@ -155,7 +155,9 @@ export class FluidSerializer implements IFluidSerializer {
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
-	public parse<T extends OpContent<"handlesEncoded">>(input: JsonString<T>): HandlesDecoded<T> {
+	public parse<T extends OpContent<"handlesEncoded">, U extends OpContent = T>(
+		input: JsonString<T>,
+	): HandlesDecoded<U> {
 		return JSON.parse(input, (key, value) => this.decodeValue(value));
 	}
 

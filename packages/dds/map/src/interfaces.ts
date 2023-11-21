@@ -398,7 +398,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  *
  * @public
  */
-export interface ISerializableValue {
+export interface ISerializableValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
@@ -407,7 +407,7 @@ export interface ISerializableValue {
 	/**
 	 * The JSONable representation of the value.
 	 */
-	value: OpContent<"handlesEncoded"> | undefined; //* s/b Primitive
+	value: HandlesEncoded<T> | undefined; //* s/b Primitive
 }
 
 /**

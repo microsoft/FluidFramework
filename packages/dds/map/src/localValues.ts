@@ -5,10 +5,13 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+	HandlesEncoded,
 	IFluidSerializer,
 	ISerializedHandle,
+	JsonString,
 	OpContent,
 	parseHandles,
+	parseJson,
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
@@ -56,12 +59,11 @@ export function makeSerializable<T extends OpContent<"fullHandles">>(
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 	// eslint-disable-next-line import/no-deprecated
-): ISerializableValue {
-	const value = localValue.makeSerialized(serializer, bind);
+): ISerializableValue<T> {
+	const { type, value } = localValue.makeSerialized(serializer, bind);
 	return {
-		type: value.type,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		value: value.value && JSON.parse(value.value),
+		type,
+		value: value && parseJson(value),
 	};
 }
 
@@ -88,7 +90,9 @@ export class PlainLocalValue<T extends OpContent<"fullHandles">> implements ILoc
 	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue<T> {
 		// Stringify to convert to the serialized handle values - and then parse in order to create
 		// a POJO for the op
-		const value = serializeHandles(this.value, serializer, bind);
+		const value = serializeHandles(this.value, serializer, bind) as JsonString<
+			HandlesEncoded<T>
+		>; //* Fix handling of Primitive case to remove this cast
 
 		return {
 			type: this.type,

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
-import { FluidSerializer } from "../serializer";
+import { FluidSerializer, ISerializedHandle, serializeJson } from "../serializer";
 import { makeJson, MockHandleContext } from "./utils";
 
 describe("FluidSerializer", () => {
@@ -265,13 +265,15 @@ describe("FluidSerializer", () => {
 		const serializer = new FluidSerializer(dsContext, (parsedHandle: IFluidHandle) => {});
 
 		it("can parse handles with absolute path", () => {
-			const serializedHandle = JSON.stringify({
+			const serializedHandle = serializeJson<ISerializedHandle>({
 				type: "__fluid_handle__",
 				url: "/default/sharedDDS", // absolute path
 			});
 
 			// Parse a handle whose url is absolute path.
-			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
+			const parsedHandle = serializer.parse<ISerializedHandle, IFluidHandle>(
+				serializedHandle,
+			) as RemoteFluidObjectHandle;
 			assert.strictEqual(
 				parsedHandle.absolutePath,
 				"/default/sharedDDS",
@@ -292,7 +294,9 @@ describe("FluidSerializer", () => {
 
 			// Parse a handle whose url is a path relative to its route context. The serializer will generate absolute
 			// path for the handle and create a handle with it.
-			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
+			const parsedHandle = serializer.parse<ISerializedHandle, IFluidHandle>(
+				serializedHandle,
+			) as RemoteFluidObjectHandle;
 			assert.strictEqual(
 				parsedHandle.absolutePath,
 				"/default/sharedDDS",

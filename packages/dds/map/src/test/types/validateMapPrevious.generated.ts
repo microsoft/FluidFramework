@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_ISerializableValue(
 declare function get_old_InterfaceDeclaration_ISerializedValue():
     TypeOnly<old.ISerializedValue>;
 declare function use_current_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<current.ISerializedValue<any>>): void;
+    use: TypeOnly<current.ISerializedValue>): void;
 use_current_InterfaceDeclaration_ISerializedValue(
     get_old_InterfaceDeclaration_ISerializedValue());
 
@@ -471,7 +471,7 @@ use_current_InterfaceDeclaration_ISerializedValue(
 * "InterfaceDeclaration_ISerializedValue": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISerializedValue():
-    TypeOnly<current.ISerializedValue<any>>;
+    TypeOnly<current.ISerializedValue>;
 declare function use_old_InterfaceDeclaration_ISerializedValue(
     use: TypeOnly<old.ISerializedValue>): void;
 use_old_InterfaceDeclaration_ISerializedValue(

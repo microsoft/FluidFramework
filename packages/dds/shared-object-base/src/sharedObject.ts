@@ -55,8 +55,9 @@ export type HandlesEncoded<T extends OpContent> = T extends OpContent<"fullHandl
 	? Omit<T, "__handles_encoded__"> & OpContent<"handlesEncoded">
 	: T;
 
-export type HandlesDecoded<T extends OpContent<"handlesEncoded">> = Omit<T, "__handles_encoded__"> &
-	OpContent<"fullHandles">;
+export type HandlesDecoded<T extends OpContent> = Omit<T, "__handles_encoded__"> & {
+	__handles_encoded__?: "fullHandles";
+};
 
 function takeEncoded(content: OpContent<"handlesEncoded">): void {}
 function takeEither(content: OpContent): void {}
