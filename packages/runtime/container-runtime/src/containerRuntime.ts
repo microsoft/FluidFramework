@@ -963,6 +963,7 @@ export class ContainerRuntime
 	}
 
 	public readonly options: ILoaderOptions;
+	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1356,7 +1357,17 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
 
-		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+		const opGroupingManager = new OpGroupingManager(
+			{
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+				opCountThreshold:
+					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
+				reentrantBatchGroupingEnabled:
+					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
+					true,
+			},
+			this.mc.logger,
+		);
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1566,7 +1577,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2594,7 +2604,9 @@ export class ContainerRuntime
 	private canSendOps() {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
+		return (
+			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+		);
 	}
 
 	/**
@@ -3954,7 +3966,11 @@ export class ContainerRuntime
 			},
 			async (event) => {
 				this.verifyNotClosed();
-				const waitBlobsToAttach = props?.notifyImminentClosure;
+				// in case imminentClosure is set to true by future code, we don't
+				// try to change its value
+				if (!this.imminentClosure) {
+					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
+				}
 				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
@@ -3963,7 +3979,7 @@ export class ContainerRuntime
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
-				const pendingAttachmentBlobs = waitBlobsToAttach
+				const pendingAttachmentBlobs = this.imminentClosure
 					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();

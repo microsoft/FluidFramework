@@ -3,28 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { fail, isReadonlyArray } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
 	Value,
 	TreeNodeStoredSchema,
-	ValueSchema,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeTypeSet,
 	MapTree,
 	ITreeCursorSynchronous,
 	TreeStoredSchema,
-	TreeValue,
 	isCursor,
 } from "../core";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./default-field-kinds";
+import { fieldKinds } from "./default-schema";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import {
 	AllowedTypes,
@@ -32,8 +29,10 @@ import {
 	TreeNodeSchema,
 	allowedTypesToTypeSet,
 } from "./typed-schema";
-import { singleMapTreeCursor } from "./mapTreeCursor";
-import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
+import { cursorForMapTreeNode } from "./mapTreeCursor";
+import { AllowedTypesToTypedTrees, TypedField, TypedNode } from "./schema-aware";
+import { isFluidHandle, allowsValue } from "./valueUtilities";
+import { TreeDataContext } from "./fieldGenerator";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -44,7 +43,8 @@ import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./sche
  * The format defined here is very tolerant to optimize for flexibility of expressing trees:
  * APIs exposing data in this format should likely further constrain what is allowed.
  * For example guarantee which fields and nodes should be inlined, and that types will be required everywhere.
- * See {@link EditableTree} for an example of this.
+ *
+ * This is from Editable tree one which has been deleted and should no longer be used!
  */
 
 /**
@@ -68,7 +68,7 @@ export function areCursors(
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
- *
+ * @deprecated This definition of Primitive is from editable-tree-1 and should not be used.
  * @remarks
  * TODO:
  * This (like most things in this file) works with stored schema doing things that should be done with view schema.
@@ -107,6 +107,7 @@ export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
 
 /**
  * @alpha
+ * @deprecated This definition of PrimitiveValue is from editable-tree-1 and should not be used.
  * @privateRemarks
  * TODO: remove from package API when old editable-tree API is removed
  */
@@ -114,6 +115,7 @@ export type PrimitiveValue = string | boolean | number;
 
 /**
  * Checks if a value is a {@link PrimitiveValue}.
+ * @deprecated This definition of PrimitiveValue is from editable-tree-1 and should not be used.
  */
 export function isPrimitiveValue(nodeValue: unknown): nodeValue is PrimitiveValue {
 	switch (typeof nodeValue) {
@@ -124,76 +126,6 @@ export function isPrimitiveValue(nodeValue: unknown): nodeValue is PrimitiveValu
 		default:
 			return false;
 	}
-}
-
-export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
-	if (schema === undefined) {
-		return nodeValue === undefined;
-	}
-	return valueSchemaAllows(schema, nodeValue);
-}
-
-export function valueSchemaAllows<TSchema extends ValueSchema>(
-	schema: TSchema,
-	nodeValue: Value,
-): nodeValue is TreeValue<TSchema> {
-	switch (schema) {
-		case ValueSchema.String:
-			return typeof nodeValue === "string";
-		case ValueSchema.Number:
-			return typeof nodeValue === "number";
-		case ValueSchema.Boolean:
-			return typeof nodeValue === "boolean";
-		case ValueSchema.FluidHandle:
-			return isFluidHandle(nodeValue);
-		case ValueSchema.Null:
-			return nodeValue === null;
-		default:
-			unreachableCase(schema);
-	}
-}
-
-/**
- * Use for readonly view of Json compatible data that can also contain IFluidHandles.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- */
-export type FluidSerializableReadOnly =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| readonly FluidSerializableReadOnly[]
-	| { readonly [P in string]?: FluidSerializableReadOnly };
-
-// TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
-		return false;
-	}
-
-	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
-	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
-	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
-	const isHandle = handle === value;
-	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
-	// do an extra test.
-	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
-	const getMember = (value as Partial<IFluidHandle>).get;
-	if (typeof getMember !== "function") {
-		return false;
-	}
-
-	return isHandle;
-}
-
-export function assertAllowedValue(
-	value: undefined | FluidSerializableReadOnly,
-): asserts value is Value {
-	assert(isPrimitiveValue(value) || isFluidHandle(value), 0x76f /* invalid value */);
 }
 
 /**
@@ -322,41 +254,6 @@ export type ContextuallyTypedNodeData =
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 /**
- * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.
- * @alpha
- * TODO:
- * Currently being exposed at the package level which also requires us to export MapTree at the package level.
- * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- */
-export interface TreeDataContext {
-	/**
-	 * Schema for the document which the tree will be used in.
-	 */
-	readonly schema: TreeStoredSchema;
-
-	/**
-	 * Procedural data generator for fields.
-	 * Fields which provide generators here can be omitted in the input contextually typed data.
-	 *
-	 * @remarks
-	 * TODO:
-	 * For implementers of this which are not pure (like identifier generation),
-	 * order of invocation should be made consistent and documented.
-	 * This will be important for identifier elision optimizations in tree encoding for session based identifier generation.
-	 */
-	fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
-}
-
-/**
- * Generates field content for a MapTree on demand.
- * @alpha
- * TODO:
- * Currently being exposed at the package level which also requires us to export MapTree at the package level.
- * Refactor the FieldGenerator to use JsonableTree instead of MapTree, and convert them internally.
- */
-export type FieldGenerator = () => MapTree[];
-
-/**
  * Checks the type of a `ContextuallyTypedNodeData`.
  */
 export function isArrayLike(
@@ -453,6 +350,9 @@ function shallowCompatibilityTest(
 			getFieldKind(primary.schema).multiplicity === Multiplicity.Sequence
 		);
 	}
+	if (data instanceof Map) {
+		return schema.mapFields !== undefined;
+	}
 	if (data[typeNameSymbol] !== undefined) {
 		return data[typeNameSymbol] === type;
 	}
@@ -473,6 +373,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorFromContextualData(
@@ -481,17 +382,18 @@ export function cursorFromContextualData(
 	data: ContextuallyTypedNodeData,
 ): ITreeCursorSynchronous {
 	const mapTree = applyTypesFromContext(context, typeSet, data);
-	return singleMapTreeCursor(mapTree);
+	return cursorForMapTreeNode(mapTree);
 }
 
 /**
- * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema
+ * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedNode<T, ApiMode.Simple>,
+	data: TypedNode<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -502,12 +404,13 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
 	schema: T,
-	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
+	data: AllowedTypesToTypedTrees<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -528,7 +431,7 @@ export function cursorsFromContextualData(
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(context, field, data);
-	return mapTrees.map(singleMapTreeCursor);
+	return mapTrees.map(cursorForMapTreeNode);
 }
 
 /**
@@ -538,7 +441,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T, ApiMode.Flexible>,
+	data: TypedField<T>,
 ): ITreeCursorSynchronous[] {
 	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
@@ -594,7 +497,7 @@ export function applyTypesFromContext(
 	} else if (data instanceof Map) {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const [key, value] of data) {
-			assert(!fields.has(key), "Keys should not be duplicated");
+			assert(!fields.has(key), 0x7f0 /* Keys should not be duplicated */);
 			const childSchema = getFieldSchema(key, schema);
 			const children = applyFieldTypesFromContext(context, childSchema, value);
 

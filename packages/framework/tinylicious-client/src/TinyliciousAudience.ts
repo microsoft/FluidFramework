@@ -12,6 +12,7 @@ import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./inte
  * {@inheritDoc ITinyliciousAudience}
  *
  * @public
+ * @deprecated use {@link ITinyliciousAudience} instead
  */
 export class TinyliciousAudience
 	extends ServiceAudience<TinyliciousMember>
@@ -21,16 +22,20 @@ export class TinyliciousAudience
 	 * @internal
 	 */
 	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
-		const tinyliciousUser = audienceMember.user as TinyliciousUser;
-		assert(
-			tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
-			0x313 /* Specified user was not of type "TinyliciousUser". */,
-		);
-
-		return {
-			userId: tinyliciousUser.id,
-			userName: tinyliciousUser.name,
-			connections: [],
-		};
+		return createTinyliciousAudienceMember(audienceMember);
 	}
+}
+
+export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
+	const tinyliciousUser = audienceMember.user as TinyliciousUser;
+	assert(
+		tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
+		0x313 /* Specified user was not of type "TinyliciousUser". */,
+	);
+
+	return {
+		userId: tinyliciousUser.id,
+		userName: tinyliciousUser.name,
+		connections: [],
+	};
 }

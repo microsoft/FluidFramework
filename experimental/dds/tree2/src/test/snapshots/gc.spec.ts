@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTree, ISharedTreeView2, SharedTree, SharedTreeFactory } from "../../shared-tree";
+import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shared-tree";
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
+import { TreeField } from "../../simple-tree";
 
 const builder = new SchemaBuilder({ scope: "test" });
 const someType = builder.object("foo", {
@@ -28,13 +29,13 @@ const someType = builder.object("foo", {
 
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
-			handles: [],
+			handles: { "": [] },
 			nested: undefined,
 			bump: undefined,
-		} as any,
+		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
 	});
@@ -93,7 +94,7 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.handles.insertAtEnd([subtree1.handle, subtree2.handle]);
+			this.tree1View.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

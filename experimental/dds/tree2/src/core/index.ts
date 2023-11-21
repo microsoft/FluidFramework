@@ -102,6 +102,7 @@ export {
 	DetachedFieldIndex,
 	ForestRootId,
 	getDetachedFieldContainingPath,
+	aboveRootPlaceholder,
 } from "./tree";
 
 export {
@@ -126,7 +127,6 @@ export {
 	TreeSchemaIdentifierSchema,
 	TreeFieldStoredSchema,
 	ValueSchema,
-	PrimitiveValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -157,6 +157,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

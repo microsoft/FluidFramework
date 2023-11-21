@@ -13,21 +13,22 @@ export {
 } from "./sharedTree";
 
 export {
-	createSharedTreeView,
-	ISharedTreeView,
+	createTreeCheckout,
+	ITreeCheckout,
 	runSynchronous,
-	ViewEvents,
+	CheckoutEvents,
 	ITransaction,
-	ISharedTreeBranchView,
-} from "./sharedTreeView";
+	ITreeCheckoutFork,
+} from "./treeCheckout";
 
 export {
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
+	buildTreeConfiguration,
 } from "./schematizedTree";
 
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
+export { TypedTreeFactory, TypedTreeOptions, ITree, TreeView } from "./simpleTree";
 
-export { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
+export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";
