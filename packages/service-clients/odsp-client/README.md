@@ -36,7 +36,7 @@ const client = new OdspClient(clientProps);
 
 A Container instance is a organizational unit within Fluid. Each Container instance has a connection to the defined Fluid Service and contains a collection of collaborative objects.
 
-Containers are created and identified by unique IDs. Management and storage of these IDs are the responsibility of the developer.
+Containers are created and identified by unique itemIds. Management and storage of these itemIds are the responsibility of the developer.
 
 ## Defining Fluid Containers
 
@@ -84,7 +84,7 @@ const schema = {
 	},
 };
 
-// Fetch back the container that had been created earlier with the same url and schema
+// Fetch back the container that had been created earlier with the same itemId and schema
 const { container, services } = await OdspClient.getContainer("_unique-itemId_", schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
