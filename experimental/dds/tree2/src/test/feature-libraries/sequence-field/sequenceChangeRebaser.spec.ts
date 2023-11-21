@@ -351,6 +351,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 
 interface TestState {
 	length: number;
+	insertIndicesLength: number;
 	numNodes: number[];
 }
 
@@ -365,6 +366,8 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
 	const numNodes = state.content.numNodes;
+	const indices = state.content.insertIndicesLength;
+	const iterationCap = Math.min(indices, state.content.length);
 
 	// Undo the most recent edit
 	if (state.mostRecentEdit !== undefined) {
@@ -383,40 +386,15 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	}
 
 	for (const nodeCount of numNodes) {
-		// MoveIn nodeCount nodes
-		const moveInIntention = mintIntention();
-		yield {
-			content: state.content,
-			mostRecentEdit: {
-				changeset: tagChange(
-					Change.move(1, nodeCount, 0),
-					tagFromIntention(moveInIntention),
-				),
-				intention: moveInIntention,
-				description: `MoveIn${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From1To0`,
-			},
-			parent: state,
-		};
-
-		// MoveOut nodeCount nodes
-		const moveOutIntention = mintIntention();
-		yield {
-			content: state.content,
-			mostRecentEdit: {
-				changeset: tagChange(
-					Change.move(0, nodeCount, 1),
-					tagFromIntention(moveOutIntention),
-				),
-				intention: moveOutIntention,
-				description: `MoveOut${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From0To1`,
-			},
-			parent: state,
-		};
-		for (let i = 0; i <= state.content.length; i++) {
+		for (let i = 0; i <= iterationCap; i++) {
 			// Insert nodeCount nodes
 			const insertIntention = mintIntention();
 			yield {
-				content: { length: state.content.length + nodeCount, numNodes },
+				content: {
+					length: state.content.length + nodeCount,
+					insertIndicesLength: state.content.insertIndicesLength,
+					numNodes,
+				},
 				mostRecentEdit: {
 					changeset: tagChange(
 						Change.insert(i, nodeCount),
@@ -427,13 +405,62 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 				},
 				parent: state,
 			};
+
+			// Delete nodeCount nodes
+			const deleteIntention = mintIntention();
+			yield {
+				content: {
+					length: state.content.length - nodeCount,
+					insertIndicesLength: state.content.insertIndicesLength,
+					numNodes,
+				},
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.delete(i, nodeCount),
+						tagFromIntention(deleteIntention),
+					),
+					intention: deleteIntention,
+					description: `Delete${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
+				},
+				parent: state,
+			};
+
+			// MoveIn nodeCount nodes
+			const moveInIntention = mintIntention();
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.move(1, nodeCount, i),
+						tagFromIntention(moveInIntention),
+					),
+					intention: moveInIntention,
+					description: `MoveIn${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From1To0`,
+				},
+				parent: state,
+			};
+
+			// MoveOut nodeCount nodes
+			const moveOutIntention = mintIntention();
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.move(i, nodeCount, 1),
+						tagFromIntention(moveOutIntention),
+					),
+					intention: moveOutIntention,
+					description: `MoveOut${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From0To1`,
+				},
+				parent: state,
+			};
 		}
 	}
 };
 
 describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3] } }],
+		[{ content: { length: 4, numNodes: [1, 3], insertIndicesLength: 2 } }],
 		generateChildStates,
 		{
 			rebase,
