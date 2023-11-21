@@ -10,6 +10,7 @@ import {
 	FieldKind as FlexFieldKind,
 	FieldKinds,
 	AllowedTypes as FlexAllowedTypes,
+	TreeNodeSchemaBase as FlexTreeNodeSchemaBase,
 	TreeNodeSchema as FlexTreeNodeSchema,
 	defaultSchemaPolicy,
 	MapNodeSchema as FlexMapNodeSchema,
@@ -18,7 +19,7 @@ import {
 } from "../feature-libraries";
 import { brand, fail, getOrCreate, isReadonlyArray } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
-import { flexSchemaSymbol } from "../simple-tree/proxies";
+import { simpleSchemaSymbol } from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
 import { TreeNode, Unhydrated } from "../simple-tree";
@@ -30,6 +31,7 @@ import {
 	LeafNodeSchema,
 	NodeKind,
 	TreeNodeSchema,
+	flexSchemaSymbol,
 } from "./schemaFactory";
 import { TreeConfiguration } from "./tree";
 
@@ -152,13 +154,16 @@ export function convertNodeSchema(
 			default:
 				unreachableCase(kind);
 		}
+		assert(out instanceof FlexTreeNodeSchemaBase, "invalid schema produced");
 
-		(out as any)[flexSchemaSymbol] = schema;
+		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
 	});
-	assert(
-		(final as any)[flexSchemaSymbol] === schema,
-		"multiple view schema for the same identifier",
-	);
+	if (schema.kind !== NodeKind.Leaf) {
+		assert(
+			(final as any)[simpleSchemaSymbol] === schema,
+			"multiple view schema for the same identifier",
+		);
+	}
 	return final;
 }

@@ -32,7 +32,13 @@ import { leaf } from "../domains";
 import { TreeValue } from "../core";
 import { TreeListNodeBase, Unhydrated, TreeMapNodeBase } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { createNodeProxy, flexSchemaSymbol } from "../simple-tree/proxies";
+import { createNodeProxy } from "../simple-tree/proxies";
+
+/**
+ * A symbol for storing FlexTreeSchema on TreeNodeSchema.
+ * Only set when TreeNodeSchema are wrapping existing FlexTreeSchema (done for as with leaves).
+ */
+export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
 
 /**
  * @alpha
@@ -296,6 +302,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public constructor(node: FlexTreeObjectNode | UnhydratedData) {
 				super();
 				// TODO: make return value a proxy over this (or not a proxy).
+				// TODO: support UnhydratedData
 				return createNodeProxy(node as FlexTreeObjectNode) as schema;
 			}
 		}

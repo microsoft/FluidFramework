@@ -96,18 +96,12 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 }
 
 /**
- * A symbol for storing TreeNode schema on FlexTreeNode's schema.
+ * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
  */
 export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
 
-/**
- * A symbol for storing FlexTreeObjectNode schema on TreeNode .
- */
-export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
-
 export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
 	if (simpleSchemaSymbol in schema) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
 	}
 	return undefined;
