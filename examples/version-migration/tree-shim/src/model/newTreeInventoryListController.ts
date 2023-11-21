@@ -9,7 +9,7 @@ import {
 	AllowedUpdateType,
 	ISharedTree,
 	Tree,
-	ProxyNode,
+	TypedNode,
 	SchemaBuilder,
 	disposeSymbol,
 } from "@fluid-experimental/tree2";
@@ -31,10 +31,10 @@ const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// The number in stock
 	quantity: builder.number,
 });
-type InventoryItemNode = ProxyNode<typeof inventoryItemSchema>;
+type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
 
 const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = ProxyNode<typeof inventoryItemList>;
+type InventoryItemList = TypedNode<typeof inventoryItemList>;
 
 const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList,
@@ -189,15 +189,13 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 	}
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this._inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
+		this._inventoryItemList.insertAtEnd({
+			// In a real-world scenario, this is probably a known unique inventory ID (rather than
+			// randomly generated).  Randomly generating here just for convenience.
+			id: uuid(),
+			name,
+			quantity,
+		});
 	};
 
 	public readonly getItems = (): IInventoryItem[] => {

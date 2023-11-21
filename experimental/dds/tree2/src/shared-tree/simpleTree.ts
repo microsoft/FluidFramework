@@ -10,7 +10,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ProxyField, TreeFieldSchema } from "../feature-libraries";
+import { TreeField } from "../simple-tree";
+import { TreeFieldSchema } from "../feature-libraries";
 import { ISubscribable } from "../events";
 import { IDisposable } from "../util";
 import { SharedTree, SharedTreeOptions } from "./sharedTree";
@@ -71,7 +72,7 @@ export interface ITree extends IChannel {
 	 */
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TreeView<ProxyField<TRoot>>;
+	): TreeView<TreeField<TRoot>>;
 }
 
 /**

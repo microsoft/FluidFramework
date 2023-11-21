@@ -10,7 +10,6 @@ import {
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
@@ -89,7 +88,6 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX = { type: leaf.string.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
 
 function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 	assert.equal(actual.length, expected.length);
