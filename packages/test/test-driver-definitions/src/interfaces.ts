@@ -11,7 +11,6 @@ import {
 
 /**
  * Types of test drivers.
- *
  * @public
  */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
