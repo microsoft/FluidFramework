@@ -183,7 +183,7 @@ This results in someone's changes being "lost" from a user's perspective. This m
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
 strategy probably won't give you the behavior you want.
 
-However, you could address this problem in different ways depending on which version of Fluid Framework you are using. 
+However, you could address this problem in different ways depending on which version of Fluid Framework you are using.
 
 In version 1.0, store individual shape properties in `SharedMap` keys. Instead of storing a
 JSON object with all the data, your code can break it apart and store the length in one `SharedMap` key, the width in another,
@@ -194,7 +194,7 @@ store the `SharedMaps` representing each shape within that parent `SharedMap` ob
 
 In version 2.0, there's a similar, but better, way. Store individual shape properties in a map node of a `SharedTree`. Your code can store the length in one key of the map node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
 
-When you have more than one shape in your data model, you could create a *list* node in the `SharedTree`, with child map nodes to store all the shapes. 
+When you have more than one shape in your data model, you could create a *list* node in the `SharedTree`, with child map nodes to store all the shapes.
 
 ### Key-value data
 

@@ -62,7 +62,7 @@ export const appSchemaConfig = buildTreeConfiguration({
 });
 ```
 
-There is one last task. The `listOfStrings` and `app` types are needed in the app's React-based view, but these objects are only types within the context of the `SchemaBuilder` object. To be used in the view, they need to be converted to real TypeScript types. The following lines do that: 
+There is one last task. The `listOfStrings` and `app` types are needed in the app's React-based view, but these objects are only types within the context of the `SchemaBuilder` object. To be used in the view, they need to be converted to real TypeScript types. The following lines do that:
 
 ```typescript
 export type App = ProxyNode<typeof app>;
@@ -147,7 +147,7 @@ const appData = (container.initialObjects.appData as ITree).schematize(
 );
 ```
 
-Next, the `main` method initializes some developer tools. 
+Next, the `main` method initializes some developer tools.
 
 ```typescript
 import { initializeDevtools } from '@fluid-experimental/devtools';
@@ -243,7 +243,7 @@ The first task within the `<ReactApp>` component is to ensure that the view chan
 -   When the React view first renders, the [Tree.on]({{< relref "data-structures/tree.md#event-handling" >}}) method runs and registers a handler that itself runs whenever the shared tree object `appRoot` is changed on any client.
 -   The `Tree.on` method returns a method that removes the handler from the event. This `unsubscribe` method runs when the component unmounts, which happens when the app is closed on the client.
 -   The `afterChange` handler calls the `setInvalidations()` method which changes the `invalidations` state object to a random number because all that matters is that it changes, not what it changes to.
--   Since `setInvalidations()` causes a change in React state, the React view automatically rerenders. 
+-   Since `setInvalidations()` causes a change in React state, the React view automatically rerenders.
 
 ```typescript
 const [invalidations, setInvalidations] = useState(0);
@@ -260,8 +260,8 @@ useEffect(() => {
 
 The final task in the `<ReactApp>` is to layout its children. Note the following about this code:
 
--   Each of the two list nodes in the shared tree is assigned to its own `<ListGroup>` component as the `list` property. 
--   Each of the list node objects is also assigned to the other `<ListGroup>` component as the `destination` property. This is needed because the Fluid API that moves items from one list node to another must be called on the destination node. 
+-   Each of the two list nodes in the shared tree is assigned to its own `<ListGroup>` component as the `list` property.
+-   Each of the list node objects is also assigned to the other `<ListGroup>` component as the `destination` property. This is needed because the Fluid API that moves items from one list node to another must be called on the destination node.
 
 ```typescript
 return (
@@ -277,7 +277,7 @@ return (
 
 The other Fluid task for the react_app.tsx file, is to link the buttons in the view to the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}}). Note the following about this code:
 
--   The `<InsertButton>` component calls the `insertAtStart()` method of the list node on which it is called to insert an empty string to the beginning of the list. 
+-   The `<InsertButton>` component calls the `insertAtStart()` method of the list node on which it is called to insert an empty string to the beginning of the list.
 -   The `<RemoveButton>` component calls the `removeAt()` method of the list node on which it is called to remove the first item in the list.
 -   The `list` property of the three components is passed to the component as the `list` property of its parent`<ListGroup>` component.
 -   The `destination` property of the `<MoveButton>` component is passed to the component as the `destination` property of its parent`<ListGroup>` component. The move APIs of list nodes must be called on the destination node.
