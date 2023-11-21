@@ -20,7 +20,6 @@ import {
 	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -29,7 +28,9 @@ import {
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
+import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { assertEqual } from "./optionalFieldUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -88,33 +89,27 @@ const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Del
 const tag = mintRevisionTag();
 const change1: TaggedChange<OptionalChangeset> = tagChange(
 	{
-		fieldChange: {
-			id: brand(1),
-			newContent: {
-				set: testTree("tree1"),
-				changes: nodeChange1,
-				buildId: { localId: brand(41) },
-			},
-			wasEmpty: true,
-		},
+		build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
+		moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
+		childChanges: [["self", nodeChange1]],
+		reservedDetachId: { localId: brand(1) },
 	},
 	tag,
 );
 
 const change2: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), false, brand(2), brand(42)),
+	optionalFieldEditor.set(testTreeCursor("tree2"), false, { fill: brand(42), detach: brand(2) }),
 	mintRevisionTag(),
 );
 
 const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
 	{
-		fieldChange: {
-			id: brand(2),
-			newContent: {
-				revert: { revision: change2.revision, localId: brand(2) },
-			},
-			wasEmpty: false,
-		},
+		moves: [
+			[{ localId: brand(2) }, "self", "nodeTargeting"],
+			["self", { localId: brand(42) }, "cellTargeting"],
+		],
+		childChanges: [],
+		build: [],
 	},
 	mintRevisionTag(),
 );
@@ -123,7 +118,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
  * Represents what change2 would have been had it been concurrent with change1.
  */
 const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), true, brand(2), brand(42)),
+	optionalFieldEditor.set(testTreeCursor("tree2"), true, { fill: brand(42), detach: brand(2) }),
 	change2.revision,
 );
 
@@ -137,18 +132,15 @@ describe("optionalField", () => {
 	// TODO: more editor tests
 	describe("editor", () => {
 		it("can be created", () => {
-			const actual: OptionalChangeset = optionalFieldEditor.set(
-				testTreeCursor("x"),
-				true,
-				brand(42),
-				brand(43),
-			);
+			const actual: OptionalChangeset = optionalFieldEditor.set(testTreeCursor("x"), true, {
+				fill: brand(42),
+				detach: brand(43),
+			});
 			const expected: OptionalChangeset = {
-				fieldChange: {
-					id: brand(42),
-					newContent: { set: testTree("x"), buildId: { localId: brand(43) } },
-					wasEmpty: true,
-				},
+				build: [{ id: { localId: brand(42) }, set: testTree("x") }],
+				moves: [[{ localId: brand(42) }, "self", "nodeTargeting"]],
+				childChanges: [],
+				reservedDetachId: { localId: brand(43) },
 			};
 			assert.deepEqual(actual, expected);
 		});
@@ -169,30 +161,44 @@ describe("optionalField", () => {
 			);
 
 			const change1And2: OptionalChangeset = {
-				fieldChange: {
-					id: brand(2),
-					revision: change2.revision,
-					newContent: { set: testTree("tree2"), buildId: { localId: brand(42) } },
-					wasEmpty: true,
-				},
-				childChanges: [[{ revision: change2.revision, localId: brand(2) }, nodeChange1]],
+				build: [
+					{
+						id: { localId: brand(41), revision: change1.revision },
+						set: testTree("tree1"),
+					},
+					{
+						id: { localId: brand(42), revision: change2.revision },
+						set: testTree("tree2"),
+					},
+				],
+				moves: [
+					[
+						{ localId: brand(41), revision: change1.revision },
+						{ localId: brand(2), revision: change2.revision },
+						"nodeTargeting",
+					],
+					[{ localId: brand(42), revision: change2.revision }, "self", "nodeTargeting"],
+				],
+				childChanges: [[{ localId: brand(2), revision: change2.revision }, nodeChange1]],
+				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
-			assert.deepEqual(composed, change1And2);
+			assertEqual(makeAnonChange(composed), makeAnonChange(change1And2));
 		});
 
 		it("can compose child changes", () => {
 			const expected: OptionalChangeset = {
-				fieldChange: {
-					id: brand(1),
-					revision: change1.revision,
-					wasEmpty: true,
-					newContent: {
+				build: [
+					{
+						id: { localId: brand(41), revision: change1.revision },
 						set: testTree("tree1"),
-						buildId: { localId: brand(41) },
-						changes: arbitraryChildChange,
 					},
-				},
+				],
+				moves: [
+					[{ localId: brand(41), revision: change1.revision }, "self", "nodeTargeting"],
+				],
+				childChanges: [["self", arbitraryChildChange]],
+				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
 			assert.deepEqual(
@@ -220,8 +226,11 @@ describe("optionalField", () => {
 			};
 
 			const expected: OptionalChangeset = {
-				fieldChange: { id: brand(1), wasEmpty: false },
-				childChanges: [["self", nodeChange2]],
+				build: [],
+				moves: [
+					["self", { localId: brand(41), revision: change1.revision }, "cellTargeting"],
+				],
+				childChanges: [[{ localId: brand(41), revision: change1.revision }, nodeChange2]],
 			};
 
 			assert.deepEqual(
@@ -256,8 +265,16 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase child change", () => {
-				const baseChange: OptionalChangeset = { childChanges: [["self", nodeChange1]] };
-				const changeToRebase: OptionalChangeset = { childChanges: [["self", nodeChange2]] };
+				const baseChange: OptionalChangeset = {
+					build: [],
+					moves: [],
+					childChanges: [["self", nodeChange1]],
+				};
+				const changeToRebase: OptionalChangeset = {
+					build: [],
+					moves: [],
+					childChanges: [["self", nodeChange2]],
+				};
 
 				const childRebaser = (
 					change: NodeChangeset | undefined,
@@ -269,6 +286,8 @@ describe("optionalField", () => {
 				};
 
 				const expected: OptionalChangeset = {
+					build: [],
+					moves: [],
 					childChanges: [["self", arbitraryChildChange]],
 				};
 
@@ -334,22 +353,23 @@ describe("optionalField", () => {
 
 			it("can rebase child change (field change ↷ field change)", () => {
 				const baseChange: OptionalChangeset = {
-					fieldChange: {
-						id: brand(0),
-						wasEmpty: false,
-					},
-					childChanges: [["self", nodeChange1]],
+					build: [],
+					moves: [["self", { localId: brand(0) }, "cellTargeting"]],
+					childChanges: [[{ localId: brand(0) }, nodeChange1]],
 				};
+				const taggedBaseChange = tagChange(baseChange, mintRevisionTag());
+
+				// Note: this sort of change (has field changes as well as nested child changes)
+				// can only be created for production codepaths using transactions.
 				const changeToRebase: OptionalChangeset = {
-					fieldChange: {
-						id: brand(1),
-						wasEmpty: false,
-						newContent: {
-							set: { type: brand("value"), value: "X" },
-							buildId: { localId: brand(41) },
-						},
-					},
-					childChanges: [["self", nodeChange2]],
+					build: [
+						{ id: { localId: brand(41) }, set: { type: brand("value"), value: "X" } },
+					],
+					moves: [
+						[{ localId: brand(41) }, "self", "nodeTargeting"],
+						["self", { localId: brand(1) }, "cellTargeting"],
+					],
+					childChanges: [[{ localId: brand(1) }, nodeChange2]],
 				};
 
 				const childRebaser = (
@@ -362,24 +382,28 @@ describe("optionalField", () => {
 				};
 
 				const expected: OptionalChangeset = {
-					fieldChange: {
-						id: brand(1),
-						wasEmpty: true,
-						newContent: {
-							set: { type: brand("value"), value: "X" },
-							buildId: { localId: brand(41) },
-						},
-					},
-					childChanges: [[{ localId: brand(0) }, arbitraryChildChange]],
+					build: [
+						{ id: { localId: brand(41) }, set: { type: brand("value"), value: "X" } },
+					],
+					// TODO:AB#6298: This test case demonstrates a problem with rebasing transactions:
+					// we don't realize that { localId: brand(1) } no longer refers to the right node
+					// because we rebased over a change that detaches that node. We either need to augment
+					// this with a move from { localId: brand(0), revision: taggedBaseChange.revision } => { localId: brand(1) }
+					// OR update the child change here to refer to { localId: brand(0), revision: taggedBaseChange.revision }!
+					// Right now we do things inconsistently with 'self' due to how renamedDsts works in optional field, which causes this bug.
+					moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
+					childChanges: [[{ localId: brand(1) }, arbitraryChildChange]],
+					// See comment above: this may need to change as well.
+					reservedDetachId: { localId: brand(1) },
 				};
 
 				const actual = optionalChangeRebaser.rebase(
 					changeToRebase,
-					makeAnonChange(baseChange),
+					taggedBaseChange,
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					defaultRevisionMetadataFromChanges([taggedBaseChange]),
 				);
 				assert.deepEqual(actual, expected);
 			});
@@ -431,8 +455,8 @@ describe("optionalField", () => {
 				local: [
 					{
 						count: 1,
-						attach: { major: change2.revision, minor: 2 },
-						detach: { major: revertChange2.revision, minor: 2 },
+						attach: { major: revertChange2.revision, minor: 2 },
+						detach: { major: revertChange2.revision, minor: 42 },
 					},
 				],
 			};
@@ -482,7 +506,7 @@ describe("optionalField", () => {
 
 	describe("relevantRemovedTrees", () => {
 		const fill = tagChange(
-			optionalFieldEditor.set(testTreeCursor(""), true, brand(1), brand(2)),
+			optionalFieldEditor.set(testTreeCursor(""), true, { detach: brand(1), fill: brand(2) }),
 			mintRevisionTag(),
 		);
 		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());
@@ -541,7 +565,10 @@ describe("optionalField", () => {
 			});
 			it("a tree that remains untouched", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees({}, noTreesDelegate),
+					optionalChangeHandler.relevantRemovedTrees(
+						{ build: [], moves: [], childChanges: [] },
+						noTreesDelegate,
+					),
 				);
 				assert.deepEqual(actual, []);
 			});

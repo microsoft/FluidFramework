@@ -185,11 +185,13 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				registryEntries,
 				requestHandler,
 				provideEntryPoint,
+				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
+				initializeEntryPoint: provideEntryPoint,
 				runtimeOptions,
 				containerScope,
 				existing,
 				containerRuntimeCtor,
-			})) as ContainerRuntimeWithAttributor;
+			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
