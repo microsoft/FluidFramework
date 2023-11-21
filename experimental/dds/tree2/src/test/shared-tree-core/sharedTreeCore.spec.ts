@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
-	ChangeEvents,
 	EditManager,
 	SharedTreeCore,
 	Summarizable,
@@ -29,104 +28,19 @@ import {
 } from "../../shared-tree-core";
 import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
 import {
-	DefaultChangeset,
 	DefaultEditBuilder,
 	FieldKinds,
 	TreeFieldSchema,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
-import { ISubscribable } from "../../events";
 import { SharedTreeTestFactory } from "../utils";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
-	describe("emits", () => {
-		/** Implementation of SharedTreeCore which exposes change events */
-		class ChangeEventSharedTree extends TestSharedTreeCore {
-			public constructor() {
-				const runtime = new MockFluidDataStoreRuntime();
-				const attributes: IChannelAttributes = {
-					type: "ChangeEventSharedTree",
-					snapshotFormatVersion: "0.0.0",
-					packageVersion: "0.0.0",
-				};
-				super();
-			}
-
-			public get events(): ISubscribable<ChangeEvents<DefaultChangeset>> {
-				return this.changeEvents;
-			}
-		}
-
-		function countTreeEvent(event: keyof ChangeEvents<DefaultChangeset>): {
-			tree: ChangeEventSharedTree;
-			counter: { count: number };
-		} {
-			const counter = {
-				count: 0,
-			};
-			const tree = new ChangeEventSharedTree();
-			tree.events.on(event, () => (counter.count += 1));
-			return { tree, counter };
-		}
-
-		it("local change event after a change", async () => {
-			const { tree, counter } = countTreeEvent("newLocalChange");
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			changeTree(tree);
-			assert.equal(counter.count, 2);
-		});
-
-		it("local change event after a change in a transaction", async () => {
-			const { tree, counter } = countTreeEvent("newLocalChange");
-			tree.getLocalBranch().startTransaction();
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			changeTree(tree);
-			assert.equal(counter.count, 2);
-		});
-
-		it("no local change event when committing a transaction", async () => {
-			const { tree, counter } = countTreeEvent("newLocalChange");
-			tree.getLocalBranch().startTransaction();
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			tree.getLocalBranch().commitTransaction();
-			assert.equal(counter.count, 1);
-		});
-
-		it("local state event after a change", async () => {
-			const { tree, counter } = countTreeEvent("newLocalState");
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			changeTree(tree);
-			assert.equal(counter.count, 2);
-		});
-
-		it("local state event after a change in a transaction", async () => {
-			const { tree, counter } = countTreeEvent("newLocalState");
-			tree.getLocalBranch().startTransaction();
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			changeTree(tree);
-			assert.equal(counter.count, 2);
-		});
-
-		it("no local state event when committing a transaction", async () => {
-			const { tree, counter } = countTreeEvent("newLocalState");
-			tree.getLocalBranch().startTransaction();
-			changeTree(tree);
-			assert.equal(counter.count, 1);
-			tree.getLocalBranch().commitTransaction();
-			assert.equal(counter.count, 1);
-		});
-	});
-
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
 		const { summary, stats } = await tree.summarize();
@@ -246,6 +160,11 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
+		});
+
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -270,6 +189,11 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
+		});
+
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
@@ -312,10 +236,15 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 1);
 	});
 
-	// This test triggers 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
-	// didn't properly track state related to the detached node the edit affects.
-	// When unskipping this test, it may be desirable to add assertions verifying the final state of the two trees.
-	it.skip("Regression test for 0x4a6", async () => {
+	/**
+	 * This test triggered 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
+	 * didn't properly track state related to the detached node the edit affects.
+	 *
+	 * This test should basically be covered by lower-level editing tests now
+	 * (see "can rebase a node replacement and a dependent edit to the new node incrementally")
+	 * but for now is kept here for slightly higher e2e coverage for this sort of thing.
+	 */
+	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -351,8 +280,8 @@ describe("SharedTreeCore", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematize(config);
-		const view2 = tree2.schematize(config);
+		const view1 = tree1.schematizeInternal(config);
+		const view2 = tree2.schematizeInternal(config);
 		const editable1 = view1.editableTree;
 		const editable2 = view2.editableTree;
 
@@ -364,6 +293,16 @@ describe("SharedTreeCore", () => {
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
 		rootNode.boxedChild.content = 43;
 		containerRuntimeFactory.processAllMessages();
+		assert.deepEqual(tree1.contentSnapshot().tree, [
+			{
+				type: node.name,
+			},
+		]);
+		assert.deepEqual(tree2.contentSnapshot().tree, [
+			{
+				type: node.name,
+			},
+		]);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
@@ -445,7 +384,7 @@ function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
+	field.insert(0, cursorForJsonableTreeNode({ type: brand("Node"), value: 42 }));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */

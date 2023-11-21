@@ -8,7 +8,6 @@ import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -62,12 +61,12 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		dataObject1 = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);

@@ -15,6 +15,7 @@ import {
 	ModularChangeset,
 	RevisionInfo,
 	FieldKindWithEditor,
+	NodeChangeInverter,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -53,8 +54,7 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
-	amendInvert: () => fail("Not supported"),
-	amendRebase: (change, base, rebaseChild) => change,
+	prune: (change) => change,
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -324,6 +324,21 @@ describe("ModularChangeFamily", () => {
 			]),
 		};
 
+		it("prioritizes earlier build entries when faced with duplicates", () => {
+			const change1: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+			};
+			const change2: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+			};
+			assert.deepEqual(
+				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
+				change1,
+			);
+		});
+
 		it("compose specific ○ specific", () => {
 			const expectedCompose: ModularChangeset = {
 				fieldChanges: new Map([
@@ -561,31 +576,23 @@ describe("ModularChangeFamily", () => {
 
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1a));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase specific ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
-				rootChange2,
-			);
+			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a));
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
-				rootChange2Generic,
-			);
+			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric));
+			assert.deepEqual(rebased, rootChange2Generic);
 		});
 	});
 
@@ -602,10 +609,12 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = new Map([
-				[fieldA, nodeDelta],
-				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
-			]);
+			const expectedDelta: Delta.Root = {
+				fields: new Map([
+					[fieldA, nodeDelta],
+					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+				]),
+			};
 
 			const actual = family.intoDelta(makeAnonChange(rootChange1a));
 			assertDeltaEqual(actual, expectedDelta);
@@ -716,6 +725,28 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		let invertWasTested = false;
+		const invert: FieldChangeRebaser<RevisionTag[]>["invert"] = (
+			change: TaggedChange<RevisionTag[]>,
+			invertChild: NodeChangeInverter,
+			genId,
+			crossFieldManager,
+			{ getIndex, tryGetInfo },
+		): RevisionTag[] => {
+			const relevantRevisions = [rev3];
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
+			assert.deepEqual(revsIndices, [0]);
+			const expected: RevisionInfo[] = [{ revision: rev3, rollbackOf: rev0 }];
+			assert.deepEqual(revsInfos, expected);
+			invertWasTested = true;
+			return change.change;
+		};
+
 		const throwCodec = {
 			encode: () => fail("Should not be called"),
 			decode: () => fail("Should not be called"),
@@ -724,7 +755,8 @@ describe("ModularChangeFamily", () => {
 			rebaser: {
 				compose,
 				rebase,
-				amendRebase: (change: RevisionTag[]) => change,
+				invert,
+				prune: (change: RevisionTag[]) => change,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
@@ -792,6 +824,8 @@ describe("ModularChangeFamily", () => {
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
+		dummyFamily.invert(tagRollbackInverse(changeB, rev3, rev0), false);
+		assert(invertWasTested);
 	});
 
 	function ensureIndexDefined(index: number | undefined): number {

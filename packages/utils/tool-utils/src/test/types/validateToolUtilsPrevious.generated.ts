@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IAsyncCache():
     TypeOnly<old.IAsyncCache<any,any>>;
 declare function use_current_InterfaceDeclaration_IAsyncCache(
-    use: TypeOnly<current.IAsyncCache<any,any>>);
+    use: TypeOnly<current.IAsyncCache<any,any>>): void;
 use_current_InterfaceDeclaration_IAsyncCache(
     get_old_InterfaceDeclaration_IAsyncCache());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IAsyncCache(
 declare function get_current_InterfaceDeclaration_IAsyncCache():
     TypeOnly<current.IAsyncCache<any,any>>;
 declare function use_old_InterfaceDeclaration_IAsyncCache(
-    use: TypeOnly<old.IAsyncCache<any,any>>);
+    use: TypeOnly<old.IAsyncCache<any,any>>): void;
 use_old_InterfaceDeclaration_IAsyncCache(
     get_current_InterfaceDeclaration_IAsyncCache());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IAsyncCache(
 declare function get_old_InterfaceDeclaration_IOdspTokenManagerCacheKey():
     TypeOnly<old.IOdspTokenManagerCacheKey>;
 declare function use_current_InterfaceDeclaration_IOdspTokenManagerCacheKey(
-    use: TypeOnly<current.IOdspTokenManagerCacheKey>);
+    use: TypeOnly<current.IOdspTokenManagerCacheKey>): void;
 use_current_InterfaceDeclaration_IOdspTokenManagerCacheKey(
     get_old_InterfaceDeclaration_IOdspTokenManagerCacheKey());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IOdspTokenManagerCacheKey(
 declare function get_current_InterfaceDeclaration_IOdspTokenManagerCacheKey():
     TypeOnly<current.IOdspTokenManagerCacheKey>;
 declare function use_old_InterfaceDeclaration_IOdspTokenManagerCacheKey(
-    use: TypeOnly<old.IOdspTokenManagerCacheKey>);
+    use: TypeOnly<old.IOdspTokenManagerCacheKey>): void;
 use_old_InterfaceDeclaration_IOdspTokenManagerCacheKey(
     get_current_InterfaceDeclaration_IOdspTokenManagerCacheKey());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IOdspTokenManagerCacheKey(
 declare function get_old_InterfaceDeclaration_IResources():
     TypeOnly<old.IResources>;
 declare function use_current_InterfaceDeclaration_IResources(
-    use: TypeOnly<current.IResources>);
+    use: TypeOnly<current.IResources>): void;
 use_current_InterfaceDeclaration_IResources(
     get_old_InterfaceDeclaration_IResources());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IResources(
 declare function get_current_InterfaceDeclaration_IResources():
     TypeOnly<current.IResources>;
 declare function use_old_InterfaceDeclaration_IResources(
-    use: TypeOnly<old.IResources>);
+    use: TypeOnly<old.IResources>): void;
 use_old_InterfaceDeclaration_IResources(
     get_current_InterfaceDeclaration_IResources());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IResources(
 declare function get_old_InterfaceDeclaration_ISnapshotNormalizerConfig():
     TypeOnly<old.ISnapshotNormalizerConfig>;
 declare function use_current_InterfaceDeclaration_ISnapshotNormalizerConfig(
-    use: TypeOnly<current.ISnapshotNormalizerConfig>);
+    use: TypeOnly<current.ISnapshotNormalizerConfig>): void;
 use_current_InterfaceDeclaration_ISnapshotNormalizerConfig(
     get_old_InterfaceDeclaration_ISnapshotNormalizerConfig());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ISnapshotNormalizerConfig(
 declare function get_current_InterfaceDeclaration_ISnapshotNormalizerConfig():
     TypeOnly<current.ISnapshotNormalizerConfig>;
 declare function use_old_InterfaceDeclaration_ISnapshotNormalizerConfig(
-    use: TypeOnly<old.ISnapshotNormalizerConfig>);
+    use: TypeOnly<old.ISnapshotNormalizerConfig>): void;
 use_old_InterfaceDeclaration_ISnapshotNormalizerConfig(
     get_current_InterfaceDeclaration_ISnapshotNormalizerConfig());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ISnapshotNormalizerConfig(
 declare function get_old_TypeAliasDeclaration_OdspTokenConfig():
     TypeOnly<old.OdspTokenConfig>;
 declare function use_current_TypeAliasDeclaration_OdspTokenConfig(
-    use: TypeOnly<current.OdspTokenConfig>);
+    use: TypeOnly<current.OdspTokenConfig>): void;
 use_current_TypeAliasDeclaration_OdspTokenConfig(
     get_old_TypeAliasDeclaration_OdspTokenConfig());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_OdspTokenConfig(
 declare function get_current_TypeAliasDeclaration_OdspTokenConfig():
     TypeOnly<current.OdspTokenConfig>;
 declare function use_old_TypeAliasDeclaration_OdspTokenConfig(
-    use: TypeOnly<old.OdspTokenConfig>);
+    use: TypeOnly<old.OdspTokenConfig>): void;
 use_old_TypeAliasDeclaration_OdspTokenConfig(
     get_current_TypeAliasDeclaration_OdspTokenConfig());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_OdspTokenConfig(
 declare function get_old_ClassDeclaration_OdspTokenManager():
     TypeOnly<old.OdspTokenManager>;
 declare function use_current_ClassDeclaration_OdspTokenManager(
-    use: TypeOnly<current.OdspTokenManager>);
+    use: TypeOnly<current.OdspTokenManager>): void;
 use_current_ClassDeclaration_OdspTokenManager(
     get_old_ClassDeclaration_OdspTokenManager());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_OdspTokenManager(
 declare function get_current_ClassDeclaration_OdspTokenManager():
     TypeOnly<current.OdspTokenManager>;
 declare function use_old_ClassDeclaration_OdspTokenManager(
-    use: TypeOnly<old.OdspTokenManager>);
+    use: TypeOnly<old.OdspTokenManager>): void;
 use_old_ClassDeclaration_OdspTokenManager(
     get_current_ClassDeclaration_OdspTokenManager());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_OdspTokenManager(
 declare function get_old_VariableDeclaration_gcBlobPrefix():
     TypeOnly<typeof old.gcBlobPrefix>;
 declare function use_current_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof current.gcBlobPrefix>);
+    use: TypeOnly<typeof current.gcBlobPrefix>): void;
 use_current_VariableDeclaration_gcBlobPrefix(
     get_old_VariableDeclaration_gcBlobPrefix());
 
@@ -185,7 +185,7 @@ use_current_VariableDeclaration_gcBlobPrefix(
 declare function get_current_VariableDeclaration_gcBlobPrefix():
     TypeOnly<typeof current.gcBlobPrefix>;
 declare function use_old_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof old.gcBlobPrefix>);
+    use: TypeOnly<typeof old.gcBlobPrefix>): void;
 use_old_VariableDeclaration_gcBlobPrefix(
     get_current_VariableDeclaration_gcBlobPrefix());
 
@@ -197,7 +197,7 @@ use_old_VariableDeclaration_gcBlobPrefix(
 declare function get_old_VariableDeclaration_getMicrosoftConfiguration():
     TypeOnly<typeof old.getMicrosoftConfiguration>;
 declare function use_current_VariableDeclaration_getMicrosoftConfiguration(
-    use: TypeOnly<typeof current.getMicrosoftConfiguration>);
+    use: TypeOnly<typeof current.getMicrosoftConfiguration>): void;
 use_current_VariableDeclaration_getMicrosoftConfiguration(
     get_old_VariableDeclaration_getMicrosoftConfiguration());
 
@@ -209,7 +209,7 @@ use_current_VariableDeclaration_getMicrosoftConfiguration(
 declare function get_current_VariableDeclaration_getMicrosoftConfiguration():
     TypeOnly<typeof current.getMicrosoftConfiguration>;
 declare function use_old_VariableDeclaration_getMicrosoftConfiguration(
-    use: TypeOnly<typeof old.getMicrosoftConfiguration>);
+    use: TypeOnly<typeof old.getMicrosoftConfiguration>): void;
 use_old_VariableDeclaration_getMicrosoftConfiguration(
     get_current_VariableDeclaration_getMicrosoftConfiguration());
 
@@ -221,7 +221,7 @@ use_old_VariableDeclaration_getMicrosoftConfiguration(
 declare function get_old_FunctionDeclaration_getNormalizedSnapshot():
     TypeOnly<typeof old.getNormalizedSnapshot>;
 declare function use_current_FunctionDeclaration_getNormalizedSnapshot(
-    use: TypeOnly<typeof current.getNormalizedSnapshot>);
+    use: TypeOnly<typeof current.getNormalizedSnapshot>): void;
 use_current_FunctionDeclaration_getNormalizedSnapshot(
     get_old_FunctionDeclaration_getNormalizedSnapshot());
 
@@ -233,7 +233,7 @@ use_current_FunctionDeclaration_getNormalizedSnapshot(
 declare function get_current_FunctionDeclaration_getNormalizedSnapshot():
     TypeOnly<typeof current.getNormalizedSnapshot>;
 declare function use_old_FunctionDeclaration_getNormalizedSnapshot(
-    use: TypeOnly<typeof old.getNormalizedSnapshot>);
+    use: TypeOnly<typeof old.getNormalizedSnapshot>): void;
 use_old_FunctionDeclaration_getNormalizedSnapshot(
     get_current_FunctionDeclaration_getNormalizedSnapshot());
 
@@ -245,7 +245,7 @@ use_old_FunctionDeclaration_getNormalizedSnapshot(
 declare function get_old_FunctionDeclaration_loadRC():
     TypeOnly<typeof old.loadRC>;
 declare function use_current_FunctionDeclaration_loadRC(
-    use: TypeOnly<typeof current.loadRC>);
+    use: TypeOnly<typeof current.loadRC>): void;
 use_current_FunctionDeclaration_loadRC(
     get_old_FunctionDeclaration_loadRC());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_loadRC(
 declare function get_current_FunctionDeclaration_loadRC():
     TypeOnly<typeof current.loadRC>;
 declare function use_old_FunctionDeclaration_loadRC(
-    use: TypeOnly<typeof old.loadRC>);
+    use: TypeOnly<typeof old.loadRC>): void;
 use_old_FunctionDeclaration_loadRC(
     get_current_FunctionDeclaration_loadRC());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_loadRC(
 declare function get_old_FunctionDeclaration_lockRC():
     TypeOnly<typeof old.lockRC>;
 declare function use_current_FunctionDeclaration_lockRC(
-    use: TypeOnly<typeof current.lockRC>);
+    use: TypeOnly<typeof current.lockRC>): void;
 use_current_FunctionDeclaration_lockRC(
     get_old_FunctionDeclaration_lockRC());
 
@@ -281,7 +281,7 @@ use_current_FunctionDeclaration_lockRC(
 declare function get_current_FunctionDeclaration_lockRC():
     TypeOnly<typeof current.lockRC>;
 declare function use_old_FunctionDeclaration_lockRC(
-    use: TypeOnly<typeof old.lockRC>);
+    use: TypeOnly<typeof old.lockRC>): void;
 use_old_FunctionDeclaration_lockRC(
     get_current_FunctionDeclaration_lockRC());
 
@@ -293,7 +293,7 @@ use_old_FunctionDeclaration_lockRC(
 declare function get_old_VariableDeclaration_odspTokensCache():
     TypeOnly<typeof old.odspTokensCache>;
 declare function use_current_VariableDeclaration_odspTokensCache(
-    use: TypeOnly<typeof current.odspTokensCache>);
+    use: TypeOnly<typeof current.odspTokensCache>): void;
 use_current_VariableDeclaration_odspTokensCache(
     get_old_VariableDeclaration_odspTokensCache());
 
@@ -305,7 +305,7 @@ use_current_VariableDeclaration_odspTokensCache(
 declare function get_current_VariableDeclaration_odspTokensCache():
     TypeOnly<typeof current.odspTokensCache>;
 declare function use_old_VariableDeclaration_odspTokensCache(
-    use: TypeOnly<typeof old.odspTokensCache>);
+    use: TypeOnly<typeof old.odspTokensCache>): void;
 use_old_VariableDeclaration_odspTokensCache(
     get_current_VariableDeclaration_odspTokensCache());
 
@@ -317,7 +317,7 @@ use_old_VariableDeclaration_odspTokensCache(
 declare function get_old_FunctionDeclaration_saveRC():
     TypeOnly<typeof old.saveRC>;
 declare function use_current_FunctionDeclaration_saveRC(
-    use: TypeOnly<typeof current.saveRC>);
+    use: TypeOnly<typeof current.saveRC>): void;
 use_current_FunctionDeclaration_saveRC(
     get_old_FunctionDeclaration_saveRC());
 
@@ -329,6 +329,6 @@ use_current_FunctionDeclaration_saveRC(
 declare function get_current_FunctionDeclaration_saveRC():
     TypeOnly<typeof current.saveRC>;
 declare function use_old_FunctionDeclaration_saveRC(
-    use: TypeOnly<typeof old.saveRC>);
+    use: TypeOnly<typeof old.saveRC>): void;
 use_old_FunctionDeclaration_saveRC(
     get_current_FunctionDeclaration_saveRC());

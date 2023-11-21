@@ -9,7 +9,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
-	getDefaultObjectFromContainer,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -34,7 +33,6 @@ import {
 	TEST_requestSummarizer,
 } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const counterKey = "count";
 
@@ -117,7 +115,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
-		dataObject1 = await getDefaultObjectFromContainer<TestDataObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 	});
 
 	afterEach(() => {
@@ -206,7 +204,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			headers,
 		);
 		const initialSequenceNumber = container2.deltaManager.lastSequenceNumber;
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const initialValue = dataObject2.value;
 
 		assert.strictEqual(dataObject1.value, dataObject2.value, "counter values should be equal");
@@ -260,7 +258,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -325,7 +323,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -368,7 +366,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			registry: [[mapId, SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
-		const do1 = await requestFluidObject<ITestFluidObject>(created, "default");
+		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
 		const map1 = await do1.getSharedObject<SharedMap>(mapId);
 
 		const headers: IRequestHeader = {
@@ -381,7 +379,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			url: await provider.driver.createContainerUrl(provider.documentId),
 			headers,
 		});
-		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
+		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
 		const map2 = await do2.getSharedObject<SharedMap>(mapId);
