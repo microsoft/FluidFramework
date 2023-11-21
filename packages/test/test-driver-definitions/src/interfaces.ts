@@ -10,26 +10,32 @@ import {
 } from "@fluidframework/driver-definitions";
 
 /**
+ * Types of test drivers.
+ *
  * @public
  */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
+ * Types of Routerlicious Endpoint.
  * @public
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
+ * Types of Odsp Endpoint.
  * @public
  */
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 /**
+ * Types of Driver Endpoint.
  * @public
  */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
 /**
+ * Interface for test drivers {@link @fluid-private/test-drivers#TinyliciousTestDriver}, {@link @fluid-private/test-drivers#RouterliciousTestDriver}, {@link @fluid-private/test-drivers#OdspTestDriver}, {@link @fluid-private/test-drivers#LocalServerTestDriver}.
  * @public
  */
 export interface ITestDriver {
