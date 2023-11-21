@@ -115,5 +115,5 @@ const entryPoint = await container.getEntryPoint();
 | `IFluidRouter` and `IProvideFluidRouter`                                                     | 2.0.0-internal.7.0.0 |                      |
 | `requestFluidObject`                                                                         | 2.0.0-internal.7.0.0 |                      |
 | `requestResolvedObjectFromContainer`                                                         | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
-| `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 |                      |
+| `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 <!-- prettier-ignore-end -->

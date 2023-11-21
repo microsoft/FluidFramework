@@ -288,74 +288,38 @@ use_old_VariableDeclaration_defaultRouteRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getDefaultObjectFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getDefaultObjectFromContainer():
-    TypeOnly<typeof old.getDefaultObjectFromContainer>;
-declare function use_current_FunctionDeclaration_getDefaultObjectFromContainer(
-    use: TypeOnly<typeof current.getDefaultObjectFromContainer>);
-use_current_FunctionDeclaration_getDefaultObjectFromContainer(
-    get_old_FunctionDeclaration_getDefaultObjectFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getDefaultObjectFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getDefaultObjectFromContainer():
-    TypeOnly<typeof current.getDefaultObjectFromContainer>;
-declare function use_old_FunctionDeclaration_getDefaultObjectFromContainer(
-    use: TypeOnly<typeof old.getDefaultObjectFromContainer>);
-use_old_FunctionDeclaration_getDefaultObjectFromContainer(
-    get_current_FunctionDeclaration_getDefaultObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getObjectFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getObjectFromContainer():
-    TypeOnly<typeof old.getObjectFromContainer>;
-declare function use_current_FunctionDeclaration_getObjectFromContainer(
-    use: TypeOnly<typeof current.getObjectFromContainer>);
-use_current_FunctionDeclaration_getObjectFromContainer(
-    get_old_FunctionDeclaration_getObjectFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getObjectFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getObjectFromContainer():
-    TypeOnly<typeof current.getObjectFromContainer>;
-declare function use_old_FunctionDeclaration_getObjectFromContainer(
-    use: TypeOnly<typeof old.getObjectFromContainer>);
-use_old_FunctionDeclaration_getObjectFromContainer(
-    get_current_FunctionDeclaration_getObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectWithIdFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getObjectWithIdFromContainer():
-    TypeOnly<typeof old.getObjectWithIdFromContainer>;
-declare function use_current_FunctionDeclaration_getObjectWithIdFromContainer(
-    use: TypeOnly<typeof current.getObjectWithIdFromContainer>);
-use_current_FunctionDeclaration_getObjectWithIdFromContainer(
-    get_old_FunctionDeclaration_getObjectWithIdFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectWithIdFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getObjectWithIdFromContainer():
-    TypeOnly<typeof current.getObjectWithIdFromContainer>;
-declare function use_old_FunctionDeclaration_getObjectWithIdFromContainer(
-    use: TypeOnly<typeof old.getObjectWithIdFromContainer>);
-use_old_FunctionDeclaration_getObjectWithIdFromContainer(
-    get_current_FunctionDeclaration_getObjectWithIdFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
