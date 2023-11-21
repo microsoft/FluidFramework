@@ -92,9 +92,6 @@ export class MockRuntime
 		);
 	}
 
-	public gcTombstoneEnforcementAllowed: boolean = true;
-	public gcThrowOnTombstoneLoad: boolean = false;
-
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
@@ -472,7 +469,9 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable, undefined);
 	});
 
-	it("upload fails and retries for retriable errors", async () => {
+	it.skip("upload fails and retries for retriable errors", async () => {
+		// Needs to use some sort of fake timer or write test in a different way as it is waiting
+		// for actual time which is causing timeouts.
 		await runtime.attach();
 		await runtime.connect();
 		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));

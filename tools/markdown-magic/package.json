@@ -21,13 +21,14 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check .",
-		"prettier:fix": "prettier --write .",
-		"test": "node src/index.cjs --files test/**/*.md !test/README.md"
+		"prettier": "prettier --check . --cache",
+		"prettier:fix": "prettier --write . --cache",
+		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
 		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@rushstack/node-core-library": "^3.55.2",
 		"@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
 		"chalk": "^2.4.2",
 		"markdown-magic-package-scripts": "^1.2.1",

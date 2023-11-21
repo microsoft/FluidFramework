@@ -153,7 +153,7 @@ Each package can be augmented the tasks definition by adding task definitions un
 
 For example:
 
-```json
+```jsonc
 {
 	"fluidBuild": {
 		"tasks": {
@@ -164,9 +164,9 @@ For example:
 				"@fluidframework/merge-tree#build:test" // Overrides default, depends only on "build:test" task
 				// in dependent package "@fluidframework/merge-tree"
 			],
-         "copy:docs": [
-            "after": [ "build:docs" ]                   // if "build:docs" is trigger, "copy:docs" only run after it
-         ],
+			"copy:docs": {
+				"after": ["build:docs"] // if "build:docs" is triggered, "copy:docs" only run after it
+			},
 			"webpack": ["^tsc"] // Depends on `tsc` task of all of the dependent packages
 			// (if the task exists)
 		}
@@ -185,7 +185,7 @@ on all the packages within the release group. There is no support for "global de
 ### Concurrency
 
 `fluid-build` will run task in parallel based on the dependencies information from the build graph. Task are queued
-when all the dependencies are "complete". By default, `fluid-build` will execute up to number of CPU of tasks.  
+when all the dependencies are "complete". By default, `fluid-build` will execute up to number of CPU of tasks.
 This can be overridden by the `--concurrency` option on the command line.
 
 ### Incremental and Tasks
@@ -245,7 +245,7 @@ repo and the local package's `package.json`. It will dump the full combined defi
 
 ### fluid-build:task:init\*
 
-These traces show the tasks and relationships in the build graph to diagnose task dependency and ordering problems.  
+These traces show the tasks and relationships in the build graph to diagnose task dependency and ordering problems.
 Debugging traces can be enabled for individual steps or for all of them.
 
 -   `fluid-build:task:init` - Trace the task that are created, to show what task is included

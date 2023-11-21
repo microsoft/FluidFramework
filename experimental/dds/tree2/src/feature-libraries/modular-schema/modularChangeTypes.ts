@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	ChangeAtomIdMap,
+	ChangesetLocalId,
+	FieldKey,
+	FieldKindIdentifier,
+	JsonableTree,
+	RevisionTag,
+} from "../../core";
 import { Brand } from "../../util";
 
 /**
@@ -35,6 +42,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
+	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+	readonly builds?: ChangeAtomIdMap<JsonableTree>;
 }
 
 /**

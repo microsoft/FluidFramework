@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -16,7 +15,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
@@ -42,7 +41,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 	});
 

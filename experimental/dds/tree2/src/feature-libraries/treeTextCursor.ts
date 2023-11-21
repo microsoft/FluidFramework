@@ -15,8 +15,12 @@ import {
 	setGenericTreeField,
 	IForestSubscription,
 	moveToDetachedField,
+	aboveRootPlaceholder,
+	DetachedField,
+	rootField,
+	detachedFieldAsKey,
 } from "../core";
-import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
+import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils";
 
 /**
  * This module provides support for reading and writing a human readable (and
@@ -45,14 +49,33 @@ import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 /**
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
- * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonableTree}.
+ * @returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link JsonableTree}.
+ * @remarks
+ * Do not confuse this with {@link JsonableTree} with the JSON domain:
+ * this takes in data in a specific format that is json compatible (except for FluidHandle values).
+ * That is distinct from treating arbitrary JSON data as a tree in the JSON domain.
  * @alpha
  */
-export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
-	return singleStackTreeCursor(root, adapter);
+export function cursorForJsonableTreeNode(root: JsonableTree): ITreeCursorSynchronous {
+	return stackTreeNodeCursor(adapter, root);
 }
 
-const adapter: CursorAdapter<JsonableTree> = {
+/**
+ * @returns an {@link ITreeCursorSynchronous} in fields mode for a JsonableTree field.
+ */
+export function cursorForJsonableTreeField(
+	trees: JsonableTree[],
+	detachedField: DetachedField = rootField,
+): ITreeCursorSynchronous {
+	const key = detachedFieldAsKey(detachedField);
+	return stackTreeFieldCursor(
+		adapter,
+		{ type: aboveRootPlaceholder, fields: { [key]: trees } },
+		detachedField,
+	);
+}
+
+export const adapter: CursorAdapter<JsonableTree> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: genericTreeKeys,
@@ -83,7 +106,7 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromFieldCursor(cursor: ITreeCursor): JsonableTree[] {
-	assert(cursor.mode === CursorLocationType.Fields, "must start at field");
+	assert(cursor.mode === CursorLocationType.Fields, 0x7ca /* must start at field */);
 	return mapCursorField(cursor, jsonableTreeFromCursor);
 }
 

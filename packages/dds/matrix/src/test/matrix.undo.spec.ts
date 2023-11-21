@@ -10,7 +10,7 @@ import {
 	MockStorage,
 	MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
 import { extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 import { UndoRedoStackManager } from "./undoRedoStackManager";

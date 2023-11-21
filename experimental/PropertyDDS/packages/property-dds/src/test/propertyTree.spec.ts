@@ -6,7 +6,7 @@
 import _ from "lodash";
 
 import { expect } from "chai";
-import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainer,
 	IHostLoader,
@@ -14,7 +14,6 @@ import {
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
@@ -63,7 +62,7 @@ describe("PropertyDDS summarizer", () => {
 		const container = await (load
 			? objProvider.loadTestContainer()
 			: objProvider.makeTestContainer());
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 		let summarizer;
 		if (withSummarizer) {
@@ -309,12 +308,12 @@ function executePerPropertyTreeType(
 
 			// Create a Container for the first client.
 			container1 = await createContainer();
-			dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedPropertyTree1 = await dataObject1.getSharedObject(propertyDdsId);
 
 			// Load the Container that was created by the first client.
 			container2 = await loadContainer();
-			dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
 		});
 

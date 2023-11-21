@@ -15,7 +15,6 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
@@ -28,13 +27,13 @@ describe("FluidDataStoreRuntime Tests", () => {
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
-		return new FluidDataStoreRuntime(
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			registry,
 			/* existing */ false,
-			entrypointInitializationFn ??
-				(async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/")),
+			entrypointInitializationFn ?? (async () => runtime),
 		);
+		return runtime;
 	}
 
 	beforeEach(() => {
@@ -47,23 +46,6 @@ describe("FluidDataStoreRuntime Tests", () => {
 				throw new Error("Not implemented");
 			},
 		};
-	});
-
-	it("FluidDataStoreRuntime.load rejects ids with forward slashes", () => {
-		const invalidId = "beforeSlash/afterSlash";
-		dataStoreContext = new MockFluidDataStoreContext(invalidId);
-		const codeBlock = () =>
-			FluidDataStoreRuntime.load(
-				dataStoreContext,
-				sharedObjectRegistry,
-				/* existing */ false,
-			);
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(
-				e,
-				"Id cannot contain slashes. DataStoreContext should have validated this.",
-			),
-		);
 	});
 
 	it("constructor rejects ids with forward slashes", () => {

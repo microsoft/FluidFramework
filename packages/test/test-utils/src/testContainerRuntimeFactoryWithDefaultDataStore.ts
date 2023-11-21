@@ -13,6 +13,14 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
+const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
+	return entryPoint.get();
+};
+
 /**
  * ! Note: This function is purely needed for back-compat as the constructor argument structure was changed
  */
@@ -37,6 +45,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			dependencyContainer,
 			requestHandlers,
 			runtimeOptions,
+			provideEntryPoint,
 		} = ctorArgs;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return new (Base as any)(
@@ -45,6 +54,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			dependencyContainer,
 			requestHandlers,
 			runtimeOptions,
+			provideEntryPoint ?? getDefaultFluidObject,
 		);
 	}
 };

@@ -12,9 +12,10 @@ import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } fr
 import { logNetworkFailure } from "./networkUtils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { calculateMaxWaitTime } from "./runWithRetry";
 
-const MaxFetchDelayInMs = 10000;
-const MissingFetchDelayInMs = 100;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const MissingFetchDelayInMs = 50;
 
 type WorkingState = "working" | "done" | "canceled";
 
@@ -423,10 +424,11 @@ async function getSingleOpBatch(
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 	let waitStartTime: number = 0;
+	let waitTime = MissingFetchDelayInMs;
 
 	while (signal?.aborted !== true) {
 		retry++;
-		let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
+		let lastError: unknown;
 		const startTime = performance.now();
 
 		try {
@@ -470,6 +472,7 @@ async function getSingleOpBatch(
 				);
 			}
 		} catch (error) {
+			lastError = error;
 			const canRetry = canRetryOnError(error);
 
 			const retryAfter = getRetryDelayFromError(error);
@@ -492,11 +495,6 @@ async function getSingleOpBatch(
 				// It's game over scenario.
 				throw error;
 			}
-
-			if (retryAfter !== undefined) {
-				// If the error told us to wait, then we will wait for that specific amount rather than the default.
-				delay = retryAfter;
-			}
 		}
 
 		if (telemetryEvent === undefined) {
@@ -506,10 +504,12 @@ async function getSingleOpBatch(
 			});
 		}
 
+		waitTime = calculateMaxWaitTime(waitTime, lastError);
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
-			setTimeout(resolve, delay);
+			setTimeout(resolve, waitTime);
 		});
 
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
