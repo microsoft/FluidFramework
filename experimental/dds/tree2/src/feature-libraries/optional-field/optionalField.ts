@@ -232,7 +232,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				nextSrcToDst.set(originalSrc, [
 					dst,
 					target === "cellTargeting" &&
-					(currentTarget === undefined || currentTarget == "cellTargeting")
+					(currentTarget === undefined || currentTarget === "cellTargeting")
 						? "cellTargeting"
 						: "nodeTargeting",
 				]);
@@ -453,7 +453,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const rebased: OptionalChangeset = {
-			build: build,
+			build,
 			moves: rebasedMoves,
 			childChanges: rebasedChildChanges,
 		};
