@@ -2000,9 +2000,10 @@ export class Container
 	}
 
 	private get client(): IClient {
+		const loaderOptionsClient = structuredClone(this.options?.client);
 		const client: IClient =
-			this.options?.client !== undefined
-				? (this.options?.client as IClient)
+			loaderOptionsClient !== undefined
+				? (loaderOptionsClient as IClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
@@ -2021,8 +2022,6 @@ export class Container
 			` loaderVersion:${pkgVersion}`,
 			` containerId:${this._containerId}`,
 		].join(";");
-
-		Object.freeze(client.details.capabilities);
 
 		return client;
 	}
