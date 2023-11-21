@@ -21,13 +21,13 @@ import {
 	Revertible,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { IDefaultEditBuilder, buildForest } from "../feature-libraries";
+import { buildForest } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
 import { noopValidator } from "../codec";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -92,7 +92,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
-	readonly editor: IDefaultEditBuilder;
+	readonly editor: ISharedTreeEditor;
 
 	/**
 	 * A collection of functions for managing transactions.
@@ -302,8 +302,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return this.forest.anchors;
 	}
 
-	public get editor(): IDefaultEditBuilder {
-		return this.branch.editor.data;
+	public get editor(): ISharedTreeEditor {
+		return this.branch.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

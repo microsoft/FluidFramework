@@ -18,7 +18,7 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes";
  * SharedTree editor for transactional tree data and schema changes.
  * @alpha
  */
-export interface ISharedTreeEditBuilder {
+export interface ISharedTreeEditor {
 	/**
 	 * An object with methods to edit the schema of the SharedTree.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
@@ -38,7 +38,7 @@ export interface ISharedTreeEditBuilder {
  * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
-export class SharedTreeEditBuilder implements ChangeFamilyEditor, ISharedTreeEditBuilder {
+export class SharedTreeEditBuilder implements ChangeFamilyEditor, ISharedTreeEditor {
 	private readonly schemaEditor: SchemaEditor;
 	private readonly dataEditor: DefaultEditBuilder;
 
