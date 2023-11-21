@@ -415,7 +415,7 @@ The `Tree` class provides some static utility APIs for working with `ShareTree` 
 ## Event handling
 
 ```typescript
-Tree.on(node: SharedTreeNode, eventType: string, listener: () => void)
+Tree.on(node: SharedTreeNode, eventType: string, listener: () => void): () => void
 ```
 
 Assigns the specified `listener` function to the specified `event type` for the specified `node`. The `node` can be any node of the tree. The `[event type]` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
@@ -423,6 +423,8 @@ Assigns the specified `listener` function to the specified `event type` for the 
 -   `event.target`: The node on which the event was triggered.
 -   `event.isLocal`: Specifies whether the change was made on the local client or a remote client.
 -   `event.stopPropagation()`: If called in the listener, it stops the event from being triggered on the parent, in the tree, of the `event.target`.
+
+The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed.
 
 ## Type guard
 

@@ -74,6 +74,12 @@ Key-value data structures are the most common choice for many scenarios.
   from the sequence and then insert a new value at the position where the old value was. But because other clients can
   insert and remove, there's no reliable way of getting the new value into the the desired position.
 
+## Hierarchical data
+
+FluidFramework 2.0 preview provides a DDS can be used for hierarchical data structures. It is optimistic and uses a last-writer-wins merge policy.
+
+-   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
 ## Strings
 
 The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
@@ -128,6 +134,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 [Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->

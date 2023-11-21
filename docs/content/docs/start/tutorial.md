@@ -1,12 +1,19 @@
 ---
 title: 'Tutorial: DiceRoller application'
-menuPosition: 2
+menuPosition: 4
 aliases:
   - "/docs/get-started/tutorial/"
   - "/start/tutorial/"
 ---
 
 In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at <https://github.com/microsoft/FluidHelloWorld>. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
+
+{{< callout note >}}
+
+The dice roller app uses Fluid Framework 1.0. For a walkthrough that uses version 2.0 preview, see [Tutorial: SharedTree demo]({{< relref "tutorial-sharedtree.md" >}})
+
+{{< /callout >}}
+
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.2021-09-24.js" >}}

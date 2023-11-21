@@ -27,7 +27,7 @@ However, a DDS is not *just* a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedMatrix*, *SharedString*,
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, *SharedString*,
 etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
@@ -69,7 +69,7 @@ The potential down-side to this approach is consistency; if another collaborator
 
 The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][] and [SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedString][], and (in Fluid Framework 2.0 and later)[SharedTree][].
 
 ### Consensus-based data structures
 
@@ -115,6 +115,12 @@ see [Fluid handles]({{< relref "handles.md" >}}).
 
 [handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}
 
+{{< callout note >}}
+
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree][] DDS instead.
+
+{{</callout >}}
+
 ## Events
 
 When a distributed data structure is changed by the Fluid runtime, it raises events. Your app can listen to these events so
@@ -126,8 +132,6 @@ myMap.on("valueChanged", () => {
   recalculate();
 });
 ```
-
-Refer to later sections for more details about the events raised by each DDS.
 
 ## Picking the right data structure
 
@@ -179,18 +183,33 @@ This results in someone's changes being "lost" from a user's perspective. This m
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
 strategy probably won't give you the behavior you want.
 
-However, you could address this problem by storing individual shape properties in `SharedMap` keys. Instead of storing a
+However, you could address this problem in different ways depending on which version of Fluid Framework you are using. 
+
+In version 1.0, store individual shape properties in `SharedMap` keys. Instead of storing a
 JSON object with all the data, your code can break it apart and store the length in one `SharedMap` key, the width in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
+In version 2.0, there's a similar, but better, way. Store individual shape properties in a map node of a `SharedTree`. Your code can store the length in one key of the map node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
+
+When you have more than one shape in your data model, you could create a *list* node in the `SharedTree`, with child map nodes to store all the shapes. 
+
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 *   [SharedMap][] -- a basic key-value distributed data structure.
+*   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
+### Array-like data
+
+*   List nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
+### Object data
+
+*   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), array-like lists, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Specialized data structures
 
@@ -214,6 +233,7 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 [Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
