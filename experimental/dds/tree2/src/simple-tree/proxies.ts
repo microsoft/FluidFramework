@@ -48,6 +48,7 @@ import {
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 import { IterableTreeListContent } from "./iterableTreeListContent";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -148,7 +149,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				return Reflect.get(target, key, proxy);
 			},
-			set(target, key, value) {
+			set(target, key, value: TreeNodeUnion<AllowedTypes, "javaScript">) {
 				const editNode = getEditNode(proxy);
 				const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
@@ -169,15 +170,21 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| FlexTreeOptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
+						const cursor = cursorFromNodeData(
+							content,
+							editNode.context,
+							fieldSchema.types,
+						);
 						modifyChildren(
 							editNode,
 							() => {
-								typedField.content = content;
+								typedField.content = cursor;
 							},
 							() => hydrateProxies(typedField.boxedContent),
 						);
 						break;
 					}
+
 					default:
 						fail("invalid FieldKind");
 				}
@@ -262,10 +269,18 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAt(index, content),
+				() => sequenceField.insertAt(index, cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -278,10 +293,18 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtStart(content),
+				() => sequenceField.insertAtStart(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -294,13 +317,21 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				| IterableTreeListContent<TreeNodeUnion<AllowedTypes, "javaScript">>
 			)[]
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
 				this.length,
 				value,
 			);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtEnd(content),
+				() => sequenceField.insertAtEnd(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -604,12 +635,15 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			key: string,
 			value: TreeNodeUnion<AllowedTypes, "javaScript">,
 		): TreeMapNode<MapNodeSchema> {
+			const node = getEditNode(this);
+
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
+			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
 			modifyChildren(
-				getEditNode(this),
-				(mapNode) => mapNode.set(key, content),
+				node,
+				(mapNode) => mapNode.set(key, cursor),
 				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
 			);
 			return this;
