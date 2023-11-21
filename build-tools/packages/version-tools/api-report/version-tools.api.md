@@ -119,6 +119,11 @@ export type WorkspaceRange = (typeof WorkspaceRanges)[number];
 // @public
 export const WorkspaceRanges: readonly ["workspace:*", "workspace:^", "workspace:~"];
 
+// Warnings were encountered during analysis:
+//
+// src/schemes.ts:168:1 - (ae-undocumented) Missing documentation for "sortVersions".
+// src/versions.ts:55:1 - (ae-undocumented) Missing documentation for "getIsLatest".
+
 // (No @packageDocumentation comment for this package)
 
 ```
