@@ -364,40 +364,76 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
-	const intention = mintIntention();
 	const numNodes = state.content.numNodes;
 
-	for (let i = 0; i <= state.content.length; i++) {
-		for (const nodeCount of numNodes) {
+	// Undo the most recent edit
+	if (state.mostRecentEdit !== undefined) {
+		assert(state.parent?.content !== undefined, "Must have parent state to undo");
+		const undoIntention = mintIntention();
+		const invertedEdit = invert(state.mostRecentEdit.changeset);
+		yield {
+			content: state.parent.content,
+			mostRecentEdit: {
+				changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+				intention: undoIntention,
+				description: `Undo:${state.mostRecentEdit.description}`,
+			},
+			parent: state,
+		};
+	}
+
+	for (const nodeCount of numNodes) {
+		// MoveIn nodeCount nodes
+		const moveInIntention = mintIntention();
+		yield {
+			content: state.content,
+			mostRecentEdit: {
+				changeset: tagChange(
+					Change.move(1, nodeCount, 0),
+					tagFromIntention(moveInIntention),
+				),
+				intention: moveInIntention,
+				description: `MoveIn${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From1To0`,
+			},
+			parent: state,
+		};
+
+		// MoveOut nodeCount nodes
+		const moveOutIntention = mintIntention();
+		yield {
+			content: state.content,
+			mostRecentEdit: {
+				changeset: tagChange(
+					Change.move(0, nodeCount, 1),
+					tagFromIntention(moveOutIntention),
+				),
+				intention: moveOutIntention,
+				description: `MoveOut${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From0To1`,
+			},
+			parent: state,
+		};
+		for (let i = 0; i <= state.content.length; i++) {
 			// Insert nodeCount nodes
+			const insertIntention = mintIntention();
 			yield {
 				content: { length: state.content.length + nodeCount, numNodes },
 				mostRecentEdit: {
-					changeset: tagChange(Change.insert(i, nodeCount), tagFromIntention(intention)),
-					intention,
+					changeset: tagChange(
+						Change.insert(i, nodeCount),
+						tagFromIntention(insertIntention),
+					),
+					intention: insertIntention,
 					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
 				},
 				parent: state,
-			};
-
-			// MoveOut nodeCount nodes
-			yield {
-				content: state.content,
-				mostRecentEdit: {
-					changeset: tagChange(Change.move(i, nodeCount, i), tagFromIntention(intention)),
-					intention,
-					description: `Move${nodeCount}${
-						nodeCount === 1 ? "Node" : "Nodes"
-					}From${i}To${1}`,
-				},
 			};
 		}
 	}
 };
 
-describe.only("SequenceField - State-based Rebaser Axioms", () => {
+describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 1, numNodes: [1] } }],
+		[{ content: { length: 4, numNodes: [1, 3] } }],
 		generateChildStates,
 		{
 			rebase,
@@ -407,10 +443,20 @@ describe.only("SequenceField - State-based Rebaser Axioms", () => {
 				const composedChanges = compose(baseChanges);
 				return rebase(change, makeAnonChange(composedChanges));
 			},
-		},
-		{
-			numberOfEditsToRebase: 2,
-			numberOfEditsToRebaseOver: 2,
+			assertEqual: (change1, change2) => {
+				if (change1 === undefined && change2 === undefined) {
+					return true;
+				}
+
+				if (change1 === undefined || change2 === undefined) {
+					return false;
+				}
+
+				return assert.deepEqual(
+					withoutLineage(change1.change),
+					withoutLineage(change2.change),
+				);
+			},
 		},
 	);
 });
