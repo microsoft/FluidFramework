@@ -9,7 +9,7 @@
 
 import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
 import { ITestTreeProvider, treeWithContent } from "../../utils";

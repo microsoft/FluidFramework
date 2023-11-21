@@ -4,19 +4,20 @@
  */
 
 const {
+	ApiItemKind,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
-	renderDocumentAsMarkdown,
+	MarkdownRenderer,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
 
 const { alertNodeType } = require("./alert-node");
 const { layoutContent } = require("./api-documentation-layout");
+const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
@@ -45,8 +46,15 @@ async function renderApiDocumentation() {
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
+		documentBoundaries: [
+			ApiItemKind.Class,
+			ApiItemKind.Enum,
+			ApiItemKind.Interface,
+			ApiItemKind.Namespace,
+		],
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
+		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
@@ -79,6 +87,18 @@ async function renderApiDocumentation() {
 
 	console.groupEnd();
 
+	console.group();
+	console.log("Generating nav contents...");
+
+	try {
+		await buildNavBar(documents);
+	} catch (error) {
+		console.error("Error saving nav bar yaml files:", error);
+		throw error;
+	}
+
+	console.groupEnd();
+
 	console.log("Writing API documents to disk...");
 	console.group();
 
@@ -86,7 +106,7 @@ async function renderApiDocumentation() {
 		documents.map(async (document) => {
 			let fileContents;
 			try {
-				fileContents = renderDocumentAsMarkdown(document, {
+				fileContents = MarkdownRenderer.renderDocument(document, {
 					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					customRenderers,
 				});

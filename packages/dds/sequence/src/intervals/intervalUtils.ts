@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import {
@@ -80,7 +81,10 @@ export const IntervalOpType = {
 	PROPERTY_CHANGED: "propertyChanged",
 	POSITION_REMOVE: "positionRemove",
 } as const;
-
+/**
+ * @alpha
+ */
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 /**
  * @public
  */

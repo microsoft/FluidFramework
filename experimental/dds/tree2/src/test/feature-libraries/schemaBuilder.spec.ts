@@ -17,6 +17,7 @@ import {
 	AllowedTypes,
 	Any,
 	FieldKinds,
+	LeafNodeSchema,
 	TreeFieldSchema,
 	TreeNodeSchema,
 } from "../../feature-libraries";
@@ -27,7 +28,7 @@ import {
 	SchemaBuilderBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase";
-import { ValueSchema } from "../../core";
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
 import { SchemaBuilder } from "../../domains";
 
 describe("SchemaBuilderBase", () => {
@@ -100,8 +101,8 @@ describe("SchemaBuilderBase", () => {
 			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -111,8 +112,8 @@ describe("SchemaBuilderBase", () => {
 			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoLibrary();
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -120,9 +121,11 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
 
 		// eslint-disable-next-line no-constant-condition
@@ -155,9 +158,11 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 
 		assert(
 			TreeFieldSchema.create(FieldKinds.optional, [treeSchema]).equals(

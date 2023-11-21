@@ -7,7 +7,7 @@ the value in the root SharedDirectory. The Fluid Container is defined in contain
 
 This implementation demonstrates plugging that Container into a standalone application, rather than using the
 `webpack-fluid-loader` environment that most of our packages use. This implementation relies on
-[Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
+[Tinylicious](/server/routerlicious/packages/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
@@ -178,8 +178,7 @@ Thank you!
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

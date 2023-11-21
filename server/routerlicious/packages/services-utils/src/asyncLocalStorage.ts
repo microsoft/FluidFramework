@@ -70,7 +70,9 @@ export const bindCorrelationId =
 		headerName: string = CorrelationIdHeaderName,
 	) =>
 	(req: Request, res: Response, next: NextFunction): void => {
-		const id: string = req.header(headerName) ?? uuid();
+		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
+		const id: string =
+			telemetryContextProperties.correlationId ?? req.header(headerName) ?? uuid();
 		res.setHeader(headerName, id);
 		if (altAsyncLocalStorage) {
 			altAsyncLocalStorage.run(id, () => next());

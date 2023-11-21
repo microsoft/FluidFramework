@@ -92,6 +92,10 @@ parameters:
 - name: tagName
   type: string
 
+- name: isReleaseGroup
+  type: boolean
+  default: false
+
 - name: includeInternalVersions
   type: boolean
   default: false
@@ -214,7 +218,7 @@ stages:
 
               Variables:
                 absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-                BuildReason=$(variables['Build.Reason'])
+                BuildReason=${{ variables['Build.Reason'] }}
 
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
@@ -553,6 +557,7 @@ stages:
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
+        isReleaseGroup: ${{ parameters.isReleaseGroup }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
 
   # Capture per-pipeline stage results

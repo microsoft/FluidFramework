@@ -8,10 +8,6 @@
  */
 export type RangeMap<T> = RangeEntry<T>[];
 
-/**
- * An association between a range of integer keys a single value.
- * @alpha
- */
 export interface RangeEntry<T> {
 	start: number;
 	length: number;
@@ -19,19 +15,63 @@ export interface RangeEntry<T> {
 }
 
 /**
- * @returns The first `RangeEntry` in `map` which intersects the range defined by `start` and `length`.
+ * The result of a query about a range of keys.
+ *
+ * @alpha
  */
-export function getFirstFromRangeMap<T>(
+export interface RangeQueryResult<T> {
+	/**
+	 * The value of the first key in the query range.
+	 */
+	value: T | undefined;
+
+	/**
+	 * The length of the prefix of the query range which have the same value.
+	 * For example, if a RangeMap has the same value for keys 5, 6, and 7,
+	 * a query about the range [5, 10] would give a result with length 3.
+	 */
+	length: number;
+}
+
+/**
+ * See comments on `RangeQueryResult`.
+ */
+export function getFromRangeMap<T>(
+	map: RangeMap<T>,
+	start: number,
+	length: number,
+): RangeQueryResult<T> {
+	for (const range of map) {
+		if (range.start > start) {
+			return { value: undefined, length: Math.min(range.start - start, length) };
+		}
+
+		const lastRangeKey = range.start + range.length - 1;
+		if (lastRangeKey >= start) {
+			// This range contains `start`.
+			const overlapLength = lastRangeKey - start + 1;
+			return { value: range.value, length: Math.min(overlapLength, length) };
+		}
+	}
+
+	// There were no entries intersecting the query range, so the entire query range has undefined value.
+	return { value: undefined, length };
+}
+
+export function getFirstEntryFromRangeMap<T>(
 	map: RangeMap<T>,
 	start: number,
 	length: number,
 ): RangeEntry<T> | undefined {
+	const lastQueryKey = start + length - 1;
 	for (const range of map) {
-		if (range.start >= start + length) {
+		if (range.start > lastQueryKey) {
+			// We've passed the end of the query range.
 			break;
 		}
 
-		if (range.start + range.length > start) {
+		const lastRangeKey = range.start + range.length - 1;
+		if (lastRangeKey >= start) {
 			return range;
 		}
 	}

@@ -10,7 +10,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -31,10 +31,12 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type Typed,
-	type ISharedTreeView,
+	disposeSymbol,
+	type TreeView,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { MigrationShimFactory } from "../migrationShimFactory.js";
 import { type MigrationShim } from "../migrationShim.js";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
@@ -83,8 +85,10 @@ class TestDataObject extends DataObject {
 	// Makes it so we can get the tree stored as "tree"
 	public async hasInitialized(): Promise<void> {
 		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
+		const handle: IFluidHandle<IChannel> | undefined =
+			this.root.get<IFluidHandle<IChannel>>("tree");
+		const tree = await handle?.get();
+		assert(tree !== undefined, "Tree channel should be defined");
 		this.channel = tree;
 	}
 
@@ -105,8 +109,8 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -157,13 +161,15 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
-			newTree.schematizeView({
-				initialTree: {
-					quantity,
-				},
-				allowedSchemaModifications: AllowedUpdateType.None,
-				schema,
-			});
+			newTree
+				.schematizeInternal({
+					initialTree: {
+						quantity,
+					},
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema,
+				})
+				[disposeSymbol]();
 		},
 	);
 
@@ -267,8 +273,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode1 = view1.root;
+		const treeNode2 = view2.root;
 
 		// Validate migrated values of the old tree match the new tree
 		const migratedValue1 = treeNode1.quantity;
@@ -324,11 +330,11 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		// Get the migrated values from the new tree
 		const tree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(tree1);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode1 = view1.root;
 
 		const tree2 = shim2.currentTree;
 		const view2 = getNewTreeView(tree2);
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode2 = view2.root;
 		const migratedValue2 = treeNode2.quantity;
 		assert(
 			migratedValue2 === originalValue,

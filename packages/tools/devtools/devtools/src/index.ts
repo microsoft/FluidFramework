@@ -26,7 +26,8 @@ import {
 	type HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 import { type IDisposable } from "@fluidframework/core-interfaces";
-import { type FluidContainer, type IFluidContainer } from "@fluidframework/fluid-static";
+import { type IFluidContainer } from "@fluidframework/fluid-static";
+import { type IContainer } from "@fluidframework/container-definitions";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -176,7 +177,7 @@ function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
 	const { container, containerKey } = containerProps;
-	const fluidContainer = container as FluidContainer;
+	const fluidContainer = container as { INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer };
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
 		console.error("Missing Container accessor on FluidContainer.");

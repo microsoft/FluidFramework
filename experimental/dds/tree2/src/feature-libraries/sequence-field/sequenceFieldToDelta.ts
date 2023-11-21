@@ -7,16 +7,17 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	getEffectiveNodeChanges,
-	isInsert,
-	isNewAttach,
-	markIsTransient,
+	getEndpoint,
+	getInputCellId,
+	getOutputCellId,
+	isAttachAndDetachEffect,
+	getDetachOutputId,
 } from "./utils";
+import { isMoveIn, isMoveOut } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
@@ -31,43 +32,60 @@ export function sequenceFieldToDelta<TNodeChange>(
 
 	for (const mark of change) {
 		const deltaMark: Mutable<Delta.Mark> = { count: mark.count };
-		const changes = getEffectiveNodeChanges(mark);
+		const inputCellId = getInputCellId(mark, revision, undefined);
+		const changes = mark.changes;
 		if (changes !== undefined) {
-			deltaMark.fields = deltaFromChild(changes);
-			if (deltaMark.fields.size === 0) {
-				delete deltaMark.fields;
+			const nestedDelta = deltaFromChild(changes);
+			if (nestedDelta.size > 0) {
+				if (inputCellId === undefined) {
+					deltaMark.fields = nestedDelta;
+				} else {
+					global.push({
+						id: nodeIdFromChangeAtom(inputCellId),
+						fields: nestedDelta,
+					});
+				}
 			}
 		}
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
 			local.push(deltaMark);
-		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
+		} else if (isAttachAndDetachEffect(mark)) {
+			assert(
+				inputCellId !== undefined,
+				0x81e /* AttachAndDetach mark should have defined input cell ID */,
+			);
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
-			if (markIsTransient(mark)) {
-				const oldId = nodeIdFromChangeAtom(mark.cellId);
-				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
-					// TODO: handle transient move-in/return-to
-					assert(isInsert(mark), 0x7d9 /* Unexpected non-insert transient mark */);
-					if (mark.content !== undefined) {
-						build.push({
-							id: oldId,
-							trees: mark.content.map(singleTextCursor),
-						});
-					}
-					rename.push({
-						count: mark.count,
-						oldId,
-						newId: nodeIdFromChangeAtom(mark.transientDetach),
-					});
-				}
-				if (deltaMark.fields) {
-					global.push({
-						id: oldId,
-						fields: deltaMark.fields,
-					});
-				}
+			if (isMoveIn(mark.attach) && isMoveOut(mark.detach)) {
+				assert(
+					mark.changes === undefined,
+					0x81f /* AttachAndDetach moves should not have changes */,
+				);
+				continue;
+			}
+
+			const outputId = getOutputCellId(mark, revision, undefined);
+			assert(
+				outputId !== undefined,
+				0x820 /* AttachAndDetach mark should have defined output cell ID */,
+			);
+			const oldId = nodeIdFromChangeAtom(
+				isMoveIn(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
+			);
+			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
+				rename.push({
+					count: mark.count,
+					oldId,
+					newId: nodeIdFromChangeAtom(outputId),
+				});
+			}
+			if (deltaMark.fields) {
+				global.push({
+					id: oldId,
+					fields: deltaMark.fields,
+				});
 			}
 		} else {
 			const type = mark.type;
@@ -75,64 +93,72 @@ export function sequenceFieldToDelta<TNodeChange>(
 			switch (type) {
 				case "MoveIn": {
 					local.push({
-						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
+						attach: nodeIdFromChangeAtom(getEndpoint(mark, revision)),
 						count: mark.count,
 					});
 					break;
 				}
 				case "Delete": {
-					if (mark.cellId === undefined) {
-						deltaMark.detach = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+					const newDetachId = getDetachOutputId(mark, revision, undefined);
+					if (inputCellId === undefined) {
+						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
 					} else {
-						// Removal of already removed content is a no-op.
-						// It does not relocate the content to the detached field that would otherwise be created.
-						// TODO: pass on nested changes if any
+						const oldId = nodeIdFromChangeAtom(inputCellId);
+						// Removal of already removed content is only a no-op if the detach IDs are different.
+						if (!areEqualChangeAtomIds(inputCellId, newDetachId)) {
+							rename.push({
+								count: mark.count,
+								oldId,
+								newId: nodeIdFromChangeAtom(newDetachId),
+							});
+						}
+						// In all cases, the nested changes apply
+						if (deltaMark.fields) {
+							global.push({
+								id: oldId,
+								fields: deltaMark.fields,
+							});
+						}
 					}
 					break;
 				}
-				case "MoveOut":
-				case "ReturnFrom": {
+				case "MoveOut": {
+					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
-					if (mark.cellId === undefined) {
+					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
 						local.push(deltaMark);
 					} else {
-						// TODO: relocate content to `detachId` field
+						// Move sources implicitly restore their content
+						rename.push({
+							count: mark.count,
+							oldId: nodeIdFromChangeAtom(inputCellId),
+							newId: detachId,
+						});
 					}
 					break;
 				}
 				case "Insert": {
 					assert(
-						mark.transientDetach === undefined,
-						0x7da /* Unexpected transient insert */,
+						inputCellId !== undefined,
+						0x821 /* Active Insert marks must have a CellId */,
 					);
-					assert(
-						mark.cellId !== undefined,
-						0x7db /* Active insert mark must have CellId */,
-					);
-					const buildId = nodeIdFromChangeAtom(mark.cellId);
+					const buildId = nodeIdFromChangeAtom(inputCellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
 						// Nested changes are represented on the node in its starting location
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
-					if (isNewAttach(mark)) {
-						assert(
-							mark.content !== undefined,
-							0x7dc /* New insert must have content */,
-						);
-						build.push({
-							id: buildId,
-							trees: mark.content.map(singleTextCursor),
-						});
-					}
 					local.push(deltaMark);
 					break;
 				}
 				case NoopMarkType:
-					fail("Unexpected NoopMarkType where cell is supposed to be affected");
+					if (inputCellId === undefined) {
+						local.push(deltaMark);
+					}
+					break;
 				case "Placeholder":
 					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
