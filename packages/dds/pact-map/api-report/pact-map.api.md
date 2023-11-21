@@ -63,6 +63,14 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/pactMap.ts:428:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/pactMap.ts:439:2 - (ae-undocumented) Missing documentation for "initializeLocalCore".
+// src/pactMap.ts:445:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/pactMap.ts:451:2 - (ae-undocumented) Missing documentation for "reSubmitCore".
+// src/pactMap.ts:521:9 - (ae-undocumented) Missing documentation for "applyStashedOp".
+
 // (No @packageDocumentation comment for this package)
 
 ```

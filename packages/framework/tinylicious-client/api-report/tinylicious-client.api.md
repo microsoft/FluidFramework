@@ -71,4 +71,8 @@ export interface TinyliciousUser extends IUser {
     name: string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/TinyliciousAudience.ts:24:2 - (ae-undocumented) Missing documentation for "createServiceMember".
+
 ```

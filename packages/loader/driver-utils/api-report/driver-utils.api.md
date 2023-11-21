@@ -396,6 +396,105 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     readonly errorType = DriverErrorType.usageError;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/adapters/compression/compressionTypes.ts:9:1 - (ae-undocumented) Missing documentation for "SummaryCompressionAlgorithm".
+// src/adapters/compression/compressionTypes.ts:10:2 - (ae-undocumented) Missing documentation for "None".
+// src/adapters/compression/compressionTypes.ts:11:2 - (ae-undocumented) Missing documentation for "LZ4".
+// src/adapters/compression/compressionTypes.ts:17:1 - (ae-undocumented) Missing documentation for "ICompressionStorageConfig".
+// src/adapters/compression/compressionTypes.ts:18:2 - (ae-undocumented) Missing documentation for "algorithm".
+// src/adapters/compression/compressionTypes.ts:19:2 - (ae-undocumented) Missing documentation for "minSizeToCompress".
+// src/adapters/compression/summaryblob/documentStorageServiceSummaryBlobCompressionAdapter.ts:25:14 - (ae-undocumented) Missing documentation for "blobHeadersBlobName".
+// src/blob.ts:18:27 - (ae-undocumented) Missing documentation for "path".
+// src/blob.ts:19:2 - (ae-undocumented) Missing documentation for "mode".
+// src/blob.ts:20:2 - (ae-undocumented) Missing documentation for "type".
+// src/blob.ts:21:2 - (ae-undocumented) Missing documentation for "value".
+// src/blob.ts:42:27 - (ae-undocumented) Missing documentation for "path".
+// src/blob.ts:43:2 - (ae-undocumented) Missing documentation for "mode".
+// src/blob.ts:44:2 - (ae-undocumented) Missing documentation for "type".
+// src/blob.ts:53:10 - (ae-undocumented) Missing documentation for "value".
+// src/blob.ts:61:33 - (ae-undocumented) Missing documentation for "path".
+// src/blob.ts:62:2 - (ae-undocumented) Missing documentation for "mode".
+// src/blob.ts:63:2 - (ae-undocumented) Missing documentation for "type".
+// src/blob.ts:64:2 - (ae-undocumented) Missing documentation for "value".
+// src/blob.ts:73:10 - (ae-undocumented) Missing documentation for "id".
+// src/documentStorageServiceProxy.ts:23:1 - (ae-undocumented) Missing documentation for "DocumentStorageServiceProxy".
+// src/documentStorageServiceProxy.ts:30:2 - (ae-undocumented) Missing documentation for "policies".
+// src/documentStorageServiceProxy.ts:34:2 - (ae-undocumented) Missing documentation for "repositoryUrl".
+// src/documentStorageServiceProxy.ts:38:14 - (ae-undocumented) Missing documentation for "internalStorageService".
+// src/documentStorageServiceProxy.ts:40:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/documentStorageServiceProxy.ts:47:15 - (ae-undocumented) Missing documentation for "getVersions".
+// src/documentStorageServiceProxy.ts:56:15 - (ae-undocumented) Missing documentation for "uploadSummaryWithContext".
+// src/documentStorageServiceProxy.ts:63:15 - (ae-undocumented) Missing documentation for "downloadSummary".
+// src/documentStorageServiceProxy.ts:67:15 - (ae-undocumented) Missing documentation for "createBlob".
+// src/documentStorageServiceProxy.ts:71:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/error.ts:16:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/error.ts:17:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/insecureUrlResolver.ts:39:15 - (ae-undocumented) Missing documentation for "resolve".
+// src/insecureUrlResolver.ts:135:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
+// src/insecureUrlResolver.ts:151:9 - (ae-undocumented) Missing documentation for "createCreateNewRequest".
+// src/messageRecognition.ts:26:1 - (ae-undocumented) Missing documentation for "MessageType2".
+// src/messageRecognition.ts:27:2 - (ae-undocumented) Missing documentation for "Accept".
+// src/messageRecognition.ts:34:1 - (ae-undocumented) Missing documentation for "canBeCoalescedByService".
+// src/network.ts:22:1 - (ae-undocumented) Missing documentation for "OnlineStatus".
+// src/network.ts:23:2 - (ae-undocumented) Missing documentation for "Offline".
+// src/network.ts:24:2 - (ae-undocumented) Missing documentation for "Online".
+// src/network.ts:25:2 - (ae-undocumented) Missing documentation for "Unknown".
+// src/network.ts:59:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:63:3 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:79:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:80:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:90:1 - (ae-undocumented) Missing documentation for "DeltaStreamConnectionForbiddenError".
+// src/network.ts:95:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:96:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:97:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:98:2 - (ae-undocumented) Missing documentation for "storageOnlyReason".
+// src/network.ts:109:1 - (ae-undocumented) Missing documentation for "AuthorizationError".
+// src/network.ts:114:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:115:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:119:3 - (ae-undocumented) Missing documentation for "claims".
+// src/network.ts:120:3 - (ae-undocumented) Missing documentation for "tenantId".
+// src/network.ts:131:1 - (ae-undocumented) Missing documentation for "LocationRedirectionError".
+// src/network.ts:136:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:137:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:141:3 - (ae-undocumented) Missing documentation for "redirectUrl".
+// src/network.ts:152:1 - (ae-undocumented) Missing documentation for "NetworkErrorBasic".
+// src/network.ts:155:3 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:156:3 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:166:1 - (ae-undocumented) Missing documentation for "NonRetryableError".
+// src/network.ts:169:3 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:179:1 - (ae-undocumented) Missing documentation for "RetryableError".
+// src/network.ts:182:3 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:195:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/network.ts:196:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/network.ts:200:3 - (ae-undocumented) Missing documentation for "retryAfterSeconds".
+// src/network.ts:210:14 - (ae-undocumented) Missing documentation for "createWriteError".
+// src/network.ts:216:1 - (ae-undocumented) Missing documentation for "createGenericNetworkError".
+// src/networkUtils.ts:13:1 - (ae-undocumented) Missing documentation for "logNetworkFailure".
+// src/parallelRequests.ts:48:2 - (ae-undocumented) Missing documentation for "canceled".
+// src/parallelRequests.ts:71:9 - (ae-undocumented) Missing documentation for "cancel".
+// src/parallelRequests.ts:78:15 - (ae-undocumented) Missing documentation for "run".
+// src/parallelRequests.ts:350:9 - (ae-undocumented) Missing documentation for "pushValue".
+// src/parallelRequests.ts:354:9 - (ae-undocumented) Missing documentation for "pushError".
+// src/parallelRequests.ts:359:9 - (ae-undocumented) Missing documentation for "pushDone".
+// src/parallelRequests.ts:364:2 - (ae-undocumented) Missing documentation for "pushCore".
+// src/parallelRequests.ts:375:15 - (ae-undocumented) Missing documentation for "read".
+// src/parallelRequests.ts:660:14 - (ae-undocumented) Missing documentation for "emptyMessageStream".
+// src/parallelRequests.ts:669:1 - (ae-undocumented) Missing documentation for "streamFromMessages".
+// src/parallelRequests.ts:688:1 - (ae-undocumented) Missing documentation for "streamObserver".
+// src/prefetchDocumentStorageService.ts:13:1 - (ae-undocumented) Missing documentation for "PrefetchDocumentStorageService".
+// src/prefetchDocumentStorageService.ts:18:2 - (ae-undocumented) Missing documentation for "policies".
+// src/prefetchDocumentStorageService.ts:25:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/prefetchDocumentStorageService.ts:39:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/prefetchDocumentStorageService.ts:42:9 - (ae-undocumented) Missing documentation for "stopPrefetch".
+// src/rateLimiter.ts:11:1 - (ae-undocumented) Missing documentation for "RateLimiter".
+// src/rateLimiter.ts:17:2 - (ae-undocumented) Missing documentation for "waitQueueLength".
+// src/rateLimiter.ts:23:2 - (ae-undocumented) Missing documentation for "release".
+// src/rateLimiter.ts:29:4 - (ae-undocumented) Missing documentation for "acquire".
+// src/rateLimiter.ts:42:15 - (ae-undocumented) Missing documentation for "schedule".
+// src/runWithRetry.ts:50:1 - (ae-undocumented) Missing documentation for "runWithRetry".
+// src/summaryForCreateNew.ts:20:2 - (ae-undocumented) Missing documentation for "tree".
+
 // (No @packageDocumentation comment for this package)
 
 ```

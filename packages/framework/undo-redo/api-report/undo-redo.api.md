@@ -75,4 +75,26 @@ export class UndoRedoStackManager {
     undoOperation(): boolean;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/mapHandler.ts:18:9 - (ae-undocumented) Missing documentation for "attachMap".
+// src/mapHandler.ts:21:9 - (ae-undocumented) Missing documentation for "detachMap".
+// src/mapHandler.ts:47:9 - (ae-undocumented) Missing documentation for "revert".
+// src/mapHandler.ts:51:9 - (ae-undocumented) Missing documentation for "discard".
+// src/sequenceHandler.ts:32:9 - (ae-undocumented) Missing documentation for "attachSequence".
+// src/sequenceHandler.ts:36:9 - (ae-undocumented) Missing documentation for "detachSequence".
+// src/sequenceHandler.ts:61:68 - (ae-undocumented) Missing documentation for "sequence".
+// src/sequenceHandler.ts:68:9 - (ae-undocumented) Missing documentation for "add".
+// src/sequenceHandler.ts:72:9 - (ae-undocumented) Missing documentation for "revert".
+// src/sequenceHandler.ts:76:9 - (ae-undocumented) Missing documentation for "discard".
+// src/undoRedoStackManager.ts:11:1 - (ae-undocumented) Missing documentation for "IRevertible".
+// src/undoRedoStackManager.ts:12:2 - (ae-undocumented) Missing documentation for "revert".
+// src/undoRedoStackManager.ts:13:2 - (ae-undocumented) Missing documentation for "discard".
+// src/undoRedoStackManager.ts:130:9 - (ae-undocumented) Missing documentation for "closeCurrentOperation".
+// src/undoRedoStackManager.ts:136:9 - (ae-undocumented) Missing documentation for "on".
+// src/undoRedoStackManager.ts:139:9 - (ae-undocumented) Missing documentation for "removeListener".
+// src/undoRedoStackManager.ts:143:9 - (ae-undocumented) Missing documentation for "undoOperation".
+// src/undoRedoStackManager.ts:153:9 - (ae-undocumented) Missing documentation for "redoOperation".
+// src/undoRedoStackManager.ts:163:9 - (ae-undocumented) Missing documentation for "pushToCurrentOperation".
+
 ```

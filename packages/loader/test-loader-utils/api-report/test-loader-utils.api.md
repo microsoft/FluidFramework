@@ -95,6 +95,36 @@ export class MockDocumentService implements IDocumentService {
     get resolvedUrl(): IResolvedUrl;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/mockDeltaStorage.ts:20:9 - (ae-undocumented) Missing documentation for "fetchMessages".
+// src/mockDocumentDeltaConnection.ts:37:50 - (ae-undocumented) Missing documentation for "clientId".
+// src/mockDocumentDeltaConnection.ts:39:9 - (ae-undocumented) Missing documentation for "claims".
+// src/mockDocumentDeltaConnection.ts:51:9 - (ae-undocumented) Missing documentation for "mode".
+// src/mockDocumentDeltaConnection.ts:52:2 - (ae-undocumented) Missing documentation for "existing".
+// src/mockDocumentDeltaConnection.ts:53:2 - (ae-undocumented) Missing documentation for "maxMessageSize".
+// src/mockDocumentDeltaConnection.ts:54:2 - (ae-undocumented) Missing documentation for "version".
+// src/mockDocumentDeltaConnection.ts:55:9 - (ae-undocumented) Missing documentation for "initialMessages".
+// src/mockDocumentDeltaConnection.ts:56:9 - (ae-undocumented) Missing documentation for "initialSignals".
+// src/mockDocumentDeltaConnection.ts:57:9 - (ae-undocumented) Missing documentation for "initialClients".
+// src/mockDocumentDeltaConnection.ts:58:2 - (ae-undocumented) Missing documentation for "serviceConfiguration".
+// src/mockDocumentDeltaConnection.ts:68:9 - (ae-undocumented) Missing documentation for "submit".
+// src/mockDocumentDeltaConnection.ts:74:9 - (ae-undocumented) Missing documentation for "submitSignal".
+// src/mockDocumentDeltaConnection.ts:80:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/mockDocumentDeltaConnection.ts:83:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/mockDocumentDeltaConnection.ts:89:9 - (ae-undocumented) Missing documentation for "emitOp".
+// src/mockDocumentDeltaConnection.ts:92:9 - (ae-undocumented) Missing documentation for "emitSignal".
+// src/mockDocumentDeltaConnection.ts:95:9 - (ae-undocumented) Missing documentation for "emitNack".
+// src/mockDocumentDeltaConnection.ts:98:9 - (ae-undocumented) Missing documentation for "emitPong".
+// src/mockDocumentDeltaConnection.ts:101:9 - (ae-undocumented) Missing documentation for "emitDisconnect".
+// src/mockDocumentDeltaConnection.ts:104:9 - (ae-undocumented) Missing documentation for "emitError".
+// src/mockDocumentService.ts:23:2 - (ae-undocumented) Missing documentation for "deltaStorageMessages".
+// src/mockDocumentService.ts:36:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/mockDocumentService.ts:39:2 - (ae-undocumented) Missing documentation for "resolvedUrl".
+// src/mockDocumentService.ts:43:15 - (ae-undocumented) Missing documentation for "connectToStorage".
+// src/mockDocumentService.ts:46:15 - (ae-undocumented) Missing documentation for "connectToDeltaStorage".
+// src/mockDocumentService.ts:51:15 - (ae-undocumented) Missing documentation for "connectToDeltaStream".
+
 // (No @packageDocumentation comment for this package)
 
 ```

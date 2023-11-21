@@ -380,6 +380,88 @@ export function wrapDocumentServiceFactory(innerDocServiceFactory: IDocumentServ
 // @public
 export function wrapDocumentStorageService(innerDocStorageService: IDocumentStorageService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentStorageService;
 
+// Warnings were encountered during analysis:
+//
+// src/TestConfigs.ts:8:14 - (ae-undocumented) Missing documentation for "mockConfigProvider".
+// src/interfaces.ts:14:1 - (ae-undocumented) Missing documentation for "IProvideTestFluidObject".
+// src/interfaces.ts:15:2 - (ae-undocumented) Missing documentation for "ITestFluidObject".
+// src/interfaces.ts:18:1 - (ae-undocumented) Missing documentation for "ITestFluidObject".
+// src/interfaces.ts:19:2 - (ae-undocumented) Missing documentation for "root".
+// src/interfaces.ts:20:2 - (ae-undocumented) Missing documentation for "runtime".
+// src/interfaces.ts:21:2 - (ae-undocumented) Missing documentation for "channel".
+// src/interfaces.ts:22:2 - (ae-undocumented) Missing documentation for "context".
+// src/interfaces.ts:23:2 - (ae-undocumented) Missing documentation for "getSharedObject".
+// src/loaderContainerTracker.ts:44:1 - (ae-undocumented) Missing documentation for "LoaderContainerTracker".
+// src/localCodeLoader.ts:25:1 - (ae-undocumented) Missing documentation for "SupportedExportInterfaces".
+// src/localCodeLoader.ts:33:1 - (ae-undocumented) Missing documentation for "fluidEntryPoint".
+// src/testFluidObject.ts:35:57 - (ae-undocumented) Missing documentation for "runtime".
+// src/testFluidObject.ts:36:2 - (ae-undocumented) Missing documentation for "ITestFluidObject".
+// src/testFluidObject.ts:40:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/testFluidObject.ts:47:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/testFluidObject.ts:51:2 - (ae-undocumented) Missing documentation for "handle".
+// src/testFluidObject.ts:55:9 - (ae-undocumented) Missing documentation for "root".
+// src/testFluidObject.ts:68:10 - (ae-undocumented) Missing documentation for "channel".
+// src/testFluidObject.ts:69:10 - (ae-undocumented) Missing documentation for "context".
+// src/testFluidObject.ts:97:15 - (ae-undocumented) Missing documentation for "request".
+// src/testFluidObject.ts:102:15 - (ae-undocumented) Missing documentation for "initialize".
+// src/testFluidObject.ts:131:1 - (ae-undocumented) Missing documentation for "ChannelFactoryRegistry".
+// src/testFluidObject.ts:164:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreFactory".
+// src/testFluidObject.ts:176:3 - (ae-undocumented) Missing documentation for "type".
+// src/testFluidObject.ts:179:15 - (ae-undocumented) Missing documentation for "instantiateDataStore".
+// src/testObjectProvider.ts:42:1 - (ae-undocumented) Missing documentation for "IOpProcessingController".
+// src/testObjectProvider.ts:43:2 - (ae-undocumented) Missing documentation for "processIncoming".
+// src/testObjectProvider.ts:44:2 - (ae-undocumented) Missing documentation for "processOutgoing".
+// src/testObjectProvider.ts:45:2 - (ae-undocumented) Missing documentation for "pauseProcessing".
+// src/testObjectProvider.ts:46:2 - (ae-undocumented) Missing documentation for "resumeProcessing".
+// src/testObjectProvider.ts:49:1 - (ae-undocumented) Missing documentation for "ITestObjectProvider".
+// src/testObjectProvider.ts:50:2 - (ae-undocumented) Missing documentation for "createFluidEntryPoint".
+// src/testObjectProvider.ts:51:2 - (ae-undocumented) Missing documentation for "createLoader".
+// src/testObjectProvider.ts:55:2 - (ae-undocumented) Missing documentation for "createContainer".
+// src/testObjectProvider.ts:59:2 - (ae-undocumented) Missing documentation for "loadContainer".
+// src/testObjectProvider.ts:70:2 - (ae-undocumented) Missing documentation for "makeTestContainer".
+// src/testObjectProvider.ts:71:2 - (ae-undocumented) Missing documentation for "loadTestContainer".
+// src/testObjectProvider.ts:79:2 - (ae-undocumented) Missing documentation for "updateDocumentId".
+// src/testObjectProvider.ts:81:2 - (ae-undocumented) Missing documentation for "logger".
+// src/testObjectProvider.ts:82:2 - (ae-undocumented) Missing documentation for "documentServiceFactory".
+// src/testObjectProvider.ts:83:2 - (ae-undocumented) Missing documentation for "urlResolver".
+// src/testObjectProvider.ts:84:2 - (ae-undocumented) Missing documentation for "defaultCodeDetails".
+// src/testObjectProvider.ts:85:2 - (ae-undocumented) Missing documentation for "opProcessingController".
+// src/testObjectProvider.ts:87:2 - (ae-undocumented) Missing documentation for "ensureSynchronized".
+// src/testObjectProvider.ts:88:2 - (ae-undocumented) Missing documentation for "reset".
+// src/testObjectProvider.ts:90:2 - (ae-undocumented) Missing documentation for "documentId".
+// src/testObjectProvider.ts:91:2 - (ae-undocumented) Missing documentation for "driver".
+// src/testObjectProvider.ts:94:1 - (ae-undocumented) Missing documentation for "DataObjectFactoryType".
+// src/testObjectProvider.ts:95:2 - (ae-undocumented) Missing documentation for "Primed".
+// src/testObjectProvider.ts:96:2 - (ae-undocumented) Missing documentation for "Test".
+// src/testObjectProvider.ts:99:1 - (ae-undocumented) Missing documentation for "ITestContainerConfig".
+// src/testObjectProvider.ts:116:14 - (ae-undocumented) Missing documentation for "createDocumentId".
+// src/testObjectProvider.ts:182:9 - (ae-undocumented) Missing documentation for "registerExpectedEvent".
+// src/testObjectProvider.ts:196:2 - (ae-undocumented) Missing documentation for "send".
+// src/testObjectProvider.ts:234:9 - (ae-undocumented) Missing documentation for "reportAndClearTrackedEvents".
+// src/testObjectProvider.ts:247:63 - (ae-undocumented) Missing documentation for "LoaderConstructor".
+// src/testObjectProvider.ts:263:10 - (ae-undocumented) Missing documentation for "driver".
+// src/testObjectProvider.ts:264:10 - (ae-undocumented) Missing documentation for "createFluidEntryPoint".
+// src/testObjectProvider.ts:271:2 - (ae-undocumented) Missing documentation for "logger".
+// src/testObjectProvider.ts:294:2 - (ae-undocumented) Missing documentation for "documentServiceFactory".
+// src/testObjectProvider.ts:301:2 - (ae-undocumented) Missing documentation for "urlResolver".
+// src/testObjectProvider.ts:308:2 - (ae-undocumented) Missing documentation for "documentId".
+// src/testObjectProvider.ts:312:2 - (ae-undocumented) Missing documentation for "defaultCodeDetails".
+// src/testObjectProvider.ts:316:2 - (ae-undocumented) Missing documentation for "opProcessingController".
+// src/testObjectProvider.ts:376:15 - (ae-undocumented) Missing documentation for "loadContainer".
+// src/testObjectProvider.ts:448:9 - (ae-undocumented) Missing documentation for "reset".
+// src/testObjectProvider.ts:461:15 - (ae-undocumented) Missing documentation for "ensureSynchronized".
+// src/testObjectProvider.ts:465:15 - (ae-undocumented) Missing documentation for "waitContainerToCatchUp".
+// src/testObjectProvider.ts:477:2 - (ae-undocumented) Missing documentation for "updateDocumentId".
+// src/testObjectProvider.ts:481:9 - (ae-undocumented) Missing documentation for "resetLoaderContainerTracker".
+// src/testObjectProvider.ts:487:1 - (ae-undocumented) Missing documentation for "getUnexpectedLogErrorException".
+// src/timeoutUtils.ts:9:14 - (ae-undocumented) Missing documentation for "defaultTimeoutDurationMs".
+// src/timeoutUtils.ts:103:1 - (ae-undocumented) Missing documentation for "TimeoutWithError".
+// src/timeoutUtils.ts:110:2 - (ae-undocumented) Missing documentation for "reject".
+// src/timeoutUtils.ts:111:2 - (ae-undocumented) Missing documentation for "errorMsg".
+// src/timeoutUtils.ts:113:1 - (ae-undocumented) Missing documentation for "TimeoutWithValue".
+// src/timeoutUtils.ts:120:2 - (ae-undocumented) Missing documentation for "reject".
+// src/timeoutUtils.ts:121:2 - (ae-undocumented) Missing documentation for "value".
+
 // (No @packageDocumentation comment for this package)
 
 ```

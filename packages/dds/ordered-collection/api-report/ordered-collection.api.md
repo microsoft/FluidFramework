@@ -106,6 +106,26 @@ export interface ISnapshotable<T> {
 // @public
 export function waitAcquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T>;
 
+// Warnings were encountered during analysis:
+//
+// src/consensusOrderedCollection.ts:186:2 - (ae-undocumented) Missing documentation for "summarizeCore".
+// src/consensusOrderedCollection.ts:199:2 - (ae-undocumented) Missing documentation for "isActive".
+// src/consensusOrderedCollection.ts:200:2 - (ae-undocumented) Missing documentation for "complete".
+// src/consensusOrderedCollection.ts:218:2 - (ae-undocumented) Missing documentation for "completeCore".
+// src/consensusOrderedCollection.ts:227:2 - (ae-undocumented) Missing documentation for "release".
+// src/consensusOrderedCollection.ts:244:2 - (ae-undocumented) Missing documentation for "releaseCore".
+// src/consensusOrderedCollection.ts:257:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/consensusOrderedCollection.ts:277:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/consensusOrderedCollection.ts:285:2 - (ae-undocumented) Missing documentation for "processCore".
+// src/consensusOrderedCollection.ts:396:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/interfaces.ts:14:1 - (ae-undocumented) Missing documentation for "ConsensusResult".
+// src/interfaces.ts:15:2 - (ae-undocumented) Missing documentation for "Release".
+// src/interfaces.ts:16:2 - (ae-undocumented) Missing documentation for "Complete".
+// src/interfaces.ts:32:2 - (ae-undocumented) Missing documentation for "load".
+// src/interfaces.ts:39:2 - (ae-undocumented) Missing documentation for "create".
+// src/interfaces.ts:125:2 - (ae-undocumented) Missing documentation for "asArray".
+// src/interfaces.ts:127:2 - (ae-undocumented) Missing documentation for "loadFrom".
+
 // (No @packageDocumentation comment for this package)
 
 ```

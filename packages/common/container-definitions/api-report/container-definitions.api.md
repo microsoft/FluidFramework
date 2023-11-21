@@ -540,4 +540,74 @@ export type ReadOnlyInfo = {
     readonly storageOnlyReason?: string;
 };
 
+// Warnings were encountered during analysis:
+//
+// src/browserPackage.ts:40:2 - (ae-undocumented) Missing documentation for "fluid".
+// src/deltas.ts:28:2 - (ae-undocumented) Missing documentation for "clientId".
+// src/deltas.ts:29:2 - (ae-undocumented) Missing documentation for "claims".
+// src/deltas.ts:30:2 - (ae-undocumented) Missing documentation for "serviceConfiguration".
+// src/deltas.ts:65:2 - (ae-undocumented) Missing documentation for "__call".
+// src/deltas.ts:70:2 - (ae-undocumented) Missing documentation for "__call".
+// src/deltas.ts:212:2 - (ae-undocumented) Missing documentation for "readOnlyInfo".
+// src/deltas.ts:318:1 - (ae-undocumented) Missing documentation for "ReadOnlyInfo".
+// src/error.ts:24:1 - (ae-undocumented) Missing documentation for "ContainerErrorTypes".
+// src/fluidModule.ts:13:1 - (ae-undocumented) Missing documentation for "IFluidModule".
+// src/fluidModule.ts:14:2 - (ae-undocumented) Missing documentation for "fluidExport".
+// src/fluidPackage.ts:79:2 - (ae-undocumented) Missing documentation for "__index".
+// src/fluidPackage.ts:119:14 - (ae-undocumented) Missing documentation for "IFluidCodeDetailsComparer".
+// src/fluidPackage.ts:125:1 - (ae-undocumented) Missing documentation for "IProvideFluidCodeDetailsComparer".
+// src/fluidPackage.ts:126:2 - (ae-undocumented) Missing documentation for "IFluidCodeDetailsComparer".
+// src/loader.ts:419:2 - (ae-undocumented) Missing documentation for "request".
+// src/loader.ts:438:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/loader.ts:530:2 - (ae-undocumented) Missing documentation for "request".
+// src/loader.ts:536:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/loader.ts:572:1 - (ae-undocumented) Missing documentation for "ILoaderOptions".
+// src/loader.ts:611:2 - (ae-undocumented) Missing documentation for "cache".
+// src/loader.ts:613:2 - (ae-undocumented) Missing documentation for "clientDetails".
+// src/loader.ts:619:2 - (ae-undocumented) Missing documentation for "reconnect".
+// src/loader.ts:638:1 - (ae-undocumented) Missing documentation for "IContainerLoadMode".
+// src/loader.ts:639:2 - (ae-undocumented) Missing documentation for "opsBeforeReturn".
+// src/loader.ts:664:2 - (ae-undocumented) Missing documentation for "deltaConnection".
+// src/loader.ts:697:2 - (ae-undocumented) Missing documentation for ""fluid-cache"".
+// src/loader.ts:698:2 - (ae-undocumented) Missing documentation for ""fluid-client-details"".
+// src/loader.ts:699:2 - (ae-undocumented) Missing documentation for "loadMode".
+// src/loader.ts:705:2 - (ae-undocumented) Missing documentation for ""fluid-reconnect"".
+// src/loader.ts:706:2 - (ae-undocumented) Missing documentation for "version".
+// src/loader.ts:712:1 - (ae-undocumented) Missing documentation for "IProvideLoader".
+// src/loader.ts:713:2 - (ae-undocumented) Missing documentation for "ILoader".
+// src/loader.ts:722:1 - (ae-undocumented) Missing documentation for "IPendingLocalState".
+// src/loader.ts:723:2 - (ae-undocumented) Missing documentation for "url".
+// src/loader.ts:724:2 - (ae-undocumented) Missing documentation for "pendingRuntimeState".
+// src/loader.ts:735:2 - (ae-undocumented) Missing documentation for "blobsContents".
+// src/loader.ts:736:2 - (ae-undocumented) Missing documentation for "trees".
+// src/runtime.ts:134:2 - (ae-undocumented) Missing documentation for "contents".
+// src/runtime.ts:135:2 - (ae-undocumented) Missing documentation for "metadata".
+// src/runtime.ts:136:2 - (ae-undocumented) Missing documentation for "compression".
+// src/runtime.ts:137:2 - (ae-undocumented) Missing documentation for "referenceSequenceNumber".
+// src/runtime.ts:147:2 - (ae-undocumented) Missing documentation for "options".
+// src/runtime.ts:148:2 - (ae-undocumented) Missing documentation for "clientId".
+// src/runtime.ts:149:2 - (ae-undocumented) Missing documentation for "clientDetails".
+// src/runtime.ts:150:2 - (ae-undocumented) Missing documentation for "storage".
+// src/runtime.ts:151:2 - (ae-undocumented) Missing documentation for "connected".
+// src/runtime.ts:152:2 - (ae-undocumented) Missing documentation for "baseSnapshot".
+// src/runtime.ts:157:2 - (ae-undocumented) Missing documentation for "submitFn".
+// src/runtime.ts:161:2 - (ae-undocumented) Missing documentation for "submitBatchFn".
+// src/runtime.ts:162:2 - (ae-undocumented) Missing documentation for "submitSummaryFn".
+// src/runtime.ts:168:2 - (ae-undocumented) Missing documentation for "submitSignalFn".
+// src/runtime.ts:169:2 - (ae-undocumented) Missing documentation for "disposeFn".
+// src/runtime.ts:170:2 - (ae-undocumented) Missing documentation for "closeFn".
+// src/runtime.ts:171:2 - (ae-undocumented) Missing documentation for "deltaManager".
+// src/runtime.ts:172:2 - (ae-undocumented) Missing documentation for "quorum".
+// src/runtime.ts:180:2 - (ae-undocumented) Missing documentation for "getSpecifiedCodeDetails".
+// src/runtime.ts:181:2 - (ae-undocumented) Missing documentation for "audience".
+// src/runtime.ts:182:2 - (ae-undocumented) Missing documentation for "loader".
+// src/runtime.ts:184:2 - (ae-undocumented) Missing documentation for "taggedLogger".
+// src/runtime.ts:185:2 - (ae-undocumented) Missing documentation for "pendingLocalState".
+// src/runtime.ts:205:2 - (ae-undocumented) Missing documentation for "getLoadedFromVersion".
+// src/runtime.ts:207:2 - (ae-undocumented) Missing documentation for "updateDirtyContainerState".
+// src/runtime.ts:209:2 - (ae-undocumented) Missing documentation for "supportedFeatures".
+// src/runtime.ts:227:14 - (ae-undocumented) Missing documentation for "IRuntimeFactory".
+// src/runtime.ts:232:1 - (ae-undocumented) Missing documentation for "IProvideRuntimeFactory".
+// src/runtime.ts:233:2 - (ae-undocumented) Missing documentation for "IRuntimeFactory".
+
 ```

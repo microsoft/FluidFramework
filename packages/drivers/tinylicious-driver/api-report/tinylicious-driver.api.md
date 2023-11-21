@@ -39,6 +39,13 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl>;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/insecureTinyliciousTokenProvider.ts:30:15 - (ae-undocumented) Missing documentation for "fetchOrdererToken".
+// src/insecureTinyliciousTokenProvider.ts:37:15 - (ae-undocumented) Missing documentation for "fetchStorageToken".
+// src/insecureTinyliciousUrlResolver.ts:39:15 - (ae-undocumented) Missing documentation for "resolve".
+// src/insecureTinyliciousUrlResolver.ts:78:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
+
 // (No @packageDocumentation comment for this package)
 
 ```

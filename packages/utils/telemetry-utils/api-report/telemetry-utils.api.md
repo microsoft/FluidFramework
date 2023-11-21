@@ -441,6 +441,73 @@ export function wrapError<T extends LoggingError>(innerError: unknown, newErrorF
 // @internal
 export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLoggerExt): T;
 
+// Warnings were encountered during analysis:
+//
+// src/config.ts:10:1 - (ae-undocumented) Missing documentation for "ConfigTypes".
+// src/config.ts:16:2 - (ae-undocumented) Missing documentation for "getRawConfig".
+// src/config.ts:23:2 - (ae-undocumented) Missing documentation for "getBoolean".
+// src/config.ts:24:2 - (ae-undocumented) Missing documentation for "getNumber".
+// src/config.ts:25:2 - (ae-undocumented) Missing documentation for "getString".
+// src/config.ts:26:2 - (ae-undocumented) Missing documentation for "getBooleanArray".
+// src/config.ts:27:2 - (ae-undocumented) Missing documentation for "getNumberArray".
+// src/config.ts:28:2 - (ae-undocumented) Missing documentation for "getStringArray".
+// src/config.ts:251:2 - (ae-undocumented) Missing documentation for "config".
+// src/config.ts:252:2 - (ae-undocumented) Missing documentation for "logger".
+// src/config.ts:262:1 - (ae-undocumented) Missing documentation for "loggerToMonitoringContext".
+// src/config.ts:271:1 - (ae-undocumented) Missing documentation for "mixinMonitoringContext".
+// src/config.ts:297:1 - (ae-undocumented) Missing documentation for "createChildMonitoringContext".
+// src/error.ts:29:89 - (ae-undocumented) Missing documentation for "error".
+// src/error.ts:30:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/error.ts:56:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/error.ts:70:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/error.ts:71:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/error.ts:95:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/errorLogging.ts:446:2 - (ae-undocumented) Missing documentation for "errorInstanceId".
+// src/errorLogging.ts:449:2 - (ae-undocumented) Missing documentation for "overwriteErrorInstanceId".
+// src/eventEmitterWithErrorHandling.ts:24:9 - (ae-undocumented) Missing documentation for "emit".
+// src/events.ts:11:14 - (ae-undocumented) Missing documentation for "connectedEventName".
+// src/events.ts:12:14 - (ae-undocumented) Missing documentation for "disconnectedEventName".
+// src/events.ts:14:1 - (ae-undocumented) Missing documentation for "safeRaiseEvent".
+// src/logger.ts:58:1 - (ae-undocumented) Missing documentation for "TelemetryEventPropertyTypes".
+// src/logger.ts:60:1 - (ae-undocumented) Missing documentation for "ITelemetryLoggerPropertyBag".
+// src/logger.ts:61:2 - (ae-undocumented) Missing documentation for "__index".
+// src/logger.ts:63:1 - (ae-undocumented) Missing documentation for "ITelemetryLoggerPropertyBags".
+// src/logger.ts:64:2 - (ae-undocumented) Missing documentation for "all".
+// src/logger.ts:65:2 - (ae-undocumented) Missing documentation for "error".
+// src/logger.ts:83:1 - (ae-undocumented) Missing documentation for "formatTick".
+// src/logger.ts:87:14 - (ae-undocumented) Missing documentation for "eventNamespaceSeparator".
+// src/logger.ts:290:1 - (ae-undocumented) Missing documentation for "TaggedLoggerAdapter".
+// src/logger.ts:296:9 - (ae-undocumented) Missing documentation for "send".
+// src/logger.ts:560:2 - (ae-undocumented) Missing documentation for "start".
+// src/logger.ts:561:2 - (ae-undocumented) Missing documentation for "end".
+// src/logger.ts:562:2 - (ae-undocumented) Missing documentation for "cancel".
+// src/logger.ts:669:2 - (ae-undocumented) Missing documentation for "duration".
+// src/logger.ts:696:9 - (ae-undocumented) Missing documentation for "reportProgress".
+// src/logger.ts:709:9 - (ae-undocumented) Missing documentation for "end".
+// src/logger.ts:724:9 - (ae-undocumented) Missing documentation for "cancel".
+// src/logger.ts:789:9 - (ae-undocumented) Missing documentation for "send".
+// src/logger.ts:790:9 - (ae-undocumented) Missing documentation for "sendTelemetryEvent".
+// src/logger.ts:791:9 - (ae-undocumented) Missing documentation for "sendErrorEvent".
+// src/logger.ts:792:9 - (ae-undocumented) Missing documentation for "sendPerformanceEvent".
+// src/logger.ts:856:14 - (ae-undocumented) Missing documentation for "tagData".
+// src/mockLogger.ts:19:56 - (ae-undocumented) Missing documentation for "minLogLevel".
+// src/mockLogger.ts:20:2 - (ae-undocumented) Missing documentation for "events".
+// src/mockLogger.ts:24:2 - (ae-undocumented) Missing documentation for "clear".
+// src/mockLogger.ts:28:2 - (ae-undocumented) Missing documentation for "toTelemetryLogger".
+// src/mockLogger.ts:32:2 - (ae-undocumented) Missing documentation for "send".
+// src/sampledTelemetryHelper.ts:57:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/sampledTelemetryHelper.ts:143:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/telemetryTypes.ts:40:2 - (ae-undocumented) Missing documentation for "value".
+// src/telemetryTypes.ts:41:2 - (ae-undocumented) Missing documentation for "tag".
+// src/telemetryTypes.ts:48:2 - (ae-undocumented) Missing documentation for "__index".
+// src/telemetryTypes.ts:58:2 - (ae-undocumented) Missing documentation for "category".
+// src/telemetryTypes.ts:59:2 - (ae-undocumented) Missing documentation for "eventName".
+// src/telemetryTypes.ts:67:2 - (ae-undocumented) Missing documentation for "eventName".
+// src/telemetryTypes.ts:68:2 - (ae-undocumented) Missing documentation for "category".
+// src/telemetryTypes.ts:76:2 - (ae-undocumented) Missing documentation for "eventName".
+// src/telemetryTypes.ts:84:2 - (ae-undocumented) Missing documentation for "duration".
+// src/utils.ts:45:2 - (ae-undocumented) Missing documentation for "sample".
+
 // (No @packageDocumentation comment for this package)
 
 ```

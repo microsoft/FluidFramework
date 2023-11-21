@@ -145,6 +145,49 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
     protected readonly storage: IDocumentStorageService;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/replayController.ts:16:88 - (ae-undocumented) Missing documentation for "getVersions".
+// src/replayController.ts:18:9 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/replayController.ts:19:9 - (ae-undocumented) Missing documentation for "readBlob".
+// src/replayController.ts:21:15 - (ae-undocumented) Missing documentation for "uploadSummaryWithContext".
+// src/replayController.ts:28:15 - (ae-undocumented) Missing documentation for "createBlob".
+// src/replayController.ts:32:15 - (ae-undocumented) Missing documentation for "downloadSummary".
+// src/replayController.ts:36:2 - (ae-undocumented) Missing documentation for "repositoryUrl".
+// src/replayDocumentService.ts:38:3 - (ae-undocumented) Missing documentation for "create".
+// src/replayDocumentService.ts:40:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/replayDocumentService.ts:43:2 - (ae-undocumented) Missing documentation for "resolvedUrl".
+// src/replayDocumentServiceFactory.ts:18:1 - (ae-undocumented) Missing documentation for "ReplayDocumentServiceFactory".
+// src/replayDocumentServiceFactory.ts:33:3 - (ae-undocumented) Missing documentation for "create".
+// src/replayDocumentServiceFactory.ts:64:15 - (ae-undocumented) Missing documentation for "createContainer".
+// src/storageImplementations.ts:31:2 - (ae-undocumented) Missing documentation for "tree".
+// src/storageImplementations.ts:32:2 - (ae-undocumented) Missing documentation for "commits".
+// src/storageImplementations.ts:35:1 - (ae-undocumented) Missing documentation for "FileSnapshotReader".
+// src/storageImplementations.ts:40:2 - (ae-undocumented) Missing documentation for "FileStorageVersionTreeId".
+// src/storageImplementations.ts:42:2 - (ae-undocumented) Missing documentation for "docId".
+// src/storageImplementations.ts:43:2 - (ae-undocumented) Missing documentation for "docTree".
+// src/storageImplementations.ts:44:2 - (ae-undocumented) Missing documentation for "blobs".
+// src/storageImplementations.ts:45:2 - (ae-undocumented) Missing documentation for "commits".
+// src/storageImplementations.ts:46:2 - (ae-undocumented) Missing documentation for "trees".
+// src/storageImplementations.ts:56:15 - (ae-undocumented) Missing documentation for "getVersions".
+// src/storageImplementations.ts:70:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/storageImplementations.ts:94:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/storageImplementations.ts:103:1 - (ae-undocumented) Missing documentation for "SnapshotStorage".
+// src/storageImplementations.ts:104:2 - (ae-undocumented) Missing documentation for "docId".
+// src/storageImplementations.ts:107:3 - (ae-undocumented) Missing documentation for "storage".
+// src/storageImplementations.ts:108:3 - (ae-undocumented) Missing documentation for "docTree".
+// src/storageImplementations.ts:114:15 - (ae-undocumented) Missing documentation for "getVersions".
+// src/storageImplementations.ts:124:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/storageImplementations.ts:132:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/storageImplementations.ts:137:1 - (ae-undocumented) Missing documentation for "OpStorage".
+// src/storageImplementations.ts:138:15 - (ae-undocumented) Missing documentation for "getVersions".
+// src/storageImplementations.ts:142:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/storageImplementations.ts:146:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/storageImplementations.ts:173:1 - (ae-undocumented) Missing documentation for "StaticStorageDocumentServiceFactory".
+// src/storageImplementations.ts:174:21 - (ae-undocumented) Missing documentation for "storage".
+// src/storageImplementations.ts:176:15 - (ae-undocumented) Missing documentation for "createDocumentService".
+// src/storageImplementations.ts:185:15 - (ae-undocumented) Missing documentation for "createContainer".
+
 // (No @packageDocumentation comment for this package)
 
 ```

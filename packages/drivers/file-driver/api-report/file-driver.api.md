@@ -166,6 +166,40 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     get version(): string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/fileDeltaStorageService.ts:37:9 - (ae-undocumented) Missing documentation for "fetchMessages".
+// src/fileDeltaStorageService.ts:46:2 - (ae-undocumented) Missing documentation for "ops".
+// src/fileDocumentDeltaConnection.ts:57:2 - (ae-undocumented) Missing documentation for "currentReplayedOp".
+// src/fileDocumentDeltaConnection.ts:65:2 - (ae-undocumented) Missing documentation for "ops".
+// src/fileDocumentDeltaConnection.ts:113:1 - (ae-undocumented) Missing documentation for "ReplayFileDeltaConnection".
+// src/fileDocumentDeltaConnection.ts:151:2 - (ae-undocumented) Missing documentation for "maxMessageSize".
+// src/fileDocumentDeltaConnection.ts:155:10 - (ae-undocumented) Missing documentation for "details".
+// src/fileDocumentDeltaConnection.ts:162:9 - (ae-undocumented) Missing documentation for "getReplayer".
+// src/fileDocumentDeltaConnection.ts:166:2 - (ae-undocumented) Missing documentation for "clientId".
+// src/fileDocumentDeltaConnection.ts:170:2 - (ae-undocumented) Missing documentation for "mode".
+// src/fileDocumentDeltaConnection.ts:174:2 - (ae-undocumented) Missing documentation for "claims".
+// src/fileDocumentDeltaConnection.ts:178:2 - (ae-undocumented) Missing documentation for "existing".
+// src/fileDocumentDeltaConnection.ts:182:2 - (ae-undocumented) Missing documentation for "version".
+// src/fileDocumentDeltaConnection.ts:186:2 - (ae-undocumented) Missing documentation for "initialMessages".
+// src/fileDocumentDeltaConnection.ts:190:2 - (ae-undocumented) Missing documentation for "initialSignals".
+// src/fileDocumentDeltaConnection.ts:194:2 - (ae-undocumented) Missing documentation for "initialClients".
+// src/fileDocumentDeltaConnection.ts:198:2 - (ae-undocumented) Missing documentation for "serviceConfiguration".
+// src/fileDocumentDeltaConnection.ts:202:9 - (ae-undocumented) Missing documentation for "submit".
+// src/fileDocumentDeltaConnection.ts:208:15 - (ae-undocumented) Missing documentation for "submitSignal".
+// src/fileDocumentDeltaConnection.ts:211:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/fileDocumentDeltaConnection.ts:214:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/fileDocumentServiceFactory.ts:49:15 - (ae-undocumented) Missing documentation for "createContainer".
+// src/fileDocumentStorageService.ts:16:14 - (ae-undocumented) Missing documentation for "FileStorageDocumentName".
+// src/fileDocumentStorageService.ts:28:2 - (ae-undocumented) Missing documentation for "docTree".
+// src/fileDocumentStorageService.ts:101:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/fileDocumentStorageService.ts:113:1 - (ae-undocumented) Missing documentation for "ISnapshotWriterStorage".
+// src/fileDocumentStorageService.ts:114:2 - (ae-undocumented) Missing documentation for "onSnapshotHandler".
+// src/fileDocumentStorageService.ts:115:2 - (ae-undocumented) Missing documentation for "reset".
+// src/fileDocumentStorageService.ts:118:1 - (ae-undocumented) Missing documentation for "ReaderConstructor".
+// src/fileDocumentStorageService.ts:119:14 - (ae-undocumented) Missing documentation for "FileSnapshotWriterClassFactory".
+// src/fileDocumentStorageService.ts:231:14 - (ae-undocumented) Missing documentation for "FluidFetchReaderFileSnapshotWriter".
+
 // (No @packageDocumentation comment for this package)
 
 ```

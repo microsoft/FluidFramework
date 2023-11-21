@@ -166,6 +166,59 @@ export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => 
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
+// Warnings were encountered during analysis:
+//
+// src/dataStoreRuntime.ts:87:1 - (ae-undocumented) Missing documentation for "DataStoreMessageType".
+// src/dataStoreRuntime.ts:89:2 - (ae-undocumented) Missing documentation for "Attach".
+// src/dataStoreRuntime.ts:90:2 - (ae-undocumented) Missing documentation for "ChannelOp".
+// src/dataStoreRuntime.ts:96:1 - (ae-undocumented) Missing documentation for "ISharedObjectRegistry".
+// src/dataStoreRuntime.ts:99:2 - (ae-undocumented) Missing documentation for "get".
+// src/dataStoreRuntime.ts:119:2 - (ae-undocumented) Missing documentation for "load".
+// src/dataStoreRuntime.ts:135:2 - (ae-undocumented) Missing documentation for "entryPoint".
+// src/dataStoreRuntime.ts:140:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/dataStoreRuntime.ts:144:2 - (ae-undocumented) Missing documentation for "connected".
+// src/dataStoreRuntime.ts:148:2 - (ae-undocumented) Missing documentation for "clientId".
+// src/dataStoreRuntime.ts:152:2 - (ae-undocumented) Missing documentation for "clientDetails".
+// src/dataStoreRuntime.ts:156:2 - (ae-undocumented) Missing documentation for "isAttached".
+// src/dataStoreRuntime.ts:160:2 - (ae-undocumented) Missing documentation for "attachState".
+// src/dataStoreRuntime.ts:164:2 - (ae-undocumented) Missing documentation for "absolutePath".
+// src/dataStoreRuntime.ts:168:2 - (ae-undocumented) Missing documentation for "routeContext".
+// src/dataStoreRuntime.ts:172:2 - (ae-undocumented) Missing documentation for "idCompressor".
+// src/dataStoreRuntime.ts:176:2 - (ae-undocumented) Missing documentation for "IFluidHandleContext".
+// src/dataStoreRuntime.ts:180:2 - (ae-undocumented) Missing documentation for "rootRoutingContext".
+// src/dataStoreRuntime.ts:183:2 - (ae-undocumented) Missing documentation for "channelsRoutingContext".
+// src/dataStoreRuntime.ts:186:2 - (ae-undocumented) Missing documentation for "objectsRoutingContext".
+// src/dataStoreRuntime.ts:191:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/dataStoreRuntime.ts:202:9 - (ae-undocumented) Missing documentation for "visibilityState".
+// src/dataStoreRuntime.ts:207:2 - (ae-undocumented) Missing documentation for "id".
+// src/dataStoreRuntime.ts:208:2 - (ae-undocumented) Missing documentation for "options".
+// src/dataStoreRuntime.ts:209:2 - (ae-undocumented) Missing documentation for "deltaManager".
+// src/dataStoreRuntime.ts:213:2 - (ae-undocumented) Missing documentation for "logger".
+// src/dataStoreRuntime.ts:377:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/dataStoreRuntime.ts:387:15 - (ae-undocumented) Missing documentation for "resolveHandle".
+// src/dataStoreRuntime.ts:391:15 - (ae-undocumented) Missing documentation for "request".
+// src/dataStoreRuntime.ts:424:15 - (ae-undocumented) Missing documentation for "getChannel".
+// src/dataStoreRuntime.ts:435:9 - (ae-undocumented) Missing documentation for "createChannel".
+// src/dataStoreRuntime.ts:532:9 - (ae-undocumented) Missing documentation for "bind".
+// src/dataStoreRuntime.ts:541:9 - (ae-undocumented) Missing documentation for "setConnectionState".
+// src/dataStoreRuntime.ts:551:9 - (ae-undocumented) Missing documentation for "getQuorum".
+// src/dataStoreRuntime.ts:555:9 - (ae-undocumented) Missing documentation for "getAudience".
+// src/dataStoreRuntime.ts:559:15 - (ae-undocumented) Missing documentation for "uploadBlob".
+// src/dataStoreRuntime.ts:596:9 - (ae-undocumented) Missing documentation for "process".
+// src/dataStoreRuntime.ts:647:9 - (ae-undocumented) Missing documentation for "processSignal".
+// src/dataStoreRuntime.ts:803:9 - (ae-undocumented) Missing documentation for "getAttachSummary".
+// src/dataStoreRuntime.ts:859:9 - (ae-undocumented) Missing documentation for "submitMessage".
+// src/dataStoreRuntime.ts:989:15 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/fluidHandle.ts:20:2 - (ae-undocumented) Missing documentation for "absolutePath".
+// src/fluidHandle.ts:25:2 - (ae-undocumented) Missing documentation for "IFluidHandle".
+// src/fluidHandle.ts:32:2 - (ae-undocumented) Missing documentation for "isAttached".
+// src/fluidHandle.ts:69:3 - (ae-undocumented) Missing documentation for "value".
+// src/fluidHandle.ts:70:3 - (ae-undocumented) Missing documentation for "path".
+// src/fluidHandle.ts:71:10 - (ae-undocumented) Missing documentation for "routeContext".
+// src/fluidHandle.ts:79:15 - (ae-undocumented) Missing documentation for "get".
+// src/fluidHandle.ts:87:9 - (ae-undocumented) Missing documentation for "attachGraph".
+// src/fluidHandle.ts:103:9 - (ae-undocumented) Missing documentation for "bind".
+
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -199,6 +199,61 @@ export function tryParseErrorResponse(response: string | undefined): {
 // @public (undocumented)
 export function unauthPostAsync(url: string, body: any): Promise<Response>;
 
+// Warnings were encountered during analysis:
+//
+// src/odspAuth.ts:12:1 - (ae-undocumented) Missing documentation for "IOdspTokens".
+// src/odspAuth.ts:13:2 - (ae-undocumented) Missing documentation for "accessToken".
+// src/odspAuth.ts:14:2 - (ae-undocumented) Missing documentation for "refreshToken".
+// src/odspAuth.ts:17:1 - (ae-undocumented) Missing documentation for "IClientConfig".
+// src/odspAuth.ts:18:2 - (ae-undocumented) Missing documentation for "clientId".
+// src/odspAuth.ts:19:2 - (ae-undocumented) Missing documentation for "clientSecret".
+// src/odspAuth.ts:22:1 - (ae-undocumented) Missing documentation for "IOdspAuthRequestInfo".
+// src/odspAuth.ts:23:2 - (ae-undocumented) Missing documentation for "accessToken".
+// src/odspAuth.ts:24:2 - (ae-undocumented) Missing documentation for "refreshTokenFn".
+// src/odspAuth.ts:27:1 - (ae-undocumented) Missing documentation for "TokenRequestCredentials".
+// src/odspAuth.ts:49:14 - (ae-undocumented) Missing documentation for "getOdspScope".
+// src/odspAuth.ts:51:14 - (ae-undocumented) Missing documentation for "pushScope".
+// src/odspAuth.ts:53:1 - (ae-undocumented) Missing documentation for "getFetchTokenUrl".
+// src/odspAuth.ts:57:1 - (ae-undocumented) Missing documentation for "getLoginPageUrl".
+// src/odspAuth.ts:72:14 - (ae-undocumented) Missing documentation for "getOdspRefreshTokenFn".
+// src/odspAuth.ts:77:14 - (ae-undocumented) Missing documentation for "getPushRefreshTokenFn".
+// src/odspAuth.ts:82:14 - (ae-undocumented) Missing documentation for "getRefreshTokenFn".
+// src/odspDocLibUtils.ts:11:1 - (ae-undocumented) Missing documentation for "isOdspHostname".
+// src/odspDocLibUtils.ts:15:1 - (ae-undocumented) Missing documentation for "isPushChannelHostname".
+// src/odspDocLibUtils.ts:19:1 - (ae-undocumented) Missing documentation for "getAadUrl".
+// src/odspDocLibUtils.ts:34:1 - (ae-undocumented) Missing documentation for "getAadTenant".
+// src/odspDocLibUtils.ts:62:1 - (ae-undocumented) Missing documentation for "getServer".
+// src/odspDocLibUtils.ts:70:1 - (ae-undocumented) Missing documentation for "getSiteUrl".
+// src/odspDrives.ts:50:1 - (ae-undocumented) Missing documentation for "IOdspDriveItem".
+// src/odspDrives.ts:51:2 - (ae-undocumented) Missing documentation for "path".
+// src/odspDrives.ts:52:2 - (ae-undocumented) Missing documentation for "name".
+// src/odspDrives.ts:53:2 - (ae-undocumented) Missing documentation for "driveId".
+// src/odspDrives.ts:54:2 - (ae-undocumented) Missing documentation for "itemId".
+// src/odspDrives.ts:55:2 - (ae-undocumented) Missing documentation for "isFolder".
+// src/odspDrives.ts:58:1 - (ae-undocumented) Missing documentation for "getDriveItemByRootFileName".
+// src/odspDrives.ts:79:1 - (ae-undocumented) Missing documentation for "getDriveItemByServerRelativePath".
+// src/odspDrives.ts:111:1 - (ae-undocumented) Missing documentation for "getDriveItemFromDriveAndItem".
+// src/odspDrives.ts:121:1 - (ae-undocumented) Missing documentation for "getChildrenByDriveItem".
+// src/odspDrives.ts:189:1 - (ae-undocumented) Missing documentation for "getDriveId".
+// src/odspErrorUtils.ts:32:14 - (ae-undocumented) Missing documentation for "fetchIncorrectResponse".
+// src/odspErrorUtils.ts:35:14 - (ae-undocumented) Missing documentation for "OdspServiceReadOnlyErrorCode".
+// src/odspErrorUtils.ts:37:1 - (ae-undocumented) Missing documentation for "getSPOAndGraphRequestIdsFromResponse".
+// src/odspErrorUtils.ts:100:2 - (ae-undocumented) Missing documentation for "code".
+// src/odspErrorUtils.ts:101:2 - (ae-undocumented) Missing documentation for "innerError".
+// src/odspErrorUtils.ts:106:2 - (ae-undocumented) Missing documentation for "error".
+// src/odspErrorUtils.ts:114:2 - (ae-undocumented) Missing documentation for "errorType".
+// src/odspErrorUtils.ts:115:2 - (ae-undocumented) Missing documentation for "canRetry".
+// src/odspErrorUtils.ts:119:3 - (ae-undocumented) Missing documentation for "redirectLocation".
+// src/odspErrorUtils.ts:136:1 - (ae-undocumented) Missing documentation for "tryParseErrorResponse".
+// src/odspErrorUtils.ts:151:1 - (ae-undocumented) Missing documentation for "parseFacetCodes".
+// src/odspErrorUtils.ts:163:1 - (ae-undocumented) Missing documentation for "createOdspNetworkError".
+// src/odspErrorUtils.ts:357:1 - (ae-undocumented) Missing documentation for "enrichOdspError".
+// src/odspErrorUtils.ts:418:1 - (ae-undocumented) Missing documentation for "hasFacetCodes".
+// src/odspRequest.ts:9:1 - (ae-undocumented) Missing documentation for "getAsync".
+// src/odspRequest.ts:16:1 - (ae-undocumented) Missing documentation for "putAsync".
+// src/odspRequest.ts:29:1 - (ae-undocumented) Missing documentation for "postAsync".
+// src/odspRequest.ts:44:1 - (ae-undocumented) Missing documentation for "unauthPostAsync".
+
 // (No @packageDocumentation comment for this package)
 
 ```

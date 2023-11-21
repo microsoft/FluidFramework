@@ -87,4 +87,30 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/lazyLoadedDataObject.ts:26:1 - (ae-undocumented) Missing documentation for "LazyLoadedDataObject".
+// src/lazyLoadedDataObject.ts:40:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/lazyLoadedDataObject.ts:43:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/lazyLoadedDataObject.ts:46:2 - (ae-undocumented) Missing documentation for "IFluidHandle".
+// src/lazyLoadedDataObject.ts:49:2 - (ae-undocumented) Missing documentation for "IProvideFluidHandle".
+// src/lazyLoadedDataObject.ts:53:2 - (ae-undocumented) Missing documentation for "root".
+// src/lazyLoadedDataObject.ts:56:3 - (ae-undocumented) Missing documentation for "context".
+// src/lazyLoadedDataObject.ts:57:3 - (ae-undocumented) Missing documentation for "runtime".
+// src/lazyLoadedDataObject.ts:66:15 - (ae-undocumented) Missing documentation for "request".
+// src/lazyLoadedDataObject.ts:76:2 - (ae-undocumented) Missing documentation for "handle".
+// src/lazyLoadedDataObject.ts:83:3 - (ae-undocumented) Missing documentation for "create".
+// src/lazyLoadedDataObject.ts:88:9 - (ae-undocumented) Missing documentation for "load".
+// src/lazyLoadedDataObjectFactory.ts:27:1 - (ae-undocumented) Missing documentation for "LazyLoadedDataObjectFactory".
+// src/lazyLoadedDataObjectFactory.ts:28:35 - (ae-undocumented) Missing documentation for "type".
+// src/lazyLoadedDataObjectFactory.ts:30:2 - (ae-undocumented) Missing documentation for "ISharedObjectRegistry".
+// src/lazyLoadedDataObjectFactory.ts:31:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreRegistry".
+// src/lazyLoadedDataObjectFactory.ts:36:3 - (ae-undocumented) Missing documentation for "root".
+// src/lazyLoadedDataObjectFactory.ts:59:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreFactory".
+// src/lazyLoadedDataObjectFactory.ts:63:15 - (ae-undocumented) Missing documentation for "instantiateDataStore".
+// src/lazyLoadedDataObjectFactory.ts:87:15 - (ae-undocumented) Missing documentation for "create".
+// src/runtimeFactory.ts:23:1 - (ae-undocumented) Missing documentation for "RuntimeFactory".
+// src/runtimeFactory.ts:51:15 - (ae-undocumented) Missing documentation for "instantiateFirstTime".
+// src/runtimeFactory.ts:56:15 - (ae-undocumented) Missing documentation for "preInitialize".
+
 ```

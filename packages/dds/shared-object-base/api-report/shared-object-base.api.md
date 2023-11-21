@@ -161,6 +161,30 @@ export enum ValueType {
     Shared = 0
 }
 
+// Warnings were encountered during analysis:
+//
+// src/serializer.ts:18:2 - (ae-undocumented) Missing documentation for "type".
+// src/serializer.ts:21:2 - (ae-undocumented) Missing documentation for "url".
+// src/serializer.ts:24:14 - (ae-undocumented) Missing documentation for "isSerializedHandle".
+// src/serializer.ts:27:1 - (ae-undocumented) Missing documentation for "IFluidSerializer".
+// src/serializer.ts:77:2 - (ae-undocumented) Missing documentation for "IFluidSerializer".
+// src/serializer.ts:117:9 - (ae-undocumented) Missing documentation for "stringify".
+// src/serializer.ts:122:9 - (ae-undocumented) Missing documentation for "parse".
+// src/serializer.ts:203:2 - (ae-undocumented) Missing documentation for "serializeHandle".
+// src/sharedObject.ts:48:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/sharedObject.ts:100:10 - (ae-undocumented) Missing documentation for "id".
+// src/sharedObject.ts:101:3 - (ae-undocumented) Missing documentation for "runtime".
+// src/sharedObject.ts:102:3 - (ae-undocumented) Missing documentation for "attributes".
+// src/sharedObject.ts:261:9 - (ae-undocumented) Missing documentation for "connect".
+// src/sharedObject.ts:269:9 - (ae-undocumented) Missing documentation for "isAttached".
+// src/sharedObject.ts:276:2 - (ae-undocumented) Missing documentation for "getAttachSummary".
+// src/sharedObject.ts:285:2 - (ae-undocumented) Missing documentation for "summarize".
+// src/sharedObject.ts:600:2 - (ae-undocumented) Missing documentation for "serializer".
+// src/sharedObject.ts:637:9 - (ae-undocumented) Missing documentation for "getAttachSummary".
+// src/sharedObject.ts:659:15 - (ae-undocumented) Missing documentation for "summarize".
+// src/summarySerializer.ts:14:9 - (ae-undocumented) Missing documentation for "getSerializedRoutes".
+// src/summarySerializer.ts:18:2 - (ae-undocumented) Missing documentation for "serializeHandle".
+
 // (No @packageDocumentation comment for this package)
 
 ```

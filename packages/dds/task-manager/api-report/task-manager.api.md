@@ -71,4 +71,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     volunteerForTask(taskId: string): Promise<boolean>;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/taskManager.ts:615:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/taskManager.ts:626:2 - (ae-undocumented) Missing documentation for "initializeLocalCore".
+// src/taskManager.ts:632:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/taskManager.ts:640:2 - (ae-undocumented) Missing documentation for "onConnect".
+// src/taskManager.ts:781:9 - (ae-undocumented) Missing documentation for "applyStashedOp".
+
 ```

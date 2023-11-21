@@ -57,6 +57,14 @@ export interface OdspMember extends IMember {
     name: string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/interfaces.ts:37:1 - (ae-undocumented) Missing documentation for "OdspClientProps".
+// src/interfaces.ts:94:2 - (ae-undocumented) Missing documentation for "name".
+// src/interfaces.ts:95:2 - (ae-undocumented) Missing documentation for "email".
+// src/odspClient.ts:73:15 - (ae-undocumented) Missing documentation for "createContainer".
+// src/odspClient.ts:94:15 - (ae-undocumented) Missing documentation for "getContainer".
+
 // (No @packageDocumentation comment for this package)
 
 ```

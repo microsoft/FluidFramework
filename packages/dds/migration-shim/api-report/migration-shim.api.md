@@ -119,4 +119,37 @@ export class SharedTreeShimFactory implements IChannelFactory {
     get type(): string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/migrationShim.ts:87:99 - (ae-undocumented) Missing documentation for "id".
+// src/migrationShim.ts:191:9 - (ae-undocumented) Missing documentation for "submitMigrateOp".
+// src/migrationShim.ts:201:2 - (ae-undocumented) Missing documentation for "currentTree".
+// src/migrationShim.ts:205:15 - (ae-undocumented) Missing documentation for "load".
+// src/migrationShim.ts:217:9 - (ae-undocumented) Missing documentation for "create".
+// src/migrationShim.ts:221:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/migrationShim.ts:224:9 - (ae-undocumented) Missing documentation for "getAttachSummary".
+// src/migrationShim.ts:231:15 - (ae-undocumented) Missing documentation for "summarize".
+// src/migrationShim.ts:244:9 - (ae-undocumented) Missing documentation for "isAttached".
+// src/migrationShim.ts:249:9 - (ae-undocumented) Missing documentation for "connect".
+// src/migrationShim.ts:295:9 - (ae-undocumented) Missing documentation for "getGCData".
+// src/migrationShim.ts:298:9 - (ae-undocumented) Missing documentation for "handle".
+// src/migrationShim.ts:299:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/sharedTreeShim.ts:37:45 - (ae-undocumented) Missing documentation for "id".
+// src/sharedTreeShim.ts:40:10 - (ae-undocumented) Missing documentation for "runtime".
+// src/sharedTreeShim.ts:41:10 - (ae-undocumented) Missing documentation for "sharedTreeFactory".
+// src/sharedTreeShim.ts:50:2 - (ae-undocumented) Missing documentation for "currentTree".
+// src/sharedTreeShim.ts:55:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/sharedTreeShim.ts:59:9 - (ae-undocumented) Missing documentation for "handle".
+// src/sharedTreeShim.ts:60:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/sharedTreeShim.ts:63:9 - (ae-undocumented) Missing documentation for "getAttachSummary".
+// src/sharedTreeShim.ts:70:15 - (ae-undocumented) Missing documentation for "summarize".
+// src/sharedTreeShim.ts:83:9 - (ae-undocumented) Missing documentation for "isAttached".
+// src/sharedTreeShim.ts:86:9 - (ae-undocumented) Missing documentation for "connect".
+// src/sharedTreeShim.ts:92:15 - (ae-undocumented) Missing documentation for "load".
+// src/sharedTreeShim.ts:107:9 - (ae-undocumented) Missing documentation for "create".
+// src/sharedTreeShim.ts:125:9 - (ae-undocumented) Missing documentation for "getGCData".
+// src/types.ts:73:2 - (ae-undocumented) Missing documentation for "create".
+// src/types.ts:74:2 - (ae-undocumented) Missing documentation for "load".
+// src/types.ts:75:2 - (ae-undocumented) Missing documentation for "currentTree".
+
 ```

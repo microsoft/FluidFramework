@@ -172,4 +172,11 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
 
+// Warnings were encountered during analysis:
+//
+// src/fluidContainer.ts:211:1 - (ae-undocumented) Missing documentation for "createFluidContainer".
+// src/rootDataObject.ts:143:1 - (ae-undocumented) Missing documentation for "createDOProviderContainerRuntimeFactory".
+// src/rootDataObject.ts:200:2 - (ae-undocumented) Missing documentation for "containerInitializingFirstTime".
+// src/serviceAudience.ts:11:1 - (ae-undocumented) Missing documentation for "createServiceAudience".
+
 ```

@@ -116,6 +116,47 @@ export class SharedMatrixFactory implements IChannelFactory {
     get type(): string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/matrix.ts:93:73 - (ae-undocumented) Missing documentation for "getFactory".
+// src/matrix.ts:107:10 - (ae-undocumented) Missing documentation for "id".
+// src/matrix.ts:155:2 - (ae-undocumented) Missing documentation for "create".
+// src/matrix.ts:161:2 - (ae-undocumented) Missing documentation for "openMatrix".
+// src/matrix.ts:166:2 - (ae-undocumented) Missing documentation for "closeMatrix".
+// src/matrix.ts:174:2 - (ae-undocumented) Missing documentation for "rowCount".
+// src/matrix.ts:177:2 - (ae-undocumented) Missing documentation for "colCount".
+// src/matrix.ts:181:9 - (ae-undocumented) Missing documentation for "getCell".
+// src/matrix.ts:202:2 - (ae-undocumented) Missing documentation for "matrixProducer".
+// src/matrix.ts:208:9 - (ae-undocumented) Missing documentation for "setCell".
+// src/matrix.ts:222:9 - (ae-undocumented) Missing documentation for "setCells".
+// src/matrix.ts:357:9 - (ae-undocumented) Missing documentation for "insertCols".
+// src/matrix.ts:361:9 - (ae-undocumented) Missing documentation for "removeCols".
+// src/matrix.ts:369:9 - (ae-undocumented) Missing documentation for "insertRows".
+// src/matrix.ts:373:9 - (ae-undocumented) Missing documentation for "removeRows".
+// src/matrix.ts:377:26 - (ae-undocumented) Missing documentation for "_undoRemoveRows".
+// src/matrix.ts:400:26 - (ae-undocumented) Missing documentation for "_undoRemoveCols".
+// src/matrix.ts:423:2 - (ae-undocumented) Missing documentation for "summarizeCore".
+// src/matrix.ts:468:2 - (ae-undocumented) Missing documentation for "submitLocalMessage".
+// src/matrix.ts:488:2 - (ae-undocumented) Missing documentation for "didAttach".
+// src/matrix.ts:497:2 - (ae-undocumented) Missing documentation for "onConnect".
+// src/matrix.ts:527:2 - (ae-undocumented) Missing documentation for "reSubmitCore".
+// src/matrix.ts:580:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/matrix.ts:585:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/matrix.ts:610:2 - (ae-undocumented) Missing documentation for "processCore".
+// src/matrix.ts:736:9 - (ae-undocumented) Missing documentation for "toString".
+// src/matrix.ts:759:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/runtime.ts:21:2 - (ae-undocumented) Missing documentation for "Type".
+// src/runtime.ts:23:2 - (ae-undocumented) Missing documentation for "Attributes".
+// src/runtime.ts:29:2 - (ae-undocumented) Missing documentation for "type".
+// src/runtime.ts:33:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/runtime.ts:40:15 - (ae-undocumented) Missing documentation for "load".
+// src/runtime.ts:51:9 - (ae-undocumented) Missing documentation for "create".
+// src/types.ts:12:1 - (ae-undocumented) Missing documentation for "IRevertible".
+// src/types.ts:13:2 - (ae-undocumented) Missing documentation for "revert".
+// src/types.ts:14:2 - (ae-undocumented) Missing documentation for "discard".
+// src/types.ts:20:1 - (ae-undocumented) Missing documentation for "IUndoConsumer".
+// src/types.ts:21:2 - (ae-undocumented) Missing documentation for "pushToCurrentOperation".
+
 // (No @packageDocumentation comment for this package)
 
 ```

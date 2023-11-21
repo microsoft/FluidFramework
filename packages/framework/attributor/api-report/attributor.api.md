@@ -66,6 +66,21 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
 
+// Warnings were encountered during analysis:
+//
+// src/attributor.ts:27:2 - (ae-undocumented) Missing documentation for "tryGetAttributionInfo".
+// src/attributor.ts:32:2 - (ae-undocumented) Missing documentation for "entries".
+// src/attributor.ts:43:2 - (ae-undocumented) Missing documentation for "keyToInfo".
+// src/attributor.ts:66:9 - (ae-undocumented) Missing documentation for "tryGetAttributionInfo".
+// src/attributor.ts:73:9 - (ae-undocumented) Missing documentation for "entries".
+// src/mixinAttributor.ts:50:14 - (ae-undocumented) Missing documentation for "IRuntimeAttributor".
+// src/mixinAttributor.ts:55:1 - (ae-undocumented) Missing documentation for "IProvideRuntimeAttributor".
+// src/mixinAttributor.ts:56:2 - (ae-undocumented) Missing documentation for "IRuntimeAttributor".
+// src/mixinAttributor.ts:70:2 - (ae-undocumented) Missing documentation for "get".
+// src/mixinAttributor.ts:75:2 - (ae-undocumented) Missing documentation for "has".
+// src/mixinAttributor.ts:81:2 - (ae-undocumented) Missing documentation for "isEnabled".
+// src/mixinAttributor.ts:89:1 - (ae-undocumented) Missing documentation for "createRuntimeAttributor".
+
 // (No @packageDocumentation comment for this package)
 
 ```

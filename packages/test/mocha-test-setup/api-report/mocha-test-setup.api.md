@@ -5,12 +5,17 @@
 ```ts
 
 /// <reference types="mocha" />
+
 // @public (undocumented)
 export const mochaHooks: {
     beforeAll(): void;
     beforeEach(this: Mocha.Context): void;
     afterEach(this: Mocha.Context): void;
 };
+
+// Warnings were encountered during analysis:
+//
+// src/mochaHooks.ts:62:14 - (ae-undocumented) Missing documentation for "mochaHooks".
 
 // (No @packageDocumentation comment for this package)
 

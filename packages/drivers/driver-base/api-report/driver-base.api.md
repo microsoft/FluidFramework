@@ -107,6 +107,29 @@ export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
 // @public (undocumented)
 export function validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number, logger: ITelemetryLoggerExt, strict?: boolean): void;
 
+// Warnings were encountered during analysis:
+//
+// src/documentDeltaConnection.ts:48:2 - (ae-undocumented) Missing documentation for "eventsToForward".
+// src/documentDeltaConnection.ts:52:2 - (ae-undocumented) Missing documentation for "eventsAlwaysForwarded".
+// src/documentDeltaConnection.ts:64:2 - (ae-undocumented) Missing documentation for "queuedMessages".
+// src/documentDeltaConnection.ts:65:2 - (ae-undocumented) Missing documentation for "queuedSignals".
+// src/documentDeltaConnection.ts:84:2 - (ae-undocumented) Missing documentation for "hasDetails".
+// src/documentDeltaConnection.ts:88:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/documentDeltaConnection.ts:106:2 - (ae-undocumented) Missing documentation for "logger".
+// src/documentDeltaConnection.ts:110:2 - (ae-undocumented) Missing documentation for "details".
+// src/documentDeltaConnection.ts:124:3 - (ae-undocumented) Missing documentation for "socket".
+// src/documentDeltaConnection.ts:125:10 - (ae-undocumented) Missing documentation for "documentId".
+// src/documentDeltaConnection.ts:128:3 - (ae-undocumented) Missing documentation for "connectionId".
+// src/documentDeltaConnection.ts:312:2 - (ae-undocumented) Missing documentation for "emitMessages".
+// src/documentDeltaConnection.ts:358:2 - (ae-undocumented) Missing documentation for "closeSocketCore".
+// src/documentDeltaConnection.ts:385:2 - (ae-undocumented) Missing documentation for "disconnect".
+// src/documentDeltaConnection.ts:422:2 - (ae-undocumented) Missing documentation for "initialize".
+// src/documentDeltaConnection.ts:647:2 - (ae-undocumented) Missing documentation for "getConnectionDetailsProps".
+// src/documentDeltaConnection.ts:656:2 - (ae-undocumented) Missing documentation for "earlyOpHandler".
+// src/documentDeltaConnection.ts:660:2 - (ae-undocumented) Missing documentation for "earlySignalHandler".
+// src/documentDeltaConnection.ts:691:2 - (ae-undocumented) Missing documentation for "addTrackedListener".
+// src/driverUtils.ts:116:1 - (ae-undocumented) Missing documentation for "validateMessages".
+
 // (No @packageDocumentation comment for this package)
 
 ```

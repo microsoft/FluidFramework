@@ -182,4 +182,34 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/container-runtime-factories/baseContainerRuntimeFactory.ts:38:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreRegistry".
+// src/container-runtime-factories/baseContainerRuntimeFactory.ts:75:15 - (ae-undocumented) Missing documentation for "instantiateFirstTime".
+// src/container-runtime-factories/baseContainerRuntimeFactory.ts:80:15 - (ae-undocumented) Missing documentation for "instantiateFromExisting".
+// src/container-runtime-factories/baseContainerRuntimeFactory.ts:84:15 - (ae-undocumented) Missing documentation for "preInitialize".
+// src/container-runtime-factories/containerRuntimeFactoryWithDefaultDataStore.ts:37:2 - (ae-undocumented) Missing documentation for "defaultDataStoreId".
+// src/container-runtime-factories/containerRuntimeFactoryWithDefaultDataStore.ts:39:2 - (ae-undocumented) Missing documentation for "defaultFactory".
+// src/data-object-factories/pureDataObjectFactory.ts:40:2 - (ae-undocumented) Missing documentation for "createRootInstance".
+// src/data-object-factories/pureDataObjectFactory.ts:141:25 - (ae-undocumented) Missing documentation for "type".
+// src/data-object-factories/pureDataObjectFactory.ts:163:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreFactory".
+// src/data-object-factories/pureDataObjectFactory.ts:167:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreRegistry".
+// src/data-object-factories/pureDataObjectFactory.ts:273:18 - (ae-undocumented) Missing documentation for "createNonRootInstanceCore".
+// src/data-object-factories/pureDataObjectFactory.ts:282:18 - (ae-undocumented) Missing documentation for "createInstanceCore".
+// src/data-objects/pureDataObject.ts:56:2 - (ae-undocumented) Missing documentation for "initProps".
+// src/data-objects/pureDataObject.ts:58:2 - (ae-undocumented) Missing documentation for "initializeP".
+// src/data-objects/pureDataObject.ts:60:2 - (ae-undocumented) Missing documentation for "id".
+// src/data-objects/pureDataObject.ts:67:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
+// src/data-objects/pureDataObject.ts:70:2 - (ae-undocumented) Missing documentation for "IFluidLoadable".
+// src/data-objects/pureDataObject.ts:73:2 - (ae-undocumented) Missing documentation for "IFluidHandle".
+// src/data-objects/pureDataObject.ts:86:3 - (ae-undocumented) Missing documentation for "getDataObject".
+// src/data-objects/types.ts:33:1 - (ae-undocumented) Missing documentation for "IDataObjectProps".
+// src/data-objects/types.ts:34:2 - (ae-undocumented) Missing documentation for "runtime".
+// src/data-objects/types.ts:35:2 - (ae-undocumented) Missing documentation for "context".
+// src/data-objects/types.ts:36:2 - (ae-undocumented) Missing documentation for "providers".
+// src/data-objects/types.ts:37:2 - (ae-undocumented) Missing documentation for "initProps".
+// src/utils/containerInteractions.ts:18:1 - (ae-undocumented) Missing documentation for "getDefaultObjectFromContainer".
+// src/utils/containerInteractions.ts:46:1 - (ae-undocumented) Missing documentation for "getObjectWithIdFromContainer".
+// src/utils/containerInteractions.ts:75:1 - (ae-undocumented) Missing documentation for "getObjectFromContainer".
+
 ```

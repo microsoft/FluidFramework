@@ -124,6 +124,29 @@ export class LocalSessionStorageDbFactory implements ITestDbFactory {
     readonly testDatabase: IDb;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/localDeltaStorageService.ts:21:9 - (ae-undocumented) Missing documentation for "fetchMessages".
+// src/localDocumentService.ts:27:62 - (ae-undocumented) Missing documentation for "resolvedUrl".
+// src/localDocumentService.ts:41:3 - (ae-undocumented) Missing documentation for "policies".
+// src/localDocumentService.ts:46:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/localDocumentServiceFactory.ts:38:15 - (ae-undocumented) Missing documentation for "createContainer".
+// src/localDocumentStorageService.ts:30:1 - (ae-undocumented) Missing documentation for "LocalDocumentStorageService".
+// src/localDocumentStorageService.ts:33:2 - (ae-undocumented) Missing documentation for "blobsShaCache".
+// src/localDocumentStorageService.ts:37:2 - (ae-undocumented) Missing documentation for "repositoryUrl".
+// src/localDocumentStorageService.ts:44:3 - (ae-undocumented) Missing documentation for "policies".
+// src/localDocumentStorageService.ts:55:15 - (ae-undocumented) Missing documentation for "getVersions".
+// src/localDocumentStorageService.ts:65:15 - (ae-undocumented) Missing documentation for "getSnapshotTree".
+// src/localDocumentStorageService.ts:81:15 - (ae-undocumented) Missing documentation for "readBlob".
+// src/localDocumentStorageService.ts:88:15 - (ae-undocumented) Missing documentation for "uploadSummaryWithContext".
+// src/localDocumentStorageService.ts:109:15 - (ae-undocumented) Missing documentation for "createBlob".
+// src/localDocumentStorageService.ts:116:15 - (ae-undocumented) Missing documentation for "downloadSummary".
+// src/localResolver.ts:13:1 - (ae-undocumented) Missing documentation for "createLocalResolverCreateNewRequest".
+// src/localResolver.ts:59:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
+// src/localResolver.ts:74:9 - (ae-undocumented) Missing documentation for "createCreateNewRequest".
+// src/localSessionStorageDb.ts:315:2 - (ae-undocumented) Missing documentation for "testDatabase".
+// src/localSessionStorageDb.ts:316:15 - (ae-undocumented) Missing documentation for "connect".
+
 // (No @packageDocumentation comment for this package)
 
 ```

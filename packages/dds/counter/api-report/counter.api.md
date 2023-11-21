@@ -43,4 +43,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     get value(): number;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/counter.ts:130:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/counter.ts:174:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+
 ```

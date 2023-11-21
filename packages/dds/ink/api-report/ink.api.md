@@ -137,6 +137,28 @@ export interface IStylusOperation {
     type: "stylus";
 }
 
+// Warnings were encountered during analysis:
+//
+// src/ink.ts:192:2 - (ae-undocumented) Missing documentation for "summarizeCore".
+// src/ink.ts:200:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/ink.ts:208:2 - (ae-undocumented) Missing documentation for "processCore".
+// src/ink.ts:238:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/ink.ts:282:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/inkCanvas.ts:111:1 - (ae-undocumented) Missing documentation for "InkCanvas".
+// src/inkCanvas.ts:142:9 - (ae-undocumented) Missing documentation for "setPenColor".
+// src/inkCanvas.ts:146:9 - (ae-undocumented) Missing documentation for "replay".
+// src/inkCanvas.ts:158:9 - (ae-undocumented) Missing documentation for "clear".
+// src/inkCanvas.ts:163:9 - (ae-undocumented) Missing documentation for "sizeCanvasBackingStore".
+// src/inkFactory.ts:24:2 - (ae-undocumented) Missing documentation for "Type".
+// src/inkFactory.ts:29:2 - (ae-undocumented) Missing documentation for "Attributes".
+// src/inkFactory.ts:38:2 - (ae-undocumented) Missing documentation for "type".
+// src/inkFactory.ts:45:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/inkFactory.ts:52:15 - (ae-undocumented) Missing documentation for "load".
+// src/inkFactory.ts:67:9 - (ae-undocumented) Missing documentation for "create".
+// src/interfaces.ts:58:1 - (ae-undocumented) Missing documentation for "IInkEvents".
+// src/interfaces.ts:59:2 - (ae-undocumented) Missing documentation for "__call".
+// src/interfaces.ts:60:2 - (ae-undocumented) Missing documentation for "__call".
+
 // (No @packageDocumentation comment for this package)
 
 ```
