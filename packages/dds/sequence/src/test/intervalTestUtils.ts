@@ -120,6 +120,7 @@ export const assertSequenceIntervals = (
 			sharedString.getLength() - 1,
 		);
 		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		intervalCollection.detachIndex(overlappingIntervalsIndex);
 	}
 	assert.strictEqual(
 		actual.length,
