@@ -19,7 +19,6 @@ const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: "<YOUR_TOKEN_PROVIDER>",
 	siteUrl: "<SITE_URL>",
 	driveId: "<RAAS_DRIVE_ID>",
-	path: "<FOLDER_PATH>",
 };
 
 export const clientProps: OdspClientProps = {
@@ -53,12 +52,9 @@ const containerSchema = {
 	],
 };
 const odspClient = new OdspClient(clientProps);
-const { container, services } = await OdspClient.createContainer(containerSchema);
+const { container, services } = await odspClient.createContainer(containerSchema);
 
 const itemId = await container.attach();
-const attributes = await services.tenantAttributes();
-const sharingUrl = attributes.sharingUrl;
-const driveId = attributes.driveId;
 ```
 
 ## Using Fluid Containers
@@ -69,7 +65,7 @@ Using the `OdspClient` class the developer can create and get Fluid containers. 
 import { OdspClient } from "@fluid-experimental/odsp-client";
 
 const odspClient = new OdspClient(props);
-const { container, services } = await OdspClient.getContainer("_unique-id_", schema);
+const { container, services } = await odspClient.getContainer("_unique-itemId_", schema);
 ```
 
 ## Using initial objects
@@ -89,7 +85,7 @@ const schema = {
 };
 
 // Fetch back the container that had been created earlier with the same url and schema
-const { container, services } = await OdspClient.getContainer("_unique-url_", schema);
+const { container, services } = await OdspClient.getContainer("_unique-itemId_", schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
