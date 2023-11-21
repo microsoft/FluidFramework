@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-insights-logger",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"private": true,
 	"description": "Provides a simple Fluid application with a UI view written in React to test the Fluid App Insights telemetry logger that will route typical Fluid telemetry to configured Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -25,8 +25,8 @@
 		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "start-server-and-test start:tinylicious 7070 start:test-app:client",
 		"start:test-app:client": "webpack serve --config webpack.config.js",
 		"start:tinylicious": "tinylicious",
@@ -39,7 +39,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/app-insights-logger": "workspace:2.0.0-internal.7.3.0",
+		"@fluid-experimental/app-insights-logger": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -54,7 +54,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.28.0-210888",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@testing-library/dom": "^8.2.0",

@@ -29,7 +29,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -102,11 +102,13 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	// This can also be used to transition a client to write mode.
 	const sendOpToUpdateSummaryTimestampToNow = async (summarizer: ISummarizer) => {
 		const runtime = (summarizer as any).runtime as ContainerRuntime;
-		const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+			| IFluidHandle<ITestDataObject>
+			| undefined;
 		if (entryPoint === undefined) {
 			throw new Error("default dataStore must exist");
 		}
-		const defaultDataObject = (await entryPoint.get()) as ITestDataObject;
+		const defaultDataObject = await entryPoint.get();
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
@@ -335,9 +337,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
-				const response = await (
-					entryPoint._context.containerRuntime as ContainerRuntime
-				).resolveHandle({
+				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime.resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;
@@ -394,9 +395,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
-				const response = await (
-					entryPoint._context.containerRuntime as ContainerRuntime
-				).resolveHandle({
+				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime.resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;

@@ -92,11 +92,13 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 			const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 			const result = await submitSummaryFuncBound(options);
 
-			const entryPoint = await summarizerRuntime.getAliasedDataStoreEntryPoint("default");
+			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
+				"default",
+			)) as IFluidHandle<ITestDataObject> | undefined;
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}
-			const defaultDatastore2 = (await entryPoint.get()) as ITestDataObject;
+			const defaultDatastore2 = await entryPoint.get();
 			const handle2 = defaultDatastore2._root.get("handle");
 			// this realizes the datastore before we get the ack
 			await handle2.get();

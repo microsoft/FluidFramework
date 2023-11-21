@@ -199,11 +199,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		let defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		if (isSummarizerContainer) {
 			const runtime = (defaultDataObject as any).runtime as ContainerRuntime;
-			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+			const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}
-			defaultDataObject = (await entryPoint.get()) as ITestDataObject;
+			defaultDataObject = await entryPoint.get();
 		}
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
@@ -496,7 +498,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// This request fails since the datastore is tombstoned
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneErrorResponse = await (
-					entryPoint._context.containerRuntime as any
+					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
 				});
@@ -518,7 +520,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 				// This request succeeds because the "allowTombstone" header is set to true
 				const tombstoneSuccessResponse = await (
-					entryPoint._context.containerRuntime as any
+					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
 					headers: { [AllowTombstoneRequestHeaderKey]: true },
@@ -589,7 +591,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneSuccessResponse = await (
-					entryPoint._context.containerRuntime as any
+					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
 				});
@@ -637,7 +639,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const tombstoneSuccessResponse = await (
-					entryPoint._context.containerRuntime as any
+					entryPoint._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: unreferencedId,
 				});

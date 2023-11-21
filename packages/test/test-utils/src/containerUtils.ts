@@ -52,6 +52,7 @@ export async function waitForContainerConnection(
 /**
  * This function should ONLY be used for back compat purposes
  * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
+ * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
  */
 export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
 	if (container.getEntryPoint !== undefined) {
