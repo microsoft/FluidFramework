@@ -12,7 +12,13 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
 	container: IContainer;
 	createServiceMember: (audienceMember: IClient) => M;
 }): IServiceAudience<M> {
-	return new NewServiceAudience<M>(props.container, props.createServiceMember);
+	// todo: once ServiceAudience isn't exported, we can remove abstract from it, and just use that here
+	const c = class NewServiceAudience extends ServiceAudience<M> {
+		protected createServiceMember(audienceMember: IClient) {
+			return props.createServiceMember(audienceMember);
+		}
+	};
+	return new c(props.container);
 }
 
 /**
@@ -163,25 +169,5 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	protected shouldIncludeAsMember(member: IClient): boolean {
 		// Include only human members
 		return member.details.capabilities.interactive;
-	}
-}
-
-/**
- * this class should be removed, and integrated ServiceAudience after service audience is remove from the exports.
- * this is just to maintain backward compatibility
- */
-class NewServiceAudience<M extends IMember = IMember> extends ServiceAudience<M> {
-	constructor(
-		/**
-		 * Fluid Container to read the audience from.
-		 */
-		container: IContainer,
-		private readonly _createServiceMember: (audienceMember: IClient) => M,
-	) {
-		super(container);
-	}
-
-	protected createServiceMember(audienceMember: IClient): M {
-		return this._createServiceMember(audienceMember);
 	}
 }
