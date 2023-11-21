@@ -824,7 +824,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it("change, undo, childchange rebased over childchange", () => {
+		it("delete, undo, childchange rebased over childchange", () => {
 			const tree = makeTreeFromJson([{ foo: ["b"] }]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
