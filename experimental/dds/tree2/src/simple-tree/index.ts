@@ -23,7 +23,7 @@ export { nodeApi as Tree, TreeApi } from "./node";
 export {
 	InsertableTreeRoot,
 	InsertableTreeField,
-	InsertableTreeNodeUnionTreeFieldInner,
+	InsertableTreeFieldInner,
 	InsertableTreeNodeUnion,
 	InsertableTreeObjectNode,
 	InsertableTreeObjectNodeFields,

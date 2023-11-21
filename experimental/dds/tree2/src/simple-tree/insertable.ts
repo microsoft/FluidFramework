@@ -48,13 +48,13 @@ export type InsertableTreeObjectNodeFields<
  * @alpha
  */
 export type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> =
-	InsertableTreeNodeUnionTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
+	InsertableTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
  * Helper for implementing InsertableTreeField.
  * @alpha
  */
-export type InsertableTreeNodeUnionTreeFieldInner<
+export type InsertableTreeFieldInner<
 	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence

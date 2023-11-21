@@ -890,15 +890,15 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends TreeFieldSch
 type _InlineTrick = 0;
 
 // @alpha
-type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> = InsertableTreeNodeUnionTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
+type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> = InsertableTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
+
+// @alpha
+type InsertableTreeFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? InsertableTreeNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? InsertableTreeNodeUnion<TTypes> | undefined : unknown;
 
 // @alpha
 type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any] ? unknown : {
     [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeNodeSchema ? InsertableTypedNode<InnerType> : never : never;
 }[number];
-
-// @alpha
-type InsertableTreeNodeUnionTreeFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? InsertableTreeNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? InsertableTreeNodeUnion<TTypes> | undefined : unknown;
 
 // @alpha
 type InsertableTreeObjectNode<TSchema extends ObjectNodeSchema> = InsertableTreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
@@ -987,7 +987,7 @@ declare namespace InternalTypes {
         testRecursiveDomain,
         TreeListNodeBase,
         InsertableTreeField,
-        InsertableTreeNodeUnionTreeFieldInner,
+        InsertableTreeFieldInner,
         InsertableTreeNodeUnion,
         InsertableTreeObjectNode,
         InsertableTreeObjectNodeFields,

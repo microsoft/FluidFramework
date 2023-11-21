@@ -46,7 +46,7 @@ export {
 export {
 	TreeListNodeBase,
 	InsertableTreeField,
-	InsertableTreeNodeUnionTreeFieldInner,
+	InsertableTreeFieldInner,
 	InsertableTreeNodeUnion,
 	InsertableTreeObjectNode,
 	InsertableTreeObjectNodeFields,
