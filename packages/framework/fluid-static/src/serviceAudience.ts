@@ -24,7 +24,7 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
- * @deprecated use {@link createServiceAudience} and {@link IServiceAudience} instead
+ * @deprecated use {@link @fluidframework/fluid-static#createServiceAudience} and {@link IServiceAudience} instead
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>

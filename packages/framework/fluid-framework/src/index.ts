@@ -11,9 +11,8 @@
  * @packageDocumentation
  */
 
-export type { ICriticalContainerError } from "@fluidframework/container-definitions";
 export { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-export { DriverErrorType } from "@fluidframework/driver-definitions";
+export { DriverErrorType, DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerSchema,
@@ -22,6 +21,7 @@ export type {
 	IFluidContainer,
 	IFluidContainerEvents,
 	IMember,
+	InitialObjects,
 	IRootDataObject,
 	IServiceAudience,
 	IServiceAudienceEvents,
@@ -30,14 +30,25 @@ export type {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
+	Myself,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export {
+	/**
+	 * @deprecated No intended replacement in this package.
+	 */
 	DOProviderContainerRuntimeFactory,
+	/**
+	 * @deprecated No intended replacement in this package.
+	 */
 	FluidContainer,
+	/**
+	 * @deprecated No intended replacement in this package.
+	 */
 	ServiceAudience,
 } from "@fluidframework/fluid-static";
 export type {
+	ICreateInfo,
 	IDirectory,
 	IDirectoryClearOperation,
 	IDirectoryCreateSubDirectoryOperation,
@@ -75,8 +86,12 @@ export type {
 	IIntervalHelpers,
 	IJSONRunSegment,
 	IMapMessageLocalMetadata,
+	InteriorSequencePlace,
 	IIntervalCollection,
+	IntervalIndex,
 	IntervalLocator,
+	IntervalOpType,
+	IntervalStickiness,
 	ISequenceDeltaRange,
 	ISerializableInterval,
 	ISerializedInterval,
@@ -84,8 +99,10 @@ export type {
 	ISharedSegmentSequenceEvents,
 	ISharedString,
 	IValueOpEmitter,
+	SequencePlace,
 	SerializedIntervalDelta,
 	SharedStringSegment,
+	Side,
 } from "@fluidframework/sequence";
 export {
 	getTextAndMarkers,

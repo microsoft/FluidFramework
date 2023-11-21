@@ -3,5 +3,31 @@
 	"extends": "@fluidframework/build-common/api-extractor-base.json",
 	"dtsRollup": {
 		"enabled": true
-	}
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// This package has some existing exports that require re-exporting many members from other packages we
+			// don't wish to expose here.
+			// The exports in question have been marked as deprecated. Once they have been removed, we should remove
+			// this rule override.
+			"ae-forgotten-export": {
+				"logLevel": "error",
+				"addToApiReportFile": true
+			},
+			// TODO: Fix violations and remove this rule override
+			"ae-missing-release-tag": {
+				"logLevel": "none"
+			}
+		}
+	},
+	// TODO: update this to either use glob patterns if/when supported (see https://github.com/microsoft/rushstack/issues/4426)
+	// or utilize some base config to enumerate all of our packages so we don't have to manage a list like this here.
+	"bundledPackages": [
+		"@fluidframework/container-definitions",
+		"@fluidframework/container-loader",
+		"@fluidframework/driver-definitions",
+		"@fluidframework/fluid-static",
+		"@fluidframework/map",
+		"@fluidframework/sequence"
+	]
 }
