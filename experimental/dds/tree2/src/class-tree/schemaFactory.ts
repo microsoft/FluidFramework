@@ -144,10 +144,10 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		NodeKind.Object,
 		T,
 		ObjectFromSchemaRecord<T>,
-		ObjectFromSchemaRecord<T>
+		InsertableObjectFromSchemaRecord<T>
 	> {
 		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
-			public constructor(input: ObjectFromSchemaRecord<T>) {
+			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
 					// TODO: make return a proxy over this (or not a proxy).
@@ -166,7 +166,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			NodeKind.Object,
 			T,
 			ObjectFromSchemaRecord<T>,
-			ObjectFromSchemaRecord<T>
+			InsertableObjectFromSchemaRecord<T>
 		>;
 	}
 
@@ -416,18 +416,26 @@ export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllo
 	> {}
 
 /**
- * Helper used to produce types for:
- * 1. Actual hydrated object nodes.
- * 2. Insertable content which can be used to construct an object node.
- * 3. Insertable content which is an unhydrated object node.
- * 4. Union of 2 and 3.
- *
- * TODO: consider separating these cases into different types.
+ * Helper used to produce types for object nodes.
  */
 export type ObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
-	[Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+};
+
+/**
+ * Helper used to produce types for:
+ * 1. Insertable content which can be used to construct an object node.
+ * 2. Insertable content which is an unhydrated object node.
+ * 3. Union of 1 and 2.
+ *
+ * TODO: consider separating these cases into different types.
+ */
+export type InsertableObjectFromSchemaRecord<
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+> = {
+	readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
 
 /**

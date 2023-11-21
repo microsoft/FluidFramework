@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { TreeConfiguration, TreeView } from "../../class-tree";
+import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
 	SchemaFactory,
 	TreeFieldFromImplicitField,
@@ -74,7 +74,86 @@ import { TreeFactory } from "../../treeFactory";
 }
 
 describe("schemaFactory", () => {
-	it("test", () => {
+	it("leaf", () => {
+		const schema = new SchemaFactory("com.example");
+
+		const config = new TreeConfiguration(schema.number, () => 5);
+
+		const factory = new TreeFactory({});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const view = tree.schematize(config);
+		assert.equal(view.root, 5);
+	});
+
+	it("object", () => {
+		const schema = new SchemaFactory("com.example");
+		class Point extends schema.object("Point", {
+			x: schema.number,
+			y: schema.number,
+		}) {}
+
+		const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
+
+		const factory = new TreeFactory({});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const root = tree.schematize(config).root;
+		assert.equal(root.x, 1);
+		assert.equal(root.y, 2);
+
+		const values: number[] = [];
+		Tree.on(root, "afterChange", () => {
+			values.push(root.x);
+		});
+		root.x = 5;
+		assert.equal(root.x, 5);
+		assert.deepEqual(values, [5]);
+	});
+
+	it("object custom members", () => {
+		const schema = new SchemaFactory("com.example");
+		class Point extends schema.object("Point", {
+			x: schema.number,
+		}) {
+			public selected = false;
+
+			public toggle(): boolean {
+				this.selected = !this.selected;
+				return this.selected;
+			}
+
+			public increment(): number {
+				return this.x++;
+			}
+		}
+
+		const config = new TreeConfiguration(Point, () => new Point({ x: 1 }));
+
+		const factory = new TreeFactory({});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const root = tree.schematize(config).root;
+		assert.equal(root.x, 1);
+
+		const values: number[] = [];
+		Tree.on(root, "afterChange", () => {
+			values.push(root.x);
+		});
+
+		assert.equal(root.selected, false);
+		// Ensure modification works
+		root.selected = true;
+		assert.equal(root.selected, true);
+		// Ensure methods work
+		assert.equal(root.toggle(), false);
+		// Ensure methods and direct access observe same property.
+		assert.equal(root.selected, false);
+
+		// Ensure methods can access tree content
+		assert.equal(root.increment(), 1);
+		assert.equal(root.increment(), 2);
+		assert.deepEqual(values, [2, 3]);
+	});
+
+	it("mixed", () => {
 		const schema = new SchemaFactory("com.example");
 
 		class Point extends schema.object("Point", {
@@ -108,21 +187,5 @@ describe("schemaFactory", () => {
 		const item = stuff[1];
 		const s: string = item.text;
 		assert.equal(s, "hi");
-	});
-
-	it("objects only", () => {
-		const schema = new SchemaFactory("com.example");
-		class Point extends schema.object("Point", {
-			x: schema.number,
-			y: schema.number,
-		}) {}
-
-		const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
-
-		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
-		const view = tree.schematize(config);
-		assert.equal(view.root.x, 1);
-		assert.equal(view.root.y, 2);
 	});
 });

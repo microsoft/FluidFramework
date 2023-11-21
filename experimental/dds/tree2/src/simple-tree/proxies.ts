@@ -190,7 +190,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			if (fieldSchema === undefined) {
 				// Allow custom properties on classes to forward to the target.
 				// Class based schema use this.
-				return Reflect.set(target, key, proxy);
+				return Reflect.set(target, key, value);
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
