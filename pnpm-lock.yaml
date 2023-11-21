@@ -6460,6 +6460,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/merge-tree': "workspace:~"
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -6492,6 +6493,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/merge-tree': link:../merge-tree
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
