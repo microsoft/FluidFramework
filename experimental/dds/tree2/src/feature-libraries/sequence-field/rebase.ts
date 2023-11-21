@@ -64,6 +64,7 @@ import {
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
+import { RebaseRevisionMetadata } from "../modular-schema/fieldChangeHandler";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -86,7 +87,7 @@ export function rebase<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
-	revisionMetadata: RevisionMetadataSource,
+	revisionMetadata: RebaseRevisionMetadata,
 	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset<TNodeChange> {
 	return rebaseMarkList(
@@ -111,7 +112,7 @@ function rebaseMarkList<TNodeChange>(
 	currMarkList: MarkList<TNodeChange>,
 	baseMarkList: MarkList<TNodeChange>,
 	baseRevision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
@@ -717,16 +718,13 @@ interface CellBlock {
 function handleLineage(
 	cellId: CellId,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ) {
-	tryRemoveLineageEvents(
-		cellId,
-		new Set(
-			metadata
-				.getRevisions()
-				.map((r) => getIntention(r, metadata) ?? fail("Intention should be defined")),
-		),
-	);
+	const baseRevisions = metadata
+		.getRevisions()
+		.map((r) => getIntention(r, metadata) ?? fail("Intention should be defined"));
+
+	removeLineageEvents(cellId, new Set(baseRevisions));
 
 	// An undefined cell revision means this cell has never been filled or emptied.
 	// It is being created by the anonymous rebasing revision.
@@ -743,7 +741,7 @@ function handleLineage(
 	}
 }
 
-function getRevisionIndex(metadata: RevisionMetadataSource, revision: RevisionTag): number {
+function getRevisionIndex(metadata: RebaseRevisionMetadata, revision: RevisionTag): number {
 	const index = metadata.getIndex(revision);
 	if (index !== undefined) {
 		return index;
@@ -770,7 +768,7 @@ function updateLineageState(
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 	rebasedMark: Mark<unknown>,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ) {
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
@@ -789,7 +787,7 @@ function updateLineageState(
 }
 
 function getAttachRevisionIndex(
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 ): number {
@@ -816,7 +814,7 @@ function getAttachRevisionIndex(
 }
 
 function getDetachRevisionIndex(
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 ): number {
@@ -847,7 +845,7 @@ function addLineageToRecipients(
 	revision: RevisionTag,
 	id: ChangesetLocalId,
 	count: number,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ) {
 	const revisionIndex = getRevisionIndex(metadata, revision);
 	for (let i = cellBlocks.length - 1; i >= 0; i--) {
@@ -906,7 +904,7 @@ function addLineageEntry(
 	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<RevisionTag>) {
+function removeLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<RevisionTag>) {
 	if (lineageHolder.lineage === undefined) {
 		return;
 	}

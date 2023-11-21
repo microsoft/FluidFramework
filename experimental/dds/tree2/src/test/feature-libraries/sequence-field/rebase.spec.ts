@@ -17,6 +17,7 @@ import {
 	rebaseOverComposition,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -920,7 +921,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				insert,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = [
@@ -947,7 +951,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				modify,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = Change.modifyDetached(0, nodeChange, {

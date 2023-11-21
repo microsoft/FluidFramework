@@ -508,11 +508,7 @@ export class ModularChangeFamily
 			const {
 				fieldKind,
 				changesets: [fieldChangeset, baseChangeset],
-			} = this.normalizeFieldChanges(
-				[fieldChange, baseChanges],
-				genId,
-				revisionMetadata.revisions,
-			);
+			} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
 
 			const { revision } = over;
 			const taggedBaseChange = { revision, change: baseChangeset };
@@ -543,8 +539,7 @@ export class ModularChangeFamily
 						rebaseChild,
 						genId,
 						manager,
-						revisionMetadata.revisions,
-						revisionMetadata.numBaseRevisions,
+						revisionMetadata,
 				  )
 				: fieldKind.changeHandler.rebaser.amendRebase(
 						fieldChangeset,
@@ -552,7 +547,7 @@ export class ModularChangeFamily
 						rebaseChild,
 						genId,
 						manager,
-						revisionMetadata.revisions,
+						revisionMetadata,
 				  );
 
 			if (!fieldKind.changeHandler.isEmpty(rebasedField)) {
@@ -583,11 +578,7 @@ export class ModularChangeFamily
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges(
-					[fieldChange, baseChanges],
-					genId,
-					revisionMetadata.revisions,
-				);
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
 
 				const manager = newCrossFieldManager(crossFieldTable);
 				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(
@@ -612,8 +603,7 @@ export class ModularChangeFamily
 					},
 					genId,
 					manager,
-					revisionMetadata.revisions,
-					revisionMetadata.numBaseRevisions,
+					revisionMetadata,
 					existenceState,
 				);
 				const rebasedFieldChange: FieldChange = {
@@ -773,11 +763,25 @@ export function revisionMetadataSourceFromInfo(
 		return index === undefined ? undefined : revInfos[index];
 	};
 
-	const getRevisions = (): RevisionTag[] => {
-		return revInfos.map((info) => info.revision);
-	};
+	return { getIndex, tryGetInfo };
+}
 
-	return { getIndex, tryGetInfo, getRevisions };
+export function rebaseRevisionMetadataFromInfo(
+	revInfos: readonly RevisionInfo[],
+	baseRevisions: (RevisionTag | undefined)[],
+): RebaseRevisionMetadata {
+	const filteredRevisions: RevisionTag[] = [];
+	for (const revision of baseRevisions) {
+		if (revision !== undefined) {
+			filteredRevisions.push(revision);
+		}
+	}
+
+	const getRevisions = () => filteredRevisions;
+	return {
+		...revisionMetadataSourceFromInfo(revInfos),
+		getRevisions,
+	};
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {

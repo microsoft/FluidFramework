@@ -6,8 +6,9 @@
 import { assert } from "@fluidframework/core-utils";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
-import { RevisionInfo, revisionMetadataSourceFromInfo } from "../../feature-libraries";
+import { RevisionInfo } from "../../feature-libraries";
 import { Mutable } from "../../util";
+import { rebaseRevisionMetadataFromInfo } from "../../feature-libraries/modular-schema/modularChangeFamily";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -289,16 +290,13 @@ export function rebaseChangeOverChanges<TChange>(
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	const revisionMetadata = revisionMetadataSourceFromInfo(
+	const revisionMetadata = rebaseRevisionMetadataFromInfo(
 		getRevInfoFromTaggedChanges(changesToRebaseOver),
+		changesToRebaseOver.map((change) => change.revision),
 	);
 
 	return changesToRebaseOver.reduce(
-		(a, b) =>
-			changeRebaser.rebase(a, b, {
-				revisions: revisionMetadata,
-				numBaseRevisions: changesToRebaseOver.length,
-			}),
+		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
 		changeToRebase,
 	);
 }

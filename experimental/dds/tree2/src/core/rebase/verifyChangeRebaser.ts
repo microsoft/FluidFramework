@@ -5,7 +5,7 @@
 
 import { makeAnonChange } from "./changeRebaser";
 import { ChangeRebaser } from ".";
-import { revisionMetadataSourceFromInfo } from "../../feature-libraries";
+import { rebaseRevisionMetadataFromInfo } from "../../feature-libraries/modular-schema/modularChangeFamily";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
 
@@ -97,11 +97,10 @@ export function verifyChangeRebaser<TChange>(
 	changes: ReadonlySet<TChange>,
 	isEquivalent: (a: TChange, b: TChange) => boolean,
 ): OutputType<TChange> {
+	const metadata = rebaseRevisionMetadataFromInfo([], []);
 	const rebase = (change: TChange, over: TChange) =>
-		rebaser.rebase(change, makeAnonChange(over), {
-			revisions: revisionMetadataSourceFromInfo([]),
-			numBaseRevisions: 1,
-		});
+		rebaser.rebase(change, makeAnonChange(over), metadata);
+
 	const compose = (changeToCompose: TChange[]) =>
 		rebaser.compose(changeToCompose.map(makeAnonChange));
 	// TODO: test with isRollback = true

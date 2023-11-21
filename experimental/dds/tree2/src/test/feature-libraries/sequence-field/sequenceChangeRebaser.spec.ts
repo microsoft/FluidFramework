@@ -29,6 +29,7 @@ import {
 	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -331,11 +332,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const rebasedOverComposition = rebaseOverComposition(
 								a.change,
 								bc,
-								revisionMetadataSourceFromInfo([
-									{ revision: tag1 },
-									{ revision: tag2 },
-									{ revision: tag3 },
-								]),
+								rebaseRevisionMetadataFromInfo(
+									[{ revision: tag1 }, { revision: tag2 }, { revision: tag3 }],
+									[tag2, tag3],
+								),
 							);
 
 							const normalizedComposition =

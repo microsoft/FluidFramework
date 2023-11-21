@@ -22,10 +22,13 @@ import { TestChange } from "../../testChange";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
+	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/fieldChangeHandler";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
 	return compose(changes.map(makeAnonChange));
@@ -92,13 +95,16 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RevisionMetadataSource,
+	revisionMetadata?: RebaseRevisionMetadata,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
 	const metadata =
-		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+		revisionMetadata ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
+			base.revision,
+		]);
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
@@ -140,7 +146,7 @@ export function rebaseTagged(
 export function rebaseOverComposition(
 	change: TestChangeset,
 	base: TestChangeset,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): TestChangeset {
 	return rebase(change, makeAnonChange(base), metadata);
 }

@@ -25,7 +25,12 @@ import {
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange";
-import { deepFreeze, defaultRevisionMetadataFromChanges, isDeltaVisible } from "../../utils";
+import {
+	deepFreeze,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+	isDeltaVisible,
+} from "../../utils";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util";
 import {
 	optionalChangeRebaser,
@@ -41,6 +46,8 @@ import {
 	ChildStateGenerator,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/fieldChangeHandler";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -124,7 +131,10 @@ function rebase(
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata = rebaseRevisionMetadataFromInfo(
+		defaultRevInfosFromChanges([base, makeAnonChange(change)]),
+		[base.revision],
+	);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(
@@ -134,7 +144,6 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
-		1,
 		undefined,
 	);
 }
@@ -152,7 +161,7 @@ function rebaseTagged(
 }
 
 function rebaseComposed(
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 	change: OptionalChangeset,
 	...baseChanges: TaggedChange<OptionalChangeset>[]
 ): OptionalChangeset {
@@ -169,7 +178,6 @@ function rebaseComposed(
 		idAllocator,
 		moveEffects,
 		metadata,
-		baseChanges.length,
 		undefined,
 	);
 }

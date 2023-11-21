@@ -110,8 +110,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-		numBaseRevisions: number,
+		revisionMetadata: RebaseRevisionMetadata,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
 
@@ -226,14 +225,14 @@ export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
  * @alpha
  */
 export interface RevisionMetadataSource {
-	readonly getRevisions: () => RevisionTag[];
+	// readonly getRevisions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
 
-export interface RebaseRevisionMetadata {
-	revisions: RevisionMetadataSource;
-	numBaseRevisions: number;
+export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	// TODO: Change to getBaseRevisions
+	readonly getRevisions: () => RevisionTag[];
 }
 
 /**

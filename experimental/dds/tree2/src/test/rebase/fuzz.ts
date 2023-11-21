@@ -6,7 +6,7 @@
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { ChangeRebaser, makeAnonChange } from "../../core";
-import { revisionMetadataSourceFromInfo } from "../../feature-libraries";
+import { rebaseRevisionMetadataFromInfo } from "../../feature-libraries/modular-schema/modularChangeFamily";
 
 enum Operation {
 	Rebase = 0,
@@ -46,10 +46,11 @@ export function generateFuzzyCombinedChange<TChange>(
 		const operation = random.integer(Operation.Rebase, Operation.Invert) as Operation;
 		switch (operation) {
 			case Operation.Rebase:
-				change = rebase(change, makeAnonChange(changeGenerator(random.real())), {
-					revisions: revisionMetadataSourceFromInfo([]),
-					numBaseRevisions: 1,
-				});
+				change = rebase(
+					change,
+					makeAnonChange(changeGenerator(random.real())),
+					rebaseRevisionMetadataFromInfo([], []),
+				);
 				break;
 			case Operation.Compose:
 				change = compose([

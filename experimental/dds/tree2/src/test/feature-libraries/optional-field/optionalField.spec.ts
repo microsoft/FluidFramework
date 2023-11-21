@@ -20,7 +20,11 @@ import {
 	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
+import {
+	assertFieldChangesEqual,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+} from "../../utils";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -30,6 +34,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -249,8 +254,9 @@ describe("optionalField", () => {
 						childRebaser,
 						fakeIdAllocator,
 						failCrossFieldManager,
-						defaultRevisionMetadataFromChanges([change1]),
-						1,
+						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([change1]), [
+							change1.revision,
+						]),
 					),
 					change2.change,
 				);
@@ -280,7 +286,7 @@ describe("optionalField", () => {
 						childRebaser,
 						fakeIdAllocator,
 						failCrossFieldManager,
-						defaultRevisionMetadataFromChanges([]),
+						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), []),
 						0,
 					),
 					expected,
@@ -319,8 +325,9 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([deletion]),
-					1,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([deletion]), [
+						deletion.revision,
+					]),
 				);
 
 				const changeToRebase3 = optionalChangeRebaser.rebase(
@@ -329,7 +336,9 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([revive]),
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([revive]), [
+						revive.revision,
+					]),
 					1,
 				);
 
@@ -383,7 +392,7 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), []),
 					0,
 				);
 				assert.deepEqual(actual, expected);
@@ -582,8 +591,10 @@ describe("optionalField", () => {
 					() => nodeChange1,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
-					1,
+					rebaseRevisionMetadataFromInfo(
+						defaultRevInfosFromChanges([clear, hasChildChanges]),
+						[clear.revision],
+					),
 				);
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedTrees(
@@ -654,8 +665,10 @@ describe("optionalField", () => {
 					() => nodeChange1,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
-					1,
+					rebaseRevisionMetadataFromInfo(
+						defaultRevInfosFromChanges([clear, hasChildChanges]),
+						[clear.revision],
+					),
 				);
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedTrees(
