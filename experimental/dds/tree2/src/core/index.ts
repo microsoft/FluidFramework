@@ -157,6 +157,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

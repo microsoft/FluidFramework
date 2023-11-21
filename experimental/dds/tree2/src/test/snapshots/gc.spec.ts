@@ -94,7 +94,7 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.handles.insertAtEnd([subtree1.handle, subtree2.handle]);
+			this.tree1View.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

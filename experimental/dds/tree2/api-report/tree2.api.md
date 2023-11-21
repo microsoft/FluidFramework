@@ -456,6 +456,7 @@ export interface FieldAnchor {
 
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
+    // @deprecated
     readonly build?: readonly DetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DetachedNodeDestruction[];
     readonly global?: readonly DetachedNodeChanges<TTree>[];
@@ -1036,6 +1037,14 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 // @alpha
+export class IterableTreeListContent<T> implements Iterable<T> {
+    // (undocumented)
+    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+    // (undocumented)
+    [Symbol.iterator](): Iterator<T>;
+}
+
+// @alpha
 export interface ITransaction {
     abort(): TransactionResult.Abort;
     commit(): TransactionResult.Commit;
@@ -1445,7 +1454,7 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 // @alpha
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type PrimitiveValue = string | boolean | number;
 
 // @alpha
@@ -1531,7 +1540,10 @@ export enum RevertResult {
 }
 
 // @alpha
-type Root<TTree = ProtoNode> = FieldMap<TTree>;
+interface Root<TTree = ProtoNode> {
+    readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly fields?: FieldMap<TTree>;
+}
 
 // @alpha
 export interface RootField {
@@ -1870,10 +1882,15 @@ export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes> ex
 }
 
 // @alpha
+export const TreeListNode: {
+    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+};
+
+// @alpha
 interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
-    insertAt(index: number, value: Iterable<TNew>): void;
-    insertAtEnd(value: Iterable<TNew>): void;
-    insertAtStart(value: Iterable<TNew>): void;
+    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;

@@ -189,15 +189,13 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 	}
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this._inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
+		this._inventoryItemList.insertAtEnd({
+			// In a real-world scenario, this is probably a known unique inventory ID (rather than
+			// randomly generated).  Randomly generating here just for convenience.
+			id: uuid(),
+			name,
+			quantity,
+		});
 	};
 
 	public readonly getItems = (): IInventoryItem[] => {

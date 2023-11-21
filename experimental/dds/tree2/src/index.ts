@@ -228,6 +228,7 @@ export {
 } from "./feature-libraries";
 
 export {
+	IterableTreeListContent,
 	TreeObjectNodeFields,
 	TreeField,
 	TreeFieldInner,
