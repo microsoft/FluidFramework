@@ -145,16 +145,78 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		>;
 	}
 
+	/**
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @remarks
+	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
+	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
+	 * This does not support recursive types.
+	 *
+	 * If using these structurally named maps, other types in this schema builder should avoid names of the form `Map<${string}>`.
+	 *
+	 * If the returned class is subclassed, that subclass must be used for all matching lists or an error will occur when configuring the tree.
+	 * @privateRemarks
+	 * See note on list.
+	 */
+	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
+		allowedTypes: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.Map<${string}>`,
+		NodeKind.Map,
+		T,
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+	>;
+
+	/**
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 */
 	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
-		t: T,
+		allowedTypes: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.Map,
+		T,
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+	>;
+
+	public map<const T extends ImplicitAllowedTypes>(
+		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+		allowedTypes?: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${string}`,
+		NodeKind.Map,
+		T,
+		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+	> {
+		if (allowedTypes === undefined) {
+			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const fullName = structuralName("Map", types);
+			return getOrCreate(
+				this.structuralTypes,
+				fullName,
+				() => this.namedMap(fullName as TName, nameOrAllowedTypes as T) as TreeNodeSchema,
+			) as TreeNodeSchemaClass<
+				`${TScope}.${string}`,
+				NodeKind.Map,
+				T,
+				TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
+			>;
+		}
+		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes);
+	}
+
+	private namedMap<Name extends TName | string, const T extends ImplicitAllowedTypes>(
+		name: Name,
+		allowedTypes: T,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		T,
 		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>
 	> {
-		class schema extends this.nodeSchema(name, NodeKind.Map, t) {
+		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes) {
 			public constructor(editNode: FlexTreeNode | UnhydratedData) {
 				super();
 				// TODO: handle unhydrated data case.
