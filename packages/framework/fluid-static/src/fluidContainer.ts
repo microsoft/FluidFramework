@@ -28,6 +28,10 @@ export type InitialObjects<T extends ContainerSchema> = {
 		: never;
 };
 
+export interface IFluidContainerAttachProps<T> {
+	value: T;
+}
+
 /**
  * Events emitted from {@link IFluidContainer}.
  */
@@ -159,7 +163,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(): Promise<string>;
+	attach<T>(props?: T): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -297,7 +301,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach(): Promise<string> {
+	public async attach<T>(props?: T): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
