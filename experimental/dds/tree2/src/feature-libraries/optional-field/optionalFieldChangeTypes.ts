@@ -36,8 +36,8 @@ export interface OptionalChangeset {
 	 * As such, changesets should not contain duplicated src or dst entries (lest they populate the same register twice,
 	 * or try to move a node to two different places).
 	 *
-	 * The third entry specifies whether the "intent" of the move is to target a specific register ("cellTargeting") OR to
-	 * target the node that currently happens to occupy some register ("nodeTargeting").
+	 * The third entry specifies whether the "intent" of the move is to target a specific source register ("cellTargeting") OR to
+	 * target the node that currently happens to occupy some source register ("nodeTargeting").
 	 * This is relevant when considering how changes should be rebased.
 	 *
 	 * Rebasing logic should only generate moves whose `src` is an occupied register.
@@ -58,7 +58,7 @@ export interface OptionalChangeset {
 	 * 1. This change intends to populate a register (call it `foo`)
 	 * 2. That register is currently unoccupied
 	 *
-	 * In such cases, this changeset should not include a move with source `foo`, since `foo` is not empty.
+	 * In such cases, this changeset should not include a move with source `foo`, since `foo` is empty.
 	 * However, if this changeset is then rebased over a change which populates `foo`, the rebased changeset must now empty `foo`.
 	 * This reserved id is used as the destination of that emptying move.
 	 */

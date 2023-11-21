@@ -14,13 +14,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Literal(0)]);
 export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
-export const EncodedBuild = Type.Object(
-	{
-		id: EncodedChangeAtomId,
-		set: EncodedJsonableTree,
-	},
-	noAdditionalProps,
-);
+export const EncodedBuild = Type.Tuple([EncodedChangeAtomId, EncodedJsonableTree]);
 export type EncodedBuild = Static<typeof EncodedBuild>;
 
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>

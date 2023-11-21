@@ -10,18 +10,30 @@ import { RevisionMetadataSource } from "../feature-libraries";
  * Given a state tree, constructs the sequence of edits which led to that state.
  */
 export function getSequentialEdits<TContent, TChangeset>(
-	state: FieldStateTree<TContent, TChangeset>,
+	initialState: FieldStateTree<TContent, TChangeset>,
 ): NamedChangeset<TChangeset>[] {
 	const edits: NamedChangeset<TChangeset>[] = [];
+	for (const state of getSequentialStates(initialState)) {
+		if (state.mostRecentEdit !== undefined) {
+			edits.push(state.mostRecentEdit);
+		}
+	}
+	return edits;
+}
+
+export function getSequentialStates<TContent, TChangeset>(
+	state: FieldStateTree<TContent, TChangeset>,
+): FieldStateTree<TContent, TChangeset>[] {
+	const states: FieldStateTree<TContent, TChangeset>[] = [];
 	for (
 		let current: FieldStateTree<TContent, TChangeset> | undefined = state;
-		current?.mostRecentEdit !== undefined;
+		current !== undefined;
 		current = current.parent
 	) {
-		edits.push(current.mostRecentEdit);
+		states.push(current);
 	}
-	edits.reverse();
-	return edits;
+	states.reverse();
+	return states;
 }
 
 /**

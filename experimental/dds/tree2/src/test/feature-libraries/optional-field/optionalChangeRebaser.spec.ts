@@ -39,6 +39,7 @@ import {
 	getSequentialEdits,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
+	getSequentialStates,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { assertEqual } from "./optionalFieldUtils";
@@ -143,7 +144,7 @@ function rebase(
 	const metadata =
 		metadataArg ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId((getMaxId(change, base.change) ?? 0) + 1);
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(
 		change,
 		base,
@@ -211,15 +212,7 @@ function computeChildChangeInputContext(inputState: OptionalFieldTestState): num
 	// intentions for edits which modify the same child as the final one in the changeset.
 	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
 	// content for what are meant to represent different nodes.
-	const states: OptionalFieldTestState[] = [];
-	for (
-		let current: OptionalFieldTestState | undefined = inputState;
-		current !== undefined;
-		current = current.parent
-	) {
-		states.push(current);
-	}
-	states.reverse();
+	const states = getSequentialStates(inputState);
 	const finalContent = states.at(-1)?.content;
 	assert(
 		finalContent !== undefined,
@@ -323,7 +316,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setIntention),
 				),
 				intention: setIntention,
-				description: `Set${value},${edits.length}`,
+				description: `Set${newContents}`,
 			},
 			parent: state,
 		};

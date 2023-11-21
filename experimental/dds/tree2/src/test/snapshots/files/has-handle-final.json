@@ -41,18 +41,18 @@
                             "fieldKind": "Optional",
                             "change": {
                               "b": [
-                                {
-                                  "id": {
+                                [
+                                  {
                                     "localId": 1
                                   },
-                                  "set": {
+                                  {
                                     "type": "com.fluidframework.leaf.handle",
                                     "value": {
                                       "type": "__fluid_handle__",
                                       "url": "/test/test"
                                     }
                                   }
-                                }
+                                ]
                               ],
                               "m": [
                                 [

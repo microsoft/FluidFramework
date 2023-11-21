@@ -393,6 +393,7 @@ describe("optionalField", () => {
 					// Right now we do things inconsistently with 'self' due to how renamedDsts works in optional field, which causes this bug.
 					moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 					childChanges: [[{ localId: brand(1) }, arbitraryChildChange]],
+					// See comment above: this may need to change as well.
 					reservedDetachId: { localId: brand(1) },
 				};
 

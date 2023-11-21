@@ -846,7 +846,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it("childchange rebase over change, undo, childchange", () => {
+		it("childchange rebase over delete, undo, childchange", () => {
 			const tree = makeTreeFromJson([{ foo: ["b"] }]);
 			const tree2 = tree.fork();
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
@@ -1868,9 +1868,10 @@ describe("Editing", () => {
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "3" }));
 
-				tree3.rebaseOnto(tree2);
-				tree2.merge(tree3, false);
+				tree1.merge(tree2, false);
 				tree1.merge(tree3, false);
+				tree2.rebaseOnto(tree1);
+				tree3.rebaseOnto(tree2);
 
 				expectJsonTree([tree1, tree2, tree3], [{ foo: "3" }]);
 			});
