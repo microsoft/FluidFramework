@@ -116,7 +116,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// This is type safe, so we can only access fields that are in the schema.
 	// @ts-expect-error This is an error since it accesses an invalid field.
-	const b5: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, z: n3 };
+	const b5: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, z: 5 };
 
 	// @ts-expect-error Missing required field
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
