@@ -296,4 +296,38 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     values(): IterableIterator<any>;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/directory.ts:289:2 - (ae-undocumented) Missing documentation for "Type".
+// src/directory.ts:294:2 - (ae-undocumented) Missing documentation for "Attributes".
+// src/directory.ts:303:2 - (ae-undocumented) Missing documentation for "type".
+// src/directory.ts:310:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/directory.ts:317:15 - (ae-undocumented) Missing documentation for "load".
+// src/directory.ts:332:9 - (ae-undocumented) Missing documentation for "create".
+// src/directory.ts:502:2 - (ae-undocumented) Missing documentation for "localValueMaker".
+// src/directory.ts:565:9 - (ae-undocumented) Missing documentation for "dispose".
+// src/directory.ts:569:2 - (ae-undocumented) Missing documentation for "disposed".
+// src/directory.ts:720:2 - (ae-undocumented) Missing documentation for "summarizeCore".
+// src/directory.ts:742:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/directory.ts:748:2 - (ae-undocumented) Missing documentation for "reSubmitCore".
+// src/directory.ts:759:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/directory.ts:856:2 - (ae-undocumented) Missing documentation for "processCore".
+// src/directory.ts:873:2 - (ae-undocumented) Missing documentation for "rollback".
+// src/directory.ts:1097:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/interfaces.ts:288:2 - (ae-undocumented) Missing documentation for "[Symbol.iterator]".
+// src/interfaces.ts:289:2 - (ae-undocumented) Missing documentation for "[Symbol.toStringTag]".
+// src/map.ts:39:2 - (ae-undocumented) Missing documentation for "Type".
+// src/map.ts:44:2 - (ae-undocumented) Missing documentation for "Attributes".
+// src/map.ts:53:2 - (ae-undocumented) Missing documentation for "type".
+// src/map.ts:60:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/map.ts:67:15 - (ae-undocumented) Missing documentation for "load".
+// src/map.ts:82:9 - (ae-undocumented) Missing documentation for "create".
+// src/map.ts:255:2 - (ae-undocumented) Missing documentation for "summarizeCore".
+// src/map.ts:335:2 - (ae-undocumented) Missing documentation for "loadCore".
+// src/map.ts:355:2 - (ae-undocumented) Missing documentation for "onDisconnect".
+// src/map.ts:361:2 - (ae-undocumented) Missing documentation for "reSubmitCore".
+// src/map.ts:369:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
+// src/map.ts:377:2 - (ae-undocumented) Missing documentation for "processCore".
+// src/map.ts:395:2 - (ae-undocumented) Missing documentation for "rollback".
+
 ```

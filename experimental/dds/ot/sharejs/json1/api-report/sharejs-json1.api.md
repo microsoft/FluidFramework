@@ -56,6 +56,27 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
     protected transform(input: JSONOp, transform: JSONOp): JSONOp;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/factory.ts:19:1 - (ae-undocumented) Missing documentation for "Json1Factory".
+// src/factory.ts:20:2 - (ae-undocumented) Missing documentation for "Type".
+// src/factory.ts:22:2 - (ae-undocumented) Missing documentation for "Attributes".
+// src/factory.ts:28:2 - (ae-undocumented) Missing documentation for "type".
+// src/factory.ts:31:2 - (ae-undocumented) Missing documentation for "attributes".
+// src/factory.ts:38:15 - (ae-undocumented) Missing documentation for "load".
+// src/factory.ts:49:9 - (ae-undocumented) Missing documentation for "create".
+// src/json1.ts:27:1 - (ae-undocumented) Missing documentation for "SharedJson1".
+// src/json1.ts:27:55 - (ae-undocumented) Missing documentation for "create".
+// src/json1.ts:29:9 - (ae-undocumented) Missing documentation for "getFactory".
+// src/json1.ts:41:9 - (ae-undocumented) Missing documentation for "get".
+// src/json1.ts:45:9 - (ae-undocumented) Missing documentation for "apply".
+// src/json1.ts:49:2 - (ae-undocumented) Missing documentation for "transform".
+// src/json1.ts:53:2 - (ae-undocumented) Missing documentation for "applyCore".
+// src/json1.ts:57:9 - (ae-undocumented) Missing documentation for "insert".
+// src/json1.ts:61:9 - (ae-undocumented) Missing documentation for "move".
+// src/json1.ts:65:9 - (ae-undocumented) Missing documentation for "remove".
+// src/json1.ts:69:9 - (ae-undocumented) Missing documentation for "replace".
+
 // (No @packageDocumentation comment for this package)
 
 ```

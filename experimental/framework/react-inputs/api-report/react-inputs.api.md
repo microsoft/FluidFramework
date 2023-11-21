@@ -106,6 +106,28 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
     replaceText(text: string, start: number, end: number): void;
 }
 
+// Warnings were encountered during analysis:
+//
+// src/CollaborativeCheckbox.tsx:30:2 - (ae-undocumented) Missing documentation for "className".
+// src/CollaborativeCheckbox.tsx:31:2 - (ae-undocumented) Missing documentation for "style".
+// src/CollaborativeCheckbox.tsx:40:2 - (ae-undocumented) Missing documentation for "checked".
+// src/CollaborativeCheckbox.tsx:63:9 - (ae-undocumented) Missing documentation for "componentDidMount".
+// src/CollaborativeCheckbox.tsx:71:9 - (ae-undocumented) Missing documentation for "render".
+// src/CollaborativeInput.tsx:30:2 - (ae-undocumented) Missing documentation for "className".
+// src/CollaborativeInput.tsx:31:2 - (ae-undocumented) Missing documentation for "style".
+// src/CollaborativeInput.tsx:32:2 - (ae-undocumented) Missing documentation for "disabled".
+// src/CollaborativeInput.tsx:33:2 - (ae-undocumented) Missing documentation for "onInput".
+// src/CollaborativeInput.tsx:42:2 - (ae-undocumented) Missing documentation for "selectionEnd".
+// src/CollaborativeInput.tsx:43:2 - (ae-undocumented) Missing documentation for "selectionStart".
+// src/CollaborativeInput.tsx:71:9 - (ae-undocumented) Missing documentation for "componentDidMount".
+// src/CollaborativeInput.tsx:81:9 - (ae-undocumented) Missing documentation for "componentDidUpdate".
+// src/CollaborativeInput.tsx:88:9 - (ae-undocumented) Missing documentation for "render".
+// src/CollaborativeTextArea.tsx:32:2 - (ae-undocumented) Missing documentation for "className".
+// src/CollaborativeTextArea.tsx:33:2 - (ae-undocumented) Missing documentation for "style".
+// src/SharedStringHelper.ts:14:1 - (ae-undocumented) Missing documentation for "ISharedStringHelperTextChangedEventArgs".
+// src/SharedStringHelper.ts:34:2 - (ae-undocumented) Missing documentation for "__call".
+// src/SharedStringHelper.ts:55:9 - (ae-undocumented) Missing documentation for "getText".
+
 // (No @packageDocumentation comment for this package)
 
 ```

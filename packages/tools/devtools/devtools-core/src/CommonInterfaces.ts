@@ -81,6 +81,7 @@ export const EditType = {
 } as const;
 
 /**
+ * {@inheritDoc (EditType:variable)}
  * @internal
  */
 export type EditType = (typeof EditType)[keyof typeof EditType];
