@@ -20,7 +20,6 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { OpContent } from '@fluidframework/shared-object-base';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
@@ -116,7 +115,7 @@ export interface IDirectoryNewStorageFormat {
 }
 
 // @public
-export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) & OpContent<"handlesEncoded">;
+export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) & HandlesEncoded;
 
 // @public
 export interface IDirectorySetOperation {

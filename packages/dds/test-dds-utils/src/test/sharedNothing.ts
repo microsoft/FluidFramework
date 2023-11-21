@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject, OpContent } from "@fluidframework/shared-object-base";
+import { HandlesEncoded, SharedObject } from "@fluidframework/shared-object-base";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -59,7 +59,7 @@ class SharedNothing extends SharedObject {
 	public noop(): void {
 		this.noopCalls++;
 		this.methodCalls.push("noop");
-		this.submitLocalMessage({ type: "noop" } as OpContent<"handlesEncoded">);
+		this.submitLocalMessage({ type: "noop" } as HandlesEncoded);
 	}
 }
 

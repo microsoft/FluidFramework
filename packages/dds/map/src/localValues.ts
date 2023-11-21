@@ -5,11 +5,11 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+	HandlesDecoded,
 	HandlesEncoded,
 	IFluidSerializer,
 	ISerializedHandle,
 	JsonString,
-	OpContent,
 	parseHandles,
 	parseJson,
 	serializeHandles,
@@ -23,7 +23,7 @@ import { ISerializableValue, ISerializedValue } from "./interfaces";
  *
  * @public
  */
-export interface ILocalValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
+export interface ILocalValue<T extends HandlesDecoded = HandlesDecoded> {
 	/**
 	 * Type indicator of the value stored within.
 	 */
@@ -54,7 +54,7 @@ export interface ILocalValue<T extends OpContent<"fullHandles"> = OpContent<"ful
  *
  * @see {@link ILocalValue.makeSerialized}
  */
-export function makeSerializable<T extends OpContent<"fullHandles">>(
+export function makeSerializable<T extends HandlesDecoded>(
 	localValue: ILocalValue<T>,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -70,7 +70,7 @@ export function makeSerializable<T extends OpContent<"fullHandles">>(
 /**
  * Manages a contained plain value.  May also contain shared object handles.
  */
-export class PlainLocalValue<T extends OpContent<"fullHandles">> implements ILocalValue<T> {
+export class PlainLocalValue<T extends HandlesDecoded> implements ILocalValue<T> {
 	/**
 	 * Create a new PlainLocalValue.
 	 * @param value - The value to store, which may contain shared object handles
@@ -130,10 +130,7 @@ export class LocalValueMaker {
 			serializable.value = handle;
 		}
 
-		const translatedValue: OpContent<"fullHandles"> = parseHandles(
-			serializable.value,
-			this.serializer,
-		);
+		const translatedValue: HandlesDecoded = parseHandles(serializable.value, this.serializer);
 
 		return new PlainLocalValue(translatedValue);
 	}

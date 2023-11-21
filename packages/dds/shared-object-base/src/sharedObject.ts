@@ -44,54 +44,40 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
  *
  * This type is used to ensure that op content types with differing handle status are incompatible.
  */
-export type OpContent<
-	HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles",
-> = Omit<unknown, "__handles_encoded__"> & {
-	__handles_encoded__?: HandlesStatus;
-	//* IN CASE WE NEED A "NOHANDLES" CASE: __handles_encoded__?: HandlesStatus extends "noHandles" ? undefined : HandlesStatus;
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type Brand_HandlesEncoded = {
+	__handles_status__?: "handlesEncoded";
 };
 
-export type HandlesEncoded<T extends OpContent> = T extends OpContent<"fullHandles">
-	? Omit<T, "__handles_encoded__"> & OpContent<"handlesEncoded">
-	: T;
-
-export type HandlesDecoded<T extends OpContent> = Omit<T, "__handles_encoded__"> & {
-	__handles_encoded__?: "fullHandles";
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type Brand_HandlesDecoded = {
+	__handles_status__?: "fullHandles";
 };
 
-function takeEncoded(content: OpContent<"handlesEncoded">): void {}
-function takeEither(content: OpContent): void {}
-// function takeNoHandles(content: OpContent<"noHandles">): void {}
+/** Type brand indicating handles (if present) are encoded. Incompatible with HandlesDecoded<T> */
+export type HandlesEncoded<T = unknown> = Omit<T, "__handles_status__"> & Brand_HandlesEncoded;
+/** Type brand indicating handles (if present) are decoded. Incompatible with HandlesEncoded<T> */
+export type HandlesDecoded<T = unknown> = Omit<T, "__handles_status__"> & Brand_HandlesDecoded;
 
-const decoded: OpContent<"fullHandles"> = {};
-const encoded: OpContent<"handlesEncoded"> = {};
-const either: OpContent = {};
-// const noHandles: OpContent<"noHandles"> = {};
-const something: { foo: number } = { foo: 42 };
+function takeEncoded(content: HandlesEncoded): void {}
+function takeEither(content: HandlesEncoded | HandlesDecoded): void {}
+
+const decoded: HandlesDecoded = {};
+const encoded: HandlesEncoded = {};
+const unmarked: { foo: number } = { foo: 42 };
 
 // @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
 takeEncoded(decoded);
 // @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
 takeEncoded(either);
 
-// takeEncoded(noHandles);
-takeEncoded(something);
+// It's permissive for "unmarked" types (neither HandlesDecoded nor HandlesEncoded)
+takeEncoded(unmarked);
 
 takeEither(encoded);
 takeEither(decoded);
-takeEither(either);
-// takeEither(noHandles);
-takeEither(something);
-
-// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
-takeNoHandles(encoded);
-// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
-takeNoHandles(decoded);
-// @ts-expect-error - Demonstrating that Content types with different HandleStatus are incompatible
-takeNoHandles(either);
-
-// takeNoHandles(noHandles);
-// takeNoHandles(something);
+takeEither(unmarked);
 
 /**
  * Base class from which all shared objects derive.
@@ -407,7 +393,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(
-		content: OpContent<"handlesEncoded">,
+		content: HandlesEncoded,
 		localOpMetadata: unknown = undefined,
 	): void {
 		this.verifyNotClosed();

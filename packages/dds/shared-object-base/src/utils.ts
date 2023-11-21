@@ -8,7 +8,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, JsonString, Primitive, serializeJson } from "./serializer";
 import { HandlesDecoded, HandlesEncoded } from "./sharedObject";
-import { OpContent } from ".";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -19,7 +18,7 @@ import { OpContent } from ".";
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns Result of strigifying an object
  */
-export function serializeHandles<T extends OpContent>(
+export function serializeHandles<T extends HandlesEncoded | HandlesDecoded>(
 	value: T | Primitive,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -39,7 +38,7 @@ export function serializeHandles<T extends OpContent>(
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
-export function makeHandlesSerializable<T extends OpContent<"fullHandles">>(
+export function makeHandlesSerializable<T extends HandlesDecoded>(
 	value: T | Primitive,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -55,7 +54,7 @@ export function makeHandlesSerializable<T extends OpContent<"fullHandles">>(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
-export function parseHandles<T extends OpContent<"handlesEncoded">>(
+export function parseHandles<T extends HandlesEncoded>(
 	value: T,
 	serializer: IFluidSerializer,
 ): HandlesDecoded<T> | Primitive {

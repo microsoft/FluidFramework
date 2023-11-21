@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
-	OpContent,
+	HandlesEncoded,
 	IFluidSerializer,
 	SharedObject,
 	ValueType,
@@ -78,7 +78,7 @@ interface IDirectoryMessageHandler {
  *
  * @public
  */
-export interface IDirectorySetOperation extends OpContent<"handlesEncoded"> {
+export interface IDirectorySetOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -214,8 +214,9 @@ export type IDirectorySubDirectoryOperation =
  *
  * @public
  */
-export type IDirectoryOperation = (IDirectoryStorageOperation | IDirectorySubDirectoryOperation) &
-	OpContent<"handlesEncoded">;
+export type IDirectoryOperation = HandlesEncoded<
+	IDirectoryStorageOperation | IDirectorySubDirectoryOperation
+>;
 
 /**
  * Create info for the subdirectory.

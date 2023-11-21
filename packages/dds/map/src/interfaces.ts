@@ -7,8 +7,8 @@ import {
 	ISharedObject,
 	ISharedObjectEvents,
 	JsonString,
-	OpContent,
 	HandlesEncoded,
+	HandlesDecoded,
 } from "@fluidframework/shared-object-base";
 import {
 	IDisposable,
@@ -398,7 +398,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  *
  * @public
  */
-export interface ISerializableValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
+export interface ISerializableValue<T extends HandlesDecoded = HandlesDecoded> {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
@@ -415,7 +415,7 @@ export interface ISerializableValue<T extends OpContent<"fullHandles"> = OpConte
  *
  * @public
  */
-export interface ISerializedValue<T extends OpContent<"fullHandles"> = OpContent<"fullHandles">> {
+export interface ISerializedValue<T extends HandlesDecoded = HandlesDecoded> {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */

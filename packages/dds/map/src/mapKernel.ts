@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { OpContent, IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { HandlesEncoded, IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 // eslint-disable-next-line import/no-deprecated
@@ -180,10 +180,7 @@ export class MapKernel {
 	public constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (
-			op: OpContent<"handlesEncoded">,
-			localOpMetadata: unknown,
-		) => void,
+		private readonly submitMessage: (op: HandlesEncoded, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {

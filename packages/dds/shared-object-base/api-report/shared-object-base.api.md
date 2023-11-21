@@ -23,11 +23,10 @@ import { ISerializedHandle as ISerializedHandle_2 } from './serializer';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { OpContent } from './sharedObject';
 
 // @public
-export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles"> = Omit<unknown, "__handles_encoded__"> & {
-    __handles_encoded__?: HandlesStatus;
+export type Content<HandlesStatus extends "handlesEncoded" | "fullHandles" = "handlesEncoded" | "fullHandles"> = Omit<unknown, "__handles_status__"> & {
+    __handles_status__?: HandlesStatus;
 };
 
 // @public
@@ -79,8 +78,8 @@ export interface ISharedObjectEvents extends IErrorEvent {
 }
 
 // @public (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle & Omit<unknown, "__handles_encoded__"> & {
-    __handles_encoded__?: "handlesEncoded" | undefined;
+export const isSerializedHandle: (value: any) => value is ISerializedHandle & Omit<unknown, "__handles_status__"> & {
+    __handles_status__?: "handlesEncoded" | undefined;
 };
 
 // @public (undocumented)
@@ -89,7 +88,7 @@ export type JsonString<T> = string & {
 };
 
 // @public
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): OpContent<"handlesEncoded">;
+export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): HandlesEncoded;
 
 // @public
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
@@ -165,8 +164,8 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
     // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): ISerializedHandle_2 & Omit<unknown, "__handles_encoded__"> & {
-        __handles_encoded__?: "handlesEncoded" | undefined;
+    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): ISerializedHandle_2 & Omit<unknown, "__handles_status__"> & {
+        __handles_status__?: "handlesEncoded" | undefined;
     };
 }
 
