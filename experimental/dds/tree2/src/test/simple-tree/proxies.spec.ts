@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../domains";
-import { TypedNode, TreeRoot, Tree } from "../../simple-tree";
+import { TypedNode, TreeRoot, Tree, TreeListNode } from "../../simple-tree";
 import { typeNameSymbol } from "../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
@@ -189,8 +189,8 @@ describe("SharedTreeList", () => {
 		itWithRoot("insertAtStart()", schema, [{ id: "B" }], (list) => {
 			assert.deepEqual(list, [{ id: "B" }]);
 			const newItem = obj.create({ id: "A" });
-			list.insertAtStart([newItem]);
-			list.insertAtStart([]); // Check that we can do a "no-op" change (a change which does not change the tree's content).
+			list.insertAtStart(newItem);
+			list.insertAtStart(); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[0]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [newItem, { id: "B" }]);
 		});
@@ -198,8 +198,8 @@ describe("SharedTreeList", () => {
 		itWithRoot("insertAtEnd()", schema, [{ id: "A" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }]);
 			const newItem = obj.create({ id: "B" });
-			list.insertAtEnd([newItem]);
-			list.insertAtEnd([]); // Check that we can do a "no-op" change (a change which does not change the tree's content).
+			list.insertAtEnd(newItem);
+			list.insertAtEnd(); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem]);
 		});
@@ -207,10 +207,48 @@ describe("SharedTreeList", () => {
 		itWithRoot("insertAt()", schema, [{ id: "A" }, { id: "C" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }, { id: "C" }]);
 			const newItem = obj.create({ id: "B" });
-			list.insertAt(1, [newItem]);
-			list.insertAt(1, []); // Check that we can do a "no-op" change (a change which does not change the tree's content).
+			list.insertAt(1, newItem);
+			list.insertAt(1); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem, { id: "C" }]);
+		});
+	});
+
+	describe("inserting inlined content", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const schema = _.intoSchema(_.list(_.number));
+
+		itWithRoot("insertAtStart()", schema, [], (list) => {
+			list.insertAtStart(TreeListNode.inline([0, 1]));
+			assert.deepEqual(list, [0, 1]);
+			list.removeRange();
+			list.insertAtStart(0, TreeListNode.inline([1]), 2);
+			assert.deepEqual(list, [0, 1, 2]);
+			list.removeRange();
+			list.insertAtStart(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
+		});
+
+		itWithRoot("insertAtEnd()", schema, [], (list) => {
+			list.insertAtEnd(TreeListNode.inline([0, 1]));
+			assert.deepEqual(list, [0, 1]);
+			list.removeRange();
+			list.insertAtEnd(0, TreeListNode.inline([1]), 2);
+			assert.deepEqual(list, [0, 1, 2]);
+			list.removeRange();
+			list.insertAtEnd(0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
+		});
+
+		itWithRoot("insertAt()", schema, [], (list) => {
+			list.insertAt(0, TreeListNode.inline([0, 1]));
+			assert.deepEqual(list, [0, 1]);
+			list.removeRange();
+			list.insertAt(0, 0, TreeListNode.inline([1]), 2);
+			assert.deepEqual(list, [0, 1, 2]);
+			list.removeRange();
+			list.insertAt(0, 0, 1, TreeListNode.inline([2, 3]), 4, TreeListNode.inline([5, 6]));
+			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 	});
 
@@ -225,84 +263,26 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(obj);
 		const initialTree = { numbers: [], strings: [], booleans: [], poly: [] };
 		itWithRoot("numbers", schema, initialTree, (root) => {
-			root.numbers.insertAtStart([0]);
-			root.numbers.insertAt(1, [1]);
-			root.numbers.insertAtEnd([2]);
+			root.numbers.insertAtStart(0);
+			root.numbers.insertAt(1, 1);
+			root.numbers.insertAtEnd(2);
 			assert.deepEqual(root.numbers, [0, 1, 2]);
 		});
 
-		itWithRoot("strings", schema, initialTree, (root) => {
-			// This test catches a usability regression in which strings can be passed directly as content to insert,
-			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
-			root.strings.insertAtStart(["a"]);
-			root.strings.insertAt(1, ["b"]);
-			root.strings.insertAtEnd(["c"]);
-
-			const string: string = "hello";
-			const stringLiteral: "hello" = "hello" as const;
-			assert.throws(() => {
-				root.strings.insertAtStart(string);
-			});
-			assert.throws(() => {
-				root.strings.insertAtStart(stringLiteral);
-			});
-			assert.throws(() => {
-				root.strings.insertAt(0, string);
-			});
-			assert.throws(() => {
-				root.strings.insertAt(0, stringLiteral);
-			});
-			assert.throws(() => {
-				root.strings.insertAtEnd(string);
-			});
-			assert.throws(() => {
-				root.strings.insertAtEnd(stringLiteral);
-			});
-
-			const iterableOrString: Iterable<string> | string = "hello";
-			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
-			assert.throws(() => {
-				root.strings.insertAtStart(iterableOrString);
-			});
-			assert.throws(() => {
-				root.strings.insertAtStart(iterableOrLiteral);
-			});
-			assert.throws(() => {
-				root.strings.insertAt(0, iterableOrString);
-			});
-			assert.throws(() => {
-				root.strings.insertAt(0, iterableOrLiteral);
-			});
-			assert.throws(() => {
-				root.strings.insertAtEnd(iterableOrString);
-			});
-			assert.throws(() => {
-				root.strings.insertAtEnd(iterableOrLiteral);
-			});
-
-			const de: Iterable<string> = "de"[Symbol.iterator]();
-			root.strings.insertAtStart(de);
-			const fg: Iterable<string> = "fg"[Symbol.iterator]();
-			root.strings.insertAt(3, fg);
-			const hi: Iterable<string> = "hi"[Symbol.iterator]();
-			root.strings.insertAtEnd(hi);
-			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
-		});
-
 		itWithRoot("booleans", schema, initialTree, (root) => {
-			root.booleans.insertAtStart([true]);
-			root.booleans.insertAt(1, [false]);
-			root.booleans.insertAtEnd([true]);
+			root.booleans.insertAtStart(true);
+			root.booleans.insertAt(1, false);
+			root.booleans.insertAtEnd(true);
 			assert.deepEqual(root.booleans, [true, false, true]);
 		});
 
 		itWithRoot("of multiple possible types", schema, initialTree, (root) => {
 			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
-			allowsStrings.insertAtStart([42]);
+			allowsStrings.insertAtStart(42);
 			const allowsStsrings: typeof root.strings | typeof root.poly = root.poly;
-			allowsStsrings.insertAt(1, ["s"]);
+			allowsStsrings.insertAt(1, "s");
 			const allowsBooleans: typeof root.booleans | typeof root.poly = root.poly;
-			allowsBooleans.insertAtEnd([true]);
+			allowsBooleans.insertAtEnd(true);
 			assert.deepEqual(root.poly, [42, "s", true]);
 		});
 	});
