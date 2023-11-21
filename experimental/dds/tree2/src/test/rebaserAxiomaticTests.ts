@@ -17,6 +17,7 @@ import {
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;
+	groupSubSuites?: boolean;
 	numberOfEditsToRebase?: number;
 	numberOfEditsToRebaseOver?: number;
 	numberOfEditsToVerifyAssociativity?: number;
@@ -27,6 +28,10 @@ const defaultSuiteOptions: Required<ExhaustiveSuiteOptions> = {
 	 * Some FieldKinds don't pass this suite and can override this option to skip it.
 	 */
 	skipRebaseOverCompose: false,
+	/**
+	 * Runs sub-suites as an individual test to reduce test discovery time
+	 */
+	groupSubSuites: false,
 	numberOfEditsToRebase: 2,
 	numberOfEditsToRebaseOver: 2,
 	numberOfEditsToVerifyAssociativity: 4,
@@ -99,8 +104,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const { numberOfEditsToRebaseOver, numberOfEditsToRebase, numberOfEditsToVerifyAssociativity } =
-		definedOptions;
+	const {
+		numberOfEditsToRebaseOver,
+		numberOfEditsToRebase,
+		numberOfEditsToVerifyAssociativity,
+		groupSubSuites,
+	} = definedOptions;
 
 	// Skip the "Rebase over compose" suite if specified to in the suite options.
 	const rebaseOverComposeDescribe = definedOptions.skipRebaseOverCompose
@@ -265,22 +274,36 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	describe("Compose associativity", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
-					initialState,
-					generateChildStates,
-					numberOfEditsToVerifyAssociativity,
-					"rev-",
-				)) {
-					const title = `for ${JSON.stringify(
-						namedSourceEdits.map(({ description }) => description),
-					)}`;
-
-					// Note that this test case doesn't verify associativity of rollback inverses.
-					// That's covered some by "Composed sandwich rebase over single edit"
-					it(title, () => {
-						const edits = namedSourceEdits.map(({ changeset }) => changeset);
-						verifyComposeAssociativity(edits);
+				if (groupSubSuites) {
+					it("Compose associativity grouped suite", () => {
+						for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+							initialState,
+							generateChildStates,
+							numberOfEditsToVerifyAssociativity,
+							"rev-",
+						)) {
+							const edits = namedSourceEdits.map(({ changeset }) => changeset);
+							verifyComposeAssociativity(edits);
+						}
 					});
+				} else {
+					for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						numberOfEditsToVerifyAssociativity,
+						"rev-",
+					)) {
+						const title = `for ${JSON.stringify(
+							namedSourceEdits.map(({ description }) => description),
+						)}`;
+
+						// Note that this test case doesn't verify associativity of rollback inverses.
+						// That's covered some by "Composed sandwich rebase over single edit"
+						it(title, () => {
+							const edits = namedSourceEdits.map(({ changeset }) => changeset);
+							verifyComposeAssociativity(edits);
+						});
+					}
 				}
 			});
 		}
