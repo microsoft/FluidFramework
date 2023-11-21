@@ -19,7 +19,7 @@ import { describeNoCompat } from "@fluid-private/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describe.only("Pong", () => {
+describe("Pong", () => {
 	describeNoCompat("Pong", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
