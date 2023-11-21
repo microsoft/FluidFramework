@@ -2293,7 +2293,7 @@ The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been
 
 ### SignalManager removed from fluid-framework export
 
-The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package. This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`. Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+The `SignalManager` and `Signaler` classes have been removed from the `@fluidframework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package. This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`. Users should instead import the classes from the `@fluid-experimental/data-objects` package.
 
 ### MockLogger removed from @fluidframework/test-runtime-utils
 
