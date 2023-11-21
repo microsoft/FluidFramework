@@ -116,6 +116,8 @@ export type InitialObjects<T extends ContainerSchema> = {
 export interface IRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     readonly initialObjects: LoadableObjectRecord;
+    // (undocumented)
+    readonly IRootDataObject?: IRootDataObject;
 }
 
 // @public
