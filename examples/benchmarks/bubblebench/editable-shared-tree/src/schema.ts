@@ -29,8 +29,8 @@ export const appSchemaData = builder.intoSchema(rootAppStateSchema);
 export type Bubble = FlexTreeTyped<typeof bubbleSchema>;
 export type Client = FlexTreeTyped<typeof clientSchema>;
 
-export type FlexBubble = SchemaAware.TypedNode<typeof bubbleSchema, SchemaAware.ApiMode.Simple>;
-export type FlexClient = SchemaAware.TypedNode<typeof clientSchema, SchemaAware.ApiMode.Simple>;
+export type FlexBubble = SchemaAware.TypedNode<typeof bubbleSchema>;
+export type FlexClient = SchemaAware.TypedNode<typeof clientSchema>;
 
 // TODO: experiment with this interface pattern. Maybe it makes better intellisense and errors?
 // TODO: Intellisense is pretty bad here if not using interface.

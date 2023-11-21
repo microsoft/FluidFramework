@@ -8,7 +8,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 import {
-	ApiMode,
 	AllowedTypesToTypedTrees,
 	TypedNode,
 	TypedField,
@@ -93,19 +92,16 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	const schemaData = builder.intoLibrary();
 
 	// Example Use:
-	type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
+	type BallTree = TypedNode<typeof ballSchema>;
 
 	{
 		type check1_ = requireAssignableTo<BallTree, ContextuallyTypedNodeDataObject>;
 	}
 
 	// We can also get the type for the "number" nodes.
-	type NumberTree = TypedNode<typeof numberSchema, ApiMode.Flexible>;
+	type NumberTree = TypedNode<typeof numberSchema>;
 
 	const n1: NumberTree = 5;
-	const n2: NumberTree = { [valueSymbol]: 5 };
-	const n3: NumberTree = { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 5 };
-	const n4: NumberTree = { [typeNameSymbol]: "com.fluidframework.leaf.number", [valueSymbol]: 5 };
 
 	const b1: BallTree = { x: 1, y: 2, size: 10 };
 	const b1x: BallTree = { x: 1, y: 2, size: undefined }; // TODO: restore ability to omit optional fields.
@@ -113,14 +109,14 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	const b4: BallTree = {
 		[typeNameSymbol]: "SchemaAwareTests.ball",
 		x: 1,
-		y: n3,
+		y: 5,
 		size: undefined,
 	};
-	const b6: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: n3, size: undefined };
+	const b6: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: 5, size: undefined };
 
 	// This is type safe, so we can only access fields that are in the schema.
 	// @ts-expect-error This is an error since it accesses an invalid field.
-	const b5: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, z: n3 };
+	const b5: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, z: 5 };
 
 	// @ts-expect-error Missing required field
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
@@ -128,7 +124,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	{
 		type XField = (typeof ballSchema)["objectNodeFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
-		type XContent = TypedField<XField, ApiMode.Simple>;
+		type XContent = TypedField<XField>;
 		type XChild = XField["allowedTypes"];
 		type _check = requireAssignableTo<XContent, number>;
 	}
@@ -142,11 +138,11 @@ import { leaf, SchemaBuilder } from "../../../domains";
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
 		type check_ = requireAssignableTo<BallXFieldTypes, readonly [typeof numberSchema]>;
 
-		type Child = AllowedTypesToTypedTrees<ApiMode.Flexible, BallXFieldTypes>;
+		type Child = AllowedTypesToTypedTrees<BallXFieldTypes>;
 
 		type check3_ = requireAssignableTo<Child, NumberTree>;
 		type check4_ = requireAssignableTo<NumberTree, Child>;
-		type Child2 = AllowedTypesToTypedTrees<ApiMode.Flexible, [typeof numberSchema]>;
+		type Child2 = AllowedTypesToTypedTrees<[typeof numberSchema]>;
 
 		type check3x_ = requireAssignableTo<Child2, NumberTree>;
 		type check4x_ = requireAssignableTo<NumberTree, Child2>;
@@ -161,9 +157,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test terminal cases:
 	{
-		type F = TypedNode<typeof numberSchema, ApiMode.Flexible>;
-		type S = TypedNode<typeof numberSchema, ApiMode.Simple>;
-		type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
+		type S = TypedNode<typeof numberSchema>;
 		type _check4 = requireTrue<areSafelyAssignable<S, number>>;
 	}
 
@@ -191,9 +185,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test non recursive cases:
 	{
-		type F = TypedNode<typeof ballSchema, ApiMode.Flexible>;
-		type S = TypedNode<typeof ballSchema, ApiMode.Simple>;
-		type _check1 = requireTrue<areSafelyAssignable<F, FlexBall>>;
+		type S = TypedNode<typeof ballSchema>;
 		type _check4 = requireTrue<areSafelyAssignable<S, SimpleBall>>;
 	}
 
@@ -204,24 +196,6 @@ import { leaf, SchemaBuilder } from "../../../domains";
 		const str = leaf.string;
 		const parentField = SchemaBuilder.required([str, bool]);
 		const parent = builder2.object("parent", { child: parentField });
-
-		type FlexBool =
-			| boolean
-			| {
-					[typeNameSymbol]?: UnbrandedName<typeof leaf.boolean.name>;
-					[valueSymbol]: boolean;
-			  };
-
-		type FlexStr =
-			| string
-			| {
-					[typeNameSymbol]?: UnbrandedName<typeof leaf.string.name>;
-					[valueSymbol]: string;
-			  };
-		interface FlexParent {
-			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
-			child: FlexBool | FlexStr;
-		}
 
 		interface SimpleParent {
 			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
@@ -244,17 +218,11 @@ import { leaf, SchemaBuilder } from "../../../domains";
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
-			type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
-			type _check5 = requireAssignableTo<FlexBool, ChildTypes>;
-			type _check6 = requireAssignableTo<FlexStr, ChildTypes>;
-			type _check7 = requireAssignableTo<ChildTypes, FlexBool | FlexStr>;
-			type Field = TypedField<ChildSchema, ApiMode.Flexible>;
+			type ChildTypes = AllowedTypesToTypedTrees<ChildSchemaTypes>;
 		}
 
 		{
-			type F = TypedNode<typeof parent, ApiMode.Flexible>;
-			type S = TypedNode<typeof parent, ApiMode.Simple>;
-			type _check1 = requireTrue<areSafelyAssignable<F, FlexParent>>;
+			type S = TypedNode<typeof parent>;
 			type _check4 = requireTrue<areSafelyAssignable<S, SimpleParent>>;
 		}
 	}
@@ -298,23 +266,15 @@ import { leaf, SchemaBuilder } from "../../../domains";
 				x: ExpectedSimple2 | undefined;
 			};
 
-			type Flexible = TypedNode<typeof rec, ApiMode.Flexible>;
-			type Simple = TypedNode<typeof rec, ApiMode.Simple>;
+			type Simple = TypedNode<typeof rec>;
 
 			// Check Simple's field type unit tests
 			{
-				type ChildTree = AllowedTypesToTypedTrees<
-					ApiMode.Simple,
-					RecFieldSchema["allowedTypes"]
-				>;
-				type SimpleField = TypedField<RecFieldSchema, ApiMode.Simple>;
+				type ChildTree = AllowedTypesToTypedTrees<RecFieldSchema["allowedTypes"]>;
+				type SimpleField = TypedField<RecFieldSchema>;
 			}
 
 			// Overall integration tests
-			type _check1a = requireAssignableTo<Flexible, ExpectedFlexible>;
-			const _check1c: ExpectedFlexible = 0 as unknown as Flexible;
-			type _check1b = requireAssignableTo<ExpectedFlexible, Flexible>;
-			type _check1 = requireTrue<areSafelyAssignable<Flexible, ExpectedFlexible>>;
 			// type _check2 = requireTrue<areSafelyAssignable<XB, EditableParent>>;
 			type _check3 = requireTrue<areSafelyAssignable<Simple, ExpectedSimple>>;
 		}
@@ -322,8 +282,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test recursive cases:
 	{
-		type F = TypedNode<typeof boxSchema, ApiMode.Flexible>;
-		type S = TypedNode<typeof boxSchema, ApiMode.Simple>;
+		type S = TypedNode<typeof boxSchema>;
 
 		interface FlexBox {
 			[typeNameSymbol]?: "SchemaAwareTests.box";
@@ -347,61 +306,29 @@ import { leaf, SchemaBuilder } from "../../../domains";
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
 			type ChildTypeArray = TypeArrayToTypedTreeArray<
-				ApiMode.Flexible,
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>
 			>;
 			{
-				type _check5 = requireAssignableTo<FlexBox, ChildTypeArray[1]>;
-				type _check6 = requireAssignableTo<FlexBall, ChildTypeArray[0]>;
 				type _check7 = requireAssignableTo<ChildTypeArray[1], FlexBox>;
 				{
 					// Should be the same as FlexBox
 					type BoxChildType = ChildTypeArray[1];
-					type BoxChildType2 = TypeArrayToTypedTreeArray<
-						ApiMode.Flexible,
-						[typeof boxSchema]
-					>[0];
-					type BoxChildType3 = TypedNode<typeof boxSchema, ApiMode.Flexible>;
+					type BoxChildType2 = TypeArrayToTypedTreeArray<[typeof boxSchema]>[0];
+					type BoxChildType3 = TypedNode<typeof boxSchema>;
 
-					type BoxChildTypeFields = TypedFields<
-						ApiMode.Flexible,
-						typeof boxSchema.objectNodeFieldsObject
-					>;
+					type BoxChildTypeFields = TypedFields<typeof boxSchema.objectNodeFieldsObject>;
 
 					type BoxChildTypeField = TypedField<
-						typeof boxSchema.objectNodeFieldsObject.children,
-						ApiMode.Flexible
+						typeof boxSchema.objectNodeFieldsObject.children
 					>;
 				}
 				type _check8 = requireAssignableTo<ChildTypeArray[0], FlexBall>;
 			}
-			type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
+			type ChildTypes = AllowedTypesToTypedTrees<ChildSchemaTypes>;
 			{
-				type _check5 = requireAssignableTo<FlexBox, ChildTypes>;
-				type _check6 = requireAssignableTo<FlexBall, ChildTypes>;
 				type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
 			}
-			type Field = TypedField<ChildSchema, ApiMode.Flexible>;
-		}
-
-		type _check1 = requireTrue<areSafelyAssignable<F, FlexBox>>;
-
-		{
-			const child: F = {
-				children: [],
-			};
-			const parent: F = {
-				children: [
-					child,
-					{
-						// TODO: this should be required to disambiguate but currently its not.
-						[typeNameSymbol]: ballSchema.name,
-						x: 1,
-						y: { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 2 },
-						size: undefined,
-					},
-				],
-			};
+			type Field = TypedField<ChildSchema>;
 		}
 
 		{

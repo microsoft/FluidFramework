@@ -14,7 +14,6 @@ export {
 	TypedField,
 	UnbrandedName,
 	TypeArrayToTypedTreeArray,
-	UntypedApi,
 	EmptyObject,
 } from "./schemaAware";
 
