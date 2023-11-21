@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -153,10 +152,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			summaryVersion,
 		);
 
-		const summarizerDataObject = await requestFluidObject<ITestDataObject>(
-			summarizingContainer2,
-			testDataObject.handle.absolutePath,
-		);
+		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+		const response = await containerRuntime.resolveHandle({
+			url: testDataObject.handle.absolutePath,
+		});
+		const summarizerDataObject = response.value as ITestDataObject;
 		await sendOpToUpdateSummaryTimestampToNow(summarizer2);
 
 		return {
@@ -335,7 +335,9 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
-				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
+				const response = await (
+					entryPoint._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;
@@ -392,7 +394,9 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
-				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
+				const response = await (
+					entryPoint._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;

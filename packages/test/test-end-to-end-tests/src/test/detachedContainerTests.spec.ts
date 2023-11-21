@@ -9,7 +9,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -68,8 +68,15 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
+const createFluidObject = async (
+	dataStoreContext: IFluidDataStoreContext,
+	type: string,
+	alias?: string,
+) => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
+	if (alias !== undefined) {
+		await dataStore.trySetAlias(alias);
+	}
 	return dataStore.entryPoint.get() as Promise<ITestFluidObject>;
 };
 
@@ -239,7 +246,12 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		// Create a sub dataStore of type TestFluidObject.
-		const subDataStore1 = await createFluidObject(dataStore.context, "default");
+		const subDataStore1Alias = "subDataStore1";
+		const subDataStore1 = await createFluidObject(
+			dataStore.context,
+			"default",
+			subDataStore1Alias,
+		);
 		dataStore.root.set("attachKey", subDataStore1.handle);
 
 		// Now attach the container and get the sub dataStore.
@@ -253,8 +265,14 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container2 = await loader2.resolve({ url: requestUrl2 });
 
 		// Get the sub dataStore and assert that it is attached.
-		const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
-		const subDataStore2 = response2.value as ITestFluidObject;
+		const entryPoint = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+		const dsEntryPoint =
+			await containerRuntime.getAliasedDataStoreEntryPoint(subDataStore1Alias);
+		if (dsEntryPoint === undefined) {
+			throw new Error("dsEntryPoint cannot be undefined");
+		}
+		const subDataStore2 = (await dsEntryPoint.get()) as ITestFluidObject;
 		assert(
 			subDataStore2.runtime.attachState !== AttachState.Detached,
 			"DataStore should be attached!!",
