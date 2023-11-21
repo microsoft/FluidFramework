@@ -28,8 +28,6 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import type { ITokenResponse } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
@@ -108,7 +106,7 @@ export class OdspClient {
 		const container = await loader.resolve({ url });
 
 		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -147,8 +145,7 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 
 		/**
 		 * See {@link FluidContainer.attach}
