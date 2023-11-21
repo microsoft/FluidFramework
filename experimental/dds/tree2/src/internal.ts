@@ -43,4 +43,12 @@ export {
 	testRecursiveDomain,
 } from "./domains";
 
-export { TreeListNodeBase } from "./simple-tree";
+export {
+	TreeListNodeBase,
+	InsertableTreeField,
+	InsertableTreeFieldInner,
+	InsertableTreeNodeUnion,
+	InsertableTreeObjectNode,
+	InsertableTreeObjectNodeFields,
+	InsertableTypedNode,
+} from "./simple-tree";

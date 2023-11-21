@@ -8,6 +8,13 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
+export function createServiceAudience<M extends IMember = IMember>(props: {
+	container: IContainer;
+	createServiceMember: (audienceMember: IClient) => M;
+}): IServiceAudience<M> {
+	return new NewServiceAudience<M>(props.container, props.createServiceMember);
+}
+
 /**
  * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
  *
@@ -17,6 +24,7 @@ import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./typ
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
+ * @deprecated use {@link createServiceAudience} and {@link IServiceAudience} instead
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>
@@ -155,5 +163,25 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	protected shouldIncludeAsMember(member: IClient): boolean {
 		// Include only human members
 		return member.details.capabilities.interactive;
+	}
+}
+
+/**
+ * this class should be removed, and integrated ServiceAudience after service audience is remove from the exports.
+ * this is just to maintain backward compatibility
+ */
+class NewServiceAudience<M extends IMember = IMember> extends ServiceAudience<M> {
+	constructor(
+		/**
+		 * Fluid Container to read the audience from.
+		 */
+		container: IContainer,
+		private readonly _createServiceMember: (audienceMember: IClient) => M,
+	) {
+		super(container);
+	}
+
+	protected createServiceMember(audienceMember: IClient): M {
+		return this._createServiceMember(audienceMember);
 	}
 }

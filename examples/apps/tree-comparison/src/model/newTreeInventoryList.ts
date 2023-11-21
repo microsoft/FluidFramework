@@ -110,15 +110,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this.inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
+		this.inventoryItemList.insertAtEnd({
+			// In a real-world scenario, this is probably a known unique inventory ID (rather than
+			// randomly generated).  Randomly generating here just for convenience.
+			id: uuid(),
+			name,
+			quantity,
+		});
 	};
 
 	public readonly getItems = (): IInventoryItem[] => {
