@@ -45,10 +45,10 @@ export {
 
 export {
 	TreeListNodeBase,
-	TreeFieldFactoryInput,
-	TreeFieldInnerFactoryInput,
-	TreeNodeUnionFactoryInput,
-	TreeObjectNodeFactoryInput,
-	TreeObjectNodeFieldsFactoryInput,
-	TypedNodeFactoryInput,
+	InsertableTreeField,
+	InsertableTreeNodeUnionTreeFieldInner,
+	InsertableTreeNodeUnion,
+	InsertableTreeObjectNode,
+	InsertableTreeObjectNodeFields,
+	InsertableTypedNode,
 } from "./simple-tree";

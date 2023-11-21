@@ -28,10 +28,9 @@ import {
 	isFluidHandle,
 	Multiplicity,
 	type TreeDataContext,
-	type TreeFieldSchema,
 	type TreeNodeSchema,
 } from "../feature-libraries";
-import { type TreeField, type TypedNode } from "./types";
+import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
  * Module notes:
@@ -53,7 +52,7 @@ import { type TreeField, type TypedNode } from "./types";
  * @returns A cursor for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
  */
 export function cursorFromNodeData(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): CursorWithNode<MapTree> | undefined {
@@ -70,7 +69,7 @@ export function cursorFromNodeData(
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  */
 export function cursorFromFieldData(
-	data: TreeField<TreeFieldSchema, "javaScript">,
+	data: InsertableTreeField,
 	context: TreeDataContext,
 	fieldSchema: TreeFieldStoredSchema,
 ): CursorWithNode<MapTree> {
@@ -85,7 +84,7 @@ export function cursorFromFieldData(
  * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  */
 export function nodeDataToMapTree(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -111,7 +110,7 @@ export function nodeDataToMapTree(
 			} else {
 				// Assume record-like object
 				return recordToMapTree(
-					data as Record<string, TypedNode<TreeNodeSchema, "javaScript">>,
+					data as Record<string, InsertableTypedNode<TreeNodeSchema>>,
 					context,
 					typeSet,
 				);
@@ -126,7 +125,7 @@ export function nodeDataToMapTree(
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  */
 export function fieldDataToMapTrees(
-	data: TreeField<TreeFieldSchema, "javaScript">,
+	data: InsertableTreeField,
 	context: TreeDataContext,
 	fieldSchema: TreeFieldStoredSchema,
 ): MapTree[] {
@@ -170,7 +169,7 @@ function valueToMapTree(
 }
 
 function arrayToMapTree(
-	data: TypedNode<TreeNodeSchema, "javaScript">[],
+	data: InsertableTypedNode<TreeNodeSchema>[],
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -196,7 +195,7 @@ function arrayToMapTree(
 }
 
 function mapToMapTree(
-	data: Map<string, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Map<string, InsertableTypedNode<TreeNodeSchema>>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -221,7 +220,7 @@ function mapToMapTree(
 }
 
 function recordToMapTree(
-	data: Record<string | number | symbol, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Record<string | number | symbol, InsertableTypedNode<TreeNodeSchema>>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -252,7 +251,7 @@ function recordToMapTree(
 }
 
 function getType(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): TreeNodeSchemaIdentifier {

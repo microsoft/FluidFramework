@@ -20,7 +20,7 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
-import { TreeNodeUnionFactoryInput } from "./factoryInputTypes";
+import { InsertableTreeNodeUnion } from "./insertable";
 import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
 
 /**
@@ -43,7 +43,7 @@ export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMap
 export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
 	extends TreeListNodeBase<
 		TreeNodeUnion<TTypes>,
-		TreeNodeUnionFactoryInput<TTypes>,
+		InsertableTreeNodeUnion<TTypes>,
 		TreeListNode
 	> {}
 

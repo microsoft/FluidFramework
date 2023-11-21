@@ -9,7 +9,7 @@ import {
 	TreeSchema,
 	SchemaAware,
 } from "../../feature-libraries";
-import { TreeField, TreeRootFactoryInput } from "../../simple-tree";
+import { TreeField, InsertableTreeRoot } from "../../simple-tree";
 import { treeViewWithContent } from "../utils";
 import { SchemaBuilder } from "../../domains";
 
@@ -37,7 +37,7 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 export function itWithRoot<TRoot extends TreeFieldSchema>(
 	title: string,
 	schema: TreeSchema<TRoot>,
-	initialTree: TreeRootFactoryInput<TreeSchema<TRoot>>,
+	initialTree: InsertableTreeRoot<TreeSchema<TRoot>>,
 	fn: (root: TreeField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {

@@ -24,52 +24,54 @@ import {
  * Data from which a {@link TreeObjectNode} can be built.
  * @alpha
  */
-export type TreeObjectNodeFactoryInput<TSchema extends ObjectNodeSchema> =
-	TreeObjectNodeFieldsFactoryInput<TSchema["objectNodeFieldsObject"]>;
+export type InsertableTreeObjectNode<TSchema extends ObjectNodeSchema> =
+	InsertableTreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
- * Helper for generating the properties of a TreeObjectNodeFactoryInput.
+ * Helper for generating the properties of a InsertableTreeObjectNode.
  * @alpha
  */
-export type TreeObjectNodeFieldsFactoryInput<
+export type InsertableTreeObjectNodeFields<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 > = {
 	// Make all properties optional.
-	readonly [key in keyof TFields]?: TreeFieldFactoryInput<TFields[key]>;
+	readonly [key in keyof TFields]?: InsertableTreeField<TFields[key]>;
 } & {
 	// Require non-optional.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends typeof FieldKinds.optional
 		? never
-		: key]-?: TreeFieldFactoryInput<TFields[key]>;
+		: key]-?: InsertableTreeField<TFields[key]>;
 };
 
 /**
  * Data from which a {@link TreeField} can be built.
  * @alpha
  */
-export type TreeFieldFactoryInput<TSchema extends TreeFieldSchema = TreeFieldSchema> =
-	TreeFieldInnerFactoryInput<TSchema["kind"], TSchema["allowedTypes"]>;
+export type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> =
+	InsertableTreeNodeUnionTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
- * Helper for implementing TreeFieldFactoryInput.
+ * Helper for implementing InsertableTreeField.
  * @alpha
  */
-export type TreeFieldInnerFactoryInput<
+export type InsertableTreeNodeUnionTreeFieldInner<
 	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
 	: Kind extends typeof FieldKinds.required
-	? TreeNodeUnionFactoryInput<TTypes>
+	? InsertableTreeNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? TreeNodeUnionFactoryInput<TTypes> | undefined
+	? InsertableTreeNodeUnion<TTypes> | undefined
 	: unknown;
 
 /**
  * Given multiple node schema types, return the corresponding object type union from which the node could be built.
+ *
+ * If the types are ambagious, use the schema's factory to construct a unhydrated node instance with the desired type.
  * @alpha
  */
-export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
+export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
 	? unknown
 	: {
 			// TODO: Is the the best way to write this type function? Can it be simplified?
@@ -79,7 +81,7 @@ export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes exte
 				infer InnerType
 			>
 				? InnerType extends TreeNodeSchema
-					? TypedNodeFactoryInput<InnerType>
+					? InsertableTypedNode<InnerType>
 					: never
 				: never;
 	  }[number];
@@ -88,23 +90,23 @@ export type TreeNodeUnionFactoryInput<TTypes extends AllowedTypes> = TTypes exte
  * Given a node's schema, return the corresponding object from which the node could be built.
  * @alpha
  */
-export type TypedNodeFactoryInput<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+export type InsertableTypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
-	? ReadonlyMap<string, TreeFieldFactoryInput<TSchema["info"]>>
+	? ReadonlyMap<string, InsertableTreeField<TSchema["info"]>>
 	: TSchema extends FieldNodeSchema
-	? readonly TreeNodeUnionFactoryInput<TSchema["info"]["allowedTypes"]>[]
+	? readonly InsertableTreeNodeUnion<TSchema["info"]["allowedTypes"]>[]
 	: TSchema extends ObjectNodeSchema
-	? TreeObjectNodeFactoryInput<TSchema>
+	? InsertableTreeObjectNode<TSchema>
 	: // TODO: This should be `never` not `unknown` since this type is used as input, and thus should not fallback to unknown when the types are not specific enough.
-	  // As is, this use of `unknown` causes `TypedNodeFactoryInput<TreeNodeSchema>` to just be `unknown` which makes some code much less type safe than it should be.
+	  // As is, this use of `unknown` causes `InsertableTypedNode<TreeNodeSchema>` to just be `unknown` which makes some code much less type safe than it should be.
 	  unknown;
 
 /**
  * Data which can be built into an entire tree matching the provided schema.
  */
-export type TreeRootFactoryInput<TSchema extends TreeSchema> = TSchema extends TreeSchema<
+export type InsertableTreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
 	infer TRootFieldSchema
 >
-	? TreeFieldFactoryInput<TRootFieldSchema>
+	? InsertableTreeField<TRootFieldSchema>
 	: never;
