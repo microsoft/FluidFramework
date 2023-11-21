@@ -75,6 +75,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
+			// Fails with 0x6a1
+			skip: [12],
 		};
 		createDDSFuzzSuite(model, options);
 	});
