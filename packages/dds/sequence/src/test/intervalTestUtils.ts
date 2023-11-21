@@ -8,6 +8,7 @@ import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtim
 import { SharedString } from "../sharedString";
 import { IIntervalCollection } from "../intervalCollection";
 import { SequenceInterval } from "../intervals";
+import { createOverlappingIntervalsIndex } from "../intervalIndex";
 
 export interface Client {
 	sharedString: SharedString;
@@ -104,7 +105,7 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 	}
 }
 
-export const assertIntervals = (
+export const assertSequenceIntervals = (
 	sharedString: SharedString,
 	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
@@ -112,11 +113,14 @@ export const assertIntervals = (
 ) => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
-		const overlapping = intervalCollection.findOverlappingIntervals(
+		const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+		intervalCollection.attachIndex(overlappingIntervalsIndex);
+		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
 			0,
 			sharedString.getLength() - 1,
 		);
 		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		intervalCollection.detachIndex(overlappingIntervalsIndex);
 	}
 	assert.strictEqual(
 		actual.length,

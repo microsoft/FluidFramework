@@ -8,7 +8,13 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
+import {
+	IIntervalCollection,
+	IOverlappingIntervalsIndex,
+	SequenceInterval,
+	SharedString,
+	createOverlappingIntervalsIndex,
+} from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
@@ -23,14 +29,20 @@ import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
-const assertIntervalsHelper = (
+const assertSequenceIntervals = (
 	sharedString: SharedString,
-	intervalView: IIntervalCollection<SequenceInterval>,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
 ) => {
-	let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
-	if (sharedString.getLength() === 0) {
-		actual = Array.from<SequenceInterval>(intervalView);
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
 	}
 	assert.strictEqual(
 		actual.length,
@@ -38,25 +50,13 @@ const assertIntervalsHelper = (
 		`findOverlappingIntervals() must return the expected number of intervals`,
 	);
 
-	for (const actualInterval of actual) {
-		const start = sharedString.localReferencePositionToPosition(actualInterval.start);
-		const end = sharedString.localReferencePositionToPosition(actualInterval.end);
-		let found = false;
-
-		// console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
-
-		for (const expectedInterval of expected) {
-			if (expectedInterval.start === start && expectedInterval.end === end) {
-				found = true;
-				break;
-			}
-		}
-
-		assert(
-			found,
-			`Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`,
-		);
-	}
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
 function testIntervalOperations(intervalCollection: IIntervalCollection<SequenceInterval>) {
@@ -257,10 +257,11 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 		let sharedString: SharedString;
 		let intervals: IIntervalCollection<SequenceInterval>;
+		let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
 		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-			assertIntervalsHelper(sharedString, intervals, expected);
+			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
 		beforeEach(async () => {
@@ -278,7 +279,13 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			sharedString.insertText(0, "012");
 
 			intervals = sharedString.getIntervalCollection("intervals");
+			overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+			intervals.attachIndex(overlappingIntervalsIndex);
 			testIntervalOperations(intervals);
+		});
+
+		afterEach(() => {
+			intervals.detachIndex(overlappingIntervalsIndex);
 		});
 
 		it("replace all is included", async () => {
@@ -397,7 +404,13 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			sharedString1.insertText(0, "0123456789");
 			const intervals1 = sharedString1.getIntervalCollection("intervals");
 			intervals1.add({ start: 1, end: 7 });
-			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+
+			const overlappingIntervalsIndex1 = createOverlappingIntervalsIndex(sharedString1);
+			intervals1.attachIndex(overlappingIntervalsIndex1);
+
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -407,16 +420,31 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+
+			const overlappingIntervalsIndex2 = createOverlappingIntervalsIndex(sharedString2);
+			intervals2.attachIndex(overlappingIntervalsIndex2);
+
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			sharedString2.removeRange(4, 5);
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 6 },
+			]);
 
 			sharedString2.insertText(4, "x");
-			assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
+			assertSequenceIntervals(sharedString2, intervals2, overlappingIntervalsIndex2, [
+				{ start: 1, end: 7 },
+			]);
 
 			await provider.ensureSynchronized();
-			assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
+			assertSequenceIntervals(sharedString1, intervals1, overlappingIntervalsIndex1, [
+				{ start: 1, end: 7 },
+			]);
+
+			intervals1.detachIndex(overlappingIntervalsIndex1);
+			intervals2.detachIndex(overlappingIntervalsIndex2);
 		});
 
 		it("multi-client interval ops", async () => {
