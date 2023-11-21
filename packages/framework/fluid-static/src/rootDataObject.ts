@@ -46,7 +46,9 @@ class RootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
-	public readonly IRootDataObject?: IRootDataObject;
+	public get IRootDataObject() {
+		return this;
+	}
 
 	private get initialObjectsDir() {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
