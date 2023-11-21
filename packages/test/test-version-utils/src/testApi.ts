@@ -97,11 +97,7 @@ const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
 const driverCache = new Map<string, typeof DriverApi>();
 
-/**
- * Current versions of the APIs
- *
- * @internal
- */
+// #region Current versions of the APIs
 export const LoaderApi = {
 	version: pkgVersion,
 	Loader,
@@ -137,6 +133,8 @@ export const DataRuntimeApi = {
 		SparseMatrix,
 	},
 };
+
+// #endregion
 
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
