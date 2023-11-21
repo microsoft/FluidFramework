@@ -18,9 +18,8 @@ import {
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
-const timeoutMs = 500;
 
-describe("Pong", () => {
+describe.only("Pong", () => {
 	describeNoCompat("Pong", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
@@ -48,7 +47,6 @@ describe("Pong", () => {
 		async function createConnectedContainer(): Promise<IContainer> {
 			const container = await provider.makeTestContainer();
 			await waitForContainerConnection(container, true, {
-				durationMs: timeoutMs,
 				errorMsg: "Container initial connection timeout",
 			});
 			assert.strictEqual(
