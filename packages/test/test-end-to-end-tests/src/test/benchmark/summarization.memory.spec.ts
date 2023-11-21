@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
@@ -46,10 +45,7 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree";
 			async run() {
-				const defaultDataStore = await requestFluidObject<ITestDataObject>(
-					mainContainer,
-					defaultDataStoreId,
-				);
+				const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = defaultDataStore._context
 					.containerRuntime as ContainerRuntime;
 
