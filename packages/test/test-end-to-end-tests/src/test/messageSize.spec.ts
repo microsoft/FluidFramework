@@ -7,7 +7,6 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -66,12 +65,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		localDataObject = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		remoteDataObject = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
