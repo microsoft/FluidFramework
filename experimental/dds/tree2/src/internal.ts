@@ -43,8 +43,6 @@ export {
 	testRecursiveDomain,
 } from "./domains";
 
-export { TreeListNodeBase } from "./simple-tree";
-
 export {
 	NodeFromSchema,
 	NodeKind,
@@ -54,3 +52,13 @@ export {
 	TreeHandle,
 	UnhydratedData,
 } from "./class-tree";
+
+export {
+	TreeListNodeBase,
+	InsertableTreeField,
+	InsertableTreeFieldInner,
+	InsertableTreeNodeUnion,
+	InsertableTreeObjectNode,
+	InsertableTreeObjectNodeFields,
+	InsertableTypedNode,
+} from "./simple-tree";
