@@ -10,11 +10,11 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -217,7 +217,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			mainDataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 
 			// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
@@ -237,17 +237,16 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 		});
 
 		it("marks non-root data stores as referenced / unreferenced correctly", async () => {
-			const dataStore = await requestFluidObject<ITestDataObject>(
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStore =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
 			// Add data store's handle in root component and verify its marked as referenced.
-			mainDataStore._root.set("nonRootDS", dataStore.handle);
+			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore._context.id,
+				dataObject._context.id,
 				true /* referenced */,
 			);
 
@@ -257,19 +256,19 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore._context.id,
+				dataObject._context.id,
 				false /* referenced */,
 			);
 
 			// Add data store's handle back in root component. If deleteContent is true, the data store
 			// should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
 			// Also, if deleteContent is true, it won't be in the GC state in the summary anymore.
-			mainDataStore._root.set("nonRootDS", dataStore.handle);
+			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore._context.id,
+				dataObject._context.id,
 				deleteContent ? false : true /* referenced */,
 				deleteContent ? true : false /* deletedFromGCState */,
 			);
@@ -277,32 +276,30 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 
 		it("marks non-root data stores with handle in unreferenced data stores as unreferenced", async () => {
 			// Create a non-root data store - dataStore1.
-			const dataStore1 = await requestFluidObject<ITestDataObject>(
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStore1 =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject1 = (await dataStore1.entryPoint.get()) as ITestDataObject;
 			// Add dataStore1's handle in root component and verify its marked as referenced.
-			mainDataStore._root.set("nonRootDS1", dataStore1.handle);
+			mainDataStore._root.set("nonRootDS1", dataObject1.handle);
 			await validateDataStoreReferenceState(
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore1._context.id,
+				dataObject1._context.id,
 				true /* referenced */,
 			);
 
 			// Create another non-root data store - dataStore2.
-			const dataStore2 = await requestFluidObject<ITestDataObject>(
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStore2 =
+				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject2 = (await dataStore1.entryPoint.get()) as ITestDataObject;
 			// Add dataStore2's handle in dataStore1 and verify its marked as referenced.
-			dataStore1._root.set("nonRootDS2", dataStore2.handle);
+			dataObject1._root.set("nonRootDS2", dataObject2.handle);
 			await validateDataStoreReferenceState(
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore2._context.id,
+				dataObject2._context.id,
 				true /* referenced */,
 			);
 
@@ -313,7 +310,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 				provider,
 				containerRuntime,
 				deleteContent,
-				dataStore2._context.id,
+				dataObject2._context.id,
 				false /* referenced */,
 			);
 		});
@@ -404,7 +401,7 @@ describeNoCompat("GC delete attachment blobs in test mode", (getTestObjectProvid
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
 			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(container);
 		});
