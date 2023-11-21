@@ -30,13 +30,7 @@ export interface OdspConnectionConfig {
 	 * RaaS Drive Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
-
-	/**
-	 * Folder path where Fluid containers are created
-	 */
-	folderPath: string;
 }
-
 /**
  * @alpha
  */
@@ -68,38 +62,9 @@ export interface OdspClientProps {
  */
 export interface OdspContainerServices {
 	/**
-	 * Retrieves container-specific attributes associated with the ODSP service for the current Fluid container.
-	 * This includes information such as sharing URL and drive IDs.
-	 *
-	 * @returns A Promise that resolves after the container is attached, providing an object containing the `OdspServiceAttributes`.
-	 * If the attachment is not yet complete or encounters an error, the Promise will be rejected.
-	 */
-	tenantAttributes: () => Promise<OdspContainerAttributes>;
-
-	/**
-	 * Provides an object that can be used to get the users that are present in this Fluid session and
-	 * listeners for when the roster has any changes from users joining/leaving the session
+	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
-}
-
-/**
- * Represents attributes specific to Fluid container.
- * @alpha
- */
-export interface OdspContainerAttributes {
-	/**
-	 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
-	 * a new `itemId` is created in the user's drive, which developers can use for various operations
-	 * like updating, renaming, moving the Fluid file, changing permissions, and more.
-	 */
-	itemId: string;
-
-	/**
-	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple
-	 * RaaS drives.
-	 */
-	driveId: string;
 }
 
 /**

@@ -37,17 +37,11 @@ export const appSchemaData = builder.intoSchema(rootFieldSchema);
 
 // Schema aware types
 
-type FlexibleListTask = SchemaAware.TypedNode<typeof listTaskSchema, SchemaAware.ApiMode.Flexible>;
+type FlexibleListTask = SchemaAware.TypedNode<typeof listTaskSchema>;
 
-type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	typeof rootFieldSchema.allowedTypes
->;
+type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<typeof rootFieldSchema.allowedTypes>;
 
-type FlexibleStringTask = SchemaAware.TypedNode<
-	typeof stringTaskSchema,
-	SchemaAware.ApiMode.Flexible
->;
+type FlexibleStringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;
 
 // Example Use
 {
