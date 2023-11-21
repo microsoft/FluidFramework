@@ -173,9 +173,8 @@ export class TinyliciousClient {
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
 		const rootDataObject: FluidObject<IRootDataObject> | undefined =
 			await container.getEntryPoint();
-		assert(rootDataObject !== undefined, "entryPoint must exist");
 		assert(
-			rootDataObject.IRootDataObject !== undefined,
+			rootDataObject?.IRootDataObject !== undefined,
 			"entryPoint must be of type IRootDataObject",
 		);
 		return rootDataObject.IRootDataObject;
