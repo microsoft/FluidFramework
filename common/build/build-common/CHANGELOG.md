@@ -1,6 +1,5 @@
 ## `3.0.0`
 
-
 ### ⚠ BREAKING CHANGES
 
 Adds `ae-undocumented` rule to `api-extractor-base.json`.
