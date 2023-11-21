@@ -36,11 +36,13 @@ import {
 } from "../../../feature-libraries/optional-field";
 import {
 	FieldStateTree,
-	getInputContext,
+	getSequentialEdits,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
+	getSequentialStates,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
+import { assertEqual } from "./optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -58,18 +60,15 @@ const OptionalChange = {
 	set(
 		value: string,
 		wasEmpty: boolean,
-		id: ChangesetLocalId = brand(0),
-		buildId: ChangesetLocalId = brand(40),
+		ids: {
+			fill: ChangesetLocalId;
+			detach: ChangesetLocalId;
+		},
 	) {
-		return optionalFieldEditor.set(
-			cursorForJsonableTreeNode({ type, value }),
-			wasEmpty,
-			id,
-			buildId,
-		);
+		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
 	},
 
-	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
+	clear(wasEmpty: boolean, id: ChangesetLocalId) {
 		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
@@ -98,9 +97,26 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		ingest(change.fieldChange?.id);
-		// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
-		// doesn't have any `ChangesetLocalId`s.
+		for (const build of change.build ?? []) {
+			ingest(build.id.localId);
+		}
+
+		for (const [src, dst] of change.moves) {
+			if (src !== "self") {
+				ingest(src.localId);
+			}
+			if (dst !== "self") {
+				ingest(dst.localId);
+			}
+		}
+
+		for (const [id] of change.childChanges) {
+			if (id !== "self") {
+				// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
+				// doesn't have any `ChangesetLocalId`s.
+				ingest(id.localId);
+			}
+		}
 	}
 
 	return max;
@@ -120,11 +136,13 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
+	metadataArg?: RevisionMetadataSource,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		metadataArg ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(
@@ -189,6 +207,36 @@ function compose(
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
 
+function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
+	// This is effectively a filter of the intentions from all edits such that it only includes
+	// intentions for edits which modify the same child as the final one in the changeset.
+	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
+	// content for what are meant to represent different nodes.
+	const states = getSequentialStates(inputState);
+	const finalContent = states.at(-1)?.content;
+	assert(
+		finalContent !== undefined,
+		"Child change input context should only be computed when the optional field has content.",
+	);
+	const intentions: number[] = [];
+	let currentContent: string | undefined;
+	for (const state of states) {
+		if (
+			state.mostRecentEdit !== undefined &&
+			currentContent === finalContent &&
+			state.mostRecentEdit.changeset.change.childChanges.length > 0
+		) {
+			if (state.mostRecentEdit.changeset.change.childChanges !== undefined) {
+				intentions.push(state.mostRecentEdit.intention);
+			}
+		}
+
+		currentContent = state.content;
+	}
+
+	return intentions;
+}
+
 /**
  * See {@link ChildStateGenerator}
  */
@@ -197,7 +245,8 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<OptionalFieldTestState> {
-	const inputContext = getInputContext(state);
+	const mintId = mintIntention as () => ChangesetLocalId;
+	const edits = getSequentialEdits(state);
 	if (state.content !== undefined) {
 		const changeChildIntention = mintIntention();
 		yield {
@@ -205,7 +254,10 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			mostRecentEdit: {
 				changeset: tagChange(
 					OptionalChange.buildChildChange(
-						TestChange.mint(inputContext, changeChildIntention),
+						TestChange.mint(
+							computeChildChangeInputContext(state),
+							changeChildIntention,
+						),
 					),
 					tagFromIntention(changeChildIntention),
 				),
@@ -220,7 +272,23 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.clear(false),
+					OptionalChange.clear(false, mintId()),
+					tagFromIntention(setUndefinedIntention),
+				),
+				intention: setUndefinedIntention,
+				description: "Delete",
+			},
+			parent: state,
+		};
+	} else {
+		// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+		// as a concurrent set operation may populate the field.
+		const setUndefinedIntention = mintIntention();
+		yield {
+			content: undefined,
+			mostRecentEdit: {
+				changeset: tagChange(
+					OptionalChange.clear(true, mintId()),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
@@ -232,18 +300,23 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	for (const value of ["A", "B"]) {
 		const setIntention = mintIntention();
+		const [fill, detach] = [mintId(), mintId()];
 		// Using length of the input context guarantees set operations generated at different times also have different
-		// values, which should tend to be easier to debug
-		const newContents = `${value},${inputContext.length}`;
+		// values, which should tend to be easier to debug.
+		// This also makes the logic to determine intentions simpler.
+		const newContents = `${value},${edits.length}`;
 		yield {
 			content: newContents,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.set(newContents, state.content === undefined),
+					OptionalChange.set(newContents, state.content === undefined, {
+						fill,
+						detach,
+					}),
 					tagFromIntention(setIntention),
 				),
 				intention: setIntention,
-				description: `Set${value},${inputContext.length}`,
+				description: `Set${newContents}`,
 			},
 			parent: state,
 		};
@@ -251,13 +324,32 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	if (state.mostRecentEdit !== undefined) {
 		const undoIntention = mintIntention();
+		// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
+		// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
+		// the 'negate' operation is already tested via sandwich rebasing.
+		const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
+			if ("inputContext" in change) {
+				return {
+					inputContext: change.outputContext,
+					outputContext: [...change.outputContext, undoIntention],
+					intentions: [undoIntention],
+				};
+			}
+			return TestChange.emptyChange;
+		};
+
+		const inverseChangeset = optionalChangeRebaser.invert(
+			state.mostRecentEdit.changeset,
+			invertTestChangeViaNewIntention as any,
+			// Optional fields should not generate IDs during invert
+			fakeIdAllocator,
+			failCrossFieldManager,
+			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
+		);
 		yield {
 			content: state.parent?.content,
 			mostRecentEdit: {
-				changeset: tagChange(
-					invert(state.mostRecentEdit.changeset),
-					tagFromIntention(undoIntention),
-				),
+				changeset: tagChange(inverseChangeset, tagFromIntention(undoIntention)),
 				intention: undoIntention,
 				description: `Undo:${state.mostRecentEdit.description}`,
 			},
@@ -279,7 +371,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A ↷ [B, B⁻¹] === A", () => {
 		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
-				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
+				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
+				it(title, () => {
 					const inv = tagRollbackInverse(invert(change2), tag1, change2.revision);
 					const r1 = rebaseTagged(change1, change2);
 					const r2 = rebaseTagged(r1, inv);
@@ -368,8 +461,12 @@ describe("OptionalField - Rebaser Axioms", () => {
 		runExhaustiveComposeRebaseSuite(
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
-			{ rebase, rebaseComposed, compose, invert },
-			{ skipRebaseOverCompose: true },
+			{ rebase, rebaseComposed, compose, invert, assertEqual },
+			{
+				numberOfEditsToRebase: 3,
+				numberOfEditsToRebaseOver: 3,
+				numberOfEditsToVerifyAssociativity: 4,
+			},
 		);
 	});
 });
