@@ -24,6 +24,8 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
@@ -74,7 +76,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -116,7 +118,7 @@ export class TinyliciousClient {
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
 			rootDataObject,
@@ -166,6 +168,17 @@ export class TinyliciousClient {
 		});
 
 		return loader;
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> | undefined =
+			await container.getEntryPoint();
+		assert(rootDataObject !== undefined, "entryPoint must exisst");
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			"entryPoint must be of type IRootDataObject",
+		);
+		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }

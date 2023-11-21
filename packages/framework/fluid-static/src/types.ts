@@ -114,6 +114,8 @@ export interface IRootDataObject {
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
 	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+
+	readonly IRootDataObject?: IRootDataObject;
 }
 
 /**
