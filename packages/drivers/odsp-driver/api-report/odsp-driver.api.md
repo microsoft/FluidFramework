@@ -15,6 +15,7 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
+import { IPrefetchSnapshotContents as IPrefetchSnapshotContents_2 } from './odspCache';
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -197,6 +198,9 @@ export function isOdcOrigin(origin: string): boolean;
 // @public
 export function isOdcUrl(url: string | URL): boolean;
 
+// @public (undocumented)
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
+
 // @public
 export function isSpoUrl(url: string): boolean;
 
@@ -229,7 +233,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents_2>;
 }
 
 // @public @deprecated (undocumented)

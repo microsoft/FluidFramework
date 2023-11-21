@@ -12,6 +12,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
 	ContainerSchema,
 	DataObjectClass,
@@ -39,7 +40,7 @@ export interface RootDataObjectProps {
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class RootDataObject
+class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject
 {
@@ -139,6 +140,12 @@ export class RootDataObject
 
 const rootDataStoreId = "rootDOId";
 
+export function createDOProviderContainerRuntimeFactory(props: {
+	schema: ContainerSchema;
+}): IRuntimeFactory {
+	return new DOProviderContainerRuntimeFactory(props.schema);
+}
+
 /**
  * Container code that provides a single {@link IRootDataObject}.
  *
@@ -146,6 +153,7 @@ const rootDataStoreId = "rootDOId";
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ * @deprecated use {@link createDOProviderContainerRuntimeFactory} instead
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
