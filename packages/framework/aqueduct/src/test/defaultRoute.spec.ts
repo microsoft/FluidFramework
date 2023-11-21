@@ -55,6 +55,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 	} catch (err) {}
 }
 
+// TODO: Remove this file when defaultRouteRequestHandler is removed AB#4991
 describe("defaultRouteRequestHandler", () => {
 	const runtime = new MockRuntime() as any as IContainerRuntime;
 

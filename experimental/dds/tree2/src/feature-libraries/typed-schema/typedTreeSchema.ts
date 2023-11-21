@@ -24,7 +24,7 @@ import {
 	oneFromSet,
 	Assume,
 } from "../../util";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";
@@ -233,7 +233,6 @@ export class FieldNodeSchema<
  * For now this is using just the base type since the union is causing issues with schema aware typing, likely due to it being a union and thus distributing over extends clauses.
  */
 export type TreeNodeSchema = TreeNodeSchemaBase;
-// export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
 
 /**
  * Convert FieldSchemaSpecification | undefined into TreeFieldSchema.

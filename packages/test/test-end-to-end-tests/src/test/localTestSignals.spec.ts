@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	ITestFluidObject,
 	timeoutPromise,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -38,10 +38,10 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
