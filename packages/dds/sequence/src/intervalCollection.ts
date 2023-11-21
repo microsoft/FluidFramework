@@ -923,9 +923,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality, for instance:
 	 *
+	 * ```typescript
 	 * const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
 	 * collection.attachIndex(overlappingIntervalsIndex)
 	 * const result = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+	 * ```
 	 *
 	 * @returns an array of all intervals in this collection that overlap with the interval
 	 * `[startPosition, endPosition]`.
