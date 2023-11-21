@@ -4,7 +4,7 @@
  */
 
 import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core";
-import { FluidSerializableReadOnly } from "../../contextuallyTyped";
+import { FluidSerializableReadOnly } from "../../valueUtilities";
 import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
 import { ShapeIndex } from "./formatGeneric";
 

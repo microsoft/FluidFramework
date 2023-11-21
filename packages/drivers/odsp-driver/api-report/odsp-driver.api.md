@@ -198,6 +198,9 @@ export function isOdcOrigin(origin: string): boolean;
 // @public
 export function isOdcUrl(url: string | URL): boolean;
 
+// @public (undocumented)
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
+
 // @public
 export function isSpoUrl(url: string): boolean;
 
