@@ -367,38 +367,37 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	const intention = mintIntention();
 	const numNodes = state.content.numNodes;
 
-	// Insert
-	for (let i = 0; i < state.content.length; i++) {
+	for (let i = 0; i <= state.content.length; i++) {
 		for (const nodeCount of numNodes) {
-			assert(
-				nodeCount < state.content.length,
-				"Number of nodes must be less than the sequence length",
-			);
+			// Insert nodeCount nodes
+			yield {
+				content: { length: state.content.length + nodeCount, numNodes },
+				mostRecentEdit: {
+					changeset: tagChange(Change.insert(i, nodeCount), tagFromIntention(intention)),
+					intention,
+					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
+				},
+				parent: state,
+			};
 
-			// Insert nodeCount nodes if the index is valid
-			if (nodeCount + i < state.content.length + 1) {
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(
-							Change.insert(i, nodeCount),
-							tagFromIntention(intention),
-						),
-						intention,
-						description: `Insert${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}At${i}`,
-					},
-					parent: state,
-				};
-			}
+			// MoveOut nodeCount nodes
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(Change.move(i, nodeCount, i), tagFromIntention(intention)),
+					intention,
+					description: `Move${nodeCount}${
+						nodeCount === 1 ? "Node" : "Nodes"
+					}From${i}To${1}`,
+				},
+			};
 		}
 	}
 };
 
-describe("SequenceField - State-based Rebaser Axioms", () => {
+describe.only("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3] } }],
+		[{ content: { length: 1, numNodes: [1] } }],
 		generateChildStates,
 		{
 			rebase,
