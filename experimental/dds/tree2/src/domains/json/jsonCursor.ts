@@ -21,7 +21,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
 		node !== null && typeof node === "object"
 			? undefined // arrays and objects have no defined value
-			: node, // null, boolean, numbers, and strings are their own value
+			: node, // null, boolean, numbers, and strings are their own values
 	type: (node: JsonCompatible) => {
 		const type = typeof node;
 

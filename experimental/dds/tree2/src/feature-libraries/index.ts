@@ -62,9 +62,10 @@ export {
 	cursorsForTypedFieldData,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	getPossibleTypes,
 } from "./contextuallyTyped";
 
-export { assertAllowedValue, isFluidHandle } from "./valueUtilities";
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
