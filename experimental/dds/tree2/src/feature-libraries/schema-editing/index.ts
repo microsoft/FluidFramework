@@ -5,4 +5,4 @@
 
 export { makeSchemaChangeCodec } from "./schemaChangeCodecs";
 export { SchemaChange } from "./schemaChangeTypes";
-export { SchemaChangeFamily, SchemaEditor } from "./schemaChangeFamily";
+export { SchemaChangeFamily, SchemaEditor, ISchemaEditor } from "./schemaChangeFamily";

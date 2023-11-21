@@ -21,16 +21,13 @@ import {
 	Revertible,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import {
-	IDefaultEditBuilder,
-	DefaultChangeset,
-	buildForest,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-} from "../feature-libraries";
+import { IDefaultEditBuilder, buildForest } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
 import { noopValidator } from "../codec";
+import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -149,8 +146,8 @@ export interface ITreeCheckout extends AnchorLocator {
  * and functionality required to implement {@link ITreeCheckout}.
  */
 export function createTreeCheckout(args?: {
-	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: DefaultChangeFamily;
+	branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
+	changeFamily?: SharedTreeChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
@@ -161,7 +158,7 @@ export function createTreeCheckout(args?: {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
-		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
+		args?.changeFamily ?? new SharedTreeChangeFamily({ jsonValidator: noopValidator });
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -221,7 +218,7 @@ export interface ITransaction {
 
 class Transaction implements ITransaction {
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	) {}
 
 	public start(): void {
@@ -263,8 +260,8 @@ export interface ITreeCheckoutFork extends ITreeCheckout {
 export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
+		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		private readonly changeFamily: SharedTreeChangeFamily,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
@@ -306,7 +303,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public get editor(): IDefaultEditBuilder {
-		return this.branch.editor;
+		return this.branch.editor.data;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

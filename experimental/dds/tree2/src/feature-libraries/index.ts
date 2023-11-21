@@ -72,7 +72,7 @@ export { ForestSummarizer } from "./forestSummarizer";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
+export { SchemaSummarizer, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
@@ -128,6 +128,8 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	RemovedTreesFromChild,
+	ModularChangeFamily,
+	makeModularChangeCodec,
 } from "./modular-schema";
 
 export {
@@ -214,6 +216,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	fieldKinds,
 } from "./default-schema";
 
 export {
@@ -258,3 +261,11 @@ import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+
+export {
+	SchemaChange,
+	SchemaChangeFamily,
+	SchemaEditor,
+	makeSchemaChangeCodec,
+	ISchemaEditor,
+} from "./schema-editing";

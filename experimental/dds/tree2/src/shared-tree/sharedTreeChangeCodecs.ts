@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec, ICodecOptions, ICodecFamily, makeCodecFamily } from "../../codec";
-import { FieldKindIdentifier } from "../../core";
-import { Mutable } from "../../util";
-import { FieldKindWithEditor, makeModularChangeCodec } from "../modular-schema";
-import { makeSchemaChangeCodec } from "../schema-editing";
-import { SharedTreeChange } from "./defaultChangeTypes";
+import { IJsonCodec, ICodecOptions, ICodecFamily, makeCodecFamily } from "../codec";
+import { FieldKindIdentifier } from "../core";
+import { Mutable } from "../util";
+import {
+	FieldKindWithEditor,
+	makeModularChangeCodec,
+	makeSchemaChangeCodec,
+} from "../feature-libraries";
+import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
 export interface EncodedSharedTreeChange {
 	readonly modularChange?: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;

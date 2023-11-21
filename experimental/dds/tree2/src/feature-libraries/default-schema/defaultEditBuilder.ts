@@ -4,169 +4,61 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
-	ChangeRebaser,
-	Delta,
 	UpPath,
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
-	TaggedChange,
 	compareFieldUpPaths,
 	topDownPath,
-	FieldKey,
+	ChangeRebaser,
+	TaggedChange,
+	Delta,
 } from "../../core";
-import { Mutable, brand, isReadonlyArray } from "../../util";
+import { brand, isReadonlyArray } from "../../util";
 import {
-	ModularChangeFamily,
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	ModularChangeFamily,
 } from "../modular-schema";
-import { SchemaChange, SchemaChangeFamily, SchemaEditor } from "../schema-editing";
+import { ICodecFamily, ICodecOptions } from "../../codec";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
-import { SharedTreeChange } from "./defaultChangeTypes";
-import { makeSharedTreeChangeCodecFamily } from "./defaultChangeCodecs";
 
-export type DefaultChangeset = SharedTreeChange;
+export type DefaultChangeset = ModularChangeset;
 
 /**
  * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
  *
  * @sealed
  */
-export class DefaultChangeFamily
-	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>, ChangeRebaser<DefaultChangeset>
-{
-	public readonly codecs: ICodecFamily<DefaultChangeset>;
-	private readonly modularChangeFamily: ModularChangeFamily;
-	private readonly schemaChangeFamily: SchemaChangeFamily;
+export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
+	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecOptions: ICodecOptions) {
-		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, codecOptions);
-		this.schemaChangeFamily = new SchemaChangeFamily(codecOptions);
-		this.codecs = makeSharedTreeChangeCodecFamily(fieldKinds, codecOptions);
-	}
-
-	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
-		return new DefaultEditBuilder(
-			this.modularChangeFamily,
-			this.schemaChangeFamily,
-			changeReceiver,
-		);
-	}
-
-	public compose(changes: TaggedChange<DefaultChangeset>[]): DefaultChangeset {
-		const modularChanges: TaggedChange<ModularChangeset>[] = [];
-		const schemaChanges: TaggedChange<SchemaChange>[] = [];
-		for (const change of changes) {
-			const { modularChange, schemaChange } = change.change;
-			if (modularChange !== undefined) {
-				modularChanges.push({
-					change: modularChange,
-					revision: change.revision,
-					rollbackOf: change.rollbackOf,
-				});
-			}
-			if (schemaChange !== undefined) {
-				schemaChanges.push({
-					change: schemaChange,
-					revision: change.revision,
-					rollbackOf: change.rollbackOf,
-				});
-			}
-		}
-
-		const composedChange: Mutable<DefaultChangeset> = {};
-		if (modularChanges.length > 0) {
-			composedChange.modularChange = this.modularChangeFamily.compose(modularChanges);
-		}
-		if (schemaChanges.length > 0) {
-			composedChange.schemaChange = this.schemaChangeFamily.compose(schemaChanges);
-		}
-		return composedChange;
-	}
-
-	public invert(change: TaggedChange<DefaultChangeset>, isRollback: boolean): DefaultChangeset {
-		const invertedChange: Mutable<DefaultChangeset> = {};
-		const { modularChange, schemaChange } = change.change;
-		if (modularChange !== undefined) {
-			invertedChange.modularChange = this.modularChangeFamily.invert(
-				{ change: modularChange, revision: change.revision, rollbackOf: change.rollbackOf },
-				isRollback,
-			);
-		}
-		if (schemaChange !== undefined) {
-			invertedChange.schemaChange = this.schemaChangeFamily.invert(
-				{ change: schemaChange, revision: change.revision, rollbackOf: change.rollbackOf },
-				isRollback,
-			);
-		}
-		return invertedChange;
-	}
-
-	public rebase(
-		change: DefaultChangeset,
-		over: TaggedChange<DefaultChangeset>,
-	): DefaultChangeset {
-		// If a tree change is being rebased over another tree change (and there are no schema changes), delegate to the tree change rebaser.
-		if (change.schemaChange === undefined && over.change.schemaChange === undefined) {
-			return change.modularChange !== undefined && over.change.modularChange !== undefined
-				? {
-						modularChange: this.modularChangeFamily.rebase(change.modularChange, {
-							change: over.change.modularChange,
-							revision: over.revision,
-							rollbackOf: over.rollbackOf,
-						}),
-				  }
-				: change;
-		}
-		// If a schema change is being rebased over another schema change (and there are no tree changes), delegate to the schema change rebaser.
-		if (change.modularChange === undefined && over.change.modularChange === undefined) {
-			return change.schemaChange !== undefined && over.change.schemaChange !== undefined
-				? {
-						schemaChange: this.schemaChangeFamily.rebase(change.schemaChange, {
-							change: over.change.schemaChange,
-							revision: over.revision,
-							rollbackOf: over.rollbackOf,
-						}),
-				  }
-				: change;
-		}
-		// If there is any mix of tree changes and schema changes being rebased over each other, conflict for now.
-		return {};
-	}
-
-	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
-		const map = new Map<FieldKey, Delta.FieldChanges>();
-		if (change.change.modularChange !== undefined) {
-			for (const [field, mark] of this.modularChangeFamily.intoDelta({
-				change: change.change.modularChange,
-				revision: change.revision,
-			})) {
-				map.set(field, mark);
-			}
-		}
-		if (change.change.schemaChange !== undefined) {
-			for (const [field, mark] of this.schemaChangeFamily.intoDelta({
-				change: change.change.schemaChange,
-				revision: change.revision,
-			})) {
-				map.set(field, mark);
-			}
-		}
-		return map;
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
-		return this;
+		return this.modularFamily.rebaser;
+	}
+
+	public get codecs(): ICodecFamily<DefaultChangeset> {
+		return this.modularFamily.codecs;
+	}
+
+	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
+		return this.modularFamily.intoDelta(change);
+	}
+
+	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
+		return new DefaultEditBuilder(this, changeReceiver);
 	}
 }
 
 /**
- * Default editor for transactions.
+ * Default editor for transactional tree data changes.
  * @alpha
  */
 export interface IDefaultEditBuilder {
@@ -218,18 +110,12 @@ export interface IDefaultEditBuilder {
  */
 export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuilder {
 	private readonly modularBuilder: ModularEditBuilder;
-	private readonly schemaBuilder: SchemaEditor;
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(modularFamily, (modularChange) => {
-			changeReceiver({ modularChange });
-		});
-		this.schemaBuilder = new SchemaEditor(schemaFamily, (schemaChange) => {
-			changeReceiver({ schemaChange });
-		});
+		this.modularBuilder = new ModularEditBuilder(family, changeReceiver);
 	}
 
 	public enterTransaction(): void {

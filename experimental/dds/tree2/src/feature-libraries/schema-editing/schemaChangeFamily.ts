@@ -15,7 +15,15 @@ import {
 import { makeSchemaChangeCodecFamily } from "./schemaChangeCodecs";
 import { SchemaChange } from "./schemaChangeTypes";
 
-export class SchemaEditor extends EditBuilder<SchemaChange> {
+export interface ISchemaEditor {
+	/**
+	 * Updates the stored schema.
+	 * @param schema - The new schema to apply.
+	 */
+	setStoredSchema(schema: TreeStoredSchema): void;
+}
+
+export class SchemaEditor extends EditBuilder<SchemaChange> implements ISchemaEditor {
 	public setStoredSchema(schema: TreeStoredSchema): void {
 		this.applyChange({ newSchema: schema });
 	}

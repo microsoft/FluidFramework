@@ -21,6 +21,6 @@ export {
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
-} from "./defaultChangeFamily";
+} from "./defaultEditBuilder";
 
 export { defaultSchemaPolicy } from "./defaultSchema";

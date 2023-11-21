@@ -16,23 +16,17 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
+import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
-	Dependee,
-	Dependent,
 	ICachedValue,
 	recordDependency,
-	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
 	schemaDataIsEmpty,
-	SchemaEvents,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { JsonCompatible } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
 /**
@@ -129,116 +123,6 @@ export class SchemaSummarizer implements Summarizable {
 		// Currently no Fluid handles are used, so just use JSON.parse.
 		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.update(decoded);
-	}
-}
-
-interface SchemaOp {
-	readonly type: "SchemaOp";
-	readonly data: Format;
-}
-
-/**
- * Wraps a StoredSchemaRepository, adjusting its "update" function to hook into Fluid Ops.
- *
- * TODO: this should be more integrated with transactions.
- */
-export class SchemaEditor<TRepository extends StoredSchemaRepository>
-	implements StoredSchemaRepository
-{
-	private readonly codec: IJsonCodec<TreeStoredSchema, Format, unknown>;
-	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
-	public constructor(
-		public readonly inner: TRepository,
-		private readonly submit: (op: SchemaOp) => void,
-		options: ICodecOptions,
-	) {
-		this.codec = makeSchemaCodec(options);
-		this.formatValidator = options.jsonValidator.compile(Format);
-	}
-
-	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
-		return this.inner.on(eventName, listener);
-	}
-
-	/**
-	 * @returns true if this is a schema op and was handled.
-	 *
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * See TODO on `SharedTree.processCore`.
-	 */
-	public tryHandleOp(encodedOp: JsonCompatibleReadOnly): boolean {
-		const op = this.tryDecodeOp(encodedOp);
-		if (op !== undefined) {
-			// TODO: This does not correctly handle concurrency of schema edits.
-			this.inner.update(op);
-			return true;
-		}
-		return false;
-	}
-
-	public tryApplyStashedOp(encodedOp: JsonCompatibleReadOnly): boolean {
-		return this.tryHandleOp(encodedOp);
-	}
-
-	/**
-	 * @returns true iff this is a schema op and was submitted.
-	 *
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * See TODO on `SharedTree.processCore`.
-	 */
-	public tryResubmitOp(content: JsonCompatibleReadOnly): boolean {
-		const op: JsonCompatibleReadOnly = content;
-		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(
-				this.formatValidator.check(op.data),
-				0x79b /* unexpected format for resubmitted schema op */,
-			);
-			const schemaOp: SchemaOp = {
-				type: op.type,
-				data: op.data,
-			};
-			this.submit(schemaOp);
-			return true;
-		}
-		return false;
-	}
-
-	public update(newSchema: TreeStoredSchema): void {
-		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
-		this.submit(op);
-		this.inner.update(newSchema);
-	}
-
-	public registerDependent(dependent: Dependent): boolean {
-		return this.inner.registerDependent(dependent);
-	}
-
-	public removeDependent(dependent: Dependent): void {
-		return this.inner.removeDependent(dependent);
-	}
-
-	public get computationName(): string {
-		return this.inner.computationName;
-	}
-
-	public get listDependees(): undefined | (() => Iterable<Dependee>) {
-		return this.inner.listDependees?.bind(this.inner);
-	}
-
-	public get rootFieldSchema(): TreeFieldStoredSchema {
-		return this.inner.rootFieldSchema;
-	}
-
-	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-		return this.inner.nodeSchema;
-	}
-
-	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {
-		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
-			return this.codec.decode(encodedOp.data);
-		}
-
-		return undefined;
 	}
 }
 

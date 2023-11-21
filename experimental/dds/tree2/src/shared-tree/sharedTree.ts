@@ -10,7 +10,6 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, noopValidator } from "../codec";
@@ -29,12 +28,8 @@ import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
-	SchemaSummarizer as SchemaSummarizer,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-	DefaultChangeset,
+	SchemaSummarizer,
 	buildForest,
-	SchemaEditor,
 	TreeFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
@@ -51,7 +46,7 @@ import {
 } from "../feature-libraries";
 import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
+import { brand, disposeSymbol, fail } from "../util";
 import { TreeView, type ITree } from "./simpleTree";
 import {
 	InitializeAndSchematizeConfiguration,
@@ -61,6 +56,9 @@ import {
 } from "./schematizedTree";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
 import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
+import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -137,14 +135,14 @@ export interface ISharedTree extends ISharedObject, ITree {
  * TODO: detail compatibility requirements.
  */
 export class SharedTree
-	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
 	private readonly _events: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
-	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public readonly storedSchema: InMemoryStoredSchemaRepository;
 
 	/**
 	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
@@ -178,7 +176,7 @@ export class SharedTree
 			options.summaryEncodeType,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
-		const changeFamily = new DefaultChangeFamily(options);
+		const changeFamily = new SharedTreeChangeFamily(options);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
@@ -188,7 +186,7 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
+		this.storedSchema = schema;
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
@@ -283,7 +281,7 @@ export class SharedTree
 				);
 				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
 					case FieldKinds.optional.identifier: {
-						const fieldEditor = this.editor.optionalField(field);
+						const fieldEditor = this.editor.data.optionalField(field);
 						assert(
 							content.length <= 1,
 							"optional field content should normalize at most one item",
@@ -292,7 +290,7 @@ export class SharedTree
 						break;
 					}
 					case FieldKinds.sequence.identifier: {
-						const fieldEditor = this.editor.sequenceField(field);
+						const fieldEditor = this.editor.data.sequenceField(field);
 						// TODO: should do an idempotent edit here.
 						fieldEditor.insert(0, content);
 						break;
@@ -322,41 +320,6 @@ export class SharedTree
 	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
 		const view = this.schematizeInternal(config);
 		return new WrapperTreeView(view);
-	}
-
-	/**
-	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
-	 * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
-	 * A single top level enum listing all ops (including their different versions),
-	 * with at least fine grained enough detail to direct them to the correct subsystem would be a good approach.
-	 * The current use-case (with an op applying to a specific index) is a temporary hack,
-	 * and its not clear how it would fit into such a system if implemented in shared-tree-core:
-	 * maybe op dispatch is part of the shared-tree level?
-	 */
-	protected override processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		// TODO: Get rid of this `as any`. There should be a better way to narrow the type of message.contents.
-		if (!this.storedSchema.tryHandleOp(message.contents as any)) {
-			super.processCore(message, local, localOpMetadata);
-		}
-	}
-
-	protected override reSubmitCore(
-		content: JsonCompatibleReadOnly,
-		localOpMetadata: unknown,
-	): void {
-		if (!this.storedSchema.tryResubmitOp(content)) {
-			super.reSubmitCore(content, localOpMetadata);
-		}
-	}
-
-	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		if (!this.storedSchema.tryApplyStashedOp(content)) {
-			return super.applyStashedOp(content);
-		}
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
