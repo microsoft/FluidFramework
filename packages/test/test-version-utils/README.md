@@ -54,9 +54,14 @@ are generated (empty entries are current versions):
 ### Cross version combinations
 
 In addition to the layer version combinations seen above, this package also provides functions to generate variations
-intended to test all layers of the current release against the latest major public release. For example, at the time
-of writing, main is on version `2.0.0-internal.7.3.0`, so we would test `2.0.0-internal.7.3.0` against the latest
-public release `1.3.7` instead of the latest internal major release (`2.0.0-internal.6.4.0`).
+intended to test all layers of one version against all layers of another version in tests that feature more than one client.
+This is applied in our cross version tests where we test the current version against the most latest **public** release.
+
+For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
+Therefore, we would test the following combinations:
+
+-   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
+-   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
 
 ### Mocha test setup with layer version combinations
 
