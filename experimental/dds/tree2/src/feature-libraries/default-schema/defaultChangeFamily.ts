@@ -83,6 +83,11 @@ export interface IDefaultEditBuilder {
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
+	 *
+	 * @param shapeInfo - optional shape information used for schema based chunk encoding.
+	 * TODO: This shapeInfo parameter is intended as temporary means of using schema based chunk encoding. This parameter
+	 * should be removed once the encoded format is eventually separated out.
+	 *
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
