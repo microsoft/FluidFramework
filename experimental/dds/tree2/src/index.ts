@@ -225,6 +225,7 @@ export {
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 	stackTreeFieldCursor,
+	ISchemaEditor,
 } from "./feature-libraries";
 
 export {
@@ -265,6 +266,7 @@ export {
 	TreeView,
 	ITreeViewFork,
 	buildTreeConfiguration,
+	ISharedTreeEditor,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

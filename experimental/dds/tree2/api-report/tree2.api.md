@@ -1004,6 +1004,11 @@ type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1 ? true : 1 extends T["length"] ? boolean : false;
 
 // @alpha
+export interface ISchemaEditor {
+    setStoredSchema(schema: TreeStoredSchema): void;
+}
+
+// @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
 // @alpha
@@ -1014,6 +1019,11 @@ export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
     requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
     schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): FlexTreeView<TRoot>;
+}
+
+// @alpha
+export interface ISharedTreeEditor extends IDefaultEditBuilder {
+    schema: ISchemaEditor;
 }
 
 // @alpha (undocumented)
@@ -1039,7 +1049,7 @@ export interface ITree extends IChannel {
 
 // @alpha
 export interface ITreeCheckout extends AnchorLocator {
-    readonly editor: IDefaultEditBuilder;
+    readonly editor: ISharedTreeEditor;
     readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ITreeCheckoutFork;

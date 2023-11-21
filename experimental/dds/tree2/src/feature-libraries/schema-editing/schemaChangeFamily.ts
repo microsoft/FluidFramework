@@ -15,10 +15,15 @@ import {
 import { makeSchemaChangeCodecFamily } from "./schemaChangeCodecs";
 import { SchemaChange } from "./schemaChangeTypes";
 
+/**
+ * The editing affordances for changing the schema of a SharedTree.
+ * @alpha
+ */
 export interface ISchemaEditor {
 	/**
 	 * Updates the stored schema.
 	 * @param schema - The new schema to apply.
+	 * @alpha
 	 */
 	setStoredSchema(schema: TreeStoredSchema): void;
 }

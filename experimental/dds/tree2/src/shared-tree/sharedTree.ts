@@ -281,7 +281,7 @@ export class SharedTree
 				);
 				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
 					case FieldKinds.optional.identifier: {
-						const fieldEditor = this.editor.data.optionalField(field);
+						const fieldEditor = this.editor.optionalField(field);
 						assert(
 							content.length <= 1,
 							"optional field content should normalize at most one item",
@@ -290,7 +290,7 @@ export class SharedTree
 						break;
 					}
 					case FieldKinds.sequence.identifier: {
-						const fieldEditor = this.editor.data.sequenceField(field);
+						const fieldEditor = this.editor.sequenceField(field);
 						// TODO: should do an idempotent edit here.
 						fieldEditor.insert(0, content);
 						break;
