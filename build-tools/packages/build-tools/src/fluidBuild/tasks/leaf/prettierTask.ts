@@ -24,7 +24,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		}
 		for (let i = 1; i < args.length; i++) {
 			if (args[i].startsWith("--")) {
-				if (args[i] === "--check") {
+				if (args[i] === "--check" || args[i] === "--cache") {
 					continue;
 				}
 				if (args[i] === "--ignore-path" && i + 1 < args.length) {

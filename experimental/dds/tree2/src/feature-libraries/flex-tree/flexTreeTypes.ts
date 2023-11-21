@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// TODO: remove flexible types from "schema-aware", and just accept cursors.
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";

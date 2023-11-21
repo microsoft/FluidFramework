@@ -442,16 +442,29 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		// This test fails due to the rebaser incorrectly ordering the cell created by the insert of C before the cell
-		// targeted by move-in of A. This happens during tree2.rebaseOnto(tree1).
+		// This test fails due to the sequence rebaser failing to line up the removal of A with the insert of A.
 		// See BUG 5351
-		it.skip("can rebase intra-field move over insert", () => {
+		it.skip("can rebase insert and delete over insert in the same gap", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 0, "B");
+
+			insert(tree2, 0, "A");
+			remove(tree2, 0, 1);
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+			expectJsonTree([tree1, tree2], ["B"]);
+		});
+
+		it("can rebase intra-field move over insert", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 			const tree2 = tree1.fork();
 
 			insert(tree1, 2, "C");
 
-			tree2.editor.sequenceField(rootField).move(0, 1, 1);
+			tree2.editor.sequenceField(rootField).move(0, 1, 2);
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);

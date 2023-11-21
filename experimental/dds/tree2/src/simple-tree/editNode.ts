@@ -79,7 +79,7 @@ export function setEditNode<T extends TreeObjectNode<ObjectNodeSchema>>(
 	target: T,
 	editNode: FlexTreeObjectNode,
 ): T;
-export function setEditNode<T extends TreeListNode<AllowedTypes>>(
+export function setEditNode<T extends TreeListNode>(
 	target: T,
 	editNode: FlexTreeFieldNode<FieldNodeSchema>,
 ): T;
@@ -90,7 +90,7 @@ export function setEditNode<T extends TreeMapNode<MapNodeSchema>>(
 export function setEditNode<T extends TreeNode>(target: T, editNode: FlexTreeNode): T {
 	assert(
 		tryGetEditNodeTarget(editNode) === undefined,
-		"Cannot associate an edit node with multiple targets",
+		0x7f5 /* Cannot associate an edit node with multiple targets */,
 	);
 	delete (editNodeMap.get(target) as Partial<HasTarget>)?.[targetSymbol];
 	editNodeMap.set(target, editNode);

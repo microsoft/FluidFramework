@@ -30,7 +30,6 @@ import {
 	Mark,
 	MoveIn,
 	MoveOut,
-	ReturnFrom,
 	NoopMark,
 	Changeset,
 	MoveId,
@@ -48,7 +47,6 @@ import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
-	MoveDestination,
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
@@ -121,8 +119,7 @@ export function getInputCellId(
 	let markRevision: RevisionTag | undefined;
 	if (isAttachAndDetachEffect(mark)) {
 		markRevision = mark.attach.revision;
-	} else {
-		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
+	} else if (!isNoopMark(mark)) {
 		markRevision = mark.revision;
 	}
 
@@ -154,7 +151,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		getOverrideDetachId(mark) ?? {
+		mark.detachIdOverride ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -168,12 +165,6 @@ function getIntentionIfMetadataProvided(
 	return metadata === undefined ? revision : getIntention(revision, metadata);
 }
 
-function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
-	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
-		? mark.detachIdOverride
-		: undefined;
-}
-
 /**
  * Preserves the semantics of the given `mark` but repackages it into a `DetachOfRemovedNodes` when possible.
  */
@@ -181,7 +172,7 @@ export function normalizeCellRename<TNodeChange>(
 	mark: CellMark<AttachAndDetach, TNodeChange>,
 	nodeChange?: TNodeChange,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
-	assert(mark.cellId !== undefined, "AttachAndDetach marks should have a cell ID");
+	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return withNodeChange(mark, nodeChange);
 	}
@@ -241,10 +232,6 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 	if (clone.type === "AttachAndDetach") {
 		clone.attach = cloneMarkEffect(clone.attach);
 		clone.detach = cloneMarkEffect(clone.detach);
-	}
-
-	if (clone.type === "Insert" && clone.content !== undefined) {
-		clone.content = [...clone.content];
 	}
 	return clone;
 }
@@ -340,7 +327,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.cellId !== undefined;
 		case "Delete":
 		case "MoveOut":
-		case "ReturnFrom":
 		case "AttachAndDetach":
 			return true;
 		case "MoveIn":
@@ -371,16 +357,15 @@ export function isImpactful(
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
-			assert(outputId !== undefined, "Delete marks must have an output cell ID");
+			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(mark.cellId, outputId);
 		}
 		case "AttachAndDetach":
 		case "MoveOut":
-		case "ReturnFrom":
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
+			assert(mark.cellId !== undefined, 0x825 /* MoveIn marks should target empty cells */);
 			return true;
 		case "Insert":
 			// A Revive has no impact if the nodes are already in the document.
@@ -432,7 +417,7 @@ export function areOverlappingIdRanges(
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
-	return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
+	return type === "Delete" || type === "MoveOut";
 }
 
 export function isDeleteMark<TNodeChange>(
@@ -530,7 +515,7 @@ function tryMergeEffects(
 
 		assert(
 			isAttach(attach) && isDetach(detach),
-			"Merged marks should be same type as input marks",
+			0x826 /* Merged marks should be same type as input marks */,
 		);
 		return { ...lhsAttachAndDetach, attach, detach };
 	}
@@ -542,7 +527,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(getOverrideDetachId(lhs), lhsCount, getOverrideDetachId(rhs))
+		!areMergeableCellIds(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride)
 	) {
 		return undefined;
 	}
@@ -569,16 +554,11 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
+		case "MoveOut": {
+			const lhsMoveOut = lhs as MoveOut;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
-				haveMergeableIdOverrides(
-					lhsMoveOut as Partial<ReturnFrom>,
-					lhsCount,
-					rhs as Partial<ReturnFrom>,
-				) &&
+				haveMergeableIdOverrides(lhsMoveOut, lhsCount, rhs) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;
@@ -588,13 +568,7 @@ function tryMergeEffects(
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
-				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, "Insert content type mismatch");
-					return lhsInsert;
-				} else {
-					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-				}
+				return lhsInsert;
 			}
 			break;
 		}
@@ -994,16 +968,11 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 				...effect,
 				id: (effect.id as number) + length,
 			};
-
-			if (effect.content !== undefined) {
-				(effect1 as Insert).content = effect.content.slice(0, length);
-				(effect2 as Insert).content = effect.content.slice(length);
-			}
 			return [effect1, effect2];
 		}
 		case "MoveIn": {
 			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveDestination;
+			const move2 = effect2 as MoveIn;
 			if (move2.finalEndpoint !== undefined) {
 				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
 			}
@@ -1023,21 +992,12 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect1, effect2];
 		}
 		case "MoveOut": {
-			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveOut;
-			if (move2.finalEndpoint !== undefined) {
-				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
-			}
-
-			return [effect, effect2];
-		}
-		case "ReturnFrom": {
 			const effect2 = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
 
-			const return2 = effect2 as ReturnFrom;
+			const return2 = effect2 as MoveOut;
 
 			if (return2.detachIdOverride !== undefined) {
 				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
@@ -1156,7 +1116,7 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 
 	assert(
 		effect.revision === undefined || effect.revision === revision,
-		"Should not overwrite mark revision",
+		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
 }

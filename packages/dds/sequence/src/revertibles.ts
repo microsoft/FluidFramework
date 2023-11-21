@@ -37,8 +37,6 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 
 const idMap = new Map<string, string>();
 
-type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
-
 /**
  * Data for undoing edits affecting Intervals.
  *

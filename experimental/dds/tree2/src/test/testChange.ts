@@ -283,7 +283,9 @@ const rootKey: FieldKey = brand("root");
 export function asDelta(intentions: number[]): Delta.Root {
 	return intentions.length === 0
 		? emptyDelta
-		: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]);
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(

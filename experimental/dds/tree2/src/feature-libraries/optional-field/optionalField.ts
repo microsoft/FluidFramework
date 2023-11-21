@@ -30,6 +30,7 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 	RemovedTreesFromChild,
+	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
@@ -341,8 +342,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return inverted;
 	},
 
-	amendInvert: () => fail("Not implemented"),
-
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
@@ -463,13 +462,25 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return rebased;
 	},
 
-	amendRebase: (
-		change: OptionalChangeset,
-		overTagged: TaggedChange<OptionalChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	) => {
-		// TODO
-		return change;
+	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
+		const childChanges: OptionalChangeset["childChanges"] = [];
+		const prunedChange: OptionalChangeset = {
+			build: change.build,
+			moves: change.moves,
+			childChanges,
+		};
+		if (change.reservedDetachId !== undefined) {
+			prunedChange.reservedDetachId = change.reservedDetachId;
+		}
+
+		for (const [id, childChange] of change.childChanges) {
+			const prunedChildChange = pruneChild(childChange);
+			if (prunedChildChange !== undefined) {
+				prunedChange.childChanges.push([id, prunedChildChange]);
+			}
+		}
+
+		return prunedChange;
 	},
 };
 
