@@ -46,11 +46,8 @@ describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
-			const tree2 = tree1.fork();
-
-			// TODO: Could this just be done before the fork?
 			insert(tree1, 0, "y");
-			tree2.rebaseOnto(tree1);
+			const tree2 = tree1.fork();
 
 			insert(tree1, 0, "x");
 			insert(tree2, 1, "a", "c");
