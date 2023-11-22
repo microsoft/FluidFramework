@@ -376,7 +376,7 @@ describe("toMapTree", () => {
 
 	// Our data serialization format does not support certain numeric values.
 	// These tests are intended to verify the mapping behaviors for those values.
-	describe.only("Incompatible numeric value handling", () => {
+	describe("Incompatible numeric value handling", () => {
 		function assertFallback(value: number, expectedFallbackValue: unknown): void {
 			const schemaBuilder = new SchemaBuilder({ scope: "test" });
 
