@@ -22,16 +22,13 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
 	CollaborationWindow,
 	compareStrings,
+	IMoveInfo,
 	IMergeLeaf,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	SegmentGroup,
 } from "./mergeTreeNodes";
-import {
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-} from "./mergeTreeDeltaCallback";
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -64,10 +61,23 @@ import { ReferencePosition, DetachedReferencePosition } from "./referencePositio
 import { IMergeTreeOptions, MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
+import {
+	IMergeTreeClientSequenceArgs,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+} from "./index";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
+
+function removeMoveInfo(segment: Partial<IMoveInfo>): void {
+	delete segment.movedSeq;
+	delete segment.movedSeqs;
+	delete segment.localMovedSeq;
+	delete segment.movedClientIds;
+	delete segment.wasMovedOnInsert;
+}
 
 /**
  * A range [start, end)
@@ -710,6 +720,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			this.pendingRebase = undefined;
 		}
 
+		// if this is an obliterate op, keep all segments in same segment group
+		const obliterateSegmentGroup: SegmentGroup = {
+			segments: [],
+			localSeq: segmentGroup.localSeq,
+			refSeq: this.getCollabWindow().currentSeq,
+		};
+
 		const opList: IMergeTreeDeltaOp[] = [];
 		// We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
 		// The reason they need them sorted, as they have the same local sequence number and which means
@@ -736,13 +753,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						segment.propertyManager?.hasPendingProperties() === true,
 						0x036 /* "Segment has no pending properties" */,
 					);
-					// if the segment has been removed, there's no need to send the annotate op
+					// if the segment has been removed or obliterated, there's no need to send the annotate op
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
 					if (
-						segment.removedSeq === undefined ||
-						(segment.localRemovedSeq !== undefined &&
-							segment.removedSeq === UnassignedSequenceNumber)
+						(segment.removedSeq === undefined ||
+							(segment.localRemovedSeq !== undefined &&
+								segment.removedSeq === UnassignedSequenceNumber)) &&
+						(segment.movedSeq === undefined ||
+							(segment.localMovedSeq !== undefined &&
+								segment.movedSeq === UnassignedSequenceNumber))
 					) {
 						newOp = createAnnotateRangeOp(
 							segmentPosition,
@@ -762,13 +782,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						segInsertOp = segment.clone();
 						segInsertOp.properties = resetOp.seg.props;
 					}
+					if (segment.movedSeq !== UnassignedSequenceNumber) {
+						removeMoveInfo(segment);
+					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
 
 				case MergeTreeDeltaType.REMOVE:
 					if (
 						segment.localRemovedSeq !== undefined &&
-						segment.removedSeq === UnassignedSequenceNumber
+						segment.removedSeq === UnassignedSequenceNumber &&
+						(segment.movedSeq === undefined ||
+							(segment.localMovedSeq !== undefined &&
+								segment.movedSeq === UnassignedSequenceNumber))
 					) {
 						newOp = createRemoveRangeOp(
 							segmentPosition,
@@ -776,21 +802,53 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						);
 					}
 					break;
-
+				case MergeTreeDeltaType.OBLITERATE:
+					if (
+						segment.localMovedSeq !== undefined &&
+						segment.movedSeq === UnassignedSequenceNumber &&
+						(segment.removedSeq === undefined ||
+							(segment.localRemovedSeq !== undefined &&
+								segment.removedSeq === UnassignedSequenceNumber))
+					) {
+						newOp = createObliterateRangeOp(
+							segmentPosition,
+							segmentPosition + segment.cachedLength,
+						);
+					}
+					break;
 				default:
 					throw new Error(`Invalid op type`);
 			}
 
-			if (newOp) {
+			if (newOp && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
+				segment.segmentGroups.enqueue(obliterateSegmentGroup);
+
+				const first = opList[0];
+
+				if (!!first && first.pos2 !== undefined) {
+					first.pos2 += newOp.pos2! - newOp.pos1!;
+				} else {
+					opList.push(newOp);
+				}
+			} else if (newOp) {
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
 				};
 				segment.segmentGroups.enqueue(newSegmentGroup);
+
 				this._mergeTree.pendingSegments.push(newSegmentGroup);
+
 				opList.push(newOp);
 			}
+		}
+
+		if (
+			resetOp.type === MergeTreeDeltaType.OBLITERATE &&
+			obliterateSegmentGroup.segments.length > 0
+		) {
+			this._mergeTree.pendingSegments.push(obliterateSegmentGroup);
 		}
 
 		return opList;

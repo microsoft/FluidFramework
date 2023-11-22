@@ -26,6 +26,12 @@ export type TestOperation = (
 export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.removeRangeLocal(opStart, opEnd);
 
+export const obliterateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.obliterateRangeLocal(opStart, opEnd);
+
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 

@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Any mapping from a string to values of type `T`
+ */
 export interface MapLike<T> {
 	[index: string]: T;
 }
 
-// We use any because when you include custom methods
-// such as toJSON(), JSON.stringify accepts most types other
-// than functions
+/**
+ * A loosely-typed mapping from strings to any value.
+ *
+ * @remarks Property sets are expected to be JSON-stringify-able.
+ *
+ * @privateRemarks PropertySet is typed using `any` because when you include
+ * custom methods such as toJSON(), JSON.stringify accepts most types other than
+ * functions
+ */
 export type PropertySet = MapLike<any>;
-
-// Assume these are created with Object.create(null)
 
 /**
  * @internal

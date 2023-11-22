@@ -31,6 +31,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - tools/markdown-magic
     - tools/pipelines/build-markdown-magic.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -53,6 +54,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - tools/markdown-magic
     - tools/pipelines/build-markdown-magic.yml
     - tools/pipelines/templates/build-npm-package.yml

@@ -33,8 +33,3 @@ export {
 	defaultRouteRequestHandler,
 	mountableViewRequestHandler,
 } from "./request-handlers";
-export {
-	getDefaultObjectFromContainer,
-	getObjectFromContainer,
-	getObjectWithIdFromContainer,
-} from "./utils";

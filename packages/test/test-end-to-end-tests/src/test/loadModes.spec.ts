@@ -9,7 +9,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
-	getDefaultObjectFromContainer,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -117,7 +116,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
-		dataObject1 = await getDefaultObjectFromContainer<TestDataObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 	});
 
 	afterEach(() => {
@@ -206,7 +205,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			headers,
 		);
 		const initialSequenceNumber = container2.deltaManager.lastSequenceNumber;
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const initialValue = dataObject2.value;
 
 		assert.strictEqual(dataObject1.value, dataObject2.value, "counter values should be equal");
@@ -260,7 +259,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -325,7 +324,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,

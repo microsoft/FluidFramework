@@ -67,7 +67,7 @@ export class Heap<T> {
 	 *
 	 * @returns Heap node containing the smallest element
 	 */
-	public peek(): IHeapNode<T> {
+	public peek(): IHeapNode<T> | undefined {
 		return this.L[1];
 	}
 
@@ -76,7 +76,11 @@ export class Heap<T> {
 	 *
 	 * @returns The smallest value in the heap
 	 */
-	public get(): T {
+	public get(): T | undefined {
+		if (this.L.length === 0) {
+			return undefined;
+		}
+
 		this.swap(1, this.count());
 		const x = this.L.pop();
 		this.fixdown(1);

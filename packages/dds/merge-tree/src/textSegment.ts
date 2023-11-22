@@ -25,6 +25,7 @@ export interface IJSONTextSegment extends IJSONSegment {
 
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";
+	public readonly type = TextSegment.type;
 
 	public static is(segment: ISegment): segment is TextSegment {
 		return segment.type === TextSegment.type;
@@ -47,8 +48,6 @@ export class TextSegment extends BaseSegment {
 		}
 		return undefined;
 	}
-
-	public readonly type = TextSegment.type;
 
 	constructor(public text: string) {
 		super();

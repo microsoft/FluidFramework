@@ -72,7 +72,7 @@ export class Bubblebench extends DataObject {
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		this.view = tree.schematize({
+		this.view = tree.schematizeInternal({
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [],
 			schema: appSchemaData,
