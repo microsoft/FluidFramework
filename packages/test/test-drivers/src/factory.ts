@@ -26,7 +26,6 @@ export interface DriverApiType {
 /**
  * @internal
  */
-
 export const DriverApi: DriverApiType = {
 	LocalDriverApi,
 	OdspDriverApi,
