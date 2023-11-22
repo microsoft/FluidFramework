@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TreeNodeSchemaBase as FlexTreeNodeSchemaBase } from "../feature-libraries";
 import { type TreeNodeSchema } from "./schemaFactory";
 

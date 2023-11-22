@@ -234,11 +234,11 @@ export {
 	TreeFieldInner,
 	TypedNode,
 	TreeNodeUnion,
-	TreeListNode,
+	TreeListNode as TreeListNodeOld,
 	TreeMapNode,
 	TreeObjectNode,
-	Tree,
-	TreeApi,
+	Tree as TreeOld,
+	TreeApi as TreeApiOld,
 	TreeNode,
 	TreeObjectFactory,
 	FactoryTreeSchema,
@@ -270,7 +270,18 @@ export {
 	buildTreeConfiguration,
 } from "./shared-tree";
 
-export { ITree, TreeNodeSchema, TreeConfiguration, TreeView } from "./class-tree";
+export {
+	ITree,
+	TreeNodeSchema,
+	TreeConfiguration,
+	TreeView,
+	SchemaFactory,
+	TreeListNode,
+	Tree,
+	TreeApi,
+	NodeBase,
+} from "./class-tree";
+export { TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";

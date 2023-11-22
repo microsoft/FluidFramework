@@ -37,6 +37,9 @@ import {
 	flexSchemaSymbol,
 } from "./cachedFlexSchemaFromClassSchema";
 
+/**
+ * @alpha
+ */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
 
@@ -114,7 +117,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
 					!(input instanceof NodeBase),
-					"Existing nodes cannot be used as new content to insert. THey must either be moved or explicitly copied",
+					"Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied",
 				);
 			}
 		}
@@ -417,6 +420,7 @@ export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllo
 
 /**
  * Helper used to produce types for object nodes.
+ * @alpha
  */
 export type ObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
@@ -431,11 +435,12 @@ export type ObjectFromSchemaRecord<
  * 3. Union of 1 and 2.
  *
  * TODO: consider separating these cases into different types.
+ * @alpha
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
-	readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
+	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
 /**
@@ -544,9 +549,18 @@ export class FieldSchema<
 	) {}
 }
 
+/**
+ * @alpha
+ */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
+/**
+ * @alpha
+ */
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
+/**
+ * @alpha
+ */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
 	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
@@ -555,24 +569,46 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 		: unknown;
 
 /**
+ * @alpha
+ */
+export type InsertableTreeFieldFromImplicitField<
+	TSchema extends ImplicitFieldSchema = FieldSchema,
+> = TSchema extends FieldSchema<infer Kind, infer Types>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	: TSchema extends ImplicitAllowedTypes
+	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+	: unknown;
+
+/**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
+ * @alpha
  */
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required
 	? T
 	: undefined | T;
 
+/**
+ * @alpha
+ */
 export type TreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? TreeNodeFromAllowedTypes<TSchema>
+	? NodeFromSchema<InternalTypedSchemaTypes.FlexListToUnion<TSchema>>
 	: unknown;
 
-export type TreeNodeFromAllowedTypes<TTypes extends AllowedTypes = AllowedTypes> = NodeFromSchema<
-	InternalTypedSchemaTypes.FlexListToUnion<TTypes>
->;
+/**
+ * @alpha
+ */
+export type InsertableTreeNodeFromImplicitAllowedTypes<
+	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
+> = TSchema extends TreeNodeSchema
+	? Unhydrated<NodeFromSchema<TSchema>> | InsertableTypedNode<TSchema>
+	: TSchema extends AllowedTypes
+	? InsertableTypedNode<InternalTypedSchemaTypes.FlexListToUnion<TSchema>>
+	: unknown;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

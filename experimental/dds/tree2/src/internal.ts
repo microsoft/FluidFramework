@@ -50,6 +50,7 @@ export {
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
 	TreeHandle,
+	InternalEditableTreeTypes,
 } from "./class-tree";
 
 export {
