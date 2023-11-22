@@ -286,6 +286,7 @@ export function rebaseChange<TChange>(
 	);
 
 	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	inverses.reverse();
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
 
