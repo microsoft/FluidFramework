@@ -37,6 +37,8 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	IMergeTreeObliterateMsg,
+	createObliterateRangeOp,
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -188,6 +190,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					break;
 				}
 
+				case MergeTreeDeltaType.OBLITERATE: {
+					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
+					if (lastRem?.pos1 === r.position) {
+						assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
+						lastRem.pos2 += r.segment.cachedLength;
+					} else {
+						ops.push(
+							createObliterateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
+						);
+					}
+					break;
+				}
+
 				default:
 			}
 		}
@@ -267,6 +285,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public removeRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
+	}
+
+	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 *
+	 * @alpha
+	 */
+	public obliterateRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
 	/**

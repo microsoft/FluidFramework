@@ -82,6 +82,10 @@ export class TestString {
 		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
 	}
 
+	public obliterateRange(start: number, end: number, increaseMsn: boolean) {
+		this.queue(this.client.obliterateRangeLocal(start, end)!, increaseMsn);
+	}
+
 	// Ensures the client's text matches the `expected` string and round-trips through a snapshot
 	// into a new client.  The current client is then replaced with the loaded client in the hope
 	// that it will help detect corruption bugs as further ops are applied.

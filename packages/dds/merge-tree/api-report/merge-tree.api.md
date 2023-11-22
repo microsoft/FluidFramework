@@ -237,6 +237,9 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 export function createMap<T>(): MapLike<T>;
 
 // @internal
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
+
+// @internal
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
@@ -448,6 +451,18 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 }
 
 // @public (undocumented)
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    relativePos1?: never;
+    relativePos2?: never;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE;
+}
+
+// @public (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @public (undocumented)
@@ -455,6 +470,7 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableObliterate?: boolean;
     // @alpha
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
@@ -488,6 +504,16 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
+}
+
+// @public
+export interface IMoveInfo {
+    localMovedSeq?: number;
+    movedClientIds: number[];
+    movedSeq: number;
+    movedSeqs: number[];
+    moveDst?: ReferencePosition;
+    wasMovedOnInsert: boolean;
 }
 
 // @internal (undocumented)
@@ -932,7 +958,7 @@ export interface SegmentGroup {
     // (undocumented)
     refSeq: number;
     // (undocumented)
-    segments: ISegment[];
+    segments: ISegmentLeaf[];
 }
 
 // @public (undocumented)

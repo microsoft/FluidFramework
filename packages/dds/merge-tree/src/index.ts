@@ -56,6 +56,7 @@ export {
 	debugMarkerToString,
 	IJSONMarkerSegment,
 	IMergeNodeCommon,
+	IMoveInfo,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
@@ -78,6 +79,7 @@ export {
 	createInsertOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+	createObliterateRangeOp,
 } from "./opBuilder";
 export {
 	ICombiningOp,
@@ -93,6 +95,7 @@ export {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	IMergeTreeObliterateMsg,
 } from "./ops";
 export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties";
 export {

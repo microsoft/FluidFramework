@@ -38,6 +38,7 @@ export function makeOperationGenerator(
 	const {
 		startPosition,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -173,6 +174,7 @@ export function makeOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
