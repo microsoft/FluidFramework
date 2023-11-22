@@ -185,20 +185,26 @@ function mapUnsupportedPrimitive(
 	typeSet: TreeTypeSet,
 	// eslint-disable-next-line @rushstack/no-new-null
 ): boolean | number | string | IFluidHandle | null {
-	if (Object.is(value, -0)) {
-		// Our serialized data format does not support -0.
-		// Map such input to +0.
-		return 0;
-	} else if (Number.isNaN(value) || !Number.isFinite(value)) {
-		// Our serialized data format does not support NaN nor +/-∞.
-		// If the schema supports `null`, fall back to that. Otherwise, throw.
-		if (typeSet?.has(leaf.null.name) ?? false) {
-			return null;
-		} else {
-			throw new TypeError(`Received unsupported numeric value: ${value}.`);
+	switch (typeof value) {
+		case "number": {
+			if (Object.is(value, -0)) {
+				// Our serialized data format does not support -0.
+				// Map such input to +0.
+				return 0;
+			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
+				// Our serialized data format does not support NaN nor +/-∞.
+				// If the schema supports `null`, fall back to that. Otherwise, throw.
+				if (typeSet?.has(leaf.null.name) ?? false) {
+					return null;
+				} else {
+					throw new TypeError(`Received unsupported numeric value: ${value}.`);
+				}
+			} else {
+				return value;
+			}
 		}
-	} else {
-		return value;
+		default:
+			return value;
 	}
 }
 
