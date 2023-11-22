@@ -16,7 +16,7 @@ import {
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
- * Types of Routerlicious Endpoint.
+ * Types of Routerlicious endpoints.
  * @public
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
