@@ -4,7 +4,11 @@
  */
 
 export { ConnectionState } from "./connectionState";
-export { IContainerExperimental, waitContainerToCatchUp } from "./container";
+export {
+	IContainerExperimental,
+	IPendingDetachedContainerState,
+	waitContainerToCatchUp,
+} from "./container";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
@@ -21,3 +25,4 @@ export {
 } from "./location-redirection-utilities";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
 export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils";
+export { ISerializableBlobContents } from "./containerStorageAdapter";

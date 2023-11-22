@@ -116,6 +116,7 @@ import { IConnectionStateHandler, createConnectionStateHandler } from "./connect
 import {
 	combineAppAndProtocolSummary,
 	getProtocolSnapshotTree,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
 	getSnapshotTreeFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
@@ -368,10 +369,8 @@ export interface IPendingContainerState {
 
 export interface IPendingDetachedContainerState {
 	attached: boolean;
-	// baseSnapshot: ISnapshotTree | undefined;
-	// snapshotBlobs: ISerializableBlobContents | undefined;
-	detachedSummary: ISummaryTree;
-	pendingRuntimeState?: unknown;
+	baseSnapshot: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
 }
 
 const summarizerClientType = "summarizer";
@@ -485,12 +484,15 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot);
+				const detachedContainerState = JSON.parse(snapshot);
 
-				if (!isPendingDetachedContainerState(deserializedSummary, hasBlobsSummaryTree)) {
+				if (!isPendingDetachedContainerState(detachedContainerState)) {
 					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 				}
-				await container.rehydrateDetachedFromSnapshot(deserializedSummary.detachedSummary);
+				await container.rehydrateDetachedFromSnapshot(
+					detachedContainerState.baseSnapshot,
+					detachedContainerState.snapshotBlobs,
+				);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1207,19 +1209,15 @@ export class Container
 			};
 		}
 
-		const pendingRuntimeState = "await this.runtime.getPendingLocalState(props);";
+		const [baseSnapshot, snapshotBlobs] = getSnapshotTreeAndBlobsFromSerializedContainer(
+			combinedSummary,
+			hasBlobsSummaryTree,
+		);
 
-		if (this.offlineLoadEnabled) {
-			const snapshot = getSnapshotTreeFromSerializedContainer(combinedSummary);
-			this.baseSnapshot = snapshot;
-			this.baseSnapshotBlobs = getBlobContentsFromTreeWithBlobContents(snapshot);
-		}
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			// baseSnapshot: this.baseSnapshot,
-			// snapshotBlobs: this.baseSnapshotBlobs,
-			detachedSummary: combinedSummary,
-			pendingRuntimeState,
+			baseSnapshot,
+			snapshotBlobs,
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1845,18 +1843,21 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
-			assert(
-				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
-				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
-			);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
-		}
+	private async rehydrateDetachedFromSnapshot(
+		snapshotTree: ISnapshotTree,
+		snapshotBlobs: ISerializableBlobContents,
+	) {
+		// if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
+		// 	assert(
+		// 		!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+		// 		0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
+		// 	);
+		// 	// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		// 	delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
+		// }
 
-		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
+		// const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotBlobs);
 		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);

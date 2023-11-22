@@ -25,6 +25,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -100,11 +101,27 @@ export interface IParsedUrl {
 }
 
 // @public (undocumented)
+export interface IPendingDetachedContainerState {
+    // (undocumented)
+    attached: boolean;
+    // (undocumented)
+    baseSnapshot: ISnapshotTree;
+    // (undocumented)
+    snapshotBlobs: ISerializableBlobContents;
+}
+
+// @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
+}
+
+// @public
+export interface ISerializableBlobContents {
+    // (undocumented)
+    [id: string]: string;
 }
 
 // @public

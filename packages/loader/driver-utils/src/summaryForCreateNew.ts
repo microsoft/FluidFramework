@@ -9,7 +9,7 @@ import {
 	ISummaryBlob,
 	ICommittedProposal,
 	IDocumentAttributes,
-	// ISnapshotTree,
+	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -23,9 +23,16 @@ export interface CombinedAppAndProtocolSummary extends ISummaryTree {
 		[".protocol"]: ISummaryTree;
 	};
 }
-
+/**
+ * @internal
+ */
 export interface ISerializableBlobContents {
 	[id: string]: string;
+}
+
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+	blobsContents: { [path: string]: ArrayBufferLike };
+	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }
 /**
  * Defines the current layout of an .app + .protocol summary tree
@@ -35,10 +42,8 @@ export interface ISerializableBlobContents {
 
 export interface PendingDetachedContainerState {
 	attached: boolean;
-	// baseSnapshot: ISnapshotTree | undefined;
-	// snapshotBlobs: ISerializableBlobContents | undefined;
-	detachedSummary: ISummaryTree;
-	pendingRuntimeState?: unknown;
+	baseSnapshot: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
 }
 
 /**
@@ -71,11 +76,11 @@ export function isCombinedAppAndProtocolSummary(
  */
 export function isPendingDetachedContainerState(
 	detachedContainerState: PendingDetachedContainerState,
-	optionalRootTrees: string,
 ): detachedContainerState is PendingDetachedContainerState {
 	if (
 		detachedContainerState?.attached === undefined ||
-		!isCombinedAppAndProtocolSummary(detachedContainerState?.detachedSummary, optionalRootTrees)
+		detachedContainerState?.baseSnapshot === undefined ||
+		detachedContainerState?.snapshotBlobs === undefined
 	) {
 		return false;
 	}

@@ -222,11 +222,17 @@ export interface IProgress {
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
 
+// @internal (undocumented)
+export interface ISerializableBlobContents {
+    // (undocumented)
+    [id: string]: string;
+}
+
 // @public
 export function isOnline(): OnlineStatus;
 
 // @internal
-export function isPendingDetachedContainerState(detachedContainerState: PendingDetachedContainerState, optionalRootTrees: string): detachedContainerState is PendingDetachedContainerState;
+export function isPendingDetachedContainerState(detachedContainerState: PendingDetachedContainerState): detachedContainerState is PendingDetachedContainerState;
 
 // @public
 export function isRuntimeMessage(message: {
@@ -299,9 +305,9 @@ export interface PendingDetachedContainerState {
     // (undocumented)
     attached: boolean;
     // (undocumented)
-    detachedSummary: ISummaryTree;
+    baseSnapshot: ISnapshotTree;
     // (undocumented)
-    pendingRuntimeState?: unknown;
+    snapshotBlobs: ISerializableBlobContents;
 }
 
 // @public (undocumented)

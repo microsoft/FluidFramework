@@ -5,7 +5,11 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { stringToBuffer, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
+import {
+	stringToBuffer,
+	Uint8ArrayToArrayBuffer,
+	Uint8ArrayToString,
+} from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -13,6 +17,7 @@ import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
+	ISerializableBlobContents,
 } from "@fluidframework/driver-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 
@@ -155,6 +160,63 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 }
 
 /**
+ * Converts summary tree (for upload) to snapshot tree (for download).
+ * Summary tree blobs contain contents, but snapshot tree blobs normally
+ * contain IDs pointing to storage. This will create 2 blob entries in the
+ * snapshot tree for each blob in the summary tree. One will be the regular
+ * path pointing to a uniquely generated ID. Then there will be another
+ * entry with the path as that uniquely generated ID, and value as the
+ * blob contents as a base-64 string.
+ * @param summary - summary to convert
+ */
+function convertSummaryToSnapshotAndBlobs(
+	summary: ISummaryTree,
+): [ISnapshotTree, ISerializableBlobContents] {
+	let blobContents: ISerializableBlobContents = {};
+	const treeNode: ISnapshotTree = {
+		blobs: {},
+		trees: {},
+		id: uuid(),
+		unreferenced: summary.unreferenced,
+	};
+	const keys = Object.keys(summary.tree);
+	for (const key of keys) {
+		const summaryObject = summary.tree[key];
+
+		switch (summaryObject.type) {
+			case SummaryType.Tree: {
+				let blobs: ISerializableBlobContents | undefined;
+				[treeNode.trees[key], blobs] = convertSummaryToSnapshotAndBlobs(summaryObject);
+				blobContents = { ...blobContents, ...blobs };
+				break;
+			}
+			case SummaryType.Attachment:
+				treeNode.blobs[key] = summaryObject.id;
+				break;
+			case SummaryType.Blob: {
+				const blobId = uuid();
+				treeNode.blobs[key] = blobId;
+				const contentString: string =
+					summaryObject.content instanceof Uint8Array
+						? Uint8ArrayToString(summaryObject.content)
+						: summaryObject.content;
+				blobContents[blobId] = contentString;
+				break;
+			}
+			case SummaryType.Handle:
+				throw new LoggingError(
+					"No handles should be there in summary in detached container!!",
+				);
+				break;
+			default: {
+				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
+			}
+		}
+	}
+	return [treeNode, blobContents];
+}
+
+/**
  * Combine and convert protocol and app summary tree to format which is readable by container while rehydrating.
  * @param protocolSummaryTree - Protocol Summary Tree
  * @param appSummaryTree - App Summary Tree
@@ -175,6 +237,20 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 	return snapshotTreeWithBlobContents;
 }
 
+export function convertProtocolAndAppSummaryToSnapshotAndBlobs(
+	protocolSummaryTree: ISummaryTree,
+	appSummaryTree: ISummaryTree,
+): [ISnapshotTree, ISerializableBlobContents] {
+	const combinedSummary: ISummaryTree = {
+		type: SummaryType.Tree,
+		tree: { ...appSummaryTree.tree },
+	};
+
+	combinedSummary.tree[".protocol"] = protocolSummaryTree;
+	const snapshotTreeWithBlobContents = convertSummaryToSnapshotAndBlobs(combinedSummary);
+	return snapshotTreeWithBlobContents;
+}
+
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
 export const getSnapshotTreeFromSerializedContainer = (
@@ -187,6 +263,23 @@ export const getSnapshotTreeFromSerializedContainer = (
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
 	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotTree(
+		protocolSummaryTree,
+		appSummaryTree,
+	);
+	return snapshotTreeWithBlobContents;
+};
+
+export const getSnapshotTreeAndBlobsFromSerializedContainer = (
+	detachedContainerSnapshot: ISummaryTree,
+	optionalRoots: string,
+): [ISnapshotTree, ISerializableBlobContents] => {
+	assert(
+		isCombinedAppAndProtocolSummary(detachedContainerSnapshot, optionalRoots),
+		"Protocol and App summary trees should be present",
+	);
+	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
+	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
+	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotAndBlobs(
 		protocolSummaryTree,
 		appSummaryTree,
 	);

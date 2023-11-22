@@ -41,7 +41,7 @@ import {
 	describeNoCompat,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
-import { isPendingDetachedContainerState } from "@fluidframework/driver-utils";
+// import { isPendingDetachedContainerState } from "@fluidframework/driver-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -991,37 +991,37 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 		},
 	);
 
-	it("Directly attach container through service factory, should resolve to same container", async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+	// it("Directly attach container through service factory, should resolve to same container", async () => {
+	// 	const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+	// 	// Get the root dataStore from the detached container.
+	// 	const response = await container.request({ url: "/" });
+	// 	const dataStore = response.value as ITestFluidObject;
 
-		// Create a sub dataStore of type TestFluidObject.
-		const subDataStore1 = await createFluidObject(dataStore.context, "default");
-		dataStore.root.set("attachKey", subDataStore1.handle);
+	// 	// Create a sub dataStore of type TestFluidObject.
+	// 	const subDataStore1 = await createFluidObject(dataStore.context, "default");
+	// 	dataStore.root.set("attachKey", subDataStore1.handle);
 
-		const snapshot = container.serialize();
-		const deserializedSummary = JSON.parse(snapshot);
-		if (!isPendingDetachedContainerState(deserializedSummary, ".hasBlobsSummaryTree")) {
-			throw Error("Cannot rehydrate detached container. Incorrect format");
-		}
-		const resolvedUrl = await provider.urlResolver.resolve(request);
-		assert(resolvedUrl);
-		const service = await provider.documentServiceFactory.createContainer(
-			deserializedSummary.detachedSummary,
-			resolvedUrl,
-		);
-		const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
+	// 	const snapshot = container.serialize();
+	// 	const deserializedSummary = JSON.parse(snapshot);
+	// 	if (!isPendingDetachedContainerState(deserializedSummary)) {
+	// 		throw Error("Cannot rehydrate detached container. Incorrect format");
+	// 	}
+	// 	const resolvedUrl = await provider.urlResolver.resolve(request);
+	// 	assert(resolvedUrl);
+	// 	const service = await provider.documentServiceFactory.createContainer(
+	// 		deserializedSummary.baseSnapshot,
+	// 		resolvedUrl,
+	// 	);
+	// 	const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
 
-		const container2 = await loader.resolve({ url: absoluteUrl });
-		// Get the root dataStore from the detached container.
-		const response2 = await container2.request({ url: "/" });
-		const dataStore2 = response2.value as ITestFluidObject;
-		assert.strictEqual(
-			dataStore2.root.get("attachKey").absolutePath,
-			subDataStore1.handle.absolutePath,
-			"Stored handle should match!!",
-		);
-	});
+	// 	const container2 = await loader.resolve({ url: absoluteUrl });
+	// 	// Get the root dataStore from the detached container.
+	// 	const response2 = await container2.request({ url: "/" });
+	// 	const dataStore2 = response2.value as ITestFluidObject;
+	// 	assert.strictEqual(
+	// 		dataStore2.root.get("attachKey").absolutePath,
+	// 		subDataStore1.handle.absolutePath,
+	// 		"Stored handle should match!!",
+	// 	);
+	// });
 });

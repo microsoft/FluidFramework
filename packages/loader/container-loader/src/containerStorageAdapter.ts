@@ -29,7 +29,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 
 /**
  * Stringified blobs from a summary/snapshot tree.
- * @internal
+ * @public
  */
 export interface ISerializableBlobContents {
 	[id: string]: string;
@@ -101,16 +101,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
-	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
-		this.getBlobContents(snapshotTree);
-	}
-
-	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+	public loadSnapshotForRehydratingContainer(snapshotBlobs: ISerializableBlobContents) {
+		for (const [id, value] of Object.entries(snapshotBlobs)) {
 			this.blobContents[id] = value;
-		}
-		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-			this.getBlobContents(tree);
 		}
 	}
 
