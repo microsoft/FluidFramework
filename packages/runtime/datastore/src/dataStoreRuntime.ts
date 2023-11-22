@@ -448,7 +448,9 @@ export class FluidDataStoreRuntime
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
 
-		this.addOrCreateChannelCore(channel);
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
 	public createChannel(id: string = uuid(), type: string): IChannel {
@@ -466,12 +468,13 @@ export class FluidDataStoreRuntime
 		}
 
 		const channel = factory.create(this, id);
-		this.addOrCreateChannelCore(channel);
-
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 		return channel;
 	}
 
-	private addOrCreateChannelCore(channel: IChannel) {
+	private createChannelContext(channel: IChannel) {
 		this.notBoundedChannelContextSet.add(channel.id);
 		const context = new LocalChannelContext(
 			channel,
@@ -486,12 +489,6 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(channel.id, context);
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer(
-			"DDSCreatedInSummarizer",
-			channel.id,
-			channel.attributes.type,
-		);
 	}
 
 	/**
