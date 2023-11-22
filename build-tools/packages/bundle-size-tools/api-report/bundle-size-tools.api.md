@@ -301,67 +301,6 @@ export function unzipStream(stream: NodeJS.ReadableStream): Promise<jszip>;
 // @public
 export type WebpackStatsProcessor = (stats: StatsCompilation, config: BundleBuddyConfig | undefined) => BundleMetricSet | undefined;
 
-// Warnings were encountered during analysis:
-//
-// src/ADO/AdoSizeComparator.ts:30:1 - (ae-undocumented) Missing documentation for "ADOSizeComparator".
-// src/ADO/Constants.ts:6:1 - (ae-undocumented) Missing documentation for "IADOConstants".
-// src/ADO/Constants.ts:8:2 - (ae-undocumented) Missing documentation for "orgUrl".
-// src/ADO/Constants.ts:11:2 - (ae-undocumented) Missing documentation for "projectName".
-// src/ADO/Constants.ts:14:2 - (ae-undocumented) Missing documentation for "ciBuildDefinitionId".
-// src/ADO/Constants.ts:19:2 - (ae-undocumented) Missing documentation for "prBuildDefinitionId".
-// src/ADO/Constants.ts:22:2 - (ae-undocumented) Missing documentation for "bundleAnalysisArtifactName".
-// src/ADO/Constants.ts:26:2 - (ae-undocumented) Missing documentation for "projectRepoGuid".
-// src/ADO/Constants.ts:31:2 - (ae-undocumented) Missing documentation for "buildsToSearch".
-// src/ADO/Constants.ts:35:14 - (ae-undocumented) Missing documentation for "totalSizeMetricName".
-// src/ADO/PrCommentsUtils.ts:9:1 - (ae-undocumented) Missing documentation for "prCommentsUtils".
-// src/ADO/getAzureDevopsApi.ts:7:1 - (ae-undocumented) Missing documentation for "getAzureDevopsApi".
-// src/ADO/getBundleBuddyConfigMap.ts:8:1 - (ae-undocumented) Missing documentation for "GetBundleBuddyConfigMapArgs".
-// src/ADO/getBundleBuddyConfigMap.ts:9:2 - (ae-undocumented) Missing documentation for "bundleFileData".
-// src/ADO/getBundleBuddyConfigMap.ts:11:2 - (ae-undocumented) Missing documentation for "getBundleBuddyConfig".
-// src/ADO/getBundleBuddyConfigMap.ts:14:1 - (ae-undocumented) Missing documentation for "getBundleBuddyConfigMap".
-// src/ADO/getBundleFilePathsFromFolder.ts:6:1 - (ae-undocumented) Missing documentation for "BundleFileData".
-// src/ADO/getBundleFilePathsFromFolder.ts:7:2 - (ae-undocumented) Missing documentation for "bundleName".
-// src/ADO/getBundleFilePathsFromFolder.ts:9:2 - (ae-undocumented) Missing documentation for "relativePathToStatsFile".
-// src/ADO/getBundleFilePathsFromFolder.ts:11:2 - (ae-undocumented) Missing documentation for "relativePathToConfigFile".
-// src/ADO/getBundleFilePathsFromFolder.ts:28:1 - (ae-undocumented) Missing documentation for "getBundleFilePathsFromFolder".
-// src/ADO/getBundleSummaries.ts:11:1 - (ae-undocumented) Missing documentation for "GetBundleSummariesArgs".
-// src/ADO/getBundleSummaries.ts:12:2 - (ae-undocumented) Missing documentation for "bundlePaths".
-// src/ADO/getBundleSummaries.ts:14:2 - (ae-undocumented) Missing documentation for "statsProcessors".
-// src/ADO/getBundleSummaries.ts:16:2 - (ae-undocumented) Missing documentation for "getStatsFile".
-// src/ADO/getBundleSummaries.ts:18:2 - (ae-undocumented) Missing documentation for "getBundleBuddyConfigFile".
-// src/ADO/getBundleSummaries.ts:23:1 - (ae-undocumented) Missing documentation for "getBundleSummaries".
-// src/BundleBuddyConfigWebpackPlugin.ts:11:1 - (ae-undocumented) Missing documentation for "BundleBuddyPluginConfig".
-// src/BundleBuddyConfigWebpackPlugin.ts:12:2 - (ae-undocumented) Missing documentation for "outputFileName".
-// src/BundleBuddyConfigWebpackPlugin.ts:14:2 - (ae-undocumented) Missing documentation for "bundleBuddyConfig".
-// src/BundleBuddyConfigWebpackPlugin.ts:34:9 - (ae-undocumented) Missing documentation for "apply".
-// src/BundleBuddyTypes.ts:22:2 - (ae-undocumented) Missing documentation for "parsedSize".
-// src/BundleBuddyTypes.ts:29:2 - (ae-undocumented) Missing documentation for "bundleName".
-// src/BundleBuddyTypes.ts:31:2 - (ae-undocumented) Missing documentation for "commonBundleMetrics".
-// src/BundleBuddyTypes.ts:57:2 - (ae-undocumented) Missing documentation for "name".
-// src/bannedModulesPlugin/bannedModulesPlugin.ts:9:1 - (ae-undocumented) Missing documentation for "BannedModule".
-// src/bannedModulesPlugin/bannedModulesPlugin.ts:17:1 - (ae-undocumented) Missing documentation for "BannedModulesPluginOptions".
-// src/bannedModulesPlugin/bannedModulesPlugin.ts:18:2 - (ae-undocumented) Missing documentation for "bannedModules".
-// src/bannedModulesPlugin/bannedModulesPlugin.ts:33:2 - (ae-undocumented) Missing documentation for "apply".
-// src/statsProcessors/bundleBuddyConfigProcessor.ts:8:1 - (ae-undocumented) Missing documentation for "BundleBuddyConfigProcessorOptions".
-// src/statsProcessors/bundleBuddyConfigProcessor.ts:10:2 - (ae-undocumented) Missing documentation for "metricNameProvider".
-// src/statsProcessors/entryStatsProcessor.ts:7:1 - (ae-undocumented) Missing documentation for "EntryStatsProcessorOptions".
-// src/statsProcessors/entryStatsProcessor.ts:9:2 - (ae-undocumented) Missing documentation for "metricNameProvider".
-// src/statsProcessors/totalSizeStatsProcessor.ts:7:1 - (ae-undocumented) Missing documentation for "TotalSizeStatsProcessorOptions".
-// src/statsProcessors/totalSizeStatsProcessor.ts:9:2 - (ae-undocumented) Missing documentation for "metricName".
-// src/utilities/getBuilds.ts:7:1 - (ae-undocumented) Missing documentation for "GetBuildOptions".
-// src/utilities/getBuilds.ts:9:2 - (ae-undocumented) Missing documentation for "project".
-// src/utilities/getBuilds.ts:12:2 - (ae-undocumented) Missing documentation for "definitions".
-// src/utilities/getBuilds.ts:15:2 - (ae-undocumented) Missing documentation for "tagFilters".
-// src/utilities/getBuilds.ts:18:2 - (ae-undocumented) Missing documentation for "maxBuildsPerDefinition".
-// src/utilities/getChunkAndDependenciesSizes.ts:10:1 - (ae-undocumented) Missing documentation for "ChunkSizeInfo".
-// src/utilities/getChunkAndDependenciesSizes.ts:12:2 - (ae-undocumented) Missing documentation for "chunkId".
-// src/utilities/getChunkAndDependenciesSizes.ts:15:2 - (ae-undocumented) Missing documentation for "size".
-// src/utilities/getChunkAndDependenciesSizes.ts:23:2 - (ae-undocumented) Missing documentation for "name".
-// src/utilities/getChunkAndDependenciesSizes.ts:26:2 - (ae-undocumented) Missing documentation for "dependencies".
-// src/utilities/getChunkAndDependenciesSizes.ts:29:2 - (ae-undocumented) Missing documentation for "size".
-// src/utilities/gitCommands.ts:16:1 - (ae-undocumented) Missing documentation for "getPriorCommit".
-// src/utilities/unzipStream.ts:23:1 - (ae-undocumented) Missing documentation for "unzipStream".
-
 // (No @packageDocumentation comment for this package)
 
 ```
