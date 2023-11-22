@@ -52,11 +52,8 @@ export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
-type JSDeepTreeRoot2 = SchemaAware.TypedField<
-	typeof deepSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema>;
+type JSDeepTreeRoot2 = SchemaAware.TypedField<typeof deepSchema.rootFieldSchema>;
 
 {
 	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
@@ -71,10 +68,7 @@ export interface JSWideTree {
 	foo: number[];
 }
 
-type JSWideTreeRoot2 = SchemaAware.TypedField<
-	typeof wideSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSWideTreeRoot2 = SchemaAware.TypedField<typeof wideSchema.rootFieldSchema>;
 
 {
 	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;

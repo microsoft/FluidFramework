@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -70,7 +69,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);

@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-private/test-version-utils";
 import { TableDocument } from "../document.js";
 import { TableSlice } from "../slice.js";
@@ -23,7 +22,7 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		const container = await provider.createContainer(TableDocument.getFactory());
-		tableDocument = await requestFluidObject<TableDocument>(container, "default");
+		tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
 	});
 
 	const extract = (table: TableDocument) => {

@@ -27,47 +27,50 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "Node",
-                                    "fields": {
-                                      "foo": [
-                                        {
-                                          "type": "Node",
-                                          "value": "a"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "b"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "c"
-                                        }
-                                      ],
-                                      "bar": [
-                                        {
-                                          "type": "Node",
-                                          "value": "d"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "e"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "f"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "Node",
+                              "fields": {
+                                "foo": [
+                                  {
+                                    "type": "Node",
+                                    "value": "a"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "b"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "c"
+                                  }
+                                ],
+                                "bar": [
+                                  {
+                                    "type": "Node",
+                                    "value": "d"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "e"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "f"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",

@@ -5,7 +5,7 @@
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
-import { MatrixItem } from "..";
+import { MatrixItem } from "../index";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own
