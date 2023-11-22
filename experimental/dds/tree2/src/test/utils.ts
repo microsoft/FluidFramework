@@ -12,7 +12,6 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ChannelFactoryRegistry,
@@ -258,7 +257,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
@@ -301,7 +300,7 @@ export class TestTreeProvider {
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
 			TestTreeProvider.treeId,
 		));

@@ -8,7 +8,6 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainerRuntimeOptions,
@@ -91,7 +90,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 		);
 
 		// getting default data store and create a new data store
-		const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		const dataStore2 = await dataObjectFactory.createInstance(
 			mainDataStore._context.containerRuntime,
 		);
@@ -99,7 +98,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 
 		// second client loads the container
 		const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-		const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+		const defaultDataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();
 
@@ -139,7 +138,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 		);
 
 		// getting default data store and create a new data store
-		const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		const dataStore2 = await dataObjectFactory.createInstance(
 			mainDataStore._context.containerRuntime,
 		);
@@ -154,7 +153,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 		provider.documentServiceFactory = mockDocumentServiceFactory;
 
 		const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
-		const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+		const defaultDataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();
 
