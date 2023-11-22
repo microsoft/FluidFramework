@@ -283,8 +283,13 @@ export function checkInstalled(requested: string) {
 /**
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
-	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	const pkgJson: { main: string } = JSON.parse(
+		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
+	);
+	return import(pathToFileURL(path.join(pkgPath, pkgJson.main)).href);
+};
 
 /**
  *

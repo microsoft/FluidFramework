@@ -14,13 +14,13 @@ import {
 	IConsensusOrderedCollection,
 	waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
@@ -59,12 +59,12 @@ function generate(
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -73,7 +73,7 @@ function generate(
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 

@@ -172,7 +172,7 @@ export class EditManager<
 		// Record the sequence id of the branch's base commit on the trunk
 		const trunkBase = { sequenceId: trackBranch(branch) };
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("change", (args) => {
+		const offRebase = branch.on("afterChange", (args) => {
 			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
 				untrackBranch(branch, trunkBase.sequenceId);
 				trunkBase.sequenceId = trackBranch(branch);

@@ -27,11 +27,6 @@
                                 "type": "Insert",
                                 "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "has-sequence-map.SeqMap"
-                                  }
-                                ],
                                 "cellId": {
                                   "localId": 0
                                 },
@@ -45,11 +40,6 @@
                                           "type": "Insert",
                                           "id": 1,
                                           "count": 1,
-                                          "content": [
-                                            {
-                                              "type": "has-sequence-map.SeqMap"
-                                            }
-                                          ],
                                           "cellId": {
                                             "localId": 1
                                           }
@@ -61,6 +51,20 @@
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "has-sequence-map.SeqMap"
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "type": "has-sequence-map.SeqMap"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
