@@ -61,24 +61,32 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			const runtime: ContainerRuntime = await containerRuntimeCtor.load(
+			const provideEntryPoint = async (runtime: IContainerRuntime) => {
+				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			};
+			return containerRuntimeCtor.loadRuntime({
 				context,
-				[
+				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
 				// eslint-disable-next-line import/no-deprecated
-				buildRuntimeRequestHandler(
+				requestHandler: buildRuntimeRequestHandler(
 					// eslint-disable-next-line import/no-deprecated
 					defaultRouteRequestHandler("default"),
 					...this.requestHandlers,
 				),
-				this.runtimeOptions,
-				context.scope,
+				provideEntryPoint,
+				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
+				initializeEntryPoint: provideEntryPoint,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
 				existing,
-			);
-
-			return runtime;
+			} as any);
 		}
 	};
 };

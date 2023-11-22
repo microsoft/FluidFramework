@@ -44,6 +44,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
@@ -68,6 +69,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml

@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_LazyLoadedDataObject():
     TypeOnly<old.LazyLoadedDataObject>;
 declare function use_current_ClassDeclaration_LazyLoadedDataObject(
-    use: TypeOnly<current.LazyLoadedDataObject>);
+    use: TypeOnly<current.LazyLoadedDataObject>): void;
 use_current_ClassDeclaration_LazyLoadedDataObject(
     get_old_ClassDeclaration_LazyLoadedDataObject());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_LazyLoadedDataObject(
 declare function get_current_ClassDeclaration_LazyLoadedDataObject():
     TypeOnly<current.LazyLoadedDataObject>;
 declare function use_old_ClassDeclaration_LazyLoadedDataObject(
-    use: TypeOnly<old.LazyLoadedDataObject>);
+    use: TypeOnly<old.LazyLoadedDataObject>): void;
 use_old_ClassDeclaration_LazyLoadedDataObject(
     get_current_ClassDeclaration_LazyLoadedDataObject());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_LazyLoadedDataObject(
 declare function get_old_ClassDeclaration_LazyLoadedDataObjectFactory():
     TypeOnly<old.LazyLoadedDataObjectFactory<any>>;
 declare function use_current_ClassDeclaration_LazyLoadedDataObjectFactory(
-    use: TypeOnly<current.LazyLoadedDataObjectFactory<any>>);
+    use: TypeOnly<current.LazyLoadedDataObjectFactory<any>>): void;
 use_current_ClassDeclaration_LazyLoadedDataObjectFactory(
     get_old_ClassDeclaration_LazyLoadedDataObjectFactory());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_LazyLoadedDataObjectFactory(
 declare function get_current_ClassDeclaration_LazyLoadedDataObjectFactory():
     TypeOnly<current.LazyLoadedDataObjectFactory<any>>;
 declare function use_old_ClassDeclaration_LazyLoadedDataObjectFactory(
-    use: TypeOnly<old.LazyLoadedDataObjectFactory<any>>);
+    use: TypeOnly<old.LazyLoadedDataObjectFactory<any>>): void;
 use_old_ClassDeclaration_LazyLoadedDataObjectFactory(
     get_current_ClassDeclaration_LazyLoadedDataObjectFactory());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_LazyLoadedDataObjectFactory(
 declare function get_old_ClassDeclaration_RuntimeFactory():
     TypeOnly<old.RuntimeFactory>;
 declare function use_current_ClassDeclaration_RuntimeFactory(
-    use: TypeOnly<current.RuntimeFactory>);
+    use: TypeOnly<current.RuntimeFactory>): void;
 use_current_ClassDeclaration_RuntimeFactory(
     get_old_ClassDeclaration_RuntimeFactory());
 
@@ -89,6 +89,6 @@ use_current_ClassDeclaration_RuntimeFactory(
 declare function get_current_ClassDeclaration_RuntimeFactory():
     TypeOnly<current.RuntimeFactory>;
 declare function use_old_ClassDeclaration_RuntimeFactory(
-    use: TypeOnly<old.RuntimeFactory>);
+    use: TypeOnly<old.RuntimeFactory>): void;
 use_old_ClassDeclaration_RuntimeFactory(
     get_current_ClassDeclaration_RuntimeFactory());

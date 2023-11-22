@@ -15,18 +15,17 @@ import {
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	type IFluidContainer,
 	type IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { AzureAudience } from "./AzureAudience";
+import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
 	type AzureClientProps,
@@ -86,11 +85,15 @@ export class AzureClient {
 
 	/**
 	 * Creates a new detached container instance in the Azure Fluid Relay.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -100,7 +103,7 @@ export class AzureClient {
 			config: {},
 		});
 
-		const fluidContainer = await this.createFluidContainer(
+		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
 			container,
 			this.properties.connection,
 		);
@@ -110,18 +113,20 @@ export class AzureClient {
 
 	/**
 	 * Creates new detached container out of specific version of another container.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
 	 * It defaults to latest version if parameter not provided.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async copyContainer(
+	public async copyContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: TContainerSchema,
 		version?: AzureContainerVersion,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -151,7 +156,7 @@ export class AzureClient {
 
 		const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
 
-		const fluidContainer = await this.createFluidContainer(
+		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
 			container,
 			this.properties.connection,
 		);
@@ -161,15 +166,17 @@ export class AzureClient {
 
 	/**
 	 * Accesses the existing container given its unique ID in the Azure Fluid Relay.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer(
+	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: TContainerSchema,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -181,9 +188,11 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -226,12 +235,15 @@ export class AzureClient {
 
 	private getContainerServices(container: IContainer): AzureContainerServices {
 		return {
-			audience: new AzureAudience(container),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createAzureAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -260,17 +272,16 @@ export class AzureClient {
 		});
 	}
 
-	private async createFluidContainer(
+	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
 		container: IContainer,
 		connection: AzureConnectionConfig,
-	): Promise<FluidContainer> {
+	): Promise<IFluidContainer<TContainerSchema>> {
 		const createNewRequest = createAzureCreateNewRequest(
 			connection.endpoint,
 			getTenantId(connection),
 		);
 
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -285,7 +296,10 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}

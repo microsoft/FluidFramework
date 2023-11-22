@@ -41,8 +41,9 @@ export function composeNoVerify(
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
+	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
 ): TestChangeset {
-	return composeI(changes, TestChange.compose, revInfos);
+	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
 
 export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
@@ -111,15 +112,14 @@ export function rebase(
 	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(
-			rebasedChange,
+		rebasedChange = SF.rebase(
+			change,
 			base,
-			(a, b) => a,
+			TestChange.rebase,
 			idAllocator,
 			moveEffects,
 			metadata,
 		);
-		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }
@@ -152,26 +152,28 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const table = SF.newCrossFieldTable();
+	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
+		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = SF.amendInvert(
-			inverted,
-			change.revision,
+		inverted = SF.invert(
+			change,
+			TestChange.invert,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
+			revisionMetadata,
 		);
-		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
 	}
 
 	return inverted;
@@ -225,4 +227,52 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	}
 
 	return factory.list;
+}
+
+export function withNormalizedLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
+	const factory = new SF.MarkListFactory<T>();
+	for (const mark of changeset) {
+		if (mark.cellId?.lineage === undefined) {
+			factory.push(mark);
+		} else {
+			const cloned = SF.cloneMark(mark);
+			assert(cloned.cellId?.lineage !== undefined, "Cloned should have lineage");
+			cloned.cellId.lineage = normalizedLineage(cloned.cellId.lineage);
+			factory.push(cloned);
+		}
+	}
+
+	return factory.list;
+}
+
+function normalizedLineage(lineage: SF.LineageEvent[]): SF.LineageEvent[] {
+	const normalized = lineage.flatMap((event) => {
+		const events: SF.LineageEvent[] = [];
+		for (let i = 0; i < event.count; i++) {
+			const id: ChangesetLocalId = brand(event.id + i);
+			const offset = i <= event.offset ? 0 : 1;
+			events.push({ revision: event.revision, count: 1, id, offset });
+		}
+
+		return events;
+	});
+
+	normalized.sort((a, b) => {
+		const cmpRevision = cmp(a.revision, b.revision);
+		if (cmpRevision !== 0) {
+			return cmpRevision;
+		}
+
+		return cmp(a.id, b.id);
+	});
+
+	return normalized;
+}
+
+function cmp(a: any, b: any): number {
+	if (a === b) {
+		return 0;
+	}
+
+	return a > b ? 1 : -1;
 }

@@ -10,7 +10,7 @@ import {
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -18,7 +18,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -31,7 +30,9 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ISharedTreeView,
+	type TreeView,
+	disposeSymbol,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -121,8 +122,8 @@ const quantityType = builder.object("quantityObj", {
 });
 const schema = builder.intoSchema(quantityType);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -175,13 +176,15 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree.schematizeView({
-				initialTree: {
-					quantity,
-				},
-				allowedSchemaModifications: AllowedUpdateType.None,
-				schema,
-			});
+			newTree
+				.schematize({
+					initialTree: {
+						quantity,
+					},
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema,
+				})
+				[disposeSymbol]();
 		},
 	);
 
@@ -210,7 +213,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
-		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
 		updateQuantity(legacyTree, originalValue);
@@ -222,12 +225,12 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	it("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
@@ -256,8 +259,8 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const newTree2 = shim2.currentTree as ISharedTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
-		const node1 = view1.root2(schema);
-		const node2 = view2.root2(schema);
+		const node1 = view1.root;
+		const node2 = view2.root;
 		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
 		assert.equal(node1.quantity, originalValue, "expected no values to be updated");
 
@@ -321,8 +324,8 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
-		const node1 = view1.root2(schema);
-		const node2 = view2.root2(schema);
+		const node1 = view1.root;
+		const node2 = view2.root;
 		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");
 		assert.equal(node2.quantity, originalValue, "Node2 should have loaded the original value");
 

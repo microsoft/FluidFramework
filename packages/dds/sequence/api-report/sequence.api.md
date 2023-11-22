@@ -159,7 +159,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
@@ -263,6 +263,9 @@ export const IntervalOpType: {
     readonly PROPERTY_CHANGED: "propertyChanged";
     readonly POSITION_REMOVE: "positionRemove";
 };
+
+// @alpha (undocumented)
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 // @alpha
 export type IntervalRevertible = {
@@ -398,9 +401,10 @@ export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval
     findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
-// @internal
+// @internal @deprecated
 export interface IValueOpEmitter {
-    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+    // @deprecated
+    emit(opName: IntervalOpType, previousValue: undefined, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
 // @alpha
