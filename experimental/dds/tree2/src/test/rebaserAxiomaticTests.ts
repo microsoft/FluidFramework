@@ -117,25 +117,14 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		? describe.skip
 		: describe;
 
-	const rebaseOverComposeBody = (
-		edit: TaggedChange<TChangeset>,
-		namedEditsToRebaseOver: NamedChangeset<TChangeset>[],
-	) => {
-		const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
-		const rebaseWithoutCompose = rebaseTagged(edit, ...editsToRebaseOver).change;
-		const metadata = defaultRevisionMetadataFromChanges([...editsToRebaseOver, edit]);
-		const rebaseWithCompose = rebaseComposed(metadata, edit.change, ...editsToRebaseOver);
-
-		assertDeepEqual(
-			tagChange(rebaseWithCompose, undefined),
-			tagChange(rebaseWithoutCompose, undefined),
-		);
-	};
+	const [outerFixture, innerFixture] = groupSubSuites
+		? [it, (title: string, fn: () => void) => fn()]
+		: [describe, it];
 
 	rebaseOverComposeDescribe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
-			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = Array.from(
 					generatePossibleSequenceOfEdits(
 						initialState,
@@ -155,91 +144,44 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					),
 				);
 
-				if (groupSubSuites) {
-					it("Rebase over compose grouped suite", () => {
-						for (const [{ changeset: edit }] of localEdits) {
-							for (const namedEditsToRebaseOver of trunkEdits) {
-								rebaseOverComposeBody(edit, namedEditsToRebaseOver);
-							}
-						}
-					});
-				} else {
-					for (const [{ description: name, changeset: edit }] of localEdits) {
-						for (const namedEditsToRebaseOver of trunkEdits) {
-							const title = `Rebase ${name} over compose ${JSON.stringify(
-								namedEditsToRebaseOver.map(({ description }) => description),
-							)}`;
+				for (const [{ description: name, changeset: edit }] of localEdits) {
+					for (const namedEditsToRebaseOver of trunkEdits) {
+						const title = `Rebase ${name} over compose ${JSON.stringify(
+							namedEditsToRebaseOver.map(({ description }) => description),
+						)}`;
 
-							it(title, () => {
-								rebaseOverComposeBody(edit, namedEditsToRebaseOver);
-							});
-						}
+						innerFixture(title, () => {
+							const editsToRebaseOver = namedEditsToRebaseOver.map(
+								({ changeset }) => changeset,
+							);
+							const rebaseWithoutCompose = rebaseTagged(
+								edit,
+								...editsToRebaseOver,
+							).change;
+							const metadata = defaultRevisionMetadataFromChanges([
+								...editsToRebaseOver,
+								edit,
+							]);
+							const rebaseWithCompose = rebaseComposed(
+								metadata,
+								edit.change,
+								...editsToRebaseOver,
+							);
+
+							assertDeepEqual(
+								tagChange(rebaseWithCompose, undefined),
+								tagChange(rebaseWithoutCompose, undefined),
+							);
+						});
 					}
 				}
 			});
 		}
 	});
 
-	const composedSandwichRebaseBody = (
-		namedSourceEdits: NamedChangeset<TChangeset>[],
-		namedEditToRebaseOver: TaggedChange<TChangeset>,
-	) => {
-		const editToRebaseOver = namedEditToRebaseOver;
-		const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
-
-		const inverses = sourceEdits.map((change) =>
-			tagRollbackInverse(
-				invert(change),
-				`rollback-${change.revision}` as RevisionTag,
-				change.revision,
-			),
-		);
-		inverses.reverse();
-
-		const rebasedEditsWithoutCompose: TaggedChange<TChangeset>[] = [];
-		const rebasedEditsWithCompose: TaggedChange<TChangeset>[] = [];
-
-		for (let i = 0; i < sourceEdits.length; i++) {
-			const edit = sourceEdits[i];
-			const editsToRebaseOver = [
-				...inverses.slice(sourceEdits.length - i),
-				editToRebaseOver,
-				...rebasedEditsWithoutCompose,
-			];
-			rebasedEditsWithoutCompose.push(rebaseTagged(edit, ...editsToRebaseOver));
-		}
-
-		let currentComposedEdit = editToRebaseOver;
-		// This needs to be used to pass an updated RevisionMetadataSource to rebase.
-		const allTaggedEdits = [...inverses, editToRebaseOver];
-		for (let i = 0; i < sourceEdits.length; i++) {
-			let metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-			const edit = sourceEdits[i];
-			const rebasedEdit = tagChange(
-				rebaseComposed(metadata, edit.change, currentComposedEdit),
-				edit.revision,
-			);
-			rebasedEditsWithCompose.push(rebasedEdit);
-			allTaggedEdits.push(rebasedEdit);
-			metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-			currentComposedEdit = makeAnonChange(
-				compose(
-					[inverses[sourceEdits.length - i - 1], currentComposedEdit, rebasedEdit],
-					metadata,
-				),
-			);
-		}
-
-		for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-			assertDeepEqual(rebasedEditsWithoutCompose[i], rebasedEditsWithCompose[i]);
-		}
-
-		verifyComposeAssociativity(allTaggedEdits);
-	};
-
 	describe("Composed sandwich rebase over single edit", () => {
 		for (const initialState of initialStates) {
-			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const intentionMinter = makeIntentionMinter();
 				const localEdits = Array.from(
 					generatePossibleSequenceOfEdits(
@@ -260,41 +202,85 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					),
 				);
 
-				if (groupSubSuites) {
-					it("Composed sandwich rebase over single edit grouped suite", () => {
-						for (const namedSourceEdits of localEdits) {
-							for (const [{ changeset: namedEditToRebaseOver }] of trunkEdits) {
-								composedSandwichRebaseBody(namedSourceEdits, namedEditToRebaseOver);
-							}
-						}
-					});
-				} else {
-					for (const namedSourceEdits of localEdits) {
-						for (const [
-							{ description: name, changeset: namedEditToRebaseOver },
-						] of trunkEdits) {
-							const title = `Rebase ${JSON.stringify(
-								namedSourceEdits.map(({ description }) => description),
-							)} over ${name}`;
+				for (const namedSourceEdits of localEdits) {
+					for (const [
+						{ description: name, changeset: namedEditToRebaseOver },
+					] of trunkEdits) {
+						const title = `Rebase ${JSON.stringify(
+							namedSourceEdits.map(({ description }) => description),
+						)} over ${name}`;
 
-							it(title, () => {
-								composedSandwichRebaseBody(namedSourceEdits, namedEditToRebaseOver);
-							});
-						}
+						innerFixture(title, () => {
+							const editToRebaseOver = namedEditToRebaseOver;
+							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
+
+							const inverses = sourceEdits.map((change) =>
+								tagRollbackInverse(
+									invert(change),
+									`rollback-${change.revision}` as RevisionTag,
+									change.revision,
+								),
+							);
+							inverses.reverse();
+
+							const rebasedEditsWithoutCompose: TaggedChange<TChangeset>[] = [];
+							const rebasedEditsWithCompose: TaggedChange<TChangeset>[] = [];
+
+							for (let i = 0; i < sourceEdits.length; i++) {
+								const edit = sourceEdits[i];
+								const editsToRebaseOver = [
+									...inverses.slice(sourceEdits.length - i),
+									editToRebaseOver,
+									...rebasedEditsWithoutCompose,
+								];
+								rebasedEditsWithoutCompose.push(
+									rebaseTagged(edit, ...editsToRebaseOver),
+								);
+							}
+
+							let currentComposedEdit = editToRebaseOver;
+							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
+							const allTaggedEdits = [...inverses, editToRebaseOver];
+							for (let i = 0; i < sourceEdits.length; i++) {
+								let metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
+								const edit = sourceEdits[i];
+								const rebasedEdit = tagChange(
+									rebaseComposed(metadata, edit.change, currentComposedEdit),
+									edit.revision,
+								);
+								rebasedEditsWithCompose.push(rebasedEdit);
+								allTaggedEdits.push(rebasedEdit);
+								metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
+								currentComposedEdit = makeAnonChange(
+									compose(
+										[
+											inverses[sourceEdits.length - i - 1],
+											currentComposedEdit,
+											rebasedEdit,
+										],
+										metadata,
+									),
+								);
+							}
+
+							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
+								assertDeepEqual(
+									rebasedEditsWithoutCompose[i],
+									rebasedEditsWithCompose[i],
+								);
+							}
+
+							verifyComposeAssociativity(allTaggedEdits);
+						});
 					}
 				}
 			});
 		}
 	});
 
-	const composeAssociativityBody = (changes: NamedChangeset<TChangeset>[]) => {
-		const verifyList = changes.map(({ changeset }) => changeset);
-		verifyComposeAssociativity(verifyList);
-	};
-
 	describe("Compose associativity", () => {
 		for (const initialState of initialStates) {
-			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const edits = Array.from(
 					generatePossibleSequenceOfEdits(
 						initialState,
@@ -304,24 +290,17 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					),
 				);
 
-				if (groupSubSuites) {
-					it("Compose associativity grouped suite", () => {
-						for (const editList of edits) {
-							composeAssociativityBody(editList);
-						}
-					});
-				} else {
-					for (const editList of edits) {
-						const title = `for ${JSON.stringify(
-							editList.map(({ description }) => description),
-						)}`;
+				for (const editList of edits) {
+					const title = `for ${JSON.stringify(
+						editList.map(({ description }) => description),
+					)}`;
 
-						// Note that this test case doesn't verify associativity of rollback inverses.
-						// That's covered some by "Composed sandwich rebase over single edit"
-						it(title, () => {
-							composeAssociativityBody(editList);
-						});
-					}
+					// Note that this test case doesn't verify associativity of rollback inverses.
+					// That's covered some by "Composed sandwich rebase over single edit"
+					innerFixture(title, () => {
+						const verifyList = editList.map(({ changeset }) => changeset);
+						verifyComposeAssociativity(verifyList);
+					});
 				}
 			});
 		}

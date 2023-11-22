@@ -351,7 +351,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 
 interface TestState {
 	length: number;
-	insertIndicesLength: number;
+	maxIndex: number;
 	numNodes: number[];
 }
 
@@ -365,9 +365,8 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
-	const numNodes = state.content.numNodes;
-	const indices = state.content.insertIndicesLength;
-	const iterationCap = Math.min(indices, state.content.length);
+	const { numNodes, maxIndex } = state.content;
+	const iterationCap = Math.min(maxIndex, state.content.length);
 
 	// Undo the most recent edit
 	if (state.mostRecentEdit !== undefined) {
@@ -392,7 +391,7 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 			yield {
 				content: {
 					length: state.content.length + nodeCount,
-					insertIndicesLength: state.content.insertIndicesLength,
+					maxIndex,
 					numNodes,
 				},
 				mostRecentEdit: {
@@ -411,7 +410,7 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 			yield {
 				content: {
 					length: state.content.length - nodeCount,
-					insertIndicesLength: state.content.insertIndicesLength,
+					maxIndex,
 					numNodes,
 				},
 				mostRecentEdit: {
@@ -435,7 +434,9 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 						tagFromIntention(moveInIntention),
 					),
 					intention: moveInIntention,
-					description: `MoveIn${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From1To0`,
+					description: `MoveIn${nodeCount}${
+						nodeCount === 1 ? "Node" : "Nodes"
+					}From1To${i}`,
 				},
 				parent: state,
 			};
@@ -450,7 +451,9 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 						tagFromIntention(moveOutIntention),
 					),
 					intention: moveOutIntention,
-					description: `MoveOut${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}From0To1`,
+					description: `MoveOut${nodeCount}${
+						nodeCount === 1 ? "Node" : "Nodes"
+					}From${i}To1`,
 				},
 				parent: state,
 			};
@@ -458,9 +461,9 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	}
 };
 
-describe.skip("SequenceField - State-based Rebaser Axioms", () => {
+describe.only("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3], insertIndicesLength: 2 } }],
+		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
 		generateChildStates,
 		{
 			rebase,
@@ -484,6 +487,9 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 					withoutLineage(change2.change),
 				);
 			},
+		},
+		{
+			groupSubSuites: true,
 		},
 	);
 });
