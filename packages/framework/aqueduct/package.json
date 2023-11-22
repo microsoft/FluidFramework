@@ -104,6 +104,19 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_getDefaultObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_getObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_getObjectWithIdFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
