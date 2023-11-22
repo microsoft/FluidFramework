@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import {
-	RestrictiveReadonlyRecord,
-	fail,
-	getOrCreate,
-	isReadonlyArray,
-	requireAssignableTo,
-} from "../util";
+import { RestrictiveReadonlyRecord, fail, getOrCreate, isReadonlyArray } from "../util";
 import {
 	FlexTreeNode,
 	LeafNodeSchema as FlexLeafNodeSchema,
@@ -47,8 +41,14 @@ import {
 
 /**
  * Instances of this class are schema for leaf nodes.
+ * @remarks
+ * Unlike other schema, leaf schema are class instances instead of classes themselves.
+ * This is because the instance type (the tree node type) for leaves are not objects,
+ * so those instances can't be instances of a schema based class.
+ * @privateRemarks
+ * This class referees to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
-export class LeafNodeSchema<T extends FlexLeafNodeSchema>
+class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	implements
 		TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>>
 {
@@ -66,6 +66,9 @@ export class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	}
 }
 
+/**
+ * Wrapper around LeafNodeSchema's constructor that provides the return type thats desired in the package public API.
+ */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
 ): TreeNodeSchema<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>> {
@@ -79,28 +82,81 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 export class SchemaFactory<TScope extends string, TName extends number | string = string> {
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
+	/**
+	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+	 */
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): `${TScope}.${Name}` {
 		return `${this.scope}.${name}`;
 	}
 
+	/**
+	 * {@link TreeNodeSchema} for holding a JavaScript `string`.
+	 *
+	 * @remarks
+	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
+	 *
+	 * These limitations come from the use of UTF-8 encoding of the strings, which requires them to be valid unicode.
+	 * JavaScript does not make this requirement for its strings so not all possible JavaScript strings are supported.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
 	public readonly string = makeLeaf(leaf.string);
+	/**
+	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
+	 *
+	 * @remarks
+	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
+	 * - `NaN`, and the infinities should not be used.
+	 * - `-0` may be converted to `0` in some cases.
+	 *
+	 * These limitations match the limitations of JSON.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
 	public readonly number = makeLeaf(leaf.number);
+	/**
+	 * {@link TreeNodeSchema} for holding a boolean.
+	 */
 	public readonly boolean = makeLeaf(leaf.boolean);
+	/**
+	 * {@link TreeNodeSchema} for JavaScript `null`.
+	 *
+	 * @remarks
+	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
+	 * This {@link TreeNodeSchema} node provide the option to include nulls in trees when desired.
+	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
+	 */
 	public readonly null = makeLeaf(leaf.null);
+	/**
+	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 */
 	public readonly handle = makeLeaf(leaf.handle);
 
+	/**
+	 * Construct a class the provides the common parts all {@link TreeNodeSchemaClass} share.
+	 * More specific schema extends this class.
+	 */
 	private nodeSchema<Name extends TName | string, TKind extends NodeKind, T>(
 		name: Name,
 		kind: TKind,
 		t: T,
-	) {
+	): TreeNodeSchemaClass<`${TScope}.${Name}`, TKind, T, NodeBase, FlexTreeNode | unknown> {
 		const identifier = this.scoped(name);
 		class schema extends NodeBase {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
+			/**
+			 * This constructor only does validation of the input, and should be passed the argument from the derived type unchanged.
+			 * It it up to the derived type to actually do something with this value.
+			 */
 			public constructor(input: FlexTreeNode | unknown) {
 				super();
 				// Currently this just does validation. All other logic is in the subclass.
@@ -116,12 +172,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 					"Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied",
 				);
 			}
-		}
-		{
-			type _check = requireAssignableTo<
-				typeof schema,
-				TreeNodeSchema<`${TScope}.${Name}`, TKind, T>
-			>;
 		}
 		markEager(schema);
 		return schema;
@@ -149,7 +199,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					// TODO: make return a proxy over this (or not a proxy).
 					return createNodeProxy(input, this) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
@@ -251,7 +300,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public constructor(input: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					// TODO: make return a proxy over this (or not a proxy).
 					return createNodeProxy(input, this) as schema;
 				} else {
 					// unhydrated data case.
