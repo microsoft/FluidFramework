@@ -22,7 +22,7 @@ export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" |
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
- * Types of Odsp Endpoint.
+ * Types of Odsp endpoints.
  * @public
  */
 export type OdspEndpoint = "odsp" | "odsp-df";
