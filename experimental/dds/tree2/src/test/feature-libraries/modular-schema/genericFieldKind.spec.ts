@@ -122,7 +122,6 @@ const childRebaser = (
 		fakeIdAllocator,
 		crossFieldManager,
 		revisionMetadata,
-		0,
 	);
 	return nodeChangeFromValueChange(rebased);
 };
