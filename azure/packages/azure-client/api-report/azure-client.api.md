@@ -128,10 +128,4 @@ export { IUser }
 
 export { ScopeType }
 
-// Warnings were encountered during analysis:
-//
-// src/AzureFunctionTokenProvider.ts:32:15 - (ae-undocumented) Missing documentation for "fetchOrdererToken".
-// src/AzureFunctionTokenProvider.ts:38:15 - (ae-undocumented) Missing documentation for "fetchStorageToken".
-// src/interfaces.ts:35:2 - (ae-undocumented) Missing documentation for "summaryCompression".
-
 ```
