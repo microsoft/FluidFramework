@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { rootFieldKey } from "../../core";
 import { TreeStatus, Any } from "../../feature-libraries";
-import { TreeRoot, TreeNode, Tree } from "../../simple-tree";
+import { TreeRoot, TreeNode, Tree, InsertableTreeRoot } from "../../simple-tree";
 import { SchemaBuilder } from "../../domains";
 import { itWithRoot } from "./utils";
 
@@ -18,7 +18,7 @@ describe("node API", () => {
 	const list = sb.list(object);
 	const parent = sb.object("parent", { object, list });
 	const treeSchema = sb.intoSchema(parent);
-	const initialTree: TreeRoot<typeof treeSchema, "javaScript"> = {
+	const initialTree: InsertableTreeRoot<typeof treeSchema> = {
 		object: { content: 42 },
 		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
 	};
@@ -168,7 +168,7 @@ describe("node API", () => {
 		});
 
 		describe("list", () => {
-			check((root) => root.list.insertAtEnd([{ content: root.list.length }]));
+			check((root) => root.list.insertAtEnd({ content: root.list.length }));
 		});
 
 		// TODO: map

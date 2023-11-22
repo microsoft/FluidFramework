@@ -14,6 +14,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	SessionId,
 	SessionIdSchema,
 } from "./types";

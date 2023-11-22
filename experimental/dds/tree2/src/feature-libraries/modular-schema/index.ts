@@ -29,6 +29,7 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	RebaseRevisionMetadata,
 	RemovedTreesFromChild,
@@ -50,5 +51,7 @@ export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
+	GlobalEditDescription,
+	FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
 } from "./modularChangeFamily";

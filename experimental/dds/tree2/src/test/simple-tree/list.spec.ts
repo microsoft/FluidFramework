@@ -70,7 +70,7 @@ describe("List", () => {
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
 		const list = createTree().numbers;
-		list.insertAtStart(items);
+		list.insertAtStart(...items);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -79,7 +79,7 @@ describe("List", () => {
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
 		const list = createTree().strings;
-		list.insertAtStart(items);
+		list.insertAtStart(...items);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -720,7 +720,7 @@ describe("List", () => {
 				(subject as any)[0] = "a";
 			});
 
-			subject.insertAtStart(["a", "b", "c"]);
+			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
 				(subject as any)[0] = "a";
@@ -734,7 +734,7 @@ describe("List", () => {
 				(subject as any).length = 0;
 			});
 
-			subject.insertAtStart(["a", "b", "c"]);
+			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
 				(subject as any).length = 0;

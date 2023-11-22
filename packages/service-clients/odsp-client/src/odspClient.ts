@@ -8,13 +8,16 @@ import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
+	createOdspUrl,
+	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver";
 import {
 	type ContainerSchema,
-	DOProviderContainerRuntimeFactory,
+	createDOProviderContainerRuntimeFactory,
 	IFluidContainer,
-	FluidContainer,
+	createFluidContainer,
 	IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
 	AttachState,
@@ -23,21 +26,13 @@ import {
 } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import {
-	IOdspResolvedUrl,
-	OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import type { ITokenResponse } from "@fluidframework/azure-client";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	OdspClientProps,
-	OdspConnectionConfig,
-	OdspContainerServices,
-	OdspContainerAttributes,
-} from "./interfaces";
-import { OdspAudience } from "./odspAudience";
+import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
+import { createOdspAudienceMember } from "./odspAudience";
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
@@ -97,24 +92,30 @@ export class OdspClient {
 	}
 
 	public async getContainer(
-		sharingUrl: string,
+		id: string,
 		containerSchema: ContainerSchema,
 	): Promise<{
 		container: IFluidContainer;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const container = await loader.resolve({ url: sharingUrl });
+		const url = createOdspUrl({
+			siteUrl: this.properties.connection.siteUrl,
+			driveId: this.properties.connection.driveId,
+			itemId: id,
+			dataStorePath: "",
+		});
+		const container = await loader.resolve({ url });
 
 		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
 
-	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -146,13 +147,6 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		const createNewRequest: IRequest = createOdspCreateContainerRequest(
-			connection.siteUrl,
-			connection.driveId,
-			connection.folderPath,
-			uuid(),
-		);
-
 		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
@@ -160,40 +154,41 @@ export class OdspClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
+			const createNewRequest: IRequest = createOdspCreateContainerRequest(
+				connection.siteUrl,
+				connection.driveId,
+				"",
+				uuid(),
+			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
-			await container.attach(createNewRequest);
-			const absoluteUrl = await container.getAbsoluteUrl("/");
-			if (absoluteUrl === undefined) {
-				throw new Error("Absolute Url not avaiable on attached container");
+
+			const resolvedUrl = container.resolvedUrl;
+
+			if (resolvedUrl === undefined || !isOdspResolvedUrl(resolvedUrl)) {
+				throw new Error("Resolved Url not available on attached container");
 			}
+			await container.attach(createNewRequest);
+
 			/**
-			 * The sharing URL for this container. It's the absoluet URL used as input to the `getContainer`.
+			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * a new `itemId` is created in the user's drive, which developers can use for various operations
+			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */
-			return absoluteUrl;
+			return resolvedUrl.itemId;
 		};
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer({ container, rootDataObject });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		const getAttributes = async (): Promise<OdspContainerAttributes> => {
-			const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
-			if (resolvedUrl === undefined) {
-				throw new Error("Resolved Url not available on attached container");
-			}
-
-			return {
-				itemId: resolvedUrl.itemId,
-				driveId: resolvedUrl.driveId,
-			};
-		};
-
 		return {
-			tenantAttributes: getAttributes,
-			audience: new OdspAudience(container),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createOdspAudienceMember,
+			}),
 		};
 	}
 }

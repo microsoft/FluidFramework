@@ -44,17 +44,17 @@ import { TransactionStack } from "./transactionStack";
  * transaction completes and all pending commits are replaced with a single squash commit.
  */
 export type SharedTreeBranchChange<TChange> =
-	| { type: "append"; change: TaggedChange<TChange>; newCommits: GraphCommit<TChange>[] }
+	| { type: "append"; change: TaggedChange<TChange>; newCommits: readonly GraphCommit<TChange>[] }
 	| {
 			type: "remove";
 			change: TaggedChange<TChange> | undefined;
-			removedCommits: GraphCommit<TChange>[];
+			removedCommits: readonly GraphCommit<TChange>[];
 	  }
 	| {
 			type: "replace";
 			change: TaggedChange<TChange> | undefined;
-			removedCommits: GraphCommit<TChange>[];
-			newCommits: GraphCommit<TChange>[];
+			removedCommits: readonly GraphCommit<TChange>[];
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**
@@ -92,10 +92,16 @@ export function getChangeReplaceType(
  */
 export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
-	 * Fired anytime the head of this branch changes.
+	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
 	 */
-	change(change: SharedTreeBranchChange<TChange>): void;
+	beforeChange(change: SharedTreeBranchChange<TChange>): void;
+
+	/**
+	 * Fired just after the head of this branch changes.
+	 * @param change - the change to this branch's state and commits
+	 */
+	afterChange(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
 	 * Fired when a revertible change is made to this branch.
@@ -175,22 +181,27 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		this.head = mintCommit(this.head, {
+		const newHead = mintCommit(this.head, {
 			revision,
 			change,
 		});
 
-		// If this is not part of a transaction, emit a revertible event
-		if (!this.isTransacting()) {
-			this.emit("revertible", this.makeSharedTreeRevertible(this.head, revertibleKind));
-		}
-
-		this.emit("change", {
+		const changeEvent = {
 			type: "append",
 			change: tagChange(change, revision),
-			newCommits: [this.head],
-		});
-		return [change, this.head];
+			newCommits: [newHead],
+		} as const;
+
+		this.emit("beforeChange", changeEvent);
+		this.head = newHead;
+
+		// If this is not part of a transaction, emit a revertible event
+		if (!this.isTransacting()) {
+			this.emit("revertible", this.makeSharedTreeRevertible(newHead, revertibleKind));
+		}
+
+		this.emit("afterChange", changeEvent);
+		return [change, newHead];
 	}
 
 	/**
@@ -246,26 +257,28 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
 		const revision = mintRevisionTag();
 
-		this.head = mintCommit(startCommit, {
+		const newHead = mintCommit(startCommit, {
 			revision,
 			change: squashedChange,
 		});
 
-		// If this transaction is not nested, emit a revertible event
-		if (!this.isTransacting()) {
-			this.emit(
-				"revertible",
-				this.makeSharedTreeRevertible(this.head, RevertibleKind.Default),
-			);
-		}
-
-		this.emit("change", {
+		const changeEvent = {
 			type: "replace",
 			change: undefined,
 			removedCommits: commits,
-			newCommits: [this.head],
-		});
-		return [commits, this.head];
+			newCommits: [newHead],
+		} as const;
+
+		this.emit("beforeChange", changeEvent);
+		this.head = newHead;
+
+		// If this transaction is not nested, emit a revertible event
+		if (!this.isTransacting()) {
+			this.emit("revertible", this.makeSharedTreeRevertible(newHead, RevertibleKind.Default));
+		}
+
+		this.emit("afterChange", changeEvent);
+		return [commits, newHead];
 	}
 
 	/**
@@ -281,7 +294,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
-		this.head = startCommit;
 
 		if (commits.length === 0) {
 			return [undefined, []];
@@ -295,11 +307,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
 
-		this.emit("change", {
+		const changeEvent = {
 			type: "remove",
 			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: commits,
-		});
+		} as const;
+
+		this.emit("beforeChange", changeEvent);
+		this.head = startCommit;
+		this.emit("afterChange", changeEvent);
 		return [change, commits];
 	}
 
@@ -453,20 +469,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
-		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
+		const changeEvent = {
+			type: "replace",
+			change: change === undefined ? undefined : makeAnonChange(change),
+			removedCommits: deletedSourceCommits,
+			newCommits,
+		} as const;
+
+		this.emit("beforeChange", changeEvent);
+		this.head = newHead;
 
 		// update revertible commits that have been rebased
 		sourceCommits.forEach((commit) => {
 			this.updateRevertibleCommit(commit);
 		});
 
-		this.emit("change", {
-			type: "replace",
-			change: change === undefined ? undefined : makeAnonChange(change),
-			removedCommits: deletedSourceCommits,
-			newCommits,
-		});
+		this.emit("afterChange", changeEvent);
 		return [change, deletedSourceCommits, newCommits];
 	}
 
@@ -498,14 +517,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// Compute the net change to this branch
 		const [newHead, _, { sourceCommits }] = rebaseResult;
-
-		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
-		this.emit("change", {
+		const changeEvent = {
 			type: "append",
 			change: makeAnonChange(change),
 			newCommits: sourceCommits,
-		});
+		} as const;
+
+		this.emit("beforeChange", changeEvent);
+		this.head = newHead;
+		this.emit("afterChange", changeEvent);
 		return [change, sourceCommits];
 	}
 

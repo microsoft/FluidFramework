@@ -82,21 +82,6 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
 		});
-		it("a tree being returned", () => {
-			const input: TestChangeset = [Mark.returnFrom(1, atomId), Mark.returnTo(1, atomId)];
-			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, []);
-		});
-		it("a tree with child changes being returned", () => {
-			const input: TestChangeset = [
-				Mark.returnFrom(1, atomId, { changes: childChange }),
-				Mark.returnTo(1, atomId),
-			];
-			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, []);
-		});
 		it("a tree being transiently inserted", () => {
 			const input: TestChangeset = [
 				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId)),
@@ -207,15 +192,6 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const input: TestChangeset = [
 				Mark.moveOut(1, atomId, { changes: childChange }),
 				Mark.moveIn(1, atomId),
-			];
-			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, [relevantNestedTree]);
-		});
-		it("relevant trees from nested changes under a tree being returned", () => {
-			const input: TestChangeset = [
-				Mark.returnFrom(1, atomId, { changes: childChange }),
-				Mark.returnTo(1, atomId),
 			];
 			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
 			const array = Array.from(actual);
