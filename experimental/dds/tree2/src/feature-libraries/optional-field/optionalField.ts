@@ -10,11 +10,9 @@ import {
 	TaggedChange,
 	tagChange,
 	ChangesetLocalId,
-	ChangeAtomId,
 	RevisionTag,
-	JsonableTree,
 	areEqualChangeAtomIds,
-	makeDetachedNodeId,
+	JsonableTree,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -35,28 +33,35 @@ import {
 	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
+import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
-type ChangeId = ChangeAtomId | "self";
-
-interface IChildChangeMap<T> {
-	set(id: ChangeId, childChange: T): void;
-	get(id: ChangeId): T | undefined;
-	delete(id: ChangeId): boolean;
-	keys(): Iterable<ChangeId>;
+interface IRegisterMap<T> {
+	set(id: RegisterId, childChange: T): void;
+	get(id: RegisterId): T | undefined;
+	delete(id: RegisterId): boolean;
+	keys(): Iterable<RegisterId>;
 	values(): Iterable<T>;
-	entries(): Iterable<[ChangeId, T]>;
+	entries(): Iterable<[RegisterId, T]>;
 	readonly size: number;
 }
 
-class ChildChangeMap<T> implements IChildChangeMap<T> {
+class RegisterMap<T> implements IRegisterMap<T> {
 	private readonly nestedMapData = new SizedNestedMap<
 		ChangesetLocalId | "self",
 		RevisionTag | undefined,
 		T
 	>();
-	public set(id: ChangeId, childChange: T): void {
+
+	public clone(): RegisterMap<T> {
+		const clone = new RegisterMap<T>();
+		for (const [id, t] of this.entries()) {
+			clone.set(id, t);
+		}
+		return clone;
+	}
+
+	public set(id: RegisterId, childChange: T): void {
 		if (id === "self") {
 			this.nestedMapData.set("self", undefined, childChange);
 		} else {
@@ -64,20 +69,24 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		}
 	}
 
-	public get(id: ChangeId): T | undefined {
+	public get(id: RegisterId): T | undefined {
 		return id === "self"
 			? this.nestedMapData.tryGet(id, undefined)
 			: this.nestedMapData.tryGet(id.localId, id.revision);
 	}
 
-	public delete(id: ChangeId): boolean {
+	public has(id: RegisterId): boolean {
+		return this.get(id) !== undefined;
+	}
+
+	public delete(id: RegisterId): boolean {
 		return id === "self"
 			? this.nestedMapData.delete("self", undefined)
 			: this.nestedMapData.delete(id.localId, id.revision);
 	}
 
-	public keys(): Iterable<ChangeId> {
-		const changeIds: ChangeId[] = [];
+	public keys(): Iterable<RegisterId> {
+		const changeIds: RegisterId[] = [];
 		for (const [localId, nestedMap] of this.nestedMapData) {
 			if (localId === "self") {
 				changeIds.push("self");
@@ -97,8 +106,8 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 	public values(): Iterable<T> {
 		return this.nestedMapData.values();
 	}
-	public entries(): Iterable<[ChangeId, T]> {
-		const entries: [ChangeId, T][] = [];
+	public entries(): Iterable<[RegisterId, T]> {
+		const entries: [RegisterId, T][] = [];
 		for (const changeId of this.keys()) {
 			if (changeId === "self") {
 				const entry = this.nestedMapData.tryGet("self", undefined);
@@ -124,6 +133,25 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 	}
 }
 
+/**
+ * Attempt to deduce whether the "self" register of a change is empty or filled in the input context.
+ * Optional changesets do not always carry enough information to determine this, in which case this
+ * returns `undefined`.
+ */
+function tryInferInputContext(change: OptionalChangeset): "empty" | "filled" | undefined {
+	if (change.reservedDetachId !== undefined) {
+		return "empty";
+	}
+
+	for (const [src] of change.moves) {
+		if (src === "self") {
+			return "filled";
+		}
+	}
+
+	return undefined;
+}
+
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
@@ -132,120 +160,131 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
-		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
-		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
-			const existingChanges = perChildChanges.get(id);
-			if (existingChanges !== undefined) {
-				existingChanges.push(...changeList);
-			} else {
-				perChildChanges.set(id, [...changeList]);
+		const getBidirectionalMaps = (
+			moves: OptionalChangeset["moves"],
+		): {
+			srcToDst: RegisterMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
+			dstToSrc: RegisterMap<RegisterId>;
+		} => {
+			const srcToDst = new RegisterMap<
+				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
+			>();
+			const dstToSrc = new RegisterMap<RegisterId>();
+			for (const [src, dst, target] of moves) {
+				srcToDst.set(src, [dst, target]);
+				dstToSrc.set(dst, src);
 			}
+			return { srcToDst, dstToSrc };
 		};
 
-		let fieldChange: Mutable<OptionalFieldChange> | undefined;
-		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
-		let index = 0;
+		let latestReservedDetachId: RegisterId | undefined;
+		let inputContext: "empty" | "filled" | undefined;
+
+		// Using a map here avoids potential duplicate builds from sandwich rebases.
+		const builds = new RegisterMap<JsonableTree>();
+		const childChangesByOriginalId = new RegisterMap<TaggedChange<NodeChangeset>[]>();
+		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
+		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
+		// for sandwich rebases would help with cloning if in-place proves too difficult
+		const current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
-			const fieldChangeInfo = revisionMetadata.tryGetInfo(
-				revision ?? change.fieldChange?.revision,
-			);
-			const { childChanges } = change;
-			if (childChanges !== undefined) {
-				for (const [childId, childChange] of childChanges) {
-					const taggedChildChange = tagChange(childChange, revision);
-					if (childId === "self") {
-						// childChange refers to the node that existed at the start of `change`,
-						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
-						// currentChildNodeChanges tracks
-						currentChildNodeChanges.push(taggedChildChange);
-					} else {
-						addChildChange(childId, taggedChildChange);
-					}
+			inputContext ??= tryInferInputContext(change);
+			const withIntention = (id: RegisterId): RegisterId => {
+				if (id === "self") {
+					return id;
 				}
-			}
+				const intention = getIntention(id.revision ?? revision, revisionMetadata);
+				return { revision: intention, localId: id.localId };
+			};
 
-			if (change.fieldChange !== undefined) {
-				if (fieldChange === undefined) {
-					fieldChange = {
-						id: change.fieldChange.id,
-						revision: fieldChangeInfo?.revision,
-						wasEmpty: change.fieldChange.wasEmpty,
-					};
-				} else {
-					fieldChange.id = change.fieldChange.id;
-					fieldChange.revision = fieldChangeInfo?.revision;
-				}
-
-				let hasMatchingPriorInverse = false;
-				const maybePriorInverse = changes.findIndex((c) => {
-					const cChangeInfo = revisionMetadata.tryGetInfo(
-						// Change c may be a composite, in which case we need to look the revision of the fieldChange
-						c.revision ?? c.change.fieldChange?.revision,
-					);
-					return (
-						(cChangeInfo?.rollbackOf !== undefined &&
-							cChangeInfo?.rollbackOf === fieldChangeInfo?.revision) ||
-						(cChangeInfo?.revision !== undefined &&
-							cChangeInfo?.revision === fieldChangeInfo?.rollbackOf)
-					);
-				});
-				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
-
-				if (change.fieldChange.newContent !== undefined) {
-					if (hasMatchingPriorInverse) {
-						fieldChange = undefined;
-					} else {
-						fieldChange.newContent = { ...change.fieldChange.newContent };
-					}
-				} else {
-					if (hasMatchingPriorInverse) {
-						fieldChange = undefined;
-					} else {
-						delete fieldChange.newContent;
-					}
-				}
-
-				// Node was changed by this revision: flush the current changes
-				if (currentChildNodeChanges.length > 0) {
-					addChildChange(
-						{ revision, localId: change.fieldChange.id },
-						...currentChildNodeChanges,
-					);
-					currentChildNodeChanges = [];
-				}
-
-				if (change.fieldChange.newContent?.changes !== undefined) {
-					currentChildNodeChanges.push(
-						tagChange(change.fieldChange.newContent.changes, fieldChangeInfo?.revision),
-					);
-				}
-			}
-			index++;
-		}
-
-		if (currentChildNodeChanges.length > 0) {
-			if (fieldChange !== undefined) {
-				assert(
-					fieldChange.newContent !== undefined,
-					0x772 /* after node must be defined to receive changes */,
+			for (const { id, set } of change.build) {
+				builds.set(
+					{
+						revision: id.revision ?? revision,
+						localId: id.localId,
+					},
+					set,
 				);
-				fieldChange.newContent.changes = composeChild(currentChildNodeChanges);
-			} else {
-				addChildChange("self", ...currentChildNodeChanges);
 			}
+
+			const nextSrcToDst = new RegisterMap<
+				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
+			>();
+			const nextDstToSrc = new RegisterMap<RegisterId>();
+
+			if (change.reservedDetachId !== undefined) {
+				latestReservedDetachId = withIntention(change.reservedDetachId);
+			}
+
+			// Compose all the things that `change` moved.
+			for (const [unintentionedSrc, unintentionedDst, target] of change.moves) {
+				const src = withIntention(unintentionedSrc);
+				const dst = withIntention(unintentionedDst);
+				let originalSrc = current.dstToSrc.get(src);
+				let currentTarget: "cellTargeting" | "nodeTargeting" | undefined;
+				if (originalSrc !== undefined) {
+					const [dst2, existingTarget] =
+						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
+					assert(areEqualRegisterIds(dst2, src), "expected consistent backward mapping");
+					currentTarget = existingTarget;
+				} else {
+					originalSrc = src;
+				}
+				nextSrcToDst.set(originalSrc, [
+					dst,
+					target === "cellTargeting" &&
+					(currentTarget === undefined || currentTarget === "cellTargeting")
+						? "cellTargeting"
+						: "nodeTargeting",
+				]);
+				nextDstToSrc.set(dst, originalSrc);
+			}
+
+			// Include any existing moves that `change` didn't affect.
+			for (const [src, [dst, target]] of current.srcToDst.entries()) {
+				if (!nextSrcToDst.has(src)) {
+					const intentionedDst = withIntention(dst);
+					nextSrcToDst.set(src, [intentionedDst, target]);
+					nextDstToSrc.set(intentionedDst, src);
+				}
+			}
+
+			for (const [id, childChange] of change.childChanges) {
+				const originalId = nextDstToSrc.get(withIntention(id)) ?? id;
+				const existingChanges = childChangesByOriginalId.get(originalId);
+				const taggedChange = tagChange(childChange, revision);
+				if (existingChanges === undefined) {
+					childChangesByOriginalId.set(originalId, [taggedChange]);
+				} else {
+					existingChanges.push(taggedChange);
+				}
+			}
+
+			current.srcToDst = nextSrcToDst;
+			current.dstToSrc = nextDstToSrc;
 		}
 
-		const composed: OptionalChangeset = {};
-
-		if (fieldChange !== undefined) {
-			composed.fieldChange = fieldChange;
+		const composedMoves: OptionalChangeset["moves"] = [];
+		for (const [src, [dst, target]] of current.srcToDst.entries()) {
+			composedMoves.push([src, dst, target]);
 		}
 
-		if (perChildChanges.size > 0) {
-			composed.childChanges = Array.from(perChildChanges.entries(), ([id, changeList]) => [
-				id,
-				composeChild(changeList),
-			]);
+		const composedBuilds: OptionalChangeset["build"] = [];
+		for (const [id, set] of builds.entries()) {
+			assert(id !== "self", "Detached trees should not be built directly to self register");
+			composedBuilds.push({ id, set });
+		}
+		const composed: OptionalChangeset = {
+			build: composedBuilds,
+			moves: composedMoves,
+			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
+				current.srcToDst.get(id)?.[0] ?? id,
+				composeChild(childChanges),
+			]),
+		};
+
+		if (inputContext === "empty") {
+			composed.reservedDetachId = latestReservedDetachId;
 		}
 
 		return composed;
@@ -256,54 +295,51 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
+		genId: IdAllocator<ChangesetLocalId>,
 	): OptionalChangeset => {
-		// Changes to the child that existed in this field before `change` was applied.
-		let originalChildChanges: NodeChangeset | undefined;
-		const inverseChildChanges = new ChildChangeMap<NodeChangeset>();
-		if (change.childChanges !== undefined) {
-			for (const [id, childChange] of change.childChanges) {
-				if (id === "self" && change.fieldChange !== undefined) {
-					originalChildChanges = invertChild(childChange);
-				} else {
-					inverseChildChanges.set(
-						// This makes assumptions about how sandwich rebasing works
-						id,
-						invertChild(childChange),
-					);
-				}
+		const { moves, childChanges } = change;
+		const invertIdMap = new RegisterMap<RegisterId>();
+		const withIntention = (id: RegisterId): RegisterId => {
+			if (id === "self") {
+				return id;
+			}
+			return { revision: id.revision ?? revision, localId: id.localId };
+		};
+		for (const [src, dst] of moves) {
+			invertIdMap.set(dst, src);
+		}
+
+		let inverseFillsSelf = false;
+		let inverseEmptiesSelf = false;
+		const invertedMoves: typeof change.moves = [];
+		for (const [src, dst] of moves) {
+			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
+			assert(
+				src === "self" || dst === "self",
+				"Invert is not currently supported for changes that transfer nodes between non-self registers.",
+			);
+			if (src !== "self" && dst === "self") {
+				inverseEmptiesSelf = true;
+				// TODO:AB#6319: This might lead to a situation where we put a node in a register it never came from, and that register may not be empty.
+				invertedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
+			} else {
+				inverseFillsSelf = true;
+				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
 			}
 		}
-
-		const selfChanges = change.fieldChange?.newContent?.changes;
-		if (selfChanges !== undefined) {
-			inverseChildChanges.set("self", invertChild(selfChanges));
-		}
-
-		const inverse: OptionalChangeset = {
-			childChanges:
-				inverseChildChanges.size > 0
-					? Array.from(inverseChildChanges.entries())
-					: undefined,
+		const inverted: OptionalChangeset = {
+			build: [],
+			moves: invertedMoves,
+			childChanges: childChanges.map(([id, childChange]) => [
+				withIntention(invertIdMap.get(id) ?? id),
+				invertChild(childChange),
+			]),
 		};
 
-		const { fieldChange } = change;
-		if (fieldChange !== undefined) {
-			// `change` replaces the node in the field
-			inverse.fieldChange = {
-				id: fieldChange.id,
-				wasEmpty: fieldChange.newContent === undefined,
-			};
-
-			if (!fieldChange.wasEmpty) {
-				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
-				inverse.fieldChange.newContent = {
-					revert: { revision, localId: fieldChange.id },
-					changes: originalChildChanges,
-				};
-			}
+		if (inverseFillsSelf && !inverseEmptiesSelf) {
+			inverted.reservedDetachId = { localId: genId.getNextId() };
 		}
-
-		return inverse;
+		return inverted;
 	},
 
 	rebase: (
@@ -315,181 +351,138 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
-		const over = overTagged.change;
-
-		const perChildChanges = new ChildChangeMap<NodeChangeset>();
-		if (change.childChanges !== undefined) {
-			// TODO: (minor) early exits, better data structure choices, etc.
-			const overChildChanges = new ChildChangeMap<NodeChangeset>();
-			for (const [id, overChange] of over.childChanges ?? []) {
-				overChildChanges.set(id, overChange);
+		const withIntention = (id: RegisterId): RegisterId => {
+			if (id === "self") {
+				return id;
 			}
+			const intention = getIntention(id.revision ?? overTagged.revision, revisionMetadata);
+			return { revision: intention, localId: id.localId };
+		};
 
-			// If we're rebasing over a fieldChange, track ChangeAtomId_s for cases where a previously existing
-			// node was restored. In that case, when we construct our child id changes, they may apply to 'self' rather than
-			// the pre-existing childId.
-			let restoredRollbackChangeId: ChangeAtomId | undefined;
-			let restoredUndoChangeId: ChangeAtomId | undefined;
-			if (over.fieldChange !== undefined) {
-				const overIntention = getIntention(
-					over.fieldChange.revision ?? overTagged.revision,
-					revisionMetadata,
-				);
+		const { moves, childChanges, build } = change;
+		const { change: overChange } = overTagged;
+		const rebasedMoves: typeof moves = [];
 
-				if (over.fieldChange.newContent !== undefined) {
-					const overContent = over.fieldChange.newContent;
-					restoredRollbackChangeId = {
-						revision: overIntention,
-						localId: over.fieldChange.id,
-					};
-					if ("revert" in overContent) {
-						restoredUndoChangeId = overContent.revert;
-					}
-				}
-			}
+		const overDstToSrc = new RegisterMap<RegisterId>();
+		const overSrcToDst = new RegisterMap<RegisterId>();
+		for (const [src, dst] of overChange.moves) {
+			const srcTagged = withIntention(src);
+			const dstTagged = withIntention(dst);
+			overSrcToDst.set(srcTagged, dstTagged);
+			overDstToSrc.set(dstTagged, srcTagged);
+		}
 
-			for (const [id, childChange] of change.childChanges) {
-				if (id === "self") {
-					const overChildChange = overChildChanges.get(id);
-					if (over.fieldChange !== undefined) {
-						// `childChange` refers to the node existing in this field before rebasing, but
-						// that node was removed by `over`.
-						const rebasedChild = rebaseChild(
-							childChange,
-							overChildChange,
-							NodeExistenceState.Dead,
-						);
-						if (rebasedChild !== undefined) {
-							perChildChanges.set(
-								{
-									// TODO: Document this choice. This isn't really the revision that deleted the node, but
-									// the one that puts it back such that if we later ressurect it, the child changes will
-									// apply to it... this matches what the previous code/format did, but it's not well-documented
-									// why it's the right choice.
-									// See the "can rebase a node replacement and a dependent edit to the new node" test case.
-									// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
-									// an obstacle for postbase)
-									revision: getIntention(
-										over.fieldChange?.revision ?? overTagged.revision,
-										revisionMetadata,
-									),
-									localId: over.fieldChange.id,
-								},
-								rebasedChild,
-							);
-						}
-					} else {
-						// `over` didn't remove the node (its fieldChange is undefined)
-						const rebasedChild = rebaseChild(
-							childChange,
-							overChildChange,
-							NodeExistenceState.Alive,
-						);
-						if (rebasedChild !== undefined) {
-							perChildChanges.set(id, rebasedChild);
-						}
-					}
+		let reservedDetachId: RegisterId | undefined = change.reservedDetachId;
+		const changeDstToSrc = new RegisterMap<RegisterId>();
+		const changeSrcToDst = new RegisterMap<RegisterId>();
+		for (const [src, dst] of moves) {
+			changeSrcToDst.set(src, dst);
+			changeDstToSrc.set(dst, src);
+		}
+
+		for (const [src, dst, target] of moves) {
+			if (target === "cellTargeting") {
+				assert(src === "self", "Cell targeting moves must have self as a source");
+				// TODO: Should we drop cell targeting / node targeting and just special-case 'self'? Might be simpler to understand.
+				// Holding off on making a call until AB#6298 is addressed (possibly support for rebasing transactions makes the
+				// answer to this more obvious).
+				if (
+					overSrcToDst.get(src) !== undefined &&
+					overDstToSrc.get(src) === undefined &&
+					reservedDetachId === undefined
+				) {
+					// Over removed the content occupying this cell and didn't fill it with other content.
+					// This change includes field changes,
+					reservedDetachId = dst;
 				} else {
-					if (
-						(restoredRollbackChangeId !== undefined &&
-							areEqualChangeIds(id, restoredRollbackChangeId)) ||
-						(restoredUndoChangeId !== undefined &&
-							areEqualChangeIds(id, restoredUndoChangeId))
-					) {
-						// childChange refers to changes to node being revived by `over`.
-						const overChange = over.fieldChange?.newContent?.changes;
-						const rebasedChild = rebaseChild(
-							childChange,
-							overChange,
-							NodeExistenceState.Alive,
-						);
-						if (rebasedChild !== undefined) {
-							perChildChanges.set("self", rebasedChild);
-						}
-					} else {
-						// childChange refers to changes to node removed by some past revision. Rebase over any changes that
-						// `over` has to that same revision.
-						const overChange = overChildChanges.get(id);
-						const rebasedChild = rebaseChild(
-							childChange,
-							overChange,
-							NodeExistenceState.Dead,
-						);
-						if (rebasedChild !== undefined) {
-							perChildChanges.set(id, rebasedChild);
-						}
-					}
+					// Cell-targeting.
+					rebasedMoves.push([src, dst, target]);
 				}
-			}
-		}
-
-		let fieldChange: OptionalFieldChange | undefined;
-		if (change.fieldChange !== undefined) {
-			if (over.fieldChange !== undefined) {
-				const wasEmpty = over.fieldChange.newContent === undefined;
-				fieldChange = { ...change.fieldChange, wasEmpty };
 			} else {
-				fieldChange = change.fieldChange;
+				// Figure out where content in src ended up in `overTagged`
+				const rebasedSrc = overSrcToDst.get(src) ?? src;
+				// Note: we cannot drop changes which map a node to itself, as this loses the intention of the original edit
+				// (since the target kind is node targeting, it may not still map to a noop after further rebases)
+				rebasedMoves.push([rebasedSrc, dst, target]);
 			}
 		}
 
-		const rebased: OptionalChangeset = {};
-		if (fieldChange !== undefined) {
-			rebased.fieldChange = fieldChange;
-		}
-		if (perChildChanges.size > 0) {
-			rebased.childChanges = Array.from(perChildChanges.entries());
+		// We rebased a fill from an empty state over another edit which also sets this field.
+		// We need to make sure that we also empty the field.
+		const overFillsEmptyField = !overSrcToDst.has("self") && overDstToSrc.has("self");
+		if (overFillsEmptyField && reservedDetachId !== undefined) {
+			rebasedMoves.push(["self", reservedDetachId, "cellTargeting"]);
+			reservedDetachId = undefined;
 		}
 
+		const overChildChangesBySrc = new RegisterMap<NodeChangeset>();
+		for (const [id, childChange] of overChange.childChanges ?? []) {
+			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, childChange);
+		}
+
+		// Maps the content occupying a given register id in the output context of `change` to the register id
+		// that content occupies in the output context of the rebased change.
+		// This is necessary since child changes to nodes are keyed on the register they occupy in the output
+		// context of the changeset, and `change` might make child changes to content which it doesn't move, but
+		// `over` does.
+		const renamedDsts = new RegisterMap<RegisterId>();
+		for (const [_, dst] of moves) {
+			renamedDsts.set(dst, dst);
+		}
+		for (const [src, dst] of overSrcToDst.entries()) {
+			if (!renamedDsts.has(src)) {
+				renamedDsts.set(src, dst);
+			}
+		}
+
+		const rebasedChildChanges: typeof childChanges = [];
+		for (const [id, childChange] of childChanges) {
+			const rebasedId = renamedDsts.get(id) ?? id;
+			// locate corresponding child change
+			const srcId = changeDstToSrc.get(id) ?? id;
+			const overChildChange = overChildChangesBySrc.get(srcId);
+			const rebasedChildChange = rebaseChild(
+				childChange,
+				overChildChange,
+				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+			);
+			if (rebasedChildChange !== undefined) {
+				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
+			}
+		}
+
+		const rebased: OptionalChangeset = {
+			build,
+			moves: rebasedMoves,
+			childChanges: rebasedChildChanges,
+		};
+		if (reservedDetachId !== undefined) {
+			rebased.reservedDetachId = reservedDetachId;
+		}
 		return rebased;
 	},
 
 	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
-		const prunedChange: OptionalChangeset = {};
-		if (change.fieldChange !== undefined) {
-			const prunedNodeChange =
-				change.fieldChange.newContent?.changes !== undefined
-					? pruneChild(change.fieldChange.newContent.changes)
-					: undefined;
-
-			const prunedFieldChange: OptionalFieldChange = {
-				...change.fieldChange,
-			};
-
-			if (prunedFieldChange.newContent?.changes !== undefined) {
-				prunedFieldChange.newContent = nodeUpdateWithNodeChange(
-					prunedFieldChange.newContent,
-					prunedNodeChange,
-				);
-			}
-
-			prunedChange.fieldChange = change.fieldChange;
+		const childChanges: OptionalChangeset["childChanges"] = [];
+		const prunedChange: OptionalChangeset = {
+			build: change.build,
+			moves: change.moves,
+			childChanges,
+		};
+		if (change.reservedDetachId !== undefined) {
+			prunedChange.reservedDetachId = change.reservedDetachId;
 		}
 
-		if (change.childChanges !== undefined) {
-			for (const [id, childChange] of change.childChanges) {
-				const prunedNode = pruneChild(childChange);
-				if (prunedNode !== undefined) {
-					prunedChange.childChanges?.push([id, prunedNode]);
-				}
+		for (const [id, childChange] of change.childChanges) {
+			const prunedChildChange = pruneChild(childChange);
+			if (prunedChildChange !== undefined) {
+				prunedChange.childChanges.push([id, prunedChildChange]);
 			}
 		}
 
 		return prunedChange;
 	},
 };
-
-function nodeUpdateWithNodeChange(
-	update: NodeUpdate,
-	change: NodeChangeset | undefined,
-): NodeUpdate {
-	const result: NodeUpdate = { ...update, changes: change };
-	if (change === undefined) {
-		delete result.changes;
-	}
-
-	return result;
-}
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
@@ -502,42 +495,59 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	set(
 		newContent: ITreeCursor,
 		wasEmpty: boolean,
-		changeId: ChangesetLocalId,
-		buildId: ChangesetLocalId,
+		ids: {
+			fill: ChangesetLocalId;
+			detach: ChangesetLocalId;
+		},
 	): OptionalChangeset;
 
 	/**
 	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the change.
+	 * @param changeId - the ID associated with the detach.
 	 */
-	clear(wasEmpty: boolean, changeId: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
 		newContent: ITreeCursor,
 		wasEmpty: boolean,
-		id: ChangesetLocalId,
-		buildId: ChangesetLocalId,
-	): OptionalChangeset => ({
-		fieldChange: {
-			id,
-			newContent: {
-				set: jsonableTreeFromCursor(newContent),
-				buildId: { localId: buildId },
-			},
-			wasEmpty,
+		ids: {
+			fill: ChangesetLocalId;
+			// Should be interpreted as a set of an empty field if undefined.
+			detach: ChangesetLocalId;
 		},
-	}),
+	): OptionalChangeset => {
+		const result: OptionalChangeset = {
+			build: [{ id: { localId: ids.fill }, set: jsonableTreeFromCursor(newContent) }],
+			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
+			childChanges: [],
+		};
+		if (wasEmpty) {
+			result.reservedDetachId = { localId: ids.detach };
+		} else {
+			result.moves.push(["self", { localId: ids.detach }, "cellTargeting"]);
+		}
+		return result;
+	},
 
-	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
-		fieldChange: { id, wasEmpty },
-	}),
+	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset =>
+		wasEmpty
+			? { build: [], moves: [], childChanges: [], reservedDetachId: { localId: detachId } }
+			: {
+					build: [],
+					moves: [["self", { localId: detachId }, "cellTargeting"]],
+					childChanges: [],
+			  },
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
-		return { childChanges: [["self", childChange]] };
+		return {
+			build: [],
+			moves: [],
+			childChanges: [["self", childChange]],
+		};
 	},
 };
 
@@ -546,52 +556,73 @@ export function optionalFieldIntoDelta(
 	deltaFromChild: ToDelta,
 ): Delta.FieldChanges {
 	const delta: Mutable<Delta.FieldChanges> = {};
-	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
-	if (childChange === undefined && change.fieldChange === undefined) {
-		return delta;
+
+	if (change.build.length > 0) {
+		const builds: Delta.DetachedNodeBuild[] = [];
+		for (const build of change.build) {
+			builds.push({
+				id: { major: build.id.revision ?? revision, minor: build.id.localId },
+				trees: [cursorForJsonableTreeNode(build.set)],
+			});
+		}
+		delta.build = builds;
 	}
 
+	const dstToSrc = new RegisterMap<RegisterId>();
+
+	let markIsANoop = true;
 	const mark: Mutable<Delta.Mark> = { count: 1 };
-	delta.local = [mark];
 
-	if (childChange !== undefined) {
-		mark.fields = deltaFromChild(childChange);
-	}
-
-	if (change.fieldChange === undefined) {
-		return delta;
-	}
-
-	if (!change.fieldChange.wasEmpty) {
-		const detachId = {
-			major: change.fieldChange.revision ?? revision,
-			minor: change.fieldChange.id,
-		};
-		mark.detach = detachId;
-	}
-
-	const update = change.fieldChange.newContent;
-	if (update === undefined) {
-		// The field is being cleared
-	} else {
-		if (Object.prototype.hasOwnProperty.call(update, "set")) {
-			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
-			const content = [cursorForJsonableTreeNode(setUpdate.set)];
-			const buildId = makeDetachedNodeId(
-				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
-				setUpdate.buildId.localId,
-			);
-			mark.attach = buildId;
-			delta.build = [{ id: buildId, trees: content }];
-		} else {
-			const changeId = (update as { revert: ChangeAtomId }).revert;
-			mark.attach = makeDetachedNodeId(changeId.revision, changeId.localId);
+	if (change.moves.length > 0) {
+		const renames: Delta.DetachedNodeRename[] = [];
+		for (const [src, dst] of change.moves) {
+			dstToSrc.set(dst, src);
+			if (src === "self" && dst !== "self") {
+				mark.detach = { major: dst.revision ?? revision, minor: dst.localId };
+				markIsANoop = false;
+			} else if (dst === "self" && src !== "self") {
+				mark.attach = { major: src.revision ?? revision, minor: src.localId };
+				markIsANoop = false;
+			} else if (src !== "self" && dst !== "self") {
+				renames.push({
+					count: 1,
+					oldId: { major: src.revision ?? revision, minor: src.localId },
+					newId: { major: dst.revision ?? revision, minor: dst.localId },
+				});
+			}
 		}
-		if (update.changes !== undefined) {
-			const fields = deltaFromChild(update.changes);
-			delta.global = [{ id: mark.attach, fields }];
+
+		if (renames.length > 0) {
+			delta.rename = renames;
 		}
 	}
+
+	if (change.childChanges.length > 0) {
+		const globals: Delta.DetachedNodeChanges[] = [];
+		for (const [id, childChange] of change.childChanges) {
+			const srcId = dstToSrc.get(id) ?? id;
+			const childDelta = deltaFromChild(childChange);
+			if (srcId !== "self") {
+				const fields = childDelta;
+				globals.push({
+					id: { major: srcId.revision ?? revision, minor: srcId.localId },
+					fields,
+				});
+			} else {
+				mark.fields = childDelta;
+				markIsANoop = false;
+			}
+		}
+
+		if (globals.length > 0) {
+			delta.global = globals;
+		}
+	}
+
+	if (!markIsANoop) {
+		delta.local = [mark];
+	}
+
 	return delta;
 }
 
@@ -604,10 +635,10 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedTrees,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges === undefined && change.fieldChange === undefined,
+		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
 };
 
-function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
+function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 	if (typeof a === "string" || typeof b === "string") {
 		return a === b;
 	}
@@ -619,39 +650,28 @@ function* relevantRemovedTrees(
 	change: OptionalChangeset,
 	removedTreesFromChild: RemovedTreesFromChild,
 ): Iterable<Delta.DetachedNodeId> {
-	let removedNode: ChangeAtomId | undefined;
-	let restoredNode: ChangeAtomId | undefined;
-	const fieldChange = change.fieldChange;
-	if (fieldChange !== undefined) {
-		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
-		const newContent = fieldChange.newContent;
-		if (newContent !== undefined) {
-			if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
-				// This tree is being restored by this change, so it is a relevant removed tree.
-				restoredNode = (newContent as { revert: ChangeAtomId }).revert;
-				yield nodeIdFromChangeAtom(restoredNode);
-			}
-			if (newContent.changes !== undefined) {
-				yield* removedTreesFromChild(newContent.changes);
-			}
+	const dstToSrc = new RegisterMap<RegisterId>();
+	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
+	for (const { id } of change.build) {
+		alreadyYieldedOrNewlyBuilt.set(id, true);
+	}
+
+	for (const [src, dst] of change.moves) {
+		dstToSrc.set(dst, src);
+		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
+			alreadyYieldedOrNewlyBuilt.set(src, true);
+			yield nodeIdFromChangeAtom(src);
 		}
 	}
-	if (change.childChanges !== undefined) {
-		for (const [deletedBy, child] of change.childChanges) {
-			if (
-				deletedBy === "self" ||
-				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
-			) {
-				// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
-			} else {
-				if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
-					// This tree is a relevant removed tree, but it is already included in the list
-				} else {
-					// This tree is being edited by this change, so it is a relevant removed tree.
-					yield nodeIdFromChangeAtom(deletedBy);
-				}
-			}
-			yield* removedTreesFromChild(child);
+
+	for (const [id, childChange] of change.childChanges) {
+		// Child changes are relevant unless they apply to the tree which existed in the starting context of
+		// of this change.
+		const startingId = dstToSrc.get(id) ?? id;
+		if (startingId !== "self" && !alreadyYieldedOrNewlyBuilt.has(startingId)) {
+			alreadyYieldedOrNewlyBuilt.set(startingId, true);
+			yield nodeIdFromChangeAtom(startingId);
 		}
+		yield* removedTreesFromChild(childChange);
 	}
 }

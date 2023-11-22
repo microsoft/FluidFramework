@@ -22,8 +22,8 @@ import {
 	MoveEffectTable,
 	getModifyAfter,
 	MoveEffect,
-	isMoveDestination,
-	isMoveSource,
+	isMoveIn,
+	isMoveOut,
 } from "./moveEffectTable";
 import {
 	getInputLength,
@@ -168,11 +168,8 @@ function composeMarks<TNodeChange>(
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
-			if (
-				isMoveDestination(newAttachAndDetach.attach) &&
-				isMoveSource(newAttachAndDetach.detach)
-			) {
-				assert(isMoveSource(baseMark), 0x808 /* Unexpected mark type */);
+			if (isMoveIn(newAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
+				assert(isMoveOut(baseMark), 0x808 /* Unexpected mark type */);
 
 				// The base changeset and new changeset both move these nodes.
 				// Call the original position of the nodes A, the position after the base changeset is applied B,
@@ -237,11 +234,8 @@ function composeMarks<TNodeChange>(
 	if (isCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (
-				isMoveDestination(baseAttachAndDetach.attach) &&
-				isMoveSource(baseAttachAndDetach.detach)
-			) {
-				assert(isMoveDestination(newMark), 0x809 /* Unexpected mark type */);
+			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
+				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -290,7 +284,7 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		if (isMoveDestination(baseMark) && nodeChange !== undefined) {
+		if (isMoveIn(baseMark) && nodeChange !== undefined) {
 			setModifyAfter(moveEffects, getEndpoint(baseMark, undefined), nodeChange, composeChild);
 			return baseMark;
 		}
@@ -303,13 +297,13 @@ function composeMarks<TNodeChange>(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
 
-		if (isMoveDestination(attach) && nodeChange !== undefined) {
+		if (isMoveIn(attach) && nodeChange !== undefined) {
 			setModifyAfter(moveEffects, getEndpoint(attach, undefined), nodeChange, composeChild);
 
 			localNodeChange = undefined;
 		}
 
-		if (isMoveDestination(attach) && isMoveSource(detach)) {
+		if (isMoveIn(attach) && isMoveOut(detach)) {
 			const finalSource = getEndpoint(attach, undefined);
 			const finalDest = getEndpoint(detach, newRev);
 

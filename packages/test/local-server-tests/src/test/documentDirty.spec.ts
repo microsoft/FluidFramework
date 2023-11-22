@@ -11,7 +11,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -151,7 +150,7 @@ describe("Document Dirty", () => {
 
 			// Create the first container, component and DDSes.
 			container = await createContainer();
-			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
@@ -553,7 +552,7 @@ describe("Document Dirty", () => {
 
 			// Create the first container, component and DDSes.
 			container = await createDetachedContainer();
-			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
