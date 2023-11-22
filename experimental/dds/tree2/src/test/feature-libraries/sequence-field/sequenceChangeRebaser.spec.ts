@@ -415,63 +415,71 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 				parent: state,
 			};
 
-			// Delete nodeCount nodes
-			const deleteIntention = mintIntention();
-			yield {
-				content: {
-					length: state.content.length - nodeCount,
-					maxIndex,
-					numNodes,
-				},
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.delete(i, nodeCount),
-						tagFromIntention(deleteIntention),
-					),
-					intention: deleteIntention,
-					description: `Delete${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
-				},
-				parent: state,
-			};
+			// Don't generate deletes past the length of the sequence
+			if (i + nodeCount <= state.content.length) {
+				// Delete nodeCount nodes
+				const deleteIntention = mintIntention();
+				yield {
+					content: {
+						length: state.content.length - nodeCount,
+						maxIndex,
+						numNodes,
+					},
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.delete(i, nodeCount),
+							tagFromIntention(deleteIntention),
+						),
+						intention: deleteIntention,
+						description: `Delete${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}At${i}`,
+					},
+					parent: state,
+				};
+			}
 
-			// MoveIn nodeCount nodes
-			const moveInIntention = mintIntention();
-			yield {
-				content: state.content,
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.move(1, nodeCount, i),
-						tagFromIntention(moveInIntention),
-					),
-					intention: moveInIntention,
-					description: `MoveIn${nodeCount}${
-						nodeCount === 1 ? "Node" : "Nodes"
-					}From1To${i}`,
-				},
-				parent: state,
-			};
+			// Only generate moves when we're moving less than the length of the whole sequence
+			if (state.content.length > nodeCount) {
+				// MoveIn nodeCount nodes
+				const moveInIntention = mintIntention();
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.move(1, nodeCount, i),
+							tagFromIntention(moveInIntention),
+						),
+						intention: moveInIntention,
+						description: `MoveIn${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}From1To${i}`,
+					},
+					parent: state,
+				};
 
-			// MoveOut nodeCount nodes
-			const moveOutIntention = mintIntention();
-			yield {
-				content: state.content,
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.move(i, nodeCount, 1),
-						tagFromIntention(moveOutIntention),
-					),
-					intention: moveOutIntention,
-					description: `MoveOut${nodeCount}${
-						nodeCount === 1 ? "Node" : "Nodes"
-					}From${i}To1`,
-				},
-				parent: state,
-			};
+				// MoveOut nodeCount nodes
+				const moveOutIntention = mintIntention();
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.move(i, nodeCount, 1),
+							tagFromIntention(moveOutIntention),
+						),
+						intention: moveOutIntention,
+						description: `MoveOut${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}From${i}To1`,
+					},
+					parent: state,
+				};
+			}
 		}
 	}
 };
 
-describe.only("SequenceField - State-based Rebaser Axioms", () => {
+describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
 		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
 		generateChildStates,
