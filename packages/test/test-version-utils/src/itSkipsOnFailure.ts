@@ -67,7 +67,7 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 ): Mocha.Test => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 
 /**
- * Similar to the ItExpects function, but allow skipping for some if the error
+ * Similar to the `itExpects` function, but allow skipping for some if the error
  * happens on the specific drivers.
  *
  * @internal
