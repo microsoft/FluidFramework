@@ -18,7 +18,6 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
@@ -77,10 +76,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
 		}`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDefaultDataStore = await requestFluidObject<ITestDataObject>(
-				mainContainer,
-				"default",
-			);
+			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
 			// Create a data store and blob.
@@ -161,10 +157,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				: [],
 			async () => {
 				const mainContainer = await provider.makeTestContainer(testContainerConfig);
-				const mainDefaultDataStore = await requestFluidObject<ITestDataObject>(
-					mainContainer,
-					"default",
-				);
+				const mainDefaultDataStore =
+					(await mainContainer.getEntryPoint()) as ITestDataObject;
 				await waitForContainerConnection(mainContainer);
 
 				// Create a data store and blob.

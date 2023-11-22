@@ -6,7 +6,6 @@
 import assert from "assert";
 import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -57,7 +56,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("blob is aborted before uploading", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const ac = new AbortController();
 			ac.abort("abort test");
 			try {
@@ -77,7 +76,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const ac = new AbortController();
 			let blob: IFluidHandle<ArrayBufferLike>;
@@ -100,7 +99,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("blob is attached after usage in map", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -112,7 +111,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("blob is attached after usage in directory", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -123,7 +122,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
@@ -137,7 +136,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("removes pending blob after attached and acked", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -149,7 +148,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		});
 
 		it("removes multiple pending blobs after attached and acked", async function () {
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
@@ -186,7 +185,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			provider.updateDocumentId(container.resolvedUrl);
-			detachedDataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+			detachedDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			map = SharedMap.create(detachedDataStore.runtime);
 			directory = SharedDirectory.create(detachedDataStore.runtime);
 			text = "this is some example text";

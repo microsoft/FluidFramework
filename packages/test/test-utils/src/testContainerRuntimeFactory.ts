@@ -63,28 +63,9 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			const runtime: ContainerRuntime =
-				(await containerRuntimeCtor.loadRuntime?.({
-					context,
-					registryEntries: [
-						["default", Promise.resolve(this.dataStoreFactory)],
-						[this.type, Promise.resolve(this.dataStoreFactory)],
-					],
-					// eslint-disable-next-line import/no-deprecated
-					requestHandler: buildRuntimeRequestHandler(
-						// eslint-disable-next-line import/no-deprecated
-						defaultRouteRequestHandler("default"),
-						...this.requestHandlers,
-					),
-					provideEntryPoint: () => {
-						throw new Error("TODO: AB#4993");
-					},
-					runtimeOptions: this.runtimeOptions,
-					containerScope: context.scope,
-					existing,
-				})) ??
+			if (containerRuntimeCtor.loadRuntime === undefined) {
 				// Note: We use the deprecated load here to allow for cross-major version compat testing.
-				containerRuntimeCtor.load(
+				return containerRuntimeCtor.load(
 					context,
 					[
 						["default", Promise.resolve(this.dataStoreFactory)],
@@ -100,8 +81,33 @@ export const createTestContainerRuntimeFactory = (
 					context.scope,
 					existing,
 				);
-
-			return runtime;
+			}
+			const provideEntryPoint = async (runtime: IContainerRuntime) => {
+				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			};
+			return containerRuntimeCtor.loadRuntime({
+				context,
+				registryEntries: [
+					["default", Promise.resolve(this.dataStoreFactory)],
+					[this.type, Promise.resolve(this.dataStoreFactory)],
+				],
+				// eslint-disable-next-line import/no-deprecated
+				requestHandler: buildRuntimeRequestHandler(
+					// eslint-disable-next-line import/no-deprecated
+					defaultRouteRequestHandler("default"),
+					...this.requestHandlers,
+				),
+				provideEntryPoint,
+				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
+				initializeEntryPoint: provideEntryPoint,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
+				existing,
+			} as any);
 		}
 	};
 };

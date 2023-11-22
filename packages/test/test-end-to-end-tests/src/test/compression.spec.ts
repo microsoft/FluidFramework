@@ -7,12 +7,12 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -42,17 +42,13 @@ const compressionSuite = (getProvider) => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);
-			const localDataObject = await requestFluidObject<ITestFluidObject>(
-				localContainer,
-				"default",
-			);
+			const localDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<SharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(testContainerConfig);
-			const remoteDataObject = await requestFluidObject<ITestFluidObject>(
-				remoteContainer,
-				"default",
-			);
+			const remoteDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<SharedMap>("mapKey");
 		});
 
