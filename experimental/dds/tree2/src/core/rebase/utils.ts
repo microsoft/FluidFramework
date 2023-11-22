@@ -4,7 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
+import {
+	ChangeRebaser,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
+} from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
 
 /**
@@ -222,31 +228,31 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const inverses: TaggedChange<TChange>[] = [];
+	let currentComposedEdit =
+		targetRebasePath.length === 1
+			? targetRebasePath[0]
+			: makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
+		const nextComposition: TaggedChange<TChange>[] = [
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+			currentComposedEdit,
+		];
 		if (sourceSet.has(c.revision)) {
-			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-				...inverses,
-				...targetRebasePath,
-			]);
+			const change = changeRebaser.rebase(c.change, currentComposedEdit);
 			newHead = {
 				revision: c.revision,
 				change,
 				parent: newHead,
 			};
 			sourceCommits.push(newHead);
-			targetRebasePath.push({ ...c, change });
+			nextComposition.push(tagChange(change, c.revision));
 		}
-		inverses.unshift(
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-		);
+		currentComposedEdit = makeAnonChange(changeRebaser.compose(nextComposition));
 	}
 
-	const toCompose = [...inverses, ...targetRebasePath];
-	const composed = changeRebaser.compose(toCompose);
 	return [
 		newHead,
-		composed,
+		currentComposedEdit.change,
 		{
 			deletedSourceCommits,
 			targetCommits,
@@ -285,14 +291,6 @@ export function rebaseChange<TChange>(
 	);
 
 	return targetPath.reduce((a, b) => changeRebaser.rebase(a, b), changeRebasedToRef);
-}
-
-function rebaseChangeOverChanges<TChange>(
-	changeRebaser: ChangeRebaser<TChange>,
-	changeToRebase: TChange,
-	changesToRebaseOver: TaggedChange<TChange>[],
-) {
-	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
 }
 
 function inverseFromCommit<TChange>(

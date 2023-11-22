@@ -640,12 +640,9 @@ describe("EditManager", () => {
 				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
-					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
+					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount);
 					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
-					assert.equal(
-						rebaser.composedCount,
-						trunkEditCount * (rebasedEditCount * 2 + 1),
-					);
+					assert.equal(rebaser.composedCount, trunkEditCount * rebasedEditCount * 3);
 				});
 			}
 		});
@@ -661,7 +658,7 @@ describe("EditManager", () => {
 					);
 
 					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
-					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
+					assert.equal(rebaser.composedCount, 0);
 				});
 			}
 		});
