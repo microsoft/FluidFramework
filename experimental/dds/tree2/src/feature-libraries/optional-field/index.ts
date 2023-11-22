@@ -4,7 +4,7 @@
  */
 
 export { noChangeCodecFamily, makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
-export { OptionalChangeset } from "./optionalFieldChangeTypes";
+export { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 export {
 	optionalChangeHandler,
 	optionalFieldEditor,

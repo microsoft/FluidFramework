@@ -14,7 +14,6 @@ import {
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 
@@ -181,7 +180,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		],
 		async () => {
 			const container = await createContainer();
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const counter = SharedCounter.create(dataObject.runtime, "counter");
 			dataObject.root.set("counter", counter.handle);
 

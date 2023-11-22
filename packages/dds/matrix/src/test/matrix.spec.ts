@@ -15,7 +15,7 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
