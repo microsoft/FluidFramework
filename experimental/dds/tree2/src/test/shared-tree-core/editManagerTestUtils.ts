@@ -85,17 +85,20 @@ export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
+	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 ): void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
+	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	rebaser: TestChangeRebaser,
+	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: boolean = false,
 ): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
@@ -115,7 +118,7 @@ export function rebasePeerEditsOverTrunkEdits(
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
-	const run = () => {
+	const part1 = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
 			manager.addSequencedChange(
 				peerEdits[iChange],
@@ -124,6 +127,24 @@ export function rebasePeerEditsOverTrunkEdits(
 			);
 		}
 	};
+	const part2 = () => {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "peer",
+			},
+			brand(peerEditCount + trunkEditCount + 1),
+			brand(trunkEditCount + (extraPeerEdit === "CaughtUp" ? 0 : -1)),
+		);
+	};
+	let run: () => void;
+	if (extraPeerEdit !== "None") {
+		part1();
+		run = part2;
+	} else {
+		run = part1;
+	}
 	return defer ? run : run();
 }
 
