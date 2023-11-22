@@ -293,6 +293,15 @@ stages:
 
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
+        # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
+        # we won't be able to write to them from outside the container.
+        - task: Bash@3
+          displayName: Create folder for pack artifact
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/pack
+
         - task: Docker@0
           displayName: Pack
           inputs:
