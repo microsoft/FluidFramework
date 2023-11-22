@@ -22,6 +22,7 @@ import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
 import {
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
+	isFluidHandle,
 } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
@@ -81,6 +82,14 @@ function testDecode(
 	// Check decode
 	const result = decode(chunk);
 	assertChunkCursorEquals(result, tree);
+
+	// handles can't be roundtripped through JSON. the FluidSerializer can't be
+	// used to roundtrip handles in this case either, as doing so changes the
+	// contents of the handle compared to the original object. avoid the below
+	// roundtripping in that case.
+	if (chunk.data.some(isFluidHandle)) {
+		return chunk;
+	}
 
 	// Confirm JSON compatibility
 	{
