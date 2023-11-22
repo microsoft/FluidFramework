@@ -13,7 +13,6 @@ import {
 	ChildStateGenerator,
 	BoundFieldChangeRebaser,
 	makeIntentionMinter,
-	NamedChangeset,
 } from "./exhaustiveRebaserUtils";
 
 interface ExhaustiveSuiteOptions {
@@ -143,7 +142,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						intentionMinter,
 					),
 				);
-
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					for (const namedEditsToRebaseOver of trunkEdits) {
 						const title = `Rebase ${name} over compose ${JSON.stringify(
@@ -201,7 +199,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						intentionMinter,
 					),
 				);
-
 				for (const namedSourceEdits of localEdits) {
 					for (const [
 						{ description: name, changeset: namedEditToRebaseOver },
@@ -281,25 +278,21 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	describe("Compose associativity", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const edits = Array.from(
-					generatePossibleSequenceOfEdits(
-						initialState,
-						generateChildStates,
-						numberOfEditsToVerifyAssociativity,
-						"rev-",
-					),
-				);
-
-				for (const editList of edits) {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					generateChildStates,
+					numberOfEditsToVerifyAssociativity,
+					"rev-",
+				)) {
 					const title = `for ${JSON.stringify(
-						editList.map(({ description }) => description),
+						namedSourceEdits.map(({ description }) => description),
 					)}`;
 
 					// Note that this test case doesn't verify associativity of rollback inverses.
 					// That's covered some by "Composed sandwich rebase over single edit"
 					innerFixture(title, () => {
-						const verifyList = editList.map(({ changeset }) => changeset);
-						verifyComposeAssociativity(verifyList);
+						const edits = namedSourceEdits.map(({ changeset }) => changeset);
+						verifyComposeAssociativity(edits);
 					});
 				}
 			});
