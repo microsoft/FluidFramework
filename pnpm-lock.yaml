@@ -6460,9 +6460,9 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/merge-tree': "workspace:~"
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-internal.7.2.0
+      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -11487,7 +11487,6 @@ importers:
       axios: ^0.26.0
       buffer: ^6.0.3
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       express: ^4.16.3
@@ -11548,7 +11547,6 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       fs-extra: 9.1.0
