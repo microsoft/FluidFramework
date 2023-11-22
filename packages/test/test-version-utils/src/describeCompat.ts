@@ -10,7 +10,7 @@ import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOpti
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
 import {
 	getVersionedTestObjectProviderFromApis,
-	getCompatVersionedTestObjectProvider,
+	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
 import { baseVersion, testBaseVersion } from "./baseVersion.js";
 import {
@@ -53,16 +53,61 @@ function createCompatSuite(
 						config.createWith !== undefined,
 						"createWith must be defined for cross version tests",
 					);
-					const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.createWith.base);
+					assert(
+						config.loadWith !== undefined,
+						"loadWith must be defined for cross version tests",
+					);
+
+					const dataRuntime = getDataRuntimeApi(
+						baseVersion,
+						config.createWith.base,
+						/** adjustMajorPublic */ true,
+					);
+					const dataRuntimeForLoading = getDataRuntimeApi(
+						baseVersion,
+						config.loadWith.base,
+						/** adjustMajorPublic */ true,
+					);
+
 					apis = {
 						containerRuntime: getContainerRuntimeApi(
 							baseVersion,
 							config.createWith.base,
+							/** adjustMajorPublic */ true,
 						),
-						dataRuntime: dataRuntimeApi,
-						dds: dataRuntimeApi.dds,
-						driver: getDriverApi(baseVersion, config.createWith.base),
-						loader: getLoaderApi(baseVersion, config.createWith.base),
+						containerRuntimeForLoading: getContainerRuntimeApi(
+							baseVersion,
+							config.loadWith.base,
+							/** adjustMajorPublic */ true,
+						),
+
+						dataRuntime,
+						dataRuntimeForLoading,
+
+						dds: dataRuntime.dds,
+						ddsForLoading: dataRuntimeForLoading.dds,
+
+						driver: getDriverApi(
+							baseVersion,
+							config.createWith.base,
+							/** adjustMajorPublic */ true,
+						),
+						driverForLoading: getDriverApi(
+							baseVersion,
+							config.loadWith.base,
+							/** adjustMajorPublic */ true,
+						),
+
+						loader: getLoaderApi(
+							baseVersion,
+							config.createWith.base,
+							/** adjustMajorPublic */ true,
+						),
+						loaderForLoading: getLoaderApi(
+							baseVersion,
+							config.loadWith.base,
+							/** adjustMajorPublic */ true,
+						),
 					};
 				} else {
 					const dataRuntimeApi = getDataRuntimeApi(
@@ -85,7 +130,8 @@ function createCompatSuite(
 					try {
 						provider =
 							config.kind === CompatKind.CrossVersion
-								? await getCompatVersionedTestObjectProvider(
+								? await getCompatVersionedTestObjectProviderFromApis(
+										apis,
 										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 										config.createWith!,
 										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

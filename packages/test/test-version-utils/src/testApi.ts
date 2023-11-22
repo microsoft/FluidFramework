@@ -347,4 +347,11 @@ export interface CompatApis {
 	dds: ReturnType<typeof getDataRuntimeApi>["dds"];
 	driver: ReturnType<typeof getDriverApi>;
 	loader: ReturnType<typeof getLoaderApi>;
+
+	// Cross Version Compat APIs
+	containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
+	dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
+	ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];
+	driverForLoading?: ReturnType<typeof getDriverApi>;
+	loaderForLoading?: ReturnType<typeof getLoaderApi>;
 }
