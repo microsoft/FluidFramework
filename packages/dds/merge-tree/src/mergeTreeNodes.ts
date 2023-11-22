@@ -273,6 +273,13 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
+
+	/**
+	 * Add properties to this segment via annotation.
+	 *
+	 * @remarks This function should not be called directly. Properties should
+	 * be added through the `annotateRange` functions.
+	 */
 	addProperties(
 		newProps: PropertySet,
 		op?: ICombiningOp,
@@ -582,41 +589,47 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	}
 
 	public splitAt(pos: number): ISegment | undefined {
-		if (pos > 0) {
-			const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
-			if (leafSegment) {
-				this.copyPropertiesTo(leafSegment);
-				// eslint-disable-next-line @typescript-eslint/no-this-alias
-				const thisAsMergeSegment: IMergeLeaf = this;
-				leafSegment.parent = thisAsMergeSegment.parent;
-
-				// Give the leaf a temporary yet valid ordinal.
-				// when this segment is put in the tree, it will get its real ordinal,
-				// but this ordinal meets all the necessary invariants for now.
-				leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
-
-				leafSegment.removedClientIds = this.removedClientIds?.slice();
-				leafSegment.removedSeq = this.removedSeq;
-				leafSegment.localRemovedSeq = this.localRemovedSeq;
-				leafSegment.seq = this.seq;
-				leafSegment.localSeq = this.localSeq;
-				leafSegment.clientId = this.clientId;
-				leafSegment.movedClientIds = this.movedClientIds?.slice();
-				leafSegment.movedSeq = this.movedSeq;
-				leafSegment.movedSeqs = this.movedSeqs?.slice();
-				leafSegment.localMovedSeq = this.localMovedSeq;
-				leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
-				this.segmentGroups.copyTo(leafSegment);
-				this.trackingCollection.copyTo(leafSegment);
-				if (this.localRefs) {
-					this.localRefs.split(pos, leafSegment);
-				}
-				if (this.attribution) {
-					leafSegment.attribution = this.attribution.splitAt(pos);
-				}
-			}
-			return leafSegment;
+		if (pos <= 0) {
+			return undefined;
 		}
+
+		const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
+
+		if (!leafSegment) {
+			return undefined;
+		}
+
+		this.copyPropertiesTo(leafSegment);
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const thisAsMergeSegment: IMergeLeaf = this;
+		leafSegment.parent = thisAsMergeSegment.parent;
+
+		// Give the leaf a temporary yet valid ordinal.
+		// when this segment is put in the tree, it will get its real ordinal,
+		// but this ordinal meets all the necessary invariants for now.
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+
+		leafSegment.removedClientIds = this.removedClientIds?.slice();
+		leafSegment.removedSeq = this.removedSeq;
+		leafSegment.localRemovedSeq = this.localRemovedSeq;
+		leafSegment.seq = this.seq;
+		leafSegment.localSeq = this.localSeq;
+		leafSegment.clientId = this.clientId;
+		leafSegment.movedClientIds = this.movedClientIds?.slice();
+		leafSegment.movedSeq = this.movedSeq;
+		leafSegment.movedSeqs = this.movedSeqs?.slice();
+		leafSegment.localMovedSeq = this.localMovedSeq;
+		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+		this.segmentGroups.copyTo(leafSegment);
+		this.trackingCollection.copyTo(leafSegment);
+		if (this.localRefs) {
+			this.localRefs.split(pos, leafSegment);
+		}
+		if (this.attribution) {
+			leafSegment.attribution = this.attribution.splitAt(pos);
+		}
+
+		return leafSegment;
 	}
 
 	private copyPropertiesTo(other: ISegment) {
@@ -658,6 +671,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
+/**
+ * The special-cased property key that tracks the id of a {@link Marker}.
+ *
+ * @remarks In general, marker ids should be accessed using the inherent method
+ * {@link Marker.getId}. Marker ids should not be updated after creation.
+ */
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
@@ -665,7 +684,16 @@ export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
-export class Marker extends BaseSegment implements ReferencePosition {
+/**
+ * Markers are a special kind of segment that do not hold any content.
+ *
+ * Markers with a reference type of {@link ReferenceType.Tile} support spatially
+ * accelerated queries for finding the next marker to the left or right of it in
+ * sub-linear time. This is useful, for example, in the case of jumping from the
+ * start of a paragraph to the end, assuming a paragraph is bound by markers at
+ * the start and end.
+ */
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
 	public static is(segment: ISegment): segment is Marker {
 		return segment.type === Marker.type;
@@ -776,6 +804,12 @@ export interface MinListener {
 	onMinGE(minSeq: number): void;
 }
 
+/**
+ * Get a human-readable string for a given {@link Marker}.
+ *
+ * @remarks This function is intended for debugging only. The exact format of
+ * this string should not be relied upon between versions.
+ */
 export function debugMarkerToString(marker: Marker): string {
 	let bbuf = "";
 	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {

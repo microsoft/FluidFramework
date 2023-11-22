@@ -12,6 +12,7 @@ import {
 	IMergeBlock,
 	IMergeNode,
 	ISegment,
+	Marker,
 	MaxNodesInBlock,
 	seqLTE,
 	toRemovalInfo,
@@ -32,11 +33,11 @@ export function zamboniSegments(
 	}
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-		let segmentToScour = mergeTree.segmentsToScour.peek();
+		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
-		segmentToScour = mergeTree.segmentsToScour.get();
+		segmentToScour = mergeTree.segmentsToScour.get()!;
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
 		if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
 			const block = segmentToScour.segment!.parent;
@@ -155,6 +156,10 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				);
 
 				segment.parent = undefined;
+
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
 			} else {
 				holdNodes.push(segment);
 			}

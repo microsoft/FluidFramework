@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, DoublyLinkedList, ListNode } from "./collections";
+import { DoublyLinkedList, ListNode } from "./collections";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -90,7 +90,7 @@ import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
  */
 export type ISegmentLeaf = ISegment & IMergeLeaf;
 
-const minListenerComparer: Comparer<MinListener> = {
+const minListenerComparer: IComparer<MinListener> = {
 	min: {
 		minRequired: Number.MIN_VALUE,
 		onMinGE: () => {
@@ -145,7 +145,7 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undef
 	return mergeTree.localNetLength(node);
 }
 
-const LRUSegmentComparer: Comparer<LRUSegment> = {
+const LRUSegmentComparer: IComparer<LRUSegment> = {
 	min: { maxSeq: -2 },
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
@@ -220,33 +220,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: MapLike<ReferencePo
 				tiles[tileLabel] = tile;
 			}
 		}
-	}
-}
-
-function addNodeReferences(
-	mergeTree: MergeTree,
-	node: IMergeNode,
-	rightmostTiles: MapLike<ReferencePosition>,
-	leftmostTiles: MapLike<ReferencePosition>,
-) {
-	if (node.isLeaf()) {
-		const segment = node;
-		if ((mergeTree.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
-			const markerId = segment.getId();
-			// Also in insertMarker but need for reload segs case
-			// can add option for this only from reload segs
-			if (markerId) {
-				mergeTree.mapIdToSegment(markerId, segment);
-			}
-			if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
-				addTile(segment, rightmostTiles);
-				addTileIfNotPresent(segment, leftmostTiles);
-			}
-		}
-	} else {
-		const block = node as IHierBlock;
-		extend(rightmostTiles, block.rightmostTiles);
-		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
 }
 
@@ -522,7 +495,7 @@ export class MergeTree {
 
 	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 
-	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
+	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -532,10 +505,9 @@ export class MergeTree {
 	 * This field enables tracking whether partials need to be recomputed using localSeq information.
 	 */
 	private localPartialsComputed = false;
-	// TODO: add remove on segment remove
 	// for now assume only markers have ids and so point directly at the Segment
 	// if we need to have pointers to non-markers, we can change to point at local refs
-	private readonly idToSegment = new Map<string, ISegment>();
+	private readonly idToMarker = new Map<string, Marker>();
 	private minSeqListeners: Heap<MinListener> | undefined;
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
@@ -592,29 +564,6 @@ export class MergeTree {
 		const block: MergeBlock = new HierMergeBlock(childCount);
 		block.ordinal = "";
 		return block;
-	}
-
-	public clone() {
-		const b = new MergeTree(this.options);
-		// For now assume that b will not collaborate
-		b.root = b.blockClone(this.root);
-	}
-
-	public blockClone(block: IMergeBlock, segments?: ISegment[]) {
-		const bBlock = this.makeBlock(block.childCount);
-		for (let i = 0; i < block.childCount; i++) {
-			const child = block.children[i];
-			if (child.isLeaf()) {
-				const segment = child.clone();
-				bBlock.assignChild(segment, i);
-				segments?.push(segment);
-			} else {
-				bBlock.assignChild(this.blockClone(child, segments), i);
-			}
-		}
-		this.nodeUpdateLengthNewStructure(bBlock);
-		this.nodeUpdateOrdinals(bBlock);
-		return bBlock;
 	}
 
 	/**
@@ -684,9 +633,11 @@ export class MergeTree {
 		}
 	}
 
-	// TODO: remove id when segment removed
-	public mapIdToSegment(id: string, segment: ISegment) {
-		this.idToSegment.set(id, segment);
+	public unlinkMarker(marker: Marker) {
+		const id = marker.getId();
+		if (id) {
+			this.idToMarker.delete(id);
+		}
 	}
 
 	private addNode(block: IMergeBlock, node: IMergeNode) {
@@ -765,10 +716,6 @@ export class MergeTree {
 			leaf.parent!.needsScour = true;
 			this.segmentsToScour.add({ segment: leaf, maxSeq: seq });
 		}
-	}
-
-	public getCollabWindow() {
-		return this.collabWindow;
 	}
 
 	public getLength(refSeq: number, clientId: number): number {
@@ -1153,7 +1100,7 @@ export class MergeTree {
 	}
 
 	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		this.minSeqListeners ??= new Heap<MinListener>([], minListenerComparer);
+		this.minSeqListeners ??= new Heap<MinListener>(minListenerComparer);
 		this.minSeqListeners.add({ minRequired, onMinGE });
 	}
 
@@ -1161,7 +1108,7 @@ export class MergeTree {
 		if (this.minSeqListeners) {
 			while (
 				this.minSeqListeners.count() > 0 &&
-				this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq
+				this.minSeqListeners.peek()!.value.minRequired <= this.collabWindow.minSeq
 			) {
 				const minListener = this.minSeqListeners.get()!;
 				minListener.onMinGE(this.collabWindow.minSeq);
@@ -1570,8 +1517,8 @@ export class MergeTree {
 	}
 
 	// TODO: error checking
-	public getMarkerFromId(id: string): ISegment | undefined {
-		return this.idToSegment.get(id);
+	public getMarkerFromId(id: string): Marker | undefined {
+		return this.idToMarker.get(id);
 	}
 
 	/**
@@ -1589,7 +1536,7 @@ export class MergeTree {
 		let pos = -1;
 		let marker: Marker | undefined;
 		if (relativePos.id) {
-			marker = this.getMarkerFromId(relativePos.id) as Marker;
+			marker = this.getMarkerFromId(relativePos.id);
 		}
 		if (marker) {
 			pos = this.getPosition(marker, refseq, clientId);
@@ -1740,7 +1687,7 @@ export class MergeTree {
 				if (Marker.is(newSegment)) {
 					const markerId = newSegment.getId();
 					if (markerId) {
-						this.mapIdToSegment(markerId, newSegment);
+						this.idToMarker.set(markerId, newSegment);
 					}
 				}
 
@@ -2760,6 +2707,32 @@ export class MergeTree {
 		normalize();
 	}
 
+	private addNodeReferences(
+		node: IMergeNode,
+		rightmostTiles: MapLike<ReferencePosition>,
+		leftmostTiles: MapLike<ReferencePosition>,
+	) {
+		if (node.isLeaf()) {
+			const segment = node;
+			if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
+				const markerId = segment.getId();
+				// Also in insertMarker but need for reload segs case
+				// can add option for this only from reload segs
+				if (markerId) {
+					this.idToMarker.set(markerId, segment);
+				}
+				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
+					addTile(segment, rightmostTiles);
+					addTileIfNotPresent(segment, leftmostTiles);
+				}
+			}
+		} else {
+			const block = node as IHierBlock;
+			extend(rightmostTiles, block.rightmostTiles);
+			extendIfUndefined(leftmostTiles, block.leftmostTiles);
+		}
+	}
+
 	private blockUpdate(block: IMergeBlock) {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
@@ -2775,7 +2748,7 @@ export class MergeTree {
 				len += nodeLength;
 			}
 			if (hierBlock) {
-				addNodeReferences(this, child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
+				this.addNodeReferences(child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
 			}
 		}
 

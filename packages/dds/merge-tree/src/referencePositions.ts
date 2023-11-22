@@ -41,12 +41,15 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  */
 export interface ReferencePosition {
 	/**
-	 * @returns Properties associated with this reference
+	 * Properties associated with this reference
 	 */
 	properties?: PropertySet;
 
 	/**
-	 * Defaults to forward
+	 * The direction for this reference position to slide when the segment it
+	 * points to is removed. See {@link (SlidingPreference:type)} for additional context.
+	 *
+	 * Defaults to SlidingPreference.Forward
 	 */
 	slidingPreference?: SlidingPreference;
 
