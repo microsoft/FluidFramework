@@ -264,13 +264,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
-
-		// TODO: no scenario for this yet, should we leave this out?
-		// Allow to be skipped if requested (on by default)
-		if (process.env.fluid__test__skipCrossVersion !== "TRUE") {
-			_configList.push(...genCrossVersionCompatConfig());
-		}
-
+		_configList.push(...genCrossVersionCompatConfig());
 		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
