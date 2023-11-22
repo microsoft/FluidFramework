@@ -4,7 +4,7 @@ This is a temporary directory containing a second implementation of the tree typ
 
 The main differences from the old schema system (SchemaBuilder and its related types):
 
-1. The new schema system is layered on-top of the without leaking all the types from it into the public API.
+1. The new schema system is layered on-top of internal one without leaking all the types from it into the public API.
    Wrappers, type erasure and casting in the implementation are used as required to accomplish this.
 2. The new system is designed from scratch to work at the same abstraction layer and data model as used in simple-tree.
    This means concepts like `List` are supported in a first class way, and the focus is on kinds of nodes (List, Object, Map), and not on FieldKinds.
@@ -12,10 +12,14 @@ The main differences from the old schema system (SchemaBuilder and its related t
    tests for those cases will simple not use this wrapper layer and can use the pre-existing schema builder instead.
 3. Schema are classes, and the instance types of those classes are what gets exposed in the tree API.
    This has many benefits:
-    1. Users don't have to use "typeof" or invoke any type meta-functions to get the node types they want to pass around: just use the class/schema name as the type.
-    2. Recursive schema work inb d.ts files due to use of classes. See [Generated d.ts includes implicit any for recursive types](microsoft/TypeScript#55832).
-    3. Intellisense is much cleaner when referring to types defined in schema: It just uses the class name. or "typeof ClassName". (These simplifications are what resolve the d.ts issue noted above with recursive types)
-    4. Normal JS/TS type narrowing with instanceof can be used with schema defined types.
+    1. Users don't have to use `typeof` or invoke any type meta-functions to get the node types they want to pass around: just use the class/schema name as the type.
+       This replaces `Typed<typeof myNodeSchema>` with just `MyNode`.
+    2. Recursive schema work in `d.ts`` files due to use of classes.
+       See [Generated d.ts includes implicit any for recursive types](microsoft/TypeScript#55832).
+    3. Intellisense is much cleaner when referring to types defined in schema:
+       it just uses the class name (for example `MyNode`) when referring to the node type or `typeof MyNode` when referring to the schema's type.
+       These simplifications are what resolve the `d.ts`` issue noted above with recursive types.
+    4. Normal JS/TS type narrowing with `instanceof` can be used with schema defined types.
     5. It's possible to add view/session local state to instances as properties, as well as adding methods by just putting them in the class like any other class.
 
 Currently this implementation exposes the prototypes from these classes: this impacts some generic object based code.
@@ -36,8 +40,10 @@ though doing this risks name collisions with user added members.
 
 Recursive types are still somewhat sketchy.
 
-Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing the more APis for them) instead of plain literals .
+Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing the more APis for them) instead of plain literals.
+
+Adding custom constructors to the schema classes is likely to break them, though static builders (like "create") can be added just fine.
 
 ## Ideas to consider in the future
 
-1. allow class schema to override "serializeSessionState", to allow persisting things like selection? Maybe support via decorator? override methods for events?
+1. allow class schema to override methods to provide hooks. For example "serializeSessionState", to allow persisting things like selection. Maybe support via decorator? override methods for events?
