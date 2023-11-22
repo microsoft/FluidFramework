@@ -112,15 +112,14 @@ export function rebase(
 	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(
-			rebasedChange,
+		rebasedChange = SF.rebase(
+			change,
 			base,
-			(a, b) => a,
+			TestChange.rebase,
 			idAllocator,
 			moveEffects,
 			metadata,
 		);
-		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }
@@ -153,26 +152,28 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const table = SF.newCrossFieldTable();
+	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
+		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = SF.amendInvert(
-			inverted,
-			change.revision,
+		inverted = SF.invert(
+			change,
+			TestChange.invert,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
+			revisionMetadata,
 		);
-		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
 	}
 
 	return inverted;

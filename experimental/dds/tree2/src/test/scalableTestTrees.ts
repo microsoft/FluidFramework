@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { FieldKinds, TreeFieldSchema, SchemaAware, typeNameSymbol } from "../feature-libraries";
 import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
-import { ITreeView, TreeContent } from "../shared-tree";
+import { FlexTreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
 
 /**
@@ -52,11 +52,8 @@ export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
-type JSDeepTreeRoot2 = SchemaAware.TypedField<
-	typeof deepSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema>;
+type JSDeepTreeRoot2 = SchemaAware.TypedField<typeof deepSchema.rootFieldSchema>;
 
 {
 	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
@@ -71,10 +68,7 @@ export interface JSWideTree {
 	foo: number[];
 }
 
-type JSWideTreeRoot2 = SchemaAware.TypedField<
-	typeof wideSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSWideTreeRoot2 = SchemaAware.TypedField<typeof wideSchema.rootFieldSchema>;
 
 {
 	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
@@ -158,7 +152,7 @@ export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; 
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -176,7 +170,7 @@ export function readWideCursorTree(tree: ITreeView<typeof wideSchema.rootFieldSc
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepCursorTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {
@@ -233,7 +227,7 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -249,7 +243,7 @@ export function readWideEditableTree(tree: ITreeView<typeof wideSchema.rootField
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {

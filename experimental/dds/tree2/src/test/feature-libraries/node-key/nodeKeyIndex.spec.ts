@@ -19,13 +19,13 @@ import {
 	StableNodeKey,
 	SchemaAware,
 	nodeKeyFieldKey,
-	TypedField,
+	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKeys } from "../../../feature-libraries/editable-tree-2/nodeKeys";
+import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
 import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
@@ -45,11 +45,8 @@ function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey
 
 describe("Node Key Index", () => {
 	function createView(
-		initialTree: SchemaAware.TypedField<
-			typeof nodeSchemaData.rootFieldSchema,
-			SchemaAware.ApiMode.Simple
-		>,
-	): TypedField<typeof nodeSchemaData.rootFieldSchema> {
+		initialTree: SchemaAware.TypedField<typeof nodeSchemaData.rootFieldSchema>,
+	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
 		return treeWithContent({ initialTree, schema: nodeSchemaData });
 	}
 
@@ -145,7 +142,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		tree.schematize(
+		tree.schematizeInternal(
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
@@ -162,7 +159,7 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = tree2.schematize(
+		const view2 = tree2.schematizeInternal(
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
@@ -226,7 +223,6 @@ describe("Node Key Index", () => {
 		const view = treeWithContent(
 			{
 				initialTree: {
-					// @ts-expect-error: Strong typing for map node literals is not implemented yet
 					[nodeKeyFieldKey]: nodeKeyManager.stabilizeNodeKey(
 						nodeKeyManager.generateLocalNodeKey(),
 					),
