@@ -107,6 +107,9 @@ export { DriverErrorType }
 
 export { FluidContainer }
 
+// @public
+export type Foo = IValueOpEmitter | undefined;
+
 export { getTextAndMarkers }
 
 export { IConnection }
