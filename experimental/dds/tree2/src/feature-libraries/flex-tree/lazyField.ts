@@ -411,8 +411,9 @@ export class LazySequence<TTypes extends AllowedTypes>
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.boxedAt(sourceStart);
-				if (sourceNode === undefined || !this.schema.types.has(sourceNode.schema.name)) {
+				const sourceNode =
+					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
+				if (!this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
