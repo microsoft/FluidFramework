@@ -49,7 +49,6 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	TreeHandle,
 	InternalEditableTreeTypes,
 } from "./class-tree";
 

@@ -5,6 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils";
 
+// Note:
+// Currently this file is unused, though it could serve as the implementation of indexing for Lists when class and simple trees are merged.
+
+/**
+ * Info integerIndexable needs to work.
+ */
 export interface IndexLookup<T> {
 	read(index: number): T;
 	write(index: number, value: T): boolean;

@@ -9,7 +9,7 @@ import { IDisposable, disposeSymbol } from "../util";
 import { FlexTreeView, type CheckoutEvents } from "../shared-tree";
 import { getProxyForField, type Unhydrated } from "../simple-tree";
 import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries";
-import { NodeFromSchema, TreeNodeSchema } from "./schemaFactory";
+import { NodeFromSchema, TreeNodeSchema } from "./schemaTypes";
 /**
  * Channel for a Tree DDS.
  * @alpha

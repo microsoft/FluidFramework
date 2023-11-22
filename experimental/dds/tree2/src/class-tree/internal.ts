@@ -20,4 +20,4 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeBuilderData,
-} from "./schemaFactory";
+} from "./schemaTypes";

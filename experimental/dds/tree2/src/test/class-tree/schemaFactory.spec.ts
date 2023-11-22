@@ -8,10 +8,13 @@ import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
-	SchemaFactory,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../class-tree/schemaTypes";
+import {
+	SchemaFactory,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
@@ -83,6 +86,27 @@ describe("schemaFactory", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view = tree.schematize(config);
 		assert.equal(view.root, 5);
+	});
+
+	it("instanceof", () => {
+		const schema = new SchemaFactory("com.example");
+
+		const config = new TreeConfiguration(schema.number, () => 5);
+
+		const factory = new TreeFactory({});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+
+		class A extends schema.object("A", {}) {}
+		class B extends schema.object("B", {}) {}
+
+		// TODO: before constructing unhydrated nodes,
+
+		const a = new A({});
+		assert(a instanceof A);
+		assert(!(a instanceof B));
+
+		// TODO: this should be a compile error, but current API is structurally typed, and doesn't include the schema of nodes in that.
+		const b: A = new B({});
 	});
 
 	it("object", () => {

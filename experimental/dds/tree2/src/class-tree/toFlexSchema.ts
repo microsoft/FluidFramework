@@ -33,7 +33,7 @@ import {
 	LeafNodeSchema,
 	NodeKind,
 	TreeNodeSchema,
-} from "./schemaFactory";
+} from "./schemaTypes";
 import { TreeConfiguration } from "./tree";
 import {
 	cachedFlexSchemaFromClassSchema,
@@ -69,9 +69,14 @@ export function toFlexConfig(config: TreeConfiguration): InitializeAndSchematize
 	};
 }
 
-export function toFlexSchema(implicitRoot: ImplicitFieldSchema): TreeSchema {
+/**
+ * Generate a {@link TreeSchema} with `root` as the root field.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
 	const schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema> = new Map();
-	const field = convertField(schemaMap, implicitRoot);
+	const field = convertField(schemaMap, root);
 	const nodeSchema = new Map(
 		Array.from(schemaMap.entries(), ([key, value]) => {
 			const schema = value();
@@ -95,6 +100,16 @@ export function toFlexSchema(implicitRoot: ImplicitFieldSchema): TreeSchema {
 		policy: defaultSchemaPolicy,
 	};
 	return typed;
+}
+
+/**
+ * Return a flex schema for the provided class schema.
+ *
+ * This also has the side effect of populating the cached view schema on the class based schema.
+ */
+export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
+	const treeSchema = toFlexSchema(root);
+	return treeSchema.rootFieldSchema.monomorphicChildType ?? fail("root should be monomorphic");
 }
 
 /**

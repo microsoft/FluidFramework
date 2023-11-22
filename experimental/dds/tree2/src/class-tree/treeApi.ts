@@ -7,7 +7,7 @@ import { EditableTreeEvents, TreeStatus } from "../feature-libraries";
 import { TreeNode, Tree as TreeSimple } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { getClassSchema } from "../simple-tree/proxies";
-import { NodeBase, NodeKind, TreeNodeSchema } from "./schemaFactory";
+import { NodeBase, NodeKind, TreeNodeSchema } from "./schemaTypes";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

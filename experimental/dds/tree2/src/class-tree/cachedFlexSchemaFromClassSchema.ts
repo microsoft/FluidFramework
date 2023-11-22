@@ -4,7 +4,7 @@
  */
 
 import { TreeNodeSchemaBase as FlexTreeNodeSchemaBase } from "../feature-libraries";
-import { type TreeNodeSchema } from "./schemaFactory";
+import { type TreeNodeSchema } from "./schemaTypes";
 
 // Putting this in its own file was the simplest fix for a dependency cycle.
 

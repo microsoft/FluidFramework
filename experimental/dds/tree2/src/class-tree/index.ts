@@ -5,17 +5,16 @@
 
 export { ITree, TreeView, TreeConfiguration, WrapperTreeView } from "./tree";
 export {
-	SchemaFactory,
 	TreeNodeSchema,
 	NodeFromSchema,
 	NodeKind,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	TreeHandle,
 	TreeListNode,
 	NodeBase,
-} from "./schemaFactory";
+} from "./schemaTypes";
+export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi } from "./treeApi";
 export { toFlexConfig } from "./toFlexSchema";
 
