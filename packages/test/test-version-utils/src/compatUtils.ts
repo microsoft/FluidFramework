@@ -99,9 +99,8 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	};
 }
 
+// Only support current version, not baseVersion support
 /**
- * Only support current version, not baseVersion support.
- *
  * @internal
  */
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));

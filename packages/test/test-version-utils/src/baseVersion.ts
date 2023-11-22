@@ -22,10 +22,9 @@ function getCodeVersion() {
 	return pkgVersion;
 }
 
+// So for test branches, the base version is 0.0.0-xyz-test where xyz is the build number.
+// So if we use the base version we will not get the right back compat testing and thus we want to use the code version.
 /**
- * So for test branches, the base version is 0.0.0-xyz-test where xyz is the build number.
- * So if we use the base version we will not get the right back compat testing and thus we want to use the code version.
- *
  * @internal
  */
 export const codeVersion = resolveVersion(getCodeVersion(), false);

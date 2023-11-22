@@ -209,7 +209,7 @@ export const getCurrentBenchmarkType: (currentType: DescribeE2EDocSuite) => Benc
 // @internal (undocumented)
 export function getDataRuntimeApi(baseVersion: string, requested?: number | string): typeof DataRuntimeApi;
 
-// @internal
+// @internal (undocumented)
 export const getDataStoreFactory: (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory;
 
 // @internal (undocumented)

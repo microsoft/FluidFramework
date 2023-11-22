@@ -97,7 +97,7 @@ const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
 const driverCache = new Map<string, typeof DriverApi>();
 
-// #region Current versions of the APIs
+// #region Current versions of the APIs.
 
 /**
  * @internal

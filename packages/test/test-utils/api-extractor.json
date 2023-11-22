@@ -9,6 +9,9 @@
 			"ae-missing-release-tag": {
 				// TODO: Fix violations and remove this rule override
 				"logLevel": "none"
+			},
+			"ae-undocumented": {
+				"logLevel": "none"
 			}
 		}
 	}

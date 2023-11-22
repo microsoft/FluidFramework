@@ -28,13 +28,14 @@ export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 /**
- * Types of Driver Endpoint.
+ * Types of Driver endpoints.
  * @public
  */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
 /**
- * Interface for test drivers {@link @fluid-private/test-drivers#TinyliciousTestDriver}, {@link @fluid-private/test-drivers#RouterliciousTestDriver}, {@link @fluid-private/test-drivers#OdspTestDriver}, {@link @fluid-private/test-drivers#LocalServerTestDriver}.
+ * Base interface for test drivers.
+ *
  * @public
  */
 export interface ITestDriver {
