@@ -432,6 +432,12 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
+	/**
+	 * Api which allows caller to create the channel first and then add it to the runtime.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
 	public addChannel(channel: IChannel): void {
 		const id = channel.id;
 		if (id.includes("/")) {
