@@ -66,21 +66,6 @@ export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents>
     volunteer(): void;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/agent.ts:11:14 - (ae-undocumented) Missing documentation for "IAgentScheduler".
-// src/agent.ts:16:1 - (ae-undocumented) Missing documentation for "IProvideAgentScheduler".
-// src/agent.ts:17:2 - (ae-undocumented) Missing documentation for "IAgentScheduler".
-// src/scheduler.ts:460:1 - (ae-undocumented) Missing documentation for "AgentSchedulerFactory".
-// src/scheduler.ts:461:2 - (ae-undocumented) Missing documentation for "type".
-// src/scheduler.ts:462:2 - (ae-undocumented) Missing documentation for "type".
-// src/scheduler.ts:464:2 - (ae-undocumented) Missing documentation for "IFluidDataStoreFactory".
-// src/scheduler.ts:468:2 - (ae-undocumented) Missing documentation for "registryEntry".
-// src/scheduler.ts:470:3 - (ae-undocumented) Missing documentation for "createChildInstance".
-// src/scheduler.ts:488:15 - (ae-undocumented) Missing documentation for "instantiateDataStore".
-// src/taskSubscription.ts:16:2 - (ae-undocumented) Missing documentation for "__call".
-// src/taskSubscription.ts:33:3 - (ae-undocumented) Missing documentation for "taskId".
-
 // (No @packageDocumentation comment for this package)
 
 ```

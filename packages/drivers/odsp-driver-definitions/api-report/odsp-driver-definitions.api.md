@@ -315,68 +315,6 @@ export interface TokenResponse {
     token: string;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/errors.ts:63:1 - (ae-undocumented) Missing documentation for "OdspErrorTypes".
-// src/errors.ts:104:2 - (ae-undocumented) Missing documentation for "fetchTokenError".
-// src/errors.ts:127:1 - (ae-undocumented) Missing documentation for "IOdspErrorAugmentations".
-// src/errors.ts:151:2 - (ae-undocumented) Missing documentation for "errorType".
-// src/errors.ts:154:1 - (ae-undocumented) Missing documentation for "OdspError".
-// src/factory.ts:6:1 - (ae-undocumented) Missing documentation for "ISnapshotOptions".
-// src/factory.ts:7:2 - (ae-undocumented) Missing documentation for "blobs".
-// src/factory.ts:8:2 - (ae-undocumented) Missing documentation for "deltas".
-// src/factory.ts:9:2 - (ae-undocumented) Missing documentation for "channels".
-// src/factory.ts:15:2 - (ae-undocumented) Missing documentation for "mds".
-// src/factory.ts:22:2 - (ae-undocumented) Missing documentation for "timeout".
-// src/factory.ts:25:1 - (ae-undocumented) Missing documentation for "IOpsCachingPolicy".
-// src/factory.ts:53:1 - (ae-undocumented) Missing documentation for "ICollabSessionOptions".
-// src/factory.ts:69:2 - (ae-undocumented) Missing documentation for "forceAccessTokenViaAuthorizationHeader".
-// src/factory.ts:72:1 - (ae-undocumented) Missing documentation for "HostStoragePolicy".
-// src/factory.ts:73:2 - (ae-undocumented) Missing documentation for "snapshotOptions".
-// src/factory.ts:87:2 - (ae-undocumented) Missing documentation for "opsBatchSize".
-// src/factory.ts:88:2 - (ae-undocumented) Missing documentation for "concurrentOpsBatches".
-// src/factory.ts:105:2 - (ae-undocumented) Missing documentation for "enableRedeemFallback".
-// src/factory.ts:116:2 - (ae-undocumented) Missing documentation for "fetchBinarySnapshotFormat".
-// src/factory.ts:133:2 - (ae-undocumented) Missing documentation for "enableShareLinkWithCreate".
-// src/odspCache.ts:12:1 - (ae-undocumented) Missing documentation for "CacheContentType".
-// src/odspCache.ts:19:1 - (ae-undocumented) Missing documentation for "IFileEntry".
-// src/resolvedUrl.ts:8:1 - (ae-undocumented) Missing documentation for "IOdspUrlParts".
-// src/resolvedUrl.ts:9:2 - (ae-undocumented) Missing documentation for "siteUrl".
-// src/resolvedUrl.ts:10:2 - (ae-undocumented) Missing documentation for "driveId".
-// src/resolvedUrl.ts:11:2 - (ae-undocumented) Missing documentation for "itemId".
-// src/resolvedUrl.ts:18:1 - (ae-undocumented) Missing documentation for "ShareLinkTypes".
-// src/resolvedUrl.ts:19:2 - (ae-undocumented) Missing documentation for "csl".
-// src/resolvedUrl.ts:26:2 - (ae-undocumented) Missing documentation for "organization".
-// src/resolvedUrl.ts:27:2 - (ae-undocumented) Missing documentation for "users".
-// src/resolvedUrl.ts:28:2 - (ae-undocumented) Missing documentation for "anonymous".
-// src/resolvedUrl.ts:29:2 - (ae-undocumented) Missing documentation for "default".
-// src/resolvedUrl.ts:36:2 - (ae-undocumented) Missing documentation for "view".
-// src/resolvedUrl.ts:37:2 - (ae-undocumented) Missing documentation for "edit".
-// src/resolvedUrl.ts:45:2 - (ae-undocumented) Missing documentation for "scope".
-// src/resolvedUrl.ts:50:2 - (ae-undocumented) Missing documentation for "role".
-// src/resolvedUrl.ts:57:2 - (ae-undocumented) Missing documentation for "webUrl".
-// src/resolvedUrl.ts:101:1 - (ae-undocumented) Missing documentation for "IOdspResolvedUrl".
-// src/resolvedUrl.ts:102:2 - (ae-undocumented) Missing documentation for "type".
-// src/resolvedUrl.ts:103:2 - (ae-undocumented) Missing documentation for "odspResolvedUrl".
-// src/resolvedUrl.ts:106:2 - (ae-undocumented) Missing documentation for "url".
-// src/resolvedUrl.ts:109:2 - (ae-undocumented) Missing documentation for "hashedDocumentId".
-// src/resolvedUrl.ts:111:2 - (ae-undocumented) Missing documentation for "endpoints".
-// src/resolvedUrl.ts:120:2 - (ae-undocumented) Missing documentation for "tokens".
-// src/resolvedUrl.ts:122:2 - (ae-undocumented) Missing documentation for "fileName".
-// src/resolvedUrl.ts:124:2 - (ae-undocumented) Missing documentation for "summarizer".
-// src/resolvedUrl.ts:126:2 - (ae-undocumented) Missing documentation for "codeHint".
-// src/resolvedUrl.ts:132:2 - (ae-undocumented) Missing documentation for "fileVersion".
-// src/resolvedUrl.ts:134:2 - (ae-undocumented) Missing documentation for "dataStorePath".
-// src/resolvedUrl.ts:143:2 - (ae-undocumented) Missing documentation for "isClpCompliantApp".
-// src/sessionProvider.ts:13:2 - (ae-undocumented) Missing documentation for "id".
-// src/sessionProvider.ts:17:2 - (ae-undocumented) Missing documentation for "runtimeTenantId".
-// src/sessionProvider.ts:18:2 - (ae-undocumented) Missing documentation for "tenantId".
-// src/sessionProvider.ts:20:2 - (ae-undocumented) Missing documentation for "snapshotStorageUrl".
-// src/sessionProvider.ts:21:2 - (ae-undocumented) Missing documentation for "deltaStorageUrl".
-// src/sessionProvider.ts:47:2 - (ae-undocumented) Missing documentation for "IRelaySessionAwareDriverFactory".
-// src/sessionProvider.ts:55:2 - (ae-undocumented) Missing documentation for "getRelayServiceSessionInfo".
-// src/tokenFetch.ts:98:1 - (ae-undocumented) Missing documentation for "InstrumentedStorageTokenFetcher".
-
 // (No @packageDocumentation comment for this package)
 
 ```

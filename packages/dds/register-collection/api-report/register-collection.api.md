@@ -85,27 +85,6 @@ export enum ReadPolicy {
     LWW = 1
 }
 
-// Warnings were encountered during analysis:
-//
-// src/consensusRegisterCollection.ts:189:9 - (ae-undocumented) Missing documentation for "readVersions".
-// src/consensusRegisterCollection.ts:194:9 - (ae-undocumented) Missing documentation for "keys".
-// src/consensusRegisterCollection.ts:198:2 - (ae-undocumented) Missing documentation for "summarizeCore".
-// src/consensusRegisterCollection.ts:210:2 - (ae-undocumented) Missing documentation for "loadCore".
-// src/consensusRegisterCollection.ts:225:2 - (ae-undocumented) Missing documentation for "onDisconnect".
-// src/consensusRegisterCollection.ts:227:2 - (ae-undocumented) Missing documentation for "processCore".
-// src/consensusRegisterCollection.ts:352:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
-// src/consensusRegisterCollectionFactory.ts:21:2 - (ae-undocumented) Missing documentation for "Type".
-// src/consensusRegisterCollectionFactory.ts:23:2 - (ae-undocumented) Missing documentation for "Attributes".
-// src/consensusRegisterCollectionFactory.ts:29:2 - (ae-undocumented) Missing documentation for "type".
-// src/consensusRegisterCollectionFactory.ts:33:2 - (ae-undocumented) Missing documentation for "attributes".
-// src/consensusRegisterCollectionFactory.ts:40:15 - (ae-undocumented) Missing documentation for "load".
-// src/consensusRegisterCollectionFactory.ts:51:9 - (ae-undocumented) Missing documentation for "create".
-// src/interfaces.ts:26:2 - (ae-undocumented) Missing documentation for "load".
-// src/interfaces.ts:33:2 - (ae-undocumented) Missing documentation for "create".
-// src/interfaces.ts:42:2 - (ae-undocumented) Missing documentation for "__call".
-// src/interfaces.ts:100:2 - (ae-undocumented) Missing documentation for "Atomic".
-// src/interfaces.ts:103:2 - (ae-undocumented) Missing documentation for "LWW".
-
 // (No @packageDocumentation comment for this package)
 
 ```

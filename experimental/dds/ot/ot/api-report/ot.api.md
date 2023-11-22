@@ -33,17 +33,6 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
     protected abstract transform(input: TOp, transform: TOp): TOp;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/ot.ts:30:1 - (ae-undocumented) Missing documentation for "SharedOT".
-// src/ot.ts:66:2 - (ae-undocumented) Missing documentation for "apply".
-// src/ot.ts:89:2 - (ae-undocumented) Missing documentation for "summarizeCore".
-// src/ot.ts:90:2 - (ae-undocumented) Missing documentation for "loadCore".
-// src/ot.ts:104:2 - (ae-undocumented) Missing documentation for "onDisconnect".
-// src/ot.ts:106:2 - (ae-undocumented) Missing documentation for "processCore".
-// src/ot.ts:156:2 - (ae-undocumented) Missing documentation for "state".
-// src/ot.ts:172:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
-
 // (No @packageDocumentation comment for this package)
 
 ```

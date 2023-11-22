@@ -28,13 +28,6 @@ export interface IProvideFluidMountableView {
     readonly IFluidMountableView: IFluidMountableView;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/mountableView.ts:11:14 - (ae-undocumented) Missing documentation for "IFluidMountableView".
-// src/mountableView.ts:16:1 - (ae-undocumented) Missing documentation for "IProvideFluidMountableView".
-// src/mountableView.ts:17:2 - (ae-undocumented) Missing documentation for "IFluidMountableView".
-// src/mountableView.ts:29:2 - (ae-undocumented) Missing documentation for "__new".
-
 // (No @packageDocumentation comment for this package)
 
 ```

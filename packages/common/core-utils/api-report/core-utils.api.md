@@ -142,21 +142,6 @@ export class Timer implements ITimer {
 // @public
 export function unreachableCase(_: never, message?: string): never;
 
-// Warnings were encountered during analysis:
-//
-// src/heap.ts:46:2 - (ae-undocumented) Missing documentation for "value".
-// src/heap.ts:47:2 - (ae-undocumented) Missing documentation for "position".
-// src/heap.ts:61:21 - (ae-undocumented) Missing documentation for "comp".
-// src/lazy.ts:47:2 - (ae-undocumented) Missing documentation for "[Symbol.toStringTag]".
-// src/lazy.ts:56:15 - (ae-undocumented) Missing documentation for "then".
-// src/lazy.ts:67:15 - (ae-undocumented) Missing documentation for "catch".
-// src/lazy.ts:77:15 - (ae-undocumented) Missing documentation for "finally".
-// src/timer.ts:12:1 - (ae-undocumented) Missing documentation for "ITimer".
-// src/timer.ts:226:1 - (ae-undocumented) Missing documentation for "IPromiseTimerResult".
-// src/timer.ts:227:2 - (ae-undocumented) Missing documentation for "timerResult".
-// src/timer.ts:275:9 - (ae-undocumented) Missing documentation for "clear".
-// src/timer.ts:283:2 - (ae-undocumented) Missing documentation for "wrapHandler".
-
 // (No @packageDocumentation comment for this package)
 
 ```

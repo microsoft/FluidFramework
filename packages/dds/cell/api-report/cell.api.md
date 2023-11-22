@@ -67,13 +67,4 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/cell.ts:192:9 - (ae-undocumented) Missing documentation for "getAttribution".
-// src/cell.ts:229:2 - (ae-undocumented) Missing documentation for "loadCore".
-// src/cell.ts:351:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
-// src/interfaces.ts:114:2 - (ae-undocumented) Missing documentation for "getAttribution".
-// src/interfaces.ts:140:2 - (ae-undocumented) Missing documentation for "attribution".
-// src/interfaces.ts:152:2 - (ae-undocumented) Missing documentation for "track".
-
 ```

@@ -32,13 +32,6 @@ export interface FluidCacheConfig {
     partitionKey: string | null;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/FluidCache.ts:34:1 - (ae-undocumented) Missing documentation for "FluidCacheConfig".
-// src/FluidCache.ts:191:15 - (ae-undocumented) Missing documentation for "removeEntries".
-// src/FluidCache.ts:216:15 - (ae-undocumented) Missing documentation for "get".
-// src/FluidCache.ts:285:15 - (ae-undocumented) Missing documentation for "put".
-
 // (No @packageDocumentation comment for this package)
 
 ```

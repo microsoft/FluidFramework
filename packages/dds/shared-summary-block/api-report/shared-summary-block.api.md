@@ -57,20 +57,6 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
     get type(): string;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/sharedSummaryBlock.ts:97:2 - (ae-undocumented) Missing documentation for "summarizeCore".
-// src/sharedSummaryBlock.ts:108:2 - (ae-undocumented) Missing documentation for "loadCore".
-// src/sharedSummaryBlock.ts:121:2 - (ae-undocumented) Missing documentation for "onDisconnect".
-// src/sharedSummaryBlock.ts:126:2 - (ae-undocumented) Missing documentation for "processCore".
-// src/sharedSummaryBlock.ts:130:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
-// src/sharedSummaryBlockFactory.ts:26:2 - (ae-undocumented) Missing documentation for "Type".
-// src/sharedSummaryBlockFactory.ts:31:2 - (ae-undocumented) Missing documentation for "Attributes".
-// src/sharedSummaryBlockFactory.ts:40:2 - (ae-undocumented) Missing documentation for "type".
-// src/sharedSummaryBlockFactory.ts:47:2 - (ae-undocumented) Missing documentation for "attributes".
-// src/sharedSummaryBlockFactory.ts:54:15 - (ae-undocumented) Missing documentation for "load".
-// src/sharedSummaryBlockFactory.ts:69:9 - (ae-undocumented) Missing documentation for "create".
-
 // (No @packageDocumentation comment for this package)
 
 ```

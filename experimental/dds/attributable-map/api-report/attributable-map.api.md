@@ -117,20 +117,4 @@ export class MapFactory implements IChannelFactory {
     get type(): string;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/map.ts:43:2 - (ae-undocumented) Missing documentation for "Type".
-// src/map.ts:48:2 - (ae-undocumented) Missing documentation for "Attributes".
-// src/map.ts:57:2 - (ae-undocumented) Missing documentation for "type".
-// src/map.ts:64:2 - (ae-undocumented) Missing documentation for "attributes".
-// src/map.ts:71:15 - (ae-undocumented) Missing documentation for "load".
-// src/map.ts:86:9 - (ae-undocumented) Missing documentation for "create".
-// src/map.ts:279:2 - (ae-undocumented) Missing documentation for "summarizeCore".
-// src/map.ts:372:2 - (ae-undocumented) Missing documentation for "loadCore".
-// src/map.ts:392:2 - (ae-undocumented) Missing documentation for "onDisconnect".
-// src/map.ts:398:2 - (ae-undocumented) Missing documentation for "reSubmitCore".
-// src/map.ts:406:2 - (ae-undocumented) Missing documentation for "applyStashedOp".
-// src/map.ts:414:2 - (ae-undocumented) Missing documentation for "processCore".
-// src/map.ts:428:2 - (ae-undocumented) Missing documentation for "rollback".
-
 ```

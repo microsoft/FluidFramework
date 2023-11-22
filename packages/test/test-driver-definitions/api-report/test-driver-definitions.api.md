@@ -40,14 +40,6 @@ export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 // @public (undocumented)
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
-// Warnings were encountered during analysis:
-//
-// src/interfaces.ts:15:1 - (ae-undocumented) Missing documentation for "TestDriverTypes".
-// src/interfaces.ts:20:1 - (ae-undocumented) Missing documentation for "RouterliciousEndpoint".
-// src/interfaces.ts:25:1 - (ae-undocumented) Missing documentation for "OdspEndpoint".
-// src/interfaces.ts:30:1 - (ae-undocumented) Missing documentation for "DriverEndpoint".
-// src/interfaces.ts:35:1 - (ae-undocumented) Missing documentation for "ITestDriver".
-
 // (No @packageDocumentation comment for this package)
 
 ```

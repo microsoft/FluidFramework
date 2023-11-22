@@ -8,8 +8,7 @@
 	"messages": {
 		"extractorMessageReporting": {
 			"ae-undocumented": {
-				"logLevel": "error",
-				"addToApiReportFile": true
+				"logLevel": "none"
 			}
 		}
 	}

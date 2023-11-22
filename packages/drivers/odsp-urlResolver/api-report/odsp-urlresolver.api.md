@@ -19,12 +19,6 @@ export class OdspUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/urlResolver.ts:19:1 - (ae-undocumented) Missing documentation for "OdspUrlResolver".
-// src/urlResolver.ts:20:15 - (ae-undocumented) Missing documentation for "resolve".
-// src/urlResolver.ts:37:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
-
 // (No @packageDocumentation comment for this package)
 
 ```

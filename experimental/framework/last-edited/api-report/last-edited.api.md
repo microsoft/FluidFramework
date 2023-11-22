@@ -58,21 +58,6 @@ export class LastEditedTrackerDataObject extends DataObject implements IProvideF
 // @public
 export function setupLastEditedTrackerForContainer(lastEditedTracker: IFluidLastEditedTracker, runtime: IContainerRuntime, shouldDiscardMessageFn?: (message: ISequencedDocumentMessage) => boolean): void;
 
-// Warnings were encountered during analysis:
-//
-// src/interfaces.ts:11:14 - (ae-undocumented) Missing documentation for "IFluidLastEditedTracker".
-// src/interfaces.ts:17:1 - (ae-undocumented) Missing documentation for "IProvideFluidLastEditedTracker".
-// src/interfaces.ts:18:2 - (ae-undocumented) Missing documentation for "IFluidLastEditedTracker".
-// src/interfaces.ts:24:1 - (ae-undocumented) Missing documentation for "IFluidLastEditedTracker".
-// src/interfaces.ts:39:1 - (ae-undocumented) Missing documentation for "ILastEditDetails".
-// src/interfaces.ts:40:2 - (ae-undocumented) Missing documentation for "user".
-// src/interfaces.ts:41:2 - (ae-undocumented) Missing documentation for "timestamp".
-// src/lastEditedTracker.ts:25:2 - (ae-undocumented) Missing documentation for "IFluidLastEditedTracker".
-// src/lastEditedTrackerDataObject.ts:28:5 - (ae-undocumented) Missing documentation for "getFactory".
-// src/lastEditedTrackerDataObject.ts:45:2 - (ae-undocumented) Missing documentation for "IFluidLastEditedTracker".
-// src/lastEditedTrackerDataObject.ts:47:3 - (ae-undocumented) Missing documentation for "initializingFirstTime".
-// src/lastEditedTrackerDataObject.ts:50:8 - (ae-undocumented) Missing documentation for "hasInitialized".
-
 // (No @packageDocumentation comment for this package)
 
 ```

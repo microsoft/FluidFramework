@@ -49,19 +49,6 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
     isOldest(): boolean;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/interfaces.ts:16:2 - (ae-undocumented) Missing documentation for "__call".
-// src/interfaces.ts:17:2 - (ae-undocumented) Missing documentation for "__call".
-// src/interfaces.ts:29:2 - (ae-undocumented) Missing documentation for "getQuorum".
-// src/interfaces.ts:35:2 - (ae-undocumented) Missing documentation for "attachState".
-// src/interfaces.ts:36:2 - (ae-undocumented) Missing documentation for "connected".
-// src/interfaces.ts:37:2 - (ae-undocumented) Missing documentation for "clientId".
-// src/interfaces.ts:46:2 - (ae-undocumented) Missing documentation for "__call".
-// src/interfaces.ts:52:1 - (ae-undocumented) Missing documentation for "IOldestClientObserver".
-// src/interfaces.ts:53:2 - (ae-undocumented) Missing documentation for "isOldest".
-// src/oldestClientObserver.ts:89:9 - (ae-undocumented) Missing documentation for "isOldest".
-
 // (No @packageDocumentation comment for this package)
 
 ```

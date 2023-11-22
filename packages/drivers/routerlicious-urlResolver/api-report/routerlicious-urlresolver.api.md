@@ -42,19 +42,6 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/urlResolver.ts:22:1 - (ae-undocumented) Missing documentation for "RouterliciousUrlResolver".
-// src/urlResolver.ts:144:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
-// src/urlResolver.ts:165:1 - (ae-undocumented) Missing documentation for "IAlfredUser".
-// src/urlResolver.ts:166:2 - (ae-undocumented) Missing documentation for "displayName".
-// src/urlResolver.ts:167:2 - (ae-undocumented) Missing documentation for "name".
-// src/urlResolver.ts:173:1 - (ae-undocumented) Missing documentation for "IConfig".
-// src/urlResolver.ts:174:2 - (ae-undocumented) Missing documentation for "serverUrl".
-// src/urlResolver.ts:175:2 - (ae-undocumented) Missing documentation for "blobStorageUrl".
-// src/urlResolver.ts:176:2 - (ae-undocumented) Missing documentation for "tenantId".
-// src/urlResolver.ts:177:2 - (ae-undocumented) Missing documentation for "documentId".
-
 // (No @packageDocumentation comment for this package)
 
 ```

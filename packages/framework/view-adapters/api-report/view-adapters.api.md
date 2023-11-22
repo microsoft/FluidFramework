@@ -20,11 +20,4 @@ export class MountableView implements IFluidMountableView {
     unmount(): void;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/mountableview/mountableView.tsx:21:2 - (ae-undocumented) Missing documentation for "IFluidMountableView".
-// src/mountableview/mountableView.tsx:28:2 - (ae-undocumented) Missing documentation for "canMount".
-// src/mountableview/mountableView.tsx:59:9 - (ae-undocumented) Missing documentation for "mount".
-// src/mountableview/mountableView.tsx:83:9 - (ae-undocumented) Missing documentation for "unmount".
-
 ```

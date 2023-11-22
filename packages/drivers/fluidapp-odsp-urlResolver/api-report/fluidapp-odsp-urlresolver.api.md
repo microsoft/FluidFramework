@@ -17,12 +17,6 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/urlResolver.ts:26:1 - (ae-undocumented) Missing documentation for "FluidAppOdspUrlResolver".
-// src/urlResolver.ts:27:15 - (ae-undocumented) Missing documentation for "resolve".
-// src/urlResolver.ts:56:15 - (ae-undocumented) Missing documentation for "getAbsoluteUrl".
-
 // (No @packageDocumentation comment for this package)
 
 ```

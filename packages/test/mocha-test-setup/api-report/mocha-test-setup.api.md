@@ -13,10 +13,6 @@ export const mochaHooks: {
     afterEach(this: Mocha.Context): void;
 };
 
-// Warnings were encountered during analysis:
-//
-// src/mochaHooks.ts:62:14 - (ae-undocumented) Missing documentation for "mochaHooks".
-
 // (No @packageDocumentation comment for this package)
 
 ```

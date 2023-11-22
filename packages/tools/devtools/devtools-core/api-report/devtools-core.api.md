@@ -551,17 +551,4 @@ export interface VisualValueNode extends ValueNodeBase {
     nodeKind: VisualNodeKind.ValueNode;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/ContainerMetadata.ts:24:2 - (ae-undocumented) Missing documentation for "attachState".
-// src/ContainerMetadata.ts:29:2 - (ae-undocumented) Missing documentation for "connectionState".
-// src/ContainerMetadata.ts:34:2 - (ae-undocumented) Missing documentation for "clientId".
-// src/data-visualization/VisualTree.ts:26:2 - (ae-undocumented) Missing documentation for "FluidTreeNode".
-// src/data-visualization/VisualTree.ts:27:2 - (ae-undocumented) Missing documentation for "FluidValueNode".
-// src/data-visualization/VisualTree.ts:28:2 - (ae-undocumented) Missing documentation for "FluidHandleNode".
-// src/data-visualization/VisualTree.ts:29:2 - (ae-undocumented) Missing documentation for "FluidUnknownObjectNode".
-// src/data-visualization/VisualTree.ts:30:2 - (ae-undocumented) Missing documentation for "TreeNode".
-// src/data-visualization/VisualTree.ts:31:2 - (ae-undocumented) Missing documentation for "ValueNode".
-// src/data-visualization/VisualTree.ts:32:2 - (ae-undocumented) Missing documentation for "UnknownObjectNode".
-
 ```

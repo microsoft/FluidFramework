@@ -51,13 +51,6 @@ export interface IProvideFluidDependencySynthesizer {
     IFluidDependencySynthesizer: IFluidDependencySynthesizer;
 }
 
-// Warnings were encountered during analysis:
-//
-// src/IFluidDependencySynthesizer.ts:8:14 - (ae-undocumented) Missing documentation for "IFluidDependencySynthesizer".
-// src/IFluidDependencySynthesizer.ts:11:1 - (ae-undocumented) Missing documentation for "IProvideFluidDependencySynthesizer".
-// src/IFluidDependencySynthesizer.ts:12:2 - (ae-undocumented) Missing documentation for "IFluidDependencySynthesizer".
-// src/dependencyContainer.ts:23:2 - (ae-undocumented) Missing documentation for "IFluidDependencySynthesizer".
-
 // (No @packageDocumentation comment for this package)
 
 ```

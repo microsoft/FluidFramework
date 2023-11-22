@@ -125,30 +125,6 @@ export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
 // @internal
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: "utf8" | "utf-8" | "base64"): string;
 
-// Warnings were encountered during analysis:
-//
-// src/bufferNode.ts:15:2 - (ae-undocumented) Missing documentation for "toString".
-// src/bufferNode.ts:27:2 - (ae-undocumented) Missing documentation for "isBuffer".
-// src/bufferNode.ts:33:14 - (ae-undocumented) Missing documentation for "IsoBuffer".
-// src/bufferNode.ts:38:1 - (ae-undocumented) Missing documentation for "IsoBuffer".
-// src/eventForwarder.ts:23:2 - (ae-undocumented) Missing documentation for "isEmitterEvent".
-// src/eventForwarder.ts:36:2 - (ae-undocumented) Missing documentation for "disposed".
-// src/eventForwarder.ts:63:9 - (ae-undocumented) Missing documentation for "dispose".
-// src/eventForwarder.ts:78:2 - (ae-undocumented) Missing documentation for "forwardEvent".
-// src/eventForwarder.ts:102:2 - (ae-undocumented) Missing documentation for "unforwardEvent".
-// src/trace.ts:14:19 - (ae-undocumented) Missing documentation for "startTick".
-// src/trace.ts:20:2 - (ae-undocumented) Missing documentation for "lastTick".
-// src/trace.ts:21:57 - (ae-undocumented) Missing documentation for "start".
-// src/trace.ts:25:9 - (ae-undocumented) Missing documentation for "trace".
-// src/typedEventEmitter.ts:32:1 - (ae-undocumented) Missing documentation for "TypedEventTransform".
-// src/typedEventEmitter.ts:74:2 - (ae-undocumented) Missing documentation for "addListener".
-// src/typedEventEmitter.ts:75:2 - (ae-undocumented) Missing documentation for "on".
-// src/typedEventEmitter.ts:76:2 - (ae-undocumented) Missing documentation for "once".
-// src/typedEventEmitter.ts:77:2 - (ae-undocumented) Missing documentation for "prependListener".
-// src/typedEventEmitter.ts:78:2 - (ae-undocumented) Missing documentation for "prependOnceListener".
-// src/typedEventEmitter.ts:79:2 - (ae-undocumented) Missing documentation for "removeListener".
-// src/typedEventEmitter.ts:80:2 - (ae-undocumented) Missing documentation for "off".
-
 // (No @packageDocumentation comment for this package)
 
 ```

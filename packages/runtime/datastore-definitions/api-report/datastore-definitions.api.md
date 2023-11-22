@@ -152,30 +152,4 @@ export type Jsonable<T = any, TReplaced = void> = T extends undefined | null | b
 // @public
 export type Serializable<T = any> = Jsonable<T, IFluidHandle>;
 
-// Warnings were encountered during analysis:
-//
-// src/channel.ts:17:1 - (ae-undocumented) Missing documentation for "IChannel".
-// src/channel.ts:23:2 - (ae-undocumented) Missing documentation for "attributes".
-// src/channel.ts:167:2 - (ae-undocumented) Missing documentation for "connected".
-// src/channel.ts:222:2 - (ae-undocumented) Missing documentation for "deltaConnection".
-// src/channel.ts:224:2 - (ae-undocumented) Missing documentation for "objectStorage".
-// src/dataStoreRuntime.ts:37:1 - (ae-undocumented) Missing documentation for "IFluidDataStoreRuntimeEvents".
-// src/dataStoreRuntime.ts:38:2 - (ae-undocumented) Missing documentation for "__call".
-// src/dataStoreRuntime.ts:39:2 - (ae-undocumented) Missing documentation for "__call".
-// src/dataStoreRuntime.ts:40:2 - (ae-undocumented) Missing documentation for "__call".
-// src/dataStoreRuntime.ts:41:2 - (ae-undocumented) Missing documentation for "__call".
-// src/dataStoreRuntime.ts:51:2 - (ae-undocumented) Missing documentation for "id".
-// src/dataStoreRuntime.ts:53:2 - (ae-undocumented) Missing documentation for "IFluidHandleContext".
-// src/dataStoreRuntime.ts:55:2 - (ae-undocumented) Missing documentation for "rootRoutingContext".
-// src/dataStoreRuntime.ts:56:2 - (ae-undocumented) Missing documentation for "channelsRoutingContext".
-// src/dataStoreRuntime.ts:57:2 - (ae-undocumented) Missing documentation for "objectsRoutingContext".
-// src/dataStoreRuntime.ts:59:2 - (ae-undocumented) Missing documentation for "options".
-// src/dataStoreRuntime.ts:61:2 - (ae-undocumented) Missing documentation for "deltaManager".
-// src/dataStoreRuntime.ts:63:2 - (ae-undocumented) Missing documentation for "clientId".
-// src/dataStoreRuntime.ts:65:2 - (ae-undocumented) Missing documentation for "connected".
-// src/dataStoreRuntime.ts:67:2 - (ae-undocumented) Missing documentation for "logger".
-// src/dataStoreRuntime.ts:74:2 - (ae-undocumented) Missing documentation for "idCompressor".
-// src/dataStoreRuntime.ts:143:2 - (ae-undocumented) Missing documentation for "request".
-// src/dataStoreRuntime.ts:149:2 - (ae-undocumented) Missing documentation for "IFluidRouter".
-
 ```

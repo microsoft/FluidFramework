@@ -11,8 +11,7 @@
 			},
 			// TODO: Add missing documentation and remove this rule override
 			"ae-undocumented": {
-				"logLevel": "error",
-				"addToApiReportFile": true
+				"logLevel": "none"
 			}
 		}
 	}
