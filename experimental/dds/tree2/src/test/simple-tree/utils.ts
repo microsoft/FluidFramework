@@ -43,7 +43,7 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
 	it(title, () => {
 		const view = treeViewWithContent({
 			schema,
-			initialTree: initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+			initialTree: initialTree as SchemaAware.TypedField<TRoot>,
 		});
 		const root = view.root;
 		fn(root);
