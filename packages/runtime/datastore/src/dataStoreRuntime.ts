@@ -459,6 +459,7 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
 
+		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
 		const factory = this.sharedObjectRegistry.get(type);
 		if (factory === undefined) {
 			throw new Error(`Channel Factory ${type} not registered`);
