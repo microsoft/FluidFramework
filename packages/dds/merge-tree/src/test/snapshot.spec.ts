@@ -93,6 +93,42 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 			await str.expect("0123");
 		});
 
+		it("includes obliterates above the MSN of segments below the MSN", async () => {
+			str.append("0x", /* increaseMsn: */ true);
+			str.obliterateRange(1, 2, /* increaseMsn: */ false);
+			await str.expect("0");
+		});
+
+		it("can insert segments after loading obliterated segment", async () => {
+			str.append("0x", /* increaseMsn: */ true);
+			str.obliterateRange(1, 2, /* increaseMsn: */ false);
+			await str.expect("0");
+			str.append("1", /* increaseMsn: */ false);
+			await str.expect("01");
+		});
+
+		it("can insert segments relative to obliterated segment", async () => {
+			str.append("0x", /* increaseMsn: */ false);
+			str.append("2", /* increaseMsn: */ false);
+			str.obliterateRange(1, 2, /* increaseMsn: */ false);
+			str.insert(1, "1", /* increaseMsn: */ false);
+			str.append("3", /* increaseMsn: */ false);
+			await str.expect("0123");
+		});
+
+		it("can insert segments relative to obliterated segment loaded from snapshot", async () => {
+			str.append("0x", /* increaseMsn: */ false);
+			str.append("2", /* increaseMsn: */ false);
+			str.obliterateRange(1, 2, /* increaseMsn: */ false);
+
+			// Note that calling str.expect() switches the underlying client to the one loaded from the snapshot.
+			await str.expect("02");
+
+			str.insert(1, "1", /* increaseMsn: */ false);
+			str.append("3", /* increaseMsn: */ false);
+			await str.expect("0123");
+		});
+
 		it("includes ACKed segments below MSN in body", async () => {
 			for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
 				str.append(`${i % 10}`, /* increaseMsn: */ true);
@@ -129,6 +165,7 @@ describe("snapshot", () => {
 	describe("with attribution", () => {
 		makeSnapshotSuite({
 			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			mergeTreeEnableObliterate: true,
 		});
 	});
 
@@ -138,11 +175,15 @@ describe("snapshot", () => {
 				track: true,
 				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
 			},
+			mergeTreeEnableObliterate: true,
 		});
 	});
 
 	describe("without attribution", () => {
-		makeSnapshotSuite({ attribution: { track: false } });
+		makeSnapshotSuite({
+			attribution: { track: false },
+			mergeTreeEnableObliterate: true,
+		});
 	});
 
 	it("presence of attribution overrides merge-tree initialization value", async () => {

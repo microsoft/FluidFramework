@@ -22864,7 +22864,7 @@ packages:
       webpack-cli: 4.x.x
     dependencies:
       webpack: 5.88.2_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
+      webpack-cli: 4.10.0_webpack@5.88.2
 
   /@webpack-cli/info/1.5.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-e8tSXZpw2hPl2uMJY6fsMswaok5FdlGNRTktvFk2sD8RjH0hE2+XistawJx1vmKteh4NmGmNUrp+Tb2w+udPcQ==}
@@ -22872,7 +22872,7 @@ packages:
       webpack-cli: 4.x.x
     dependencies:
       envinfo: 7.10.0
-      webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
+      webpack-cli: 4.10.0_webpack@5.88.2
 
   /@webpack-cli/serve/1.7.0_hxwqhfj3xkkgp5omnyg2m7pnsm:
     resolution: {integrity: sha512-oxnCNGj88fL+xzV+dacXs44HcDwf1ovs3AuEzvP7mqXw7fQntqIhQ1BRmynh4qEKQSSSRSWVyXRjmTbZIX9V2Q==}
@@ -22895,8 +22895,7 @@ packages:
       webpack-dev-server:
         optional: true
     dependencies:
-      webpack-cli: 4.10.0_xrcblan7buurh2bchxgxle5xda
-    dev: true
+      webpack-cli: 4.10.0_webpack@5.88.2
 
   /@wojtekmaj/enzyme-adapter-react-17/0.6.7_7ltvq4e2railvf5uya4ffxpe2a:
     resolution: {integrity: sha512-B+byiwi/T1bx5hcj9wc0fUL5Hlb5giSXJzcnEfJVl2j6dGV2NJfcxDBYX0WWwIxlzNiFz8kAvlkFWI2y/nscZQ==}
@@ -44049,7 +44048,6 @@ packages:
       rechoir: 0.7.1
       webpack: 5.88.2_webpack-cli@4.10.0
       webpack-merge: 5.9.0
-    dev: true
 
   /webpack-cli/4.10.0_xrcblan7buurh2bchxgxle5xda:
     resolution: {integrity: sha512-NLhDfH/h4O6UOy+0LSso42xvYypClINuMNBVVzX4vX98TmTaTUxwRbXdhucbFMd2qLaCTcLq/PdYrvi8onw90w==}
@@ -44433,7 +44431,7 @@ packages:
       tapable: 2.2.1
       terser-webpack-plugin: 5.3.9_webpack@5.88.2
       watchpack: 2.4.0
-      webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
+      webpack-cli: 4.10.0_webpack@5.88.2
       webpack-sources: 3.2.3
     transitivePeerDependencies:
       - '@swc/core'

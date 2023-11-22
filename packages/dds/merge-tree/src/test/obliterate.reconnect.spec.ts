@@ -9,7 +9,7 @@ import { MergeTree } from "../mergeTree";
 import { ReconnectTestHelper } from "./reconnectHelper";
 
 for (const incremental of [true, false]) {
-	describe.skip(`obliterate partial lengths incremental = ${incremental}`, () => {
+	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
 		beforeEach(() => {
 			PartialSequenceLengths.options.verifier = verify;
 			PartialSequenceLengths.options.verifyExpected = verifyExpected;

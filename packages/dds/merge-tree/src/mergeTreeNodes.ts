@@ -10,6 +10,7 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
+import { ISegmentLeaf } from "./mergeTree";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
@@ -180,6 +181,19 @@ export interface IMoveInfo {
 	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
+}
+
+export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
+	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
+		return maybe as IMoveInfo;
+	}
+	assert(
+		maybe?.movedClientIds === undefined &&
+			maybe?.movedSeq === undefined &&
+			maybe?.movedSeqs === undefined &&
+			maybe?.wasMovedOnInsert === undefined,
+		"movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set",
+	);
 }
 
 /**
@@ -370,7 +384,7 @@ export interface SegmentActions<TClientData> {
  * @internal
  */
 export interface SegmentGroup {
-	segments: ISegment[];
+	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -552,6 +566,21 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
 					return true;
 				}
+				return false;
+
+			case MergeTreeDeltaType.OBLITERATE:
+				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
+				assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
+				this.localMovedSeq = undefined;
+				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+				assert(seqIdx !== -1, "expected movedSeqs to contain unacked seq");
+				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+
+				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+					return true;
+				}
+
 				return false;
 
 			default:
