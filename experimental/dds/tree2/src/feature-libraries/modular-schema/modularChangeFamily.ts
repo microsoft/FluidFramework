@@ -805,6 +805,12 @@ export class ModularChangeFamily
 	}
 }
 
+/**
+ *
+ * @param revInfos - This should describe all revisions in the rebase path, even if not part of the current base changeset.
+ * @param baseRevisions - The set of revisions in the changeset being rebased over
+ * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`
+ */
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
 	baseRevisions: (RevisionTag | undefined)[],
