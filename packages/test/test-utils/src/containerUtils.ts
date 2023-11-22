@@ -56,7 +56,14 @@ export async function waitForContainerConnection(
  */
 export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
 	if (container.getEntryPoint !== undefined) {
-		return (await container.getEntryPoint()) as T;
+		const entryPoint = await container.getEntryPoint();
+		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
+		// cross version compat testing scenarios, if we create with 1.X container and load with 2.X then the
+		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
+		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
+		if (entryPoint !== undefined) {
+			return entryPoint as T;
+		}
 	}
 	const response: IResponse = await (container as any).request({ url: "/" });
 	assert(response.status === 200, "requesting '/' should return default data object");

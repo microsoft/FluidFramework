@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
@@ -12,7 +11,6 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
 import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
@@ -71,9 +69,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
-					// eslint-disable-next-line import/no-deprecated
 					buildRuntimeRequestHandler(
-						// eslint-disable-next-line import/no-deprecated
 						defaultRouteRequestHandler("default"),
 						...this.requestHandlers,
 					),
@@ -95,9 +91,7 @@ export const createTestContainerRuntimeFactory = (
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
-				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(
-					// eslint-disable-next-line import/no-deprecated
 					defaultRouteRequestHandler("default"),
 					...this.requestHandlers,
 				),
