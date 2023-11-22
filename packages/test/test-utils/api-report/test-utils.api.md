@@ -141,7 +141,7 @@ export function getContainerEntryPointBackCompat<T>(container: IContainer): Prom
 // @public (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
-// @public
+// @internal
 export interface IDocumentIdStrategy {
     get(): string;
     reset(): void;
@@ -325,7 +325,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     get urlResolver(): IUrlResolver;
 }
 
-// @public
+// @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
     constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;

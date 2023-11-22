@@ -201,6 +201,8 @@ export const createDocumentId = (): string => uuid();
 
 /**
  * Used to retrieve, update, and reset document id based on the type of driver being used.
+ *
+ * @internal
  */
 export interface IDocumentIdStrategy {
 	/**
@@ -607,6 +609,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 /**
  * Implements {@link ITestObjectProvider}, but uses different versions to create and load containers.
+ *
+ * @internal
  */
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
 	/**
