@@ -7,6 +7,10 @@ import { strict as assert } from "assert";
 import { promises as fs, existsSync, rmSync, mkdirSync } from "fs";
 import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protocol-definitions";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { JsonCompatibleReadOnly } from "../../util";
+
+export const regenerateSnapshots = process.argv.includes("--snapshot");
+export const dirPathTail = "src/test/snapshots";
 
 const numberOfSpaces = 2;
 
@@ -117,6 +121,26 @@ export async function createSnapshot(path: string, data: ISummaryTree): Promise<
 	const tree = serializeTree(".handle", data, ".app");
 	const dataStr = JSON.stringify(tree, undefined, numberOfSpaces);
 	await fs.writeFile(path, dataStr);
+}
+
+export async function createSchemaSnapshot(
+	path: string,
+	data: JsonCompatibleReadOnly,
+): Promise<void> {
+	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
+	await fs.writeFile(path, dataStr);
+}
+
+export async function verifyEqualPastSchemaSnapshot(
+	path: string,
+	data: JsonCompatibleReadOnly,
+	testName: string,
+): Promise<void> {
+	assert(existsSync(path), `test schema snapshot file does not exist: ${path}`);
+	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
+	const pastDataStr = await fs.readFile(path, "utf-8");
+
+	assert.equal(dataStr, pastDataStr, `snapshot different for ${testName}`);
 }
 
 export async function verifyEqualPastSnapshot(

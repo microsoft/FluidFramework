@@ -196,6 +196,10 @@ export class SharedString
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
 	 * @param consensusCallback - The callback called when consensus is reached
+	 *
+	 * @deprecated We no longer intend to support this functionality and it will
+	 * be removed in a future release. There is no replacement for this
+	 * functionality.
 	 */
 	public annotateMarkerNotifyConsensus(
 		marker: Marker,
