@@ -113,6 +113,19 @@ export function rebasePeerEditsOverTrunkEdits(
 			brand(iChange),
 		);
 	}
+	let totalTrunkEdits = trunkEditCount;
+	if (extraPeerEdit === "NotCaughtUp") {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "trunk",
+			},
+			brand(trunkEditCount + 1),
+			brand(trunkEditCount),
+		);
+		totalTrunkEdits += 1;
+	}
 	const peerEdits = makeArray(peerEditCount, () => ({
 		change: TestChange.emptyChange,
 		revision: mintRevisionTag(),
@@ -122,7 +135,7 @@ export function rebasePeerEditsOverTrunkEdits(
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
 			manager.addSequencedChange(
 				peerEdits[iChange],
-				brand(iChange + trunkEditCount + 1),
+				brand(iChange + totalTrunkEdits + 1),
 				brand(0),
 			);
 		}
@@ -134,8 +147,8 @@ export function rebasePeerEditsOverTrunkEdits(
 				revision: mintRevisionTag(),
 				sessionId: "peer",
 			},
-			brand(peerEditCount + trunkEditCount + 1),
-			brand(trunkEditCount + (extraPeerEdit === "CaughtUp" ? 0 : -1)),
+			brand(peerEditCount + totalTrunkEdits + 1),
+			brand(totalTrunkEdits + (extraPeerEdit === "CaughtUp" ? 0 : -1)),
 		);
 	};
 	let run: () => void;
