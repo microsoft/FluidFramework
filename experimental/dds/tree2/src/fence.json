@@ -1,5 +1,0 @@
-{
-	"tags": ["package"],
-	"exports": ["index"],
-	"imports": ["tree", "schema-stored", "util"]
-}
