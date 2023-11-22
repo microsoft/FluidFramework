@@ -442,7 +442,7 @@ describe("SharedTree", () => {
 		};
 		initializeTestTree(summarizingTree.view, initialState);
 
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
 		const fooField: FieldKey = brand("foo");
 		runSynchronous(summarizingTree.view, () => {
@@ -646,7 +646,9 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
 			provider.processMessages();
@@ -674,6 +676,59 @@ describe("SharedTree", () => {
 			unsubscribe();
 		});
 
+		it("inserts of multiple nodes in a sequence field", () => {
+			const value = "A";
+			const value2 = "B";
+			const value3 = "C";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
+			provider.processMessages();
+
+			// Insert node
+			tree1.editableTree.insertAtStart(value3);
+			tree1.editableTree.insertAtStart(value2);
+			tree1.editableTree.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual(tree1.editableTree.asArray, [value, value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value, value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, []);
+			assert.deepEqual(tree2.editableTree.asArray, []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+			unsubscribe();
+		});
+
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
@@ -687,7 +742,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 
 			provider.processMessages();
 			const tree2 =
@@ -697,7 +752,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Validate insertion
 			validateTreeContent(tree2.checkout, content);
@@ -764,12 +819,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Insert node
 			tree1.editableTree.insertAtStart([value]);
@@ -822,10 +877,10 @@ describe("SharedTree", () => {
 			validateViewConsistency(tree1.checkout, tree2.checkout);
 
 			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.checkout,
+				tree1.checkout.events,
 			);
 			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				tree2.checkout,
+				tree2.checkout.events,
 			);
 
 			const root1 = tree1.editableTree;
@@ -1061,7 +1116,7 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.objectRecursive("Node", {
+			const rootNodeSchema = testSchemaBuilder.object("Node", {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});
