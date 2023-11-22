@@ -39,5 +39,9 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { waitForContainerConnection, getContainerEntryPointBackCompat } from "./containerUtils";
+export {
+	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "./containerUtils";
 export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";

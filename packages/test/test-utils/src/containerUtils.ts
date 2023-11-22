@@ -7,6 +7,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { IDataStore } from "@fluidframework/runtime-definitions";
 import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtils";
 
 /**
@@ -67,5 +68,19 @@ export async function getContainerEntryPointBackCompat<T>(container: IContainer)
 	}
 	const response: IResponse = await (container as any).request({ url: "/" });
 	assert(response.status === 200, "requesting '/' should return default data object");
+	return response.value as T;
+}
+
+/**
+ * This function should ONLY be used for back compat purposes
+ * Older supported versions of IDataStore do not have the "entryPoint" property, so we need to fallback to "request"
+ * This function can be removed once back-compat support for IDataStore moves to 2.0.0-internal.7.0.0
+ */
+export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T> {
+	if (dataStore.entryPoint !== undefined) {
+		return dataStore.entryPoint.get() as Promise<T>;
+	}
+	const response: IResponse = await (dataStore as any).request({ url: "" });
+	assert(response.status === 200, "empty request should return data object");
 	return response.value as T;
 }

@@ -36,6 +36,7 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 
@@ -70,7 +71,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
-	return dataStore.entryPoint.get() as Promise<ITestFluidObject>;
+	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
 describeFullCompat("Detached Container", (getTestObjectProvider) => {
@@ -80,10 +81,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
 	beforeEach(function () {
 		provider = getTestObjectProvider();
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			// TODO: Temporarily disabling, need to fix entry point issues
-			this.skip();
-		}
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 		loader = provider.makeTestLoader(testContainerConfig) as Loader;
 	});
@@ -460,7 +457,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const newDataStore = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
-		const comp2 = (await newDataStore.entryPoint.get()) as ITestFluidObject;
+		const comp2 = await getDataStoreEntryPointBackCompat<ITestFluidObject>(newDataStore);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
