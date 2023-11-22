@@ -194,6 +194,7 @@ function mapUnsupportedPrimitive(
 			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
+				// This is intended to match JSON's behavior for such values.
 				if (typeSet?.has(leaf.null.name) ?? false) {
 					return null;
 				} else {
