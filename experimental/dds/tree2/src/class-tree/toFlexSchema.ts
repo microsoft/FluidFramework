@@ -30,16 +30,10 @@ import {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	LeafNodeSchema,
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes";
 import { TreeConfiguration } from "./tree";
-import {
-	cachedFlexSchemaFromClassSchema,
-	flexSchemaSymbol,
-	setFlexSchemaFromClassSchema,
-} from "./cachedFlexSchemaFromClassSchema";
 
 /**
  * @remarks
@@ -165,8 +159,11 @@ export function convertNodeSchema(
 		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {
-				assert(schema instanceof LeafNodeSchema, "invalid leaf schema");
-				return (schema as any)[flexSchemaSymbol] as FlexTreeNodeSchema;
+				const cached =
+					cachedFlexSchemaFromClassSchema(schema) ??
+					fail("leaf schema should be pre-cached");
+				assert(schemaIsLeaf(cached), "expected leaf");
+				return cached;
 			}
 			case NodeKind.Map: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
@@ -227,4 +224,23 @@ export function convertNodeSchema(
 		return out;
 	});
 	return final;
+}
+
+/**
+ * A symbol for storing FlexTreeSchema on TreeNodeSchema.
+ * Only set when TreeNodeSchema are wrapping existing FlexTreeSchema (done for as with leaves).
+ */
+export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
+
+export function cachedFlexSchemaFromClassSchema(
+	schema: TreeNodeSchema,
+): FlexTreeNodeSchemaBase | undefined {
+	return (schema as any)[flexSchemaSymbol] as FlexTreeNodeSchemaBase | undefined;
+}
+
+export function setFlexSchemaFromClassSchema(
+	simple: TreeNodeSchema,
+	flex: FlexTreeNodeSchemaBase,
+): void {
+	(simple as any)[flexSchemaSymbol] = flex;
 }

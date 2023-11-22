@@ -24,7 +24,7 @@ import { TreeValue } from "../core";
 import { TreeMapNodeBase } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { createNodeProxy, createRawObjectProxy, getClassSchema } from "../simple-tree/proxies";
-import { getFlexSchema } from "./toFlexSchema";
+import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -34,7 +34,6 @@ import {
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
-	LeafNodeSchema,
 	NodeBase,
 	NodeFromSchema,
 	NodeKind,
@@ -45,6 +44,27 @@ import {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 } from "./schemaTypes";
+
+/**
+ * Instances of this class are schema for leaf nodes.
+ */
+export class LeafNodeSchema<T extends FlexLeafNodeSchema>
+	implements
+		TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>>
+{
+	public readonly identifier: T["name"];
+	public readonly kind = NodeKind.Leaf;
+	public readonly info: T["info"];
+	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
+		return data;
+	}
+
+	public constructor(schema: T) {
+		setFlexSchemaFromClassSchema(this, schema);
+		this.identifier = schema.name;
+		this.info = schema.info;
+	}
+}
 
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,

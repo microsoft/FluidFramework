@@ -4,41 +4,14 @@
  */
 
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
-import {
-	LeafNodeSchema as FlexLeafNodeSchema,
-	FlexListToUnion,
-	LazyItem,
-} from "../feature-libraries";
-import { TreeValue } from "../core";
+import { FlexListToUnion, LazyItem } from "../feature-libraries";
 import { TreeListNodeBase, Unhydrated } from "../simple-tree";
-import { setFlexSchemaFromClassSchema } from "./cachedFlexSchemaFromClassSchema";
 
 /**
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
-
-/**
- * Instances of this class are schema for leaf nodes.
- */
-export class LeafNodeSchema<T extends FlexLeafNodeSchema>
-	implements
-		TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>>
-{
-	public readonly identifier: T["name"];
-	public readonly kind = NodeKind.Leaf;
-	public readonly info: T["info"];
-	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
-		return data;
-	}
-
-	public constructor(schema: T) {
-		setFlexSchemaFromClassSchema(this, schema);
-		this.identifier = schema.name;
-		this.info = schema.info;
-	}
-}
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
