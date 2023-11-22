@@ -188,4 +188,24 @@ describe("schemaFactory", () => {
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
+
+	it("Nested List", () => {
+		const builder = new SchemaFactory("com.contoso.app.inventory");
+
+		class Inventory extends builder.object("Inventory", {
+			parts: builder.list(builder.number),
+		}) {}
+
+		const treeConfiguration = new TreeConfiguration(
+			Inventory,
+			() =>
+				new Inventory({
+					parts: [1, 2],
+				}),
+		);
+
+		const factory = new TreeFactory({});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const view = tree.schematize(treeConfiguration);
+	});
 });

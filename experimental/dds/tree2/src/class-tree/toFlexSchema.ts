@@ -150,7 +150,7 @@ export function convertNodeSchema(
 			case NodeKind.List: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
 				const field = FlexTreeFieldSchema.create(
-					FieldKinds.optional,
+					FieldKinds.sequence,
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);

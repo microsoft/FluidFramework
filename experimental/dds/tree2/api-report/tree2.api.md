@@ -35,7 +35,7 @@ export type AllowedTypeSet = Any | ReadonlySet<FlexTreeNodeSchema>;
 
 // @alpha
 type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
-T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeNodeSchema[]>>> : ContextuallyTypedNodeData
+T extends InternalTypedSchemaTypes.FlexList<FlexTreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly FlexTreeNodeSchema[]>>> : ContextuallyTypedNodeData
 ][_InlineTrick];
 
 // @alpha
@@ -128,6 +128,9 @@ export const Any: "Any";
 
 // @alpha
 export type Any = typeof Any;
+
+// @alpha
+type ApplyKind<T, Kind extends FieldKind_2> = Kind extends FieldKind_2.Required ? T : undefined | T;
 
 // @alpha
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
@@ -269,7 +272,7 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
-export function cursorForTypedTreeData<T extends TreeNodeSchema>(context: TreeDataContext, schema: T, data: TypedNode_2<T>): ITreeCursorSynchronous;
+export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(context: TreeDataContext, schema: T, data: TypedNode_2<T>): ITreeCursorSynchronous;
 
 // @alpha
 export function cursorFromContextualData(context: TreeDataContext, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
@@ -2251,10 +2254,10 @@ ArrayHasFixedLength<T> extends false ? T extends readonly (infer InnerT)[] ? [Fl
 ][_InlineTrick];
 
 // @alpha
-type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
+type TypeArrayToTypedTreeArray<T extends readonly FlexTreeNodeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
-TypedNode_2<Assume<Head, TreeNodeSchema>>,
-...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>
+TypedNode_2<Assume<Head, FlexTreeNodeSchema>>,
+...TypeArrayToTypedTreeArray<Assume<Tail, readonly FlexTreeNodeSchema[]>>
 ] : []
 ][_InlineTrick];
 
@@ -2281,7 +2284,7 @@ TFields extends {
 export type TypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? TreeMapNode<TSchema> : TSchema extends FieldNodeSchema ? TreeListNodeOld<TSchema["info"]["allowedTypes"]> : TSchema extends ObjectNodeSchema ? TreeObjectNode<TSchema> : unknown;
 
 // @alpha
-type TypedNode_2<TSchema extends TreeNodeSchema> = FlattenKeys<CollectOptions<TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? {
+type TypedNode_2<TSchema extends FlexTreeNodeSchema> = FlattenKeys<CollectOptions<TSchema extends ObjectNodeSchema<string, infer TFields extends Fields> ? TypedFields<TFields> : TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema> ? {
     "": TypedField<TField>;
 } : TSchema extends MapNodeSchema<string, infer TField extends TreeFieldSchema> ? {
     readonly [P in string]: TypedField<TField>;
@@ -2324,6 +2327,9 @@ type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
 
 // @alpha
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
+
+// @alpha
+export type Unhydrated<T> = T;
 
 // @alpha
 export interface UpPath<TParent = UpPathDefault> {
