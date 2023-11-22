@@ -27,7 +27,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:genver",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
