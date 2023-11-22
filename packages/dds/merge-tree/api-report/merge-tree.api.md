@@ -5,6 +5,7 @@
 ```ts
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { Heap } from '@fluidframework/core-utils';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
