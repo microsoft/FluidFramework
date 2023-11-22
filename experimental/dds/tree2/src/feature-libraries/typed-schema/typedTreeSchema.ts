@@ -24,7 +24,7 @@ import {
 	oneFromSet,
 	Assume,
 } from "../../util";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";

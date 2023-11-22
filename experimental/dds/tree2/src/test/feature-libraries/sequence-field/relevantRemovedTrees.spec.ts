@@ -82,24 +82,9 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
 		});
-		it("a tree being returned", () => {
-			const input: TestChangeset = [Mark.returnFrom(1, atomId), Mark.returnTo(1, atomId)];
-			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, []);
-		});
-		it("a tree with child changes being returned", () => {
-			const input: TestChangeset = [
-				Mark.returnFrom(1, atomId, { changes: childChange }),
-				Mark.returnTo(1, atomId),
-			];
-			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, []);
-		});
 		it("a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId)),
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId)),
 			];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
@@ -107,7 +92,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree with child changes being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -117,7 +102,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
 			];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
@@ -125,10 +110,16 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree with child changes being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
 					changes: childChange,
 				}),
 			];
+			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
+			const array = Array.from(actual);
+			assert.deepEqual(array, []);
+		});
+		it("a live tree being pinned", () => {
+			const input: TestChangeset = [Mark.pin(1, brand(0))];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
@@ -153,22 +144,34 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
 		});
-		it("a tree being restored", () => {
+		it("a tree being restored by revive", () => {
 			const input: TestChangeset = [Mark.revive(1, atomId)];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
 		});
-		it("a tree being transiently restored", () => {
-			const input: TestChangeset = [
-				Mark.transient(Mark.revive(1, atomId), Mark.delete(1, atomId)),
-			];
+		it("a tree being restored by pin", () => {
+			const input: TestChangeset = [Mark.pin(1, brand(0), { cellId: atomId })];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
 		});
-		it("relevant trees from nested changes under a tree being restored", () => {
+		it("a tree being transiently restored", () => {
+			const input: TestChangeset = [Mark.delete(1, brand(0), { cellId: atomId })];
+			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
+			const array = Array.from(actual);
+			assert.deepEqual(array, [deltaId]);
+		});
+		it("relevant trees from nested changes under a tree being restored by revive", () => {
 			const input: TestChangeset = [Mark.revive(1, atomId, { changes: childChange })];
+			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
+			const array = Array.from(actual);
+			assert.deepEqual(array, [deltaId, relevantNestedTree]);
+		});
+		it("relevant trees from nested changes under a tree being restored by pin", () => {
+			const input: TestChangeset = [
+				Mark.pin(1, brand(0), { cellId: atomId, changes: childChange }),
+			];
 			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId, relevantNestedTree]);
@@ -194,18 +197,9 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const array = Array.from(actual);
 			assert.deepEqual(array, [relevantNestedTree]);
 		});
-		it("relevant trees from nested changes under a tree being returned", () => {
-			const input: TestChangeset = [
-				Mark.returnFrom(1, atomId, { changes: childChange }),
-				Mark.returnTo(1, atomId),
-			];
-			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, [relevantNestedTree]);
-		});
 		it("relevant trees from nested changes under a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -215,9 +209,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("relevant trees from nested changes under a tree being transiently restored", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.revive(1, atomId), Mark.delete(1, atomId), {
-					changes: childChange,
-				}),
+				Mark.delete(1, brand(0), { cellId: atomId, changes: childChange }),
 			];
 			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
 			const array = Array.from(actual);
@@ -225,7 +217,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("relevant trees from nested changes under a tree being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
 					changes: childChange,
 				}),
 			];

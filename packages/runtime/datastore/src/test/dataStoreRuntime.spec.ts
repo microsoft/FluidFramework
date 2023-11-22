@@ -15,7 +15,6 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
@@ -28,13 +27,13 @@ describe("FluidDataStoreRuntime Tests", () => {
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
-		return new FluidDataStoreRuntime(
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			registry,
 			/* existing */ false,
-			entrypointInitializationFn ??
-				(async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/")),
+			entrypointInitializationFn ?? (async () => runtime),
 		);
+		return runtime;
 	}
 
 	beforeEach(() => {
