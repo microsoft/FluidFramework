@@ -976,11 +976,6 @@ function compareCellPositions(
 
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
-	// TODO: Use specified tiebreak instead of always tiebreaking left.
-	// BUG 5351: The above assumption is incorrect as `newMark` may be targeting cells which were created on its branch,
-	// in revisions that are sequenced after the base changeset.
-	// When that's the case, we should use the tiebreak of the mark that creates the cells instead.
-	// This will be a challenge as `newMark` does not carry the tiebreak information of the mark that created its cells.
 	return -Infinity;
 }
 
