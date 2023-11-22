@@ -265,17 +265,4 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
 // @public @deprecated
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// Warnings were encountered during analysis:
-//
-// src/logger.ts:32:2 - (ae-undocumented) Missing documentation for "value".
-// src/logger.ts:33:2 - (ae-undocumented) Missing documentation for "tag".
-// src/logger.ts:42:2 - (ae-undocumented) Missing documentation for "__index".
-// src/logger.ts:54:2 - (ae-undocumented) Missing documentation for "category".
-// src/logger.ts:55:2 - (ae-undocumented) Missing documentation for "eventName".
-// src/logger.ts:65:2 - (ae-undocumented) Missing documentation for "send".
-// src/logger.ts:75:2 - (ae-undocumented) Missing documentation for "eventName".
-// src/logger.ts:76:2 - (ae-undocumented) Missing documentation for "category".
-// src/logger.ts:86:2 - (ae-undocumented) Missing documentation for "eventName".
-// src/logger.ts:96:2 - (ae-undocumented) Missing documentation for "duration".
-
 ```
