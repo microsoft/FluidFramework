@@ -16,7 +16,7 @@ The main differences from the old schema system (SchemaBuilder and its related t
     2. Recursive schema work inb d.ts files due to use of classes. See [Generated d.ts includes implicit any for recursive types](microsoft/TypeScript#55832).
     3. Intellisense is much cleaner when referring to types defined in schema: It just uses the class name. or "typeof ClassName". (These simplifications are what resolve the d.ts issue noted above with recursive types)
     4. Normal JS/TS type narrowing with instanceof can be used with schema defined types.
-    5. Its possible to add view/session local state to instances as properties, as well as adding methods by just putting them in the class like any other class.
+    5. It's possible to add view/session local state to instances as properties, as well as adding methods by just putting them in the class like any other class.
 
 Currently this implementation exposes the prototypes from these classes: this impacts some generic object based code.
 For example, this probably impacts Node's deep equals as follows:
