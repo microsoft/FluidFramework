@@ -5,6 +5,7 @@
 ```ts
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { Heap } from '@fluidframework/core-utils';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -237,9 +238,12 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 export function createMap<T>(): MapLike<T>;
 
 // @internal
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
+
+// @internal
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
-// @public (undocumented)
+// @public
 export function debugMarkerToString(marker: Marker): string;
 
 // @public (undocumented)
@@ -448,6 +452,18 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 }
 
 // @public (undocumented)
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    relativePos1?: never;
+    relativePos2?: never;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE;
+}
+
+// @public (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @public (undocumented)
@@ -455,6 +471,7 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableObliterate?: boolean;
     // @alpha
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
@@ -490,6 +507,16 @@ export interface IMergeTreeTextHelper {
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
+// @public
+export interface IMoveInfo {
+    localMovedSeq?: number;
+    movedClientIds: number[];
+    movedSeq: number;
+    movedSeqs: number[];
+    moveDst?: ReferencePosition;
+    wasMovedOnInsert: boolean;
+}
+
 // @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
@@ -522,7 +549,6 @@ export interface IRemovalInfo {
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     // @internal
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
@@ -627,14 +653,14 @@ export interface LocalReferencePosition extends ReferencePosition {
     readonly trackingCollection: TrackingGroupCollection;
 }
 
-// @public (undocumented)
+// @public
 export interface MapLike<T> {
     // (undocumented)
     [index: string]: T;
 }
 
-// @public (undocumented)
-export class Marker extends BaseSegment implements ReferencePosition {
+// @public
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     constructor(refType: ReferenceType);
     // (undocumented)
     append(): void;
@@ -779,7 +805,7 @@ export interface PropertyAction<TKey, TData> {
     <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
 }
 
-// @public (undocumented)
+// @public
 export type PropertySet = MapLike<any>;
 
 // @internal (undocumented)
@@ -875,7 +901,6 @@ export interface ReferencePosition {
     getSegment(): ISegment | undefined;
     // (undocumented)
     isLeaf(): this is ISegment;
-    // (undocumented)
     properties?: PropertySet;
     // (undocumented)
     refType: ReferenceType;
@@ -884,9 +909,7 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // (undocumented)
     RangeBegin = 16,
-    // (undocumented)
     RangeEnd = 32,
     // (undocumented)
     Simple = 0,
@@ -908,7 +931,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @public (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @public (undocumented)
+// @public
 export const reservedMarkerIdKey = "markerId";
 
 // @public (undocumented)
@@ -932,7 +955,7 @@ export interface SegmentGroup {
     // (undocumented)
     refSeq: number;
     // (undocumented)
-    segments: ISegment[];
+    segments: ISegmentLeaf[];
 }
 
 // @public (undocumented)
@@ -1077,7 +1100,7 @@ export class TrackingGroup implements ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @public (undocumented)
+// @public
 export class TrackingGroupCollection {
     constructor(trackable: Trackable);
     // (undocumented)

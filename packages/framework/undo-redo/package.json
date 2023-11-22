@@ -93,6 +93,7 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_SharedSegmentSequenceRevertible": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

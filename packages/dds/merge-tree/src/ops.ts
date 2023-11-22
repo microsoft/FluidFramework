@@ -4,7 +4,7 @@
  */
 
 /**
- * Flags enum that dictates behavior of a ReferencePosition
+ * Flags enum that dictates behavior of a {@link ReferencePosition}
  */
 export enum ReferenceType {
 	Simple = 0x0,
@@ -12,8 +12,21 @@ export enum ReferenceType {
 	 * Allows this reference to be located using the `findTile` API on merge-tree.
 	 */
 	Tile = 0x1,
+
+	/**
+	 * Denotes that this reference begins the start of an interval. This is
+	 * generally not meaningful outside the context of interval collections
+	 * on SharedString.
+	 */
 	RangeBegin = 0x10,
+
+	/**
+	 * Denotes that this reference is the end of an interval. This is
+	 * generally not meaningful outside the context of interval collections
+	 * on SharedString.
+	 */
 	RangeEnd = 0x20,
+
 	/**
 	 * When a segment is marked removed (locally or with ack), this reference will slide to the first
 	 * valid option of:

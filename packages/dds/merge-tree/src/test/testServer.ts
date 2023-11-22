@@ -4,7 +4,8 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Comparer, Heap, RedBlackTree } from "../collections";
+import { Heap, IComparer } from "@fluidframework/core-utils";
+import { RedBlackTree } from "../collections";
 import { compareNumbers } from "../mergeTreeNodes";
 import { PropertySet } from "../properties";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
@@ -15,7 +16,7 @@ interface ClientSeq {
 	clientId: string;
 }
 
-const clientSeqComparer: Comparer<ClientSeq> = {
+const clientSeqComparer: IComparer<ClientSeq> = {
 	min: { refSeq: -1, clientId: "" },
 	compare: (a, b) => a.refSeq - b.refSeq,
 };
@@ -27,14 +28,14 @@ const clientSeqComparer: Comparer<ClientSeq> = {
 export class TestServer extends TestClient {
 	seq = 1;
 	clients: TestClient[] = [];
-	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
+	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>(clientSeqComparer);
 	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
 	constructor(options?: PropertySet) {
 		super(options);
 	}
 
 	addClients(clients: TestClient[]) {
-		this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
+		this.clientSeqNumbers = new Heap<ClientSeq>(clientSeqComparer);
 		this.clients = clients;
 		for (const client of clients) {
 			this.clientSeqNumbers.add({
@@ -98,18 +99,19 @@ export class TestServer extends TestClient {
 					return true;
 				}
 				if (this.clients) {
-					let minCli = this.clientSeqNumbers.peek();
+					let minCli = this.clientSeqNumbers.peek()?.value;
 					if (
 						minCli &&
 						minCli.clientId === msg.clientId &&
 						minCli.refSeq < msg.referenceSequenceNumber
 					) {
-						const cliSeq = this.clientSeqNumbers.get();
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const cliSeq = this.clientSeqNumbers.get()!;
 						const oldSeq = cliSeq.refSeq;
 						cliSeq.refSeq = msg.referenceSequenceNumber;
 						this.clientSeqNumbers.add(cliSeq);
-						minCli = this.clientSeqNumbers.peek();
-						if (minCli.refSeq > oldSeq) {
+						minCli = this.clientSeqNumbers.peek()?.value;
+						if (minCli && minCli.refSeq > oldSeq) {
 							msg.minimumSequenceNumber = minCli.refSeq;
 							this.minSeq = minCli.refSeq;
 						}

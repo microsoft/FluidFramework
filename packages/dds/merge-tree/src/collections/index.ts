@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { Comparer, Heap } from "./heap";
 export { DoublyLinkedList, ListNode, ListNodeRange, walkList } from "./list";
 export {
 	ConflictAction,

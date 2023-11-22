@@ -121,15 +121,19 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ISharedString": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedSegmentSequence": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedSequence": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"TypeAliasDeclaration_SharedStringSegment": {
