@@ -15,17 +15,14 @@ import {
 	requireAssignableTo,
 } from "../util";
 import {
-	LazyItem,
-	isLazy,
-	markEager,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../feature-libraries/typed-schema/flexList";
-import {
 	FlexTreeNode,
-	InternalTypedSchemaTypes,
 	LeafNodeSchema as FlexLeafNodeSchema,
 	isFlexTreeNode,
 	ObjectNodeSchema,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	markEager,
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
@@ -313,7 +310,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		NodeKind.List,
 		T,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
@@ -455,10 +452,10 @@ export type TreeNodeSchema<
 	Kind extends NodeKind = NodeKind,
 	Specification = unknown,
 	TNode = unknown,
-	TInsertable = never,
+	TBuild = never,
 > =
-	| TreeNodeSchemaClass<Name, Kind, Specification, TNode, TInsertable>
-	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TInsertable>;
+	| TreeNodeSchemaClass<Name, Kind, Specification, TNode, TBuild>
+	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TBuild>;
 
 /**
  * @alpha
@@ -596,7 +593,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<InternalTypedSchemaTypes.FlexListToUnion<TSchema>>
+	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
 
 /**
@@ -605,9 +602,9 @@ export type TreeNodeFromImplicitAllowedTypes<
 export type InsertableTreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
 > = TSchema extends TreeNodeSchema
-	? Unhydrated<NodeFromSchema<TSchema>> | InsertableTypedNode<TSchema>
+	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<InternalTypedSchemaTypes.FlexListToUnion<TSchema>>
+	? InsertableTypedNode<FlexListToUnion<TSchema>>
 	: unknown;
 
 /**
@@ -624,6 +621,15 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	: never;
 
 /**
+ * Data which can be used as a node to be inserted.
+ * Either an unhydrated node, or content to build a new node.
+ * @alpha
+ */
+export type InsertableTypedNode<T extends TreeNodeSchema> =
+	| NodeBuilderData<T>
+	| Unhydrated<NodeFromSchema<T>>;
+
+/**
  * Given a node's schema, return the corresponding object from which the node could be built.
  * @privateRemarks
  * Currently this assumes factory functions take exactly one argument.
@@ -632,14 +638,14 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
  * These factory function can also take an FlexTreeNode, but this is not exposed in the public facing types.
  * @alpha
  */
-export type InsertableTypedNode<T extends TreeNodeSchema> = T extends TreeNodeSchema<
+export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	any,
 	any,
 	any,
 	any,
-	infer TInsertable
+	infer TBuild
 >
-	? TInsertable
+	? TBuild
 	: never;
 
 // TODO: unify this with logic in getOrCreateNodeProxy

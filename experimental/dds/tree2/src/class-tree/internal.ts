@@ -19,4 +19,5 @@ export {
 	ApplyKind,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
+	NodeBuilderData,
 } from "./schemaFactory";

@@ -63,16 +63,40 @@ function f(n: NodeMap): Note[] {
 
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const config = new TreeConfiguration(Canvas, () => new Canvas({ stuff: new NodeList([]) }));
+// TODO: this should be possible, and this approach is needed in some cases where types are ambagious:
+const config = new TreeConfiguration(
+	Canvas,
+	() =>
+		new Canvas({
+			stuff: new NodeList([
+				{ text: "a", location: undefined },
+				new Note({ text: "b", location: undefined }),
+			]),
+		}),
+);
+// Currently the constructors of lists and maps cannot be used to make unhydrated nodes.
+// In this case the root is an object, and the types are unambiguous,
+// so this workaround is possible, but in general it is not always possible.
+const configWorkaround = new TreeConfiguration(
+	Canvas,
+	() =>
+		new Canvas({
+			stuff: [
+				// Trees of insertable data can mix inline insertable content and unhydrated nodes:
+				{ text: "a", location: undefined },
+				new Note({ text: "b", location: undefined }),
+			],
+		}),
+);
 
 function setup(tree: ITree): Note[] {
-	const view: TreeView<Canvas> = tree.schematize(config);
+	const view: TreeView<Canvas> = tree.schematize(configWorkaround);
 	const stuff = view.root.stuff;
 	if (stuff instanceof NodeMap) {
 		return f(stuff);
 	}
-	// Numeric indexing is supported on lists (by the types anyway: implementing it at runtime is a TODO).
-	const secondItem = stuff[2];
+	// Numeric indexing is supported on lists:
+	const secondItem = stuff[1];
 	// Methods on schema based types can be called as expected.
 	secondItem.moveToFront();
 	// Access to a schema based field. Intellisense for doc comment and navigate to source just work, as does refactor rename.
@@ -84,7 +108,7 @@ function setup(tree: ITree): Note[] {
 }
 
 describe("Class based end to end example", () => {
-	it("test", () => {
+	it("run example", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		setup(theTree);
