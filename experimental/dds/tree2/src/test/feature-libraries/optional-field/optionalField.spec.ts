@@ -307,7 +307,6 @@ describe("optionalField", () => {
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), []),
-						0,
 					),
 					expected,
 				);
@@ -359,7 +358,6 @@ describe("optionalField", () => {
 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([revive]), [
 						revive.revision,
 					]),
-					1,
 				);
 
 				assert.deepEqual(changeToRebase3, changeToRebase);

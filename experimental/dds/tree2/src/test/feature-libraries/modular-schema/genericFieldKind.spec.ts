@@ -287,7 +287,6 @@ describe("Generic FieldKind", () => {
 				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				0,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -330,7 +329,6 @@ describe("Generic FieldKind", () => {
 				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
-				0,
 			);
 			assert.deepEqual(actual, expected);
 		});
