@@ -21,11 +21,10 @@ import {
 	RevertibleKind,
 	RevertResult,
 	DiscardResult,
+	rebaseChangeOverChanges,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseChangeOverChanges } from "../core/rebase/utils";
 import { TransactionStack } from "./transactionStack";
 
 /**

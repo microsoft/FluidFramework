@@ -42,5 +42,6 @@ export {
 	findCommonAncestor,
 	rebaseBranch,
 	rebaseChange,
+	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
 } from "./utils";

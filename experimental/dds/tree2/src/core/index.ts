@@ -171,6 +171,7 @@ export {
 	mintRevisionTag,
 	rebaseBranch,
 	rebaseChange,
+	rebaseChangeOverChanges,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
