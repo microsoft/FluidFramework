@@ -350,8 +350,18 @@ describe("SequenceField - Rebaser Axioms", () => {
 });
 
 interface TestState {
+	/**
+	 * The current length of the sequence being edited
+	 */
 	length: number;
+	/**
+	 * The highest index that will be iterated to to generate inserts, deletes, and moves
+	 */
 	maxIndex: number;
+	/**
+	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
+	 * deletes that operate on one node at a time and then 3 nodes at a time.
+	 */
 	numNodes: number[];
 }
 
