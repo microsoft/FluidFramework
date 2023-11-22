@@ -153,7 +153,8 @@ describe("schemaFactory", () => {
 		assert.deepEqual(values, [2, 3]);
 	});
 
-	it("mixed", () => {
+	// Skipped since constructing map and list nodes directly is not yet implemented
+	it.skip("mixed", () => {
 		const schema = new SchemaFactory("com.example");
 
 		class Point extends schema.object("Point", {

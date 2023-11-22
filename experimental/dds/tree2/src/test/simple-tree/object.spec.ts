@@ -312,7 +312,8 @@ const tcs: TestCase[] = [
 testObjectLike(tcs);
 
 describe("Object-like", () => {
-	describe("setting an invalid field", () => {
+	// Disabled since assigning non-field properties is useful for subclasses of class based schema
+	describe.skip("setting an invalid field", () => {
 		itWithRoot(
 			"throws TypeError in strict mode",
 			makeSchema((_) => _.object("no fields", {})),
