@@ -21,3 +21,6 @@ export {
 	InsertableTypedNode,
 	NodeBuilderData,
 } from "./schemaTypes";
+
+import * as testRecursiveDomain from "./testRecursiveDomain";
+export { testRecursiveDomain };

@@ -989,7 +989,8 @@ declare namespace InternalClassTreeTypes {
         ApplyKind,
         InsertableTreeNodeFromImplicitAllowedTypes,
         InsertableTypedNode_2 as InsertableTypedNode,
-        NodeBuilderData
+        NodeBuilderData,
+        testRecursiveDomain
     }
 }
 
@@ -1067,7 +1068,6 @@ declare namespace InternalTypes {
         Sequence,
         FactoryObjectNodeSchema,
         FactoryObjectNodeSchemaRecursive,
-        testRecursiveDomain,
         NodeFromSchema,
         NodeKind,
         TreeNodeSchemaClass,
@@ -1314,9 +1314,6 @@ export class LeafNodeSchema<const out Name extends string = string, const out Sp
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
-
-// @alpha (undocumented)
-const library: SchemaLibrary;
 
 // @alpha
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
@@ -1604,16 +1601,8 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-const recursiveObject: FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", any>]>;
-readonly number: LeafNodeSchema<"com.fluidframework.leaf.number", import("..").ValueSchema.Number>;
-}>;
-
-// @alpha (undocumented)
-const recursiveObject2: FactoryObjectNodeSchema<"Test Recursive Domain", "object2", {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchema<"Test Recursive Domain", "object2", any>]>;
-readonly number: LeafNodeSchema<"com.fluidframework.leaf.number", import("..").ValueSchema.Number>;
-}>;
+class RecursiveObject extends RecursiveObject_base {
+}
 
 // @alpha
 type _RecursiveTrick = never;
@@ -1771,24 +1760,19 @@ export interface SchemaEvents {
 // @alpha @sealed
 export class SchemaFactory<TScope extends string, TName extends number | string = string> {
     constructor(scope: TScope);
-    // (undocumented)
     readonly boolean: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.boolean">, NodeKind.Leaf, ValueSchema, boolean>;
     fixRecursiveReference<T extends AllowedTypes_2>(...types: T): void;
-    // (undocumented)
     readonly handle: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.handle">, NodeKind.Leaf, ValueSchema, IFluidHandle<FluidObject & IFluidLoadable>>;
     list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaClass<`${TScope}.List<${string}>`, NodeKind.List, T, TreeListNode<T>, Iterable<TreeNodeFromImplicitAllowedTypes<T>>>;
     list<const Name extends TName, const T extends ImplicitAllowedTypes_2>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaClass<`${TScope}.Map<${string}>`, NodeKind.Map, T, TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>>;
     map<Name extends TName, const T extends ImplicitAllowedTypes_2>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, T, TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>>;
-    // (undocumented)
     readonly null: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.null">, NodeKind.Leaf, ValueSchema, null>;
-    // (undocumented)
     readonly number: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.number">, NodeKind.Leaf, ValueSchema, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema_2>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, T, ObjectFromSchemaRecord<T>, InsertableObjectFromSchemaRecord<T>>;
     optional<const T extends ImplicitAllowedTypes_2>(t: T): FieldSchema<FieldKind_2.Optional, T>;
     // (undocumented)
     readonly scope: TScope;
-    // (undocumented)
     readonly string: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.string">, NodeKind.Leaf, ValueSchema, string>;
 }
 
@@ -1914,9 +1898,7 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 
 declare namespace testRecursiveDomain {
     export {
-        recursiveObject,
-        recursiveObject2,
-        library
+        RecursiveObject
     }
 }
 

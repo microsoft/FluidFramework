@@ -37,11 +37,7 @@ export {
 	Sequence,
 } from "./feature-libraries";
 
-export {
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-	testRecursiveDomain,
-} from "./domains";
+export { FactoryObjectNodeSchema, FactoryObjectNodeSchemaRecursive } from "./domains";
 
 export {
 	NodeFromSchema,

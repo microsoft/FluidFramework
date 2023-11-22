@@ -140,7 +140,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public readonly handle = makeLeaf(leaf.handle);
 
 	/**
-	 * Construct a class the provides the common parts all {@link TreeNodeSchemaClass} share.
+	 * Construct a class the provides the common parts all TreeNodeSchemaClass share.
 	 * More specific schema extends this class.
 	 */
 	private nodeSchema<Name extends TName | string, TKind extends NodeKind, T>(
