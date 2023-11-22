@@ -738,6 +738,7 @@ function handleLineage(
 		cellId.revision === undefined ? -Infinity : getRevisionIndex(metadata, cellId.revision);
 
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
+		// BUG: This check doesn't make sense for rollbacks
 		if (revisionIndex < getRevisionIndex(metadata, revision)) {
 			for (const entry of detachBlock) {
 				addLineageEntry(cellId, revision, entry.id, entry.count, entry.count);

@@ -17,6 +17,7 @@ import {
 	rebase as rebaseI,
 	shallowCompose,
 	rebaseOverComposition,
+	rebaseOverChanges,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -505,7 +506,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const insertC2 = rebaseTagged(insertC, delA, insertB2);
+		const insertC2 = rebaseOverChanges(insertC, [delA, insertB2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertC2.change, expected);
 	});
@@ -517,8 +518,8 @@ describe("SequenceField - Rebase", () => {
 
 		const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
-		const insertD2 = rebaseTagged(insertD, delA, delB, delC);
-		const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+		const insertD2 = rebaseOverChanges(insertD, [delA, delB, delC]);
+		const insertE2 = rebaseOverChanges(insertE, [delA, delB, delC, insertD2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertE2.change, expected);
 	});
@@ -528,7 +529,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const moveC2 = rebaseTagged(moveC, delA, insertB2);
+		const moveC2 = rebaseOverChanges(moveC, [delA, insertB2]);
 		const expected = Change.move(2, 1, 1);
 		checkDeltaEquality(moveC2.change, expected);
 	});

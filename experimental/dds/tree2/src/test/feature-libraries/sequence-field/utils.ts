@@ -132,11 +132,30 @@ export function rebase(
 
 export function rebaseTagged(
 	change: TaggedChange<TestChangeset>,
-	...baseChanges: TaggedChange<TestChangeset>[]
+	baseChange: TaggedChange<TestChangeset>,
+): TaggedChange<TestChangeset> {
+	return rebaseOverChanges(change, [baseChange]);
+}
+
+export function rebaseOverChanges(
+	change: TaggedChange<TestChangeset>,
+	baseChanges: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([change, ...baseChanges]);
 	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+		currChange = tagChange(
+			rebase(
+				currChange.change,
+				base,
+				rebaseRevisionMetadataFromInfo(
+					revisionInfo,
+					baseChanges.map((c) => c.revision),
+				),
+			),
+			currChange.revision,
+		);
 	}
 
 	return currChange;

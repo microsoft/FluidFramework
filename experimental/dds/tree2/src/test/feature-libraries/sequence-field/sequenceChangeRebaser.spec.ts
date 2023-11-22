@@ -14,6 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
+	RevisionInfo,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -24,6 +25,7 @@ import {
 	compose,
 	composeAnonChanges,
 	invert,
+	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
@@ -370,7 +372,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const deleteB = tagChange(Change.delete(0, 1), tag3);
 		const insertA2 = rebaseTagged(insertA, insertT);
 		const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
-		const deleteB2 = rebaseTagged(deleteB, inverseA, insertT, insertA2);
+		const deleteB2 = rebaseOverChanges(deleteB, [inverseA, insertT, insertA2]);
 		assert.deepEqual(deleteB2.change, deleteB.change);
 	});
 
@@ -417,8 +419,47 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const moveInverse = invert(move);
 		const undo = tagChange(moveInverse, tag2);
 		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
-		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
+		const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
 		assert.deepEqual(rebasedUndo, undo);
+	});
+
+	it("delete ↷ two inverse inserts", () => {
+		// Given a branch with three changes:
+		// A: Insert x at index 0
+		// B: Insert y at index 0
+		// C: Delete y
+		// This test simulates rebasing C back to the trunk.
+
+		const changeC = tagChange([Mark.delete(1, brand(0))], tag3);
+
+		const rollbackTag2 = mintRevisionTag();
+		const changeB = tagChange([Mark.insert(1, brand(0))], tag2);
+		const inverseB = tagRollbackInverse(invert(changeB), rollbackTag2, tag2);
+
+		const rollbackTag1 = mintRevisionTag();
+		const changeA = tagChange([Mark.insert(1, brand(0))], tag1);
+		const inverseA = tagRollbackInverse(invert(changeA), rollbackTag1, tag1);
+
+		const revInfos: RevisionInfo[] = [
+			{ revision: rollbackTag2, rollbackOf: tag2 },
+			{ revision: rollbackTag1, rollbackOf: tag1 },
+			{ revision: tag1 },
+			{ revision: tag2 },
+			{ revision: tag3 },
+		];
+
+		const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag2,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(cRebasedToTrunk.change, expected);
 	});
 });
 
