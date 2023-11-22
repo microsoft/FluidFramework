@@ -99,8 +99,6 @@ describe("schemaFactory", () => {
 		class A extends schema.object("A", {}) {}
 		class B extends schema.object("B", {}) {}
 
-		// TODO: before constructing unhydrated nodes,
-
 		const a = new A({});
 		assert(a instanceof A);
 		assert(!(a instanceof B));
