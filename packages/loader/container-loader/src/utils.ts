@@ -160,13 +160,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 }
 
 /**
- * Converts summary tree (for upload) to snapshot tree (for download).
- * Summary tree blobs contain contents, but snapshot tree blobs normally
- * contain IDs pointing to storage. This will create 2 blob entries in the
- * snapshot tree for each blob in the summary tree. One will be the regular
- * path pointing to a uniquely generated ID. Then there will be another
- * entry with the path as that uniquely generated ID, and value as the
- * blob contents as a base-64 string.
+ * Converts summary tree (for upload) to snapshot tree and blobs.
  * @param summary - summary to convert
  */
 function convertSummaryToSnapshotAndBlobs(
