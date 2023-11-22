@@ -55,7 +55,7 @@ export type SkippedErrorExpectingTestWithDriverType = (
 ) => Mocha.Test;
 
 /**
- * Similar to mocha's it function, but allow skipping for some if the error
+ * Similar to mocha's `it` function, but allow skipping for some if the error
  * happens on the specific drivers.
  *
  * @internal
