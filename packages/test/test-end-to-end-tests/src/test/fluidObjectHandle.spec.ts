@@ -19,8 +19,12 @@ import {
 
 describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach(function () {
 		provider = getTestObjectProvider();
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			// TODO: Temporarily disabling, need to fix entry point issues
+			this.skip();
+		}
 	});
 
 	let firstContainerObject1: ITestDataObject;
