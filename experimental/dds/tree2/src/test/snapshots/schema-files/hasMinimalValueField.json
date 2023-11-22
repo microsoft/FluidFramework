@@ -162,7 +162,9 @@
     }
   ],
   "rootFieldSchema": {
-    "kind": "Optional",
-    "types": []
+    "kind": "Value",
+    "types": [
+      "test.hasMinimalValueField"
+    ]
   }
 }

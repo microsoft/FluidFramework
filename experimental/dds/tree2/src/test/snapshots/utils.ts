@@ -9,6 +9,9 @@ import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protoc
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { JsonCompatibleReadOnly } from "../../util";
 
+export const regenerateSnapshots = process.argv.includes("--snapshot");
+export const dirPathTail = "src/test/snapshots";
+
 const numberOfSpaces = 2;
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {

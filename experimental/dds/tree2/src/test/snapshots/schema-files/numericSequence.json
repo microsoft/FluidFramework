@@ -162,7 +162,9 @@
     }
   ],
   "rootFieldSchema": {
-    "kind": "Optional",
-    "types": []
+    "kind": "Sequence",
+    "types": [
+      "com.fluidframework.leaf.number"
+    ]
   }
 }
