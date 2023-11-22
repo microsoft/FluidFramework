@@ -70,7 +70,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     // (undocumented)
     insertRows(rowStart: number, count: number): void;
     // (undocumented)
-    isSetCellConflictResolutionPolicyFWW?(): boolean;
+    isSetCellConflictResolutionPolicyFWW(): boolean;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
@@ -101,7 +101,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    switchSetCellPolicy?(): void;
+    switchSetCellPolicy(): void;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)

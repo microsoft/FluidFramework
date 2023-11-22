@@ -34,9 +34,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 		dataStoreRuntime,
 		`load(${matrix.id})`,
 		SharedMatrixFactory.Attributes,
-		matrix.isSetCellConflictResolutionPolicyFWW !== undefined
-			? matrix.isSetCellConflictResolutionPolicyFWW()
-			: false,
+		matrix.isSetCellConflictResolutionPolicyFWW(),
 	);
 	await matrix2.load({
 		deltaConnection: new MockEmptyDeltaConnection(),

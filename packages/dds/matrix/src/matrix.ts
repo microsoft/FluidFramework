@@ -245,7 +245,7 @@ export class SharedMatrix<T = any>
 		return this.cols.getLength();
 	}
 
-	public isSetCellConflictResolutionPolicyFWW?() {
+	public isSetCellConflictResolutionPolicyFWW() {
 		return this.setCellPolicySwitchOpSeqNumber > -1;
 	}
 
@@ -325,27 +325,27 @@ export class SharedMatrix<T = any>
 		rowHandle = this.rows.getAllocatedHandle(row),
 		colHandle = this.cols.getAllocatedHandle(col),
 	) {
-		if (this.undo !== undefined) {
-			let oldValue = this.cells.getCell(rowHandle, colHandle);
-			if (oldValue === null) {
-				oldValue = undefined;
+		this.protectAgainstReentrancy(() => {
+			if (this.undo !== undefined) {
+				let oldValue = this.cells.getCell(rowHandle, colHandle);
+				if (oldValue === null) {
+					oldValue = undefined;
+				}
+
+				this.undo.cellSet(rowHandle, colHandle, oldValue);
 			}
 
-			this.undo.cellSet(rowHandle, colHandle, oldValue);
-		}
+			this.cells.setCell(rowHandle, colHandle, value);
 
-		this.cells.setCell(rowHandle, colHandle, value);
+			if (this.isAttached()) {
+				this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+			}
 
-		if (this.isAttached()) {
-			this.protectAgainstReentrancy(() =>
-				this.sendSetCellOp(row, col, value, rowHandle, colHandle),
-			);
-		}
-
-		// Avoid reentrancy by raising change notifications after the op is queued.
-		for (const consumer of this.consumers.values()) {
-			consumer.cellsChanged(row, col, 1, 1, this);
-		}
+			// Avoid reentrancy by raising change notifications after the op is queued.
+			for (const consumer of this.consumers.values()) {
+				consumer.cellsChanged(row, col, 1, 1, this);
+			}
+		});
 	}
 
 	private sendSetCellOp(
@@ -383,6 +383,14 @@ export class SharedMatrix<T = any>
 		this.pending.setCell(rowHandle, colHandle, localSeq);
 	}
 
+	/**
+	 * This makes sure that the code inside the callback is not reentrant. We need to do that because we raise notifications
+	 * to the consumers telling about these changes and they can try to change the matrix while listening to those notifications
+	 * which can make the shared matrix to be in bad state. For example, we are raising notification for a setCell changes and
+	 * a consumer tries to delete that row/col on receiving that notification which can lead to this matrix trying to setCell in
+	 * a deleted row/col.
+	 * @param callback - code that needs to protected against reentrancy.
+	 */
 	private protectAgainstReentrancy(callback: () => void) {
 		assert(this.reentrantCount === 0, "reentrant code");
 		this.reentrantCount++;
@@ -943,7 +951,7 @@ export class SharedMatrix<T = any>
 	 * Api to switch Set Op policy from Last Writer Win to First Writer Win. It only switches from LWW to FWW
 	 * and not from FWW to LWW. An op will be sent to communicate this to other clients.
 	 */
-	public switchSetCellPolicy?() {
+	public switchSetCellPolicy() {
 		if (this.setCellPolicySwitchOpSeqNumber === -1) {
 			if (this.isAttached()) {
 				const op: ISetCellChangePolicyOp = {

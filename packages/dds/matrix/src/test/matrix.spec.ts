@@ -1152,7 +1152,6 @@ describe("Matrix", () => {
 			});
 
 			const switchPolicy = (matrix: SharedMatrix) => {
-				assert(matrix.switchSetCellPolicy !== undefined, "function should be present");
 				matrix.switchSetCellPolicy();
 			};
 

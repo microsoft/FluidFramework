@@ -383,10 +383,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 							i % 10 === 0 &&
 							isSetCellPolicyFWW === 2 &&
 							float64() < switchProbability &&
-							(matrix.isSetCellConflictResolutionPolicyFWW !== undefined
-								? matrix.isSetCellConflictResolutionPolicyFWW() !== true
-								: false) &&
-							matrix.switchSetCellPolicy !== undefined
+							matrix.isSetCellConflictResolutionPolicyFWW() !== true
 						) {
 							trace?.push(`switched policy on matrix${matrixIndex + 1}`);
 							matrix.switchSetCellPolicy();
@@ -424,11 +421,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 					for (const m of matrices) {
 						console.log(
-							`Matrix id=${m.id} SetCell Resolution Policy is FFW = ${
-								m.isSetCellConflictResolutionPolicyFWW !== undefined
-									? m.isSetCellConflictResolutionPolicyFWW()
-									: false
-							}`,
+							`Matrix id=${
+								m.id
+							} SetCell Resolution Policy is FFW = ${m.isSetCellConflictResolutionPolicyFWW()}`,
 						);
 					}
 
