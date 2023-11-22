@@ -11466,6 +11466,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/node-fetch': ^2.5.10
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -11497,6 +11498,7 @@ importers:
       '@types/node': 16.18.58
       '@types/node-fetch': 2.6.6
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11526,6 +11528,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -11561,6 +11564,7 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11591,6 +11595,7 @@ importers:
       '@types/node': ^16.18.38
       async-mutex: ^0.3.1
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -11625,6 +11630,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
