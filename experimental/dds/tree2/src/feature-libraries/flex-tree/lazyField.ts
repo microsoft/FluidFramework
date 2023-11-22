@@ -68,6 +68,9 @@ import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilit
  *
  * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
  * for additional context on the semantics.
+ *
+ * @returns A positive index that can be used in regular indexing. Returns
+ * undefined if that index would be out-of-bounds.
  */
 function indexForAt(index: number, length: number): number | undefined {
 	let finalIndex = Math.trunc(+index);

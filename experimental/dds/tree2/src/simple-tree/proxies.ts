@@ -527,15 +527,23 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 		get: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
-			const value = maybeIndex === undefined ? undefined : field.boxedAt(maybeIndex);
+
+			if (maybeIndex === undefined) {
+				// Pass the proxy as the receiver here, so that any methods on
+				// the prototype receive `proxy` as `this`.
+				return Reflect.get(dispatch, key, proxy) as unknown;
+			}
+
+			const value = field.boxedAt(maybeIndex);
+
+			if (value === undefined) {
+				return undefined;
+			}
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
-			return maybeIndex !== undefined
-				? value && getOrCreateNodeProxy(value)
-				: // Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-				  (Reflect.get(dispatch, key, proxy) as unknown);
+			return getOrCreateNodeProxy(value);
 		},
 		set: (target, key, newValue, receiver) => {
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
