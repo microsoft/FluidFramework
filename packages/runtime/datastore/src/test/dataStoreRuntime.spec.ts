@@ -148,7 +148,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
 		} as any as IChannel;
-		dataStoreRuntime.createChannel(channel);
+		dataStoreRuntime.addChannel(channel);
 		const channel1 = await dataStoreRuntime.getChannel(channel.id);
 		assert.deepStrictEqual(channel, channel1, "both channel should match");
 	});
@@ -163,7 +163,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
 		} as any as IChannel;
-		const codeBlock = () => dataStoreRuntime.createChannel(channel);
+		const codeBlock = () => dataStoreRuntime.addChannel(channel);
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>

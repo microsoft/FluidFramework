@@ -432,10 +432,8 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	public createChannel(channel: IChannel): void;
-	public createChannel(id: string | undefined, type: string): IChannel;
-	createChannel(idOrChannel: string | IChannel = uuid(), maybeType?: string): IChannel | void {
-		const id = typeof idOrChannel === "string" ? idOrChannel : idOrChannel.id;
+	public addChannel(channel: IChannel): void {
+		const id = channel.id;
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
@@ -444,39 +442,55 @@ export class FluidDataStoreRuntime
 
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const type = typeof idOrChannel === "string" ? maybeType! : idOrChannel.attributes.type;
+		const type = channel.attributes.type;
+		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		this.addOrCreateChannelCore(channel);
+	}
+
+	public createChannel(id: string = uuid(), type: string): IChannel {
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+
+		this.verifyNotClosed();
+		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
+
 		const factory = this.sharedObjectRegistry.get(type);
 		if (factory === undefined) {
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
 
-		const channel = typeof idOrChannel === "string" ? factory.create(this, id) : idOrChannel;
+		const channel = factory.create(this, id);
+		this.addOrCreateChannelCore(channel);
 
-		this.notBoundedChannelContextSet.add(id);
+		return channel;
+	}
+
+	private addOrCreateChannelCore(channel: IChannel) {
+		this.notBoundedChannelContextSet.add(channel.id);
 		const context = new LocalChannelContext(
 			channel,
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(content, localOpMetadata) =>
+				this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
-		this.contexts.set(id, context);
-
+		this.contexts.set(channel.id, context);
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer(
 			"DDSCreatedInSummarizer",
-			id,
-			context.channel.attributes.type,
+			channel.id,
+			channel.attributes.type,
 		);
-
-		if (typeof idOrChannel === "string") {
-			return context.channel;
-		}
 	}
 
 	/**

@@ -46,6 +46,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
+    addChannel(channel: IChannel): void;
+    // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     // (undocumented)
@@ -61,8 +63,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
-    // (undocumented)
-    createChannel(channel: IChannel): void;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
