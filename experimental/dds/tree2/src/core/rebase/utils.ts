@@ -228,10 +228,7 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	let currentComposedEdit =
-		targetRebasePath.length === 1
-			? targetRebasePath[0]
-			: makeAnonChange(changeRebaser.compose(targetRebasePath));
+	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
 		const nextComposition: TaggedChange<TChange>[] = [
 			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
