@@ -12,8 +12,11 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IntervalType, SequenceInterval } from "../intervals";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { createOverlappingSequenceIntervalsIndex } from "../intervalIndex";
-import { RandomIntervalOptions } from "./intervalIndexUtils";
+import {
+	createOverlappingIntervalsIndex,
+	createOverlappingSequenceIntervalsIndex,
+} from "../intervalIndex";
+import { RandomIntervalOptions } from "./intervalIndexTestUtils";
 
 function assertSequenceIntervalsEqual(
 	string: SharedString,
@@ -404,15 +407,21 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			const count = 100;
 			const min = 0;
 
+			// Attach the default overlapping interval index for comparison purposes
+			const overlappingIntervalsIndex = createOverlappingIntervalsIndex(testSharedString);
+			collection.attachIndex(overlappingIntervalsIndex);
+
 			fillInRandomSequenceIntervals({ random, count, min });
 			// Test with running 100 random queries
 			const max = testSharedString.getLength() - 1;
 			for (let i = 0; i < 100; ++i) {
 				const start = random.integer(min, max);
 				const end = random.integer(start, max);
+
 				// Query intervals using two distinct methods
 				results = queryIntervalsByPositions(start, end);
-				const expected = collection.findOverlappingIntervals(start, end);
+				const expected = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+
 				results.sort(compareFn);
 				expected.sort(compareFn);
 

@@ -14,7 +14,7 @@ import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertIntervals } from "./intervalUtils";
+import { assertSequenceIntervals } from "./intervalTestUtils";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
@@ -129,7 +129,9 @@ describe("IntervalCollection snapshotting", () => {
 			detachedSummary,
 		);
 		const collection = stringLoadedWithDetachedInterval.getIntervalCollection("test");
-		assertIntervals(stringLoadedWithDetachedInterval, collection, [{ start: -1, end: -1 }]);
+		assertSequenceIntervals(stringLoadedWithDetachedInterval, collection, [
+			{ start: -1, end: -1 },
+		]);
 	});
 
 	describe("enables operations on reload", () => {
@@ -153,10 +155,10 @@ describe("IntervalCollection snapshotting", () => {
 
 		it("reloaded interval can be changed", async () => {
 			collection.change(id, 1, 3);
-			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
-			assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
+			assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 		});
 
 		it("reloaded interval can be deleted", async () => {
@@ -169,13 +171,13 @@ describe("IntervalCollection snapshotting", () => {
 
 		it("new interval can be added after reload", async () => {
 			collection.add({ start: 2, end: 4 });
-			assertIntervals(sharedString, collection, [
+			assertSequenceIntervals(sharedString, collection, [
 				{ start: 0, end: 2 },
 				{ start: 2, end: 4 },
 			]);
-			assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [
+			assertSequenceIntervals(sharedString2, collection2, [
 				{ start: 0, end: 2 },
 				{ start: 2, end: 4 },
 			]);
