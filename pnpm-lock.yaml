@@ -6460,9 +6460,9 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/merge-tree': "workspace:~"
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-internal.7.2.0
+      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -10697,6 +10697,7 @@ importers:
       '@types/mocha': ^9.1.1
       c8: ^7.7.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -10726,6 +10727,7 @@ importers:
       '@types/mocha': 9.1.1
       c8: 7.14.0
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -10915,6 +10917,7 @@ importers:
       '@types/mocha': ^9.1.1
       c8: ^7.7.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -10957,6 +10960,7 @@ importers:
       '@types/mocha': 9.1.1
       c8: 7.14.0
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -11148,6 +11152,7 @@ importers:
       chai: ^4.2.0
       chalk: ^2.4.2
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -11220,6 +11225,7 @@ importers:
       chai: 4.3.10
       chalk: 2.4.2
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -11398,6 +11404,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/json-stable-stringify': ^1.0.32
       '@types/node': ^16.18.38
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       json-stable-stringify: ^1.0.1
       prettier: ~3.0.3
@@ -11440,6 +11447,7 @@ importers:
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/json-stable-stringify': 1.0.34
       '@types/node': 16.18.58
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -11574,6 +11582,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/node-fetch': ^2.5.10
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -11605,6 +11614,7 @@ importers:
       '@types/node': 16.18.58
       '@types/node-fetch': 2.6.6
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11634,6 +11644,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -11669,6 +11680,7 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -11699,6 +11711,7 @@ importers:
       '@types/node': ^16.18.38
       async-mutex: ^0.3.1
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
@@ -11733,6 +11746,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
