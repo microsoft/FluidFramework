@@ -17,7 +17,7 @@ export class OdspAudience extends ServiceAudience<OdspMember> implements IOdspAu
 		const user = audienceMember.user as OdspUser;
 		assert(
 			user.name !== undefined || user.email !== undefined,
-			'Provided user was not an "OdspUser".',
+			0x836 /* Provided user was not an "OdspUser". */,
 		);
 
 		return {

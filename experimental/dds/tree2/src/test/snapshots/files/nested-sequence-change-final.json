@@ -142,41 +142,44 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "has-sequence-map.SeqMap",
-                          false,
+                        ],
+                        "data": [
+                          1,
                           [
-                            "foo",
+                            "has-sequence-map.SeqMap",
+                            false,
                             [
-                              "has-sequence-map.SeqMap",
-                              false,
-                              []
+                              "foo",
+                              [
+                                "has-sequence-map.SeqMap",
+                                false,
+                                []
+                              ]
                             ]
                           ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
