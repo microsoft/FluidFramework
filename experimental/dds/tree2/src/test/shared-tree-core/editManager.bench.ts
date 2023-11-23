@@ -12,7 +12,7 @@ import {
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils";
 
-describe("EditManager - Bench", () => {
+describe.only("EditManager - Bench", () => {
 	interface Scenario {
 		readonly type: BenchmarkType;
 		readonly rebasedEditCount: number;
@@ -20,12 +20,12 @@ describe("EditManager - Bench", () => {
 	}
 
 	const scenarios: Scenario[] = [
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+		// { type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
+		// { type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+		// { type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+		// { type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+		// { type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
 		{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
 	];
