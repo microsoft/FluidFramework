@@ -489,7 +489,6 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
-		console.debug(newCommit, "seq:", sequenceNumber, "ref:", referenceSequenceNumber);
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
