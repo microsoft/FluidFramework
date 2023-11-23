@@ -163,13 +163,13 @@ export class OdspClient {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
+			await container.attach(createNewRequest);
 
 			const resolvedUrl = container.resolvedUrl;
 
 			if (resolvedUrl === undefined || !isOdspResolvedUrl(resolvedUrl)) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			await container.attach(createNewRequest);
 
 			/**
 			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
