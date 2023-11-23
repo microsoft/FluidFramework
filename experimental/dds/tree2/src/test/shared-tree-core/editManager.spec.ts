@@ -719,12 +719,7 @@ describe("EditManager", () => {
 						// However, we avoid recomputing the inverse for the same change,
 						// so in the end we only invert (once) each peer edit that has peer edit after it.
 						inverted: peerCount - 1,
-						// For each peer edit received (factor of P),
-						// we compose...
-						// - the rebased version of that peer edit: 1
-						// This compose is part of the code path updating the local branch.
-						// Note: that the composition doesn't appear to be needed.
-						composed: peerCount,
+						composed: 0,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -781,10 +776,7 @@ describe("EditManager", () => {
 						// - the trunk edits: T
 						// - the rebased version of the phase-1 peer edits: P
 						// Note: that the composition doesn't appear to be needed.
-						// As part of rebasing the local branch, we compose...
-						// - the phase-2 peer edit: 1
-						// Note: that the composition doesn't appear to be needed.
-						composed: peerCount + trunkCount + peerCount + 1,
+						composed: peerCount + trunkCount + peerCount,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -840,10 +832,7 @@ describe("EditManager", () => {
 						// - the inverse of the phase-1 peer edits: P
 						// - the trunk edits up to the ref# of P+: T
 						// - the rebased version of the phase-1 peer edits: P
-						// As part of rebasing the local branch, we compose...
-						// - the phase-2 peer edit P+: 1
-						// Note: that the composition doesn't appear to be needed.
-						composed: peerCount + trunkCount + peerCount + 1,
+						composed: peerCount + trunkCount + peerCount,
 					};
 					assert.deepEqual(actual, expected);
 				});
