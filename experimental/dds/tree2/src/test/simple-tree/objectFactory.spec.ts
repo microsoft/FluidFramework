@@ -224,7 +224,7 @@ describe("SharedTreeObject factories", () => {
 		});
 		const content = { content: 3 };
 		view.root.child = childA.create(content);
-		view.root.grand.child.list.insertAtEnd([childA.create(content)]);
+		view.root.grand.child.list.insertAtEnd(childA.create(content));
 		view.root.grand.child.map.set("a", childA.create(content));
 	});
 

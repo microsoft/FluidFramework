@@ -76,7 +76,8 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 	};
-	visitFieldMarks(delta, visitor, detachConfig);
+	processBuilds(delta.build, detachConfig, visitor);
+	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
 	const attachConfig: PassConfig = {
@@ -87,7 +88,7 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 	};
-	visitFieldMarks(delta, visitor, attachConfig);
+	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
 	for (const { id, count } of rootDestructions) {
 		for (let i = 0; i < count; i += 1) {
@@ -315,11 +316,17 @@ interface PassConfig {
 
 type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
 
-function visitFieldMarks(fields: Delta.FieldMap, visitor: DeltaVisitor, config: PassConfig): void {
-	for (const [key, field] of fields) {
-		visitor.enterField(key);
-		config.func(field, visitor, config);
-		visitor.exitField(key);
+function visitFieldMarks(
+	fields: Delta.FieldMap | undefined,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
+	if (fields !== undefined) {
+		for (const [key, field] of fields) {
+			visitor.enterField(key);
+			config.func(field, visitor, config);
+			visitor.exitField(key);
+		}
 	}
 }
 
@@ -347,21 +354,7 @@ function visitNode(
  * (because we want to wait until we are sure content to attach is available as a root)
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	if (delta.build !== undefined) {
-		for (const { id, trees } of delta.build) {
-			for (let i = 0; i < trees.length; i += 1) {
-				const offsettedId = offsetDetachId(id, i);
-				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
-				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
-				if (root === undefined) {
-					root = config.detachedFieldIndex.createEntry(offsettedId);
-					const field = config.detachedFieldIndex.toFieldKey(root);
-					visitor.create([trees[i]], field);
-				}
-			}
-		}
-	}
+	processBuilds(delta.build, config, visitor);
 	if (delta.destroy !== undefined) {
 		config.rootDestructions.push(...delta.destroy);
 	}
@@ -399,6 +392,28 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				}
 			} else if (!isAttachMark(mark)) {
 				index += mark.count;
+			}
+		}
+	}
+}
+
+function processBuilds(
+	builds: readonly Delta.DetachedNodeBuild[] | undefined,
+	config: PassConfig,
+	visitor: DeltaVisitor,
+) {
+	if (builds !== undefined) {
+		for (const { id, trees } of builds) {
+			for (let i = 0; i < trees.length; i += 1) {
+				const offsettedId = offsetDetachId(id, i);
+				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
+				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
+				if (root === undefined) {
+					root = config.detachedFieldIndex.createEntry(offsettedId);
+					const field = config.detachedFieldIndex.toFieldKey(root);
+					visitor.create([trees[i]], field);
+				}
 			}
 		}
 	}

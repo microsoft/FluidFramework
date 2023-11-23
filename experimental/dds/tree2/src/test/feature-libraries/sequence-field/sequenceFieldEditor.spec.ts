@@ -4,19 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf } from "../../../domains";
 import { ChangesetLocalId } from "../../../core";
-import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits";
 
 const id: ChangesetLocalId = brand(0);
-const nodeX = { type: leaf.string.name, value: "X" };
-const nodeY = { type: leaf.string.name, value: "Y" };
-const content = [cursorForJsonableTreeNode(nodeX), cursorForJsonableTreeNode(nodeY)];
-deepFreeze(content);
 
 describe("SequenceField - Editor", () => {
 	it("child change", () => {
@@ -28,14 +23,14 @@ describe("SequenceField - Editor", () => {
 	});
 
 	it("insert one node", () => {
-		const actual = SF.sequenceFieldEditor.insert(42, [content[0]], id);
-		const expected: SF.Changeset = [{ count: 42 }, Mark.insert([nodeX], id)];
+		const actual = SF.sequenceFieldEditor.insert(42, 1, id);
+		const expected: SF.Changeset = [{ count: 42 }, Mark.revive(1, { localId: id })];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert multiple nodes", () => {
-		const actual = SF.sequenceFieldEditor.insert(42, content, id);
-		const expected: SF.Changeset = [{ count: 42 }, Mark.insert([nodeX, nodeY], id)];
+		const actual = SF.sequenceFieldEditor.insert(42, 2, id);
+		const expected: SF.Changeset = [{ count: 42 }, Mark.insert(2, id)];
 		assert.deepEqual(actual, expected);
 	});
 
