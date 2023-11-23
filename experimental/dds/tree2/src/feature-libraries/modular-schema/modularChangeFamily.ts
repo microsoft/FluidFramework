@@ -140,6 +140,16 @@ export class ModularChangeFamily
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		if (changes.length === 1) {
+			const { fieldChanges, builds, constraintViolationCount } = changes[0].change;
+			return makeModularChangeset(
+				fieldChanges,
+				maxId,
+				revInfos,
+				constraintViolationCount,
+				builds,
+			);
+		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
@@ -181,12 +191,12 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
 		for (const { revision, change } of changes) {
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
-					const innerDstMap = getOrAddInMap(builds, setRevisionKey, new Map());
+					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
 					for (const [id, tree] of innerMap) {
 						// Check for duplicate builds and prefer earlier ones.
 						// There are two scenarios where we might get duplicate builds:
@@ -209,7 +219,7 @@ export class ModularChangeFamily
 				}
 			}
 		}
-		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, builds);
+		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, allBuilds);
 	}
 
 	private composeFieldMaps(
