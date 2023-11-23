@@ -13,7 +13,7 @@ import {
 } from "../../../core";
 import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
-import { fieldKinds } from "../../default-field-kinds";
+import { fieldKinds } from "../../default-schema";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,

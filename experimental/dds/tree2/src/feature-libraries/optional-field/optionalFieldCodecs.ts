@@ -7,8 +7,12 @@ import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { JsonCompatibleReadOnly, Mutable } from "../../util";
 import type { NodeChangeset } from "../modular-schema";
-import type { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
-import { EncodedOptionalChangeset, EncodedNodeUpdate } from "./defaultFieldChangeFormat";
+import type {
+	NodeUpdate,
+	OptionalChangeset,
+	OptionalFieldChange,
+} from "./optionalFieldChangeTypes";
+import { EncodedOptionalChangeset, EncodedNodeUpdate } from "./optionalFieldChangeFormat";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 

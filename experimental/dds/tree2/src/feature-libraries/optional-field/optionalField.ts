@@ -34,8 +34,8 @@ import {
 	RemovedTreesFromChild,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
-import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
+import { OptionalChangeset, OptionalFieldChange } from "./optionalFieldChangeTypes";
+import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
 type ChangeId = ChangeAtomId | "self";
 
