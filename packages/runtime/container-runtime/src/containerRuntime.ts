@@ -2211,6 +2211,7 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	//* RENAME / REFACTOR
 	/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
 	private ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
 		//* aka ISerializedHandle
@@ -2224,31 +2225,44 @@ export class ContainerRuntime
 			url: string;
 		} => value?.type === "__fluid_handle__";
 
-		//* Ok... so we need to collect the set of handles, and then afterwards reconstruct the channel path.  Too bad.
-		const fromPath = "THIS WON'T BE KNOWN UNTIL AFTER THE PARSE IS DONE";
+		// These will be built up as we traverse the message contents
+		const outboundPaths: string[] = [];
+		const pathParts: string[] = [];
 
 		// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
 		// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-		const detectHandles = (_key: string, value: any) => {
+		const inspectReviver = (key: string, value: any) => {
 			// If 'value' is a serialized IFluidHandle return the deserialized result.
 			if (isSerializedHandle(value)) {
 				//* Does this check apply?  Original comment in FluidSerializer.decodeValue says:
 				// Old documents may have handles with relative path in their summaries...
 				//* And then does this if not: value.url = generateHandleContextPath(value.url, this.context);
 				if (value.url.startsWith("/")) {
-					this.garbageCollector.addedOutboundReference(fromPath, value.url);
+					outboundPaths.push(value.url);
 				}
-				return value;
-			} else {
-				return value;
 			}
+
+			// DataStore and Channel (DDS) addresses are nested as we go deeper into the object
+			if (key === "address") {
+				pathParts.push(value);
+			}
+
+			return value;
 		};
 
 		// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 		// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 		// Old ops may contain empty string (I assume noops).
 		if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-			mutableMessage.contents = JSON.parse(mutableMessage.contents, detectHandles);
+			mutableMessage.contents = JSON.parse(mutableMessage.contents, inspectReviver);
+
+			// Only take first two path parts in case a DDS has "address" inside its content
+			pathParts.splice(2);
+			const fromPath = pathParts.join("/");
+			outboundPaths.forEach((toPath) =>
+				//* Update GC to understand the new semantics of adding stuff from here instead of DDSes (and delete the other code)
+				this.garbageCollector.addedOutboundReference(fromPath, toPath),
+			);
 		}
 	}
 
