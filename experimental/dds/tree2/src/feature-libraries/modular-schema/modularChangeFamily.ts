@@ -161,7 +161,7 @@ export class ModularChangeFamily
 
 		const composedFields = this.composeFieldMaps(
 			changesWithoutConstraintViolations.map((change) =>
-				tagChange(change.change.fieldChanges, change.revision),
+				tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
 			),
 			genId,
 			crossFieldTable,
@@ -352,7 +352,7 @@ export class ModularChangeFamily
 		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 
 		const invertedFields = this.invertFieldMap(
-			tagChange(change.change.fieldChanges, change.revision),
+			tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -485,7 +485,7 @@ export class ModularChangeFamily
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
-			tagChange(over.change.fieldChanges, over.revision),
+			tagChange(over.change.fieldChanges, revisionFromTaggedChange(over)),
 			genId,
 			crossFieldTable,
 			() => true,
@@ -710,12 +710,14 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
+	public intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.Root {
+		const change = taggedChange.change;
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return emptyDelta;
 		}
 
+		const revision = revisionFromTaggedChange(taggedChange);
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 		const rootDelta: Mutable<Delta.Root> = {};
 		const fieldDeltas = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
@@ -1236,4 +1238,17 @@ function revisionInfoFromTaggedChange(
 		revInfos.push(info);
 	}
 	return revInfos;
+}
+
+function revisionFromTaggedChange(change: TaggedChange<ModularChangeset>): RevisionTag | undefined {
+	return change.revision ?? revisionFromRevInfos(change.change.revisions);
+}
+
+function revisionFromRevInfos(
+	revInfos: undefined | readonly RevisionInfo[],
+): RevisionTag | undefined {
+	if (revInfos === undefined || revInfos.length !== 1) {
+		return undefined;
+	}
+	return revInfos[0].revision;
 }
