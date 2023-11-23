@@ -1595,8 +1595,8 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
+      '@fluid-experimental/app-insights-logger': workspace:2.0.0-internal.7.3.0
       '@fluid-experimental/react-inputs': workspace:~
-      '@fluidframework/app-insights-logger': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.28.0-210888
       '@fluidframework/container-loader': workspace:~
@@ -1642,8 +1642,8 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-experimental/app-insights-logger': link:../../../packages/framework/client-logger/app-insights-logger
       '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
-      '@fluidframework/app-insights-logger': link:../../../packages/framework/client-logger/app-insights-logger
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/counter': link:../../../packages/dds/counter
@@ -42447,7 +42447,7 @@ packages:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0_@types+node@16.18.58
+      jest: 29.7.0
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
