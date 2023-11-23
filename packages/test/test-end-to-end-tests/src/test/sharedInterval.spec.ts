@@ -8,7 +8,6 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
@@ -274,7 +273,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 			sharedString.insertText(0, "012");
 
@@ -392,7 +391,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "0123456789");
@@ -402,7 +401,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
@@ -430,7 +429,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "012");
@@ -450,7 +449,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 
@@ -552,7 +551,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "01234");
@@ -564,7 +563,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
@@ -898,17 +897,17 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 		});
 

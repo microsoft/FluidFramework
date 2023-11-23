@@ -37,7 +37,6 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
 	ITestDataObject,
@@ -308,7 +307,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		const container = await localTestObjectProvider.makeTestContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 		let runCount = 0;
 
@@ -408,7 +407,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"container is not connected after connected event fires",
 		);
 
-		const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
+		const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
 		const directory1 = dataObject._root;
 		directory1.set("key", "value");
 		let value1 = await directory1.get("key");
@@ -419,7 +418,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			durationMs: timeoutMs,
 			errorMsg: "container2 initial connect timeout",
 		});
-		const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
+		const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
 		const directory2 = dataObjectTest._root;
 		await localTestObjectProvider.ensureSynchronized();
 		let value2 = await directory2.get("key");
@@ -680,7 +679,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" }],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;
@@ -733,7 +732,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;

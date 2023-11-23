@@ -15,7 +15,6 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	createLoader,
@@ -23,6 +22,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	timeoutPromise,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
@@ -109,10 +109,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				);
 				containerResolvedUrl = initContainer.resolvedUrl;
 
-				const initDataObject = await requestFluidObject<ITestFluidObject>(
-					initContainer,
-					"default",
-				);
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
 				for (let i = 0; i < maxOps; i++) {
 					initDataObject.root.set(i.toString(), i);
 				}
@@ -157,10 +155,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				});
 
 				// Force the container into write mode to ensure a summary will be created
-				const dataObject = await requestFluidObject<ITestFluidObject>(
-					summaryContainer,
-					"default",
-				);
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(summaryContainer);
 				dataObject.root.set("Force write", 0);
 
 				const summaryCollection = new SummaryCollection(
@@ -214,10 +210,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				const validationContainer = await validationLoader.resolve({
 					url: containerUrl,
 				});
-				const validationDataObject = await requestFluidObject<ITestFluidObject>(
-					validationContainer,
-					"default",
-				);
+				const validationDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
 				const storageOnlyDsF: IDocumentServiceFactory = {
 					createContainer: provider.documentServiceFactory.createContainer.bind(
@@ -301,10 +295,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						"deltaManager.readOnlyInfo.storageOnly",
 					);
 
-					const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-						storageOnlyContainer,
-						"default",
-					);
+					const storageOnlyDataObject =
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							storageOnlyContainer,
+						);
 					for (const key of validationDataObject.root.keys()) {
 						assert.strictEqual(
 							storageOnlyDataObject.root.get(key),
