@@ -2211,6 +2211,47 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	/** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
+	private ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+		//* aka ISerializedHandle
+		const isSerializedHandle = (
+			value: any,
+		): value is {
+			// Marker to indicate to JSON.parse that the object is a Fluid handle
+			type: "__fluid_handle__";
+
+			// URL to the object. Relative URLs are relative to the handle context passed to the stringify.
+			url: string;
+		} => value?.type === "__fluid_handle__";
+
+		//* Ok... so we need to collect the set of handles, and then afterwards reconstruct the channel path.  Too bad.
+		const fromPath = "THIS WON'T BE KNOWN UNTIL AFTER THE PARSE IS DONE";
+
+		// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
+		// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
+		const detectHandles = (_key: string, value: any) => {
+			// If 'value' is a serialized IFluidHandle return the deserialized result.
+			if (isSerializedHandle(value)) {
+				//* Does this check apply?  Original comment in FluidSerializer.decodeValue says:
+				// Old documents may have handles with relative path in their summaries...
+				//* And then does this if not: value.url = generateHandleContextPath(value.url, this.context);
+				if (value.url.startsWith("/")) {
+					this.garbageCollector.addedOutboundReference(fromPath, value.url);
+				}
+				return value;
+			} else {
+				return value;
+			}
+		};
+
+		// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
+		// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
+		// Old ops may contain empty string (I assume noops).
+		if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
+			mutableMessage.contents = JSON.parse(mutableMessage.contents, detectHandles);
+		}
+	}
+
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2224,6 +2265,8 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+
+		this.ensureContentsDeserialized(messageCopy);
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
