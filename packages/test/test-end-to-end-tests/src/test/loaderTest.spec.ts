@@ -9,15 +9,17 @@ import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	describeNoCompat,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
+import { requestResolvedObjectFromContainer } from "@fluidframework/container-loader";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // REVIEW: enable compat testing?
+// TODO: Remove this file when request is removed from Loader AB#4991
 describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
@@ -249,6 +251,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		},
 	);
 
+	// TODO: Remove this test when request is removed from Container AB#4991
 	itSkipsFailureOnSpecificDrivers("can handle url with query params", ["odsp"], async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
@@ -270,6 +273,30 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	it("requestResolvedObjectFromContainer can handle url with query params", async () => {
+		const url = await container.getAbsoluteUrl("");
+		assert(url, "url is undefined");
+		const testUrl = `${url}${
+			url.includes("?") ? "&query1=1&query2=2&inspect=1" : "?query1=1&query2=2&inspect=1"
+		}`;
+
+		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const resolvedContainer = await newLoader.resolve({ url: testUrl });
+		const response = await requestResolvedObjectFromContainer(resolvedContainer);
+		const searchParams = new URLSearchParams(response.value);
+		assert.strictEqual(
+			searchParams.get("query1"),
+			"1",
+			"request did not pass the right query to the data store",
+		);
+		assert.strictEqual(
+			searchParams.get("query2"),
+			"2",
+			"request did not pass the right query to the data store",
+		);
+	});
+
+	// TODO: Remove this test when request is removed from Container AB#4991
 	it("can handle requests with headers", async () => {
 		const containerUrl = await container.getAbsoluteUrl("");
 		assert(containerUrl, "url is undefined");

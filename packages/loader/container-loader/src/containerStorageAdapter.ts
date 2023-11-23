@@ -106,10 +106,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	}
 
 	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		if (snapshotTree.blobsContents !== undefined) {
-			for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
-				this.blobContents[id] = value;
-			}
+		for (const [id, value] of Object.entries(snapshotTree.blobsContents ?? {})) {
+			this.blobContents[id] = value;
 		}
 		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
 			this.getBlobContents(tree);

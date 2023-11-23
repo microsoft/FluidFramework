@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { DoublyLinkedList, ListNode, walkList } from "./collections";
@@ -10,7 +12,12 @@ import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
-import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import {
+	refHasTileLabels,
+	refHasRangeLabels,
+	ReferencePosition,
+	refTypeIncludesFlag,
+} from "./referencePositions";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
@@ -331,6 +338,9 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
+			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+				this.hierRefCount++;
+			}
 			this.refCount++;
 		}
 		validateRefCount?.(this);
@@ -347,8 +357,10 @@ export class LocalReferenceCollection {
 			const node = lref.getListNode();
 			node?.list?.remove(node);
 
-			lref.link(undefined, 0, undefined);
-
+			lref.link(lref.getSegment(), lref.getOffset(), undefined);
+			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+				this.hierRefCount--;
+			}
 			this.refCount--;
 			validateRefCount?.(this);
 			return lref;
@@ -443,6 +455,10 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
+				if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+					this.hierRefCount--;
+					localRefs.hierRefCount++;
+				}
 				this.refCount--;
 				localRefs.refCount++;
 			}
@@ -478,6 +494,9 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
+					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+						this.hierRefCount++;
+					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {
@@ -509,6 +528,9 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
+					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+						this.hierRefCount++;
+					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {

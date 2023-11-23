@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
+import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
@@ -80,6 +83,11 @@ export interface ReferencePosition {
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
 	isLeaf(): this is ISegment;
 }
+
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
+export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;
 
