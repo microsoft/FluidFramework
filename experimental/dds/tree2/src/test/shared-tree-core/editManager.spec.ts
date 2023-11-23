@@ -771,12 +771,7 @@ describe("EditManager", () => {
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase P+ over the their inverse.
 						inverted: peerCount + peerCount,
-						// As part of rebasing the peer branch, we compose...
-						// - the inverse of the phase-1 peer edits: P
-						// - the trunk edits: T
-						// - the rebased version of the phase-1 peer edits: P
-						// Note: that the composition doesn't appear to be needed.
-						composed: peerCount + trunkCount + peerCount,
+						composed: 0,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -828,11 +823,7 @@ describe("EditManager", () => {
 						// - each of the phase-1 peer edits (which are based on commit Tc): P
 						// This is so that we can rebase P+ over the inverse of the phase-1 peer edits and up to T+.
 						inverted: peerCount + peerCount,
-						// As part of rebasing the peer branch, we compose...
-						// - the inverse of the phase-1 peer edits: P
-						// - the trunk edits up to the ref# of P+: T
-						// - the rebased version of the phase-1 peer edits: P
-						composed: peerCount + trunkCount + peerCount,
+						composed: 0,
 					};
 					assert.deepEqual(actual, expected);
 				});

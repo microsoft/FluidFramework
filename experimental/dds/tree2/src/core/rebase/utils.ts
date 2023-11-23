@@ -56,10 +56,13 @@ export interface RebasedCommits<TChange> {
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param computeSourceChange - if `true` the returned tuple will include the net change to the source branch.
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a tuple containing:
+ * - the head of a rebased source branch
+ * - the cumulative change to the source branch (undefined if no change occurred or if `computeSourceChange` is not `true`),
+ * - details about how the commits on the source branch changed
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. For example:
@@ -78,6 +81,7 @@ export interface RebasedCommits<TChange> {
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
+	computeSourceChange: boolean,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): [
@@ -93,11 +97,14 @@ export function rebaseBranch<TChange>(
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param computeSourceChange - if `true` the returned tuple will include the net change to the source branch.
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a tuple containing:
+ * - the head of a rebased source branch
+ * - the cumulative change to the source branch (undefined if no change occurred or if `computeSourceChange` is not `true`),
+ * - details about how the commits on the source branch changed
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
@@ -123,6 +130,7 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
+	computeSourceChange: boolean,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -133,6 +141,7 @@ export function rebaseBranch<TChange>(
 ];
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
+	computeSourceChange: boolean,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -242,11 +251,12 @@ export function rebaseBranch<TChange>(
 		);
 	}
 
-	const toCompose = [...inverses, ...targetRebasePath];
-	const composed = composeChanges(changeRebaser, toCompose);
+	const netChange = computeSourceChange
+		? composeChanges(changeRebaser, [...inverses, ...targetRebasePath])
+		: undefined;
 	return [
 		newHead,
-		composed,
+		netChange,
 		{
 			deletedSourceCommits,
 			targetCommits,

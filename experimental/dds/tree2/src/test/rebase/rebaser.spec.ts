@@ -130,6 +130,7 @@ describe("rebaser", () => {
 
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
+					true,
 					tester.branch,
 					base,
 					tester.main,
