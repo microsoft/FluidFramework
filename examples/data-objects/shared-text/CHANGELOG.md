@@ -1,4 +1,4 @@
-# @fluid-example/app-integration-external-controller
+# @fluid-example/shared-text
 
 ## 2.0.0-internal.7.3.0
 
