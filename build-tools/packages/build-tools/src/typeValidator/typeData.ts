@@ -99,8 +99,10 @@ export function toTypeString(prefix: string, typeData: TypeData) {
 		) {
 			// it's really hard to build the right type for a generic,
 			// so for now we'll just pass any, as it will always work
+			// even though it may defeat the utility of a type or related test.
 			typeParams = `<${node
 				.getTypeParameters()
+				.filter((tp) => tp.getDefault() === undefined)
 				.map(() => "any")
 				.join(",")}>`;
 		}
