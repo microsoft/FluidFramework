@@ -13,9 +13,6 @@
 			// TODO: Add missing documentation and remove this rule override
 			"ae-undocumented": {
 				"logLevel": "none"
-			},
-			"ae-undocumented": {
-				"logLevel": "none"
 			}
 		}
 	}
