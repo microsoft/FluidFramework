@@ -4,9 +4,6 @@
 # include-publish-npm-package-steps template to publish NPM packages/projects
 
 parameters:
-- name: namespace
-  type: boolean
-
 - name: feedUrl
   type: string
 

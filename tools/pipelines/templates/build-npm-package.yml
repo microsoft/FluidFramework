@@ -71,10 +71,6 @@ parameters:
   type: boolean
   default: false
 
-- name: namespace
-  type: boolean
-  default: true
-
 - name: buildNumberInPatch
   type: string
   default:
@@ -537,7 +533,6 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         isReleaseGroup: ${{ parameters.isReleaseGroup }}
     

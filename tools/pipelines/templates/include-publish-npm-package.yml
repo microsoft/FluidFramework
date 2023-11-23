@@ -4,9 +4,6 @@
 # include-publish-npm-package
 
 parameters:
-- name: namespace
-  type: boolean
-
 - name: tagName
   type: string
 
@@ -30,7 +27,6 @@ stages:
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
       feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
       environment: test-package-build-feed
@@ -48,7 +44,6 @@ stages:
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
       # Environment should match the condition for publish_npm_internal_dev
@@ -68,7 +63,6 @@ stages:
     jobs:
     - template: include-publish-npm-package-deployment.yml
       parameters:
-        namespace: ${{ parameters.namespace }}
         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
         feedKind: internal-dev
         # Environment should match the condition for publish_npm_internal_build
@@ -84,7 +78,6 @@ stages:
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
       feedUrl: https://registry.npmjs.org
       feedKind: public
       environment: package-npmjs-feed
