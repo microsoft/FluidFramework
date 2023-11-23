@@ -46,7 +46,7 @@
 		"@fluidframework/build-tools": "0.28.0-210888",
 		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.7.2.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@microsoft/api-extractor": "^7.37.0",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/node": "^16.18.38",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",

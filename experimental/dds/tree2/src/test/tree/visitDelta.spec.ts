@@ -87,7 +87,7 @@ const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");
 const field3: FieldKey = brand("-3");
 
-describe("visit", () => {
+describe("visitDelta", () => {
 	it("empty delta", () => {
 		testTreeVisit({}, [
 			["enterField", rootKey],
@@ -103,6 +103,23 @@ describe("visit", () => {
 			[
 				["enterField", rootKey],
 				["create", [content], field0],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["attach", field0, 1, 0],
+				["exitField", rootKey],
+			],
+			index,
+		);
+		assert.equal(index.entries().next().done, true);
+	});
+	it("idempotent insert", () => {
+		const index = makeDetachedFieldIndex("");
+		const node = { minor: 42 };
+		index.createEntry(node);
+		testTreeVisit(
+			deltaForSet(content, { minor: 42 }),
+			[
+				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["attach", field0, 1, 0],
