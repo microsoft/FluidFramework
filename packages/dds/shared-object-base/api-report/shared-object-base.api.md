@@ -28,7 +28,7 @@ export function createSingleBlobSummary(key: string, content: string | Uint8Arra
 
 // @public
 export class FluidSerializer implements IFluidSerializer {
-    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
+    constructor(context: IFluidHandleContext, handleParsedCb?: (handle: IFluidHandle) => void);
     decode(input: any): any;
     encode(input: any, bind: IFluidHandle): any;
     // (undocumented)

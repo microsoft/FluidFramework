@@ -2231,7 +2231,7 @@ export class ContainerRuntime
 
 		// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
 		// Otherwise returns the original 'value'.  Used by 'decode()' and 'parse()'.
-		const inspectReviver = (key: string, value: any) => {
+		const inspectReviver = (key: string, value: any): any => {
 			// If 'value' is a serialized IFluidHandle return the deserialized result.
 			if (isSerializedHandle(value)) {
 				//* Does this check apply?  Original comment in FluidSerializer.decodeValue says:

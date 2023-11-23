@@ -24,6 +24,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		private _connected: boolean,
 		public readonly submit: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
+		/** @deprecated There is no replacement for this, its functionality is no longer needed at this layer. */
 		public readonly addedGCOutboundReference: (
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,

@@ -650,13 +650,17 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		// About back-compat: If an old (n-1) DataStoreRuntime calls this, it should no-op,
+		// since the new ContainerRuntime is responsible for adding new outbound routes directly.
 	}
 
 	/**

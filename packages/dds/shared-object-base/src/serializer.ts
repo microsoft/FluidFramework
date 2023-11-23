@@ -66,7 +66,7 @@ export class FluidSerializer implements IFluidSerializer {
 	public constructor(
 		private readonly context: IFluidHandleContext,
 		// To be called whenever a handle is parsed by this serializer.
-		private readonly handleParsedCb: (handle: IFluidHandle) => void,
+		private readonly handleParsedCb: (handle: IFluidHandle) => void = () => {},
 	) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
