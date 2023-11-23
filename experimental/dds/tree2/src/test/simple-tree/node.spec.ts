@@ -168,7 +168,7 @@ describe("node API", () => {
 		});
 
 		describe("list", () => {
-			check((root) => root.list.insertAtEnd([{ content: root.list.length }]));
+			check((root) => root.list.insertAtEnd({ content: root.list.length }));
 		});
 
 		// TODO: map

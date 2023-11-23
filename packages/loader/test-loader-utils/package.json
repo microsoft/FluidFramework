@@ -15,9 +15,14 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"build:docs": "fluid-build . --task api",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -39,10 +44,24 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@microsoft/api-extractor": "^7.38.3",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

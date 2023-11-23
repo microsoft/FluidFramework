@@ -11,7 +11,7 @@ import {
 	CellMark,
 	AttachAndDetach,
 	MoveIn,
-	MoveSource,
+	MoveOut,
 } from "./format";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
@@ -22,7 +22,6 @@ export interface DetachedCellMark extends HasMarkFields {
 
 export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | AttachAndDetach, TNodeChange>;
 
-export type MoveDestination = MoveIn;
-export type MoveMarkEffect = MoveSource | MoveDestination;
+export type MoveMarkEffect = MoveOut | MoveIn;
 export type DetachOfRemovedNodes = Detach & { cellId: CellId };
 export type CellRename = AttachAndDetach | DetachOfRemovedNodes;

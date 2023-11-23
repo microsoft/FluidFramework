@@ -81,7 +81,10 @@ export const IntervalOpType = {
 	PROPERTY_CHANGED: "propertyChanged",
 	POSITION_REMOVE: "positionRemove",
 } as const;
-
+/**
+ * @alpha
+ */
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 /**
  * @public
  */

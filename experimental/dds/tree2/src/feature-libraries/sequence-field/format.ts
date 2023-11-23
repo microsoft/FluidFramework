@@ -4,13 +4,7 @@
  */
 
 import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	JsonableTree,
-	RevisionTag,
-	RevisionTagSchema,
-} from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, RevisionTagSchema } from "../../core";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../modular-schema";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
@@ -19,12 +13,6 @@ import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../m
 // but the schema for the serialized type uses ProtoNode (which is the result of serializing that cursor).
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
-
-/**
- * The contents of a node to be created
- */
-export type ProtoNode = JsonableTree;
-export const ProtoNode = Type.Any();
 
 export type CellCount = number;
 export const CellCount = Type.Number();
@@ -165,24 +153,19 @@ export interface HasRevisionTag {
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
 /**
- * Content being inserted or or restored into a cell.
+ * Moves detached roots into cells.
+ * The specific content being moved in is determined by the IDs of the cells this mark targets.
  * Always brings about the desired outcome: the content is in the targeted cells.
  *
  * Rebasing this mark never causes it to insert/restore a different set of nodes.
  * Rebasing this mark never causes it to fill a different set of cells
  * (though the way those cells are identified may change).
  *
- * When `content` is not defined, this mark revives the content that was last removed from the cell.
- *
  * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
  * will transform into a pair of returns which will move the content back into this cell.
  */
 export interface Insert extends HasMoveId, HasRevisionTag {
 	type: "Insert";
-	/**
-	 * The content to insert. Only populated for new attaches.
-	 */
-	content?: ProtoNode[];
 }
 export const Insert = Type.Composite(
 	[
@@ -190,7 +173,6 @@ export const Insert = Type.Composite(
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("Insert"),
-			content: Type.Array(ProtoNode),
 		}),
 	],
 	noAdditionalProps,
@@ -274,12 +256,13 @@ export const Delete = Type.Composite(
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface MoveOut extends HasMoveFields {
+export interface MoveOut extends HasMoveFields, InverseAttachFields {
 	type: "MoveOut";
 }
 export const MoveOut = Type.Composite(
 	[
 		HasMoveFields,
+		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("MoveOut"),
 		}),
@@ -287,37 +270,11 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
-/**
- * Removes nodes from their cells so they can be moved into other cells.
- * Always brings about the desired outcome: the targeted nodes are removed from their cells.
- * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
- *
- * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can cause it to clear a different set of cells.
- * TODO: unify with `MoveOut`.
- */
-export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
-	type: "ReturnFrom";
-}
-export const ReturnFrom = Type.Composite(
-	[
-		HasMoveFields,
-		InverseAttachFields,
-		Type.Object({
-			type: Type.Literal("ReturnFrom"),
-		}),
-	],
-	noAdditionalProps,
-);
-
-export type MoveSource = MoveOut | ReturnFrom;
-export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
-
 export type Attach = Insert | MoveIn;
 export const Attach = Type.Union([Insert, MoveIn]);
 
-export type Detach = Delete | MoveSource;
-export const Detach = Type.Union([Delete, MoveSource]);
+export type Detach = Delete | MoveOut;
+export const Detach = Type.Union([Delete, MoveOut]);
 
 /**
  * Mark used during compose to temporarily remember the position of nodes which were being moved
