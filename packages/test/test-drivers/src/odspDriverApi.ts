@@ -23,6 +23,9 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { pkgVersion } from "./packageVersion";
 
+/**
+ * @internal
+ */
 export const OdspDriverApi = {
 	version: pkgVersion,
 	OdspDocumentServiceFactory,
@@ -31,6 +34,9 @@ export const OdspDriverApi = {
 	createOdspUrl, // REVIEW: does this need to be back compat?
 };
 
+/**
+ * @internal
+ */
 export type OdspDriverApiType = typeof OdspDriverApi;
 
 const odspSnapshotOptions: OptionsMatrix<ISnapshotOptions> = {
@@ -52,6 +58,9 @@ const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
 	forceAccessTokenViaAuthorizationHeader: [undefined],
 };
 
+/**
+ * @internal
+ */
 export const generateOdspHostStoragePolicy = (seed: number) => {
 	const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
 		concurrentSnapshotFetch: booleanCases,
