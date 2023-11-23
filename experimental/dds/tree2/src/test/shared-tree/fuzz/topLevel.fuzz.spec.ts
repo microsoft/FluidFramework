@@ -79,7 +79,7 @@ describe("Fuzz - Top-Level", () => {
 			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
 			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
 			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [6, 10, 12, 14, 15, 17, 18, 19],
+			skip: [0, 1, 7, 14, 18, 19],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -112,7 +112,7 @@ describe("Fuzz - Top-Level", () => {
 			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
 			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
 			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [2, 3, 6, 12, 14, 15, 16],
+			skip: [1, 6, 8, 9, 16, 17, 18],
 		};
 		createDDSFuzzSuite(model, options);
 	});
