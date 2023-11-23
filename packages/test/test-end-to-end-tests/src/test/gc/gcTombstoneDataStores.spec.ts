@@ -802,11 +802,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					url: unreferencedId,
 					headers: { [AllowTombstoneRequestHeaderKey]: true },
 				};
-				let tombstonedObject: ITestDataObject;
-				{
-					const response = await containerRuntime.resolveHandle(requestAllowingTombstone);
-					tombstonedObject = response.value as ITestDataObject;
-				}
+				const tombstoneAllowedResponse =
+					await containerRuntime.resolveHandle(requestAllowingTombstone);
+				const tombstonedObject = tombstoneAllowedResponse.value as ITestDataObject;
 				const defaultDataObject =
 					(await tombstoneContainer.getEntryPoint()) as ITestDataObject;
 				defaultDataObject._root.set("store", tombstonedObject.handle);
@@ -814,34 +812,28 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// The datastore should be un-tombstoned now
 				const { summaryVersion: revivalVersion } = await summarize(summarizer);
 				const revivalContainer = await loadContainer(revivalVersion);
-				let revivedObject: ITestDataObject;
-				{
-					const revivalEntryPoint =
-						(await revivalContainer.getEntryPoint()) as ITestDataObject;
-					const revivalContainerRuntime = revivalEntryPoint._context
-						.containerRuntime as ContainerRuntime;
-					const response = await revivalContainerRuntime.resolveHandle({
-						url: unreferencedId,
-					});
-					revivedObject = response.value as ITestDataObject;
-				}
+				const revivalEntryPoint =
+					(await revivalContainer.getEntryPoint()) as ITestDataObject;
+				const revivalContainerRuntime = revivalEntryPoint._context
+					.containerRuntime as ContainerRuntime;
+				const revivalResponse = await revivalContainerRuntime.resolveHandle({
+					url: unreferencedId,
+				});
+				const revivedObject = revivalResponse.value as ITestDataObject;
 				revivedObject._root.set("can send", "op");
 				// This signal call closes the tombstoneContainer.
 				// The op above doesn't because the signal reaches the tombstone container faster
 				revivedObject._runtime.submitSignal("can submit", "signal");
 
 				const sendingContainer = await loadContainer(revivalVersion);
-				let sendDataObject: ITestDataObject;
-				{
-					const sendingEntryPoint =
-						(await sendingContainer.getEntryPoint()) as ITestDataObject;
-					const sendingContainerRuntime = sendingEntryPoint._context
-						.containerRuntime as ContainerRuntime;
-					const response = await sendingContainerRuntime.resolveHandle({
-						url: unreferencedId,
-					});
-					sendDataObject = response.value as ITestDataObject;
-				}
+				const sendingEntryPoint =
+					(await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const sendingContainerRuntime = sendingEntryPoint._context
+					.containerRuntime as ContainerRuntime;
+				const sendingResponse = await sendingContainerRuntime.resolveHandle({
+					url: unreferencedId,
+				});
+				const sendDataObject = sendingResponse.value as ITestDataObject;
 				sendDataObject._root.set("can receive", "an op");
 				sendDataObject._runtime.submitSignal("can receive", "a signal");
 				await provider.ensureSynchronized();
@@ -1268,10 +1260,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 				// Requesting the tombstoned data store should result in an error.
 				const unreferencedId = newDataStore._context.id;
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				await assert.rejects(
-					async () => resolveHandleHelper(containerRuntime, unreferencedId),
+					async () => resolveHandleHelper(containerRuntime2, unreferencedId),
 					(error: any) => {
 						const correctErrorType = error.code === 404;
 						const correctErrorMessage =
@@ -1348,10 +1340,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const container2 = await provider.loadTestContainer(configWithLogger, {
 					[LoaderHeader.version]: summaryVersion,
 				});
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				await assert.doesNotReject(
-					async () => resolveHandleHelper(containerRuntime, dataStore2._context.id),
+					async () => resolveHandleHelper(containerRuntime2, dataStore2._context.id),
 					`Should be able to request a tombstoned datastore.`,
 				);
 				mockLogger.assertMatch(

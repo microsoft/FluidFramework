@@ -840,6 +840,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 
+		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 		const map2 = response.value as SharedMap;
 		await provider.ensureSynchronized();
@@ -892,6 +893,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataStore1.context.containerRuntime as ContainerRuntime;
 
+		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/default/${newMapId}` });
 		const map2 = response.value as SharedMap;
 		await provider.ensureSynchronized();
@@ -1427,6 +1429,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map2 = response.value as SharedMap;
 			assert.strictEqual(map2.get(testKey), testValue);
@@ -1440,6 +1443,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		{
 			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map3 = response.value as SharedMap;
 			await provider.ensureSynchronized();

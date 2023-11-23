@@ -604,8 +604,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					defaultDataStoreContainer2._root.set("mode", "write");
 					await waitForContainerWriteModeConnectionWrite(container2);
 
-					const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-					const container2Runtime = entryPoint._context
+					const container2Runtime = defaultDataStoreContainer2._context
 						.containerRuntime as ContainerRuntime;
 
 					const response = await container2Runtime.resolveHandle({

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
@@ -340,7 +340,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		// Create a container for the first client.
 		const container1 = await provider.createContainer(runtimeFactory);
-		await container1.getEntryPoint();
+		await assert.doesNotReject(
+			container1.getEntryPoint(),
+			"Initial creation of container and data store should succeed.",
+		);
 
 		// Create a summarizer for the container and do a summary shouldn't throw.
 		const createSummarizerResult = await createSummarizerFromFactory(
@@ -357,22 +360,25 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		);
 
 		// In summarizer, load the data store should fail.
-		try {
-			const runtime = (createSummarizerResult.summarizer as any).runtime as ContainerRuntime;
-			const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
-			await dsEntryPoint?.get();
-			fail("Expected exception");
-		} catch (e) {
-			assert.strictEqual(
-				(e as Error).message,
+		await assert.rejects(
+			async () => {
+				const runtime = (createSummarizerResult.summarizer as any)
+					.runtime as ContainerRuntime;
+				const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				await dsEntryPoint?.get();
+			},
+			(e: Error) =>
+				e.message ===
 				"Non interactive/summarizer client's data object should not be initialized",
-				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
-			);
-		}
+			"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
+		);
 
 		// Load second container, load the data store will also call initializingFromExisting and succeed.
 		const container2 = await provider.loadContainer(runtimeFactory);
-		await container2.getEntryPoint();
+		await assert.doesNotReject(
+			container2.getEntryPoint(),
+			"Initial creation of container and data store should succeed.",
+		);
 	});
 
 	/**

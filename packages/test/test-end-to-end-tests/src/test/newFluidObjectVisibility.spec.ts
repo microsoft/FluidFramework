@@ -354,9 +354,10 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 			// Load a second container.
 			const container2 = await provider.loadTestContainer();
 			await provider.ensureSynchronized();
-			const entryPoint = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-			const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-			const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("rootDataStore");
+			const entryPoint2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+			const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+			const dsEntryPoint =
+				await containerRuntime2.getAliasedDataStoreEntryPoint("rootDataStore");
 			if (dsEntryPoint === undefined) {
 				throw new Error("rootDataStore must exist");
 			}

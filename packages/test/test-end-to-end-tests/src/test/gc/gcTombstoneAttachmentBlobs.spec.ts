@@ -140,9 +140,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle since it loaded after the blob was tombstoned.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const response = await containerRuntime.resolveHandle({
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
 					url: blobHandle.absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
@@ -224,9 +224,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Load a container from the above summary. Retrieving the blob via any of the handles should fail. Note
 				// that the blob is requested via its url since this container does not have access to the blob's handle.
 				const container2 = await loadContainer(summary2.summaryVersion);
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const response1 = await runtime.resolveHandle({ url: blobHandle1.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response1 = await containerRuntime2.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response1?.status,
 					404,
@@ -237,7 +239,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected response value for blob handle 1`,
 				);
 
-				const response2 = await runtime.resolveHandle({ url: blobHandle2.absolutePath });
+				const response2 = await containerRuntime2.resolveHandle({
+					url: blobHandle2.absolutePath,
+				});
 				assert.strictEqual(
 					response2?.status,
 					404,
@@ -295,8 +299,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// via its url since this container does not have access to the blob's handle.
 				const container2 = await loadContainer(summary2.summaryVersion);
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
-				const response1 = await runtime2.resolveHandle({ url: blobHandle1.absolutePath });
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response1 = await containerRuntime2.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response1?.status,
 					404,
@@ -320,8 +326,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// requested via its url since this container does not have access to the blob's handle.
 				const container3 = await loadContainer(summary3.summaryVersion);
 				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
-				const runtime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
-				const response2 = await runtime3.resolveHandle({ url: blobHandle1.absolutePath });
+				const containerRuntime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
+				const response2 = await containerRuntime3.resolveHandle({
+					url: blobHandle1.absolutePath,
+				});
 				assert.strictEqual(
 					response2?.status,
 					200,
@@ -373,9 +381,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const response = await runtime.resolveHandle({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 200, `Expecting a 200 response`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
@@ -534,9 +544,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const response = await runtime.resolveHandle({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert(
 					response.value.startsWith("Blob was tombstoned:"),
@@ -625,9 +637,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const localResponse1 = await runtime.resolveHandle({
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
 					url: localHandle1.absolutePath,
 				});
 				assert.strictEqual(
@@ -640,7 +652,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await runtime.resolveHandle({
+				const localResponse2 = await containerRuntime2.resolveHandle({
 					url: localHandle2.absolutePath,
 				});
 				assert.strictEqual(
@@ -746,9 +758,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const localResponse1 = await runtime.resolveHandle({
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
 					url: localHandle1.absolutePath,
 				});
 				assert.strictEqual(
@@ -761,7 +773,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await runtime.resolveHandle({
+				const localResponse2 = await containerRuntime2.resolveHandle({
 					url: localHandle2.absolutePath,
 				});
 				assert.strictEqual(
@@ -774,7 +786,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 2`,
 				);
 
-				const localResponse3 = await runtime.resolveHandle({
+				const localResponse3 = await containerRuntime2.resolveHandle({
 					url: localHandle3.absolutePath,
 				});
 				assert.strictEqual(
@@ -877,9 +889,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const response = await runtime.resolveHandle({ url: blobHandle.absolutePath });
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime2.resolveHandle({
+					url: blobHandle.absolutePath,
+				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert(
 					response.value.startsWith("Blob was tombstoned:"),
@@ -958,9 +972,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const localResponse1 = await runtime.resolveHandle({
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
 					url: localHandle1.absolutePath,
 				});
 				assert.strictEqual(
@@ -973,7 +987,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await runtime.resolveHandle({
+				const localResponse2 = await containerRuntime2.resolveHandle({
 					url: localHandle2.absolutePath,
 				});
 				assert.strictEqual(
@@ -1070,9 +1084,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
 				// this container does not have access to the blob's handle.
-				const entryPoint = (await container2.getEntryPoint()) as ITestDataObject;
-				const runtime = entryPoint._context.containerRuntime as ContainerRuntime;
-				const localResponse1 = await runtime.resolveHandle({
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
+				const localResponse1 = await containerRuntime2.resolveHandle({
 					url: localHandle1.absolutePath,
 				});
 				assert.strictEqual(
@@ -1085,7 +1099,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 1`,
 				);
 
-				const localResponse2 = await runtime.resolveHandle({
+				const localResponse2 = await containerRuntime2.resolveHandle({
 					url: localHandle2.absolutePath,
 				});
 				assert.strictEqual(
@@ -1098,7 +1112,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Unexpected value for local handle 2`,
 				);
 
-				const localResponse3 = await runtime.resolveHandle({
+				const localResponse3 = await containerRuntime2.resolveHandle({
 					url: localHandle3.absolutePath,
 				});
 				assert.strictEqual(
