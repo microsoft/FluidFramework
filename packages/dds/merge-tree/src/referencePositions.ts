@@ -5,6 +5,7 @@
 
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet } from "./properties";
 
@@ -77,6 +78,7 @@ export interface ReferencePosition {
 	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
 	isLeaf(): this is ISegment;
 }

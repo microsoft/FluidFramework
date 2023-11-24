@@ -5,6 +5,7 @@
 
 import { ISegment, Marker } from "./mergeTreeNodes";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ICombiningOp,
 	IMergeTreeAnnotateMsg,
 	// eslint-disable-next-line import/no-deprecated
@@ -29,6 +30,7 @@ import { PropertySet } from "./properties";
 export function createAnnotateMarkerOp(
 	marker: Marker,
 	props: PropertySet,
+	// eslint-disable-next-line import/no-deprecated
 	combiningOp?: ICombiningOp,
 ): IMergeTreeAnnotateMsg | undefined {
 	const id = marker.getId();
@@ -59,6 +61,7 @@ export function createAnnotateRangeOp(
 	start: number,
 	end: number,
 	props: PropertySet,
+	// eslint-disable-next-line import/no-deprecated
 	combiningOp: ICombiningOp | undefined,
 ): IMergeTreeAnnotateMsg {
 	return {

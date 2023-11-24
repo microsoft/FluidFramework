@@ -56,6 +56,7 @@ import {
 } from "./mergeTreeDeltaCallback";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ICombiningOp,
 	IMergeTreeDeltaOp,
 	IRelativePosition,
@@ -2066,6 +2067,7 @@ export class MergeTree {
 		start: number,
 		end: number,
 		props: PropertySet,
+		// eslint-disable-next-line import/no-deprecated
 		combiningOp: ICombiningOp | undefined,
 		refSeq: number,
 		clientId: number,
