@@ -35,16 +35,18 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			throw new Error("rebase");
-		}
+		},
 	},
 	codecs: {
-		resolve: (formatVersion: number): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
+		resolve: (
+			formatVersion: number,
+		): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
 			assert.equal(formatVersion, arg1);
 			throw new Error("resolve");
 		},
 		getSupportedFormats: (): Iterable<number> => {
 			throw new Error("getSupportedFormats");
-		}
+		},
 	},
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
@@ -70,29 +72,31 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			return "rebase";
-		}
+		},
 	},
 	codecs: {
-		resolve: (formatVersion: number): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
+		resolve: (
+			formatVersion: number,
+		): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
 			assert.equal(formatVersion, arg1);
-			return "resolve" as unknown as IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly>;
+			return "resolve" as unknown as IMultiFormatCodec<
+				string,
+				JsonCompatibleReadOnly,
+				JsonCompatibleReadOnly
+			>;
 		},
 		getSupportedFormats: (): Iterable<number> => {
 			return "getSupportedFormats" as unknown as Iterable<number>;
-		}
+		},
 	},
 };
 
 const errorLog: unknown[] = [];
-const mitigatedThrowingFamily = makeMitigatedChangeFamily(
-	throwingFamily,
-	fallback,
-	(error) => errorLog.push((error as Error).message),
+const mitigatedThrowingFamily = makeMitigatedChangeFamily(throwingFamily, fallback, (error) =>
+	errorLog.push((error as Error).message),
 );
-const mitigatedReturningFamily = makeMitigatedChangeFamily(
-	returningFamily,
-	fallback,
-	() => assert.fail("Unexpected onError call"),
+const mitigatedReturningFamily = makeMitigatedChangeFamily(returningFamily, fallback, () =>
+	assert.fail("Unexpected onError call"),
 );
 const mitigatedReturningRebaser = mitigatedReturningFamily.rebaser;
 const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
@@ -102,8 +106,14 @@ describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
 		assert.equal(mitigatedReturningFamily.intoDelta(arg1), returningFamily.intoDelta(arg1));
-		assert.equal(mitigatedReturningRebaser.rebase(arg1, arg2), returningRebaser.rebase(arg1, arg2));
-		assert.equal(mitigatedReturningRebaser.invert(arg1, arg2), returningRebaser.invert(arg1, arg2));
+		assert.equal(
+			mitigatedReturningRebaser.rebase(arg1, arg2),
+			returningRebaser.rebase(arg1, arg2),
+		);
+		assert.equal(
+			mitigatedReturningRebaser.invert(arg1, arg2),
+			returningRebaser.invert(arg1, arg2),
+		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 	});
 	describe("catches errors from", () => {

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily, ChangeFamilyEditor, ChangeRebaser, Delta, TaggedChange, emptyDelta } from "../core";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	Delta,
+	TaggedChange,
+	emptyDelta,
+} from "../core";
 
 /**
  * Makes a given `ChangeFamily` safer to use by wrapping some of its functions in try-catch blocks.
@@ -20,50 +27,50 @@ import { ChangeFamily, ChangeFamilyEditor, ChangeRebaser, Delta, TaggedChange, e
  * @returns a mitigated change family.
  */
 export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TChange>(
-    unmitigatedChangeFamily: ChangeFamily<TEditor, TChange>,
-    fallbackChange: TChange,
-    onError: (error: unknown) => void,
+	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange>,
+	fallbackChange: TChange,
+	onError: (error: unknown) => void,
 ): ChangeFamily<TEditor, TChange> {
 	return {
-        buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
-            return unmitigatedChangeFamily.buildEditor(changeReceiver);
-        },
-        intoDelta: (change: TaggedChange<TChange>): Delta.Root => {
-            try {
-                return unmitigatedChangeFamily.intoDelta(change);
-            } catch (error: unknown) {
-                onError(error);
-                return emptyDelta;
-            }
-        },
-        rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
-        codecs: unmitigatedChangeFamily.codecs,
-    };
+		buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
+			return unmitigatedChangeFamily.buildEditor(changeReceiver);
+		},
+		intoDelta: (change: TaggedChange<TChange>): Delta.Root => {
+			try {
+				return unmitigatedChangeFamily.intoDelta(change);
+			} catch (error: unknown) {
+				onError(error);
+				return emptyDelta;
+			}
+		},
+		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
+		codecs: unmitigatedChangeFamily.codecs,
+	};
 }
 
 export function makeMitigatedRebaser<TChange>(
-    unmitigatedRebaser: ChangeRebaser<TChange>,
-    fallbackChange: TChange,
-    onError: (error: unknown) => void,
+	unmitigatedRebaser: ChangeRebaser<TChange>,
+	fallbackChange: TChange,
+	onError: (error: unknown) => void,
 ): ChangeRebaser<TChange> {
-    const withFallback = (fn: () => TChange): TChange => {
-        try {
-            return fn();
-        } catch (error: unknown) {
-            onError(error);
-            return fallbackChange;
-        }    
-    };
- 
-    return {
-        compose: (changes: TaggedChange<TChange>[]): TChange => {
-            return withFallback(() => unmitigatedRebaser.compose(changes));
-        },
-        invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
-            return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
-        },
-        rebase: (change: TChange, over: TaggedChange<TChange>): TChange => {
-            return withFallback(() => unmitigatedRebaser.rebase(change, over));
-        },
-    };
+	const withFallback = (fn: () => TChange): TChange => {
+		try {
+			return fn();
+		} catch (error: unknown) {
+			onError(error);
+			return fallbackChange;
+		}
+	};
+
+	return {
+		compose: (changes: TaggedChange<TChange>[]): TChange => {
+			return withFallback(() => unmitigatedRebaser.compose(changes));
+		},
+		invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
+			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
+		},
+		rebase: (change: TChange, over: TaggedChange<TChange>): TChange => {
+			return withFallback(() => unmitigatedRebaser.rebase(change, over));
+		},
+	};
 }
