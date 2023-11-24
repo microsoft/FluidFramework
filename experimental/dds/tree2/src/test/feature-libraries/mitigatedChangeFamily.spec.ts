@@ -6,8 +6,6 @@
 import { strict as assert } from "assert";
 import { ChangeFamily, ChangeFamilyEditor, Delta, TaggedChange, emptyDelta } from "../../core";
 import { makeMitigatedChangeFamily } from "../../feature-libraries";
-import { JsonCompatibleReadOnly } from "../../util";
-import { IMultiFormatCodec } from "../../codec";
 
 const fallback = "Fallback";
 const arg1: any = "arg1";
@@ -37,17 +35,7 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			throw new Error("rebase");
 		},
 	},
-	codecs: {
-		resolve: (
-			formatVersion: number,
-		): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
-			assert.equal(formatVersion, arg1);
-			throw new Error("resolve");
-		},
-		getSupportedFormats: (): Iterable<number> => {
-			throw new Error("getSupportedFormats");
-		},
-	},
+	codecs: {} as any,
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
@@ -74,21 +62,7 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			return "rebase";
 		},
 	},
-	codecs: {
-		resolve: (
-			formatVersion: number,
-		): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
-			assert.equal(formatVersion, arg1);
-			return "resolve" as unknown as IMultiFormatCodec<
-				string,
-				JsonCompatibleReadOnly,
-				JsonCompatibleReadOnly
-			>;
-		},
-		getSupportedFormats: (): Iterable<number> => {
-			return "getSupportedFormats" as unknown as Iterable<number>;
-		},
-	},
+	codecs: {} as any,
 };
 
 const errorLog: unknown[] = [];
