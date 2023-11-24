@@ -1,0 +1,153 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+import { ChangeFamily, ChangeFamilyEditor, Delta, TaggedChange, emptyDelta } from "../../core";
+import { makeMitigatedChangeFamily } from "../../feature-libraries";
+import { JsonCompatibleReadOnly } from "../../util";
+import { IMultiFormatCodec } from "../../codec";
+
+const fallback = "Fallback";
+const arg1: any = "arg1";
+const arg2: any = "arg2";
+const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
+	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+		assert.equal(changeReceiver, arg1);
+		throw new Error("buildEditor");
+	},
+	intoDelta: (change: TaggedChange<string>): Delta.Root => {
+		assert.equal(change, arg1);
+		throw new Error("intoDelta");
+	},
+	rebaser: {
+		compose: (changes: TaggedChange<string>[]): string => {
+			assert.equal(changes, arg1);
+			throw new Error("compose");
+		},
+		invert: (change: TaggedChange<string>, isRollback: boolean): string => {
+			assert.equal(change, arg1);
+			assert.equal(isRollback, arg2);
+			throw new Error("invert");
+		},
+		rebase: (change: string, over: TaggedChange<string>): string => {
+			assert.equal(change, arg1);
+			assert.equal(over, arg2);
+			throw new Error("rebase");
+		}
+	},
+	codecs: {
+		resolve: (formatVersion: number): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
+			assert.equal(formatVersion, arg1);
+			throw new Error("resolve");
+		},
+		getSupportedFormats: (): Iterable<number> => {
+			throw new Error("getSupportedFormats");
+		}
+	},
+};
+const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
+	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
+		assert.equal(changeReceiver, arg1);
+		return "buildEditor" as unknown as ChangeFamilyEditor;
+	},
+	intoDelta: (change: TaggedChange<string>): Delta.Root => {
+		assert.equal(change, arg1);
+		return "intoDelta" as unknown as Delta.Root;
+	},
+	rebaser: {
+		compose: (changes: TaggedChange<string>[]): string => {
+			assert.equal(changes, arg1);
+			return "compose";
+		},
+		invert: (change: TaggedChange<string>, isRollback: boolean): string => {
+			assert.equal(change, arg1);
+			assert.equal(isRollback, arg2);
+			return "invert";
+		},
+		rebase: (change: string, over: TaggedChange<string>): string => {
+			assert.equal(change, arg1);
+			assert.equal(over, arg2);
+			return "rebase";
+		}
+	},
+	codecs: {
+		resolve: (formatVersion: number): IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly> => {
+			assert.equal(formatVersion, arg1);
+			return "resolve" as unknown as IMultiFormatCodec<string, JsonCompatibleReadOnly, JsonCompatibleReadOnly>;
+		},
+		getSupportedFormats: (): Iterable<number> => {
+			return "getSupportedFormats" as unknown as Iterable<number>;
+		}
+	},
+};
+
+const errorLog: unknown[] = [];
+const mitigatedThrowingFamily = makeMitigatedChangeFamily(
+	throwingFamily,
+	fallback,
+	(error) => errorLog.push((error as Error).message),
+);
+const mitigatedReturningFamily = makeMitigatedChangeFamily(
+	returningFamily,
+	fallback,
+	() => assert.fail("Unexpected onError call"),
+);
+const mitigatedReturningRebaser = mitigatedReturningFamily.rebaser;
+const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
+const mitigatedReturningCodecs = mitigatedReturningFamily.codecs;
+const mitigatedThrowingCodecs = mitigatedThrowingFamily.codecs;
+const returningRebaser = returningFamily.rebaser;
+const returningCodecs = returningFamily.codecs;
+
+describe("makeMitigatedChangeFamily", () => {
+	it("does not interfere so long as nothing is thrown", () => {
+		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
+		assert.equal(mitigatedReturningFamily.intoDelta(arg1), returningFamily.intoDelta(arg1));
+		assert.equal(mitigatedReturningRebaser.rebase(arg1, arg2), returningRebaser.rebase(arg1, arg2));
+		assert.equal(mitigatedReturningRebaser.invert(arg1, arg2), returningRebaser.invert(arg1, arg2));
+		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
+		assert.equal(mitigatedReturningCodecs.resolve(arg1), returningCodecs.resolve(arg1));
+		assert.equal(mitigatedReturningCodecs.getSupportedFormats(), returningCodecs.getSupportedFormats());
+	});
+	describe("catches errors from", () => {
+		it("intoDelta", () => {
+			errorLog.length = 0;
+			assert.equal(mitigatedThrowingFamily.intoDelta(arg1), emptyDelta);
+			assert.deepEqual(errorLog, ["intoDelta"]);
+		});
+		it("rebase", () => {
+			errorLog.length = 0;
+			assert.equal(mitigatedThrowingRebaser.rebase(arg1, arg2), fallback);
+			assert.deepEqual(errorLog, ["rebase"]);
+		});
+		it("invert", () => {
+			errorLog.length = 0;
+			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2), fallback);
+			assert.deepEqual(errorLog, ["invert"]);
+		});
+		it("compose", () => {
+			errorLog.length = 0;
+			assert.equal(mitigatedThrowingRebaser.compose(arg1), fallback);
+			assert.deepEqual(errorLog, ["compose"]);
+		});
+	});
+	describe("does not catch errors from", () => {
+		it("buildEditor", () => {
+			errorLog.length = 0;
+			assert.throws(() => mitigatedThrowingFamily.buildEditor(arg1), new Error("buildEditor"));
+			assert.deepEqual(errorLog, []);
+		});
+		it("resolve", () => {
+			errorLog.length = 0;
+			assert.throws(() => mitigatedThrowingCodecs.resolve(arg1), new Error("resolve"));
+			assert.deepEqual(errorLog, []);
+		});
+		it("getSupportedFormats", () => {
+			errorLog.length = 0;
+			assert.throws(() => mitigatedThrowingCodecs.getSupportedFormats(), new Error("getSupportedFormats"));
+			assert.deepEqual(errorLog, []);
+		});
+	});
+});
