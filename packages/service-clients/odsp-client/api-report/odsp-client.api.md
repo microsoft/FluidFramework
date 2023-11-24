@@ -15,6 +15,8 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
+export { IOdspTokenProvider }
+
 // @alpha @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
