@@ -11,7 +11,6 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { ICombiningOp } from '@fluidframework/merge-tree';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -205,7 +204,7 @@ export interface InteriorSequencePlace {
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: PropertySet);
     // @internal (undocumented)
-    addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     addPropertySet(props: PropertySet): void;
     // @internal (undocumented)
     auxProps: PropertySet[] | undefined;
@@ -425,7 +424,7 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @internal (undocumented)
-    addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    addProperties(newProps: PropertySet, collab?: boolean, seq?: number): PropertySet | undefined;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
@@ -539,7 +538,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
+    annotateRange(start: number, end: number, props: PropertySet): void;
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -621,9 +620,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 // @public
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
-    // @deprecated
-    annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
+    annotateMarker(marker: Marker, props: PropertySet): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
     // @deprecated
     findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {

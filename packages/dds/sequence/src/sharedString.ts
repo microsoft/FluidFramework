@@ -4,7 +4,6 @@
  */
 
 import {
-	ICombiningOp,
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
@@ -186,33 +185,12 @@ export class SharedString
 	}
 
 	/**
-	 * Annotates the marker with the provided properties and calls the callback on consensus.
-	 * @param marker - The marker to annotate
-	 * @param props - The properties to annotate the marker with
-	 * @param consensusCallback - The callback called when consensus is reached
-	 *
-	 * @deprecated We no longer intend to support this functionality and it will
-	 * be removed in a future release. There is no replacement for this
-	 * functionality.
-	 */
-	public annotateMarkerNotifyConsensus(
-		marker: Marker,
-		props: PropertySet,
-		callback: (m: Marker) => void,
-	) {
-		this.guardReentrancy(() =>
-			this.client.annotateMarkerNotifyConsensus(marker, props, callback),
-		);
-	}
-
-	/**
 	 * Annotates the marker with the provided properties.
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
+	public annotateMarker(marker: Marker, props: PropertySet) {
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
 	/**

@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { DoublyLinkedList, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
-import { ICombiningOp, ReferenceType } from "./ops";
+import { ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
 
@@ -124,8 +122,8 @@ class LocalReference implements LocalReferencePosition {
 		return false;
 	}
 
-	public addProperties(newProps: PropertySet, op?: ICombiningOp) {
-		this.properties = addProperties(this.properties, newProps, op);
+	public addProperties(newProps: PropertySet) {
+		this.properties = addProperties(this.properties, newProps);
 	}
 
 	public getSegment() {

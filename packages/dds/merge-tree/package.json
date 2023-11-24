@@ -246,6 +246,10 @@
 			"ClassDeclaration_TextSegment": {
 				"backCompat": false
 			},
+			"RemovedInterfaceDeclaration_ICombiningOp": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"RemovedFunctionDeclaration_createAnnotateMarkerOp": {
 				"forwardCompat": false,
 				"backCompat": false

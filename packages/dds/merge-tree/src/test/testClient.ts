@@ -256,12 +256,7 @@ export class TestClient extends Client {
 		longClientId: string,
 	) {
 		this.applyMsg(
-			this.makeOpMessage(
-				createAnnotateRangeOp(start, end, props, undefined),
-				seq,
-				refSeq,
-				longClientId,
-			),
+			this.makeOpMessage(createAnnotateRangeOp(start, end, props), seq, refSeq, longClientId),
 		);
 	}
 
@@ -571,7 +566,7 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			this.submitOpCallback?.(op);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
-			const op = client.annotateRangeLocal(start, end, props, undefined);
+			const op = client.annotateRangeLocal(start, end, props);
 			this.submitOpCallback?.(op);
 		},
 		insertFromSpec(pos: number, spec: IJSONSegment) {

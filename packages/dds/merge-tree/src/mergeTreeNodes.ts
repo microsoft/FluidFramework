@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
@@ -14,7 +13,7 @@ import { LocalReferenceCollection } from "./localReference";
 import { ISegmentLeaf } from "./mergeTree";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
+import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
@@ -283,11 +282,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 */
 	addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
 		collaborating?: boolean,
 		rollback?: PropertiesRollback,
-	): PropertySet | undefined;
+	): PropertySet;
 	clone(): ISegment;
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
@@ -477,7 +475,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
 		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
@@ -487,7 +484,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
-			op,
 			seq,
 			collaborating,
 			rollback,
@@ -791,19 +787,6 @@ export class CollaborationWindow {
 export const compareNumbers = (a: number, b: number) => a - b;
 
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
-
-export interface IConsensusInfo {
-	marker: Marker;
-	callback: (m: Marker) => void;
-}
-
-/**
- * @internal
- */
-export interface MinListener {
-	minRequired: number;
-	onMinGE(minSeq: number): void;
-}
 
 /**
  * Get a human-readable string for a given {@link Marker}.

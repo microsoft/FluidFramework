@@ -267,26 +267,14 @@ use_old_InterfaceDeclaration_IAttributionCollectionSpec(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICombiningOp():
-    TypeOnly<old.ICombiningOp>;
-declare function use_current_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<current.ICombiningOp>): void;
-use_current_InterfaceDeclaration_ICombiningOp(
-    get_old_InterfaceDeclaration_ICombiningOp());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICombiningOp": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICombiningOp": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICombiningOp():
-    TypeOnly<current.ICombiningOp>;
-declare function use_old_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<old.ICombiningOp>): void;
-use_old_InterfaceDeclaration_ICombiningOp(
-    get_current_InterfaceDeclaration_ICombiningOp());
 
 /*
 * Validate forward compat by using old type in place of current type
