@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-deprecated
 import { createGroupOp, createRemoveRangeOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
 import { SharedString, Marker, ReferenceType, TextSegment } from "@fluidframework/sequence";
 import { exampleSetup } from "prosemirror-example-setup";
@@ -256,6 +256,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -320,6 +321,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 

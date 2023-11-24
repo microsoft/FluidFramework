@@ -1859,7 +1859,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -1894,7 +1893,6 @@ importers:
       '@fluidframework/datastore': link:../../../packages/runtime/datastore
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
-      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
@@ -2800,7 +2798,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -2835,7 +2832,6 @@ importers:
       '@fluidframework/datastore': link:../../../packages/runtime/datastore
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
-      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
@@ -2877,7 +2873,6 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/request-handler': workspace:~
@@ -2906,7 +2901,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
