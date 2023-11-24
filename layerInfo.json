@@ -159,7 +159,7 @@
 			},
 			"OdspClient": {
 				"dirs": ["packages/service-clients/odsp-client"],
-				"deps": ["AzureClient"]
+				"deps": ["Container-Definitions", "Framework"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],

@@ -4,9 +4,9 @@
  */
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { type ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { type ITokenProvider } from "@fluidframework/azure-client";
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { type IUser } from "@fluidframework/protocol-definitions";
+import { IOdspTokenProvider } from "@fluidframework/odsp-driver";
 
 /**
  * Defines the necessary properties that will be applied to all containers
@@ -19,7 +19,7 @@ export interface OdspConnectionConfig {
 	/**
 	 * Instance that provides AAD endpoint tokens for Push and SharePoint
 	 */
-	tokenProvider: ITokenProvider;
+	tokenProvider: IOdspTokenProvider;
 
 	/**
 	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.

@@ -26,8 +26,10 @@ import {
 } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
-import type { ITokenResponse } from "@fluidframework/azure-client";
+import {
+	OdspResourceTokenFetchOptions,
+	TokenResponse,
+} from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -45,26 +47,19 @@ export class OdspClient {
 
 	public constructor(private readonly properties: OdspClientProps) {
 		const getSharePointToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
-				await this.properties.connection.tokenProvider.fetchStorageToken(
-					options.siteUrl,
-					"",
-				);
-			return {
-				token: tokenResponse.jwt,
-			};
+			const tokenResponse: TokenResponse =
+				await this.properties.connection.tokenProvider.fetchStorageToken(options.siteUrl);
+			return tokenResponse;
 		};
 
-		const getPushServiceToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
-				await this.properties.connection.tokenProvider.fetchOrdererToken(options.siteUrl);
-			return {
-				token: tokenResponse.jwt,
-			};
+		const getWebsocketToken = async (options: OdspResourceTokenFetchOptions) => {
+			const tokenResponse: TokenResponse =
+				await this.properties.connection.tokenProvider.fetchWebsocketToken(options.siteUrl);
+			return tokenResponse;
 		};
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
 			getSharePointToken,
-			getPushServiceToken,
+			getWebsocketToken,
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
