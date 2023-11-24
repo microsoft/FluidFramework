@@ -20,7 +20,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
-	IRequestHeader,
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
@@ -41,7 +40,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
-import { IParsedUrl, parseUrl } from "./utils";
+import { IParsedUrl, tryParseCompatibleResolvedUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
 import { DebugLogger } from "./debugLogger";
@@ -63,7 +62,7 @@ export class RelativeLoader implements ILoader {
 	) {}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
@@ -94,7 +93,7 @@ export class RelativeLoader implements ILoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		if (request.url.startsWith("/")) {
@@ -270,33 +269,6 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
- * With an already-resolved container, we can request a component directly, without loading the container again
- * @param container - a resolved container
- * @returns component on the container
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- */
-export async function requestResolvedObjectFromContainer(
-	container: IContainer,
-	headers?: IRequestHeader,
-): Promise<IResponse> {
-	ensureResolvedUrlDefined(container.resolvedUrl);
-	const parsedUrl = parseUrl(container.resolvedUrl.url);
-
-	if (parsedUrl === undefined) {
-		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
-	}
-
-	// eslint-disable-next-line import/no-deprecated
-	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
-	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
-
-	return router.request({
-		url: `${parsedUrl.path}${parsedUrl.query}`,
-		headers,
-	});
-}
-
-/**
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
@@ -347,7 +319,7 @@ export class Loader implements IHostLoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
@@ -398,7 +370,7 @@ export class Loader implements IHostLoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
@@ -422,13 +394,13 @@ export class Loader implements IHostLoader {
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
 		// Parse URL into data stores
-		const parsed = parseUrl(resolvedAsFluid.url);
+		const parsed = tryParseCompatibleResolvedUrl(resolvedAsFluid.url);
 		if (parsed === undefined) {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}
 
 		if (pendingLocalState !== undefined) {
-			const parsedPendingUrl = parseUrl(pendingLocalState.url);
+			const parsedPendingUrl = tryParseCompatibleResolvedUrl(pendingLocalState.url);
 			if (
 				parsedPendingUrl?.id !== parsed.id ||
 				parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")

@@ -41,6 +41,8 @@ import {
 	gcVersionUpgradeToV4Key,
 	gcTombstoneGenerationOptionName,
 	gcSweepGenerationOptionName,
+	throwOnTombstoneLoadOverrideKey,
+	gcThrowOnTombstoneLoadOptionName,
 	GCVersion,
 	runSessionExpiryKey,
 } from "../../gc";
@@ -76,13 +78,19 @@ describe("Garbage Collection configurations", () => {
 	const createGcWithPrivateMembers = (
 		gcMetadata?: IGCMetadata,
 		gcOptions?: IGCRuntimeOptions,
+		isSummarizerClient?: boolean,
 	): GcWithPrivates => {
 		const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && {
 			summaryFormatVersion: 1,
 			message: undefined,
 			...gcMetadata,
 		};
-		return createGarbageCollector({ metadata, gcOptions }) as GcWithPrivates;
+		return createGarbageCollector(
+			{ metadata, gcOptions },
+			undefined /* gcBlobsMap */,
+			undefined /* closeFn */,
+			isSummarizerClient,
+		) as GcWithPrivates;
 	};
 
 	function createGarbageCollector(
@@ -116,7 +124,6 @@ describe("Garbage Collection configurations", () => {
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
 			closeFn,
-			gcTombstoneEnforcementAllowed: true,
 		};
 
 		return GarbageCollector.create({
@@ -843,6 +850,51 @@ describe("Garbage Collection configurations", () => {
 					);
 				});
 			});
+		});
+	});
+
+	describe("throwOnTombstoneLoad", () => {
+		it("throwOnTombstoneLoad enabled", () => {
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0 },
+				{ [gcThrowOnTombstoneLoadOptionName]: true },
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
+		});
+		it("throwOnTombstoneLoad disabled", () => {
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0 },
+				{ [gcThrowOnTombstoneLoadOptionName]: false },
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
+		});
+		it("throwOnTombstoneLoad undefined", () => {
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0 },
+				undefined /* gcOptions */,
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
+		});
+		it("throwOnTombstoneLoad enabled via override", () => {
+			injectedSettings[throwOnTombstoneLoadOverrideKey] = true;
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0 },
+				{ [gcThrowOnTombstoneLoadOptionName]: false },
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
+		});
+		it("throwOnTombstoneLoad disabled via override", () => {
+			injectedSettings[throwOnTombstoneLoadOverrideKey] = false;
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0 },
+				{ [gcThrowOnTombstoneLoadOptionName]: true },
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
 	});
 });

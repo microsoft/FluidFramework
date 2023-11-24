@@ -13,29 +13,37 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../util";
-import { AllowedTypes, Any, FieldKinds, FieldSchema, TreeSchema } from "../../feature-libraries";
+import {
+	AllowedTypes,
+	Any,
+	FieldKinds,
+	LeafNodeSchema,
+	TreeFieldSchema,
+	TreeNodeSchema,
+} from "../../feature-libraries";
 
 import {
-	SchemaBuilder,
 	normalizeAllowedTypes,
 	normalizeField,
+	SchemaBuilderBase,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/schemaBuilder";
-import { ValueSchema } from "../../core";
+} from "../../feature-libraries/schemaBuilderBase";
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
+import { SchemaBuilder } from "../../domains";
 
-describe("SchemaBuilder", () => {
+describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {
 		it("recursive", () => {
-			const builder = new SchemaBuilder({ scope: "test" });
+			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 
-			const recursiveStruct = builder.structRecursive("recursiveStruct", {
-				foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+			const recursiveStruct = builder.objectRecursive("recursiveStruct", {
+				foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 			});
 
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -43,22 +51,22 @@ describe("SchemaBuilder", () => {
 		it("recursive without special functions", () => {
 			// Recursive helper function are needed but can be avoided due to issues covered in https://github.com/microsoft/TypeScript/issues/55758.
 			// This workaround seems to only work for compile time, not for intellisense, which makes it not very useful in practice and hard to verify that it works.
-			const builder = new SchemaBuilder({ scope: "test" });
+			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 
 			const recursiveReference = () => recursiveStruct;
 			type _trickCompilerIntoWorking = requireAssignableTo<
 				typeof recursiveReference,
-				() => TreeSchema
+				() => TreeNodeSchema
 			>;
-			const recursiveStruct = builder.struct("recursiveStruct2", {
-				foo: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			const recursiveStruct = builder.object("recursiveStruct2", {
+				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
 			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -69,43 +77,43 @@ describe("SchemaBuilder", () => {
 			// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 			function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 
-			const builder = new SchemaBuilder({ scope: "test" });
+			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 
 			const recursiveReference = () => recursiveStruct;
 			fixRecursiveReference(recursiveReference);
-			const recursiveStruct = builder.struct("recursiveStruct2", {
-				foo: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			const recursiveStruct = builder.object("recursiveStruct2", {
+				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
 			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
 	});
 
-	describe("toDocumentSchema", () => {
+	describe("intoSchema", () => {
 		it("Simple", () => {
-			const schemaBuilder = new SchemaBuilder({ scope: "test" });
-			const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
-			const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(leafSchema));
+			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
+			const empty = schemaBuilder.object("empty", {});
+			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
-			assert.equal(schema.treeSchema.size, 1); // "leaf"
-			assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
 	describe("intoLibrary", () => {
 		it("Simple", () => {
-			const schemaBuilder = new SchemaBuilder({ scope: "test" });
-			const leafSchema = schemaBuilder.leaf("leaf", ValueSchema.Boolean);
-			const schema = schemaBuilder.finalize();
+			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
+			const empty = schemaBuilder.object("empty", {});
+			const schema = schemaBuilder.intoLibrary();
 
-			assert.equal(schema.treeSchema.size, 1); // "leaf"
-			assert.equal(schema.treeSchema.get(brand("test.leaf")), leafSchema);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -113,9 +121,11 @@ describe("SchemaBuilder", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeSchema({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
 
 		// eslint-disable-next-line no-constant-condition
@@ -130,34 +140,39 @@ describe("SchemaBuilder", () => {
 
 	it("normalizeField", () => {
 		// Check types are normalized correctly
-		const directAny = FieldSchema.create(FieldKinds.optional, [Any]);
+		const directAny = TreeFieldSchema.create(FieldKinds.optional, [Any]);
 		assert(directAny.equals(normalizeField(Any, FieldKinds.optional)));
 		assert(directAny.equals(normalizeField([Any], FieldKinds.optional)));
 		assert(
 			directAny.equals(
-				normalizeField(FieldSchema.create(FieldKinds.optional, [Any]), FieldKinds.optional),
+				normalizeField(
+					TreeFieldSchema.create(FieldKinds.optional, [Any]),
+					FieldKinds.optional,
+				),
 			),
 		);
 
 		assert(
-			FieldSchema.create(FieldKinds.optional, []).equals(
+			TreeFieldSchema.create(FieldKinds.optional, []).equals(
 				normalizeField([], FieldKinds.optional),
 			),
 		);
 
-		const treeSchema = new TreeSchema({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 
 		assert(
-			FieldSchema.create(FieldKinds.optional, [treeSchema]).equals(
+			TreeFieldSchema.create(FieldKinds.optional, [treeSchema]).equals(
 				normalizeField([treeSchema], FieldKinds.optional),
 			),
 		);
 
 		// Check provided field kind is used
 		assert(
-			FieldSchema.create(FieldKinds.required, [treeSchema]).equals(
+			TreeFieldSchema.create(FieldKinds.required, [treeSchema]).equals(
 				normalizeField([treeSchema], FieldKinds.required),
 			),
 		);

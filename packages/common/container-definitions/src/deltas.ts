@@ -22,6 +22,7 @@ import {
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
+ * @public
  */
 export interface IConnectionDetails {
 	clientId: string;
@@ -43,6 +44,7 @@ export interface IConnectionDetails {
 
 /**
  * Contract supporting delivery of outbound messages to the server
+ * @public
  */
 export interface IDeltaSender {
 	/**
@@ -53,6 +55,7 @@ export interface IDeltaSender {
 
 /**
  * Events emitted by {@link IDeltaManager}.
+ * @public
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
@@ -132,6 +135,7 @@ export interface IDeltaManagerEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
+ * @public
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
@@ -212,11 +216,12 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	 */
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 /**
  * Events emitted by {@link IDeltaQueue}.
+ * @public
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
@@ -259,6 +264,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 
 /**
  * Queue of ops to be sent to or processed from storage
+ * @public
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
@@ -306,6 +312,9 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 	waitTillProcessingDone(): Promise<{ count: number; duration: number }>;
 }
 
+/**
+ * @public
+ */
 export type ReadOnlyInfo =
 	| {
 			readonly readonly: false | undefined;

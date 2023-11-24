@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
@@ -26,8 +26,14 @@ export type TestOperation = (
 export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.removeRangeLocal(opStart, opEnd);
 
+export const obliterateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.obliterateRangeLocal(opStart, opEnd);
+
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,

@@ -166,7 +166,7 @@ export interface IDataStore {
 	 * Issue a request against the DataStore for a resource within it.
 	 * @param request - The request to be issued against the DataStore
 	 *
-	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
 	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
 	 *
@@ -175,7 +175,7 @@ export interface IDataStore {
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
@@ -363,7 +363,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
@@ -373,7 +373,7 @@ export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
 	getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
@@ -464,8 +464,9 @@ export interface IFluidDataStoreContext
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
@@ -503,7 +504,7 @@ export interface IFluidDataStoreContext
 	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 *
 	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
 	 * and its children with the GC details from the previous summary.

@@ -11,8 +11,8 @@ list all the commands
 
 ```
 USAGE
-  $ flub commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--sort <value>] [--filter
-    <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
+  $ flub commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--filter <value>] [--no-header |
+    [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>]
 
 FLAGS
   -h, --help         Show CLI help.
@@ -35,4 +35,4 @@ DESCRIPTION
   list all the commands
 ```
 
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.17/src/commands/commands.ts)_
+_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v3.0.4/src/commands/commands.ts)_

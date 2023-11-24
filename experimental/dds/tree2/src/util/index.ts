@@ -21,14 +21,15 @@ export {
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
+	forEachInNestedMap,
 	NestedMap,
 	SizedNestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-	encodeNestedMap,
-	decodeNestedMap,
+	nestedMapToFlatList,
+	nestedMapFromFlatList,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
@@ -104,7 +105,14 @@ export {
 	brandedSlot,
 } from "./brandedMap";
 
-export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+export {
+	getFirstEntryFromRangeMap,
+	getFromRangeMap,
+	RangeEntry,
+	RangeMap,
+	RangeQueryResult,
+	setInRangeMap,
+} from "./rangeMap";
 
 export {
 	IdAllocator,

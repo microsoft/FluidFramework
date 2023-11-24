@@ -9,7 +9,7 @@
 
 import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
 import { ITestTreeProvider, treeWithContent } from "../../utils";
@@ -33,15 +33,15 @@ import { brand } from "../../../util";
 import { ApiMode } from "../../../feature-libraries/schema-aware";
 
 const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
-const nodeSchema = builder.struct("node", {
-	// child: FieldSchema.createUnsafe(
+const nodeSchema = builder.object("node", {
+	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeSchema,	() => nodeWithKeySchema],
 	// ),
 });
-const nodeWithKeySchema = builder.struct("nodeWithKey", {
+const nodeWithKeySchema = builder.object("nodeWithKey", {
 	...nodeKeyField,
-	// child: FieldSchema.createUnsafe(
+	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeWithKeySchema, () => nodeSchema],
 	// ),
@@ -74,17 +74,17 @@ describe("Node Key Index Benchmarks", () => {
 				view: TreeContext,
 				nodeKey?: LocalNodeKey,
 			):
-				| SchemaAware.TypedNode<typeof nodeWithKeySchema, ApiMode.Simple>
-				| SchemaAware.TypedNode<typeof nodeSchema, ApiMode.Simple> {
+				| SchemaAware.TypedNode<typeof nodeWithKeySchema>
+				| SchemaAware.TypedNode<typeof nodeSchema> {
 				if (nodeKey !== undefined) {
 					return {
 						[typeNameSymbol]: nodeWithKeySchema.name,
 						[nodeKeyFieldKey]: view.nodeKeys.stabilize(nodeKey),
-					} satisfies SchemaAware.TypedNode<typeof nodeWithKeySchema, ApiMode.Simple>;
+					} satisfies SchemaAware.TypedNode<typeof nodeWithKeySchema>;
 				}
 				return {
 					[typeNameSymbol]: nodeSchema.name,
-				} satisfies SchemaAware.TypedNode<typeof nodeSchema, ApiMode.Simple>;
+				} satisfies SchemaAware.TypedNode<typeof nodeSchema>;
 			}
 
 			for (const keyDensityPercentage of [5, 50, 100]) {

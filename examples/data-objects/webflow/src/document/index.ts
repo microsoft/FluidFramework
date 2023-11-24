@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {

@@ -6,19 +6,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-// eslint-disable-next-line import/no-deprecated
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
+import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	FluidObject,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
-} from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
@@ -27,7 +20,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString, ReferenceType, reservedRangeLabelsKey } from "@fluidframework/sequence";
 import { EditorView } from "prosemirror-view";
-import { ILoader } from "@fluidframework/container-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 
 import React, { useEffect, useRef } from "react";
 
@@ -58,17 +51,9 @@ function insertMarkers(
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class ProseMirror
-	extends EventEmitter
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor
-{
-	public static async load(
-		runtime: IFluidDataStoreRuntime,
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	) {
-		const collection = new ProseMirror(runtime, context);
+export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
+	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);
 
 		return collection;
@@ -81,10 +66,7 @@ export class ProseMirror
 	public get IFluidLoadable() {
 		return this;
 	}
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
-		return this;
-	}
+
 	public get IRichTextEditor() {
 		return this._collabManager!;
 	}
@@ -100,18 +82,10 @@ export class ProseMirror
 	}
 	private readonly innerHandle: IFluidHandle<this>;
 
-	constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly context: IFluidDataStoreContext,
-	) {
+	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
-	}
-
-	public async request(request: IRequest): Promise<IResponse> {
-		// eslint-disable-next-line import/no-deprecated
-		return defaultFluidObjectRequestHandler(this, request);
 	}
 
 	private async initialize(existing: boolean) {
@@ -129,15 +103,17 @@ export class ProseMirror
 		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
-		const scope: FluidObject<ILoader> = this.context.scope;
-		if (scope.ILoader === undefined) {
-			throw new Error("scope must include ILoader");
-		}
-		this._collabManager = new FluidCollabManager(this.text, scope.ILoader);
+		this._collabManager = new FluidCollabManager(this.text);
 
 		// Access for debugging
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["easyComponent"] = this;
+	}
+
+	public async request(req: IRequest): Promise<IResponse> {
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
 }
 
@@ -150,13 +126,17 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		// eslint-disable-next-line import/no-deprecated
-		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
-			const router = await routerP;
-			return router.request(request);
-		});
+		// request mixin in
+		const runtimeClass = mixinRequestHandler(
+			async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+				// The provideEntryPoint callback below always returns ProseMirror, so this cast is safe
+				const dataObject = (await runtimeArg.entryPoint.get()) as ProseMirror;
+				return dataObject.request?.(request);
+			},
+			FluidDataStoreRuntime,
+		);
 
-		const runtime = new runtimeClass(
+		return new runtimeClass(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -165,14 +145,8 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			() => {
-				// TODO: AB#4993
-				throw new Error("TODO");
-			},
+			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, existing),
 		);
-		const routerP = ProseMirror.load(runtime, context, existing);
-
-		return runtime;
 	}
 }
 

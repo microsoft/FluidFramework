@@ -75,7 +75,7 @@ describe("AzureClient", () => {
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("Created container is detached", async () => {
+	it("created container is detached", async () => {
 		const { container } = await client.createContainer(schema);
 		assert.strictEqual(
 			container.attachState,
@@ -250,5 +250,20 @@ describe("AzureClient", () => {
 			"write",
 			"Getting a container with only write permission is not in write mode",
 		);
+	});
+
+	/**
+	 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
+	 * schema type is statically known.
+	 */
+	it("preserves types of 'initialObjects'", async () => {
+		const { container } = await client.createContainer({
+			initialObjects: {
+				map1: SharedMap,
+			},
+		});
+
+		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
+		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);
 	});
 });

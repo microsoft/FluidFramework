@@ -25,6 +25,7 @@ export interface IJSONTextSegment extends IJSONSegment {
 
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";
+	public readonly type = TextSegment.type;
 
 	public static is(segment: ISegment): segment is TextSegment {
 		return segment.type === TextSegment.type;
@@ -48,14 +49,12 @@ export class TextSegment extends BaseSegment {
 		return undefined;
 	}
 
-	public readonly type = TextSegment.type;
-
 	constructor(public text: string) {
 		super();
 		this.cachedLength = text.length;
 	}
 
-	public toJSONObject() {
+	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
 		return this.properties ? { text: this.text, props: this.properties } : this.text;
@@ -87,22 +86,6 @@ export class TextSegment extends BaseSegment {
 		this.text += segment.text;
 	}
 
-	// TODO: retain removed text for undo
-	// returns true if entire string removed
-	public removeRange(start: number, end: number) {
-		let remnantString = "";
-		const len = this.text.length;
-		if (start > 0) {
-			remnantString += this.text.substring(0, start);
-		}
-		if (end < len) {
-			remnantString += this.text.substring(end);
-		}
-		this.text = remnantString;
-		this.cachedLength = remnantString.length;
-		return remnantString.length === 0;
-	}
-
 	protected createSplitSegmentAt(pos: number) {
 		if (pos > 0) {
 			const remainingText = this.text.substring(pos);
@@ -114,6 +97,9 @@ export class TextSegment extends BaseSegment {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeTextHelper {
 	getText(
 		refSeq: number,

@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_ConfigTypes():
     TypeOnly<old.ConfigTypes>;
 declare function use_current_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<current.ConfigTypes>);
+    use: TypeOnly<current.ConfigTypes>): void;
 use_current_TypeAliasDeclaration_ConfigTypes(
     get_old_TypeAliasDeclaration_ConfigTypes());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_ConfigTypes(
 declare function get_current_TypeAliasDeclaration_ConfigTypes():
     TypeOnly<current.ConfigTypes>;
 declare function use_old_TypeAliasDeclaration_ConfigTypes(
-    use: TypeOnly<old.ConfigTypes>);
+    use: TypeOnly<old.ConfigTypes>): void;
 use_old_TypeAliasDeclaration_ConfigTypes(
     get_current_TypeAliasDeclaration_ConfigTypes());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_ConfigTypes(
 declare function get_old_ClassDeclaration_DataCorruptionError():
     TypeOnly<old.DataCorruptionError>;
 declare function use_current_ClassDeclaration_DataCorruptionError(
-    use: TypeOnly<current.DataCorruptionError>);
+    use: TypeOnly<current.DataCorruptionError>): void;
 use_current_ClassDeclaration_DataCorruptionError(
     get_old_ClassDeclaration_DataCorruptionError());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_DataCorruptionError(
 declare function get_current_ClassDeclaration_DataCorruptionError():
     TypeOnly<current.DataCorruptionError>;
 declare function use_old_ClassDeclaration_DataCorruptionError(
-    use: TypeOnly<old.DataCorruptionError>);
+    use: TypeOnly<old.DataCorruptionError>): void;
 use_old_ClassDeclaration_DataCorruptionError(
     get_current_ClassDeclaration_DataCorruptionError());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_DataCorruptionError(
 declare function get_old_ClassDeclaration_DataProcessingError():
     TypeOnly<old.DataProcessingError>;
 declare function use_current_ClassDeclaration_DataProcessingError(
-    use: TypeOnly<current.DataProcessingError>);
+    use: TypeOnly<current.DataProcessingError>): void;
 use_current_ClassDeclaration_DataProcessingError(
     get_old_ClassDeclaration_DataProcessingError());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_DataProcessingError(
 declare function get_current_ClassDeclaration_DataProcessingError():
     TypeOnly<current.DataProcessingError>;
 declare function use_old_ClassDeclaration_DataProcessingError(
-    use: TypeOnly<old.DataProcessingError>);
+    use: TypeOnly<old.DataProcessingError>): void;
 use_old_ClassDeclaration_DataProcessingError(
     get_current_ClassDeclaration_DataProcessingError());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_DataProcessingError(
 declare function get_old_ClassDeclaration_EventEmitterWithErrorHandling():
     TypeOnly<old.EventEmitterWithErrorHandling>;
 declare function use_current_ClassDeclaration_EventEmitterWithErrorHandling(
-    use: TypeOnly<current.EventEmitterWithErrorHandling>);
+    use: TypeOnly<current.EventEmitterWithErrorHandling>): void;
 use_current_ClassDeclaration_EventEmitterWithErrorHandling(
     get_old_ClassDeclaration_EventEmitterWithErrorHandling());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_EventEmitterWithErrorHandling(
 declare function get_current_ClassDeclaration_EventEmitterWithErrorHandling():
     TypeOnly<current.EventEmitterWithErrorHandling>;
 declare function use_old_ClassDeclaration_EventEmitterWithErrorHandling(
-    use: TypeOnly<old.EventEmitterWithErrorHandling>);
+    use: TypeOnly<old.EventEmitterWithErrorHandling>): void;
 use_old_ClassDeclaration_EventEmitterWithErrorHandling(
     get_current_ClassDeclaration_EventEmitterWithErrorHandling());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_EventEmitterWithErrorHandling(
 declare function get_old_ClassDeclaration_GenericError():
     TypeOnly<old.GenericError>;
 declare function use_current_ClassDeclaration_GenericError(
-    use: TypeOnly<current.GenericError>);
+    use: TypeOnly<current.GenericError>): void;
 use_current_ClassDeclaration_GenericError(
     get_old_ClassDeclaration_GenericError());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_GenericError(
 declare function get_current_ClassDeclaration_GenericError():
     TypeOnly<current.GenericError>;
 declare function use_old_ClassDeclaration_GenericError(
-    use: TypeOnly<old.GenericError>);
+    use: TypeOnly<old.GenericError>): void;
 use_old_ClassDeclaration_GenericError(
     get_current_ClassDeclaration_GenericError());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_GenericError(
 declare function get_old_InterfaceDeclaration_IConfigProvider():
     TypeOnly<old.IConfigProvider>;
 declare function use_current_InterfaceDeclaration_IConfigProvider(
-    use: TypeOnly<current.IConfigProvider>);
+    use: TypeOnly<current.IConfigProvider>): void;
 use_current_InterfaceDeclaration_IConfigProvider(
     get_old_InterfaceDeclaration_IConfigProvider());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IConfigProvider(
 declare function get_current_InterfaceDeclaration_IConfigProvider():
     TypeOnly<current.IConfigProvider>;
 declare function use_old_InterfaceDeclaration_IConfigProvider(
-    use: TypeOnly<old.IConfigProvider>);
+    use: TypeOnly<old.IConfigProvider>): void;
 use_old_InterfaceDeclaration_IConfigProvider(
     get_current_InterfaceDeclaration_IConfigProvider());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IConfigProvider(
 declare function get_old_InterfaceDeclaration_IConfigProviderBase():
     TypeOnly<old.IConfigProviderBase>;
 declare function use_current_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<current.IConfigProviderBase>);
+    use: TypeOnly<current.IConfigProviderBase>): void;
 use_current_InterfaceDeclaration_IConfigProviderBase(
     get_old_InterfaceDeclaration_IConfigProviderBase());
 
@@ -185,9 +185,33 @@ use_current_InterfaceDeclaration_IConfigProviderBase(
 declare function get_current_InterfaceDeclaration_IConfigProviderBase():
     TypeOnly<current.IConfigProviderBase>;
 declare function use_old_InterfaceDeclaration_IConfigProviderBase(
-    use: TypeOnly<old.IConfigProviderBase>);
+    use: TypeOnly<old.IConfigProviderBase>): void;
 use_old_InterfaceDeclaration_IConfigProviderBase(
     get_current_InterfaceDeclaration_IConfigProviderBase());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventSampler": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEventSampler():
+    TypeOnly<old.IEventSampler>;
+declare function use_current_InterfaceDeclaration_IEventSampler(
+    use: TypeOnly<current.IEventSampler>): void;
+use_current_InterfaceDeclaration_IEventSampler(
+    get_old_InterfaceDeclaration_IEventSampler());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEventSampler": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEventSampler():
+    TypeOnly<current.IEventSampler>;
+declare function use_old_InterfaceDeclaration_IEventSampler(
+    use: TypeOnly<old.IEventSampler>): void;
+use_old_InterfaceDeclaration_IEventSampler(
+    get_current_InterfaceDeclaration_IEventSampler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -197,7 +221,7 @@ use_old_InterfaceDeclaration_IConfigProviderBase(
 declare function get_old_InterfaceDeclaration_IFluidErrorAnnotations():
     TypeOnly<old.IFluidErrorAnnotations>;
 declare function use_current_InterfaceDeclaration_IFluidErrorAnnotations(
-    use: TypeOnly<current.IFluidErrorAnnotations>);
+    use: TypeOnly<current.IFluidErrorAnnotations>): void;
 use_current_InterfaceDeclaration_IFluidErrorAnnotations(
     get_old_InterfaceDeclaration_IFluidErrorAnnotations());
 
@@ -209,7 +233,7 @@ use_current_InterfaceDeclaration_IFluidErrorAnnotations(
 declare function get_current_InterfaceDeclaration_IFluidErrorAnnotations():
     TypeOnly<current.IFluidErrorAnnotations>;
 declare function use_old_InterfaceDeclaration_IFluidErrorAnnotations(
-    use: TypeOnly<old.IFluidErrorAnnotations>);
+    use: TypeOnly<old.IFluidErrorAnnotations>): void;
 use_old_InterfaceDeclaration_IFluidErrorAnnotations(
     get_current_InterfaceDeclaration_IFluidErrorAnnotations());
 
@@ -221,7 +245,7 @@ use_old_InterfaceDeclaration_IFluidErrorAnnotations(
 declare function get_old_InterfaceDeclaration_IFluidErrorBase():
     TypeOnly<old.IFluidErrorBase>;
 declare function use_current_InterfaceDeclaration_IFluidErrorBase(
-    use: TypeOnly<current.IFluidErrorBase>);
+    use: TypeOnly<current.IFluidErrorBase>): void;
 use_current_InterfaceDeclaration_IFluidErrorBase(
     get_old_InterfaceDeclaration_IFluidErrorBase());
 
@@ -233,7 +257,7 @@ use_current_InterfaceDeclaration_IFluidErrorBase(
 declare function get_current_InterfaceDeclaration_IFluidErrorBase():
     TypeOnly<current.IFluidErrorBase>;
 declare function use_old_InterfaceDeclaration_IFluidErrorBase(
-    use: TypeOnly<old.IFluidErrorBase>);
+    use: TypeOnly<old.IFluidErrorBase>): void;
 use_old_InterfaceDeclaration_IFluidErrorBase(
     get_current_InterfaceDeclaration_IFluidErrorBase());
 
@@ -245,7 +269,7 @@ use_old_InterfaceDeclaration_IFluidErrorBase(
 declare function get_old_InterfaceDeclaration_IPerformanceEventMarkers():
     TypeOnly<old.IPerformanceEventMarkers>;
 declare function use_current_InterfaceDeclaration_IPerformanceEventMarkers(
-    use: TypeOnly<current.IPerformanceEventMarkers>);
+    use: TypeOnly<current.IPerformanceEventMarkers>): void;
 use_current_InterfaceDeclaration_IPerformanceEventMarkers(
     get_old_InterfaceDeclaration_IPerformanceEventMarkers());
 
@@ -257,9 +281,33 @@ use_current_InterfaceDeclaration_IPerformanceEventMarkers(
 declare function get_current_InterfaceDeclaration_IPerformanceEventMarkers():
     TypeOnly<current.IPerformanceEventMarkers>;
 declare function use_old_InterfaceDeclaration_IPerformanceEventMarkers(
-    use: TypeOnly<old.IPerformanceEventMarkers>);
+    use: TypeOnly<old.IPerformanceEventMarkers>): void;
 use_old_InterfaceDeclaration_IPerformanceEventMarkers(
     get_current_InterfaceDeclaration_IPerformanceEventMarkers());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISampledTelemetryLogger": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISampledTelemetryLogger():
+    TypeOnly<old.ISampledTelemetryLogger>;
+declare function use_current_InterfaceDeclaration_ISampledTelemetryLogger(
+    use: TypeOnly<current.ISampledTelemetryLogger>): void;
+use_current_InterfaceDeclaration_ISampledTelemetryLogger(
+    get_old_InterfaceDeclaration_ISampledTelemetryLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISampledTelemetryLogger": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISampledTelemetryLogger():
+    TypeOnly<current.ISampledTelemetryLogger>;
+declare function use_old_InterfaceDeclaration_ISampledTelemetryLogger(
+    use: TypeOnly<old.ISampledTelemetryLogger>): void;
+use_old_InterfaceDeclaration_ISampledTelemetryLogger(
+    get_current_InterfaceDeclaration_ISampledTelemetryLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -269,7 +317,7 @@ use_old_InterfaceDeclaration_IPerformanceEventMarkers(
 declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt():
     TypeOnly<old.ITaggedTelemetryPropertyTypeExt>;
 declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
-    use: TypeOnly<current.ITaggedTelemetryPropertyTypeExt>);
+    use: TypeOnly<current.ITaggedTelemetryPropertyTypeExt>): void;
 use_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     get_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
 
@@ -281,7 +329,7 @@ use_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
 declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt():
     TypeOnly<current.ITaggedTelemetryPropertyTypeExt>;
 declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
-    use: TypeOnly<old.ITaggedTelemetryPropertyTypeExt>);
+    use: TypeOnly<old.ITaggedTelemetryPropertyTypeExt>): void;
 use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
 
@@ -293,7 +341,7 @@ use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
 declare function get_old_InterfaceDeclaration_ITelemetryErrorEventExt():
     TypeOnly<old.ITelemetryErrorEventExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryErrorEventExt(
-    use: TypeOnly<current.ITelemetryErrorEventExt>);
+    use: TypeOnly<current.ITelemetryErrorEventExt>): void;
 use_current_InterfaceDeclaration_ITelemetryErrorEventExt(
     get_old_InterfaceDeclaration_ITelemetryErrorEventExt());
 
@@ -305,7 +353,7 @@ use_current_InterfaceDeclaration_ITelemetryErrorEventExt(
 declare function get_current_InterfaceDeclaration_ITelemetryErrorEventExt():
     TypeOnly<current.ITelemetryErrorEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
-    use: TypeOnly<old.ITelemetryErrorEventExt>);
+    use: TypeOnly<old.ITelemetryErrorEventExt>): void;
 use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
     get_current_InterfaceDeclaration_ITelemetryErrorEventExt());
 
@@ -317,7 +365,7 @@ use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
 declare function get_old_InterfaceDeclaration_ITelemetryEventExt():
     TypeOnly<old.ITelemetryEventExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryEventExt(
-    use: TypeOnly<current.ITelemetryEventExt>);
+    use: TypeOnly<current.ITelemetryEventExt>): void;
 use_current_InterfaceDeclaration_ITelemetryEventExt(
     get_old_InterfaceDeclaration_ITelemetryEventExt());
 
@@ -329,7 +377,7 @@ use_current_InterfaceDeclaration_ITelemetryEventExt(
 declare function get_current_InterfaceDeclaration_ITelemetryEventExt():
     TypeOnly<current.ITelemetryEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryEventExt(
-    use: TypeOnly<old.ITelemetryEventExt>);
+    use: TypeOnly<old.ITelemetryEventExt>): void;
 use_old_InterfaceDeclaration_ITelemetryEventExt(
     get_current_InterfaceDeclaration_ITelemetryEventExt());
 
@@ -341,7 +389,7 @@ use_old_InterfaceDeclaration_ITelemetryEventExt(
 declare function get_old_InterfaceDeclaration_ITelemetryGenericEventExt():
     TypeOnly<old.ITelemetryGenericEventExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryGenericEventExt(
-    use: TypeOnly<current.ITelemetryGenericEventExt>);
+    use: TypeOnly<current.ITelemetryGenericEventExt>): void;
 use_current_InterfaceDeclaration_ITelemetryGenericEventExt(
     get_old_InterfaceDeclaration_ITelemetryGenericEventExt());
 
@@ -353,7 +401,7 @@ use_current_InterfaceDeclaration_ITelemetryGenericEventExt(
 declare function get_current_InterfaceDeclaration_ITelemetryGenericEventExt():
     TypeOnly<current.ITelemetryGenericEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
-    use: TypeOnly<old.ITelemetryGenericEventExt>);
+    use: TypeOnly<old.ITelemetryGenericEventExt>): void;
 use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
     get_current_InterfaceDeclaration_ITelemetryGenericEventExt());
 
@@ -365,7 +413,7 @@ use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
 declare function get_old_InterfaceDeclaration_ITelemetryLoggerExt():
     TypeOnly<old.ITelemetryLoggerExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryLoggerExt(
-    use: TypeOnly<current.ITelemetryLoggerExt>);
+    use: TypeOnly<current.ITelemetryLoggerExt>): void;
 use_current_InterfaceDeclaration_ITelemetryLoggerExt(
     get_old_InterfaceDeclaration_ITelemetryLoggerExt());
 
@@ -377,7 +425,7 @@ use_current_InterfaceDeclaration_ITelemetryLoggerExt(
 declare function get_current_InterfaceDeclaration_ITelemetryLoggerExt():
     TypeOnly<current.ITelemetryLoggerExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryLoggerExt(
-    use: TypeOnly<old.ITelemetryLoggerExt>);
+    use: TypeOnly<old.ITelemetryLoggerExt>): void;
 use_old_InterfaceDeclaration_ITelemetryLoggerExt(
     get_current_InterfaceDeclaration_ITelemetryLoggerExt());
 
@@ -389,7 +437,7 @@ use_old_InterfaceDeclaration_ITelemetryLoggerExt(
 declare function get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<old.ITelemetryLoggerPropertyBag>;
 declare function use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
-    use: TypeOnly<current.ITelemetryLoggerPropertyBag>);
+    use: TypeOnly<current.ITelemetryLoggerPropertyBag>): void;
 use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
     get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
 
@@ -401,7 +449,7 @@ use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
 declare function get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<current.ITelemetryLoggerPropertyBag>;
 declare function use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
-    use: TypeOnly<old.ITelemetryLoggerPropertyBag>);
+    use: TypeOnly<old.ITelemetryLoggerPropertyBag>): void;
 use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
     get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
 
@@ -413,7 +461,7 @@ use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
 declare function get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags():
     TypeOnly<old.ITelemetryLoggerPropertyBags>;
 declare function use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
-    use: TypeOnly<current.ITelemetryLoggerPropertyBags>);
+    use: TypeOnly<current.ITelemetryLoggerPropertyBags>): void;
 use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
     get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags());
 
@@ -425,7 +473,7 @@ use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
 declare function get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBags():
     TypeOnly<current.ITelemetryLoggerPropertyBags>;
 declare function use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
-    use: TypeOnly<old.ITelemetryLoggerPropertyBags>);
+    use: TypeOnly<old.ITelemetryLoggerPropertyBags>): void;
 use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
     get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBags());
 
@@ -437,7 +485,7 @@ use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
 declare function get_old_InterfaceDeclaration_ITelemetryPerformanceEventExt():
     TypeOnly<old.ITelemetryPerformanceEventExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
-    use: TypeOnly<current.ITelemetryPerformanceEventExt>);
+    use: TypeOnly<current.ITelemetryPerformanceEventExt>): void;
 use_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     get_old_InterfaceDeclaration_ITelemetryPerformanceEventExt());
 
@@ -449,7 +497,7 @@ use_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
 declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt():
     TypeOnly<current.ITelemetryPerformanceEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
-    use: TypeOnly<old.ITelemetryPerformanceEventExt>);
+    use: TypeOnly<old.ITelemetryPerformanceEventExt>): void;
 use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt());
 
@@ -461,7 +509,7 @@ use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
 declare function get_old_InterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<old.ITelemetryPropertiesExt>;
 declare function use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
-    use: TypeOnly<current.ITelemetryPropertiesExt>);
+    use: TypeOnly<current.ITelemetryPropertiesExt>): void;
 use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
     get_old_InterfaceDeclaration_ITelemetryPropertiesExt());
 
@@ -473,7 +521,7 @@ use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
 declare function get_current_InterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<current.ITelemetryPropertiesExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
-    use: TypeOnly<old.ITelemetryPropertiesExt>);
+    use: TypeOnly<old.ITelemetryPropertiesExt>): void;
 use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
     get_current_InterfaceDeclaration_ITelemetryPropertiesExt());
 
@@ -485,7 +533,7 @@ use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
 declare function get_old_ClassDeclaration_LoggingError():
     TypeOnly<old.LoggingError>;
 declare function use_current_ClassDeclaration_LoggingError(
-    use: TypeOnly<current.LoggingError>);
+    use: TypeOnly<current.LoggingError>): void;
 use_current_ClassDeclaration_LoggingError(
     get_old_ClassDeclaration_LoggingError());
 
@@ -497,7 +545,7 @@ use_current_ClassDeclaration_LoggingError(
 declare function get_current_ClassDeclaration_LoggingError():
     TypeOnly<current.LoggingError>;
 declare function use_old_ClassDeclaration_LoggingError(
-    use: TypeOnly<old.LoggingError>);
+    use: TypeOnly<old.LoggingError>): void;
 use_old_ClassDeclaration_LoggingError(
     get_current_ClassDeclaration_LoggingError());
 
@@ -509,7 +557,7 @@ use_old_ClassDeclaration_LoggingError(
 declare function get_old_ClassDeclaration_MockLogger():
     TypeOnly<old.MockLogger>;
 declare function use_current_ClassDeclaration_MockLogger(
-    use: TypeOnly<current.MockLogger>);
+    use: TypeOnly<current.MockLogger>): void;
 use_current_ClassDeclaration_MockLogger(
     get_old_ClassDeclaration_MockLogger());
 
@@ -521,7 +569,7 @@ use_current_ClassDeclaration_MockLogger(
 declare function get_current_ClassDeclaration_MockLogger():
     TypeOnly<current.MockLogger>;
 declare function use_old_ClassDeclaration_MockLogger(
-    use: TypeOnly<old.MockLogger>);
+    use: TypeOnly<old.MockLogger>): void;
 use_old_ClassDeclaration_MockLogger(
     get_current_ClassDeclaration_MockLogger());
 
@@ -533,7 +581,7 @@ use_old_ClassDeclaration_MockLogger(
 declare function get_old_InterfaceDeclaration_MonitoringContext():
     TypeOnly<old.MonitoringContext>;
 declare function use_current_InterfaceDeclaration_MonitoringContext(
-    use: TypeOnly<current.MonitoringContext>);
+    use: TypeOnly<current.MonitoringContext>): void;
 use_current_InterfaceDeclaration_MonitoringContext(
     get_old_InterfaceDeclaration_MonitoringContext());
 
@@ -545,7 +593,7 @@ use_current_InterfaceDeclaration_MonitoringContext(
 declare function get_current_InterfaceDeclaration_MonitoringContext():
     TypeOnly<current.MonitoringContext>;
 declare function use_old_InterfaceDeclaration_MonitoringContext(
-    use: TypeOnly<old.MonitoringContext>);
+    use: TypeOnly<old.MonitoringContext>): void;
 use_old_InterfaceDeclaration_MonitoringContext(
     get_current_InterfaceDeclaration_MonitoringContext());
 
@@ -557,7 +605,7 @@ use_old_InterfaceDeclaration_MonitoringContext(
 declare function get_old_VariableDeclaration_NORMALIZED_ERROR_TYPE():
     TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>;
 declare function use_current_VariableDeclaration_NORMALIZED_ERROR_TYPE(
-    use: TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>);
+    use: TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>): void;
 use_current_VariableDeclaration_NORMALIZED_ERROR_TYPE(
     get_old_VariableDeclaration_NORMALIZED_ERROR_TYPE());
 
@@ -569,7 +617,7 @@ use_current_VariableDeclaration_NORMALIZED_ERROR_TYPE(
 declare function get_current_VariableDeclaration_NORMALIZED_ERROR_TYPE():
     TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>;
 declare function use_old_VariableDeclaration_NORMALIZED_ERROR_TYPE(
-    use: TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>);
+    use: TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>): void;
 use_old_VariableDeclaration_NORMALIZED_ERROR_TYPE(
     get_current_VariableDeclaration_NORMALIZED_ERROR_TYPE());
 
@@ -581,7 +629,7 @@ use_old_VariableDeclaration_NORMALIZED_ERROR_TYPE(
 declare function get_old_ClassDeclaration_PerformanceEvent():
     TypeOnly<old.PerformanceEvent>;
 declare function use_current_ClassDeclaration_PerformanceEvent(
-    use: TypeOnly<current.PerformanceEvent>);
+    use: TypeOnly<current.PerformanceEvent>): void;
 use_current_ClassDeclaration_PerformanceEvent(
     get_old_ClassDeclaration_PerformanceEvent());
 
@@ -593,7 +641,7 @@ use_current_ClassDeclaration_PerformanceEvent(
 declare function get_current_ClassDeclaration_PerformanceEvent():
     TypeOnly<current.PerformanceEvent>;
 declare function use_old_ClassDeclaration_PerformanceEvent(
-    use: TypeOnly<old.PerformanceEvent>);
+    use: TypeOnly<old.PerformanceEvent>): void;
 use_old_ClassDeclaration_PerformanceEvent(
     get_current_ClassDeclaration_PerformanceEvent());
 
@@ -605,7 +653,7 @@ use_old_ClassDeclaration_PerformanceEvent(
 declare function get_old_ClassDeclaration_SampledTelemetryHelper():
     TypeOnly<old.SampledTelemetryHelper>;
 declare function use_current_ClassDeclaration_SampledTelemetryHelper(
-    use: TypeOnly<current.SampledTelemetryHelper>);
+    use: TypeOnly<current.SampledTelemetryHelper>): void;
 use_current_ClassDeclaration_SampledTelemetryHelper(
     get_old_ClassDeclaration_SampledTelemetryHelper());
 
@@ -617,7 +665,7 @@ use_current_ClassDeclaration_SampledTelemetryHelper(
 declare function get_current_ClassDeclaration_SampledTelemetryHelper():
     TypeOnly<current.SampledTelemetryHelper>;
 declare function use_old_ClassDeclaration_SampledTelemetryHelper(
-    use: TypeOnly<old.SampledTelemetryHelper>);
+    use: TypeOnly<old.SampledTelemetryHelper>): void;
 use_old_ClassDeclaration_SampledTelemetryHelper(
     get_current_ClassDeclaration_SampledTelemetryHelper());
 
@@ -629,7 +677,7 @@ use_old_ClassDeclaration_SampledTelemetryHelper(
 declare function get_old_ClassDeclaration_TaggedLoggerAdapter():
     TypeOnly<old.TaggedLoggerAdapter>;
 declare function use_current_ClassDeclaration_TaggedLoggerAdapter(
-    use: TypeOnly<current.TaggedLoggerAdapter>);
+    use: TypeOnly<current.TaggedLoggerAdapter>): void;
 use_current_ClassDeclaration_TaggedLoggerAdapter(
     get_old_ClassDeclaration_TaggedLoggerAdapter());
 
@@ -641,7 +689,7 @@ use_current_ClassDeclaration_TaggedLoggerAdapter(
 declare function get_current_ClassDeclaration_TaggedLoggerAdapter():
     TypeOnly<current.TaggedLoggerAdapter>;
 declare function use_old_ClassDeclaration_TaggedLoggerAdapter(
-    use: TypeOnly<old.TaggedLoggerAdapter>);
+    use: TypeOnly<old.TaggedLoggerAdapter>): void;
 use_old_ClassDeclaration_TaggedLoggerAdapter(
     get_current_ClassDeclaration_TaggedLoggerAdapter());
 
@@ -653,7 +701,7 @@ use_old_ClassDeclaration_TaggedLoggerAdapter(
 declare function get_old_EnumDeclaration_TelemetryDataTag():
     TypeOnly<old.TelemetryDataTag>;
 declare function use_current_EnumDeclaration_TelemetryDataTag(
-    use: TypeOnly<current.TelemetryDataTag>);
+    use: TypeOnly<current.TelemetryDataTag>): void;
 use_current_EnumDeclaration_TelemetryDataTag(
     get_old_EnumDeclaration_TelemetryDataTag());
 
@@ -665,7 +713,7 @@ use_current_EnumDeclaration_TelemetryDataTag(
 declare function get_current_EnumDeclaration_TelemetryDataTag():
     TypeOnly<current.TelemetryDataTag>;
 declare function use_old_EnumDeclaration_TelemetryDataTag(
-    use: TypeOnly<old.TelemetryDataTag>);
+    use: TypeOnly<old.TelemetryDataTag>): void;
 use_old_EnumDeclaration_TelemetryDataTag(
     get_current_EnumDeclaration_TelemetryDataTag());
 
@@ -677,7 +725,7 @@ use_old_EnumDeclaration_TelemetryDataTag(
 declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
     TypeOnly<old.TelemetryEventCategory>;
 declare function use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<current.TelemetryEventCategory>);
+    use: TypeOnly<current.TelemetryEventCategory>): void;
 use_current_TypeAliasDeclaration_TelemetryEventCategory(
     get_old_TypeAliasDeclaration_TelemetryEventCategory());
 
@@ -689,7 +737,7 @@ use_current_TypeAliasDeclaration_TelemetryEventCategory(
 declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
     TypeOnly<current.TelemetryEventCategory>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<old.TelemetryEventCategory>);
+    use: TypeOnly<old.TelemetryEventCategory>): void;
 use_old_TypeAliasDeclaration_TelemetryEventCategory(
     get_current_TypeAliasDeclaration_TelemetryEventCategory());
 
@@ -701,7 +749,7 @@ use_old_TypeAliasDeclaration_TelemetryEventCategory(
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt():
     TypeOnly<old.TelemetryEventPropertyTypeExt>;
 declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
-    use: TypeOnly<current.TelemetryEventPropertyTypeExt>);
+    use: TypeOnly<current.TelemetryEventPropertyTypeExt>): void;
 use_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     get_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt());
 
@@ -713,7 +761,7 @@ use_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
 declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt():
     TypeOnly<current.TelemetryEventPropertyTypeExt>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
-    use: TypeOnly<old.TelemetryEventPropertyTypeExt>);
+    use: TypeOnly<old.TelemetryEventPropertyTypeExt>): void;
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt());
 
@@ -725,7 +773,7 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyTypes():
     TypeOnly<old.TelemetryEventPropertyTypes>;
 declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyTypes(
-    use: TypeOnly<current.TelemetryEventPropertyTypes>);
+    use: TypeOnly<current.TelemetryEventPropertyTypes>): void;
 use_current_TypeAliasDeclaration_TelemetryEventPropertyTypes(
     get_old_TypeAliasDeclaration_TelemetryEventPropertyTypes());
 
@@ -737,7 +785,7 @@ use_current_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes():
     TypeOnly<current.TelemetryEventPropertyTypes>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
-    use: TypeOnly<old.TelemetryEventPropertyTypes>);
+    use: TypeOnly<old.TelemetryEventPropertyTypes>): void;
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
     get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes());
 
@@ -749,7 +797,7 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 declare function get_old_ClassDeclaration_TelemetryNullLogger():
     TypeOnly<old.TelemetryNullLogger>;
 declare function use_current_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<current.TelemetryNullLogger>);
+    use: TypeOnly<current.TelemetryNullLogger>): void;
 use_current_ClassDeclaration_TelemetryNullLogger(
     get_old_ClassDeclaration_TelemetryNullLogger());
 
@@ -761,7 +809,7 @@ use_current_ClassDeclaration_TelemetryNullLogger(
 declare function get_current_ClassDeclaration_TelemetryNullLogger():
     TypeOnly<current.TelemetryNullLogger>;
 declare function use_old_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<old.TelemetryNullLogger>);
+    use: TypeOnly<old.TelemetryNullLogger>): void;
 use_old_ClassDeclaration_TelemetryNullLogger(
     get_current_ClassDeclaration_TelemetryNullLogger());
 
@@ -773,7 +821,7 @@ use_old_ClassDeclaration_TelemetryNullLogger(
 declare function get_old_ClassDeclaration_ThresholdCounter():
     TypeOnly<old.ThresholdCounter>;
 declare function use_current_ClassDeclaration_ThresholdCounter(
-    use: TypeOnly<current.ThresholdCounter>);
+    use: TypeOnly<current.ThresholdCounter>): void;
 use_current_ClassDeclaration_ThresholdCounter(
     get_old_ClassDeclaration_ThresholdCounter());
 
@@ -785,7 +833,7 @@ use_current_ClassDeclaration_ThresholdCounter(
 declare function get_current_ClassDeclaration_ThresholdCounter():
     TypeOnly<current.ThresholdCounter>;
 declare function use_old_ClassDeclaration_ThresholdCounter(
-    use: TypeOnly<old.ThresholdCounter>);
+    use: TypeOnly<old.ThresholdCounter>): void;
 use_old_ClassDeclaration_ThresholdCounter(
     get_current_ClassDeclaration_ThresholdCounter());
 
@@ -797,7 +845,7 @@ use_old_ClassDeclaration_ThresholdCounter(
 declare function get_old_ClassDeclaration_UsageError():
     TypeOnly<old.UsageError>;
 declare function use_current_ClassDeclaration_UsageError(
-    use: TypeOnly<current.UsageError>);
+    use: TypeOnly<current.UsageError>): void;
 use_current_ClassDeclaration_UsageError(
     get_old_ClassDeclaration_UsageError());
 
@@ -809,7 +857,7 @@ use_current_ClassDeclaration_UsageError(
 declare function get_current_ClassDeclaration_UsageError():
     TypeOnly<current.UsageError>;
 declare function use_old_ClassDeclaration_UsageError(
-    use: TypeOnly<old.UsageError>);
+    use: TypeOnly<old.UsageError>): void;
 use_old_ClassDeclaration_UsageError(
     get_current_ClassDeclaration_UsageError());
 
@@ -821,7 +869,7 @@ use_old_ClassDeclaration_UsageError(
 declare function get_old_VariableDeclaration_connectedEventName():
     TypeOnly<typeof old.connectedEventName>;
 declare function use_current_VariableDeclaration_connectedEventName(
-    use: TypeOnly<typeof current.connectedEventName>);
+    use: TypeOnly<typeof current.connectedEventName>): void;
 use_current_VariableDeclaration_connectedEventName(
     get_old_VariableDeclaration_connectedEventName());
 
@@ -833,7 +881,7 @@ use_current_VariableDeclaration_connectedEventName(
 declare function get_current_VariableDeclaration_connectedEventName():
     TypeOnly<typeof current.connectedEventName>;
 declare function use_old_VariableDeclaration_connectedEventName(
-    use: TypeOnly<typeof old.connectedEventName>);
+    use: TypeOnly<typeof old.connectedEventName>): void;
 use_old_VariableDeclaration_connectedEventName(
     get_current_VariableDeclaration_connectedEventName());
 
@@ -845,7 +893,7 @@ use_old_VariableDeclaration_connectedEventName(
 declare function get_old_FunctionDeclaration_createChildLogger():
     TypeOnly<typeof old.createChildLogger>;
 declare function use_current_FunctionDeclaration_createChildLogger(
-    use: TypeOnly<typeof current.createChildLogger>);
+    use: TypeOnly<typeof current.createChildLogger>): void;
 use_current_FunctionDeclaration_createChildLogger(
     get_old_FunctionDeclaration_createChildLogger());
 
@@ -857,7 +905,7 @@ use_current_FunctionDeclaration_createChildLogger(
 declare function get_current_FunctionDeclaration_createChildLogger():
     TypeOnly<typeof current.createChildLogger>;
 declare function use_old_FunctionDeclaration_createChildLogger(
-    use: TypeOnly<typeof old.createChildLogger>);
+    use: TypeOnly<typeof old.createChildLogger>): void;
 use_old_FunctionDeclaration_createChildLogger(
     get_current_FunctionDeclaration_createChildLogger());
 
@@ -869,7 +917,7 @@ use_old_FunctionDeclaration_createChildLogger(
 declare function get_old_FunctionDeclaration_createChildMonitoringContext():
     TypeOnly<typeof old.createChildMonitoringContext>;
 declare function use_current_FunctionDeclaration_createChildMonitoringContext(
-    use: TypeOnly<typeof current.createChildMonitoringContext>);
+    use: TypeOnly<typeof current.createChildMonitoringContext>): void;
 use_current_FunctionDeclaration_createChildMonitoringContext(
     get_old_FunctionDeclaration_createChildMonitoringContext());
 
@@ -881,7 +929,7 @@ use_current_FunctionDeclaration_createChildMonitoringContext(
 declare function get_current_FunctionDeclaration_createChildMonitoringContext():
     TypeOnly<typeof current.createChildMonitoringContext>;
 declare function use_old_FunctionDeclaration_createChildMonitoringContext(
-    use: TypeOnly<typeof old.createChildMonitoringContext>);
+    use: TypeOnly<typeof old.createChildMonitoringContext>): void;
 use_old_FunctionDeclaration_createChildMonitoringContext(
     get_current_FunctionDeclaration_createChildMonitoringContext());
 
@@ -893,7 +941,7 @@ use_old_FunctionDeclaration_createChildMonitoringContext(
 declare function get_old_FunctionDeclaration_createMultiSinkLogger():
     TypeOnly<typeof old.createMultiSinkLogger>;
 declare function use_current_FunctionDeclaration_createMultiSinkLogger(
-    use: TypeOnly<typeof current.createMultiSinkLogger>);
+    use: TypeOnly<typeof current.createMultiSinkLogger>): void;
 use_current_FunctionDeclaration_createMultiSinkLogger(
     get_old_FunctionDeclaration_createMultiSinkLogger());
 
@@ -905,9 +953,33 @@ use_current_FunctionDeclaration_createMultiSinkLogger(
 declare function get_current_FunctionDeclaration_createMultiSinkLogger():
     TypeOnly<typeof current.createMultiSinkLogger>;
 declare function use_old_FunctionDeclaration_createMultiSinkLogger(
-    use: TypeOnly<typeof old.createMultiSinkLogger>);
+    use: TypeOnly<typeof old.createMultiSinkLogger>): void;
 use_old_FunctionDeclaration_createMultiSinkLogger(
     get_current_FunctionDeclaration_createMultiSinkLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSampledLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSampledLogger():
+    TypeOnly<typeof old.createSampledLogger>;
+declare function use_current_FunctionDeclaration_createSampledLogger(
+    use: TypeOnly<typeof current.createSampledLogger>): void;
+use_current_FunctionDeclaration_createSampledLogger(
+    get_old_FunctionDeclaration_createSampledLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSampledLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSampledLogger():
+    TypeOnly<typeof current.createSampledLogger>;
+declare function use_old_FunctionDeclaration_createSampledLogger(
+    use: TypeOnly<typeof old.createSampledLogger>): void;
+use_old_FunctionDeclaration_createSampledLogger(
+    get_current_FunctionDeclaration_createSampledLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -917,7 +989,7 @@ use_old_FunctionDeclaration_createMultiSinkLogger(
 declare function get_old_VariableDeclaration_disconnectedEventName():
     TypeOnly<typeof old.disconnectedEventName>;
 declare function use_current_VariableDeclaration_disconnectedEventName(
-    use: TypeOnly<typeof current.disconnectedEventName>);
+    use: TypeOnly<typeof current.disconnectedEventName>): void;
 use_current_VariableDeclaration_disconnectedEventName(
     get_old_VariableDeclaration_disconnectedEventName());
 
@@ -929,7 +1001,7 @@ use_current_VariableDeclaration_disconnectedEventName(
 declare function get_current_VariableDeclaration_disconnectedEventName():
     TypeOnly<typeof current.disconnectedEventName>;
 declare function use_old_VariableDeclaration_disconnectedEventName(
-    use: TypeOnly<typeof old.disconnectedEventName>);
+    use: TypeOnly<typeof old.disconnectedEventName>): void;
 use_old_VariableDeclaration_disconnectedEventName(
     get_current_VariableDeclaration_disconnectedEventName());
 
@@ -941,7 +1013,7 @@ use_old_VariableDeclaration_disconnectedEventName(
 declare function get_old_VariableDeclaration_eventNamespaceSeparator():
     TypeOnly<typeof old.eventNamespaceSeparator>;
 declare function use_current_VariableDeclaration_eventNamespaceSeparator(
-    use: TypeOnly<typeof current.eventNamespaceSeparator>);
+    use: TypeOnly<typeof current.eventNamespaceSeparator>): void;
 use_current_VariableDeclaration_eventNamespaceSeparator(
     get_old_VariableDeclaration_eventNamespaceSeparator());
 
@@ -953,7 +1025,7 @@ use_current_VariableDeclaration_eventNamespaceSeparator(
 declare function get_current_VariableDeclaration_eventNamespaceSeparator():
     TypeOnly<typeof current.eventNamespaceSeparator>;
 declare function use_old_VariableDeclaration_eventNamespaceSeparator(
-    use: TypeOnly<typeof old.eventNamespaceSeparator>);
+    use: TypeOnly<typeof old.eventNamespaceSeparator>): void;
 use_old_VariableDeclaration_eventNamespaceSeparator(
     get_current_VariableDeclaration_eventNamespaceSeparator());
 
@@ -965,7 +1037,7 @@ use_old_VariableDeclaration_eventNamespaceSeparator(
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
     TypeOnly<typeof old.extractLogSafeErrorProperties>;
 declare function use_current_FunctionDeclaration_extractLogSafeErrorProperties(
-    use: TypeOnly<typeof current.extractLogSafeErrorProperties>);
+    use: TypeOnly<typeof current.extractLogSafeErrorProperties>): void;
 use_current_FunctionDeclaration_extractLogSafeErrorProperties(
     get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
@@ -977,7 +1049,7 @@ use_current_FunctionDeclaration_extractLogSafeErrorProperties(
 declare function get_current_FunctionDeclaration_extractLogSafeErrorProperties():
     TypeOnly<typeof current.extractLogSafeErrorProperties>;
 declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    use: TypeOnly<typeof old.extractLogSafeErrorProperties>);
+    use: TypeOnly<typeof old.extractLogSafeErrorProperties>): void;
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     get_current_FunctionDeclaration_extractLogSafeErrorProperties());
 
@@ -989,7 +1061,7 @@ use_old_FunctionDeclaration_extractLogSafeErrorProperties(
 declare function get_old_VariableDeclaration_extractSafePropertiesFromMessage():
     TypeOnly<typeof old.extractSafePropertiesFromMessage>;
 declare function use_current_VariableDeclaration_extractSafePropertiesFromMessage(
-    use: TypeOnly<typeof current.extractSafePropertiesFromMessage>);
+    use: TypeOnly<typeof current.extractSafePropertiesFromMessage>): void;
 use_current_VariableDeclaration_extractSafePropertiesFromMessage(
     get_old_VariableDeclaration_extractSafePropertiesFromMessage());
 
@@ -1001,7 +1073,7 @@ use_current_VariableDeclaration_extractSafePropertiesFromMessage(
 declare function get_current_VariableDeclaration_extractSafePropertiesFromMessage():
     TypeOnly<typeof current.extractSafePropertiesFromMessage>;
 declare function use_old_VariableDeclaration_extractSafePropertiesFromMessage(
-    use: TypeOnly<typeof old.extractSafePropertiesFromMessage>);
+    use: TypeOnly<typeof old.extractSafePropertiesFromMessage>): void;
 use_old_VariableDeclaration_extractSafePropertiesFromMessage(
     get_current_VariableDeclaration_extractSafePropertiesFromMessage());
 
@@ -1013,7 +1085,7 @@ use_old_VariableDeclaration_extractSafePropertiesFromMessage(
 declare function get_old_FunctionDeclaration_formatTick():
     TypeOnly<typeof old.formatTick>;
 declare function use_current_FunctionDeclaration_formatTick(
-    use: TypeOnly<typeof current.formatTick>);
+    use: TypeOnly<typeof current.formatTick>): void;
 use_current_FunctionDeclaration_formatTick(
     get_old_FunctionDeclaration_formatTick());
 
@@ -1025,7 +1097,7 @@ use_current_FunctionDeclaration_formatTick(
 declare function get_current_FunctionDeclaration_formatTick():
     TypeOnly<typeof current.formatTick>;
 declare function use_old_FunctionDeclaration_formatTick(
-    use: TypeOnly<typeof old.formatTick>);
+    use: TypeOnly<typeof old.formatTick>): void;
 use_old_FunctionDeclaration_formatTick(
     get_current_FunctionDeclaration_formatTick());
 
@@ -1037,7 +1109,7 @@ use_old_FunctionDeclaration_formatTick(
 declare function get_old_FunctionDeclaration_generateErrorWithStack():
     TypeOnly<typeof old.generateErrorWithStack>;
 declare function use_current_FunctionDeclaration_generateErrorWithStack(
-    use: TypeOnly<typeof current.generateErrorWithStack>);
+    use: TypeOnly<typeof current.generateErrorWithStack>): void;
 use_current_FunctionDeclaration_generateErrorWithStack(
     get_old_FunctionDeclaration_generateErrorWithStack());
 
@@ -1049,7 +1121,7 @@ use_current_FunctionDeclaration_generateErrorWithStack(
 declare function get_current_FunctionDeclaration_generateErrorWithStack():
     TypeOnly<typeof current.generateErrorWithStack>;
 declare function use_old_FunctionDeclaration_generateErrorWithStack(
-    use: TypeOnly<typeof old.generateErrorWithStack>);
+    use: TypeOnly<typeof old.generateErrorWithStack>): void;
 use_old_FunctionDeclaration_generateErrorWithStack(
     get_current_FunctionDeclaration_generateErrorWithStack());
 
@@ -1061,7 +1133,7 @@ use_old_FunctionDeclaration_generateErrorWithStack(
 declare function get_old_FunctionDeclaration_generateStack():
     TypeOnly<typeof old.generateStack>;
 declare function use_current_FunctionDeclaration_generateStack(
-    use: TypeOnly<typeof current.generateStack>);
+    use: TypeOnly<typeof current.generateStack>): void;
 use_current_FunctionDeclaration_generateStack(
     get_old_FunctionDeclaration_generateStack());
 
@@ -1073,7 +1145,7 @@ use_current_FunctionDeclaration_generateStack(
 declare function get_current_FunctionDeclaration_generateStack():
     TypeOnly<typeof current.generateStack>;
 declare function use_old_FunctionDeclaration_generateStack(
-    use: TypeOnly<typeof old.generateStack>);
+    use: TypeOnly<typeof old.generateStack>): void;
 use_old_FunctionDeclaration_generateStack(
     get_current_FunctionDeclaration_generateStack());
 
@@ -1085,7 +1157,7 @@ use_old_FunctionDeclaration_generateStack(
 declare function get_old_VariableDeclaration_getCircularReplacer():
     TypeOnly<typeof old.getCircularReplacer>;
 declare function use_current_VariableDeclaration_getCircularReplacer(
-    use: TypeOnly<typeof current.getCircularReplacer>);
+    use: TypeOnly<typeof current.getCircularReplacer>): void;
 use_current_VariableDeclaration_getCircularReplacer(
     get_old_VariableDeclaration_getCircularReplacer());
 
@@ -1097,7 +1169,7 @@ use_current_VariableDeclaration_getCircularReplacer(
 declare function get_current_VariableDeclaration_getCircularReplacer():
     TypeOnly<typeof current.getCircularReplacer>;
 declare function use_old_VariableDeclaration_getCircularReplacer(
-    use: TypeOnly<typeof old.getCircularReplacer>);
+    use: TypeOnly<typeof old.getCircularReplacer>): void;
 use_old_VariableDeclaration_getCircularReplacer(
     get_current_VariableDeclaration_getCircularReplacer());
 
@@ -1109,7 +1181,7 @@ use_old_VariableDeclaration_getCircularReplacer(
 declare function get_old_VariableDeclaration_hasErrorInstanceId():
     TypeOnly<typeof old.hasErrorInstanceId>;
 declare function use_current_VariableDeclaration_hasErrorInstanceId(
-    use: TypeOnly<typeof current.hasErrorInstanceId>);
+    use: TypeOnly<typeof current.hasErrorInstanceId>): void;
 use_current_VariableDeclaration_hasErrorInstanceId(
     get_old_VariableDeclaration_hasErrorInstanceId());
 
@@ -1121,7 +1193,7 @@ use_current_VariableDeclaration_hasErrorInstanceId(
 declare function get_current_VariableDeclaration_hasErrorInstanceId():
     TypeOnly<typeof current.hasErrorInstanceId>;
 declare function use_old_VariableDeclaration_hasErrorInstanceId(
-    use: TypeOnly<typeof old.hasErrorInstanceId>);
+    use: TypeOnly<typeof old.hasErrorInstanceId>): void;
 use_old_VariableDeclaration_hasErrorInstanceId(
     get_current_VariableDeclaration_hasErrorInstanceId());
 
@@ -1133,7 +1205,7 @@ use_old_VariableDeclaration_hasErrorInstanceId(
 declare function get_old_FunctionDeclaration_isExternalError():
     TypeOnly<typeof old.isExternalError>;
 declare function use_current_FunctionDeclaration_isExternalError(
-    use: TypeOnly<typeof current.isExternalError>);
+    use: TypeOnly<typeof current.isExternalError>): void;
 use_current_FunctionDeclaration_isExternalError(
     get_old_FunctionDeclaration_isExternalError());
 
@@ -1145,7 +1217,7 @@ use_current_FunctionDeclaration_isExternalError(
 declare function get_current_FunctionDeclaration_isExternalError():
     TypeOnly<typeof current.isExternalError>;
 declare function use_old_FunctionDeclaration_isExternalError(
-    use: TypeOnly<typeof old.isExternalError>);
+    use: TypeOnly<typeof old.isExternalError>): void;
 use_old_FunctionDeclaration_isExternalError(
     get_current_FunctionDeclaration_isExternalError());
 
@@ -1157,7 +1229,7 @@ use_old_FunctionDeclaration_isExternalError(
 declare function get_old_FunctionDeclaration_isFluidError():
     TypeOnly<typeof old.isFluidError>;
 declare function use_current_FunctionDeclaration_isFluidError(
-    use: TypeOnly<typeof current.isFluidError>);
+    use: TypeOnly<typeof current.isFluidError>): void;
 use_current_FunctionDeclaration_isFluidError(
     get_old_FunctionDeclaration_isFluidError());
 
@@ -1169,7 +1241,7 @@ use_current_FunctionDeclaration_isFluidError(
 declare function get_current_FunctionDeclaration_isFluidError():
     TypeOnly<typeof current.isFluidError>;
 declare function use_old_FunctionDeclaration_isFluidError(
-    use: TypeOnly<typeof old.isFluidError>);
+    use: TypeOnly<typeof old.isFluidError>): void;
 use_old_FunctionDeclaration_isFluidError(
     get_current_FunctionDeclaration_isFluidError());
 
@@ -1181,7 +1253,7 @@ use_old_FunctionDeclaration_isFluidError(
 declare function get_old_VariableDeclaration_isILoggingError():
     TypeOnly<typeof old.isILoggingError>;
 declare function use_current_VariableDeclaration_isILoggingError(
-    use: TypeOnly<typeof current.isILoggingError>);
+    use: TypeOnly<typeof current.isILoggingError>): void;
 use_current_VariableDeclaration_isILoggingError(
     get_old_VariableDeclaration_isILoggingError());
 
@@ -1193,7 +1265,7 @@ use_current_VariableDeclaration_isILoggingError(
 declare function get_current_VariableDeclaration_isILoggingError():
     TypeOnly<typeof current.isILoggingError>;
 declare function use_old_VariableDeclaration_isILoggingError(
-    use: TypeOnly<typeof old.isILoggingError>);
+    use: TypeOnly<typeof old.isILoggingError>): void;
 use_old_VariableDeclaration_isILoggingError(
     get_current_VariableDeclaration_isILoggingError());
 
@@ -1205,7 +1277,7 @@ use_old_VariableDeclaration_isILoggingError(
 declare function get_old_FunctionDeclaration_isTaggedTelemetryPropertyValue():
     TypeOnly<typeof old.isTaggedTelemetryPropertyValue>;
 declare function use_current_FunctionDeclaration_isTaggedTelemetryPropertyValue(
-    use: TypeOnly<typeof current.isTaggedTelemetryPropertyValue>);
+    use: TypeOnly<typeof current.isTaggedTelemetryPropertyValue>): void;
 use_current_FunctionDeclaration_isTaggedTelemetryPropertyValue(
     get_old_FunctionDeclaration_isTaggedTelemetryPropertyValue());
 
@@ -1217,7 +1289,7 @@ use_current_FunctionDeclaration_isTaggedTelemetryPropertyValue(
 declare function get_current_FunctionDeclaration_isTaggedTelemetryPropertyValue():
     TypeOnly<typeof current.isTaggedTelemetryPropertyValue>;
 declare function use_old_FunctionDeclaration_isTaggedTelemetryPropertyValue(
-    use: TypeOnly<typeof old.isTaggedTelemetryPropertyValue>);
+    use: TypeOnly<typeof old.isTaggedTelemetryPropertyValue>): void;
 use_old_FunctionDeclaration_isTaggedTelemetryPropertyValue(
     get_current_FunctionDeclaration_isTaggedTelemetryPropertyValue());
 
@@ -1229,7 +1301,7 @@ use_old_FunctionDeclaration_isTaggedTelemetryPropertyValue(
 declare function get_old_FunctionDeclaration_isValidLegacyError():
     TypeOnly<typeof old.isValidLegacyError>;
 declare function use_current_FunctionDeclaration_isValidLegacyError(
-    use: TypeOnly<typeof current.isValidLegacyError>);
+    use: TypeOnly<typeof current.isValidLegacyError>): void;
 use_current_FunctionDeclaration_isValidLegacyError(
     get_old_FunctionDeclaration_isValidLegacyError());
 
@@ -1241,7 +1313,7 @@ use_current_FunctionDeclaration_isValidLegacyError(
 declare function get_current_FunctionDeclaration_isValidLegacyError():
     TypeOnly<typeof current.isValidLegacyError>;
 declare function use_old_FunctionDeclaration_isValidLegacyError(
-    use: TypeOnly<typeof old.isValidLegacyError>);
+    use: TypeOnly<typeof old.isValidLegacyError>): void;
 use_old_FunctionDeclaration_isValidLegacyError(
     get_current_FunctionDeclaration_isValidLegacyError());
 
@@ -1253,7 +1325,7 @@ use_old_FunctionDeclaration_isValidLegacyError(
 declare function get_old_FunctionDeclaration_logIfFalse():
     TypeOnly<typeof old.logIfFalse>;
 declare function use_current_FunctionDeclaration_logIfFalse(
-    use: TypeOnly<typeof current.logIfFalse>);
+    use: TypeOnly<typeof current.logIfFalse>): void;
 use_current_FunctionDeclaration_logIfFalse(
     get_old_FunctionDeclaration_logIfFalse());
 
@@ -1265,7 +1337,7 @@ use_current_FunctionDeclaration_logIfFalse(
 declare function get_current_FunctionDeclaration_logIfFalse():
     TypeOnly<typeof current.logIfFalse>;
 declare function use_old_FunctionDeclaration_logIfFalse(
-    use: TypeOnly<typeof old.logIfFalse>);
+    use: TypeOnly<typeof old.logIfFalse>): void;
 use_old_FunctionDeclaration_logIfFalse(
     get_current_FunctionDeclaration_logIfFalse());
 
@@ -1277,7 +1349,7 @@ use_old_FunctionDeclaration_logIfFalse(
 declare function get_old_FunctionDeclaration_loggerToMonitoringContext():
     TypeOnly<typeof old.loggerToMonitoringContext>;
 declare function use_current_FunctionDeclaration_loggerToMonitoringContext(
-    use: TypeOnly<typeof current.loggerToMonitoringContext>);
+    use: TypeOnly<typeof current.loggerToMonitoringContext>): void;
 use_current_FunctionDeclaration_loggerToMonitoringContext(
     get_old_FunctionDeclaration_loggerToMonitoringContext());
 
@@ -1289,7 +1361,7 @@ use_current_FunctionDeclaration_loggerToMonitoringContext(
 declare function get_current_FunctionDeclaration_loggerToMonitoringContext():
     TypeOnly<typeof current.loggerToMonitoringContext>;
 declare function use_old_FunctionDeclaration_loggerToMonitoringContext(
-    use: TypeOnly<typeof old.loggerToMonitoringContext>);
+    use: TypeOnly<typeof old.loggerToMonitoringContext>): void;
 use_old_FunctionDeclaration_loggerToMonitoringContext(
     get_current_FunctionDeclaration_loggerToMonitoringContext());
 
@@ -1301,7 +1373,7 @@ use_old_FunctionDeclaration_loggerToMonitoringContext(
 declare function get_old_FunctionDeclaration_mixinMonitoringContext():
     TypeOnly<typeof old.mixinMonitoringContext>;
 declare function use_current_FunctionDeclaration_mixinMonitoringContext(
-    use: TypeOnly<typeof current.mixinMonitoringContext>);
+    use: TypeOnly<typeof current.mixinMonitoringContext>): void;
 use_current_FunctionDeclaration_mixinMonitoringContext(
     get_old_FunctionDeclaration_mixinMonitoringContext());
 
@@ -1313,7 +1385,7 @@ use_current_FunctionDeclaration_mixinMonitoringContext(
 declare function get_current_FunctionDeclaration_mixinMonitoringContext():
     TypeOnly<typeof current.mixinMonitoringContext>;
 declare function use_old_FunctionDeclaration_mixinMonitoringContext(
-    use: TypeOnly<typeof old.mixinMonitoringContext>);
+    use: TypeOnly<typeof old.mixinMonitoringContext>): void;
 use_old_FunctionDeclaration_mixinMonitoringContext(
     get_current_FunctionDeclaration_mixinMonitoringContext());
 
@@ -1325,7 +1397,7 @@ use_old_FunctionDeclaration_mixinMonitoringContext(
 declare function get_old_FunctionDeclaration_normalizeError():
     TypeOnly<typeof old.normalizeError>;
 declare function use_current_FunctionDeclaration_normalizeError(
-    use: TypeOnly<typeof current.normalizeError>);
+    use: TypeOnly<typeof current.normalizeError>): void;
 use_current_FunctionDeclaration_normalizeError(
     get_old_FunctionDeclaration_normalizeError());
 
@@ -1337,7 +1409,7 @@ use_current_FunctionDeclaration_normalizeError(
 declare function get_current_FunctionDeclaration_normalizeError():
     TypeOnly<typeof current.normalizeError>;
 declare function use_old_FunctionDeclaration_normalizeError(
-    use: TypeOnly<typeof old.normalizeError>);
+    use: TypeOnly<typeof old.normalizeError>): void;
 use_old_FunctionDeclaration_normalizeError(
     get_current_FunctionDeclaration_normalizeError());
 
@@ -1349,7 +1421,7 @@ use_old_FunctionDeclaration_normalizeError(
 declare function get_old_FunctionDeclaration_numberFromString():
     TypeOnly<typeof old.numberFromString>;
 declare function use_current_FunctionDeclaration_numberFromString(
-    use: TypeOnly<typeof current.numberFromString>);
+    use: TypeOnly<typeof current.numberFromString>): void;
 use_current_FunctionDeclaration_numberFromString(
     get_old_FunctionDeclaration_numberFromString());
 
@@ -1361,7 +1433,7 @@ use_current_FunctionDeclaration_numberFromString(
 declare function get_current_FunctionDeclaration_numberFromString():
     TypeOnly<typeof current.numberFromString>;
 declare function use_old_FunctionDeclaration_numberFromString(
-    use: TypeOnly<typeof old.numberFromString>);
+    use: TypeOnly<typeof old.numberFromString>): void;
 use_old_FunctionDeclaration_numberFromString(
     get_current_FunctionDeclaration_numberFromString());
 
@@ -1373,7 +1445,7 @@ use_old_FunctionDeclaration_numberFromString(
 declare function get_old_FunctionDeclaration_overwriteStack():
     TypeOnly<typeof old.overwriteStack>;
 declare function use_current_FunctionDeclaration_overwriteStack(
-    use: TypeOnly<typeof current.overwriteStack>);
+    use: TypeOnly<typeof current.overwriteStack>): void;
 use_current_FunctionDeclaration_overwriteStack(
     get_old_FunctionDeclaration_overwriteStack());
 
@@ -1385,7 +1457,7 @@ use_current_FunctionDeclaration_overwriteStack(
 declare function get_current_FunctionDeclaration_overwriteStack():
     TypeOnly<typeof current.overwriteStack>;
 declare function use_old_FunctionDeclaration_overwriteStack(
-    use: TypeOnly<typeof old.overwriteStack>);
+    use: TypeOnly<typeof old.overwriteStack>): void;
 use_old_FunctionDeclaration_overwriteStack(
     get_current_FunctionDeclaration_overwriteStack());
 
@@ -1397,7 +1469,7 @@ use_old_FunctionDeclaration_overwriteStack(
 declare function get_old_FunctionDeclaration_raiseConnectedEvent():
     TypeOnly<typeof old.raiseConnectedEvent>;
 declare function use_current_FunctionDeclaration_raiseConnectedEvent(
-    use: TypeOnly<typeof current.raiseConnectedEvent>);
+    use: TypeOnly<typeof current.raiseConnectedEvent>): void;
 use_current_FunctionDeclaration_raiseConnectedEvent(
     get_old_FunctionDeclaration_raiseConnectedEvent());
 
@@ -1409,7 +1481,7 @@ use_current_FunctionDeclaration_raiseConnectedEvent(
 declare function get_current_FunctionDeclaration_raiseConnectedEvent():
     TypeOnly<typeof current.raiseConnectedEvent>;
 declare function use_old_FunctionDeclaration_raiseConnectedEvent(
-    use: TypeOnly<typeof old.raiseConnectedEvent>);
+    use: TypeOnly<typeof old.raiseConnectedEvent>): void;
 use_old_FunctionDeclaration_raiseConnectedEvent(
     get_current_FunctionDeclaration_raiseConnectedEvent());
 
@@ -1421,7 +1493,7 @@ use_old_FunctionDeclaration_raiseConnectedEvent(
 declare function get_old_FunctionDeclaration_safeRaiseEvent():
     TypeOnly<typeof old.safeRaiseEvent>;
 declare function use_current_FunctionDeclaration_safeRaiseEvent(
-    use: TypeOnly<typeof current.safeRaiseEvent>);
+    use: TypeOnly<typeof current.safeRaiseEvent>): void;
 use_current_FunctionDeclaration_safeRaiseEvent(
     get_old_FunctionDeclaration_safeRaiseEvent());
 
@@ -1433,7 +1505,7 @@ use_current_FunctionDeclaration_safeRaiseEvent(
 declare function get_current_FunctionDeclaration_safeRaiseEvent():
     TypeOnly<typeof current.safeRaiseEvent>;
 declare function use_old_FunctionDeclaration_safeRaiseEvent(
-    use: TypeOnly<typeof old.safeRaiseEvent>);
+    use: TypeOnly<typeof old.safeRaiseEvent>): void;
 use_old_FunctionDeclaration_safeRaiseEvent(
     get_current_FunctionDeclaration_safeRaiseEvent());
 
@@ -1445,7 +1517,7 @@ use_old_FunctionDeclaration_safeRaiseEvent(
 declare function get_old_VariableDeclaration_sessionStorageConfigProvider():
     TypeOnly<typeof old.sessionStorageConfigProvider>;
 declare function use_current_VariableDeclaration_sessionStorageConfigProvider(
-    use: TypeOnly<typeof current.sessionStorageConfigProvider>);
+    use: TypeOnly<typeof current.sessionStorageConfigProvider>): void;
 use_current_VariableDeclaration_sessionStorageConfigProvider(
     get_old_VariableDeclaration_sessionStorageConfigProvider());
 
@@ -1457,7 +1529,7 @@ use_current_VariableDeclaration_sessionStorageConfigProvider(
 declare function get_current_VariableDeclaration_sessionStorageConfigProvider():
     TypeOnly<typeof current.sessionStorageConfigProvider>;
 declare function use_old_VariableDeclaration_sessionStorageConfigProvider(
-    use: TypeOnly<typeof old.sessionStorageConfigProvider>);
+    use: TypeOnly<typeof old.sessionStorageConfigProvider>): void;
 use_old_VariableDeclaration_sessionStorageConfigProvider(
     get_current_VariableDeclaration_sessionStorageConfigProvider());
 
@@ -1469,7 +1541,7 @@ use_old_VariableDeclaration_sessionStorageConfigProvider(
 declare function get_old_VariableDeclaration_tagCodeArtifacts():
     TypeOnly<typeof old.tagCodeArtifacts>;
 declare function use_current_VariableDeclaration_tagCodeArtifacts(
-    use: TypeOnly<typeof current.tagCodeArtifacts>);
+    use: TypeOnly<typeof current.tagCodeArtifacts>): void;
 use_current_VariableDeclaration_tagCodeArtifacts(
     get_old_VariableDeclaration_tagCodeArtifacts());
 
@@ -1481,7 +1553,7 @@ use_current_VariableDeclaration_tagCodeArtifacts(
 declare function get_current_VariableDeclaration_tagCodeArtifacts():
     TypeOnly<typeof current.tagCodeArtifacts>;
 declare function use_old_VariableDeclaration_tagCodeArtifacts(
-    use: TypeOnly<typeof old.tagCodeArtifacts>);
+    use: TypeOnly<typeof old.tagCodeArtifacts>): void;
 use_old_VariableDeclaration_tagCodeArtifacts(
     get_current_VariableDeclaration_tagCodeArtifacts());
 
@@ -1493,7 +1565,7 @@ use_old_VariableDeclaration_tagCodeArtifacts(
 declare function get_old_VariableDeclaration_tagData():
     TypeOnly<typeof old.tagData>;
 declare function use_current_VariableDeclaration_tagData(
-    use: TypeOnly<typeof current.tagData>);
+    use: TypeOnly<typeof current.tagData>): void;
 use_current_VariableDeclaration_tagData(
     get_old_VariableDeclaration_tagData());
 
@@ -1505,7 +1577,7 @@ use_current_VariableDeclaration_tagData(
 declare function get_current_VariableDeclaration_tagData():
     TypeOnly<typeof current.tagData>;
 declare function use_old_VariableDeclaration_tagData(
-    use: TypeOnly<typeof old.tagData>);
+    use: TypeOnly<typeof old.tagData>): void;
 use_old_VariableDeclaration_tagData(
     get_current_VariableDeclaration_tagData());
 
@@ -1517,7 +1589,7 @@ use_old_VariableDeclaration_tagData(
 declare function get_old_FunctionDeclaration_wrapError():
     TypeOnly<typeof old.wrapError>;
 declare function use_current_FunctionDeclaration_wrapError(
-    use: TypeOnly<typeof current.wrapError>);
+    use: TypeOnly<typeof current.wrapError>): void;
 use_current_FunctionDeclaration_wrapError(
     get_old_FunctionDeclaration_wrapError());
 
@@ -1529,7 +1601,7 @@ use_current_FunctionDeclaration_wrapError(
 declare function get_current_FunctionDeclaration_wrapError():
     TypeOnly<typeof current.wrapError>;
 declare function use_old_FunctionDeclaration_wrapError(
-    use: TypeOnly<typeof old.wrapError>);
+    use: TypeOnly<typeof old.wrapError>): void;
 use_old_FunctionDeclaration_wrapError(
     get_current_FunctionDeclaration_wrapError());
 
@@ -1541,7 +1613,7 @@ use_old_FunctionDeclaration_wrapError(
 declare function get_old_FunctionDeclaration_wrapErrorAndLog():
     TypeOnly<typeof old.wrapErrorAndLog>;
 declare function use_current_FunctionDeclaration_wrapErrorAndLog(
-    use: TypeOnly<typeof current.wrapErrorAndLog>);
+    use: TypeOnly<typeof current.wrapErrorAndLog>): void;
 use_current_FunctionDeclaration_wrapErrorAndLog(
     get_old_FunctionDeclaration_wrapErrorAndLog());
 
@@ -1553,6 +1625,6 @@ use_current_FunctionDeclaration_wrapErrorAndLog(
 declare function get_current_FunctionDeclaration_wrapErrorAndLog():
     TypeOnly<typeof current.wrapErrorAndLog>;
 declare function use_old_FunctionDeclaration_wrapErrorAndLog(
-    use: TypeOnly<typeof old.wrapErrorAndLog>);
+    use: TypeOnly<typeof old.wrapErrorAndLog>): void;
 use_old_FunctionDeclaration_wrapErrorAndLog(
     get_current_FunctionDeclaration_wrapErrorAndLog());

@@ -9,6 +9,9 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
+/**
+ * @public
+ */
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 	private readonly map: Map<
 		string,

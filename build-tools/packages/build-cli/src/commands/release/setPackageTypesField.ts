@@ -9,7 +9,6 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
-import * as fs from "fs";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -53,6 +52,11 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				throw new Error(`Invalid release type: ${input}`);
 			},
 		})(),
+		checkFileExists: Flags.boolean({
+			description: "Check if the file path exists",
+			default: true,
+			allowNo: true,
+		}),
 		...PackageCommand.flags,
 	};
 
@@ -65,10 +69,12 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		const configOptions = ExtractorConfig.tryLoadForFolder({
 			startingFolder: pkg.directory,
 		});
+
 		if (configOptions === undefined) {
 			this.verbose(`No api-extractor config found for ${pkg.name}. Skipping.`);
 			return;
 		}
+
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.types !== undefined && json.typings !== undefined) {
 				throw new Error(
@@ -84,7 +90,14 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				);
 			}
 
-			const extractorConfig = ExtractorConfig.prepare(configOptions);
+			/**
+			 * When preparing the configuration object, folder and file paths referenced in the configuration are checked for existence,
+			 * and an error is reported if they are not found.
+			 */
+			const extractorConfig = ExtractorConfig.prepare({
+				...configOptions,
+				ignoreMissingEntryPoint: !this.flags.checkFileExists,
+			});
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
 			const packageUpdated = updatePackageJsonTypes(
@@ -107,7 +120,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		await super.run();
 
 		if (this.packageList.packagesUpdated.length === 0) {
-			this.log(`No updates in package.json for ${this.flags.types} release tag`);
+			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
+			this.exit(1);
 		}
 
 		return this.packageList;
@@ -153,9 +167,6 @@ function updatePackageJsonTypes(
 			}
 
 			if (filePath) {
-				if (!fs.existsSync(filePath)) {
-					throw new Error(`${filePath} path does not exists`);
-				}
 				delete json.typings;
 				json.types = path.relative(directory, filePath);
 				return true;

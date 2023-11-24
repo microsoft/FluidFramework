@@ -22,9 +22,8 @@
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "fieldChange": {
-                                "id": 0,
-                                "wasEmpty": true
+                              "d": {
+                                "localId": 0
                               }
                             }
                           }
@@ -41,18 +40,31 @@
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "fieldChange": {
-                                "id": 0,
-                                "wasEmpty": true,
-                                "newContent": {
-                                  "set": {
+                              "b": [
+                                [
+                                  {
+                                    "localId": 1
+                                  },
+                                  {
                                     "type": "com.fluidframework.leaf.handle",
                                     "value": {
                                       "type": "__fluid_handle__",
                                       "url": "/test/test"
                                     }
                                   }
-                                }
+                                ]
+                              ],
+                              "m": [
+                                [
+                                  {
+                                    "localId": 1
+                                  },
+                                  0,
+                                  true
+                                ]
+                              ],
+                              "d": {
+                                "localId": 2
                               }
                             }
                           }
@@ -80,25 +92,30 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
@@ -122,20 +139,41 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "rootFieldKey",
                       {
-                        "type": "com.fluidframework.leaf.handle",
-                        "value": {
-                          "type": "__fluid_handle__",
-                          "url": "/test/test"
-                        }
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.handle",
+                            true,
+                            {
+                              "type": "__fluid_handle__",
+                              "url": "/test/test"
+                            },
+                            []
+                          ]
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
@@ -150,8 +188,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
-                  "id": 0
+                  "version": 1,
+                  "data": [],
+                  "maxId": 0
                 },
                 "encoding": "utf-8"
               }

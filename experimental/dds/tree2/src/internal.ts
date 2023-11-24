@@ -24,4 +24,31 @@ export {
 	BrandedKeyContent,
 } from "./util";
 
-export { NormalizeField, DefaultFieldKind, NormalizeAllowedTypes } from "./feature-libraries";
+export {
+	NormalizeField,
+	NormalizeAllowedTypes,
+
+	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
+	// These names also are collision prone.
+	Required,
+	Optional,
+	NodeKeyFieldKind,
+	Forbidden,
+	Sequence,
+} from "./feature-libraries";
+
+export {
+	FactoryObjectNodeSchema,
+	FactoryObjectNodeSchemaRecursive,
+	testRecursiveDomain,
+} from "./domains";
+
+export {
+	TreeListNodeBase,
+	InsertableTreeField,
+	InsertableTreeFieldInner,
+	InsertableTreeNodeUnion,
+	InsertableTreeObjectNode,
+	InsertableTreeObjectNodeFields,
+	InsertableTypedNode,
+} from "./simple-tree";

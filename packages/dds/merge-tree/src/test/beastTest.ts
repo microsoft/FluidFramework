@@ -11,7 +11,7 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
-import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -24,7 +24,14 @@ import {
 	SortedDictionary,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { IJSONMarkerSegment, IMergeNode, ISegment, reservedMarkerIdKey } from "../mergeTreeNodes";
+import {
+	IJSONMarkerSegment,
+	IMergeNode,
+	ISegment,
+	reservedMarkerIdKey,
+	compareNumbers,
+	compareStrings,
+} from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
@@ -138,10 +145,6 @@ function log(message: any) {
 		logLines.push(message.toString());
 	}
 }
-
-const compareStrings = (a: string, b: string) => a.localeCompare(b);
-
-const compareNumbers = (a: number, b: number) => a - b;
 
 function printStringProperty(p?: Property<string, string>) {
 	log(`[${p?.key}, ${p?.data}]`);

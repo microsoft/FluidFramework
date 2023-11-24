@@ -5,7 +5,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp } from "@fluidframework/merge-tree";
 import { PropertySet } from "@fluidframework/sequence";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
@@ -68,15 +67,10 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 		this.doc.setCellValue(row, col, value, properties);
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
 		this.validateInSlice(startRow, undefined);
 		this.validateInSlice(endRow - 1, undefined);
-		this.doc.annotateRows(startRow, endRow, properties, op);
+		this.doc.annotateRows(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
@@ -84,15 +78,10 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 		return this.doc.getRowProperties(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
 		this.validateInSlice(undefined, startCol);
 		this.validateInSlice(undefined, endCol - 1);
-		this.doc.annotateCols(startCol, endCol, properties, op);
+		this.doc.annotateCols(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {

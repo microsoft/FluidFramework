@@ -5,7 +5,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IntervalType,
@@ -108,26 +107,16 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		return component;
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.rows.annotateRange(startRow, endRow, properties, op);
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.cols.annotateRange(startCol, endCol, properties, op);
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {

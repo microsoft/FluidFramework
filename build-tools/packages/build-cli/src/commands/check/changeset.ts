@@ -10,20 +10,20 @@ import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
 export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
-	static summary = `Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.`;
+	static readonly summary = `Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.`;
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	static flags = {
+	static readonly flags = {
 		branch: Flags.string({
 			char: "b",
 			description: "The branch to compare against.",
 			required: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Check if a changeset was added when compared to the 'main' branch.",
 			command: "<%= config.bin %> <%= command.id %> -b main",

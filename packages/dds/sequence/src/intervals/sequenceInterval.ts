@@ -8,7 +8,6 @@
 
 import {
 	Client,
-	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
 	PropertiesManager,
@@ -100,17 +99,19 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
+ * @public
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 * @internal
 	 */
-	public propertyManager: PropertiesManager;
+	public propertyManager: PropertiesManager = new PropertiesManager();
 
 	/**
 	 * @internal
@@ -143,9 +144,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -339,10 +337,8 @@ export class SequenceInterval implements ISerializableInterval {
 		newProps: PropertySet,
 		collab: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
-		this.initializeProperties();
-		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
 	}
 
 	/**
@@ -428,7 +424,6 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -436,15 +431,6 @@ export class SequenceInterval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 
@@ -632,6 +618,7 @@ export function createSequenceInterval(
 
 /**
  * @deprecated The methods within have substitutions
+ * @public
  */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	create: createSequenceInterval,

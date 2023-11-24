@@ -258,7 +258,7 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
-	assert(endIndex > startIndex, "Range indices are malformed.");
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
 }
@@ -282,8 +282,8 @@ export function assertValidRange(
 ) {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
-	assert(end <= array.length, "Range end must be less than or equal to length");
-	assert(start <= end, "Range start must be less than or equal to range start");
+	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
+	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
 export function assertNonNegativeSafeInteger(index: number) {
@@ -303,7 +303,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  *
  * @alpha
  */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 /**
  * The counter used to generate deterministic stable ids for testing purposes.
@@ -344,7 +344,7 @@ export function useDeterministicStableId<T>(f: () => T): T {
 export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
 	assert(
 		deterministicStableIdCount === undefined,
-		"useAsyncDeterministicStableId cannot be nested",
+		0x79f /* useAsyncDeterministicStableId cannot be nested */,
 	);
 	deterministicStableIdCount = 1;
 	try {
@@ -455,11 +455,15 @@ export interface Named<TName> {
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
+ * @alpha
  */
-export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
+ * @privateRemarks
+ * TODO: align this with core-utils/IDisposable.
+ * @alpha
  */
 export interface IDisposable {
 	/**

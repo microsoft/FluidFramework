@@ -36,7 +36,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * The flags defined on the base class.
 	 */
-	static baseFlags = {
+	static readonly baseFlags = {
 		root: rootPathFlag({
 			helpGroup: "GLOBAL",
 		}),
@@ -60,7 +60,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			hidden: true,
 			helpGroup: "GLOBAL",
 		}),
-	};
+	} as const;
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
@@ -79,6 +79,7 @@ export abstract class BaseCommand<T extends typeof Command>
 		const { args, flags } = await this.parse({
 			flags: this.ctor.flags,
 			baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+			enableJsonFlag: this.ctor.enableJsonFlag,
 			args: this.ctor.args,
 			strict: this.ctor.strict,
 		});
@@ -127,14 +128,14 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
-			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot(this.logger));
-			const gitRepo = new GitRepo(resolvedRoot, this.logger);
+			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot());
+			const gitRepo = new GitRepo(resolvedRoot);
 			const branch = await gitRepo.getCurrentBranchName();
 
 			this.verbose(`Repo: ${resolvedRoot}`);
 			this.verbose(`Branch: ${branch}`);
 
-			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch, this.logger);
+			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
 		}
 
 		return this._context;

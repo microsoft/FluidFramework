@@ -3,11 +3,64 @@
 
 Generate commands are used to create/update code, docs, readmes, etc.
 
+* [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate upcoming`](#flub-generate-upcoming)
+
+## `flub generate assertTags`
+
+Tags asserts by replacing their message with a unique numerical value.
+
+```
+USAGE
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--all | --dir <value> | --packages
+    | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+
+FLAGS
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
+                                  release group root packages. To include those, use the --releaseGroupRoot argument.
+                                  Cannot be used with --all, --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                  --releaseGroup, or --releaseGroupRoot.
+  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                  child packages within the release group. To include those, use the --releaseGroup
+                                  argument. Cannot be used with --all, --dir, or --packages.
+                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+TESTING FLAGS
+  --disableConfig  Disable filtering based on the fluid-build config in the repo. Useful for testing.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Tags asserts by replacing their message with a unique numerical value.
+
+  Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry
+  purposes.
+```
+
+_See code: [src/commands/generate/assertTags.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/assertTags.ts)_
 
 ## `flub generate buildVersion`
 
@@ -16,13 +69,17 @@ This command is used to compute the version number of Fluid packages. The releas
 ```
 USAGE
   $ flub generate buildVersion --build <value> [-v | --quiet] [--testBuild <value>] [--release release|prerelease|none]
-    [--patch <value>] [--base <value>] [--tag <value>] [-i <value>]
+    [--patch <value>] [--base <value>] [--tag <value>] [-i <value>] [--packageTypes none|alpha|beta|public|untrimmed]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
   --base=<value>                         The base version. This will be read from lerna.json/package.json if not
                                          provided.
   --build=<value>                        (required) The CI build number.
+  --packageTypes=<option>                [default: none] If provided, the version generated will include extra strings
+                                         based on the TypeScript types that are expected to be used. This flag should
+                                         only be used in the Fluid Framework CI pipeline.
+                                         <options: none|alpha|beta|public|untrimmed>
   --patch=<value>                        Indicates the build is a patch build.
   --release=<option>                     Indicates the build is a release build.
                                          <options: release|prerelease|none>
@@ -41,6 +98,8 @@ DESCRIPTION
 EXAMPLES
   $ flub generate buildVersion
 ```
+
+_See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
 
 ## `flub generate bundleStats`
 
@@ -62,6 +121,8 @@ DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
   consumption
 ```
+
+_See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleStats.ts)_
 
 ## `flub generate changelog`
 
@@ -90,13 +151,15 @@ EXAMPLES
     $ flub generate changelog --releaseGroup client
 ```
 
+_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
+
 ## `flub generate changeset`
 
 Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.
 
 ```
 USAGE
-  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty -g
+  $ flub generate changeset [--json] [-v | --quiet] [-b <value>] [--empty -g
     client|server|azure|build-tools|gitrest|historian] [--all] [--uiMode default|simple]
 
 FLAGS
@@ -145,13 +208,15 @@ EXAMPLES
     $ flub generate changeset --all
 ```
 
+_See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
+
 ## `flub generate upcoming`
 
 Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.
 
 ```
 USAGE
-  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [-v | --quiet] [--json]
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [--json] [-v | --quiet]
     [--out <value>]
 
 FLAGS
@@ -177,3 +242,5 @@ EXAMPLES
 
     $ flub generate upcoming -g client -t minor --out testOutput.md
 ```
+
+_See code: [src/commands/generate/upcoming.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/upcoming.ts)_

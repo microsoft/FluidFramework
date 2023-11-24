@@ -5,6 +5,7 @@
 
 export {
 	assertIsRevisionTag,
+	areEqualChangeAtomIds,
 	mintRevisionTag,
 	isRevisionTag,
 	mintCommit,
@@ -13,6 +14,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	SessionId,
 	SessionIdSchema,
 } from "./types";

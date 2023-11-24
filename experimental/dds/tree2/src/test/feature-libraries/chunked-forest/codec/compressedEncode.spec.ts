@@ -30,11 +30,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
 import { testTrees } from "../../../cursorTestSuite";
-import {
-	fieldCursorFromJsonableTrees,
-	jsonableTreesFromFieldCursor,
-} from "../fieldCursorTestUtilities";
-import { FieldStoredSchema, TreeSchemaIdentifier, Value } from "../../../../core";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
 import {
 	EncodedChunkShape,
 	EncodedValueShape,
@@ -53,6 +50,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 import { brand } from "../../../../util";
 import { typeboxValidator } from "../../../../external-utilities";
+import { cursorForJsonableTreeField } from "../../../../feature-libraries";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -66,11 +64,11 @@ describe("compressedEncode", () => {
 	describe("test trees", () => {
 		for (const [name, jsonable] of testTrees) {
 			it(name, () => {
-				const input = fieldCursorFromJsonableTrees([jsonable]);
+				const input = cursorForJsonableTreeField([jsonable]);
 				const cache = new EncoderCache(
-					(fieldShaper: FieldShaper, schemaName: TreeSchemaIdentifier): NodeEncoder =>
+					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
 						anyNodeShape,
-					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoder =>
+					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 				);
 				const codec = makeCompressedCodec({ jsonValidator: typeboxValidator }, cache);

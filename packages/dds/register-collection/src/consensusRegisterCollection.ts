@@ -91,7 +91,9 @@ type PendingResolve = (winner: boolean) => void;
 const snapshotFileName = "header";
 
 /**
- * Implementation of a consensus register collection
+ * {@inheritDoc IConsensusRegisterCollection}
+ *
+ * @public
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>
@@ -321,7 +323,8 @@ export class ConsensusRegisterCollection<T>
 			);
 		} else if (data.versions.length > 0) {
 			assert(
-				sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
+				// seqNum should always be increasing, except for the case of grouped batches (seqNum will be the same)
+				sequenceNumber >= data.versions[data.versions.length - 1].sequenceNumber,
 				0x071 /* "Versions should naturally be ordered by sequenceNumber" */,
 			);
 		}

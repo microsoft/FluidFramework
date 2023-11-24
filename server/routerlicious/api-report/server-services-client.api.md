@@ -7,7 +7,6 @@
 import * as api from '@fluidframework/protocol-definitions';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
-import { AxiosRequestHeaders } from 'axios';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -101,7 +100,7 @@ export const getGlobalTimeoutContext: () => ITimeoutContext;
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: RawAxiosRequestHeaders): Promise<void>;
 
 // @public (undocumented)
 export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
@@ -378,6 +377,7 @@ export interface ISession {
     historianUrl: string;
     isSessionActive: boolean;
     isSessionAlive: boolean;
+    messageBrokerId?: string;
     ordererUrl: string;
 }
 

@@ -3,19 +3,10 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import {
-	FieldKinds,
-	FieldSchema,
-	isEditableField,
-	isEditableTree,
-	SchemaAware,
-	SchemaBuilder,
-	typeNameSymbol,
-	UnwrappedEditableField,
-} from "../feature-libraries";
-import { jsonNumber, jsonSchema } from "../domains";
+import { FieldKinds, TreeFieldSchema, SchemaAware, typeNameSymbol } from "../feature-libraries";
+import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
-import { ISharedTreeView, TreeContent } from "../shared-tree";
+import { FlexTreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
 
 /**
@@ -34,8 +25,8 @@ const deepBuilder = new SchemaBuilder({
 });
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: FieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, jsonNumber]),
+const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
+	foo: TreeFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
 const wideBuilder = new SchemaBuilder({
@@ -44,13 +35,13 @@ const wideBuilder = new SchemaBuilder({
 	libraries: [jsonSchema],
 });
 
-export const wideRootSchema = wideBuilder.struct("WideRoot", {
-	foo: FieldSchema.create(FieldKinds.sequence, [jsonNumber]),
+export const wideRootSchema = wideBuilder.object("WideRoot", {
+	foo: TreeFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
 
-export const wideSchema = wideBuilder.toDocumentSchema(wideRootSchema);
+export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
 
-export const deepSchema = deepBuilder.toDocumentSchema([linkedListSchema, jsonNumber]);
+export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
 
 /**
  * JS object like a deep tree.
@@ -61,11 +52,8 @@ export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
-type JSDeepTreeRoot2 = SchemaAware.TypedField<
-	typeof deepSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema>;
+type JSDeepTreeRoot2 = SchemaAware.TypedField<typeof deepSchema.rootFieldSchema>;
 
 {
 	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
@@ -80,10 +68,7 @@ export interface JSWideTree {
 	foo: number[];
 }
 
-type JSWideTreeRoot2 = SchemaAware.TypedField<
-	typeof wideSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
+type JSWideTreeRoot2 = SchemaAware.TypedField<typeof wideSchema.rootFieldSchema>;
 
 {
 	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
@@ -167,11 +152,14 @@ export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; 
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
+export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+	nodesCount: number;
+	sum: number;
+} {
 	let nodesCount = 0;
 	let sum = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	readCursor.firstField();
 	for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
@@ -182,11 +170,14 @@ export function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number;
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: number } {
+export function readDeepCursorTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+	depth: number;
+	value: number;
+} {
 	let depth = 0;
 	let value = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	while (readCursor.firstField()) {
 		readCursor.firstNode();
@@ -236,28 +227,32 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
+export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+	nodesCount: number;
+	sum: number;
+} {
 	let sum = 0;
 	let nodesCount = 0;
-	const root = tree.root;
-	assert(isEditableTree(root));
-	const field = root.foo;
-	assert(isEditableField(field));
+	const root = tree.editableTree;
+	const field = root.content.foo;
 	assert(field.length !== 0);
 	for (const currentNode of field) {
-		sum += currentNode as number;
+		sum += currentNode;
 		nodesCount += 1;
 	}
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
+export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+	depth: number;
+	value: number;
+} {
 	let depth = 0;
-	let currentNode: UnwrappedEditableField = tree.root;
-	while (isEditableTree(currentNode)) {
+	let currentNode = tree.editableTree.content;
+	while (currentNode.is(linkedListSchema)) {
 		currentNode = currentNode.foo;
 		depth++;
 	}
-	assert(typeof currentNode === "number");
-	return { depth, value: currentNode };
+	assert(currentNode.is(leaf.number));
+	return { depth, value: currentNode.value };
 }

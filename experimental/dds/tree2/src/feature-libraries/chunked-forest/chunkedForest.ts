@@ -26,6 +26,8 @@ import {
 	DeltaVisitor,
 	PlaceIndex,
 	Range,
+	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -34,7 +36,7 @@ import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
 import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
-	return new BasicChunk(brand("above root placeholder"), new Map());
+	return new BasicChunk(aboveRootPlaceholder, new Map());
 }
 
 interface StackNode {
@@ -122,8 +124,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
-				const parent = this.getParent();
-				parent.mutableChunk.fields.delete(detachedField);
+				this.forest.roots.fields.delete(detachedField);
 			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
@@ -173,7 +174,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				if (destination !== undefined) {
 					assert(
 						!this.forest.roots.fields.has(destination),
-						"Destination must be a new empty detached field",
+						0x7af /* Destination must be a new empty detached field */,
 					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
@@ -196,7 +197,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,
-					"Replace detached source field and detached destination field must be different",
+					0x7b0 /* Replace detached source field and detached destination field must be different */,
 				);
 				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
@@ -321,10 +322,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	public moveCursorToPath(
-		destination: UpPath | undefined,
-		cursorToMove: ITreeSubscriptionCursor,
-	): void {
+	public moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void {
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53c /* ChunkedForest must only be given its own Cursor type */,
@@ -357,6 +355,12 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cursorToMove.enterNode(indexStack.pop()!);
 		}
+	}
+
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		const rootCursor = this.roots.cursor();
+		rootCursor.enterNode(0);
+		return rootCursor;
 	}
 }
 
@@ -445,6 +449,6 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): IEditableForest {
+export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): ChunkedForest {
 	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors);
 }

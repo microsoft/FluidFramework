@@ -10,7 +10,6 @@ import {
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
@@ -20,13 +19,13 @@ import {
 	applyDelta,
 	makeDetachedFieldIndex,
 } from "../../../core";
-import { jsonNumber, jsonObject, jsonString } from "../../../domains";
+import { leaf, jsonObject } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	buildForest,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -88,8 +87,7 @@ const root_bar0_bar0: UpPath = {
 	parentIndex: 0,
 };
 
-const nodeX = { type: jsonString.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
+const nodeX = { type: leaf.string.name, value: "X" };
 
 function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 	assert.equal(actual.length, expected.length);
@@ -109,7 +107,7 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [singleTextCursor(data)]);
+		initializeForest(forest, [cursorForJsonableTreeNode(data)]);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
@@ -150,7 +148,7 @@ describe("DefaultEditBuilder", () => {
 		const { builder, deltas, forest } = initializeEditableForest({
 			type: jsonObject.name,
 			fields: {
-				foo: [{ type: jsonNumber.name, value: 0 }],
+				foo: [{ type: leaf.number.name, value: 0 }],
 			},
 		});
 		assert.equal(deltas.length, 0);
@@ -159,11 +157,11 @@ describe("DefaultEditBuilder", () => {
 		const fooEditor = builder.sequenceField(fooPath);
 		fooEditor.delete(0, 1);
 		assert.equal(deltas.length, 1);
-		fooEditor.insert(0, singleTextCursor({ type: jsonNumber.name, value: 42 }));
+		fooEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 42 }));
 		expectForest(forest, {
 			type: jsonObject.name,
 			fields: {
-				foo: [{ type: jsonNumber.name, value: 42 }],
+				foo: [{ type: leaf.number.name, value: 42 }],
 			},
 		});
 		assert.equal(deltas.length, 2);
@@ -175,7 +173,9 @@ describe("DefaultEditBuilder", () => {
 	describe("Value Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
-			builder.valueField({ parent: undefined, field: rootKey }).set(singleTextCursor(nodeX));
+			builder
+				.valueField({ parent: undefined, field: rootKey })
+				.set(cursorForJsonableTreeNode(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -184,24 +184,26 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
 				},
 			});
-			builder.valueField({ parent: root_foo2, field: fooKey }).set(singleTextCursor(nodeX));
+			builder
+				.valueField({ parent: root_foo2, field: fooKey })
+				.set(cursorForJsonableTreeNode(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
@@ -220,7 +222,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
 			builder
 				.optionalField({ parent: undefined, field: rootKey })
-				.set(singleTextCursor(nodeX), false);
+				.set(cursorForJsonableTreeNode(nodeX), false);
 			expectForest(forest, nodeX);
 		});
 
@@ -229,12 +231,12 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
@@ -242,13 +244,13 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder
 				.optionalField({ parent: root_foo2, field: fooKey })
-				.set(singleTextCursor(nodeX), false);
+				.set(cursorForJsonableTreeNode(nodeX), false);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
@@ -265,7 +267,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest();
 			builder
 				.optionalField({ parent: undefined, field: rootKey })
-				.set(singleTextCursor(nodeX), true);
+				.set(cursorForJsonableTreeNode(nodeX), true);
 			expectForest(forest, nodeX);
 		});
 
@@ -274,21 +276,21 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{ type: jsonObject.name },
 					],
 				},
 			});
 			builder
 				.optionalField({ parent: root_foo2, field: fooKey })
-				.set(singleTextCursor(nodeX), true);
+				.set(cursorForJsonableTreeNode(nodeX), true);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{ type: jsonObject.name, fields: { foo: [nodeX] } },
 					],
 				},
@@ -302,7 +304,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest();
 			builder
 				.sequenceField({ parent: undefined, field: rootKey })
-				.insert(0, singleTextCursor(nodeX));
+				.insert(0, cursorForJsonableTreeNode(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -311,17 +313,17 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
 								],
 							},
 						},
@@ -330,22 +332,22 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder
 				.sequenceField({ parent: root_foo2, field: fooKey })
-				.insert(5, singleTextCursor(nodeX));
+				.insert(5, cursorForJsonableTreeNode(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
 									nodeX,
 								],
 							},
@@ -367,19 +369,19 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
-									{ type: jsonNumber.name, value: 5 },
-									{ type: jsonNumber.name, value: 6 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
+									{ type: leaf.number.name, value: 5 },
+									{ type: leaf.number.name, value: 6 },
 								],
 							},
 						},
@@ -391,17 +393,17 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
-									{ type: jsonNumber.name, value: 4 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
 								],
 							},
 						},
@@ -416,23 +418,23 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 1);
+			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 3 },
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
 					],
 				},
 			};
@@ -444,10 +446,10 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			});
@@ -457,10 +459,38 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
-						{ type: jsonNumber.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes in their own midst", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+					],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			};
@@ -472,12 +502,12 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
-					bar: [{ type: jsonNumber.name, value: 0 }],
+					bar: [{ type: leaf.number.name, value: 0 }],
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
@@ -485,12 +515,12 @@ describe("DefaultEditBuilder", () => {
 			const expected = {
 				type: jsonObject.name,
 				fields: {
-					foo: [{ type: jsonNumber.name, value: 0 }],
+					foo: [{ type: leaf.number.name, value: 0 }],
 					bar: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			};
@@ -506,17 +536,17 @@ describe("DefaultEditBuilder", () => {
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
@@ -537,17 +567,17 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
@@ -565,17 +595,17 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 						{
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
@@ -598,17 +628,17 @@ describe("DefaultEditBuilder", () => {
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
@@ -626,10 +656,10 @@ describe("DefaultEditBuilder", () => {
 							type: jsonObject.name,
 							fields: {
 								foo: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
@@ -638,7 +668,7 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: jsonObject.name,
 							fields: {
-								bar: [{ type: jsonNumber.name, value: 0 }],
+								bar: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
@@ -659,7 +689,7 @@ describe("DefaultEditBuilder", () => {
 						{
 							type: jsonObject.name,
 							fields: {
-								foo: [{ type: jsonNumber.name, value: 0 }],
+								foo: [{ type: leaf.number.name, value: 0 }],
 							},
 						},
 					],
@@ -668,10 +698,10 @@ describe("DefaultEditBuilder", () => {
 							type: jsonObject.name,
 							fields: {
 								bar: [
-									{ type: jsonNumber.name, value: 0 },
-									{ type: jsonNumber.name, value: 1 },
-									{ type: jsonNumber.name, value: 2 },
-									{ type: jsonNumber.name, value: 3 },
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
 								],
 							},
 						},
@@ -679,6 +709,123 @@ describe("DefaultEditBuilder", () => {
 				},
 			};
 			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes before an ancestor of the moved node", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: fooKey },
+				0,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: leaf.number.name, value: 0 }],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes after an ancestor of the moved node", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: leaf.number.name, value: 0 }],
+							},
+						},
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Errors when attempting to move a node under itself", () => {
+			const statingState = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+						},
+					],
+				},
+			};
+			const { builder, forest } = initializeEditableForest(statingState);
+			assert.throws(() =>
+				builder.move(
+					{ parent: root, field: fooKey },
+					0,
+					1,
+					{ parent: root_foo0, field: fooKey },
+					0,
+				),
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			assert.deepEqual(treeView, [statingState]);
 		});
 
 		it("Can move nodes across deep subtrees of different fields", () => {
@@ -694,10 +841,10 @@ describe("DefaultEditBuilder", () => {
 										type: jsonObject.name,
 										fields: {
 											foo: [
-												{ type: jsonNumber.name, value: 0 },
-												{ type: jsonNumber.name, value: 1 },
-												{ type: jsonNumber.name, value: 2 },
-												{ type: jsonNumber.name, value: 3 },
+												{ type: leaf.number.name, value: 0 },
+												{ type: leaf.number.name, value: 1 },
+												{ type: leaf.number.name, value: 2 },
+												{ type: leaf.number.name, value: 3 },
 											],
 										},
 									},
@@ -711,9 +858,9 @@ describe("DefaultEditBuilder", () => {
 							fields: {
 								bar: [
 									{
-										type: jsonNumber.name,
+										type: leaf.number.name,
 										fields: {
-											bar: [{ type: jsonNumber.name, value: 0 }],
+											bar: [{ type: leaf.number.name, value: 0 }],
 										},
 									},
 								],
@@ -741,7 +888,7 @@ describe("DefaultEditBuilder", () => {
 									{
 										type: jsonObject.name,
 										fields: {
-											foo: [{ type: jsonNumber.name, value: 0 }],
+											foo: [{ type: leaf.number.name, value: 0 }],
 										},
 									},
 								],
@@ -754,13 +901,13 @@ describe("DefaultEditBuilder", () => {
 							fields: {
 								bar: [
 									{
-										type: jsonNumber.name,
+										type: leaf.number.name,
 										fields: {
 											bar: [
-												{ type: jsonNumber.name, value: 0 },
-												{ type: jsonNumber.name, value: 1 },
-												{ type: jsonNumber.name, value: 2 },
-												{ type: jsonNumber.name, value: 3 },
+												{ type: leaf.number.name, value: 0 },
+												{ type: leaf.number.name, value: 1 },
+												{ type: leaf.number.name, value: 2 },
+												{ type: leaf.number.name, value: 3 },
 											],
 										},
 									},
@@ -778,11 +925,11 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					foo: [
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
-					bar: [{ type: jsonNumber.name, value: 0 }],
+					bar: [{ type: leaf.number.name, value: 0 }],
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
@@ -791,10 +938,10 @@ describe("DefaultEditBuilder", () => {
 				type: jsonObject.name,
 				fields: {
 					bar: [
-						{ type: jsonNumber.name, value: 0 },
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			};
