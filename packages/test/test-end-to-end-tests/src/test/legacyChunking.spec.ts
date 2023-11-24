@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeInstallVersions,
@@ -81,14 +81,12 @@ describeInstallVersions(
 
 	const setupContainers = async () => {
 		const oldContainer = await createOldContainer();
-		const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
+		const oldDataObject =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
 		oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
 
 		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = await requestFluidObject<ITestFluidObject>(
-			containerOnLatest,
-			"default",
-		);
+		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
 		newMap = await newDataObject.getSharedObject<SharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -97,7 +95,8 @@ describeInstallVersions(
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
 
-	it("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
+	// To be fixed in AB#6302 (the "old" container above is actually just an old runtime with the current version of loader/container)
+	it.skip("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
 		await setupContainers();
 		const regularMessageSizeInBytes = 15 * 1024;
 		// Ops larger than 16k will end up chunked in older versions of fluid

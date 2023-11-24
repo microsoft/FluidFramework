@@ -25,8 +25,8 @@
 		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "start-server-and-test start:tinylicious 7070 start:test-app:client",
 		"start:test-app:client": "webpack serve --config webpack.config.js",
 		"start:tinylicious": "tinylicious",
@@ -39,7 +39,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/app-insights-logger": "workspace:2.0.0-internal.8.0.0",
+		"@fluid-experimental/app-insights-logger": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
