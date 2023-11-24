@@ -35,6 +35,7 @@ import { leaf, SchemaBuilder } from "../../domains";
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	failFastOnChangesetErrors: true,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees" });

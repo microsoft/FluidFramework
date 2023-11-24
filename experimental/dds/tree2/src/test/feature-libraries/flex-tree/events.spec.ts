@@ -32,6 +32,7 @@ describe("beforeChange/afterChange events", () => {
 	const factory = new SharedTreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
+		failFastOnChangesetErrors: true,
 	});
 
 	it("fire the expected number of times", () => {

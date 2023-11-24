@@ -48,6 +48,7 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
+	makeMitigatedChangeFamily,
 } from "../feature-libraries";
 import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -179,7 +180,16 @@ export class SharedTree
 			options,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
-		const changeFamily = new DefaultChangeFamily(options);
+		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const changeFamily = options.failFastOnChangesetErrors
+			? defaultChangeFamily
+			: makeMitigatedChangeFamily(
+					defaultChangeFamily,
+					DefaultChangeFamily.emptyChange,
+					(error: unknown) => {
+						// TODO:6344 Add telemetry for these errors.
+					},
+			  );
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
@@ -193,6 +203,7 @@ export class SharedTree
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
+			changeFamily,
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
@@ -375,6 +386,14 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 */
 	forest?: ForestType;
 	summaryEncodeType?: TreeCompressionStrategy;
+	/**
+	 * If true, the SharedTree will throw an error if processing a change fails during merge resolution and change application.
+	 * This option is preferable for testing and debugging SharedTree internals.
+	 *
+	 * Otherwise (default), no error will be generated and the change will be treated as empty.
+	 * This option is preferable for production scenarios.
+	 */
+	failFastOnChangesetErrors?: boolean;
 }
 
 /**
@@ -398,6 +417,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+	failFastOnChangesetErrors: false,
 };
 
 /**

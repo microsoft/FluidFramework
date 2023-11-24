@@ -228,7 +228,10 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: SharedTreeFactory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		factory: SharedTreeFactory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			failFastOnChangesetErrors: true,
+		}),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -373,7 +376,10 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		private readonly factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			failFastOnChangesetErrors: true,
+		}),
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTree[] = [];
@@ -504,7 +510,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		private readonly onCreate: (tree: SharedTree) => void,
 		private readonly onLoad?: (tree: SharedTree) => void,
 	) {
-		super({ jsonValidator: typeboxValidator });
+		super({ jsonValidator: typeboxValidator, failFastOnChangesetErrors: true });
 	}
 
 	public override async load(
