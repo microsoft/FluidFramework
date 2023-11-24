@@ -96,10 +96,7 @@ const mitigatedReturningFamily = makeMitigatedChangeFamily(
 );
 const mitigatedReturningRebaser = mitigatedReturningFamily.rebaser;
 const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
-const mitigatedReturningCodecs = mitigatedReturningFamily.codecs;
-const mitigatedThrowingCodecs = mitigatedThrowingFamily.codecs;
 const returningRebaser = returningFamily.rebaser;
-const returningCodecs = returningFamily.codecs;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
@@ -108,8 +105,6 @@ describe("makeMitigatedChangeFamily", () => {
 		assert.equal(mitigatedReturningRebaser.rebase(arg1, arg2), returningRebaser.rebase(arg1, arg2));
 		assert.equal(mitigatedReturningRebaser.invert(arg1, arg2), returningRebaser.invert(arg1, arg2));
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
-		assert.equal(mitigatedReturningCodecs.resolve(arg1), returningCodecs.resolve(arg1));
-		assert.equal(mitigatedReturningCodecs.getSupportedFormats(), returningCodecs.getSupportedFormats());
 	});
 	describe("catches errors from", () => {
 		it("intoDelta", () => {
@@ -133,21 +128,12 @@ describe("makeMitigatedChangeFamily", () => {
 			assert.deepEqual(errorLog, ["compose"]);
 		});
 	});
-	describe("does not catch errors from", () => {
-		it("buildEditor", () => {
-			errorLog.length = 0;
-			assert.throws(() => mitigatedThrowingFamily.buildEditor(arg1), new Error("buildEditor"));
-			assert.deepEqual(errorLog, []);
-		});
-		it("resolve", () => {
-			errorLog.length = 0;
-			assert.throws(() => mitigatedThrowingCodecs.resolve(arg1), new Error("resolve"));
-			assert.deepEqual(errorLog, []);
-		});
-		it("getSupportedFormats", () => {
-			errorLog.length = 0;
-			assert.throws(() => mitigatedThrowingCodecs.getSupportedFormats(), new Error("getSupportedFormats"));
-			assert.deepEqual(errorLog, []);
-		});
+	it("does not catch errors from buildEditor", () => {
+		errorLog.length = 0;
+		assert.throws(() => mitigatedThrowingFamily.buildEditor(arg1), new Error("buildEditor"));
+		assert.deepEqual(errorLog, []);
+	});
+	it("does affect codecs", () => {
+		assert.equal(mitigatedReturningFamily.codecs, returningFamily.codecs);
 	});
 });
