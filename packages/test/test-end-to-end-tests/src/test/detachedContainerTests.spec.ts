@@ -36,11 +36,7 @@ import {
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeFullCompat,
-	describeNoCompat,
-	itExpects,
-} from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 // import { isPendingDetachedContainerState } from "@fluidframework/driver-utils";
 
 const detachedContainerRefSeqNumber = 0;

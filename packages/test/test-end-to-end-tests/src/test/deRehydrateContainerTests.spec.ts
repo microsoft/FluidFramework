@@ -32,9 +32,8 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 // import {
 // 	// getSnapshotTreeFromSerializedContainer,
 // 	// eslint-disable-next-line import/no-internal-modules
@@ -252,8 +251,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 
 	const tests = () => {
 		it("Dehydrated container snapshot", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			const [snapshotTree, snapshotBlobs] = getSnapshotTreeFromSerializedSnapshot(container);
 
 			// Check for protocol attributes
@@ -299,8 +297,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 		});
 
 		it("Dehydrated container snapshot 2 times with changes in between", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			const [snapshotTree1, snapshotBlobs1] =
 				getSnapshotTreeFromSerializedSnapshot(container);
 			// Create a channel
@@ -685,15 +682,18 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 				const container2 = await loader2.resolve({ url: requestUrl2 });
 
 				// Get the sharedString1 from dataStore2 in rehydrated container.
-				const dataStore2FromRC = await getDataObjectFromContainer(
-					rehydratedContainer,
-					dataStore2Key,
-				);
+				const responseBefore = await rehydratedContainer.request({
+					url: `/${dataStore2.context.id}`,
+				});
+				const dataStore2FromRC = responseBefore.value as TestFluidObject;
 				const sharedMapFromRC =
 					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 				sharedMapFromRC.set("1", "B");
 
-				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
+				const responseAfter = await container2.request({
+					url: `/${dataStore2.context.id}`,
+				});
+				const dataStore3 = responseAfter.value as TestFluidObject;
 				const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 
 				await loaderContainerTracker.ensureSynchronized();
@@ -743,15 +743,18 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
 				const container2 = await loader2.resolve({ url: requestUrl2 });
 
 				// Get the sharedString1 from dataStore2 in container2.
-				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
+				const responseBefore = await container2.request({
+					url: `/${dataStore2.context.id}`,
+				});
+				const dataStore3 = responseBefore.value as TestFluidObject;
 				const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 				sharedMap3.set("1", "B");
 
 				// Get the sharedString1 from dataStore2 in rehydrated container.
-				const dataStore2FromRC = await getDataObjectFromContainer(
-					rehydratedContainer,
-					dataStore2Key,
-				);
+				const responseAfter = await rehydratedContainer.request({
+					url: `/${dataStore2.context.id}`,
+				});
+				const dataStore2FromRC = responseAfter.value as TestFluidObject;
 				const sharedMapFromRC =
 					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
