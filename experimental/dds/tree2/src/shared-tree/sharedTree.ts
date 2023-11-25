@@ -391,7 +391,8 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * This option is preferable for testing and debugging SharedTree internals.
 	 *
 	 * Otherwise (default), no error will be generated and the change will be treated as empty.
-	 * This option is preferable for production scenarios.
+	 * This option is preferable for production scenarios. It allows SharedTree users to keep using documents
+	 * in the face of merge resolution errors that would otherwise prevent the document from loading.
 	 */
 	failFastOnChangesetErrors?: boolean;
 }
