@@ -74,7 +74,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 }
 
 /**
- * Wrapper around LeafNodeSchema's constructor that provides the return type thats desired in the package public API.
+ * Wrapper around LeafNodeSchema's constructor that provides the return type that is desired in the package public API.
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
