@@ -1233,25 +1233,35 @@ describe("SharedTree", () => {
 			errorsThrown += 1;
 			throw new Error("test error");
 		};
+
+		const intoDeltaBackup = optionalChangeHandler.intoDelta;
+		const rebaserBackup = { ...optionalChangeRebaser };
 		optionalChangeHandler.intoDelta = throws;
 		optionalChangeRebaser.rebase = throws;
 		optionalChangeRebaser.invert = throws;
 		optionalChangeRebaser.compose = throws;
 
-		tree1.editor
-			.optionalField({ parent: undefined, field: rootFieldKey })
-			.set(undefined, false);
-		tree2.editor
-			.optionalField({ parent: undefined, field: rootFieldKey })
-			.set(undefined, false);
+		try {
+			tree1.editor
+				.optionalField({ parent: undefined, field: rootFieldKey })
+				.set(undefined, false);
+			tree2.editor
+				.optionalField({ parent: undefined, field: rootFieldKey })
+				.set(undefined, false);
 
-		// Also test that this propagates to forks
-		tree2.view
-			.fork()
-			.editor.optionalField({ parent: undefined, field: rootFieldKey })
-			.set(undefined, false);
+			// Also test that this propagates to forks
+			tree2.view
+				.fork()
+				.editor.optionalField({ parent: undefined, field: rootFieldKey })
+				.set(undefined, false);
 
-		provider.processMessages();
+			provider.processMessages();
+		} finally {
+			optionalChangeHandler.intoDelta = intoDeltaBackup;
+			optionalChangeRebaser.rebase = rebaserBackup.rebase;
+			optionalChangeRebaser.invert = rebaserBackup.invert;
+			optionalChangeRebaser.compose = rebaserBackup.compose;
+		}
 
 		assert(errorsThrown > 0);
 	});
@@ -1264,30 +1274,39 @@ describe("SharedTree", () => {
 		const throws = () => {
 			throw new Error("test error");
 		};
+		const intoDeltaBackup = optionalChangeHandler.intoDelta;
+		const rebaserBackup = { ...optionalChangeRebaser };
 		optionalChangeHandler.intoDelta = throws;
 		optionalChangeRebaser.rebase = throws;
 		optionalChangeRebaser.invert = throws;
 		optionalChangeRebaser.compose = throws;
 
-		assert.throws(() =>
-			tree1.editor
-				.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false),
-		);
-		assert.throws(() =>
-			tree2.editor
-				.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false),
-		);
-		// Also test that this propagates to forks
-		assert.throws(() =>
-			tree2.view
-				.fork()
-				.editor.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false),
-		);
+		try {
+			assert.throws(() =>
+				tree1.editor
+					.optionalField({ parent: undefined, field: rootFieldKey })
+					.set(undefined, false),
+			);
+			assert.throws(() =>
+				tree2.editor
+					.optionalField({ parent: undefined, field: rootFieldKey })
+					.set(undefined, false),
+			);
+			// Also test that this propagates to forks
+			assert.throws(() =>
+				tree2.view
+					.fork()
+					.editor.optionalField({ parent: undefined, field: rootFieldKey })
+					.set(undefined, false),
+			);
 
-		provider.processMessages();
+			provider.processMessages();
+		} finally {
+			optionalChangeHandler.intoDelta = intoDeltaBackup;
+			optionalChangeRebaser.rebase = rebaserBackup.rebase;
+			optionalChangeRebaser.invert = rebaserBackup.invert;
+			optionalChangeRebaser.compose = rebaserBackup.compose;
+		}
 	});
 
 	describe("Stashed ops", () => {
