@@ -719,7 +719,12 @@ describe("EditManager", () => {
 						// However, we avoid recomputing the inverse for the same change,
 						// so in the end we only invert (once) each peer edit that has peer edit after it.
 						inverted: peerCount - 1,
-						composed: 0,
+						// For each peer edit received (factor of P),
+						// we compose...
+						// - the rebased version of that peer edit: 1
+						// This compose is part of the code path updating the local branch.
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: peerCount,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -771,7 +776,10 @@ describe("EditManager", () => {
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase P+ over the their inverse.
 						inverted: peerCount + peerCount,
-						composed: 0,
+						// As part of rebasing the local branch, we compose...
+						// - the phase-2 peer edit: 1
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: 1,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -823,7 +831,10 @@ describe("EditManager", () => {
 						// - each of the phase-1 peer edits (which are based on commit Tc): P
 						// This is so that we can rebase P+ over the inverse of the phase-1 peer edits and up to T+.
 						inverted: peerCount + peerCount,
-						composed: 0,
+						// As part of rebasing the local branch, we compose...
+						// - the phase-2 peer edit P+: 1
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: 1,
 					};
 					assert.deepEqual(actual, expected);
 				});

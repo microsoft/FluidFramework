@@ -252,7 +252,7 @@ export function rebaseBranch<TChange>(
 	}
 
 	const netChange = computeSourceChange
-		? composeChanges(changeRebaser, [...inverses, ...targetRebasePath])
+		? changeRebaser.compose([...inverses, ...targetRebasePath])
 		: undefined;
 	return [
 		newHead,
@@ -263,13 +263,6 @@ export function rebaseBranch<TChange>(
 			sourceCommits,
 		},
 	];
-}
-
-function composeChanges<TChange>(
-	changeRebaser: ChangeRebaser<TChange>,
-	changes: TaggedChange<TChange>[],
-): TChange {
-	return changes.length === 1 ? changes[0].change : changeRebaser.compose(changes);
 }
 
 /**
