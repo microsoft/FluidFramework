@@ -20,6 +20,8 @@ import {
 	createNodeProxy,
 	createRawObjectProxy,
 	getClassSchema,
+	getSequenceField,
+	listPrototypeProperties,
 	mapStaticDispatchMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../simple-tree/proxies";
@@ -361,18 +363,30 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 *
 	 * If using these structurally named lists, other types in this schema builder should avoid names of the form `List<${string}>`.
 	 *
-	 * If the returned class is subclassed, that subclass must be used for all matching lists or an error will occur when configuring the tree.
-	 *
+	 * @example
+	 * The returned schema should be used as a schema directly:
+	 * ```typescript
+	 * const MyList = factory.list(factory.number);
+	 * type MyList = NodeFromSchema<typeof MyList>;
+	 * ```
+	 * Or inline:
+	 * ```typescript
+	 * factory.object("Foo", {myList: factory.list(factory.number)});
+	 * ```
 	 * @privateRemarks
 	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
 	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
 	 * For example attempts to narrow unions of structural lists by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
+	 *
+	 * The return value is a class, but its the type is intentionally not specific enough to indicate it is a class.
+	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the easy of accidentally giving two different calls o this different subclasses)
+	 * when working with structural typing.
 	 */
 	public list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
 		NodeKind.List,
 		T,
@@ -384,6 +398,11 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
+	 *
+	 * @example
+	 * ```typescript
+	 * class NamedList extends factory.list("name", factory.number) {}
+	 * ```
 	 */
 	public list<const Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
@@ -399,7 +418,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public list<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		NodeKind.List,
 		T,
@@ -410,7 +429,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedList(fullName, nameOrAllowedTypes as T),
+				this.namedList(fullName, nameOrAllowedTypes as T, false),
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.List,
@@ -419,7 +438,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
-		return this.namedList(nameOrAllowedTypes as TName, allowedTypes);
+		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true);
 	}
 
 	/**
@@ -430,6 +449,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
+		customizable: boolean,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.List,
@@ -442,18 +462,26 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		class schema extends this.nodeSchema(name, NodeKind.List, allowedTypes) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
 			public get length(): number {
-				return fail("this exists only to make proxy valid");
+				return getSequenceField(this as unknown as TreeListNode).length;
 			}
 			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, true, this) as schema;
+					return createNodeProxy(
+						input,
+						customizable,
+						customizable ? this : undefined,
+					) as schema;
 				} else {
 					// unhydrated data case.
 					fail("TODO: Support constructing unhydrated lists.");
 				}
 			}
 		}
+
+		// Setup list functionality
+		Object.defineProperties(schema.prototype, listPrototypeProperties);
+
 		return schema as unknown as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.List,

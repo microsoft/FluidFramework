@@ -264,7 +264,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 /**
  * Given a list proxy, returns its underlying LazySequence field.
  */
-const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
+export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
 	getEditNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
@@ -291,7 +291,7 @@ function contextualizeInsertedListContent(
 /**
  * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
  */
-const listPrototypeProperties: PropertyDescriptorMap = {
+export const listPrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
 	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
 	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
@@ -546,24 +546,28 @@ function asIndex(key: string | symbol, length: number) {
 
 function createListProxy<TTypes extends AllowedTypes>(
 	allowAdditionalProperties: boolean,
-	targetObject: object = [],
+	customTargetObject?: object,
 ): TreeListNode<TTypes> {
+	const targetObject = customTargetObject ?? [];
+
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
 	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'length', which is defined below).
 	//
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
-	const dispatch: object = Object.create(listPrototype, {
-		length: {
-			get(this: TreeListNode) {
-				return getSequenceField(this).length;
+	const dispatch: object =
+		customTargetObject ??
+		Object.create(listPrototype, {
+			length: {
+				get(this: TreeListNode) {
+					return getSequenceField(this).length;
+				},
+				set() {},
+				enumerable: false,
+				configurable: false,
 			},
-			set() {},
-			enumerable: false,
-			configurable: false,
-		},
-	});
+		});
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'

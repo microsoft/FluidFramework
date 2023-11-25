@@ -217,24 +217,80 @@ describe("schemaFactory", () => {
 		assert.equal(s, "hi");
 	});
 
-	it("Nested List", () => {
-		const builder = new SchemaFactory("test");
+	describe("List", () => {
+		it("Nested List", () => {
+			const builder = new SchemaFactory("test");
 
-		class Inventory extends builder.object("Inventory", {
-			parts: builder.list(builder.number),
-		}) {}
+			class Inventory extends builder.object("Inventory", {
+				parts: builder.list(builder.number),
+			}) {}
 
-		const treeConfiguration = new TreeConfiguration(
-			Inventory,
-			() =>
-				new Inventory({
-					parts: [1, 2],
-				}),
-		);
+			const treeConfiguration = new TreeConfiguration(
+				Inventory,
+				() =>
+					new Inventory({
+						parts: [1, 2],
+					}),
+			);
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
-		const view = tree.schematize(treeConfiguration);
+			const factory = new TreeFactory({});
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+			const view = tree.schematize(treeConfiguration);
+		});
+
+		const treeFactory = new TreeFactory({});
+
+		it("Structural", () => {
+			const factory = new SchemaFactory("test");
+
+			// Explicit structural example
+			const MyList = factory.list(factory.number);
+			type MyList = NodeFromSchema<typeof MyList>;
+
+			// Inline structural example
+			factory.object("Foo", { myList: factory.list(factory.number) });
+
+			function broken() {
+				// @ts-expect-error structural list schema are not typed as classes.
+				class NotAClass extends factory.list(factory.number) {}
+			}
+		});
+
+		it("Named", () => {
+			const factory = new SchemaFactory("test");
+			class NamedList extends factory.list("name", factory.number) {
+				public testProperty = false;
+			}
+
+			// Due to missing unhydrated list support, make a wrapper object
+			class Parent extends factory.object("parent", { child: NamedList }) {}
+
+			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the list node:
+			const treeConfiguration = new TreeConfiguration(
+				Parent,
+				() => new Parent({ child: [5] }),
+			);
+			const tree = treeFactory.create(new MockFluidDataStoreRuntime(), "tree");
+			const view = tree.schematize(treeConfiguration);
+
+			const listNode = view.root.child;
+			assert(listNode instanceof NamedList);
+			assert(listNode instanceof NodeBase);
+			assert(Reflect.has(listNode, "testProperty"));
+			assert.equal(listNode.testProperty, false);
+			listNode.testProperty = true;
+			assert.equal(listNode.testProperty, true);
+
+			// Test method from list
+			assert.equal(listNode.at(0), 5);
+		});
+
+		// Unhydrated lists are not implemented yet
+		it.skip("Unhydrated", () => {
+			const factory = new SchemaFactory("test");
+			class NamedList extends factory.list("name", factory.number) {}
+			const namedInstance = new NamedList([5]);
+		});
 	});
 
 	describe("Map", () => {
@@ -281,7 +337,7 @@ describe("schemaFactory", () => {
 			mapNode.testProperty = true;
 			assert.equal(mapNode.testProperty, true);
 
-			const getter = mapNode.get;
+			// Test method from map
 			assert.equal(mapNode.get("x"), 5);
 		});
 

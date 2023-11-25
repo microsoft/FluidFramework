@@ -1758,7 +1758,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
     readonly boolean: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.boolean">, NodeKind.Leaf, ValueSchema, boolean>;
     fixRecursiveReference<T extends AllowedTypes_2>(...types: T): void;
     readonly handle: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.handle">, NodeKind.Leaf, ValueSchema, IFluidHandle<FluidObject & IFluidLoadable>>;
-    list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaClass<`${TScope}.List<${string}>`, NodeKind.List, T, TreeListNode<T>, Iterable<TreeNodeFromImplicitAllowedTypes<T>>>;
+    list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.List<${string}>`, NodeKind.List, T, TreeListNode<T>, Iterable<TreeNodeFromImplicitAllowedTypes<T>>>;
     list<const Name extends TName, const T extends ImplicitAllowedTypes_2>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.List, T, TreeListNode<T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Map<${string}>`, NodeKind.Map, T, TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>>;
     map<Name extends TName, const T extends ImplicitAllowedTypes_2>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, T, TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>>;
