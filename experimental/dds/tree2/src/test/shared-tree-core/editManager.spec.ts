@@ -723,7 +723,7 @@ describe("EditManager", () => {
 						// we compose...
 						// - the rebased version of that peer edit: 1
 						// This compose is part of the code path updating the local branch.
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: peerCount,
 					};
 					assert.deepEqual(actual, expected);
@@ -783,7 +783,7 @@ describe("EditManager", () => {
 						// Note: the output of the composition doesn't appear to be consumed.
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit: 1
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: peerCount + trunkCount + peerCount + 1,
 					};
 					assert.deepEqual(actual, expected);
@@ -843,7 +843,7 @@ describe("EditManager", () => {
 						// Note: the output of the composition doesn't appear to be consumed.
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit P+: 1
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: peerCount + trunkCount + peerCount + 1,
 					};
 					assert.deepEqual(actual, expected);
