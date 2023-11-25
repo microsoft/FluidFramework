@@ -24,7 +24,7 @@ import { InsertableTreeNodeUnion } from "./insertable";
 import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
 
 /**
- * Type alias for to document which values are un-hydrated.
+ * Type alias to document which values are un-hydrated.
  *
  * Un-hydrated values are nodes produced from schema's create functions that haven't been inserted into a tree yet.
  *

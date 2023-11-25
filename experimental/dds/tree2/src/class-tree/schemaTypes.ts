@@ -51,6 +51,7 @@ export type InsertableObjectFromSchemaRecord<
 
 /**
  * Interface which carries the runtime and compile type data (from the generic type parameter) in a member.
+ * @remarks
  * This is also a constructor so that instances of it can be extended as classes.
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.

@@ -16,7 +16,7 @@ import { NodeFromSchema, TreeNodeSchema } from "./schemaTypes";
  */
 export interface ITree extends IChannel {
 	/**
-	 * Returns a tree known to be compatible with the provided schema with a schema aware API based on that schema.
+	 * Returns a tree that is known to be compatible with the provided schema. The returned tree exposes an API that is schema-aware.
 	 *
 	 * @remarks
 	 * If the tree is uninitialized (has no schema and no content), the tree is initialized with the provided `initialTree` and `schema`.

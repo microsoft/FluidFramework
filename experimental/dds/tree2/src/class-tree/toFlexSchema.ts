@@ -39,7 +39,7 @@ import { TreeConfiguration } from "./tree";
  * @remarks
  * Ideally this would work on any node, not just the root,
  * and the schema would come from the unhydrated node.
- * For now though, this is the only case thats needed, and we do have the data to make it work, so this is fine.
+ * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
 export function cursorFromUnhydratedRoot(
 	schema: TreeSchema,
@@ -147,7 +147,7 @@ export function convertAllowedTypes(
 const builder = { name: "simple schema" };
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * Normalizes an {@link ImplicitAllowedTypes} into {@link AllowedTypes}.
  */
 export function convertNodeSchema(
 	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,
