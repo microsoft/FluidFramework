@@ -35,12 +35,12 @@ Fields allowing `Any` can not be supported due to the requirement to traverse al
 Returned classes from factory cannot have any private or protected members due to a [TypeScript limitation](https://github.com/microsoft/TypeScript/issues/36060).
 This means getting nominal typing (non-structural typing) of node will require explicit members (like a strongly typed schema or type name symbol) if nominal typing is desired.
 Private data can still be stored using `#` private fields, or via weak keyed maps or under symbols.
-Even regular private and protected fields can be used in the implementation and cases away from the type returned by the factory,
+Even regular private and protected fields can be used in the implementation and casts away from the type returned by the factory,
 though doing this risks name collisions with user added members.
 
 Recursive types are still somewhat sketchy.
 
-Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing the more APis for them) instead of plain literals.
+Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing more APIs for them) instead of plain literals.
 
 Adding custom constructors to the schema classes is likely to break them, though static builders (like "create") can be added just fine.
 

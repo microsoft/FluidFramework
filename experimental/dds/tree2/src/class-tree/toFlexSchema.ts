@@ -36,7 +36,7 @@ import {
 import { TreeConfiguration } from "./tree";
 
 /**
- * @remarks
+ * @privateRemarks
  * Ideally this would work on any node, not just the root,
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.

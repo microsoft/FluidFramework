@@ -18,7 +18,7 @@ export interface IndexLookup<T> {
 }
 
 /**
- * Class which can indexed with integers from 0 to length -1 like arrays.
+ * Class which can be indexed with integers from 0 to length -1 like arrays.
  * Unlike with arrays, this class asserts for out of bounds indexing on both read and write.
  *
  * @privateRemarks
