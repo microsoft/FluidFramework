@@ -840,6 +840,7 @@ describe("EditManager", () => {
 						// - the inverse of the phase-1 peer edits: P
 						// - the trunk edits up to the ref# of P+: T
 						// - the rebased version of the phase-1 peer edits: P
+						// Note: the output of the composition doesn't appear to be consumed.
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit P+: 1
 						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
