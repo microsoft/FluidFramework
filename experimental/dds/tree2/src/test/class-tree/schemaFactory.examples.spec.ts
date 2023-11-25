@@ -9,12 +9,12 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, ITree, TreeConfiguration, TreeView, Tree } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
 
-// Since this no longer follows the builder pattern its a SchemaFactory instead of a SchemaBuilder.
+// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
 
 /**
  * An example schema based type.
- * This doc comment will be visible in intellisense when using referring to the schema (as a runtime value) or the instance type.
+ * This doc comment will be visible in intellisense when referring to the schema (as a runtime value) or the instance type.
  */
 class Point extends schema.object("Point", {
 	x: schema.number,
@@ -63,7 +63,7 @@ function f(n: NodeMap): Note[] {
 
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-// TODO: this should be possible, and this approach is needed in some cases where types are ambagious:
+// TODO: this should be possible, and this approach is needed in some cases where types are ambiguous:
 const config = new TreeConfiguration(
 	Canvas,
 	() =>

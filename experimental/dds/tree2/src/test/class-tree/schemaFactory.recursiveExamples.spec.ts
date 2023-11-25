@@ -9,7 +9,7 @@ import { SchemaFactory } from "../../class-tree/schemaFactory";
 import { ITree, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
 
-// Since this no longer follows the builder pattern its a SchemaFactory instead of a SchemaBuilder.
+// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
 
 const BoxRef = () => Box;

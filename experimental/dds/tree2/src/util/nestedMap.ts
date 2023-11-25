@@ -15,7 +15,7 @@
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
- * Subset of the `Map` interface thats also compatible with WeakMap and other similar APIs.
+ * Subset of the `Map` interface that's also compatible with WeakMap and other similar APIs.
  */
 export interface SimpleMap<Key, Value> {
 	get(key: Key): Value | undefined;

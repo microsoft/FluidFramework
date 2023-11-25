@@ -58,7 +58,6 @@ export interface ITree extends IChannel {
  */
 export class TreeConfiguration<TSchema extends TreeNodeSchema = TreeNodeSchema> {
 	/**
-	 *
 	 * @param initialTree - Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 * @param schema - The schema which the application wants to view the tree with.
