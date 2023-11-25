@@ -133,13 +133,14 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	} else {
 		// Fallback to createNodeProxy if needed.
 		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		output = createNodeProxy<TSchema>(flexNode);
+		output = createNodeProxy<TSchema>(flexNode, false);
 	}
 	return output;
 }
 
 export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	flexNode: FlexTreeNode,
+	allowAdditionalProperties: boolean,
 	targetObject?: object,
 ): TypedNode<TSchema> {
 	const schema = flexNode.schema;
@@ -148,11 +149,15 @@ export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	}
 	let proxy: TypedNode<TSchema>;
 	if (schemaIsMap(schema)) {
-		proxy = createMapProxy(targetObject) as TypedNode<TSchema>;
+		proxy = createMapProxy(allowAdditionalProperties, targetObject) as TypedNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
-		proxy = createListProxy(targetObject) as TypedNode<TSchema>;
+		proxy = createListProxy(allowAdditionalProperties, targetObject) as TypedNode<TSchema>;
 	} else if (schemaIsObjectNode(schema)) {
-		proxy = createObjectProxy(schema, targetObject) as TypedNode<TSchema>;
+		proxy = createObjectProxy(
+			schema,
+			allowAdditionalProperties,
+			targetObject,
+		) as TypedNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -160,8 +165,9 @@ export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	return proxy;
 }
 
-function createObjectProxy<TSchema extends ObjectNodeSchema>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
+	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeObjectNode<TSchema> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -188,9 +194,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
-				// Allow custom properties on classes to forward to the target.
-				// Class based schema use this.
-				return Reflect.set(target, key, value);
+				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
@@ -224,16 +228,24 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			return true;
 		},
 		has: (target, key) => {
-			return schema.objectNodeFields.has(key as FieldKey);
+			return (
+				schema.objectNodeFields.has(key as FieldKey) ||
+				(allowAdditionalProperties ? Reflect.has(target, key) : false)
+			);
 		},
 		ownKeys: (target) => {
-			return [...schema.objectNodeFields.keys()];
+			return [
+				...schema.objectNodeFields.keys(),
+				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
+			];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getEditNode(proxy).tryGetField(key as FieldKey);
 
 			if (field === undefined) {
-				return undefined;
+				return allowAdditionalProperties
+					? Reflect.getOwnPropertyDescriptor(target, key)
+					: undefined;
 			}
 
 			const p: PropertyDescriptor = {
@@ -533,6 +545,7 @@ function asIndex(key: string | symbol, length: number) {
 }
 
 function createListProxy<TTypes extends AllowedTypes>(
+	allowAdditionalProperties: boolean,
 	targetObject: object = [],
 ): TreeListNode<TTypes> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
@@ -575,8 +588,13 @@ function createListProxy<TTypes extends AllowedTypes>(
 				return Reflect.set(dispatch, key, newValue, proxy);
 			}
 
-			// For MVP, we otherwise disallow setting properties (mutation is only available via the list mutation APIs).
-			return false;
+			const field = getSequenceField(proxy);
+			const maybeIndex = asIndex(key, field.length);
+			if (maybeIndex !== undefined) {
+				// For MVP, we otherwise disallow setting properties (mutation is only available via the list mutation APIs).
+				return false;
+			}
+			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
 		},
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -623,7 +641,7 @@ function createListProxy<TTypes extends AllowedTypes>(
 
 // #region Create dispatch map for maps
 
-const mapStaticDispatchMap: PropertyDescriptorMap = {
+export const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
 		value(this: TreeMapNode) {
 			return this.entries();
@@ -702,12 +720,17 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
 // #endregion
 
 function createMapProxy<TSchema extends MapNodeSchema>(
-	targetObject: object = new Map<string, TreeField<TSchema["info"], "notEmpty">>(),
+	allowAdditionalProperties: boolean,
+	customTargetObject?: object,
 ): TreeMapNode<TSchema> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
-	const dispatch: object = Object.create(mapPrototype, {
-		// Empty - JavaScript Maps do not expose any "own" properties.
-	});
+	const dispatch: object =
+		customTargetObject ??
+		Object.create(mapPrototype, {
+			// Empty - JavaScript Maps do not expose any "own" properties.
+		});
+	const targetObject: object =
+		customTargetObject ?? new Map<string, TreeField<TSchema["info"], "notEmpty">>();
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
@@ -725,8 +748,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 				return Reflect.has(dispatch, key);
 			},
 			set: (target, key, newValue): boolean => {
-				// There aren't any `set` operations appropriate for maps.
-				return false;
+				return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
 			},
 			ownKeys: (target) => {
 				// All of Map's properties are inherited via its prototype, so there is nothing to return here,
@@ -749,12 +771,13 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	content: InsertableTypedNode<TSchema>,
+	allowAdditionalProperties: boolean,
 	target?: object,
 ): Unhydrated<TreeObjectNode<TSchema>> {
 	// Shallow copy the content and then add the type name symbol to it.
 	const contentCopy = { ...content };
 	Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
-	const proxy = createObjectProxy(schema, target);
+	const proxy = createObjectProxy(schema, allowAdditionalProperties, target);
 	const editNode = createRawObjectNode(schema, contentCopy);
 	return setEditNode(proxy, editNode);
 }

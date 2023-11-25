@@ -8,6 +8,8 @@ import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
 import {
+	NodeBase,
+	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
@@ -160,6 +162,9 @@ describe("schemaFactory", () => {
 			values.push(root.x);
 		});
 
+		assert(root instanceof Point);
+		assert(root instanceof NodeBase);
+		assert(Reflect.has(root, "selected"));
 		assert.equal(root.selected, false);
 		// Ensure modification works
 		root.selected = true;
@@ -213,7 +218,7 @@ describe("schemaFactory", () => {
 	});
 
 	it("Nested List", () => {
-		const builder = new SchemaFactory("com.contoso.app.inventory");
+		const builder = new SchemaFactory("test");
 
 		class Inventory extends builder.object("Inventory", {
 			parts: builder.list(builder.number),
@@ -230,5 +235,61 @@ describe("schemaFactory", () => {
 		const factory = new TreeFactory({});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view = tree.schematize(treeConfiguration);
+	});
+
+	describe("Map", () => {
+		const treeFactory = new TreeFactory({});
+
+		it("Structural", () => {
+			const factory = new SchemaFactory("test");
+
+			// Explicit structural example
+			const MyMap = factory.map(factory.number);
+			type MyMap = NodeFromSchema<typeof MyMap>;
+
+			// Inline structural example
+			factory.object("Foo", { myMap: factory.map(factory.number) });
+
+			function broken() {
+				// @ts-expect-error structural map schema are not typed as classes.
+				class NotAClass extends factory.map(factory.number) {}
+			}
+		});
+
+		it("Named", () => {
+			const factory = new SchemaFactory("test");
+			class NamedMap extends factory.map("name", factory.number) {
+				public testProperty = false;
+			}
+
+			// Due to missing unhydrated map support, make a wrapper object
+			class Parent extends factory.object("parent", { child: NamedMap }) {}
+
+			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
+			const treeConfiguration = new TreeConfiguration(
+				Parent,
+				() => new Parent({ child: new Map([["x", 5]]) }),
+			);
+			const tree = treeFactory.create(new MockFluidDataStoreRuntime(), "tree");
+			const view = tree.schematize(treeConfiguration);
+
+			const mapNode = view.root.child;
+			assert(mapNode instanceof NamedMap);
+			assert(mapNode instanceof NodeBase);
+			assert(Reflect.has(mapNode, "testProperty"));
+			assert.equal(mapNode.testProperty, false);
+			mapNode.testProperty = true;
+			assert.equal(mapNode.testProperty, true);
+
+			const getter = mapNode.get;
+			assert.equal(mapNode.get("x"), 5);
+		});
+
+		// Unhydrated maps are not implemented yet
+		it.skip("Unhydrated", () => {
+			const factory = new SchemaFactory("test");
+			class NamedMap extends factory.map("name", factory.number) {}
+			const namedInstance = new NamedMap(new Map([["x", 5]]));
+		});
 	});
 });

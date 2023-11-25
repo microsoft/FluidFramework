@@ -1,0 +1,5 @@
+undo or per-do renames: make new ones "new".
+Add overload for generating non-class based schema from schemaFactory for list and map. Force this for structural ones. Make not set target for proxy.
+Apply smaller changes to existing code as separate PR.
+
+Add flag to allow / ban extra properties on object proxies, unignore test for that.

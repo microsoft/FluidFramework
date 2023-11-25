@@ -16,8 +16,13 @@ import {
 import { leaf } from "../domains";
 import { TreeValue } from "../core";
 import { TreeMapNodeBase } from "../simple-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { createNodeProxy, createRawObjectProxy, getClassSchema } from "../simple-tree/proxies";
+import {
+	createNodeProxy,
+	createRawObjectProxy,
+	getClassSchema,
+	mapStaticDispatchMap,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../simple-tree/proxies";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema";
 import {
 	AllowedTypes,
@@ -195,16 +200,18 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		ObjectFromSchemaRecord<T>,
 		InsertableObjectFromSchemaRecord<T>
 	> {
+		const allowAdditionalProperties = true;
 		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, this) as schema;
+					return createNodeProxy(input, allowAdditionalProperties, this) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawObjectProxy(
 						flexSchema as ObjectNodeSchema,
 						input,
+						allowAdditionalProperties,
 						this,
 					) as schema;
 				}
@@ -230,13 +237,22 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 *
 	 * If using these structurally named maps, other types in this schema builder should avoid names of the form `Map<${string}>`.
 	 *
-	 * If the returned class is subclassed, that subclass must be used for all matching lists or an error will occur when configuring the tree.
+	 * @example
+	 * The returned schema should be used as a schema directly:
+	 * ```typescript
+	 * const MyMap = factory.map(factory.number);
+	 * type MyMap = NodeFromSchema<typeof MyMap>;
+	 * ```
+	 * Or inline:
+	 * ```typescript
+	 * factory.object("Foo", {myMap: factory.map(factory.number)});
+	 * ```
 	 * @privateRemarks
 	 * See note on list.
 	 */
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchema<
 		`${TScope}.Map<${string}>`,
 		NodeKind.Map,
 		T,
@@ -246,6 +262,11 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @example
+	 * ```typescript
+	 * class NamedMap extends factory.map("name", factory.number) {}
+	 * ```
 	 */
 	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
@@ -261,7 +282,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchemaClass<
+	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		NodeKind.Map,
 		T,
@@ -274,7 +295,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			return getOrCreate(
 				this.structuralTypes,
 				fullName,
-				() => this.namedMap(fullName as TName, nameOrAllowedTypes as T) as TreeNodeSchema,
+				() =>
+					this.namedMap(
+						fullName as TName,
+						nameOrAllowedTypes as T,
+						false,
+					) as TreeNodeSchema,
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.Map,
@@ -283,12 +309,13 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes);
+		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true);
 	}
 
 	private namedMap<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
+		customizable: boolean,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
@@ -300,13 +327,20 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public constructor(input: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, this) as schema;
+					return createNodeProxy(
+						input,
+						customizable,
+						customizable ? this : undefined,
+					) as schema;
 				} else {
 					// unhydrated data case.
-					fail("todo");
+					fail("TODO: Support constructing unhydrated maps.");
 				}
 			}
 		}
+
+		// Setup map functionality
+		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
 
 		return schema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
@@ -413,11 +447,10 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
-					// TODO: make return a proxy over this (or not a proxy).
-					return createNodeProxy(input, this) as schema;
+					return createNodeProxy(input, true, this) as schema;
 				} else {
 					// unhydrated data case.
-					fail("todo");
+					fail("TODO: Support constructing unhydrated lists.");
 				}
 			}
 		}
