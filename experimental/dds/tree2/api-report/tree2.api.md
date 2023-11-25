@@ -989,8 +989,7 @@ declare namespace InternalClassTreeTypes {
         ApplyKind,
         InsertableTreeNodeFromImplicitAllowedTypes,
         InsertableTypedNode_2 as InsertableTypedNode,
-        NodeBuilderData,
-        testRecursiveDomain
+        NodeBuilderData
     }
 }
 
@@ -1600,10 +1599,6 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 // @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
-// @alpha (undocumented)
-class RecursiveObject extends RecursiveObject_base {
-}
-
 // @alpha
 type _RecursiveTrick = never;
 
@@ -1894,12 +1889,6 @@ export interface StoredSchemaCollection {
 // @alpha
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, TreeStoredSchema {
     update(newSchema: TreeStoredSchema): void;
-}
-
-declare namespace testRecursiveDomain {
-    export {
-        RecursiveObject
-    }
 }
 
 // @alpha
