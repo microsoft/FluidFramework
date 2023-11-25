@@ -723,7 +723,7 @@ describe("EditManager", () => {
 						// we compose...
 						// - the rebased version of that peer edit: 1
 						// This compose is part of the code path updating the local branch.
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: peerCount,
 					};
 					assert.deepEqual(actual, expected);
@@ -765,20 +765,20 @@ describe("EditManager", () => {
 						// we rebase P+ (factor of 1) over...
 						// - the inverse of each peer edit before it: P
 						// - the trunk edits since its inception, which are the rebased phase-1 edits: P
-						// Note: that last rebase phase doesn't seem to be needed for this scenario.
+						// Note: this last rebase phase doesn't seem to be needed for this scenario.
 						rebased:
 							peerCount * (peerCount - 1 + trunkCount) + 1 * (peerCount + peerCount),
 						// As part of rebasing the peer branch, we invert...
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase them over the trunk edits.
-						// Note: that the last phase-1 peer edit does not actually need to be inverted.
+						// Note: the last of the phase-1 peer edit does not actually need to be inverted.
 						// As part of rebasing P+, we invert...
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase P+ over the their inverse.
 						inverted: peerCount + peerCount,
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit: 1
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: 1,
 					};
 					assert.deepEqual(actual, expected);
@@ -833,7 +833,7 @@ describe("EditManager", () => {
 						inverted: peerCount + peerCount,
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit P+: 1
-						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
 						composed: 1,
 					};
 					assert.deepEqual(actual, expected);
