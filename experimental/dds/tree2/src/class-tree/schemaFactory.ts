@@ -505,7 +505,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * @remarks
 	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 	 *
-	 * Also be aware that code which relies on this (or the "recursive" SchemaBuilder methods tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
+	 * Also be aware that code which relies on this tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
 	 * The command `TypeScript: Restart TS Server` should fix it.
 	 * Sometimes this does not work: the exact cause has not been confirmed but if you have the file open multiple times (for example in both sides of a window split into two columns): closing the extra copy may help.
 	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
