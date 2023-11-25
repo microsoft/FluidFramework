@@ -107,7 +107,9 @@ function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
 	}
 	return getEndpointConfigFromEnv(r11sEndpointName);
 }
-
+/**
+ * @internal
+ */
 export function assertRouterliciousEndpoint(
 	endpoint: string | undefined,
 ): asserts endpoint is RouterliciousEndpoint | undefined {
@@ -123,6 +125,9 @@ export function assertRouterliciousEndpoint(
 	throw new TypeError("Not a routerlicious endpoint");
 }
 
+/**
+ * @internal
+ */
 export class RouterliciousTestDriver implements ITestDriver {
 	public static createFromEnv(
 		config?: { r11sEndpointName?: string },
