@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { requestFluidObject, seqFromTree } from "@fluidframework/runtime-utils";
+import { seqFromTree } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
@@ -22,7 +22,7 @@ import {
 	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -135,7 +135,7 @@ describeNoCompat("Summarizer fetches expected number of times", (getTestObjectPr
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await createContainer();
 
-		mainDataStore = await requestFluidObject<TestDataObject1>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
 		mainDataStore._root.set("test", "value");
 		await waitForContainerConnection(mainContainer);
 	});

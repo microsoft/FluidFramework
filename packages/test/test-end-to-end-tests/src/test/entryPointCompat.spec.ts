@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { describeLoaderCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeLoaderCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -54,6 +54,7 @@ describe("entryPoint compat", () => {
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
 		});
 
+		// TODO: Remove this test when request is removed from Container AB#4991
 		it("request pattern", async () => {
 			const container = await createContainer();
 			const requestResult = await container.request({ url: "/" });
@@ -62,6 +63,7 @@ describe("entryPoint compat", () => {
 			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
 		});
 
+		// TODO: Remove this test when request is removed from Container AB#4991
 		it("both entryPoint and request pattern", async () => {
 			const container = await createContainer();
 			const entryPoint = await container.getEntryPoint?.();

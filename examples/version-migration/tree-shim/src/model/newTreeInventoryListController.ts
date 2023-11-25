@@ -8,9 +8,10 @@ import EventEmitter from "events";
 import {
 	AllowedUpdateType,
 	ISharedTree,
-	node,
-	ProxyNode,
+	Tree,
+	TypedNode,
 	SchemaBuilder,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -30,10 +31,10 @@ const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// The number in stock
 	quantity: builder.number,
 });
-type InventoryItemNode = ProxyNode<typeof inventoryItemSchema>;
+type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
 
 const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = ProxyNode<typeof inventoryItemList>;
+type InventoryItemList = TypedNode<typeof inventoryItemList>;
 
 const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList,
@@ -69,8 +70,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		super();
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
-		// node.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = node.on(this._inventoryItemNode, "changing", () => {
+		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "changing", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -84,9 +85,10 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
-	public static initializeTree(tree: ISharedTree): void {
-		tree.schematize({
-			initialTree: {
+	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
+	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
+		const view = tree.schematize({
+			initialTree: initialTree ?? {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
 					"": [
@@ -106,6 +108,11 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
 		});
+
+		// This is required because schematizing the tree twice will result in an error
+		if (initialTree !== undefined) {
+			view[disposeSymbol]();
+		}
 	}
 
 	private readonly _inventoryItemList: InventoryItemList;
@@ -147,8 +154,8 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
-		// node.on() is the way to register events on the list (the first argument).  AB#6051
-		node.on(this._inventoryItemList, "afterChange", () => {
+		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
+		Tree.on(this._inventoryItemList, "afterChange", () => {
 			for (const inventoryItemNode of this._inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
@@ -182,15 +189,13 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 	}
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this._inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
+		this._inventoryItemList.insertAtEnd({
+			// In a real-world scenario, this is probably a known unique inventory ID (rather than
+			// randomly generated).  Randomly generating here just for convenience.
+			id: uuid(),
+			name,
+			quantity,
+		});
 	};
 
 	public readonly getItems = (): IInventoryItem[] => {

@@ -9,7 +9,7 @@ import { ITreeCursorSynchronous } from "./cursor";
 import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta";
 import { rootFieldKey } from "./types";
 
-export const emptyDelta: Root<never> = new Map();
+export const emptyDelta: Root<never> = {};
 
 export const emptyFieldChanges: FieldChanges<never> = {};
 
@@ -39,15 +39,17 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 		return emptyDelta;
 	}
 	const buildId = { minor: 0 };
-	const delta: Root = new Map<FieldKey, FieldChanges>([
-		[
-			rootFieldKey,
-			{
-				build: [{ id: buildId, trees: content }],
-				local: [{ count: content.length, attach: buildId }],
-			},
-		],
-	]);
+	const delta: Root = {
+		build: [{ id: buildId, trees: content }],
+		fields: new Map<FieldKey, FieldChanges>([
+			[
+				rootFieldKey,
+				{
+					local: [{ count: content.length, attach: buildId }],
+				},
+			],
+		]),
+	};
 	return delta;
 }
 
@@ -75,6 +77,24 @@ export function makeDetachedNodeId(
 		out.major = major;
 	}
 	return out;
+}
+
+export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId;
+export function offsetDetachId(
+	id: DetachedNodeId | undefined,
+	offset: number,
+): DetachedNodeId | undefined;
+export function offsetDetachId(
+	id: DetachedNodeId | undefined,
+	offset: number,
+): DetachedNodeId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	return {
+		...id,
+		minor: id.minor + offset,
+	};
 }
 
 export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {

@@ -14,6 +14,9 @@ import {
 	FieldUpPath,
 	PathRootPrefix,
 	CursorMarker,
+	DetachedField,
+	rootField,
+	detachedFieldAsKey,
 } from "../core";
 import { fail } from "../util";
 
@@ -43,18 +46,36 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 /**
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
- * @returns an {@link ITreeCursorSynchronous} for a single root.
+ * @returns an {@link ITreeCursorSynchronous} for a single root in `nodes` mode.
  * @alpha
  */
-export function singleStackTreeCursor<TNode>(
-	root: TNode,
+export function stackTreeNodeCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
+	root: TNode,
 ): CursorWithNode<TNode> {
 	return new StackCursor(adapter, [], [], [root], 0);
 }
 
 /**
- * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
+ * Create a cursor, in `fields` mode at the `detachedField` under the provided `root`.
+ *
+ * @returns an {@link ITreeCursorSynchronous} for `detachedField` of `root` in `fields` mode.
+ * @alpha
+ */
+export function stackTreeFieldCursor<TNode>(
+	adapter: CursorAdapter<TNode>,
+	root: TNode,
+	detachedField: DetachedField = rootField,
+): CursorWithNode<TNode> {
+	const cursor = stackTreeNodeCursor(adapter, root);
+	// Because the root node in `stackTreeNodeCursor` is treated as the above detached fields node,
+	// using it then just entering the correct field doesn't mess up the paths reported by the cursor.
+	cursor.enterField(detachedFieldAsKey(detachedField));
+	return cursor;
+}
+
+/**
+ * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
  * @alpha
  */
 export interface CursorAdapter<TNode> {
@@ -95,8 +116,13 @@ export abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  *
+ * @privateRemarks
  * Note that TNode can be `null` (and we should support `undefined` as well),
  * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
+ *
+ * TODO:
+ * 1. Unit tests for this.
+ * 2. Support for cursors which are field cursors at the root.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
 	public readonly [CursorMarker] = true;

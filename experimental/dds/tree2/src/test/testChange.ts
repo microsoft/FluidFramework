@@ -19,7 +19,7 @@ import {
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -57,7 +57,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -175,7 +175,7 @@ function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap
 			[
 				brand("foo"),
 				deltaForSet(
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: brand("test"),
 						value: change.intentions.map(String).join("|"),
 					}),
@@ -283,7 +283,9 @@ const rootKey: FieldKey = brand("root");
 export function asDelta(intentions: number[]): Delta.Root {
 	return intentions.length === 0
 		? emptyDelta
-		: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]);
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(

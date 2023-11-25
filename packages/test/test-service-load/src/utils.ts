@@ -9,16 +9,14 @@ import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 	OdspTestDriver,
-} from "@fluid-internal/test-drivers";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/test-drivers";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ConfigTypes,
 	createChildLogger,
@@ -225,8 +223,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
-		// eslint-disable-next-line import/no-deprecated
-		const ds = await requestFluidObject<ILoadTest>(container, "/");
+		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),

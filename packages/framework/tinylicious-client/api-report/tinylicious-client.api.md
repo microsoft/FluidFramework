@@ -22,7 +22,7 @@ export { ITelemetryBaseLogger }
 // @public
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
-// @public
+// @public @deprecated
 export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
     // @internal (undocumented)
     protected createServiceMember(audienceMember: IClient): TinyliciousMember;
@@ -31,12 +31,12 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 // @public
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
 }

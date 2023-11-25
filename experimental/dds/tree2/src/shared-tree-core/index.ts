@@ -11,8 +11,6 @@ export {
 } from "./branch";
 
 export {
-	ChangeEvents,
-	ISharedTreeCoreEvents,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,

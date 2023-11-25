@@ -10,7 +10,7 @@ import {
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -28,10 +28,12 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ISharedTreeView2,
+	type TreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ProxyNode,
+	type TypedNode,
+	disposeSymbol,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -64,7 +66,7 @@ const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 const schema = builder.intoSchema(rootType);
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,
@@ -75,13 +77,15 @@ function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootF
 }
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematize({
-		initialTree: {
-			quantity,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+	newTree
+		.schematize({
+			initialTree: {
+				quantity,
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		})
+		[disposeSymbol]();
 };
 
 // Useful for modifying the legacy tree
@@ -266,7 +270,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 
 		const newTree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(newTree1);
-		const rootNode1: ProxyNode<typeof rootType> = view1.root;
+		const rootNode1: TypedNode<typeof rootType> = view1.root;
 
 		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
@@ -286,7 +290,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 		const shim3 = await testObj3.getShim();
 		const tree3 = shim3.currentTree as ISharedTree;
 		const view3 = getNewTreeView(tree3);
-		const rootNode3: ProxyNode<typeof rootType> = view3.root;
+		const rootNode3: TypedNode<typeof rootType> = view3.root;
 
 		// Verify that the value loaded from the summary matches the one loaded from a different summary
 		await provider.ensureSynchronized();
