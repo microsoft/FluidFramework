@@ -2073,7 +2073,6 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
       '@types/react': ^17.0.44
@@ -2102,7 +2101,6 @@ importers:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       monaco-editor: 0.30.1
