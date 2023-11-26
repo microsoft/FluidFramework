@@ -662,21 +662,25 @@ describe("EditManager", () => {
 					const expected = {
 						// For each trunk edit received (factor of T),
 						// we rebase each local edit (factor of L) over...
-						// - the inverse of each local edit before it: (L - 1) / 2
-						// - the new trunk edit: 1
-						// - the rebased version of each local edit before it: (L - 1) / 2
-						rebased: trunkCount * localCount * localCount,
+						// - the composition of...
+						//   - the inverse of each local edit before it
+						//   - the new trunk edit
+						//   - the rebased version of each local edit before it
+						// which counts for 1.
+						rebased: trunkCount * localCount * 1,
 						// For each trunk edit received (factor of T),
 						// we invert...
 						// - each local edit once: L
 						inverted: trunkCount * localCount,
 						// For each trunk edit received (factor of T),
 						// we compose...
-						// - the inverse of each local edits: L
-						// - the trunk edit:  1
-						// - the rebased version of each local edits: L
-						// This compose is part of the code path updating the local branch.
-						composed: trunkCount * (localCount * 2 + 1),
+						// - the trunk edit: 1
+						// - then, for each local edit (factor of L),
+						//   we compose...
+						//   - the inverted version of the local edit: 1
+						//   - the prior composition: 1
+						//   - the rebased version of the local edit: 1
+						composed: trunkCount * (1 + localCount * 3),
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -758,16 +762,17 @@ describe("EditManager", () => {
 					const expected = {
 						// As part of rebasing the peer branch that contains the phase-1 edits,
 						// we rebase each peer (factor of P) edit over...
-						// - the inverse of each peer edit before it: (P - 1) / 2
-						// - each the trunk edits: T
-						// - the fully rebased version of each peer edit before it: (P - 1) / 2
+						// - the composition of...
+						//   - the inverse of each peer edit before it
+						//   - the trunk edit
+						//   - the rebased version of each peer edit before it
+						// which counts for 1.
 						// As part of rebasing P+,
 						// we rebase P+ (factor of 1) over...
 						// - the inverse of each peer edit before it: P
 						// - the trunk edits since its inception, which are the rebased phase-1 edits: P
 						// Note: this last rebase phase doesn't seem to be needed for this scenario.
-						rebased:
-							peerCount * (peerCount - 1 + trunkCount) + 1 * (peerCount + peerCount),
+						rebased: peerCount * 1 + 1 * (peerCount + peerCount),
 						// As part of rebasing the peer branch, we invert...
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase them over the trunk edits.
@@ -777,14 +782,16 @@ describe("EditManager", () => {
 						// This is so that we can rebase P+ over the their inverse.
 						inverted: peerCount + peerCount,
 						// As part of rebasing the peer branch, we compose...
-						// - the inverse of the phase-1 peer edits: P
 						// - the trunk edits: T
-						// - the rebased version of the phase-1 peer edits: P
-						// Note: the output of the composition doesn't appear to be consumed.
+						// - then, for each peer edit (factor of P),
+						//   we compose...
+						//   - the inverted version of the peer edit: 1
+						//   - the prior composition: 1
+						//   - the rebased version of the peer edit: 1
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit: 1
 						// Note: this composition is only needed to bake the RevisionTag into the changeset.
-						composed: peerCount + trunkCount + peerCount + 1,
+						composed: trunkCount + peerCount * 3 + 1,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -818,17 +825,17 @@ describe("EditManager", () => {
 					const expected = {
 						// As part of rebasing the peer branch that contains the phase-1 edits,
 						// we rebase each peer (factor of P) edit over...
-						// - the inverse of each peer edit before it: (P - 1) / 2
-						// - each the trunk edits: T
-						// - the fully rebased version of each peer edit before it: (P - 1) / 2
+						// - the composition of...
+						//   - the inverse of each peer edit before it
+						//   - the trunk edit
+						//   - the rebased version of each peer edit before it
+						// which counts for 1.
 						// As part of rebasing P+,
 						// we rebase P+ (factor of 1) over...
 						// - the inverse of each peer edit before it (which are based on commit Tc): P
 						// - the one remaining trunk edit T+: 1
 						// - each peer fully rebased peer edit before it (which are based on commit T+): P
-						rebased:
-							peerCount * (peerCount - 1 + trunkCount) +
-							1 * (peerCount + 1 + peerCount),
+						rebased: peerCount * 1 + 1 * (peerCount + 1 + peerCount),
 						// As part of rebasing the peer branch, we invert...
 						// - each of the phase-1 peer edits (which are based on commit 0): P
 						// This is so that we can phase-1 up to Tc.
@@ -837,14 +844,16 @@ describe("EditManager", () => {
 						// This is so that we can rebase P+ over the inverse of the phase-1 peer edits and up to T+.
 						inverted: peerCount + peerCount,
 						// As part of rebasing the peer branch, we compose...
-						// - the inverse of the phase-1 peer edits: P
-						// - the trunk edits up to the ref# of P+: T
-						// - the rebased version of the phase-1 peer edits: P
-						// Note: the output of the composition doesn't appear to be consumed.
+						// - the trunk edits: T
+						// - then, for each peer edit (factor of P),
+						//   we compose...
+						//   - the inverted version of the peer edit: 1
+						//   - the prior composition: 1
+						//   - the rebased version of the peer edit: 1
 						// As part of rebasing the local branch, we compose...
 						// - the phase-2 peer edit P+: 1
 						// Note: this composition is only needed to bake the RevisionTag into the changeset.
-						composed: peerCount + trunkCount + peerCount + 1,
+						composed: trunkCount + peerCount * 3 + 1,
 					};
 					assert.deepEqual(actual, expected);
 				});
