@@ -536,28 +536,10 @@ export class EditManager<
 			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
 
-		// Advance the that reference point to take into account any sequenced changes from that session.
-		// This is safe because peers create and send new changes assuming all their local changes are sequenced next.
-		// (0)-(T)-(P1')
-		//  |   +--------(P2)
-		//  +------(P1)
-		let effectiveBaseRevisionInTrunk = baseRevisionInTrunk;
-		const trunkTail = getPath(
-			"FromAfter",
+		const effectiveBaseRevisionInTrunk = this.fastForwardReferencePoint(
 			baseRevisionInTrunk,
-			"ToAfter",
-			this.trunk.getHead(),
+			peerLocalBranch.getHead(),
 		);
-		const branchTail = getPathFromBase(peerLocalBranch.getHead(), this.trunk.getHead());
-		for (
-			let iBase = 0;
-			iBase < branchTail.length &&
-			iBase < trunkTail.length &&
-			branchTail[iBase].revision === trunkTail[iBase].revision;
-			iBase += 1
-		) {
-			effectiveBaseRevisionInTrunk = trunkTail[iBase];
-		}
 
 		peerLocalBranch.rebaseOnto(this.trunk, effectiveBaseRevisionInTrunk);
 
@@ -582,6 +564,47 @@ export class EditManager<
 		}
 
 		this.localBranch.rebaseOnto(this.trunk);
+	}
+
+	/**
+	 * Attempts to find a more recent trunk commit that a new peer commit is effectively based on.
+	 *
+	 * This function is used to detect scenarios of the following form:
+	 * ```text
+	 * (X0)-(X1)-(P1') <= the trunk
+	 *   |    +--------(P2) <= new peer commit
+	 *   +------(P1) <= previous peer commit
+	 *```
+	 * A new peer commit `P2` is received with a ref that indicates it is based on `X1`.
+	 * This function will detect that, because `P1` was sequenced after `X1`, `P2` is effectively based on `P1'`.
+	 * This is due to the fact that all clients rebase their local changes and only emit new changes based on those
+	 * rebased changes.
+	 *
+	 * @param newPeerCommitRef - The trunk commit that a new peer commit (not passed in) is based on.
+	 * @param previousPeerCommit - The previous commit (i.e., before the new one) from the same peer.
+	 * Note: passing a trunk commit from a different peer is safe (and will result in `newPeerCommitRef`
+	 * being returned).
+	 * @returns The most recent trunk commit that the new peer commit is effectively based on
+	 * when accounting for fast-forward opportunities.
+	 * This may be the same as `newPeerCommitRef` or it may be a more recent trunk commit.
+	 */
+	private fastForwardReferencePoint(
+		newPeerCommitRef: GraphCommit<TChangeset>,
+		previousPeerCommit: GraphCommit<TChangeset>,
+	): GraphCommit<TChangeset> {
+		let effectiveRef = newPeerCommitRef;
+		const trunkTail = getPath("FromAfter", newPeerCommitRef, "ToAfter", this.trunk.getHead());
+		const branchTail = getPathFromBase(previousPeerCommit, this.trunk.getHead());
+		for (
+			let iBase = 0;
+			iBase < branchTail.length &&
+			iBase < trunkTail.length &&
+			branchTail[iBase].revision === trunkTail[iBase].revision;
+			iBase += 1
+		) {
+			effectiveRef = trunkTail[iBase];
+		}
+		return effectiveRef;
 	}
 
 	public findLocalCommit(
