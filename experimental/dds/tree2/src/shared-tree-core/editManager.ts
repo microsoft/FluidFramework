@@ -527,6 +527,7 @@ export class EditManager<
 
 		// Get the revision that the remote change is based on
 		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
+
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const peerLocalBranch = getOrCreate(
@@ -534,7 +535,31 @@ export class EditManager<
 			newCommit.sessionId,
 			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
-		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+
+		// Advance the that reference point to take into account any sequenced changes from that session.
+		// This is safe because peers create and send new changes assuming all their local changes are sequenced next.
+		// (0)-(T)-(P1')
+		//  |   +--------(P2)
+		//  +------(P1)
+		let effectiveBaseRevisionInTrunk = baseRevisionInTrunk;
+		const trunkTail = getPath(
+			"FromAfter",
+			baseRevisionInTrunk,
+			"ToAfter",
+			this.trunk.getHead(),
+		);
+		const branchTail = getPathFromBase(peerLocalBranch.getHead(), this.trunk.getHead());
+		for (
+			let iBase = 0;
+			iBase < branchTail.length &&
+			iBase < trunkTail.length &&
+			branchTail[iBase].revision === trunkTail[iBase].revision;
+			iBase += 1
+		) {
+			effectiveBaseRevisionInTrunk = trunkTail[iBase];
+		}
+
+		peerLocalBranch.rebaseOnto(this.trunk, effectiveBaseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
@@ -639,5 +664,35 @@ function getPathFromBase<TCommit extends { parent?: TCommit }>(
 		findCommonAncestor([branchHead, path], baseBranchHead) !== undefined,
 		0x573 /* Expected branches to be related */,
 	);
+	return path;
+}
+
+/**
+ * @returns the path of commits from the ancestor to the descendant, ordered oldest to newest.
+ * The ancestor and descendant are not included in the path.
+ */
+function getPath<TCommit extends { parent?: TCommit }>(
+	from: "FromBefore" | "FromAfter",
+	ancestor: TCommit,
+	to: "ToBefore" | "ToAfter",
+	descendant: TCommit,
+): TCommit[] {
+	const path: TCommit[] = [];
+	if (from === "FromBefore") {
+		path.push(ancestor);
+	}
+	if (ancestor !== descendant) {
+		let current = descendant.parent;
+		while (current !== ancestor) {
+			assert(current !== undefined, "Expected ancestor to be an ancestor of descendant");
+			path.unshift(current);
+			current = current.parent;
+		}
+		if (to === "ToAfter") {
+			path.push(descendant);
+		}
+	} else {
+		assert(!(from === "FromAfter" && to === "ToBefore"), "Invalid path request");
+	}
 	return path;
 }
