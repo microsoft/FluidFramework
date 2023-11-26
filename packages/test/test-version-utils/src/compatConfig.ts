@@ -176,6 +176,9 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+/**
+ * @internal
+ */
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -260,6 +263,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * ```
  *
  * If the linked github issue is ever fixed, this can be once again used as a global setup fixture.
+ *
+ * @internal
  */
 export async function mochaGlobalSetup() {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));
