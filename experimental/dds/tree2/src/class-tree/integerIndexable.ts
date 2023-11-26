@@ -51,10 +51,7 @@ export function integerIndexable<T, TTarget extends object>(
 			return undefined;
 		}
 		const index = Number.parseInt(key, 10);
-		if (!Number.isNaN(index)) {
-			return index;
-		}
-		return undefined;
+		return Number.isNaN(index) ? undefined : index;
 	}
 
 	const proxyHandler: ProxyHandler<TTarget> = {
@@ -95,7 +92,7 @@ export function integerIndexable<T, TTarget extends object>(
 			if (typeof key === "string") {
 				const numericKey = Number.parseInt(key, 10);
 				if (!Number.isNaN(numericKey)) {
-					return true;
+					return isValidIndex(numericKey);
 				}
 			}
 			return Reflect.has(target, key);
