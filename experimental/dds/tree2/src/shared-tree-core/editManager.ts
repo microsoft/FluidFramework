@@ -527,7 +527,6 @@ export class EditManager<
 
 		// Get the revision that the remote change is based on
 		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const peerLocalBranch = getOrCreate(
@@ -535,7 +534,6 @@ export class EditManager<
 			newCommit.sessionId,
 			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
-
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
