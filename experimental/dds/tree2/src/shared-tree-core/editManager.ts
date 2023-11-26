@@ -536,12 +536,7 @@ export class EditManager<
 			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
 		);
 
-		const effectiveBaseRevisionInTrunk = this.fastForwardReferencePoint(
-			baseRevisionInTrunk,
-			peerLocalBranch.getHead(),
-		);
-
-		peerLocalBranch.rebaseOnto(this.trunk, effectiveBaseRevisionInTrunk);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
@@ -564,48 +559,6 @@ export class EditManager<
 		}
 
 		this.localBranch.rebaseOnto(this.trunk);
-	}
-
-	/**
-	 * Attempts to find a more recent trunk commit that a new peer commit is effectively based on.
-	 *
-	 * This function is used to detect scenarios of the following form:
-	 * ```text
-	 * (X0)-(X1)-(P1') <= the trunk
-	 *   |    +--------(P2) <= new peer commit
-	 *   +------(P1) <= previous peer commit
-	 *```
-	 * A new peer commit `P2` is received with a ref that indicates it is based on `X1`.
-	 * This function will detect that, because `P1` was sequenced after `X1`, and because the peer knew of `X1` at the
-	 * time it sent `P2`, `P2` is effectively based on `P1'`.
-	 * This is due to the fact that all clients rebase their local changes and only emit new changes based on those
-	 * rebased changes.
-	 *
-	 * @param newPeerCommitRef - The trunk commit that a new peer commit (not passed in) is based on.
-	 * @param previousPeerCommit - The previous commit (i.e., before the new one) from the same peer.
-	 * Note: passing a trunk commit from a different peer is safe (and will result in `newPeerCommitRef`
-	 * being returned).
-	 * @returns The most recent trunk commit that the new peer commit is effectively based on
-	 * when accounting for fast-forward opportunities.
-	 * This may be the same as `newPeerCommitRef` or it may be a more recent trunk commit.
-	 */
-	private fastForwardReferencePoint(
-		newPeerCommitRef: GraphCommit<TChangeset>,
-		previousPeerCommit: GraphCommit<TChangeset>,
-	): GraphCommit<TChangeset> {
-		let effectiveRef = newPeerCommitRef;
-		const trunkTail = getPath("FromAfter", newPeerCommitRef, "ToAfter", this.trunk.getHead());
-		const branchTail = getPathFromBase(previousPeerCommit, this.trunk.getHead());
-		for (
-			let iBase = 0;
-			iBase < branchTail.length &&
-			iBase < trunkTail.length &&
-			branchTail[iBase].revision === trunkTail[iBase].revision;
-			iBase += 1
-		) {
-			effectiveRef = trunkTail[iBase];
-		}
-		return effectiveRef;
 	}
 
 	public findLocalCommit(
@@ -688,35 +641,5 @@ function getPathFromBase<TCommit extends { parent?: TCommit }>(
 		findCommonAncestor([branchHead, path], baseBranchHead) !== undefined,
 		0x573 /* Expected branches to be related */,
 	);
-	return path;
-}
-
-/**
- * @returns the path of commits from the ancestor to the descendant, ordered oldest to newest.
- * The ancestor and descendant are not included in the path.
- */
-function getPath<TCommit extends { parent?: TCommit }>(
-	from: "FromBefore" | "FromAfter",
-	ancestor: TCommit,
-	to: "ToBefore" | "ToAfter",
-	descendant: TCommit,
-): TCommit[] {
-	const path: TCommit[] = [];
-	if (from === "FromBefore") {
-		path.push(ancestor);
-	}
-	if (ancestor !== descendant) {
-		let current = descendant.parent;
-		while (current !== ancestor) {
-			assert(current !== undefined, "Expected ancestor to be an ancestor of descendant");
-			path.unshift(current);
-			current = current.parent;
-		}
-		if (to === "ToAfter") {
-			path.push(descendant);
-		}
-	} else {
-		assert(!(from === "FromAfter" && to === "ToBefore"), "Invalid path request");
-	}
 	return path;
 }
