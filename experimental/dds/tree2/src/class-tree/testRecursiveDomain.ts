@@ -29,7 +29,7 @@ builder.fixRecursiveReference(recursiveReference);
 /**
  * @alpha
  */
-export class RecursiveObject extends builder.object("object2", {
+export class RecursiveObject extends builder.object("testObject", {
 	recursive: [recursiveReference],
 	number: builder.number,
 }) {}

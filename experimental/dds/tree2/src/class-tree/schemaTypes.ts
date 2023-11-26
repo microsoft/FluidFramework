@@ -8,6 +8,7 @@ import { FlexListToUnion, LazyItem } from "../feature-libraries";
 import { TreeListNodeBase, Unhydrated } from "../simple-tree";
 
 /**
+ * Base type which all nodes extend.
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -50,11 +51,9 @@ export type InsertableObjectFromSchemaRecord<
 };
 
 /**
- * Interface which carries the runtime and compile type data (from the generic type parameter) in a member.
+ * Schema for a tree node.
  * @remarks
- * This is also a constructor so that instances of it can be extended as classes.
- * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
- * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
+ * Captures the schema both as runtime data and compile time type information.
  * @alpha
  */
 export type TreeNodeSchema<
@@ -68,6 +67,11 @@ export type TreeNodeSchema<
 	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TBuild>;
 
 /**
+ * Schema which is not a class.
+ * @remarks
+ * This is used fort schema which cannot have their instances constructed using constructors, like leaf schema.
+ * @privateRemarks
+ * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
  * @alpha
  */
 export interface TreeNodeSchemaNonClass<
@@ -81,6 +85,13 @@ export interface TreeNodeSchemaNonClass<
 }
 
 /**
+ * Tree node schema which is implemented using a class.
+ * @remarks
+ * Instances of this class are nodes in the tree.
+ * This is also a constructor so that it can be subclassed.
+ *
+ * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
+ * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
  * @alpha
  */
 export interface TreeNodeSchemaClass<
@@ -94,6 +105,7 @@ export interface TreeNodeSchemaClass<
 }
 
 /**
+ * Data common to all tree node schema.
  * @alpha
  */
 export interface TreeNodeSchemaCore<
@@ -115,6 +127,7 @@ export interface TreeNodeSchemaCore<
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
+ * Kind of a field on a node.
  * @alpha
  */
 export enum FieldKind {
@@ -123,6 +136,7 @@ export enum FieldKind {
 }
 
 /**
+ * Kind of tree node.
  * @alpha
  */
 export enum NodeKind {
@@ -157,15 +171,22 @@ export class FieldSchema<
 }
 
 /**
+ * Types allowed in a field.
+ * @remarks
+ * Implicitly treats a single type as an array of one type.
  * @alpha
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 /**
+ * Schema for a field of a tree node.
+ * @remarks
+ * Implicitly treats {@link ImplicitAllowedTypes} as a Required field of that type.
  * @alpha
  */
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
+ * Converts ImplicitFieldSchema to the corresponding tree node's field type.
  * @alpha
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
@@ -176,6 +197,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 		: unknown;
 
 /**
+ * Type of content that can be inserted into the tree for a field of the given schema.
  * @alpha
  */
 export type InsertableTreeFieldFromImplicitField<
@@ -196,6 +218,7 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 	: undefined | T;
 
 /**
+ * Type of of tree node for a field of the given schema.
  * @alpha
  */
 export type TreeNodeFromImplicitAllowedTypes<
@@ -207,6 +230,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 	: unknown;
 
 /**
+ * Type of content that can be inserted into the tree for a node of the given schema.
  * @alpha
  */
 export type InsertableTreeNodeFromImplicitAllowedTypes<
