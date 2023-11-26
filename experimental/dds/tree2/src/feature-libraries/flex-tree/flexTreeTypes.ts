@@ -645,7 +645,7 @@ export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> exten
 	 * Gets a boxed node of this field by its index.
 	 * Note that a node must exist at the given index.
 	 */
-	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes>;
+	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.

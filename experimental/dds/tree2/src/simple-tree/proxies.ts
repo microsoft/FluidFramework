@@ -300,7 +300,14 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	at: {
 		value(this: TreeListNode, index: number): FlexTreeUnknownUnboxed | undefined {
-			return getSequenceField(this).at(index);
+			const field = getSequenceField(this);
+			const val = field.boxedAt(index);
+
+			if (val === undefined) {
+				return val;
+			}
+
+			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
 		},
 	},
 	insertAt: {
@@ -577,13 +584,22 @@ function createListProxy<TTypes extends AllowedTypes>(
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 
+			if (maybeIndex === undefined) {
+				// Pass the proxy as the receiver here, so that any methods on
+				// the prototype receive `proxy` as `this`.
+				return Reflect.get(dispatch, key, proxy) as unknown;
+			}
+
+			const value = field.boxedAt(maybeIndex);
+
+			if (value === undefined) {
+				return undefined;
+			}
+
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
-			return maybeIndex !== undefined
-				? getOrCreateNodeProxy(field.boxedAt(maybeIndex))
-				: // Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-				  (Reflect.get(dispatch, key, proxy) as unknown);
+			return getOrCreateNodeProxy(value);
 		},
 		set: (target, key, newValue, receiver) => {
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
@@ -616,13 +632,14 @@ function createListProxy<TTypes extends AllowedTypes>(
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
+				const val = field.boxedAt(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
 					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
 					//       inner field.
-					value: getOrCreateNodeProxy(field.boxedAt(maybeIndex)),
+					value: val === undefined ? val : getOrCreateNodeProxy(val),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
@@ -962,7 +979,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 function getListChildNode(
 	listNode: FlexTreeFieldNode<FieldNodeSchema>,
 	index: number,
-): FlexTreeNode {
+): FlexTreeNode | undefined {
 	const field = listNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,

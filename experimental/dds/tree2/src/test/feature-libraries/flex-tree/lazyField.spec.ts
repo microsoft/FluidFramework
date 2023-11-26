@@ -251,8 +251,7 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("boxedAt", () => {
-			// Invalid to request the value if there isn't one.
-			assert.throws(() => field.boxedAt(0));
+			assert.equal(field.boxedAt(0), undefined);
 		});
 
 		it("length", () => {
@@ -397,7 +396,12 @@ describe("LazySequence", () => {
 		assert.equal(boxedResult1.type, leafDomain.number.name);
 		assert.equal(boxedResult1.value, 42);
 
-		assert.throws(() => sequence.boxedAt(2));
+		const boxedResultNeg1 = sequence.boxedAt(-1);
+		assert.equal(boxedResultNeg1.type, leafDomain.number.name);
+		assert.equal(boxedResultNeg1.value, 42);
+
+		assert.equal(sequence.boxedAt(2), undefined);
+		assert.equal(sequence.boxedAt(-2).value, 37);
 	});
 
 	it("length", () => {

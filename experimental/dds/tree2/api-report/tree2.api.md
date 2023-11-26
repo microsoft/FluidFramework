@@ -748,7 +748,7 @@ export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> exten
     [Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
     readonly asArray: readonly FlexTreeUnboxNodeUnion<TTypes>[];
     at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
-    boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes>;
+    boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
     insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
     insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
     insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
