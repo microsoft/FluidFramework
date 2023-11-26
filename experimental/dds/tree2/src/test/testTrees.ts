@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { ITreeCursorSynchronous, JsonableTree } from "../core";
 import {
 	Any,
@@ -134,6 +135,7 @@ export const testTrees: readonly TestTree[] = [
 	testTree("null", library, leaf.null, null),
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, leaf.number, 5),
+	testTree("handle", library, leaf.handle, new MockHandle(5)),
 	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),
 	testTree("true boolean", library, leaf.boolean, true),
 	testTree("false boolean", library, leaf.boolean, false),
