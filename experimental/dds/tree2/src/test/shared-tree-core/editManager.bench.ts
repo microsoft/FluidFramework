@@ -83,7 +83,6 @@ describe("EditManager - Bench", () => {
 							peerEditCount,
 							trunkEditCount,
 							manager,
-							"None",
 							true,
 						);
 
@@ -98,39 +97,38 @@ describe("EditManager - Bench", () => {
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
 			});
-			for (const extraPeerEditStatus of ["CaughtUp", "NotCaughtUp"] as const) {
-				benchmark({
-					type,
-					title: `Receive 1 peer ${extraPeerEditStatus} commit on top of ${peerEditCount} existing peer commits that were rebased over ${trunkEditCount} trunk commits`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
+			// for (const extraPeerEditStatus of ["CaughtUp", "NotCaughtUp"] as const) {
+			// 	benchmark({
+			// 		type,
+			// 		title: `Receive 1 peer ${extraPeerEditStatus} commit on top of ${peerEditCount} existing peer commits that were rebased over ${trunkEditCount} trunk commits`,
+			// 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			// 			let duration: number;
+			// 			do {
+			// 				// Since this setup one collects data from one iteration, assert that this is what is expected.
+			// 				assert.equal(state.iterationsPerBatch, 1);
 
-							// Setup
-							const rebaser = new NoOpChangeRebaser();
-							const manager = editManagerFactory({ rebaser }).manager;
-							const rebasing = rebasePeerEditsOverTrunkEdits(
-								peerEditCount,
-								trunkEditCount,
-								manager,
-								extraPeerEditStatus,
-								true,
-							);
+			// 				// Setup
+			// 				const rebaser = new NoOpChangeRebaser();
+			// 				const manager = editManagerFactory({ rebaser }).manager;
+			// 				const rebasing = rebasePeerEditsOverTrunkEdits(
+			// 					peerEditCount,
+			// 					trunkEditCount,
+			// 					manager,
+			// 					true,
+			// 				);
 
-							// Measure
-							const before = state.timer.now();
-							rebasing();
-							const after = state.timer.now();
-							duration = state.timer.toSeconds(before, after);
-							// Collect data
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
-				});
-			}
+			// 				// Measure
+			// 				const before = state.timer.now();
+			// 				rebasing();
+			// 				const after = state.timer.now();
+			// 				duration = state.timer.toSeconds(before, after);
+			// 				// Collect data
+			// 			} while (state.recordBatch(duration));
+			// 		},
+			// 		// Force batch size of 1
+			// 		minBatchDurationSeconds: 0,
+			// 	});
+			// }
 		}
 	});
 	describe("Multi-peer commit rebasing", () => {

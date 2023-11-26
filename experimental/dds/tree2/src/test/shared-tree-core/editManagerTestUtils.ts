@@ -84,20 +84,17 @@ export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: TestEditManager,
-	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 ): void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: TestEditManager,
-	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: TestEditManager,
-	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: boolean = false,
 ): void | (() => void) {
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
@@ -111,51 +108,20 @@ export function rebasePeerEditsOverTrunkEdits(
 			brand(iChange),
 		);
 	}
-	let totalTrunkEdits = trunkEditCount;
-	if (extraPeerEdit === "NotCaughtUp") {
-		manager.addSequencedChange(
-			{
-				change: TestChange.emptyChange,
-				revision: mintRevisionTag(),
-				sessionId: "trunk",
-			},
-			brand(trunkEditCount + 1),
-			brand(trunkEditCount),
-		);
-		totalTrunkEdits += 1;
-	}
 	const peerEdits = makeArray(peerEditCount, () => ({
 		change: TestChange.emptyChange,
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
-	const part1 = () => {
+	const run = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
 			manager.addSequencedChange(
 				peerEdits[iChange],
-				brand(iChange + totalTrunkEdits + 1),
+				brand(iChange + trunkEditCount + 1),
 				brand(0),
 			);
 		}
 	};
-	const part2 = () => {
-		manager.addSequencedChange(
-			{
-				change: TestChange.emptyChange,
-				revision: mintRevisionTag(),
-				sessionId: "peer",
-			},
-			brand(peerEditCount + totalTrunkEdits + 1),
-			brand(totalTrunkEdits + (extraPeerEdit === "CaughtUp" ? 0 : -1)),
-		);
-	};
-	let run: () => void;
-	if (extraPeerEdit !== "None") {
-		part1();
-		run = part2;
-	} else {
-		run = part1;
-	}
 	return defer ? run : run();
 }
 
