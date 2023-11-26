@@ -576,7 +576,8 @@ export class EditManager<
 	 *   +------(P1) <= previous peer commit
 	 *```
 	 * A new peer commit `P2` is received with a ref that indicates it is based on `X1`.
-	 * This function will detect that, because `P1` was sequenced after `X1`, `P2` is effectively based on `P1'`.
+	 * This function will detect that, because `P1` was sequenced after `X1`, and because the peer knew of `X1` at the
+	 * time it sent `P2`, `P2` is effectively based on `P1'`.
 	 * This is due to the fact that all clients rebase their local changes and only emit new changes based on those
 	 * rebased changes.
 	 *
