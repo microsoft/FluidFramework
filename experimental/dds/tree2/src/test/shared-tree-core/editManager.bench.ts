@@ -64,10 +64,10 @@ describe("EditManager - Bench", () => {
 		}
 	});
 	describe("Peer commit rebasing", () => {
-		for (const { type, rebasedEditCount, trunkEditCount } of scenarios) {
+		for (const { type, rebasedEditCount: peerEditCount, trunkEditCount } of scenarios) {
 			benchmark({
 				type,
-				title: `Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`,
+				title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
 				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 					let duration: number;
 					do {
@@ -77,7 +77,7 @@ describe("EditManager - Bench", () => {
 						// Setup
 						const rebaser = new NoOpChangeRebaser();
 						const rebasing = rebasePeerEditsOverTrunkEdits(
-							rebasedEditCount,
+							peerEditCount,
 							trunkEditCount,
 							rebaser,
 							"None",
@@ -95,6 +95,38 @@ describe("EditManager - Bench", () => {
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
 			});
+			for (const extraPeerEditStatus of ["CaughtUp", "NotCaughtUp"] as const) {
+				benchmark({
+					type,
+					title: `Receive 1 peer ${extraPeerEditStatus} commit on top of ${peerEditCount} existing peer commits that were rebased over ${trunkEditCount} trunk commits`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							const rebaser = new NoOpChangeRebaser();
+							const rebasing = rebasePeerEditsOverTrunkEdits(
+								peerEditCount,
+								trunkEditCount,
+								rebaser,
+								extraPeerEditStatus,
+								true,
+							);
+
+							// Measure
+							const before = state.timer.now();
+							rebasing();
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+			}
 		}
 	});
 	describe("Multi-peer commit rebasing", () => {
