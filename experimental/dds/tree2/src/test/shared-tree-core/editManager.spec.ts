@@ -757,25 +757,15 @@ describe("EditManager", () => {
 					};
 					const expected = {
 						// As part of rebasing the peer branch that contains the phase-1 edits,
-						// we rebase each peer (factor of P) edit over...
-						// - the inverse of each peer edit before it: (P - 1) / 2
-						// - each the trunk edits: T
-						// - the fully rebased version of each peer edit before it: (P - 1) / 2
-						// As part of rebasing P+,
-						// we rebase P+ (factor of 1) over...
-						// - the inverse of each peer edit before it: P
-						// - the trunk edits since its inception, which are the rebased phase-1 edits: P
-						// Note: this last rebase phase doesn't seem to be needed for this scenario.
-						rebased:
-							peerCount * (peerCount - 1 + trunkCount) + 1 * (peerCount + peerCount),
+						// we realize that the trunk already contains those edits, they therefore undergo no rebasing.
+						// As part of rebasing P+ we realize that it is effectively based on the tip of the trunk,
+						// it therefore undergoes no rebasing.
+						rebased: 0,
 						// As part of rebasing the peer branch, we invert...
 						// - each of the phase-1 peer edits: P
 						// This is so that we can rebase them over the trunk edits.
-						// Note: the last of the phase-1 peer edit does not actually need to be inverted.
-						// As part of rebasing P+, we invert...
-						// - each of the phase-1 peer edits: P
-						// This is so that we can rebase P+ over the their inverse.
-						inverted: peerCount + peerCount,
+						// Note: none of those edits actually need to be inverted because all of them are already on the trunk.
+						inverted: peerCount,
 						// As part of rebasing the peer branch, we compose...
 						// - the inverse of the phase-1 peer edits: P
 						// - the trunk edits: T
