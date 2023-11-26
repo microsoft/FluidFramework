@@ -50,21 +50,20 @@ export function editManagerFactory(options: {
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
@@ -84,24 +83,23 @@ export function rebaseLocalEditsOverTrunkEdits(
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 ): void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	extraPeerEdit: "None" | "CaughtUp" | "NotCaughtUp",
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{

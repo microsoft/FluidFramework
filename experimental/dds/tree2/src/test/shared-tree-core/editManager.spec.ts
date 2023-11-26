@@ -644,10 +644,11 @@ describe("EditManager", () => {
 				// We reset the rebase/invert/compose counters before T1 is received.
 				it(`Rebase ${localCount} local commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
+					const manager = editManagerFactory({ rebaser }).manager;
 					const run = rebaseLocalEditsOverTrunkEdits(
 						localCount,
 						trunkCount,
-						rebaser,
+						manager,
 						true,
 					);
 					rebaser.rebasedCount = 0;
@@ -690,10 +691,11 @@ describe("EditManager", () => {
 				// We reset the rebase/invert/compose counters before P1 is received.
 				it(`Rebase ${peerCount} peer commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
+					const manager = editManagerFactory({ rebaser }).manager;
 					const run = rebasePeerEditsOverTrunkEdits(
 						peerCount,
 						trunkCount,
-						rebaser,
+						manager,
 						"None",
 						true,
 					);
@@ -739,10 +741,11 @@ describe("EditManager", () => {
 				// We reset the rebase/invert/compose counters before P+ is received.
 				it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
+					const manager = editManagerFactory({ rebaser }).manager;
 					const run = rebasePeerEditsOverTrunkEdits(
 						peerCount,
 						trunkCount,
-						rebaser,
+						manager,
 						"CaughtUp",
 						true,
 					);
@@ -799,10 +802,11 @@ describe("EditManager", () => {
 				// We reset the rebase/invert/compose counters before P+ is received.
 				it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
+					const manager = editManagerFactory({ rebaser }).manager;
 					const run = rebasePeerEditsOverTrunkEdits(
 						peerCount,
 						trunkCount,
-						rebaser,
+						manager,
 						"NotCaughtUp",
 						true,
 					);

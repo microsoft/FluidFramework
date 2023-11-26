@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { NoOpChangeRebaser } from "../testChange";
 import {
+	editManagerFactory,
 	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
@@ -43,10 +44,11 @@ describe("EditManager - Bench", () => {
 
 						// Setup
 						const rebaser = new NoOpChangeRebaser();
+						const manager = editManagerFactory({ rebaser }).manager;
 						const rebasing = rebaseLocalEditsOverTrunkEdits(
 							rebasedEditCount,
 							trunkEditCount,
-							rebaser,
+							manager,
 							true,
 						);
 
@@ -76,10 +78,11 @@ describe("EditManager - Bench", () => {
 
 						// Setup
 						const rebaser = new NoOpChangeRebaser();
+						const manager = editManagerFactory({ rebaser }).manager;
 						const rebasing = rebasePeerEditsOverTrunkEdits(
 							peerEditCount,
 							trunkEditCount,
-							rebaser,
+							manager,
 							"None",
 							true,
 						);
@@ -107,10 +110,11 @@ describe("EditManager - Bench", () => {
 
 							// Setup
 							const rebaser = new NoOpChangeRebaser();
+							const manager = editManagerFactory({ rebaser }).manager;
 							const rebasing = rebasePeerEditsOverTrunkEdits(
 								peerEditCount,
 								trunkEditCount,
-								rebaser,
+								manager,
 								extraPeerEditStatus,
 								true,
 							);
