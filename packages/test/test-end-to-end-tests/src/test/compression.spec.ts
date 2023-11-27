@@ -15,7 +15,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
@@ -85,7 +85,7 @@ const compressionSuite = (getProvider) => {
 	});
 };
 
-describeFullCompat("Op Compression", (getTestObjectProvider) =>
+describeCompat("Op Compression", "FullCompat", (getTestObjectProvider) =>
 	compressionSuite(async () => getTestObjectProvider()),
 );
 

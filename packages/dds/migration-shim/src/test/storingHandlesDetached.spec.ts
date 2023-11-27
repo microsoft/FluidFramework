@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -94,7 +94,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

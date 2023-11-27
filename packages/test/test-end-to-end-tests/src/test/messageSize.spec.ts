@@ -15,7 +15,7 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ConfigTypes, GenericError, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Message size", (getTestObjectProvider) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

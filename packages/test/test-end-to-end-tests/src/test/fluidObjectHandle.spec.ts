@@ -12,12 +12,12 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { describeLoaderCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -43,7 +43,7 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeNoCompat("no compat", (getTestObjectProvider) => {
+	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 		});
@@ -79,7 +79,7 @@ describe("entryPoint compat", () => {
 	});
 
 	// Simulating old loader code
-	describeLoaderCompat("loader compat", (getTestObjectProvider) => {
+	describeCompat("loader compat", "LoaderCompat", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 		});

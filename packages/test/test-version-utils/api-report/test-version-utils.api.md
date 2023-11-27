@@ -54,6 +54,9 @@ export interface CompatApis {
 }
 
 // @internal (undocumented)
+export type CompatVersionKind = "Full" | "NoCompat" | "LoaderCompat" | string;
+
+// @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
     ContainerRuntime: typeof ContainerRuntime;
@@ -84,7 +87,10 @@ export const DataRuntimeApi: {
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export const describeCompat: DescribeCompat;
+
+// @internal (undocumented)
+export type DescribeCompatSuite = (name: string, compatVersionKind: CompatVersionKind, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {
@@ -114,17 +120,8 @@ export const describeE2EDocsRuntime: DescribeE2EDocSuite;
 // @internal (undocumented)
 export type DescribeE2EDocSuite = (title: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, documentType: () => DescribeE2EDocInfo) => void, docTypes?: DescribeE2EDocInfo[], testType?: string) => Mocha.Suite | void;
 
-// @internal (undocumented)
-export const describeFullCompat: DescribeCompat;
-
 // @internal
 export function describeInstallVersions(requestedVersions?: IRequestedFluidVersions, timeoutMs?: number): DescribeWithVersions;
-
-// @internal (undocumented)
-export const describeLoaderCompat: DescribeCompat;
-
-// @internal (undocumented)
-export const describeNoCompat: DescribeCompat;
 
 // @internal (undocumented)
 export type DescribeSuiteWithVersions = (name: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider) => void) => Mocha.Suite | void;

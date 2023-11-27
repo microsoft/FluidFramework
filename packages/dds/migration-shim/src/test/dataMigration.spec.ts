@@ -10,7 +10,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -118,7 +118,7 @@ function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryF
 	});
 }
 
-describeNoCompat("HotSwap", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

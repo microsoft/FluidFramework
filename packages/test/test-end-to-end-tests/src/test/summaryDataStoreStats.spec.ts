@@ -20,7 +20,7 @@ import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -36,7 +36,7 @@ class TestDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 

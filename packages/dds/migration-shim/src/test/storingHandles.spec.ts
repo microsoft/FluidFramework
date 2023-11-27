@@ -10,7 +10,7 @@ import {
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -152,7 +152,7 @@ function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.roo
 	});
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

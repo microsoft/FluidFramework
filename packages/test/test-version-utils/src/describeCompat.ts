@@ -20,9 +20,13 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
-
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
+
+/**
+ * @internal
+ */
+export type CompatVersionKind = "Full" | "NoCompat" | "LoaderCompat" | string;
 
 /*
  * Mocha Utils for test to generate the compat variants.
@@ -30,7 +34,7 @@ await mochaGlobalSetup();
 function createCompatSuite(
 	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 	compatFilter?: CompatKind[],
-) {
+): (this: Mocha.Suite) => void {
 	return function (this: Mocha.Suite) {
 		let configs = configList.value;
 		if (compatFilter !== undefined) {
@@ -125,6 +129,7 @@ export interface ITestObjectProviderOptions {
  */
 export type DescribeCompatSuite = (
 	name: string,
+	compatVersionKind: CompatVersionKind,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
@@ -138,29 +143,53 @@ export type DescribeCompatSuite = (
 export type DescribeCompat = DescribeCompatSuite &
 	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
-function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
-	const d: DescribeCompat = (name, tests) =>
-		describe(name, createCompatSuite(tests, compatFilter));
-	d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
-	d.only = (name, tests) => describe.only(name, createCompatSuite(tests, compatFilter));
-	d.noCompat = (name, tests) => describe(name, createCompatSuite(tests, [CompatKind.None]));
+function createCompatDescribe(): DescribeCompat {
+	const createCompatSuiteWithDefault = (
+		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
+		compatVersionKind: CompatVersionKind,
+	) => {
+		switch (compatVersionKind) {
+			case "FullCompat":
+				return createCompatSuite(tests, undefined);
+			case "NoCompat":
+				return createCompatSuite(tests, [CompatKind.None]);
+			case "LoaderCompat":
+				return createCompatSuite(tests, [CompatKind.None, CompatKind.Loader]);
+			default:
+				// TODO: support min version
+				throw new Error("Option not supported");
+		}
+	};
+	const d: DescribeCompat = (name: string, compatVersionKind: CompatVersionKind, tests) =>
+		describe(name, createCompatSuiteWithDefault(tests, compatVersionKind));
+	d.skip = (name, compatVersionKind, tests) =>
+		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersionKind));
+
+	d.only = (name, compatVersionKind, tests) =>
+		describe.only(name, createCompatSuiteWithDefault(tests, compatVersionKind));
+
+	d.noCompat = (name, compatVersionKind, tests) =>
+		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
+
 	return d;
 }
 
-/**
- * @internal
- */
-export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
+// function createOldCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
+// 	const d: DescribeCompat = (name, tests) =>
+// 		describe(name, createCompatSuite(tests, compatFilter));
+// 	d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
+// 	d.only = (name, tests) => describe.only(name, createCompatSuite(tests, compatFilter));
+// 	d.noCompat = (name, tests) => describe(name, createCompatSuite(tests, [CompatKind.None]));
+// 	return d;
+// }
 
-/**
- * @internal
- */
-export const describeLoaderCompat: DescribeCompat = createCompatDescribe([
-	CompatKind.None,
-	CompatKind.Loader,
-]);
+// export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
 
+// export const describeLoaderCompat: DescribeCompat = createCompatDescribe([
+// 	CompatKind.None,
+// 	CompatKind.Loader,
+// ]);
 /**
  * @internal
  */
-export const describeFullCompat: DescribeCompat = createCompatDescribe();
+export const describeCompat: DescribeCompat = createCompatDescribe();

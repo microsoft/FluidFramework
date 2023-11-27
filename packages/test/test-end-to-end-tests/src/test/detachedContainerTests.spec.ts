@@ -37,7 +37,7 @@ import {
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -73,7 +73,7 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 	return dataStore.entryPoint.get() as Promise<ITestFluidObject>;
 };
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
@@ -887,7 +887,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 });
 
 // Review: Run with Full Compat?
-describeNoCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;

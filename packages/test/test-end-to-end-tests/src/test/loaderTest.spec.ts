@@ -9,10 +9,7 @@ import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
-import {
-	describeNoCompat,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import { requestResolvedObjectFromContainer } from "@fluidframework/container-loader";
@@ -20,7 +17,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // REVIEW: enable compat testing?
 // TODO: Remove this file when request is removed from Loader AB#4991
-describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
+describeCompat("Loader.request", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
