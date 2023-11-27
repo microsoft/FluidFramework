@@ -1714,7 +1714,6 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
-    failFastOnChangesetErrors?: boolean;
     forest?: ForestType;
     // (undocumented)
     summaryEncodeType?: TreeCompressionStrategy;
