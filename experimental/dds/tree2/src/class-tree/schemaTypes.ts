@@ -37,8 +37,11 @@ export type ObjectFromSchemaRecord<
 
 /**
  * Helper used to produce types for:
+ *
  * 1. Insertable content which can be used to construct an object node.
+ *
  * 2. Insertable content which is an unhydrated object node.
+ *
  * 3. Union of 1 and 2.
  *
  * TODO: consider separating these cases into different types.
