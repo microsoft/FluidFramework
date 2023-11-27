@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json",
+	"extends": "../../../common/build/build-common/api-extractor-base.json",
 
 	// This package is deprecated, so there is no real need to fix these.
 	"messages": {
@@ -9,6 +9,9 @@
 				"logLevel": "none"
 			},
 			"ae-forgotten-export": {
+				"logLevel": "none"
+			},
+			"ae-undocumented": {
 				"logLevel": "none"
 			}
 		}
