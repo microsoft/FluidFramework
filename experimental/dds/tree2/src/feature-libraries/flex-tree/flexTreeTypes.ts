@@ -27,7 +27,7 @@ import { EditableTreeEvents } from "./treeEvents";
 import { FlexTreeContext } from "./context";
 
 /**
- * Allows boxed iteration of a tree/field.
+ * Indicates that an object is a flex tree.
  * @alpha
  */
 export const flexTreeMarker = Symbol("flexTreeMarker");
@@ -70,6 +70,10 @@ export const boxedIterator = Symbol();
  * @alpha
  */
 export interface FlexTreeEntity<out TSchema = unknown> {
+	/**
+	 * Indicates that an object is a specific kind of flex tree FlexTreeEntity.
+	 * This makes it possible to both down cast FlexTreeEntities safely as well as validate if an object is or is not a FlexTreeEntity.
+	 */
 	readonly [flexTreeMarker]: FlexTreeEntityKind;
 
 	/**
