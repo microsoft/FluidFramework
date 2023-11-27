@@ -435,7 +435,8 @@ export class FluidDataStoreRuntime
 	/**
 	 * Api which allows caller to create the channel first and then add it to the runtime.
 	 * The channel type should be present in the registry, otherwise the runtime would reject
-	 * the channel.
+	 * the channel. Also the runtime used to create the channel object should be same to which
+	 * it is added.
 	 * @param channel - channel which needs to be added to the runtime.
 	 */
 	public addChannel(channel: IChannel): void {
