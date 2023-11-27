@@ -10,6 +10,7 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
+	defaultConsoleLogger,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
@@ -33,9 +34,9 @@ async function renderApiDocumentation() {
 	// Process API reports
 	console.group();
 
-	const apiModel = await loadModel(apiReportsDirectoryPath);
+	const logger = defaultConsoleLogger;
 
-	console.log("API MODEL:", apiModel)
+	const apiModel = await loadModel(apiReportsDirectoryPath, logger);
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
