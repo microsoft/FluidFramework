@@ -13,7 +13,7 @@ renderApiDocumentation().then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error("MAIN: API docs could not be written due to an error:", error);
+		console.error("API docs could not be written due to an error:", error);
 		process.exit(1);
 	},
 );
