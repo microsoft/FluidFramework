@@ -294,7 +294,7 @@ stages:
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
         # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
-        # we won't be able to write to them from outside the container.
+        # we won't be able to write to them from outside the container when generating the lists of packages below.
         - task: Bash@3
           displayName: Create folder for pack artifact
           inputs:
@@ -308,8 +308,9 @@ stages:
             action: 'Run a Docker command'
             customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
-        # Need to generate package lists manually, because we don't have access to the scripts/pack-packages.sh
-        # script that build-npm-package.yml uses.
+        # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
+        # inside the Docker container is proving problematic.
+        # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
         - task: Bash@3
           displayName: Generate package lists
           env:
