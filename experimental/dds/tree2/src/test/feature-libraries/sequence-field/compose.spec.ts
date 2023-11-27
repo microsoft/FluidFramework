@@ -696,6 +696,22 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("move ○ modify and return", () => {
+		const move = [Mark.moveIn(1, brand(0)), { count: 1 }, Mark.moveOut(1, brand(0))];
+		const changes = TestChange.mint([], 42);
+		const moveBack = [
+			Mark.moveOut(1, brand(0), { changes }),
+			{ count: 1 },
+			Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+		];
+		const expected = [{ count: 1 }, Mark.modify(changes)];
+		const actual = shallowCompose([
+			tagChange(move, tag1),
+			tagRollbackInverse(moveBack, tag3, tag1),
+		]);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("move ○ delete", () => {
 		const move = Change.move(1, 1, 4, brand(0));
 		const deletion = Change.delete(3, 1, brand(1));
