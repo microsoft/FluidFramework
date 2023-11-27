@@ -14,6 +14,9 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
+/**
+ * @internal
+ */
 export class TinyliciousTestDriver implements ITestDriver {
 	public readonly type = "tinylicious";
 	public readonly endpointName = "local";

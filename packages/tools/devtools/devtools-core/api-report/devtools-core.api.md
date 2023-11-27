@@ -247,7 +247,7 @@ export const EditType: {
     readonly Null: "null";
 };
 
-// @internal (undocumented)
+// @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
 // @public
