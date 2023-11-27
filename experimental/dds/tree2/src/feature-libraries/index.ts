@@ -265,3 +265,4 @@ import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";
