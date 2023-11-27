@@ -210,7 +210,7 @@ stages:
           displayName: 'Extract LTS blob content'
           inputs:
             archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/*tar.gz'
-            cleanDestinationFolder: true
+            cleanDestinationFolder: false
             overwriteExistingFiles: true
 
         - template: templates/include-use-node-version.yml
