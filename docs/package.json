@@ -12,7 +12,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:api && npm run build:md-magic && npm run hugo",
+		"build": "npm run build:api && npm run build:api:lts && npm run build:md-magic && npm run hugo",
 		"build:api": "npm run build:api-rollup && npm run build:api-documentation",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",
 		"build:api-documentation:lts": "node ./api-markdown-documenter/index-lts.js",
