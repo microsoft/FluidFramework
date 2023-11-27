@@ -230,7 +230,7 @@ export function rebaseBranch<TChange>(
 	let newHead = newBase;
 	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
-		const nextComposition: TaggedChange<TChange>[] = [
+		const editsToCompose: TaggedChange<TChange>[] = [
 			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
 			currentComposedEdit,
 		];
@@ -242,9 +242,9 @@ export function rebaseBranch<TChange>(
 				parent: newHead,
 			};
 			sourceCommits.push(newHead);
-			nextComposition.push(tagChange(change, c.revision));
+			editsToCompose.push(tagChange(change, c.revision));
 		}
-		currentComposedEdit = makeAnonChange(changeRebaser.compose(nextComposition));
+		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 	}
 
 	return [
