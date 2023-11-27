@@ -940,6 +940,21 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("insert ↷ [delete, insert]", () => {
+		// Because B does not have lineage for A, we should B's insertion's tiebreak policy
+		// and considered the cell it inserts into to be before the cell emptied by A
+		// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
+		// we should use C's lineage to deduce that it must come after B.
+		const deleteA = [Mark.delete(1, brand(0))];
+		const insertB = [Mark.insert(1, brand(0))];
+		const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
+
+		const c2 = rebase(insertC, deleteA);
+		const c3 = rebase(c2, insertB);
+		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
+		assert.deepEqual(c3, expected);
+	});
+
 	describe("Over composition", () => {
 		it("insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([

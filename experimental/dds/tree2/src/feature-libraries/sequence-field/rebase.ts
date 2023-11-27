@@ -154,7 +154,7 @@ function rebaseMarkList<TNodeChange>(
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
 		if ((markEmptiesCells(baseMark) || isCellRename(baseMark)) && !isInverseAttach(baseMark)) {
-			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
+			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
 			assert(
 				detachId !== undefined,
 				0x816 /* Mark which empties cells should have a detach ID */,
@@ -677,37 +677,20 @@ function handleLineage(
 
 	removeLineageEvents(cellId, new Set(baseRevisions));
 
-	// An undefined cell revision means this cell has never been filled or emptied.
-	// It is being created by the anonymous rebasing revision.
-	// This cell should get lineage from all revisions, so we treat it as older than all of them.
-	const revisionIndex =
-		cellId.revision === undefined ? -Infinity : getRevisionIndex(metadata, cellId.revision);
-
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
-		// BUG: This check doesn't make sense for rollbacks
-		if (revisionIndex < getRevisionIndex(metadata, revision)) {
+		if (shouldReceiveLineage(cellId.revision, revision, metadata)) {
+			const intention = metadata.tryGetInfo(revision)?.rollbackOf ?? revision;
 			for (const entry of detachBlock) {
-				addLineageEntry(cellId, revision, entry.id, entry.count, entry.count);
+				addLineageEntry(cellId, intention, entry.id, entry.count, entry.count);
 			}
 		}
 	}
 }
 
-function getRevisionIndex(metadata: RebaseRevisionMetadata, revision: RevisionTag): number {
+function getRevisionIndex(metadata: RevisionMetadataSource, revision: RevisionTag): number {
 	const index = metadata.getIndex(revision);
 	if (index !== undefined) {
 		return index;
-	}
-
-	const revisions = metadata.getBaseRevisions();
-	const rollbackIndex = revisions.findIndex(
-		(r) => metadata.tryGetInfo(r)?.rollbackOf === revision,
-	);
-
-	if (rollbackIndex >= 0) {
-		// `revision` is not in the metadata, but we've found a rollback of it,
-		// so `revision` must come after all changes in the metadata.
-		return Infinity;
 	}
 
 	// This revision is not in the changesets being handled and must be older than them.
@@ -720,7 +703,7 @@ function updateLineageState(
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 	rebasedMark: Mark<unknown>,
-	metadata: RebaseRevisionMetadata,
+	metadata: RevisionMetadataSource,
 ) {
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
@@ -739,7 +722,7 @@ function updateLineageState(
 }
 
 function getAttachRevisionIndex(
-	metadata: RebaseRevisionMetadata,
+	metadata: RevisionMetadataSource,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 ): number {
@@ -766,7 +749,7 @@ function getAttachRevisionIndex(
 }
 
 function getDetachRevisionIndex(
-	metadata: RebaseRevisionMetadata,
+	metadata: RevisionMetadataSource,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 ): number {
@@ -799,12 +782,14 @@ function addLineageToRecipients(
 	count: number,
 	metadata: RebaseRevisionMetadata,
 ) {
-	const revisionIndex = getRevisionIndex(metadata, revision);
+	const rollbackOf = metadata.tryGetInfo(revision)?.rollbackOf;
+	const intention = rollbackOf ?? revision;
+	const intentionIndex = getRevisionIndex(metadata, intention);
 	for (let i = cellBlocks.length - 1; i >= 0; i--) {
 		const entry = cellBlocks[i];
 		if (
-			entry.firstAttachedRevisionIndex <= revisionIndex &&
-			revisionIndex <= entry.lastAttachedRevisionIndex
+			entry.firstAttachedRevisionIndex <= intentionIndex &&
+			intentionIndex <= entry.lastAttachedRevisionIndex
 		) {
 			// These cells were full in this revision, so cells earlier in the sequence
 			// do not need to know about this lineage event.
@@ -812,12 +797,12 @@ function addLineageToRecipients(
 		}
 
 		// We only add lineage to cells which were detached before the lineage event occurred.
-		if (
-			entry.cellId !== undefined &&
-			(entry.cellId.revision === undefined ||
-				revisionIndex > getRevisionIndex(metadata, entry.cellId.revision))
-		) {
-			addLineageEntry(entry.cellId, revision, id, count, 0);
+		if (entry.cellId === undefined) {
+			continue;
+		}
+
+		if (shouldReceiveLineage(entry.cellId.revision, revision, metadata)) {
+			addLineageEntry(entry.cellId, intention, id, count, 0);
 		}
 	}
 }
@@ -888,6 +873,25 @@ function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): vo
 	);
 	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
 	mark.cellId.adjacentCells = adjacentCells;
+}
+
+function shouldReceiveLineage(
+	cellRevision: RevisionTag | undefined,
+	detachRevision: RevisionTag,
+	metadata: RevisionMetadataSource,
+): boolean {
+	if (cellRevision === undefined) {
+		return true;
+	}
+
+	const cellRevisionIndex = getRevisionIndex(metadata, cellRevision);
+	const rollbackOf = metadata.tryGetInfo(detachRevision)?.rollbackOf;
+	const detachIntention = rollbackOf ?? detachRevision;
+	const detachRevisionIndex = getRevisionIndex(metadata, detachIntention);
+	const isRollback = rollbackOf !== undefined;
+	return isRollback
+		? detachRevisionIndex < cellRevisionIndex
+		: detachRevisionIndex > cellRevisionIndex;
 }
 
 /**

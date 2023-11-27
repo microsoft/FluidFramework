@@ -331,7 +331,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 								a.change,
 								bc,
 								rebaseRevisionMetadataFromInfo(
-									[{ revision: tag1 }, { revision: tag2 }, { revision: tag3 }],
+									[{ revision: tag2 }, { revision: tag3 }, { revision: tag1 }],
 									[tag2, tag3],
 								),
 							);
