@@ -33,9 +33,9 @@ async function renderApiDocumentation() {
 	// Process API reports
 	console.group();
 
-	console.log("processing api reports");
-
 	const apiModel = await loadModel(apiReportsDirectoryPath);
+
+	console.log("API MODEL:", apiModel)
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {

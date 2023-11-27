@@ -188,15 +188,13 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: Bash@3
-          displayName: Create api-extractor-temp directory and api markdown directory
+          displayName: Create api-extractor-temp directory
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               echo "creating api-extractor-temp folder"
               mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models
-              echo "creating api content folder"
-              mkdir -p $(Build.SourcesDirectory)/docs/content/docs/apis-lts
 
         - task: AzureCLI@2
           displayName: 'Download LTS api-extractor JSON blob'
