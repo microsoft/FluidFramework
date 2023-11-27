@@ -577,6 +577,7 @@ export class DataStores implements IDisposable {
 					// state indicates an op was sent to attach a local data store, and the the attach op
 					// had not yet round tripped back to the client.
 					if (context.attachState === AttachState.Attaching) {
+						// Formerly assert 0x589
 						const error = DataProcessingError.create(
 							"Local data store detected in attaching state during summarize",
 							"summarize",
