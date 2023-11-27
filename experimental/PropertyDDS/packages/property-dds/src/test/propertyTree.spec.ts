@@ -223,10 +223,8 @@ describe("PropertyDDS summarizer", () => {
 		// Summarize
 		await summarizeNow(summarizer.summarizer);
 
-		const summarizerDataObject = await requestFluidObject<ITestFluidObject>(
-			summarizer.container,
-			"/",
-		);
+		const summarizerDataObject =
+			(await summarizer.container.getEntryPoint()) as ITestFluidObject;
 		const summarizerClient =
 			await summarizerDataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
 
