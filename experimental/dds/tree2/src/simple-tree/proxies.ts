@@ -138,6 +138,14 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	return output;
 }
 
+/**
+ * @param flexNode - underlying tree node which this proxy should wrap.
+ * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+ * Otherwise setting of unexpected properties will error.
+ * @param customTargetObject - Target object of the proxy.
+ * If not provided an empty collection of the relevant type is used for the target and a separate object created to dispatch methods.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide needed functionality depending on the schema kind.
+ */
 export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	flexNode: FlexTreeNode,
 	allowAdditionalProperties: boolean,
@@ -165,6 +173,12 @@ export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	return proxy;
 }
 
+/**
+ * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+ * Otherwise setting of unexpected properties will error.
+ * @param customTargetObject - Target object of the proxy.
+ * If not provided `{}` is used for the target.
+ */
 export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	allowAdditionalProperties: boolean,
@@ -551,6 +565,13 @@ function asIndex(key: string | symbol, length: number) {
 	}
 }
 
+/**
+ * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+ * Otherwise setting of unexpected properties will error.
+ * @param customTargetObject - Target object of the proxy.
+ * If not provided `[]` is used for the target and a separate object created to dispatch list methods.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the list functionality from {@link listPrototype}.
+ */
 function createListProxy<TTypes extends AllowedTypes>(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
@@ -740,6 +761,13 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
 
 // #endregion
 
+/**
+ * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+ * Otherwise setting of unexpected properties will error.
+ * @param customTargetObject - Target object of the proxy.
+ * If not provided `new Map()` is used for the target and a separate object created to dispatch map methods.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide the map functionality from {@link mapPrototype}.
+ */
 function createMapProxy<TSchema extends MapNodeSchema>(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
@@ -785,6 +813,10 @@ function createMapProxy<TSchema extends MapNodeSchema>(
  * @param schema - the schema of the object node
  * @param content - the content to be stored in the raw node.
  * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
+ * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+ * Otherwise setting of unexpected properties will error.
+ * @param customTargetObject - Target object of the proxy.
+ * If not provided `{}` is used for the target.
  * @remarks
  * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawObjectNode}.
  * Most if its properties and methods will error if read/called.
