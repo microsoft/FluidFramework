@@ -19,6 +19,7 @@ import {
 	chunkTree,
 	defaultChunkPolicy,
 	uncompressedEncode,
+	EncodedChunk,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -33,6 +34,7 @@ import {
 	tagRollbackInverse,
 	assertIsRevisionTag,
 	deltaForSet,
+	ITreeCursorSynchronous,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -328,38 +330,16 @@ describe("ModularChangeFamily", () => {
 		};
 
 		it("prioritizes earlier build entries when faced with duplicates", () => {
-			const cursor = singleJsonCursor(1);
-			const chunk = uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[
-						undefined,
-						new Map([
-							[
-								brand(0),
-								uncompressedEncode(
-									chunkTree(singleJsonCursor(1), defaultChunkPolicy).cursor(),
-								),
-							],
-						]),
-					],
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(1))]])],
 				]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[
-						undefined,
-						new Map([
-							[
-								brand(0),
-								uncompressedEncode(
-									chunkTree(singleJsonCursor(2), defaultChunkPolicy).cursor(),
-								),
-							],
-						]),
-					],
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(2))]])],
 				]),
 			};
 			assert.deepEqual(
@@ -862,3 +842,7 @@ describe("ModularChangeFamily", () => {
 		return index;
 	}
 });
+
+function encodedChunkFromCursor(cursor: ITreeCursorSynchronous): EncodedChunk {
+	return uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
+}
