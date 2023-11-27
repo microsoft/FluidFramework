@@ -392,7 +392,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * though there may still be some problematic cases even after that work is done.
 	 *
 	 * The return value is a class, but its the type is intentionally not specific enough to indicate it is a class.
-	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the easy of accidentally giving two different calls o this different subclasses)
+	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls o this different subclasses)
 	 * when working with structural typing.
 	 */
 	public list<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
