@@ -108,20 +108,51 @@ export function rebasePeerEditsOverTrunkEdits(
 			brand(iChange),
 		);
 	}
+	let totalTrunkEdits = trunkEditCount;
+	if (extraPeerEdit === "NotCaughtUp") {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "trunk",
+			},
+			brand(trunkEditCount + 1),
+			brand(trunkEditCount),
+		);
+		totalTrunkEdits += 1;
+	}
 	const peerEdits = makeArray(peerEditCount, () => ({
 		change: TestChange.emptyChange,
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
-	const run = () => {
+	const part1 = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
 			manager.addSequencedChange(
 				peerEdits[iChange],
-				brand(iChange + trunkEditCount + 1),
+				brand(iChange + totalTrunkEdits + 1),
 				brand(0),
 			);
 		}
 	};
+	const part2 = () => {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "peer",
+			},
+			brand(peerEditCount + totalTrunkEdits + 1),
+			brand(totalTrunkEdits + (extraPeerEdit === "CaughtUp" ? 0 : -1)),
+		);
+	};
+	let run: () => void;
+	if (extraPeerEdit !== "None") {
+		part1();
+		run = part2;
+	} else {
+		run = part1;
+	}
 	return defer ? run : run();
 }
 
