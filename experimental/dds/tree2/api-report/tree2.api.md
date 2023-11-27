@@ -478,7 +478,7 @@ export abstract class FieldKind<TName extends string = string, TMultiplicity ext
     readonly multiplicity: TMultiplicity;
 }
 
-// @alpha (undocumented)
+// @alpha
 enum FieldKind_2 {
     // (undocumented)
     Optional = 0,
@@ -920,13 +920,13 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 // @alpha
 export type ImplicitAllowedTypes = AllowedTypes | FlexTreeNodeSchema | Any;
 
-// @alpha (undocumented)
+// @alpha
 type ImplicitAllowedTypes_2 = AllowedTypes_2 | TreeNodeSchema;
 
 // @alpha
 export type ImplicitFieldSchema = TreeFieldSchema | ImplicitAllowedTypes;
 
-// @alpha (undocumented)
+// @alpha
 type ImplicitFieldSchema_2 = FieldSchema | ImplicitAllowedTypes_2;
 
 // @alpha
@@ -944,13 +944,13 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string
 // @alpha
 type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> = InsertableTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
-// @alpha (undocumented)
+// @alpha
 type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema_2 = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes_2 ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @alpha
 type InsertableTreeFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? InsertableTreeNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? InsertableTreeNodeUnion<TTypes> | undefined : unknown;
 
-// @alpha (undocumented)
+// @alpha
 type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode_2<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode_2<FlexListToUnion<TSchema>> : unknown;
 
 // @alpha
@@ -1393,7 +1393,7 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 // @alpha
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
-// @alpha (undocumented)
+// @alpha
 export class NodeBase {
 }
 
@@ -1441,7 +1441,7 @@ interface NodeKeys {
 // @alpha
 export const nodeKeySchema: SchemaLibrary;
 
-// @alpha (undocumented)
+// @alpha
 enum NodeKind {
     // (undocumented)
     Leaf = 3,
@@ -1983,7 +1983,7 @@ export class TreeFactory implements IChannelFactory {
 // @alpha
 export type TreeField<TSchema extends TreeFieldSchema = TreeFieldSchema, Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
-// @alpha (undocumented)
+// @alpha
 type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema_2 = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes_2 ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @alpha
@@ -2076,7 +2076,7 @@ export const enum TreeNavigationResult {
 // @alpha
 export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
-// @alpha (undocumented)
+// @alpha
 type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes_2 ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
 // @alpha
@@ -2103,13 +2103,13 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
     protected _typeCheck?: MakeNominal;
 }
 
-// @alpha (undocumented)
+// @alpha
 interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out Specification = unknown, out TNode = unknown, in TInsertable = never> extends TreeNodeSchemaCore<Name, Kind, Specification> {
     // (undocumented)
     new (data: TInsertable): TNode;
 }
 
-// @alpha (undocumented)
+// @alpha
 interface TreeNodeSchemaCore<out Name extends string = string, out Kind extends NodeKind = NodeKind, out Specification = unknown> {
     // (undocumented)
     readonly identifier: Name;
@@ -2122,7 +2122,7 @@ interface TreeNodeSchemaCore<out Name extends string = string, out Kind extends 
 // @alpha
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<TName, "tree.TreeNodeSchemaIdentifier">;
 
-// @alpha (undocumented)
+// @alpha
 interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out Specification = unknown, out TNode = unknown, in TInsertable = never> extends TreeNodeSchemaCore<Name, Kind, Specification> {
     // (undocumented)
     create(data: TInsertable): TNode;
