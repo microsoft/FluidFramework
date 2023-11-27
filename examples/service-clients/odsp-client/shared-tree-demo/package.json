@@ -59,6 +59,11 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools": "workspace:~",
+		"@fluid-tools/build-cli": "^0.28.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.28.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/debug": "^4.1.7",
 		"@types/node": "^17.0.45",
 		"@types/randomcolor": "^0.5.6",
