@@ -84,6 +84,11 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 
 /**
  * Builds schema libraries, and the schema within them.
+ *
+ * @typeParam TScope - Scope added as a prefix to the name of every schema produced by this factory.
+ * @typeParam TName - Type of names used to identify each schema produced in this factory.
+ * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
+ *
  * @sealed @alpha
  */
 export class SchemaFactory<TScope extends string, TName extends number | string = string> {
@@ -113,6 +118,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should validate and/or normalize them when inserting content.
 	 */
 	public readonly string = makeLeaf(leaf.string);
+
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
 	 *
@@ -128,10 +134,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should validate and/or normalize them when inserting content.
 	 */
 	public readonly number = makeLeaf(leaf.number);
+
 	/**
 	 * {@link TreeNodeSchema} for holding a boolean.
 	 */
 	public readonly boolean = makeLeaf(leaf.boolean);
+
 	/**
 	 * {@link TreeNodeSchema} for JavaScript `null`.
 	 *
@@ -141,6 +149,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
 	public readonly null = makeLeaf(leaf.null);
+
 	/**
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
