@@ -10,7 +10,6 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
-	defaultConsoleLogger,
 	verboseConsoleLogger,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
