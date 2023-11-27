@@ -686,6 +686,7 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Peer commit rebasing for peer with fixed seq ref#", () => {
 			for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
 				// This test leads to the following branching structure:
@@ -735,6 +736,7 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Peer commit rebasing for peer with advancing (but not tip) seq ref#", () => {
 			for (const editCount of [1, 2, 10]) {
 				// This test leads to the following branching structure:
@@ -818,6 +820,7 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Single peer commit on top of existing peer branch", () => {
 			describe("with peer commit ref# to the trunk edit that the existing peer branch should rebase over", () => {
 				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
@@ -889,6 +892,7 @@ describe("EditManager", () => {
 					});
 				}
 			});
+
 			describe("with peer commit ref# to the trunk edit before the trunk edit that the existing peer branch should rebase over", () => {
 				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
 					// This test leads to the following branching structure:
