@@ -5,8 +5,15 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, FieldKindIdentifier } from "../../core";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
+import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	brand,
+	fail,
+	JsonCompatibleReadOnly,
+	Mutable,
+	nestedMapFromFlatList,
+	nestedMapToFlatList,
+} from "../../util";
 import {
 	ICodecFamily,
 	ICodecOptions,
@@ -25,6 +32,7 @@ import {
 import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
+	EncodedBuilds,
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
 	EncodedModularChangeset,
@@ -146,12 +154,36 @@ function makeV0Codec(
 		return decodedChange;
 	}
 
+	function encodeBuilds(builds: ModularChangeset["builds"]): EncodedBuilds | undefined {
+		if (builds === undefined) {
+			return undefined;
+		}
+		const encoded: EncodedBuilds = nestedMapToFlatList(builds).map(([r, i, t]) =>
+			// `undefined` does not round-trip through JSON strings, so it needs special handling.
+			// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
+			// We therefore optimize for the common case by omitting the revision when it is undefined.
+			r !== undefined ? [r, i, t] : [i, t],
+		);
+		return encoded.length === 0 ? undefined : encoded;
+	}
+
+	function decodeBuilds(encoded: EncodedBuilds | undefined): ModularChangeset["builds"] {
+		if (encoded === undefined || encoded.length === 0) {
+			return undefined;
+		}
+		const list: [RevisionTag | undefined, ChangesetLocalId, any][] = encoded.map((tuple) =>
+			tuple.length === 3 ? tuple : [undefined, ...tuple],
+		);
+		return nestedMapFromFlatList(list);
+	}
+
 	return {
 		encode: (change) => {
 			return {
 				maxId: change.maxId,
 				revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
 				changes: encodeFieldChangesForJson(change.fieldChanges),
+				builds: encodeBuilds(change.builds),
 			};
 		},
 		decode: (change) => {
@@ -159,6 +191,9 @@ function makeV0Codec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes),
 			};
+			if (encodedChange.builds !== undefined) {
+				decoded.builds = decodeBuilds(encodedChange.builds);
+			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = encodedChange.revisions;
 			}

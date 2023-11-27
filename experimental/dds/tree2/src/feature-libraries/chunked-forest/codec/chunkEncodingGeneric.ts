@@ -5,7 +5,7 @@
 
 import { TreeValue } from "../../../core";
 import { fail } from "../../../util";
-import { FluidSerializableReadOnly } from "../../contextuallyTyped";
+import { FluidSerializableReadOnly } from "../../valueUtilities";
 import { EncodedChunkGeneric } from "./formatGeneric";
 import {
 	Counter,

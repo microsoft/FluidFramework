@@ -19,7 +19,6 @@ import {
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
-	ICombiningOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -163,7 +162,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								r.position,
 								r.position + r.segment.cachedLength,
 								props,
-								undefined,
 							),
 						);
 					}
@@ -343,16 +341,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 *
 	 */
-	public annotateRange(
-		start: number,
-		end: number,
-		props: PropertySet,
-		combiningOp?: ICombiningOp,
-	): void {
-		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
+	public annotateRange(start: number, end: number, props: PropertySet): void {
+		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
 	public getPropertiesAtPosition(pos: number) {

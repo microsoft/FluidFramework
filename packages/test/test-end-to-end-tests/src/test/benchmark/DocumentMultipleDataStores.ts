@@ -8,7 +8,6 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -198,7 +197,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			configProvider: configProvider(featureGates),
 		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
 		await this.ensureContainerConnectedWriteMode(this._mainContainer);

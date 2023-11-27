@@ -5,7 +5,7 @@
 
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
-import { ReferenceType, ICombiningOp } from "./ops";
+import { ReferenceType } from "./ops";
 import { PropertySet } from "./properties";
 
 export const reservedTileLabelsKey = "referenceTileLabels";
@@ -73,11 +73,10 @@ export interface ReferencePosition {
 
 	/**
 	 * @param newProps - Properties to add to this reference.
-	 * @param op - Combining semantics for changed properties. By default, property changes are last-write-wins.
 	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
 	 */
-	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
 }
 

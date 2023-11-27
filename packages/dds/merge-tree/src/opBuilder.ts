@@ -5,7 +5,6 @@
 
 import { ISegment, Marker } from "./mergeTreeNodes";
 import {
-	ICombiningOp,
 	IMergeTreeAnnotateMsg,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
@@ -21,7 +20,6 @@ import { PropertySet } from "./properties";
  * Creates the op for annotating the markers with the provided properties
  * @param marker - The marker to annotate
  * @param props - The properties to annotate the marker with
- * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
  *
  * @internal
@@ -29,7 +27,6 @@ import { PropertySet } from "./properties";
 export function createAnnotateMarkerOp(
 	marker: Marker,
 	props: PropertySet,
-	combiningOp?: ICombiningOp,
 ): IMergeTreeAnnotateMsg | undefined {
 	const id = marker.getId();
 	if (!id) {
@@ -37,7 +34,6 @@ export function createAnnotateMarkerOp(
 	}
 
 	return {
-		combiningOp,
 		props,
 		relativePos1: { id, before: true },
 		relativePos2: { id },
@@ -50,7 +46,6 @@ export function createAnnotateMarkerOp(
  * @param start - The inclusive start position of the range to annotate
  * @param end - The exclusive end position of the range to annotate
  * @param props - The properties to annotate the range with
- * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
  *
  * @internal
@@ -59,10 +54,8 @@ export function createAnnotateRangeOp(
 	start: number,
 	end: number,
 	props: PropertySet,
-	combiningOp: ICombiningOp | undefined,
 ): IMergeTreeAnnotateMsg {
 	return {
-		combiningOp,
 		pos1: start,
 		pos2: end,
 		props,
@@ -138,7 +131,6 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {
 		ops,
-		// eslint-disable-next-line import/no-deprecated
 		type: MergeTreeDeltaType.GROUP,
 	};
 }

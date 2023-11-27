@@ -17,7 +17,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
-export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
+export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet): PropertySet;
 
 // @alpha (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
@@ -39,7 +39,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // @internal (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -103,9 +103,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet);
     // (undocumented)
     addLongClientId(longClientId: string): void;
-    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
-    annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
-    annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
+    annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
+    annotateRangeLocal(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
     // (undocumented)
@@ -217,7 +216,7 @@ export function compareReferencePositions(a: ReferencePosition, b: ReferencePosi
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
 // @internal
-export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
+export function createAnnotateRangeOp(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg;
 
 // @public (undocumented)
 export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
@@ -320,18 +319,6 @@ export interface IAttributionCollectionSpec<T> {
 }
 
 // @public (undocumented)
-export interface ICombiningOp {
-    // (undocumented)
-    defaultValue?: any;
-    // (undocumented)
-    maxValue?: any;
-    // (undocumented)
-    minValue?: any;
-    // (undocumented)
-    name: string;
-}
-
-// @public (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
     marker: IMarkerDef;
@@ -365,8 +352,6 @@ export interface IMergeNodeCommon {
 
 // @public (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-    // (undocumented)
-    combiningOp?: ICombiningOp;
     // (undocumented)
     pos1?: number;
     // (undocumented)
@@ -549,7 +534,7 @@ export interface IRemovalInfo {
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     // @internal
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     append(segment: ISegment): void;
     // @alpha
@@ -771,11 +756,10 @@ export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 
 // @public (undocumented)
 export class PropertiesManager {
-    constructor();
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
     // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
+    addProperties(oldProps: PropertySet, newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
@@ -787,7 +771,6 @@ export class PropertiesManager {
 // @public (undocumented)
 export enum PropertiesRollback {
     None = 0,
-    Rewrite = 2,
     Rollback = 1
 }
 
@@ -896,7 +879,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 // @public
 export interface ReferencePosition {
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+    addProperties(newProps: PropertySet): void;
     getOffset(): number;
     getSegment(): ISegment | undefined;
     // (undocumented)

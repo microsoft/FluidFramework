@@ -29,7 +29,6 @@ import {
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const counterKey = "count";
 
@@ -339,7 +338,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			registry: [[mapId, SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
-		const do1 = await requestFluidObject<ITestFluidObject>(created, "default");
+		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
 		const map1 = await do1.getSharedObject<SharedMap>(mapId);
 
 		const headers: IRequestHeader = {
@@ -352,7 +351,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			url: await provider.driver.createContainerUrl(provider.documentId),
 			headers,
 		});
-		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
+		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
 		const map2 = await do2.getSharedObject<SharedMap>(mapId);

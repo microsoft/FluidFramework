@@ -82,7 +82,6 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder";
 export {
-	ICombiningOp,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,

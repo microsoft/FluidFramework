@@ -39,7 +39,6 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	MinListener,
 	reservedMarkerIdKey,
 	SegmentActions,
 	SegmentGroup,
@@ -55,13 +54,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
-import {
-	ICombiningOp,
-	IMergeTreeDeltaOp,
-	IRelativePosition,
-	MergeTreeDeltaType,
-	ReferenceType,
-} from "./ops";
+import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
 import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
@@ -89,16 +82,6 @@ import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentLeaf = ISegment & IMergeLeaf;
-
-const minListenerComparer: IComparer<MinListener> = {
-	min: {
-		minRequired: Number.MIN_VALUE,
-		onMinGE: () => {
-			assert(false, 0x048 /* "onMinGE()" */);
-		},
-	},
-	compare: (a, b) => a.minRequired - b.minRequired,
-};
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -508,7 +491,6 @@ export class MergeTree {
 	// for now assume only markers have ids and so point directly at the Segment
 	// if we need to have pointers to non-markers, we can change to point at local refs
 	private readonly idToMarker = new Map<string, Marker>();
-	private minSeqListeners: Heap<MinListener> | undefined;
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
@@ -1099,23 +1081,6 @@ export class MergeTree {
 		}
 	}
 
-	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		this.minSeqListeners ??= new Heap<MinListener>(minListenerComparer);
-		this.minSeqListeners.add({ minRequired, onMinGE });
-	}
-
-	private notifyMinSeqListeners() {
-		if (this.minSeqListeners) {
-			while (
-				this.minSeqListeners.count() > 0 &&
-				this.minSeqListeners.peek()!.value.minRequired <= this.collabWindow.minSeq
-			) {
-				const minListener = this.minSeqListeners.get()!;
-				minListener.onMinGE(this.collabWindow.minSeq);
-			}
-		}
-	}
-
 	public setMinSeq(minSeq: number) {
 		assert(
 			minSeq <= this.collabWindow.currentSeq,
@@ -1135,7 +1100,6 @@ export class MergeTree {
 			if (MergeTree.options.zamboniSegments) {
 				zamboniSegments(this);
 			}
-			this.notifyMinSeqListeners();
 		}
 	}
 
@@ -2055,7 +2019,6 @@ export class MergeTree {
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 * @param refSeq - The reference sequence number to use to apply the annotate
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
@@ -2066,7 +2029,6 @@ export class MergeTree {
 		start: number,
 		end: number,
 		props: PropertySet,
-		combiningOp: ICombiningOp | undefined,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -2088,7 +2050,6 @@ export class MergeTree {
 			);
 			const propertyDeltas = segment.addProperties(
 				props,
-				combiningOp,
 				seq,
 				this.collabWindow.collaborating,
 				rollback,
@@ -2100,7 +2061,7 @@ export class MergeTree {
 						segment,
 						segmentGroup,
 						localSeq,
-						propertyDeltas ?? {},
+						propertyDeltas,
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {
@@ -2437,26 +2398,20 @@ export class MergeTree {
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
-					const rollbackType =
-						op.combiningOp?.name === "rewrite"
-							? PropertiesRollback.Rewrite
-							: PropertiesRollback.Rollback;
 					const annotateOp = createAnnotateRangeOp(
 						start,
 						start + segment.cachedLength,
 						props,
-						undefined,
 					);
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,
 						props,
-						undefined,
 						UniversalSequenceNumber,
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
-						rollbackType,
+						PropertiesRollback.Rollback,
 					);
 					i++;
 				}

@@ -58,7 +58,7 @@ export class TestString {
 	}
 
 	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
-		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+		this.queue(this.client.annotateRangeLocal(start, end, props)!, increaseMsn);
 	}
 
 	public append(text: string, increaseMsn: boolean) {

@@ -23,7 +23,7 @@ import {
 	FlexTreeUnknownUnboxed,
 	TypeArrayToTypedFlexTreeArray,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-tree/editableTreeTypes";
+} from "../../../feature-libraries/flex-tree/flexTreeTypes";
 import {
 	areSafelyAssignable,
 	Assume,
@@ -153,7 +153,7 @@ describe("editableTreeTypes", () => {
 		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
 		const child: number | undefined = sequence.at(0);
-		const childBoxed: FlexTreeTypedNode<typeof leaf.number> = sequence.boxedAt(0);
+		const childBoxed: FlexTreeTypedNode<typeof leaf.number> | undefined = sequence.boxedAt(0);
 	}
 
 	function recursiveStructExample(struct: Recursive): void {

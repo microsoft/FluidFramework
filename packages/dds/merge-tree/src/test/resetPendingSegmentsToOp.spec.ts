@@ -164,7 +164,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			applyOpList(client);
@@ -176,7 +176,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			opList.push({
@@ -196,7 +196,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment and annotateRange", async () => {
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
@@ -248,7 +248,7 @@ describe("resetPendingSegmentsToOp", () => {
 		it("for text segments", () => {
 			const insertOp = client.insertTextLocal(0, "abc", { prop1: "foo" });
 			assert(insertOp);
-			client.annotateRangeLocal(0, 3, { prop2: "bar" }, undefined);
+			client.annotateRangeLocal(0, 3, { prop2: "bar" });
 
 			const otherClient = new TestClient();
 			otherClient.startOrUpdateCollaboration("other user");

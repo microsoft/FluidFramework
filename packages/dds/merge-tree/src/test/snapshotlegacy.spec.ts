@@ -172,7 +172,7 @@ describe("snapshot", () => {
 
 		ops.push(
 			clients.B.makeOpMessage(
-				clients.B.annotateRangeLocal(0, 14, { foo: "bar" }, undefined),
+				clients.B.annotateRangeLocal(0, 14, { foo: "bar" }),
 				/* seq */ 3,
 				/* refSeq */ 2,
 			),

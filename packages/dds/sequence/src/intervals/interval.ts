@@ -5,7 +5,6 @@
 /* eslint-disable import/no-deprecated */
 
 import {
-	ICombiningOp,
 	PropertiesManager,
 	PropertySet,
 	createMap,
@@ -174,13 +173,11 @@ export class Interval implements ISerializableInterval {
 		newProps: PropertySet,
 		collaborating: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
 		if (newProps) {
 			return this.propertyManager.addProperties(
 				this.properties,
 				newProps,
-				op,
 				seq,
 				collaborating,
 			);

@@ -16,7 +16,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze, isDeltaVisible } from "../../utils";
+import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
 import {
 	compose,
@@ -62,9 +62,12 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"MInsert",
 		(i) =>
-			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
+			composeAnonChanges([
+				Change.insert(i, 1, brand(42)),
+				Change.modify(i, TestChange.mint([], 2)),
+			]),
 	],
-	["Insert", (i) => Change.insert(i, 2, 42)],
+	["Insert", (i) => Change.insert(i, 2, brand(42))],
 	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
@@ -260,7 +263,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(isDeltaVisible(delta), false);
+				assert.deepEqual(delta, emptyFieldChanges);
 			});
 		}
 	});
@@ -307,14 +310,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
 					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					if (
-						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&
-						nameC === "Delete"
-					) {
-						it.skip(title, () => {
-							// Some of these tests fail due to BUG 6155 where if a mark in changeA is moved by changeB,
-							// we may not rebase changeA over the delete in changeC due to handling the move of changeA in the amend pass.
-						});
-					} else if (
 						changesTargetingDetached.has(nameA) &&
 						changesTargetingDetached.has(nameB)
 					) {

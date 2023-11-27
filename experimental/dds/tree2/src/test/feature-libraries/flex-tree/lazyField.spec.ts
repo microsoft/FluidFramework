@@ -17,7 +17,7 @@ import {
 	cursorForJsonableTreeField,
 } from "../../../feature-libraries";
 import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core";
-import { forestWithContent, viewWithContent } from "../../utils";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils";
 import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { brand } from "../../../util";
 import {
@@ -251,8 +251,7 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("boxedAt", () => {
-			// Invalid to request the value if there isn't one.
-			assert.throws(() => field.boxedAt(0));
+			assert.equal(field.boxedAt(0), undefined);
 		});
 
 		it("length", () => {
@@ -275,7 +274,7 @@ describe("LazyOptionalField", () => {
 	});
 
 	it("content", () => {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: 5,
 		});
@@ -331,7 +330,7 @@ describe("LazyValueField", () => {
 	});
 
 	it("content", () => {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: "X",
 		});
@@ -361,7 +360,7 @@ describe("LazySequence", () => {
 	}
 
 	function testMutableSequence(data: number[]) {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: data,
 		});
@@ -397,7 +396,12 @@ describe("LazySequence", () => {
 		assert.equal(boxedResult1.type, leafDomain.number.name);
 		assert.equal(boxedResult1.value, 42);
 
-		assert.throws(() => sequence.boxedAt(2));
+		const boxedResultNeg1 = sequence.boxedAt(-1);
+		assert.equal(boxedResultNeg1.type, leafDomain.number.name);
+		assert.equal(boxedResultNeg1.value, 42);
+
+		assert.equal(sequence.boxedAt(2), undefined);
+		assert.equal(sequence.boxedAt(-2).value, 37);
 	});
 
 	it("length", () => {
