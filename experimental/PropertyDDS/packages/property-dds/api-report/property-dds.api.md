@@ -223,7 +223,7 @@ export class SharedPropertyTree extends SharedObject {
     // (undocumented)
     propertyTreeConfig: IPropertyTreeConfig;
     // (undocumented)
-    static prune(minimumSequenceNumber: number, remoteChanges: IPropertyTreeMessage[], unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>): {
+    static prune(minimumSequenceNumber: number, remoteChanges: IPropertyTreeMessage[], unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>, remoteHeadGuid: string): {
         remoteChanges: IPropertyTreeMessage[];
         unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>;
         prunedCount: number;
