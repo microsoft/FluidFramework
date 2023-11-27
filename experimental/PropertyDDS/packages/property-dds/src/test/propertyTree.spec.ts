@@ -40,7 +40,6 @@ import {
 	ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
