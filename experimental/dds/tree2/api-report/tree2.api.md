@@ -159,6 +159,18 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 // @alpha
+const base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, {
+readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof RecursiveObject]>;
+readonly number: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.number">, NodeKind.Leaf, ValueSchema, number>;
+}, ObjectFromSchemaRecord<    {
+readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof RecursiveObject]>;
+readonly number: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.number">, NodeKind.Leaf, ValueSchema, number>;
+}>, InsertableObjectFromSchemaRecord<    {
+readonly recursive: FieldSchema<import("./schemaTypes").FieldKind.Optional, readonly [() => typeof RecursiveObject]>;
+readonly number: TreeNodeSchema<TreeNodeSchemaIdentifier<"com.fluidframework.leaf.number">, NodeKind.Leaf, ValueSchema, number>;
+}>>;
+
+// @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
@@ -989,7 +1001,8 @@ declare namespace InternalClassTreeTypes {
         ApplyKind,
         InsertableTreeNodeFromImplicitAllowedTypes,
         InsertableTypedNode_2 as InsertableTypedNode,
-        NodeBuilderData
+        NodeBuilderData,
+        testRecursiveDomain
     }
 }
 
@@ -1599,6 +1612,10 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 // @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
+// @alpha (undocumented)
+class RecursiveObject extends base {
+}
+
 // @alpha
 type _RecursiveTrick = never;
 
@@ -1889,6 +1906,13 @@ export interface StoredSchemaCollection {
 // @alpha
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, TreeStoredSchema {
     update(newSchema: TreeStoredSchema): void;
+}
+
+declare namespace testRecursiveDomain {
+    export {
+        base,
+        RecursiveObject
+    }
 }
 
 // @alpha
