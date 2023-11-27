@@ -195,7 +195,13 @@ stages:
             scriptType: bash
             scriptLocation: inlineScript
             inlineScript: |
-              az storage blob download -f '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+              az storage blob download -f '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+
+        - task: ExtractFiles@1
+          inputs:
+            archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/*tar.gz'
+            cleanDestinationFolder: true
+            overwriteExistingFiles: true
 
         - template: templates/include-use-node-version.yml
 
