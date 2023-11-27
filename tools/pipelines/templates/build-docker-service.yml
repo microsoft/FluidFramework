@@ -306,23 +306,12 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
-
-        # Need to generate package lists manually, because we don't have access to the scripts/pack-packages.sh
-        # script that build-npm-package.yml uses.
-        - task: Bash@3
-          displayName: Generate package lists
-          env:
-            RELEASE_GROUP: ${{ parameters.tagName }}
-            STAGING_PATH: $(Build.ArtifactStagingDirectory)
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+            customCommand: |
+              run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag)
+              RELEASE_GROUP=${{ parameters.tagName }}
+              STAGING_PATH=$(Build.ArtifactStagingDirectory)
+              PACKAGE_MANAGER=npm
+              /usr/scripts/pack-packages.sh
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
