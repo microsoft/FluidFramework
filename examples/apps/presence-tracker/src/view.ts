@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { TinyliciousSignalStats } from "@fluidframework/tinylicious-client";
+import { Signaler } from "@fluid-experimental/data-objects";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
+
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
@@ -71,10 +71,10 @@ function getFocusPresencesString(
 }
 
 
-export function renderStats(signalStats: TinyliciousSignalStats, div: HTMLDivElement) {
+export function renderStats(signaler: Signaler, div: HTMLDivElement) {
 	const statsDiv = document.createElement("div");
 	setInterval(() => {
-		const stats = signalStats.stats();
+		const stats = signaler.statsQueue();
 		statsDiv.innerHTML = stats !== undefined ? `
   			<div style="display: flex; flex-wrap: nowrap;">
     		${stats.map(stat => {
