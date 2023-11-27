@@ -308,10 +308,10 @@ stages:
             action: 'Run a Docker command'
             customCommand: >
               run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag)
-              RELEASE_GROUP=${{ parameters.tagName }}
+              'RELEASE_GROUP=${{ parameters.tagName }}
               STAGING_PATH=$(Build.ArtifactStagingDirectory)
               PACKAGE_MANAGER=npm
-              /usr/scripts/pack-packages.sh
+              /usr/scripts/pack-packages.sh'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
