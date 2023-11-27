@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
-
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
@@ -65,7 +65,6 @@ function getFocusPresencesString(
 			focusString.push(`${prefix} missing focus`);
 		}
 	});
-
 	return focusString.join(newLineSeparator);
 }
 

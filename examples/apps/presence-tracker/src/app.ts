@@ -40,7 +40,6 @@ async function start() {
 
 	renderFocusPresence(model.focusTracker, contentDiv);
 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
-	
 }
 
 start().catch(console.error);
