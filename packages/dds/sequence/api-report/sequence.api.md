@@ -4,11 +4,9 @@
 
 ```ts
 
-import { appendToMergeTreeDeltaRevertibles } from '@fluidframework/merge-tree';
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/core-utils';
-import { discardMergeTreeDeltaRevertible } from '@fluidframework/merge-tree';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -45,7 +43,6 @@ import { ReferenceType } from '@fluidframework/merge-tree';
 import { reservedMarkerIdKey } from '@fluidframework/merge-tree';
 import { reservedRangeLabelsKey } from '@fluidframework/merge-tree';
 import { reservedTileLabelsKey } from '@fluidframework/merge-tree';
-import { revertMergeTreeDeltaRevertibles } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
@@ -69,8 +66,6 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 // @alpha
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-export { appendToMergeTreeDeltaRevertibles }
-
 export { BaseSegment }
 
 // @public (undocumented)
@@ -93,8 +88,6 @@ export function createStartpointInRangeIndex(sharedString: SharedString): IStart
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
-
-export { discardMergeTreeDeltaRevertible }
 
 // @alpha
 export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
@@ -415,8 +408,6 @@ export { MapLike }
 
 export { Marker }
 
-export { MergeTreeDeltaRevertible }
-
 export { MergeTreeDeltaType }
 
 export { PropertySet }
@@ -430,8 +421,6 @@ export { reservedMarkerIdKey }
 export { reservedRangeLabelsKey }
 
 export { reservedTileLabelsKey }
-
-export { revertMergeTreeDeltaRevertibles }
 
 // @alpha
 export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
