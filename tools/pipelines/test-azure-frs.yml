@@ -209,10 +209,11 @@ stages:
         - task: ExtractFiles@1
           displayName: 'Extract LTS blob content'
           inputs:
-            destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models'
             archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/*tar.gz'
             cleanDestinationFolder: false
             overwriteExistingFiles: true
+
+        - powershell: Get-ChildItem -Path '$(Build.SourcesDirectory)\*.json' -recurse
 
         - template: templates/include-use-node-version.yml
 
