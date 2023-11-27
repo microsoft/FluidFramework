@@ -42,9 +42,11 @@ export class SharedTreeEditBuilder
 		modularChangeFamily: ModularChangeFamily,
 		changeReceiver: (change: SharedTreeChange) => void,
 	) {
-		super(modularChangeFamily, (change) => changeReceiver({ modularChange: change }));
+		super(modularChangeFamily, (change) =>
+			changeReceiver({ changes: [{ type: "data", change }] }),
+		);
 		this.schemaEditor = new SchemaEditor(schemaChangeFamily, (change) =>
-			changeReceiver({ schemaChange: change }),
+			changeReceiver({ changes: [{ type: "schema", change }] }),
 		);
 	}
 

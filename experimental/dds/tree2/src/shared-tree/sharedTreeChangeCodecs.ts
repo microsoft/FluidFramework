@@ -13,12 +13,24 @@ import {
 } from "../feature-libraries";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
+// These can't be an interfaces or they don't get the special string indexer bonus property.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type EncodedModularChange = {
+	type: "data";
+	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
+};
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type EncodedSchemaChange = {
+	type: "schema";
+	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
+};
+
 export interface EncodedSharedTreeChange {
-	readonly modularChange?: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-	readonly schemaChange?: ReturnType<ReturnType<typeof makeSchemaChangeCodec>["encode"]>;
+	readonly encodedChanges: readonly (EncodedModularChange | EncodedSchemaChange)[];
 }
 
-function makeSharedTreeChangeCodec(
+export function makeSharedTreeChangeCodec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SharedTreeChange> {
@@ -26,29 +38,39 @@ function makeSharedTreeChangeCodec(
 	const modularChangeCodec = makeModularChangeCodec(fieldKinds, { jsonValidator: validator });
 	return {
 		encode: (change) => {
-			const encoded: Mutable<EncodedSharedTreeChange> = {};
-			if (change.schemaChange !== undefined) {
-				encoded.schemaChange = schemaChangeCodec.encode(change.schemaChange);
+			const changes: Mutable<EncodedSharedTreeChange["encodedChanges"]> = [];
+			for (const decodedChange of change.changes) {
+				if (decodedChange.type === "data") {
+					changes.push({
+						type: "data",
+						change: modularChangeCodec.encode(decodedChange.change),
+					});
+				} else if (decodedChange.type === "schema") {
+					changes.push({
+						type: "schema",
+						change: schemaChangeCodec.encode(decodedChange.change),
+					});
+				}
 			}
-			if (change.modularChange !== undefined) {
-				encoded.modularChange = modularChangeCodec.encode(change.modularChange);
-			}
-			return encoded;
+			return { encodedChanges: changes };
 		},
 		decode: (json) => {
-			const decodedTreeChange: Mutable<SharedTreeChange> = {};
-			const encodedTreeChange = json as EncodedSharedTreeChange;
-			if (encodedTreeChange.schemaChange !== undefined) {
-				decodedTreeChange.schemaChange = schemaChangeCodec.decode(
-					encodedTreeChange.schemaChange,
-				);
+			const encodedChange = json as unknown as EncodedSharedTreeChange;
+			const changes: Mutable<SharedTreeChange["changes"]> = [];
+			for (const subChange of encodedChange.encodedChanges) {
+				if (subChange.type === "data") {
+					changes.push({
+						type: "data",
+						change: modularChangeCodec.decode(subChange.change),
+					});
+				} else if (subChange.type === "schema") {
+					changes.push({
+						type: "schema",
+						change: schemaChangeCodec.decode(subChange.change),
+					});
+				}
 			}
-			if (encodedTreeChange.modularChange !== undefined) {
-				decodedTreeChange.modularChange = modularChangeCodec.decode(
-					encodedTreeChange.modularChange,
-				);
-			}
-			return decodedTreeChange;
+			return { changes };
 		},
 	};
 }
