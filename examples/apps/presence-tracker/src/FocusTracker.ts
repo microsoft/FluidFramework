@@ -112,7 +112,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		});
 		return statuses;
 	}
-	
+
 	/**
 	 * Returns focus status of specified client
 	 */

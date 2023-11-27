@@ -227,3 +227,4 @@ export class CircularBuffer<T> {
 		return this.buffer.length === 0;
 	}
   }
+  

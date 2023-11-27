@@ -118,7 +118,6 @@ export class TinyliciousClient {
 	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
 			audience: new TinyliciousAudience(container),
-
 		};
 	}
 

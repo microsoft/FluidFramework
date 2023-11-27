@@ -58,7 +58,6 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-	off(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	submitSignal(type: string, content: any): void;
 }
 
