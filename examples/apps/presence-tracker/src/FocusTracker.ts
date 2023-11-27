@@ -112,19 +112,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		});
 		return statuses;
 	}
-
-	public getSignaler() {
-		return this.signaler;
-	}
-
-	// public stats(): string | undefined {
-	// 	const stats = this.signaler.stats();
-	// 	if (stats === undefined) {
-	// 		return undefined;
-	// 	}
-	// 	return JSON.stringify(stats);
-	// }
-
+	
 	/**
 	 * Returns focus status of specified client
 	 */
