@@ -35,7 +35,6 @@ import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
-import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
@@ -149,12 +148,6 @@ export interface IOdspResponse<T> {
     headers: Map<string, string>;
     // (undocumented)
     propsToLog: ITelemetryProperties;
-}
-
-// @alpha
-export interface IOdspTokenProvider {
-    fetchStorageToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
-    fetchWebsocketToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
 }
 
 // @public
