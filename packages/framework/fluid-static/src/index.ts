@@ -10,17 +10,13 @@
  */
 
 export {
-	FluidContainer,
 	createFluidContainer,
 	IFluidContainer,
 	IFluidContainerEvents,
 	InitialObjects,
 } from "./fluidContainer";
-export {
-	DOProviderContainerRuntimeFactory,
-	createDOProviderContainerRuntimeFactory,
-} from "./rootDataObject";
-export { ServiceAudience, createServiceAudience } from "./serviceAudience";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { createServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,
 	DataObjectClass,

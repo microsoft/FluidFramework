@@ -225,9 +225,8 @@ export function createFluidContainer<
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
- * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
  */
-export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {

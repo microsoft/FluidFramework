@@ -111,6 +111,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_AzureAudience": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

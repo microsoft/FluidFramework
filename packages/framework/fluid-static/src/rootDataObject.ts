@@ -153,9 +153,8 @@ export function createDOProviderContainerRuntimeFactory(props: {
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
- * @deprecated use {@link createDOProviderContainerRuntimeFactory} instead
  */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
