@@ -211,7 +211,7 @@ stages:
           inputs:
             destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models'
             archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/*tar.gz'
-            cleanDestinationFolder: true
+            cleanDestinationFolder: false
             overwriteExistingFiles: true
 
         - template: templates/include-use-node-version.yml
