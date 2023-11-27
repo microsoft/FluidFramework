@@ -638,11 +638,23 @@ describe("EditManager", () => {
 
 		describe("Local commit rebasing", () => {
 			for (const { rebasedEditCount: L, trunkEditCount: T } of scenarios) {
-				// This test leads to the following branching structure:
-				// (0)-(T1)-...-(Tc)
-				//  └----------------(L1)-...-(Lc)
-				// Note that the EditManager is first fed the local edits, then the trunk edits.
-				// We reset the rebase/invert/compose counters before T1 is received.
+				// This test simulates the following inputs to the EditManager:
+				//   - Add local edit L1 with a ref seq# pointing to edit 0
+				//   ...(not incrementing the ref seq# for each L)
+				//   - Add local edit Lc with a ref seq# pointing to edit 0
+				//   => we start measuring from here
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc)
+				//     └───────────────(L1)─...─(Lc)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)
+				//     └───────────────(L1)─...─(Lc)
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)
+				//                   └─(L1)─...─(Lc)
 				it(`Rebase ${L} local commits over ${T} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = editManagerFactory({ rebaser }).manager;
@@ -657,7 +669,7 @@ describe("EditManager", () => {
 						composed: rebaser.composedCount,
 					};
 					const expected = {
-						// As part of rebasing thew local branch over the trunk edits,
+						// As part of rebasing the local branch over the trunk edits,
 						//   the Ith local edit on the branch is rebased over...
 						//     - the inverse of each local edit before it: I - 1
 						//     - the new trunk edit: 1
@@ -668,13 +680,13 @@ describe("EditManager", () => {
 						// Summing over all T branch rebases gives us: TL + 2TL(L+1)/2 - 2TL
 						// Which simplifies to:
 						rebased: T * L * L,
-						// As part of rebasing thew local branch over the trunk edits,
+						// As part of rebasing the local branch over the trunk edits,
 						//   the Ith local edit on the branch is inverted once
 						//   Summing over all L edits gives us L
 						// Summing over all T branch rebases gives us: TL
 						inverted: T * L,
-						// As part of rebasing thew local branch over the trunk edits,
-						//   for each branch rebase, we comose...
+						// As part of rebasing the local branch over the trunk edits,
+						//   for each branch rebase, we compose...
 						//     - the inverse of each local edits: L
 						//     - the trunk edit:  1
 						//     - the rebased version of each local edits: L
@@ -686,12 +698,26 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Peer commit rebasing for peer with fixed seq ref#", () => {
 			for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
-				// This test leads to the following branching structure:
-				// (0)-(T1)-...-(Tc)
-				//  └----------------(P1)-...-(Pc)
-				// We reset the rebase/invert/compose counters before P1 is received.
+				// This test simulates the following inputs to the EditManager:
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				//   => we start measuring from here
+				//   - Add local edit P1 with a ref seq# pointing to edit 0
+				//   ...(not incrementing the ref seq# for each P)
+				//   - Add local edit Pc with a ref seq# pointing to edit 0
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc)
+				//     └───────────────(P1)─...─(Pc)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)
+				//     └─
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)
+				//                                 └─
 				it(`Rebase ${P} peer commits over ${T} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = editManagerFactory({ rebaser }).manager;
@@ -724,7 +750,7 @@ describe("EditManager", () => {
 						//   However, we cache the inverse of each change, so overall we only invert once each peer
 						//   edit that has peer edit after it.
 						inverted: P - 1,
-						// As part of rebasing thew local branch edit over the peer edit,
+						// As part of rebasing the local branch edit over the peer edit,
 						//   For the Ith peer edit, we compose...
 						//     - the rebased version of that peer edit: 1
 						//   Summing over all P edits transforms gives us: P
@@ -735,14 +761,28 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Peer commit rebasing for peer with advancing (but not tip) seq ref#", () => {
 			for (const editCount of [1, 2, 10]) {
-				// This test leads to the following branching structure:
-				// (0)-(T1)-...-(Tc-1)-(Tc)
-				//  |    |          └-----------------(Pc)
-				//  |    └-----------------------(P2)
-				//  └-----------------------(P1)
-				// We reset the rebase/invert/compose counters before P1 is received.
+				// This test simulates the following inputs to the EditManager:
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				//   => we start measuring from here
+				//   - Add local edit P1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each P)
+				//   - Add local edit Pc with a ref seq# pointing to edit Tc-1
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)
+				//     |    |          └──────(P1)─(P2)─...─(Pc)
+				//     |    └─────────────────(P1)─(P2)
+				//     └──────────────────────(P1)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)
+				//     └─
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)─(P1)─(P2)─...─(Pc)
+				//                                             └─
 				it(`for ${editCount} peer commits and ${editCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = editManagerFactory({ rebaser }).manager;
@@ -818,14 +858,29 @@ describe("EditManager", () => {
 				});
 			}
 		});
+
 		describe("Single peer commit on top of existing peer branch", () => {
 			describe("with peer commit ref# to the trunk edit that the existing peer branch should rebase over", () => {
 				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
-					// This test leads to the following branching structure:
-					// (0)-(T1)-...-(Tc)
-					//  |             └----------------(P+)
-					//  └----------------(P1)-...-(Pc)
-					// We reset the rebase/invert/compose counters before P+ is received.
+					// This test simulates the following inputs to the EditManager:
+					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+					//   ...(incrementing the ref seq# for each T)
+					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+					//   - Add local edit P1 with a ref seq# pointing to edit 0
+					//   ...(not incrementing the ref seq# for each P)
+					//   - Add local edit Pc with a ref seq# pointing to edit 0
+					//   => we start measuring from here
+					//   - Add local edit P+ with a ref seq# pointing to edit Tc
+					// This defines the following relationships between edits:
+					//   (0)─(T1)─...─(Tc)
+					//     |             └─(P1)─...─(Pc)─(P+)
+					//     └───────────────(P1)─...─(Pc)
+					// Before we start measuring, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)
+					//     └───────────────(P1)─...─(Pc)
+					// By the end of the test, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)─(P+)
+					//                  └──(P1)─...─(Pc)─(P+)
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
@@ -877,13 +932,29 @@ describe("EditManager", () => {
 					});
 				}
 			});
+
 			describe("with peer commit ref# to the trunk edit before the trunk edit that the existing peer branch should rebase over", () => {
 				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
-					// This test leads to the following branching structure:
-					// (0)-(T1)-...-(Tc)-(T+)
-					//  |             └----------------------(P+)
-					//  └-----------------------(P1)-...-(Pc)
-					// We reset the rebase/invert/compose counters before P+ is received.
+					// This test simulates the following inputs to the EditManager:
+					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+					//   ...(incrementing the ref seq# for each T)
+					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+					//   - Add trunk edit T+ with a ref seq# pointing to edit Tc
+					//   - Add local edit P1 with a ref seq# pointing to edit 0
+					//   ...(not incrementing the ref seq# for each P)
+					//   - Add local edit Pc with a ref seq# pointing to edit 0
+					//   => we start measuring from here
+					//   - Add local edit P+ with a ref seq# pointing to edit Tc
+					// This defines the following relationships between edits:
+					//   (0)─(T1)─...─(Tc)─(T+)
+					//     |             └──────(P1)─...─(Pc)─(P+)
+					//     └────────────────────(P1)─...─(Pc)
+					// Before we start measuring, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(T+)
+					//     └────────────────────(P1)─...─(Pc)
+					// By the end of the test, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(T+)─(P1)─...─(Pc)─(P+)
+					//                  └──(P1)─...─(Pc)─(P+)
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
