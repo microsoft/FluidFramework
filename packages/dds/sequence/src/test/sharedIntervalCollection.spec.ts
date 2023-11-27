@@ -18,8 +18,8 @@ import {
 } from "../sharedIntervalCollection";
 import { IIntervalCollection } from "../intervalCollection";
 import { Interval, IntervalType, intervalHelpers } from "../intervals";
-import { idCompareFn, endpointCompareFn } from "./intervalUtils";
 import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex";
+import { idCompareFn, endpointCompareFn } from "./intervalTestUtils";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,

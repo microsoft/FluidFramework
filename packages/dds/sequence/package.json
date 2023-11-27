@@ -131,6 +131,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IOverlappingIntervalsIndex": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SequenceIntervalIndexes.Overlapping": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

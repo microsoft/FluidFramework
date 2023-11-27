@@ -630,40 +630,6 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-/*
-class IntervalCollectionIterator<TInterval extends ISerializableInterval>
-	implements Iterator<TInterval>
-{
-	private readonly results: TInterval[];
-	private index: number;
-
-	constructor(
-		collection: IntervalCollection<TInterval>,
-		iteratesForward: boolean = true,
-		start?: number,
-		end?: number,
-	) {
-		this.results = [];
-		this.index = 0;
-
-		collection.gatherIterationResults(this.results, iteratesForward, start, end);
-	}
-
-	public next(): IteratorResult<TInterval> {
-		if (this.index < this.results.length) {
-			return {
-				value: this.results[this.index++],
-				done: false,
-			};
-		}
-
-		return {
-			value: undefined,
-			done: true,
-		};
-	}
-} */
-
 /**
  * Change events emitted by `IntervalCollection`s
  * @public
@@ -1921,18 +1887,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			};
 		}
 		return this.localCollection.idIntervalIndex[Symbol.iterator]();
-		/*
-		const iterator = new IntervalCollectionIterator<TInterval>(this);
-		return iterator; */
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
 	 */
 	public CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval> {
-		/*
-		const iterator = new IntervalCollectionIterator<TInterval>(this, true, startPosition);
-		return iterator; */
 		if (!this.localCollection) {
 			// Return an empty iterator if the localCollection is undefined.
 			return {

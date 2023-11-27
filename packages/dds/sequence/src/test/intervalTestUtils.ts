@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
+import { ISerializableInterval, SequenceInterval } from "../intervals";
 import { createOverlappingIntervalsIndex } from "../intervalIndex";
 
 export interface Client {
@@ -108,7 +108,7 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 export const assertSequenceIntervals = (
 	sharedString: SharedString,
 	intervalCollection: IIntervalCollection<SequenceInterval>,
-	expected: readonly { start: number; end: number }[],
+	expected: { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
 	const actual = Array.from(intervalCollection);
@@ -119,6 +119,9 @@ export const assertSequenceIntervals = (
 			0,
 			sharedString.getLength() - 1,
 		);
+		// Sort the intervals with id
+		actual.sort(idCompareFn);
+		overlapping.sort(idCompareFn);
 		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
 		intervalCollection.detachIndex(overlappingIntervalsIndex);
 	}
@@ -134,5 +137,20 @@ export const assertSequenceIntervals = (
 		const end = sharedString.localReferencePositionToPosition(interval.end);
 		return { start, end };
 	});
+	actualPos.sort(endpointCompareFn);
+	expected.sort(endpointCompareFn);
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
+};
+
+export const idCompareFn = (a: ISerializableInterval, b: ISerializableInterval) => {
+	const id1 = a.properties.intervalId as string;
+	const id2 = b.properties.intervalId as string;
+	return id1.localeCompare(id2);
+};
+
+export const endpointCompareFn = (
+	a: { start: number; end: number },
+	b: { start: number; end: number },
+) => {
+	return a.start !== b.start ? a.start - b.start : a.end - b.end;
 };
