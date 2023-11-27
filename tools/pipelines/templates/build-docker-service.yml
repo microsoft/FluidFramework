@@ -93,7 +93,7 @@ parameters:
 # Any additional build arguments to pass to the docker build command.
 - name: additionalBuildArguments
   type: string
-  default: ""
+  default: "--build-context root=."
 
 trigger: none
 
