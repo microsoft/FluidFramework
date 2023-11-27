@@ -18,6 +18,11 @@ import { pkgVersion } from "./packageVersion.js";
 import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
+/**
+ * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
+ * the delta is -1, then we are trying to represent the package at version 1.X.
+ * @internal
+ */
 export interface CompatVersion {
 	base: string;
 	delta: number;

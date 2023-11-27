@@ -52,7 +52,8 @@ export const createTestContainerRuntimeFactory = (
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 			// Validate we can load root data stores.
 			// We should be able to load any data store that was created in initializeFirstTime!
-			// Note: This check was re-enabled to allow for cross-major version compat testing.
+			// Note: We use the deprecated `getRootDataStore` from v1.X here to allow for cross-major version compat
+			// testing. Can be removed when we no longer support v1.X.
 			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
 				runtime.getRootDataStore("default"));
 		}
@@ -62,7 +63,8 @@ export const createTestContainerRuntimeFactory = (
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
 			if (containerRuntimeCtor.loadRuntime === undefined) {
-				// Note: We use the deprecated load from v1.x here to allow for cross-major version compat testing.  Can be removed when we no longer support v1.x.
+				// Note: We use the deprecated `load` from v1.X here to allow for cross-major version compat testing.
+				// Can be removed when we no longer support v1.X.
 				return containerRuntimeCtor.load(
 					context,
 					[

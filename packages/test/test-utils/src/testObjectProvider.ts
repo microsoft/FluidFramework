@@ -363,7 +363,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	constructor(
 		private readonly LoaderConstructor: typeof Loader,
 		/**
-		 * {@inheritDoc ITestObjectProvider.logger}
+		 * {@inheritDoc ITestObjectProvider.driver}
 		 */
 		public readonly driver: ITestDriver,
 		/**
@@ -624,10 +624,15 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private _urlResolver: IUrlResolver | undefined;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
 	private _documentCreated = false;
-	// `_loadCount` is used to alternate which version we load the next container with.
-	// If loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
-	// After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
-	// Note: This will only affect tests that load a container more than two times.
+
+	/**
+	 * `_loadCount` is used to alternate which version we load the next container with.
+	 * loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
+	 * After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
+	 *
+	 * Note: This will only affect tests that load a container more than two times.
+	 */
+
 	private _loadCount: number = 0;
 
 	constructor(
@@ -657,10 +662,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			);
 		}
 		return this._logger;
-	}
-
-	private set logger(logger: EventAndErrorTrackingLogger) {
-		this._logger = logger;
 	}
 
 	/**
@@ -708,7 +709,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.driver}
 	 */
 	public get driver(): ITestDriver {
-		return this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+		return this.nextLoaderShouldCreate() ? this.driverForCreating : this.driverForLoading;
 	}
 
 	/**
@@ -717,7 +718,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public get createFluidEntryPoint(): (
 		testContainerConfig?: ITestContainerConfig,
 	) => fluidEntryPoint {
-		return this._loadCount % 2 === 0
+		return this.nextLoaderShouldCreate()
 			? this.createFluidEntryPointForCreating
 			: this.createFluidEntryPointForLoading;
 	}
@@ -771,8 +772,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		// This will increment `_loadCount` AFTER each create call.
-		return this._loadCount++ % 2 === 0
+		return this.nextLoaderShouldCreate(/** increment */ true)
 			? this.createLoaderForCreating(packageEntries, loaderProps)
 			: this.createLoaderForLoading(packageEntries, loaderProps);
 	}
@@ -807,8 +807,9 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
-		// Keep track of which Loader we are about to use so we can pass the correct driver through
-		const driver = this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+		const driver = this.nextLoaderShouldCreate()
+			? this.driverForCreating
+			: this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
 		return this.resolveContainer(loader, requestHeader, driver);
 	}
@@ -870,7 +871,9 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		// Keep track of which Loader we are about to use so we can pass the correct driver through
-		const driver = this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+		const driver = this.nextLoaderShouldCreate()
+			? this.driverForCreating
+			: this.driverForLoading;
 		const loader = this.makeTestLoader(testContainerConfig);
 		const container = await this.resolveContainer(loader, requestHeader, driver);
 		await this.waitContainerToCatchUp(container);
@@ -884,6 +887,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public reset() {
 		this._loadCount = 0;
 		this._loaderContainerTracker.reset();
+		this._logger = undefined;
 		this._documentServiceFactory = undefined;
 		this._urlResolver = undefined;
 		this._documentIdStrategy.reset();
@@ -891,7 +895,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		if (logError) {
 			throw logError;
 		}
-		this._logger = undefined;
 		this._documentCreated = false;
 	}
 
@@ -927,6 +930,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
+	}
+
+	private nextLoaderShouldCreate(increment: boolean = false): boolean {
+		const shouldCreate = this._loadCount % 2 === 0;
+		if (increment) {
+			this._loadCount++;
+		}
+		return shouldCreate;
 	}
 }
 

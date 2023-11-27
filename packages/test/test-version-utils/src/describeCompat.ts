@@ -130,20 +130,13 @@ function createCompatSuite(
 					try {
 						provider =
 							config.kind === CompatKind.CrossVersion
-								? await getCompatVersionedTestObjectProviderFromApis(
-										apis,
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										config.createWith!,
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										config.loadWith!,
-										{
-											type: driver,
-											config: {
-												r11s: { r11sEndpointName },
-												odsp: { tenantIndex },
-											},
+								? await getCompatVersionedTestObjectProviderFromApis(apis, {
+										type: driver,
+										config: {
+											r11s: { r11sEndpointName },
+											odsp: { tenantIndex },
 										},
-								  )
+								  })
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {

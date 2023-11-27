@@ -31,7 +31,6 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
-import { CompatVersion } from "./compatConfig.js";
 
 /**
  * @internal
@@ -169,35 +168,30 @@ export async function getVersionedTestObjectProvider(
 	);
 }
 
+/**
+ * @internal
+ */
 export async function getCompatVersionedTestObjectProviderFromApis(
 	apis: CompatApis,
-	createVersion: CompatVersion,
-	loadVersion: CompatVersion,
-	driverConfig?: {
-		type?: TestDriverTypes;
-		config?: FluidTestDriverConfig;
-		version?: string | number | undefined;
+	driverConfig: {
+		type: TestDriverTypes;
+		config: FluidTestDriverConfig;
 	},
 ): Promise<TestObjectProviderWithVersionedLoad> {
 	assert(apis.driverForLoading !== undefined, "driverForLoading must be defined");
 	assert(apis.loaderForLoading !== undefined, "loaderForLoading must be defined");
 	assert(apis.dataRuntimeForLoading !== undefined, "dataRuntimeForLoading must be defined");
 
-	if (driverConfig) {
-		driverConfig.version = createVersion.delta;
-	}
 	const driverForCreating = await createFluidTestDriver(
-		driverConfig?.type ?? "local",
-		driverConfig?.config,
+		driverConfig.type,
+		driverConfig.config,
 		apis.driver,
 	);
+
 	const driverConfigForLoading = driverConfig;
-	if (driverConfigForLoading) {
-		driverConfigForLoading.version = loadVersion.delta;
-	}
 	const driverForLoading = await createFluidTestDriver(
-		driverConfigForLoading?.type ?? "local",
-		driverConfigForLoading?.config,
+		driverConfigForLoading.type,
+		driverConfigForLoading.config,
 		apis.driverForLoading,
 	);
 
