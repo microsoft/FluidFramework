@@ -1,0 +1,1228 @@
+{
+  "example-utils": {
+    "Class": [
+      "ContainerViewRuntimeFactory"
+    ]
+  },
+  "iframe-host": {
+    "Interface": [
+      "IFrameInnerApi",
+      "IFrameOuterHostConfig"
+    ],
+    "Class": [
+      "IFrameOuterHost"
+    ]
+  },
+  "last-edited": {
+    "Interface": [
+      "IFluidLastEditedTracker",
+      "ILastEditDetails",
+      "IProvideFluidLastEditedTracker"
+    ],
+    "Class": [
+      "LastEditedTracker",
+      "LastEditedTrackerDataObject"
+    ]
+  },
+  "react-inputs": {
+    "Class": [
+      "CollaborativeCheckbox",
+      "CollaborativeInput",
+      "SharedStringHelper"
+    ],
+    "Interface": [
+      "ICollaborativeCheckboxProps",
+      "ICollaborativeCheckboxState",
+      "ICollaborativeInputProps",
+      "ICollaborativeInputState",
+      "ICollaborativeTextAreaProps",
+      "ISharedStringHelperEvents",
+      "ISharedStringHelperTextChangedEventArgs"
+    ]
+  },
+  "sharejs-json1": {
+    "Class": [
+      "Json1Factory",
+      "SharedJson1"
+    ]
+  },
+  "task-manager": {
+    "Interface": [
+      "IOldestClientObservable",
+      "IOldestClientObservableEvents",
+      "IOldestClientObserver",
+      "IOldestClientObserverEvents",
+      "ITaskManager",
+      "ITaskManagerEvents"
+    ],
+    "Class": [
+      "OldestClientObserver",
+      "TaskManager"
+    ]
+  },
+  "tree": {
+    "Interface": [
+      "Build",
+      "BuildInternal_0_0_2",
+      "BuildInternal",
+      "BuildTreeNode",
+      "Constraint",
+      "ConstraintInternal_0_0_2",
+      "ConstraintInternal",
+      "Delta",
+      "Detach",
+      "DetachInternal_0_0_2",
+      "DetachInternal",
+      "Edit",
+      "EditBase",
+      "EditCommittedEventArguments",
+      "EditHandle",
+      "EditingResultBase",
+      "EditLogSummary",
+      "EditWithoutId",
+      "FailedEditingResult",
+      "FailingTransactionState",
+      "FluidEditHandle",
+      "ForestNode",
+      "GenericTransactionPolicy",
+      "HasTraits",
+      "HasVariadicTraits",
+      "ICheckoutEvents",
+      "Insert",
+      "InsertInternal_0_0_2",
+      "InsertInternal",
+      "InternalizedChange",
+      "ISharedTreeEvents",
+      "LogViewer",
+      "MergeHealthStats",
+      "NodeData",
+      "NodeIdBrand",
+      "NodeIdContext",
+      "NodeIdConverter",
+      "NodeIdGenerator",
+      "NodeInTrait",
+      "OrderedEditSet",
+      "ParentData",
+      "ReconciliationChange",
+      "ReconciliationEdit",
+      "ReconciliationPath",
+      "Error",
+      "Ok",
+      "SequencedEditAppliedEventArguments",
+      "SessionUnique",
+      "SetValue",
+      "SetValueInternal_0_0_2",
+      "SetValueInternal",
+      "SharedTreeOptions_0_0_2",
+      "SharedTreeOptions_0_1_1",
+      "SharedTreeSummaryBase",
+      "StablePlace",
+      "StablePlaceInternal_0_0_2",
+      "StablePlaceInternal",
+      "StableRange",
+      "StableRangeInternal_0_0_2",
+      "StableRangeInternal",
+      "StashedLocalOpMetadata",
+      "StringInterner",
+      "SucceedingTransactionState",
+      "TraitLocation",
+      "TraitLocationInternal_0_0_2",
+      "TraitLocationInternal",
+      "TraitMap",
+      "TransactionEvents",
+      "TransactionFailure",
+      "BadPlaceFailure",
+      "BadRangeFailure",
+      "ConstraintViolationFailure",
+      "DetachedSequenceIdAlreadyInUseFailure",
+      "DetachedSequenceNotFoundFailure",
+      "DuplicateIdInBuildFailure",
+      "IdAlreadyInUseFailure",
+      "UnknownIdFailure",
+      "UnusedDetachedSequenceFailure",
+      "TreeNode",
+      "TreeViewNode",
+      "TreeViewPlace",
+      "TreeViewRange",
+      "ValidEditingResult"
+    ],
+    "Enum": [
+      "ChangeType",
+      "ChangeTypeInternal",
+      "CheckoutEvent",
+      "ConstraintEffect",
+      "EditStatus",
+      "EditValidationResult",
+      "PlaceValidationResult",
+      "RangeValidationResultKind",
+      "ResultType",
+      "SharedTreeDiagnosticEvent",
+      "SharedTreeEvent",
+      "Side",
+      "TransactionEvent",
+      "ConstraintViolationKind",
+      "FailureKind",
+      "WriteFormat"
+    ],
+    "Class": [
+      "Checkout",
+      "EagerCheckout",
+      "Forest",
+      "GenericTransaction",
+      "LazyCheckout",
+      "RevisionView",
+      "SharedTree",
+      "SharedTreeFactory",
+      "SharedTreeMergeHealthTelemetryHeartbeat",
+      "Transaction",
+      "Policy",
+      "TransactionView",
+      "TreeNodeHandle",
+      "TreeView"
+    ],
+    "Namespace": [
+      "Result",
+      "TransactionInternal"
+    ]
+  },
+  "quorum": {
+    "Interface": [
+      "IQuorum",
+      "IQuorumEvents"
+    ],
+    "Class": [
+      "Quorum"
+    ]
+  },
+  "aqueduct": {
+    "Class": [
+      "BaseContainerRuntimeFactory",
+      "BaseContainerService",
+      "ContainerRuntimeFactoryWithDefaultDataStore",
+      "DataObject",
+      "DataObjectFactory",
+      "PureDataObject",
+      "PureDataObjectFactory"
+    ],
+    "Interface": [
+      "DataObjectTypes",
+      "IDataObjectProps",
+      "IRootDataObjectFactory"
+    ]
+  },
+  "azure-client": {
+    "Class": [
+      "AzureAudience",
+      "AzureClient",
+      "AzureFunctionTokenProvider"
+    ],
+    "Interface": [
+      "AzureClientProps",
+      "AzureConnectionConfig",
+      "AzureContainerServices",
+      "AzureContainerVersion",
+      "AzureGetVersionsOptions",
+      "AzureLocalConnectionConfig",
+      "AzureMember",
+      "AzureRemoteConnectionConfig",
+      "AzureUser"
+    ]
+  },
+  "cell": {
+    "Interface": [
+      "ISharedCell",
+      "ISharedCellEvents"
+    ],
+    "Class": [
+      "SharedCell"
+    ]
+  },
+  "container-definitions": {
+    "Enum": [
+      "AttachState",
+      "BindState",
+      "ContainerErrorType",
+      "LoaderHeader"
+    ],
+    "Namespace": [
+      "ConnectionState"
+    ],
+    "Interface": [
+      "ContainerWarning",
+      "IAudience",
+      "ICodeAllowList",
+      "ICodeDetailsLoader",
+      "ICodeLoader",
+      "IConnectionDetails",
+      "IContainer",
+      "IContainerContext",
+      "IContainerEvents",
+      "IContainerLoadMode",
+      "IDeltaHandlerStrategy",
+      "IDeltaManager",
+      "IDeltaManagerEvents",
+      "IDeltaQueue",
+      "IDeltaQueueEvents",
+      "IDeltaSender",
+      "IErrorBase",
+      "IFluidBrowserPackage",
+      "IFluidBrowserPackageEnvironment",
+      "IFluidCodeDetails",
+      "IFluidCodeDetailsComparer",
+      "IFluidCodeDetailsConfig",
+      "IFluidCodeResolver",
+      "IFluidModule",
+      "IFluidModuleWithDetails",
+      "IFluidPackage",
+      "IFluidPackageEnvironment",
+      "IFluidTokenProvider",
+      "IGenericError",
+      "IHostLoader",
+      "ILoader",
+      "ILoaderHeader",
+      "IPendingLocalState",
+      "IProvideFluidCodeDetailsComparer",
+      "IProvideFluidTokenProvider",
+      "IProvideLoader",
+      "IProvideRuntimeFactory",
+      "IResolvedFluidCodeDetails",
+      "IRuntime",
+      "IRuntimeFactory",
+      "ISnapshotTreeWithBlobContents",
+      "IThrottlingWarning",
+      "IUsageError"
+    ]
+  },
+  "container-loader": {
+    "Enum": [
+      "ConnectionState"
+    ],
+    "Class": [
+      "Container",
+      "Loader",
+      "RelativeLoader"
+    ],
+    "Interface": [
+      "ICodeDetailsLoader",
+      "IContainerConfig",
+      "IContainerLoadOptions",
+      "IFluidModuleWithDetails",
+      "ILoaderOptions",
+      "ILoaderProps",
+      "ILoaderServices",
+      "IPendingContainerState"
+    ]
+  },
+  "container-runtime": {
+    "Enum": [
+      "ContainerMessageType",
+      "RuntimeHeaders",
+      "RuntimeMessage"
+    ],
+    "Class": [
+      "ContainerRuntime",
+      "DeltaScheduler",
+      "FluidDataStoreRegistry",
+      "ScheduleManager",
+      "Summarizer",
+      "SummaryCollection"
+    ],
+    "Interface": [
+      "ContainerRuntimeMessage",
+      "IAckedSummary",
+      "IAckSummaryResult",
+      "IBaseSummarizeResult",
+      "IBroadcastSummaryResult",
+      "ICancellableSummarizerController",
+      "ICancellationToken",
+      "IChunkedOp",
+      "IClientSummaryWatcher",
+      "IConnectableRuntime",
+      "IContainerRuntimeOptions",
+      "IEnqueueSummarizeOptions",
+      "IGarbageCollectionRuntime",
+      "IGCRuntimeOptions",
+      "IGCStats",
+      "IGeneratedSummaryStats",
+      "IGenerateSummaryTreeResult",
+      "INackSummaryResult",
+      "IOnDemandSummarizeOptions",
+      "IPendingFlush",
+      "IPendingFlushMode",
+      "IPendingLocalState",
+      "IPendingMessage",
+      "IPendingRuntimeState",
+      "IProvideSummarizer",
+      "IRootSummaryTreeWithStats",
+      "ISubmitSummaryOpResult",
+      "ISubmitSummaryOptions",
+      "ISummarizeOptions",
+      "ISummarizer",
+      "ISummarizeResults",
+      "ISummarizerEvents",
+      "ISummarizerInternalsProvider",
+      "ISummarizerRuntime",
+      "ISummarizingWarning",
+      "ISummary",
+      "ISummaryAckMessage",
+      "ISummaryBaseConfiguration",
+      "ISummaryCollectionOpEvents",
+      "ISummaryConfigurationDisableHeuristics",
+      "ISummaryConfigurationDisableSummarizer",
+      "ISummaryConfigurationHeuristics",
+      "ISummaryNackMessage",
+      "ISummaryOpMessage",
+      "ISummaryRuntimeOptions",
+      "IUploadSummaryResult"
+    ]
+  },
+  "container-runtime-definitions": {
+    "Interface": [
+      "IContainerRuntime",
+      "IContainerRuntimeEvents",
+      "IDataStoreWithBindToContext_Deprecated",
+      "IProvideContainerRuntime"
+    ]
+  },
+  "container-utils": {
+    "Class": [
+      "ClientSessionExpiredError",
+      "DataCorruptionError",
+      "DataProcessingError",
+      "GenericError",
+      "ThrottlingWarning",
+      "UsageError"
+    ]
+  },
+  "core-interfaces": {
+    "Interface": [
+      "IFluidCodeDetails",
+      "IFluidCodeDetailsComparer",
+      "IFluidCodeDetailsConfig",
+      "IFluidHandle",
+      "IFluidHandleContext",
+      "IFluidLoadable",
+      "IFluidObject",
+      "IFluidPackage",
+      "IFluidPackageEnvironment",
+      "IFluidRouter",
+      "IFluidRunnable",
+      "IProvideFluidCodeDetailsComparer",
+      "IProvideFluidHandle",
+      "IProvideFluidHandleContext",
+      "IProvideFluidLoadable",
+      "IProvideFluidRouter",
+      "IProvideFluidRunnable",
+      "IRequest",
+      "IRequestHeader",
+      "IResponse"
+    ]
+  },
+  "counter": {
+    "Interface": [
+      "ISharedCounter",
+      "ISharedCounterEvents"
+    ],
+    "Class": [
+      "SharedCounter"
+    ]
+  },
+  "data-object-base": {
+    "Class": [
+      "LazyLoadedDataObject",
+      "LazyLoadedDataObjectFactory",
+      "RuntimeFactory"
+    ]
+  },
+  "datastore": {
+    "Enum": [
+      "DataStoreMessageType"
+    ],
+    "Class": [
+      "FluidDataStoreRuntime",
+      "FluidObjectHandle"
+    ],
+    "Interface": [
+      "ISharedObjectRegistry"
+    ]
+  },
+  "datastore-definitions": {
+    "Interface": [
+      "IChannel",
+      "IChannelAttributes",
+      "IChannelFactory",
+      "IChannelServices",
+      "IChannelStorageService",
+      "IDeltaConnection",
+      "IDeltaHandler",
+      "IFluidDataStoreRuntime",
+      "IFluidDataStoreRuntimeEvents"
+    ]
+  },
+  "debugger": {
+    "Class": [
+      "DebuggerUI",
+      "DebugReplayController"
+    ],
+    "Namespace": [
+      "FluidDebugger"
+    ],
+    "Interface": [
+      "IDebuggerController",
+      "IDebuggerUI"
+    ]
+  },
+  "driver-base": {
+    "Class": [
+      "DocumentDeltaConnection"
+    ]
+  },
+  "driver-definitions": {
+    "Enum": [
+      "DriverErrorType",
+      "DriverHeader",
+      "LoaderCachingPolicy"
+    ],
+    "Interface": [
+      "DriverPreCheckInfo",
+      "IAuthorizationError",
+      "IContainerPackageInfo",
+      "IDeltasFetchResult",
+      "IDeltaStorageService",
+      "IDocumentDeltaConnection",
+      "IDocumentDeltaConnectionEvents",
+      "IDocumentDeltaStorageService",
+      "IDocumentService",
+      "IDocumentServiceFactory",
+      "IDocumentServicePolicies",
+      "IDocumentStorageService",
+      "IDocumentStorageServicePolicies",
+      "IDriverBasicError",
+      "IDriverErrorBase",
+      "IDriverHeader",
+      "IFluidResolvedUrl",
+      "IGenericNetworkError",
+      "ILocationRedirectionError",
+      "IResolvedUrlBase",
+      "IStream",
+      "ISummaryContext",
+      "IThrottlingWarning",
+      "IUrlResolver",
+      "IWebResolvedUrl"
+    ]
+  },
+  "driver-utils": {
+    "Class": [
+      "AuthorizationError",
+      "BlobAggregationStorage",
+      "BlobCacheStorageService",
+      "DeltaStreamConnectionForbiddenError",
+      "DocumentStorageServiceProxy",
+      "EmptyDocumentDeltaStorageService",
+      "GenericNetworkError",
+      "InsecureUrlResolver",
+      "MultiDocumentServiceFactory",
+      "MultiUrlResolver",
+      "NetworkErrorBasic",
+      "NonRetryableError",
+      "ParallelRequests",
+      "PrefetchDocumentStorageService",
+      "Queue",
+      "RateLimiter",
+      "RetryableError",
+      "SnapshotExtractor",
+      "SummaryTreeAssembler",
+      "ThrottlingError",
+      "UsageError"
+    ],
+    "Interface": [
+      "IAnyDriverError",
+      "IProgress",
+      "ISummaryTreeAssemblerProps"
+    ],
+    "Enum": [
+      "OnlineStatus"
+    ]
+  },
+  "driver-web-cache": {
+    "Class": [
+      "FluidCache"
+    ],
+    "Interface": [
+      "FluidCacheConfig"
+    ]
+  },
+  "file-driver": {
+    "Class": [
+      "FileDeltaStorageService",
+      "FileDocumentService",
+      "FileDocumentServiceFactory",
+      "FluidFetchReader",
+      "Replayer",
+      "ReplayFileDeltaConnection"
+    ],
+    "Interface": [
+      "ISnapshotWriterStorage"
+    ]
+  },
+  "fluid-static": {
+    "Interface": [
+      "ContainerSchema",
+      "IConnection",
+      "IFluidContainer",
+      "IFluidContainerEvents",
+      "IMember",
+      "IServiceAudience",
+      "IServiceAudienceEvents",
+      "RootDataObjectProps"
+    ],
+    "Class": [
+      "DOProviderContainerRuntimeFactory",
+      "FluidContainer",
+      "RootDataObject",
+      "ServiceAudience"
+    ]
+  },
+  "garbage-collector": {
+    "Class": [
+      "GCDataBuilder"
+    ],
+    "Interface": [
+      "IGCResult"
+    ]
+  },
+  "iframe-driver": {
+    "Class": [
+      "DocumentServiceFactoryProxy",
+      "InnerDocumentDeltaConnection",
+      "InnerDocumentService",
+      "InnerDocumentServiceFactory",
+      "InnerUrlResolver",
+      "OuterUrlResolver"
+    ],
+    "Interface": [
+      "ICombinedDriver",
+      "IDocumentServiceFactoryProxy",
+      "IOuterDocumentDeltaConnectionProxy",
+      "IUrlResolverProxy"
+    ]
+  },
+  "ink": {
+    "Interface": [
+      "IClearOperation",
+      "IColor",
+      "ICreateStrokeOperation",
+      "IInk",
+      "IInkEvents",
+      "IInkPoint",
+      "IInkStroke",
+      "IPen",
+      "IStylusOperation"
+    ],
+    "Class": [
+      "Ink",
+      "InkCanvas",
+      "InkFactory"
+    ]
+  },
+  "map": {
+    "Class": [
+      "DirectoryFactory",
+      "LocalValueMaker",
+      "MapFactory",
+      "SharedDirectory",
+      "SharedMap"
+    ],
+    "Interface": [
+      "IDirectory",
+      "IDirectoryClearOperation",
+      "IDirectoryCreateSubDirectoryOperation",
+      "IDirectoryDataObject",
+      "IDirectoryDeleteOperation",
+      "IDirectoryDeleteSubDirectoryOperation",
+      "IDirectoryEvents",
+      "IDirectoryNewStorageFormat",
+      "IDirectorySetOperation",
+      "IDirectoryValueChanged",
+      "ILocalValue",
+      "ISerializableValue",
+      "ISerializedValue",
+      "ISharedDirectory",
+      "ISharedDirectoryEvents",
+      "ISharedMap",
+      "ISharedMapEvents",
+      "IValueChanged"
+    ]
+  },
+  "matrix": {
+    "Interface": [
+      "IRevertible",
+      "IUndoConsumer"
+    ],
+    "Class": [
+      "SharedMatrix",
+      "SharedMatrixFactory"
+    ]
+  },
+  "merge-tree": {
+    "Interface": [
+      "AugmentedIntervalNode",
+      "BlockAction",
+      "BlockUpdateActions",
+      "ClientSeq",
+      "Comparer",
+      "Dictionary",
+      "ICombiningOp",
+      "IConsensusInfo",
+      "IConsensusValue",
+      "IHierBlock",
+      "IIntegerRange",
+      "IInterval",
+      "IJSONMarkerSegment",
+      "IJSONSegment",
+      "IJSONTextSegment",
+      "IMarkerDef",
+      "IMarkerModifiedAction",
+      "IMergeBlock",
+      "IMergeNodeCommon",
+      "IMergeTreeAnnotateMsg",
+      "IMergeTreeClientSequenceArgs",
+      "IMergeTreeDelta",
+      "IMergeTreeDeltaCallbackArgs",
+      "IMergeTreeDeltaOpArgs",
+      "IMergeTreeGroupMsg",
+      "IMergeTreeInsertMsg",
+      "IMergeTreeMaintenanceCallbackArgs",
+      "IMergeTreeRemoveMsg",
+      "IMergeTreeSegmentDelta",
+      "IncrementalBlockAction",
+      "IncrementalSegmentAction",
+      "IncrementalSegmentActions",
+      "InsertContext",
+      "IRBAugmentation",
+      "IRBMatcher",
+      "IRelativePosition",
+      "IRemovalInfo",
+      "ISegment",
+      "ISegmentAction",
+      "ISegmentChanges",
+      "KeyComparer",
+      "LocalReferencePosition",
+      "LRUSegment",
+      "MapLike",
+      "MergeTreeStats",
+      "MinListener",
+      "NodeAction",
+      "Property",
+      "PropertyAction",
+      "ProxString",
+      "QProperty",
+      "RBNode",
+      "RBNodeActions",
+      "ReferencePosition",
+      "SearchResult",
+      "SegmentAccumulator",
+      "SegmentActions",
+      "SegmentGroup",
+      "SortedDictionary",
+      "TSTNode",
+      "TSTResult"
+    ],
+    "Class": [
+      "BaseSegment",
+      "Client",
+      "CollaborationWindow",
+      "Heap",
+      "IncrementalMapState",
+      "IntervalTree",
+      "List",
+      "LocalReference",
+      "LocalReferenceCollection",
+      "Marker",
+      "MergeBlock",
+      "MergeNode",
+      "MergeTree",
+      "MergeTreeTextHelper",
+      "PropertiesManager",
+      "RedBlackTree",
+      "SegmentGroupCollection",
+      "SnapshotLegacy",
+      "SortedSegmentSet",
+      "Stack",
+      "TextSegment",
+      "TrackingGroup",
+      "TrackingGroupCollection",
+      "TST"
+    ],
+    "Enum": [
+      "IncrementalExecOp",
+      "ReferenceType"
+    ]
+  },
+  "odsp-driver": {
+    "Enum": [
+      "ClpCompliantAppHeader",
+      "SharingLinkHeader"
+    ],
+    "Interface": [
+      "IClpCompliantAppHeader",
+      "ISharingLinkHeader",
+      "ISnapshotContents",
+      "OdspFluidDataStoreLocator",
+      "ShareLinkFetcherProps"
+    ],
+    "Class": [
+      "OdspDocumentServiceFactory",
+      "OdspDocumentServiceFactoryCore",
+      "OdspDocumentServiceFactoryWithCodeSplit",
+      "OdspDriverUrlResolver",
+      "OdspDriverUrlResolverForShareLink",
+      "ReadBuffer"
+    ]
+  },
+  "odsp-driver-definitions": {
+    "Interface": [
+      "HostStoragePolicy",
+      "ICacheEntry",
+      "ICollabSessionOptions",
+      "IEntry",
+      "IFileEntry",
+      "IOdspError",
+      "IOdspResolvedUrl",
+      "IOdspUrlParts",
+      "IOpsCachingPolicy",
+      "IPersistedCache",
+      "ISnapshotOptions",
+      "OdspResourceTokenFetchOptions",
+      "ShareLinkInfoType",
+      "TokenFetchOptions",
+      "TokenResponse"
+    ],
+    "Enum": [
+      "OdspErrorType",
+      "ShareLinkTypes"
+    ]
+  },
+  "ordered-collection": {
+    "Class": [
+      "ConsensusOrderedCollection",
+      "ConsensusQueue"
+    ],
+    "Enum": [
+      "ConsensusResult"
+    ],
+    "Interface": [
+      "IConsensusOrderedCollection",
+      "IConsensusOrderedCollectionEvents",
+      "IConsensusOrderedCollectionFactory",
+      "IOrderedCollection",
+      "ISnapshotable"
+    ]
+  },
+  "protocol-definitions": {
+    "Enum": [
+      "FileMode",
+      "MessageType",
+      "NackErrorType",
+      "ScopeType",
+      "TreeEntry"
+    ],
+    "Interface": [
+      "IActorClient",
+      "IAttachment",
+      "IBlob",
+      "IBranchOrigin",
+      "ICapabilities",
+      "IClient",
+      "IClientConfiguration",
+      "IClientDetails",
+      "IClientJoin",
+      "IConnect",
+      "IConnected",
+      "ICreateBlobResponse",
+      "IDocumentAttributes",
+      "IDocumentMessage",
+      "IDocumentSystemMessage",
+      "IHelpMessage",
+      "INack",
+      "INackContent",
+      "IProcessMessageResult",
+      "IProposal",
+      "IProtocolState",
+      "IQueueMessage",
+      "IQuorum",
+      "IQuorumClients",
+      "IQuorumClientsEvents",
+      "IQuorumProposals",
+      "IQuorumProposalsEvents",
+      "ISequencedClient",
+      "ISequencedDocumentAugmentedMessage",
+      "ISequencedDocumentMessage",
+      "ISequencedDocumentSystemMessage",
+      "IServerError",
+      "ISignalClient",
+      "ISignalMessage",
+      "ISnapshotTree",
+      "ISnapshotTreeEx",
+      "ISummaryAck",
+      "ISummaryAttachment",
+      "ISummaryAuthor",
+      "ISummaryBlob",
+      "ISummaryCommitter",
+      "ISummaryConfiguration",
+      "ISummaryContent",
+      "ISummaryHandle",
+      "ISummaryNack",
+      "ISummaryProposal",
+      "ISummaryTokenClaims",
+      "ISummaryTree",
+      "ITokenClaims",
+      "ITokenProvider",
+      "ITokenService",
+      "ITrace",
+      "ITree",
+      "IUploadedSummaryDetails",
+      "IUser",
+      "IVersion"
+    ],
+    "Namespace": [
+      "SummaryType"
+    ]
+  },
+  "register-collection": {
+    "Class": [
+      "ConsensusRegisterCollection",
+      "ConsensusRegisterCollectionFactory"
+    ],
+    "Interface": [
+      "IConsensusRegisterCollection",
+      "IConsensusRegisterCollectionEvents",
+      "IConsensusRegisterCollectionFactory"
+    ],
+    "Enum": [
+      "ReadPolicy"
+    ]
+  },
+  "replay-driver": {
+    "Class": [
+      "FileSnapshotReader",
+      "OpStorage",
+      "ReadDocumentStorageServiceBase",
+      "ReplayController",
+      "ReplayDocumentService",
+      "ReplayDocumentServiceFactory",
+      "SnapshotStorage",
+      "StaticStorageDocumentService",
+      "StaticStorageDocumentServiceFactory"
+    ],
+    "Interface": [
+      "IFileSnapshot"
+    ]
+  },
+  "request-handler": {
+    "Class": [
+      "RuntimeRequestHandlerBuilder"
+    ]
+  },
+  "routerlicious-driver": {
+    "Class": [
+      "DefaultTokenProvider",
+      "DeltaStorageService",
+      "DocumentDeltaStorageService",
+      "DocumentPostCreateError",
+      "DocumentService",
+      "DocumentStorageService",
+      "NullBlobStorageService",
+      "RouterliciousDocumentServiceFactory"
+    ],
+    "Interface": [
+      "IRouterliciousDriverPolicies",
+      "ITokenProvider",
+      "ITokenResponse",
+      "ITokenService"
+    ]
+  },
+  "runtime-definitions": {
+    "Enum": [
+      "CreateSummarizerNodeSource",
+      "FlushMode"
+    ],
+    "Interface": [
+      "IAttachMessage",
+      "IContainerRuntimeBase",
+      "IContainerRuntimeBaseEvents",
+      "IDataStore",
+      "IEnvelope",
+      "IFluidDataStoreChannel",
+      "IFluidDataStoreContext",
+      "IFluidDataStoreContextDetached",
+      "IFluidDataStoreContextEvents",
+      "IFluidDataStoreFactory",
+      "IFluidDataStoreRegistry",
+      "IGarbageCollectionData",
+      "IGarbageCollectionDetailsBase",
+      "IGarbageCollectionNodeData",
+      "IGarbageCollectionState",
+      "IInboundSignalMessage",
+      "IProvideFluidDataStoreFactory",
+      "IProvideFluidDataStoreRegistry",
+      "ISignalEnvelope",
+      "ISummarizeInternalResult",
+      "ISummarizeResult",
+      "ISummarizerNode",
+      "ISummarizerNodeConfig",
+      "ISummarizerNodeConfigWithGC",
+      "ISummarizerNodeWithGC",
+      "ISummaryStats",
+      "ISummaryTreeWithStats",
+      "ITelemetryContext"
+    ]
+  },
+  "runtime-utils": {
+    "Interface": [
+      "IRootSummarizerNode",
+      "IRootSummarizerNodeWithGC",
+      "ISummarizerNodeRootContract"
+    ],
+    "Class": [
+      "ObjectStoragePartition",
+      "RequestParser",
+      "RuntimeFactoryHelper",
+      "SummaryTreeBuilder",
+      "TelemetryContext"
+    ]
+  },
+  "sequence": {
+    "Interface": [
+      "IIntervalCollectionEvent",
+      "IIntervalHelpers",
+      "IJSONRunSegment",
+      "ISequenceDeltaRange",
+      "ISerializableInterval",
+      "ISerializedInterval",
+      "ISharedIntervalCollection",
+      "ISharedSegmentSequenceEvents",
+      "ISharedString"
+    ],
+    "Class": [
+      "Interval",
+      "IntervalCollection",
+      "IntervalCollectionIterator",
+      "PaddingSegment",
+      "RunSegment",
+      "SequenceDeltaEvent",
+      "SequenceEvent",
+      "SequenceInterval",
+      "SequenceMaintenanceEvent",
+      "SharedIntervalCollection",
+      "SharedIntervalCollectionFactory",
+      "SharedNumberSequence",
+      "SharedNumberSequenceFactory",
+      "SharedObjectSequence",
+      "SharedObjectSequenceFactory",
+      "SharedSegmentSequence",
+      "SharedSequence",
+      "SharedString",
+      "SharedStringFactory",
+      "SparseMatrix",
+      "SparseMatrixFactory",
+      "SubSequence"
+    ],
+    "Enum": [
+      "IntervalType"
+    ]
+  },
+  "shared-object-base": {
+    "Class": [
+      "FluidSerializer",
+      "SharedObject",
+      "SharedObjectCore",
+      "SummarySerializer"
+    ],
+    "Interface": [
+      "IFluidSerializer",
+      "ISerializedHandle",
+      "ISharedObject",
+      "ISharedObjectEvents"
+    ],
+    "Enum": [
+      "ValueType"
+    ]
+  },
+  "shared-summary-block": {
+    "Interface": [
+      "ISharedSummaryBlock"
+    ],
+    "Class": [
+      "SharedSummaryBlock",
+      "SharedSummaryBlockFactory"
+    ]
+  },
+  "synthesize": {
+    "Class": [
+      "DependencyContainer"
+    ],
+    "Interface": [
+      "IFluidDependencySynthesizer",
+      "IProvideFluidDependencySynthesizer"
+    ]
+  },
+  "telemetry-utils": {
+    "Class": [
+      "ChildLogger",
+      "DebugLogger",
+      "EventEmitterWithErrorHandling",
+      "LoggingError",
+      "MockLogger",
+      "MultiSinkLogger",
+      "PerformanceEvent",
+      "SampledTelemetryHelper",
+      "TaggedLoggerAdapter",
+      "TelemetryLogger",
+      "TelemetryUTLogger",
+      "ThresholdCounter"
+    ],
+    "Interface": [
+      "IConfigProvider",
+      "IConfigProviderBase",
+      "IFluidErrorAnnotations",
+      "IFluidErrorBase",
+      "IPerformanceEventMarkers",
+      "ITelemetryLoggerPropertyBag",
+      "ITelemetryLoggerPropertyBags",
+      "MonitoringContext"
+    ],
+    "Enum": [
+      "TelemetryDataTag"
+    ]
+  },
+  "test-driver-definitions": {
+    "Interface": [
+      "ITelemetryBufferedLogger",
+      "ITestDriver"
+    ]
+  },
+  "test-drivers": {
+    "Interface": [
+      "DriverApiType",
+      "FluidTestDriverConfig"
+    ],
+    "Class": [
+      "LocalServerTestDriver",
+      "OdspTestDriver",
+      "RouterliciousTestDriver",
+      "TinyliciousTestDriver"
+    ]
+  },
+  "test-runtime-utils": {
+    "Interface": [
+      "IMockContainerRuntimePendingMessage"
+    ],
+    "Class": [
+      "InsecureTokenProvider",
+      "MockContainerRuntime",
+      "MockContainerRuntimeFactory",
+      "MockContainerRuntimeFactoryForReconnection",
+      "MockContainerRuntimeForReconnection",
+      "MockDeltaConnection",
+      "MockDeltaManager",
+      "MockDeltaQueue",
+      "MockEmptyDeltaConnection",
+      "MockFluidDataStoreContext",
+      "MockFluidDataStoreRuntime",
+      "MockHandle",
+      "MockObjectStorageService",
+      "MockQuorumClients",
+      "MockSharedObjectServices",
+      "MockStorage"
+    ]
+  },
+  "test-utils": {
+    "Enum": [
+      "DataObjectFactoryType"
+    ],
+    "Class": [
+      "EventAndErrorTrackingLogger",
+      "LoaderContainerTracker",
+      "LocalCodeLoader",
+      "TestFluidObject",
+      "TestFluidObjectFactory",
+      "TestObjectProvider"
+    ],
+    "Interface": [
+      "IOpProcessingController",
+      "IProvideTestFluidObject",
+      "ITestContainerConfig",
+      "ITestFluidObject",
+      "ITestObjectProvider",
+      "TimeoutWithError",
+      "TimeoutWithValue"
+    ]
+  },
+  "tinylicious-client": {
+    "Class": [
+      "TinyliciousAudience",
+      "TinyliciousClient"
+    ],
+    "Interface": [
+      "TinyliciousClientProps",
+      "TinyliciousConnectionConfig",
+      "TinyliciousContainerServices",
+      "TinyliciousMember",
+      "TinyliciousUser"
+    ]
+  },
+  "tool-utils": {
+    "Interface": [
+      "IAsyncCache",
+      "IOdspTokenManagerCacheKey",
+      "IResources",
+      "ISnapshotNormalizerConfig"
+    ],
+    "Class": [
+      "OdspTokenManager"
+    ]
+  },
+  "undo-redo": {
+    "Interface": [
+      "IRevertible"
+    ],
+    "Class": [
+      "SharedMapRevertible",
+      "SharedMapUndoRedoHandler",
+      "SharedSegmentSequenceRevertible",
+      "SharedSegmentSequenceUndoRedoHandler",
+      "UndoRedoStackManager"
+    ]
+  },
+  "view-adapters": {
+    "Class": [
+      "HTMLViewAdapter",
+      "MountableView",
+      "ReactViewAdapter"
+    ],
+    "Interface": [
+      "IReactViewAdapterProps"
+    ]
+  },
+  "view-interfaces": {
+    "Interface": [
+      "IFluidHTMLOptions",
+      "IFluidHTMLView",
+      "IFluidMountableView",
+      "IFluidMountableViewClass",
+      "IProvideFluidHTMLView",
+      "IProvideFluidMountableView"
+    ]
+  },
+  "web-code-loader": {
+    "Class": [
+      "AllowList",
+      "SemVerCdnCodeResolver",
+      "WebCodeLoader"
+    ],
+    "Interface": [
+      "IPackageIdentifierDetails"
+    ]
+  }
+}

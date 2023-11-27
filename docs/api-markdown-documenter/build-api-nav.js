@@ -14,7 +14,7 @@ const yaml = require("js-yaml");
  * @param {Array<Object>} documents - List of {@link @fluid-tools/api-markdown-documenter#Document}s with associated API items.
  * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
-async function buildNavBar(documents) {
+async function buildNavBar(documents, version) {
 	const navKinds = new Set([
 		ApiItemKind.Class,
 		ApiItemKind.Interface,
@@ -30,7 +30,9 @@ async function buildNavBar(documents) {
 			const associatedPackage = apiItem.getAssociatedPackage();
 
 			if (associatedPackage === undefined) {
-				throw new Error(`Associated package is undefined for API item: ${apiItem.displayName}`);
+				throw new Error(
+					`Associated package is undefined for API item: ${apiItem.displayName}`,
+				);
 			}
 
 			const packageName = ApiItemUtilities.getUnscopedPackageName(associatedPackage);
@@ -54,14 +56,22 @@ async function buildNavBar(documents) {
 	);
 
 	return await Promise.all([
-		saveToFile("allAPIs.yaml", allAPIs),
-		saveToFile("packageNameToDisplayName.yaml", packageMap),
-		saveToFile("displayNameToPackageName.yaml", invertMap(packageMap)),
+		saveToFile(`allAPIs.yaml`, version, allAPIs),
+		saveToFile(`packageNameToDisplayName.yaml`, version, packageMap),
+		saveToFile(`displayNameToPackageName.yaml`, version, invertMap(packageMap)),
 	]);
 }
 
-const saveToFile = async (filename, data) =>
-	fs.writeFile(path.join(__dirname, "..", "data", filename), yaml.dump(data), "utf8");
+const saveToFile = async (filename, version, data) => {
+	if (!fs.existsSync(path.join(__dirname, "..", "data", version))) {
+		fs.mkdirSync(path.join(__dirname, "..", "data", version), { recursive: true });
+	}
+	fs.writeFile(
+		path.join(__dirname, "..", "data", `${version}/${filename}`),
+		yaml.dump(data),
+		"utf8",
+	);
+};
 
 const invertMap = (obj) =>
 	Object.entries(obj).reduce((acc, [key, value]) => {
