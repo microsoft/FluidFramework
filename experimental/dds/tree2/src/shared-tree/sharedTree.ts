@@ -181,15 +181,28 @@ export class SharedTree
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const defaultChangeFamily = new DefaultChangeFamily(options);
-		const changeFamily = options.failFastOnChangesetErrors
-			? defaultChangeFamily
-			: makeMitigatedChangeFamily(
-					defaultChangeFamily,
-					DefaultChangeFamily.emptyChange,
-					(error: unknown) => {
-						// TODO:6344 Add telemetry for these errors.
-					},
-			  );
+		const changeFamily = makeMitigatedChangeFamily(
+			defaultChangeFamily,
+			DefaultChangeFamily.emptyChange,
+			(error: unknown) => {
+				// TODO:6344 Add telemetry for these errors.
+				// Rethrowing the error has a different effect depending on the context in which the
+				// ChangeFamily was invoked:
+				// - If the ChangeFamily was invoked as part of incoming op processing, rethrowing the error
+				// will cause the runtime to disconnect the client, log a severe error, and not reconnect.
+				// This will not cause the host application to crash because it is not on the stack at that time.
+				// TODO: let the host application know that the client is now disconnected.
+				// - If the ChangeFamily was invoked as part of dealing with a local change, rethrowing the
+				// error will cause the host application to crash. This is not ideal, but is better than
+				// letting the application either send an invalid change to the server or allowing the
+				// application to continue working when its local branches contain edits that cannot be
+				// reflected in its views.
+				// The best course of action for a host application in such a state is to restart.
+				// TODO: let the host application know about this situation and provide a way to
+				// programmatically reload the SharedTree container.
+				throw error;
+			},
+		);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
@@ -386,15 +399,6 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 */
 	forest?: ForestType;
 	summaryEncodeType?: TreeCompressionStrategy;
-	/**
-	 * If true, the SharedTree will throw an error if processing a change fails during merge resolution and change application.
-	 * This option is preferable for testing and debugging SharedTree internals.
-	 *
-	 * Otherwise (default), no error will be generated and the change will be treated as empty.
-	 * This option is preferable for production scenarios. It allows SharedTree users to keep using documents
-	 * in the face of merge resolution errors that would otherwise prevent the document from loading.
-	 */
-	failFastOnChangesetErrors?: boolean;
 }
 
 /**
@@ -418,7 +422,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
-	failFastOnChangesetErrors: false,
 };
 
 /**

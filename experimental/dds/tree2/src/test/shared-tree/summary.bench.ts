@@ -70,10 +70,7 @@ describe("Summary benchmarks", () => {
 	describe("load speed of", () => {
 		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({
-				jsonValidator: typeboxValidator,
-				failFastOnChangesetErrors: true,
-			});
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
 				title,
 				type,

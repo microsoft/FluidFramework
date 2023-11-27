@@ -61,10 +61,7 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 }
 
 function createLocalTree(id: string) {
-	const factory = new SharedTreeFactory({
-		jsonValidator: typeboxValidator,
-		failFastOnChangesetErrors: true,
-	});
+	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 

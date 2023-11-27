@@ -17,11 +17,6 @@ import {
 	boxedIterator,
 	TreeSchema,
 } from "../../feature-libraries";
-import {
-	optionalChangeHandler,
-	optionalChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/optional-field";
 import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
 	SharedTreeTestFactory,
@@ -76,7 +71,6 @@ describe("SharedTree", () => {
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			failFastOnChangesetErrors: true,
 		});
 
 		const builder = new SchemaBuilder({
@@ -162,7 +156,6 @@ describe("SharedTree", () => {
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			failFastOnChangesetErrors: true,
 		});
 		const schemaEmpty = new SchemaBuilderInternal({
 			scope: "com.fluidframework.test",
@@ -234,7 +227,6 @@ describe("SharedTree", () => {
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
-			failFastOnChangesetErrors: true,
 		});
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const view = sharedTree.schematizeInternal({
@@ -251,9 +243,7 @@ describe("SharedTree", () => {
 	});
 
 	it("contentSnapshot", () => {
-		const factory = new SharedTreeFactory({
-			failFastOnChangesetErrors: true,
-		});
+		const factory = new SharedTreeFactory();
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		{
 			const snapshot = sharedTree.contentSnapshot();
@@ -1223,92 +1213,6 @@ describe("SharedTree", () => {
 		provider.processMessages();
 	});
 
-	it("by default does not fail fast on merge logic errors", () => {
-		const factory = new SharedTreeFactory();
-		const provider = new TestTreeProviderLite(2, factory);
-		const [tree1, tree2] = provider.trees;
-
-		let errorsThrown = 0;
-		const throws = () => {
-			errorsThrown += 1;
-			throw new Error("test error");
-		};
-
-		const intoDeltaBackup = optionalChangeHandler.intoDelta;
-		const rebaserBackup = { ...optionalChangeRebaser };
-		optionalChangeHandler.intoDelta = throws;
-		optionalChangeRebaser.rebase = throws;
-		optionalChangeRebaser.invert = throws;
-		optionalChangeRebaser.compose = throws;
-
-		try {
-			tree1.editor
-				.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false);
-			tree2.editor
-				.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false);
-
-			// Also test that this propagates to forks
-			tree2.view
-				.fork()
-				.editor.optionalField({ parent: undefined, field: rootFieldKey })
-				.set(undefined, false);
-
-			provider.processMessages();
-		} finally {
-			optionalChangeHandler.intoDelta = intoDeltaBackup;
-			optionalChangeRebaser.rebase = rebaserBackup.rebase;
-			optionalChangeRebaser.invert = rebaserBackup.invert;
-			optionalChangeRebaser.compose = rebaserBackup.compose;
-		}
-
-		assert(errorsThrown > 0);
-	});
-
-	it("can be configured to fail fast on merge logic errors", () => {
-		const factory = new SharedTreeFactory({ failFastOnChangesetErrors: true });
-		const provider = new TestTreeProviderLite(2, factory);
-		const [tree1, tree2] = provider.trees;
-
-		const throws = () => {
-			throw new Error("test error");
-		};
-		const intoDeltaBackup = optionalChangeHandler.intoDelta;
-		const rebaserBackup = { ...optionalChangeRebaser };
-		optionalChangeHandler.intoDelta = throws;
-		optionalChangeRebaser.rebase = throws;
-		optionalChangeRebaser.invert = throws;
-		optionalChangeRebaser.compose = throws;
-
-		try {
-			assert.throws(() =>
-				tree1.editor
-					.optionalField({ parent: undefined, field: rootFieldKey })
-					.set(undefined, false),
-			);
-			assert.throws(() =>
-				tree2.editor
-					.optionalField({ parent: undefined, field: rootFieldKey })
-					.set(undefined, false),
-			);
-			// Also test that this propagates to forks
-			assert.throws(() =>
-				tree2.view
-					.fork()
-					.editor.optionalField({ parent: undefined, field: rootFieldKey })
-					.set(undefined, false),
-			);
-
-			provider.processMessages();
-		} finally {
-			optionalChangeHandler.intoDelta = intoDeltaBackup;
-			optionalChangeRebaser.rebase = rebaserBackup.rebase;
-			optionalChangeRebaser.invert = rebaserBackup.invert;
-			optionalChangeRebaser.compose = rebaserBackup.compose;
-		}
-	});
-
 	describe("Stashed ops", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
@@ -1455,7 +1359,6 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					failFastOnChangesetErrors: true,
 				}),
 			);
 			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
@@ -1467,7 +1370,6 @@ describe("SharedTree", () => {
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
 					forest: ForestType.Reference,
-					failFastOnChangesetErrors: true,
 				}),
 			);
 			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
@@ -1479,7 +1381,6 @@ describe("SharedTree", () => {
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
 					forest: ForestType.Optimized,
-					failFastOnChangesetErrors: true,
 				}),
 			);
 			assert.equal(trees[0].view.forest.computationName, "object-forest.ChunkedForest");

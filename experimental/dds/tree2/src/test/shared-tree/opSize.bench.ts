@@ -353,10 +353,7 @@ const styles = [
 	},
 ];
 
-const factory = new SharedTreeFactory({
-	jsonValidator: typeboxValidator,
-	failFastOnChangesetErrors: true,
-});
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
