@@ -8,6 +8,7 @@ import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark
 import { NoOpChangeRebaser } from "../testChange";
 import {
 	editManagerFactory,
+	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
@@ -65,7 +66,7 @@ describe("EditManager - Bench", () => {
 			});
 		}
 	});
-	describe("Peer commit rebasing", () => {
+	describe("Peer commit rebasing (fix ref seq#)", () => {
 		for (const { type, rebasedEditCount: peerEditCount, trunkEditCount } of scenarios) {
 			benchmark({
 				type,
@@ -97,38 +98,43 @@ describe("EditManager - Bench", () => {
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
 			});
-			// for (const extraPeerEditStatus of ["CaughtUp", "NotCaughtUp"] as const) {
-			// 	benchmark({
-			// 		type,
-			// 		title: `Receive 1 peer ${extraPeerEditStatus} commit on top of ${peerEditCount} existing peer commits that were rebased over ${trunkEditCount} trunk commits`,
-			// 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-			// 			let duration: number;
-			// 			do {
-			// 				// Since this setup one collects data from one iteration, assert that this is what is expected.
-			// 				assert.equal(state.iterationsPerBatch, 1);
+		}
+	});
+	describe("Peer commit rebasing (advancing ref seq#)", () => {
+		for (const { type, editCount } of [
+			{ type: BenchmarkType.Perspective, editCount: 1 },
+			{ type: BenchmarkType.Perspective, editCount: 10 },
+			{ type: BenchmarkType.Measurement, editCount: 100 },
+		]) {
+			benchmark({
+				type,
+				title: `for ${editCount} peer commits and ${editCount} trunk commits`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
 
-			// 				// Setup
-			// 				const rebaser = new NoOpChangeRebaser();
-			// 				const manager = editManagerFactory({ rebaser }).manager;
-			// 				const rebasing = rebasePeerEditsOverTrunkEdits(
-			// 					peerEditCount,
-			// 					trunkEditCount,
-			// 					manager,
-			// 					true,
-			// 				);
+						// Setup
+						const rebaser = new NoOpChangeRebaser();
+						const manager = editManagerFactory({ rebaser }).manager;
+						const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
+							editCount,
+							manager,
+							true,
+						);
 
-			// 				// Measure
-			// 				const before = state.timer.now();
-			// 				rebasing();
-			// 				const after = state.timer.now();
-			// 				duration = state.timer.toSeconds(before, after);
-			// 				// Collect data
-			// 			} while (state.recordBatch(duration));
-			// 		},
-			// 		// Force batch size of 1
-			// 		minBatchDurationSeconds: 0,
-			// 	});
-			// }
+						// Measure
+						const before = state.timer.now();
+						rebasing();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
 		}
 	});
 	describe("Multi-peer commit rebasing", () => {
