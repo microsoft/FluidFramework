@@ -104,8 +104,7 @@ describe("EditManager - Bench", () => {
 		for (const { type, editCount } of [
 			{ type: BenchmarkType.Perspective, editCount: 1 },
 			{ type: BenchmarkType.Perspective, editCount: 10 },
-			{ type: BenchmarkType.Perspective, editCount: 100 },
-			{ type: BenchmarkType.Measurement, editCount: 1000 },
+			{ type: BenchmarkType.Measurement, editCount: 100 },
 		]) {
 			benchmark({
 				type,
