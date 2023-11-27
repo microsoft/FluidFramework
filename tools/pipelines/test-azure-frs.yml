@@ -194,7 +194,7 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               echo "creating api-extractor-temp folder"
-              mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-lts
+              mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models
 
         - task: AzureCLI@2
           displayName: 'Download LTS api-extractor JSON blob'
@@ -204,13 +204,14 @@ stages:
             scriptType: bash
             scriptLocation: inlineScript
             inlineScript: |
-              az storage blob download -f '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+              az storage blob download -f '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/latest-lts.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
 
         - task: ExtractFiles@1
           displayName: 'Extract LTS blob content'
           inputs:
-            archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/*tar.gz'
-            cleanDestinationFolder: false
+            destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models'
+            archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/*tar.gz'
+            cleanDestinationFolder: true
             overwriteExistingFiles: true
 
         - template: templates/include-use-node-version.yml
