@@ -613,7 +613,6 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TLis
 // @alpha
 export interface FlexTreeEntity<out TSchema = unknown> {
     [boxedIterator](): IterableIterator<FlexTreeEntity>;
-    // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind;
     readonly context: TreeContext;
     readonly schema: TSchema;
