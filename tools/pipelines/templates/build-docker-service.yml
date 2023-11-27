@@ -300,10 +300,10 @@ stages:
             customCommand: >
               run
               -v $(Build.ArtifactStagingDirectory):/usr/artifacts
-              -e RELEASE_GROUP='${{ parameters.tagName }}'
-              -e STAGING_PATH='/usr/artifacts'
-              -e PACKAGE_MANAGER='npm'
-              -e PUBLISH_NON_SCOPED='False'
+              -e RELEASE_GROUP=${{ parameters.tagName }}
+              -e STAGING_PATH=/usr/artifacts
+              -e PACKAGE_MANAGER=npm
+              -e PUBLISH_NON_SCOPED=False
               --entrypoint bash
               $(baseContainerTag)
               /usr/scripts/pack-packages.sh
