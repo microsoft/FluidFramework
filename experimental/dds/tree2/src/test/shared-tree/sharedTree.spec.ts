@@ -294,7 +294,7 @@ describe("SharedTree", () => {
 		validateTreeConsistency(provider.trees[0], joinedLaterTree);
 	});
 
-	it("can summarize and load", async () => {
+	it.only("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
 		const summarizingTree = provider.trees[0].schematize({

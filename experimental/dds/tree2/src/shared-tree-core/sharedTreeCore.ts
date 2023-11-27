@@ -14,13 +14,19 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
+	blobCountPropertyName,
+	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
+	FluidSerializer,
 	IFluidSerializer,
 	ISharedObjectEvents,
-	SharedObject,
+	SharedObjectCore,
+	SummarySerializer,
 } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICodecOptions, IJsonCodec } from "../codec";
 import { ChangeFamily, Delta, ChangeFamilyEditor, GraphCommit } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
@@ -78,7 +84,7 @@ export interface ChangeEvents<TChangeset> {
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObjectCore<
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
@@ -119,6 +125,31 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
 	/**
+	 * True while we are garbage collecting this object's data.
+	 */
+	private _isGCing: boolean = false;
+
+	/**
+	 * The serializer to use to serialize / parse handles, if any.
+	 */
+	private readonly _serializer: IFluidSerializer;
+
+	protected get serializer(): IFluidSerializer {
+		/**
+		 * During garbage collection, the SummarySerializer keeps track of IFluidHandles that are serialized. These
+		 * handles represent references to other Fluid objects.
+		 *
+		 * This is fine for now. However, if we implement delay loading in DDss, they may load and de-serialize content
+		 * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
+		 */
+		assert(
+			!this._isGCing,
+			"SummarySerializer should be used for serializing data during summary.",
+		);
+		return this._serializer;
+	}
+
+	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
@@ -135,9 +166,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		telemetryContextPrefix: string,
+		private readonly telemetryContextPrefix: string,
 	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
+		super(id, runtime, attributes);
+
+		this._serializer = new FluidSerializer(
+			this.runtime.channelsRoutingContext,
+			(handle: IFluidHandle) => this.handleDecoded(handle),
+		);
 
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
@@ -193,20 +229,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 	}
 
-	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
-	// We might want to not subclass it, or override/reimplement most of its functionality.
-	protected summarizeCore(
-		serializer: IFluidSerializer,
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
+	 */
+	public getAttachSummary(
+		fullTree: boolean = false,
+		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
+		serializer?: IFluidSerializer,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
+		const summarySerializer = serializer ?? this.serializer;
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.handle),
+					(contents) => summarySerializer.stringify(contents, this.handle),
 					undefined,
 					undefined,
 					telemetryContext,
@@ -215,6 +255,60 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+
+		const result = summarizableBuilder.getSummaryTree();
+		this.incrementTelemetryMetric(
+			blobCountPropertyName,
+			result.stats.blobNodeCount,
+			telemetryContext,
+		);
+		this.incrementTelemetryMetric(
+			totalBlobSizePropertyName,
+			result.stats.totalBlobSize,
+			telemetryContext,
+		);
+
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
+	 */
+	public async summarize(
+		fullTree: boolean = false,
+		trackState: boolean = false,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		serializer?: IFluidSerializer,
+	): Promise<ISummaryTreeWithStats> {
+		const builder = new SummaryTreeBuilder();
+		const summarizableBuilder = new SummaryTreeBuilder();
+		const summarySerializer = serializer ?? this.serializer;
+		// Merge the summaries of all summarizables together under a single ISummaryTree
+		for (const s of this.summarizables) {
+			const summary = await s.summarize(
+				(contents) => summarySerializer.stringify(contents, this.handle),
+				undefined,
+				undefined,
+				telemetryContext,
+			);
+			summarizableBuilder.addWithStats(s.key, summary);
+		}
+
+		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+
+		const result = summarizableBuilder.getSummaryTree();
+		this.incrementTelemetryMetric(
+			blobCountPropertyName,
+			result.stats.blobNodeCount,
+			telemetryContext,
+		);
+		this.incrementTelemetryMetric(
+			totalBlobSizePropertyName,
+			result.stats.totalBlobSize,
+			telemetryContext,
+		);
+
 		return builder.getSummaryTree();
 	}
 
@@ -317,8 +411,43 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return;
 	}
 
+	public getObjectGCData(fullGC: boolean = false): IGarbageCollectionData {
+		// Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer to serialize handles
+		// in this object's data.
+		assert(!this._isGCing, "Possible re-entrancy! Summary should not already be in progress.");
+		this._isGCing = true;
+
+		let gcData: IGarbageCollectionData;
+		try {
+			const serializer = new SummarySerializer(
+				this.runtime.channelsRoutingContext,
+				(handle: IFluidHandle) => this.handleDecoded(handle),
+			);
+			this.processGCDataCore(serializer);
+			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
+			// routes of handles serialized during summarization.
+			gcData = { gcNodes: { "/": serializer.getSerializedRoutes() } };
+			assert(this._isGCing, "Possible re-entrancy! Summary should have been in progress.");
+		} finally {
+			this._isGCing = false;
+		}
+
+		return gcData;
+	}
+
+	/**
+	 * Calls the serializer over all data in this object that reference other GC nodes.
+	 * Derived classes must override this to provide custom list of references to other GC nodes.
+	 */
+	protected processGCDataCore(serializer: SummarySerializer) {
+		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
+		// expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
+		// See: https://github.com/microsoft/FluidFramework/issues/4547
+		this.getAttachSummary(false, false, undefined, serializer);
+	}
+
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
-		const gcNodes: IGarbageCollectionData["gcNodes"] = super.getGCData(fullGC).gcNodes;
+		const gcNodes: IGarbageCollectionData["gcNodes"] = this.getObjectGCData(fullGC).gcNodes;
 		for (const s of this.summarizables) {
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
@@ -331,6 +460,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return {
 			gcNodes,
 		};
+	}
+
+	private incrementTelemetryMetric(
+		propertyName: string,
+		incrementBy: number,
+		telemetryContext?: ITelemetryContext,
+	) {
+		const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ??
+			0) as number;
+		telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
 	}
 }
 
