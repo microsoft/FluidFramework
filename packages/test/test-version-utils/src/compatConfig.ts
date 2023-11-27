@@ -201,6 +201,8 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
  *
  * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
  * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
+ * 
+ * @internal
  */
 export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
@@ -339,6 +341,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * ```
  *
  * If the linked github issue is ever fixed, this can be once again used as a global setup fixture.
+ *
+ * @internal
  */
 export async function mochaGlobalSetup() {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));

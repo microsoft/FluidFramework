@@ -196,6 +196,9 @@ function createCompatSuite(
 	};
 }
 
+/**
+ * @internal
+ */
 export interface ITestObjectProviderOptions {
 	/** If true, resets all state after each test completes. */
 	resetAfterEach?: boolean;
@@ -203,6 +206,9 @@ export interface ITestObjectProviderOptions {
 	syncSummarizer?: boolean;
 }
 
+/**
+ * @internal
+ */
 export type DescribeCompatSuite = (
 	name: string,
 	tests: (
@@ -212,6 +218,9 @@ export type DescribeCompatSuite = (
 	) => void,
 ) => Mocha.Suite | void;
 
+/**
+ * @internal
+ */
 export type DescribeCompat = DescribeCompatSuite &
 	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
@@ -224,11 +233,20 @@ function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
 	return d;
 }
 
+/**
+ * @internal
+ */
 export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
 
+/**
+ * @internal
+ */
 export const describeLoaderCompat: DescribeCompat = createCompatDescribe([
 	CompatKind.None,
 	CompatKind.Loader,
 ]);
 
+/**
+ * @internal
+ */
 export const describeFullCompat: DescribeCompat = createCompatDescribe();

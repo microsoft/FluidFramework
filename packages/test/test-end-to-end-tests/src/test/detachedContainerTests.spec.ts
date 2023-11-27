@@ -254,8 +254,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container2 = await loader2.resolve({ url: requestUrl2 });
 
 		// Get the sub dataStore and assert that it is attached.
-		const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
-		const subDataStore2 = response2.value as ITestFluidObject;
+		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const subDataStore2Handle: IFluidHandle<ITestFluidObject> | undefined =
+			entryPoint2.root.get("attachKey");
+		assert(subDataStore2Handle !== undefined, "handle should exist");
+		const subDataStore2 = await subDataStore2Handle.get();
 		assert(
 			subDataStore2.runtime.attachState !== AttachState.Detached,
 			"DataStore should be attached!!",

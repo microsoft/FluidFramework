@@ -33,8 +33,14 @@ import {
 } from "./testApi.js";
 import { CompatVersion } from "./compatConfig.js";
 
+/**
+ * @internal
+ */
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
+/**
+ * @internal
+ */
 export interface ITestDataObject extends IFluidLoadable {
 	_context: IFluidDataStoreContext;
 	_runtime: IFluidDataStoreRuntime;
@@ -96,8 +102,14 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 }
 
 // Only support current version, not baseVersion support
+/**
+ * @internal
+ */
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
 
+/**
+ * @internal
+ */
 export async function getVersionedTestObjectProviderFromApis(
 	apis: Omit<CompatApis, "dds">,
 	driverConfig?: {
@@ -132,6 +144,9 @@ export async function getVersionedTestObjectProviderFromApis(
 	return new TestObjectProvider(apis.loader.Loader, driver, containerFactoryFn);
 }
 
+/**
+ * @internal
+ */
 export async function getVersionedTestObjectProvider(
 	baseVersion: string,
 	loaderVersion?: number | string,
