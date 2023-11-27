@@ -880,7 +880,7 @@ describe("EditManager", () => {
 					//     └───────────────(P1)─...─(Pc)
 					// By the end of the test, the EditManager has the following structure:
 					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)─(P+)
-					//                  └──(P1)─...─(Pc)─(P+)
+					//                   └──(P1)─...─(Pc)─(P+)
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
@@ -966,7 +966,7 @@ describe("EditManager", () => {
 					//     └────────────────────(P1)─...─(Pc)
 					// By the end of the test, the EditManager has the following structure:
 					//   (0)─(T1)─...─(Tc)─(T+)─(P1)─...─(Pc)─(P+)
-					//                  └──(P1)─...─(Pc)─(P+)
+					//                   └──(P1)─...─(Pc)─(P+)
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
