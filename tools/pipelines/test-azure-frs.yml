@@ -204,16 +204,23 @@ stages:
             scriptType: bash
             scriptLocation: inlineScript
             inlineScript: |
-              az storage blob download -f '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/latest-lts.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+              az storage blob download -f '$(Build.SourcesDirectory)/latest-lts.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
 
         - task: ExtractFiles@1
           displayName: 'Extract LTS blob content'
           inputs:
-            archiveFilePatterns: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models/*tar.gz'
+            destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models'
+            archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
             cleanDestinationFolder: false
             overwriteExistingFiles: true
 
-        - powershell: Get-ChildItem -Path '$(Build.SourcesDirectory)\*.json' -recurse
+        - task: Bash@3
+          displayName: echo folder structure
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              find . | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
 
         - template: templates/include-use-node-version.yml
 
