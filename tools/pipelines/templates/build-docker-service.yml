@@ -312,7 +312,7 @@ stages:
               -t $(baseContainerTag)
               -e RELEASE_GROUP=${{ parameters.tagName }}
               -e STAGING_PATH=$(Build.ArtifactStagingDirectory)
-              -e PACKAGE_MANAGER=npm
+              -e PACKAGE_MANAGER='npm'
               /usr/scripts/pack-packages.sh
 
         - task: PublishPipelineArtifact@1
