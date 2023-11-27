@@ -293,26 +293,18 @@ stages:
 
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
-        # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
-        # we won't be able to write to them from outside the container.
-        - task: Bash@3
-          displayName: Create folder for pack artifact
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir -p $(Build.ArtifactStagingDirectory)/pack
-
         - task: Docker@0
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
             customCommand: >
               run
-              -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack
+              -v $(Build.ArtifactStagingDirectory)/pack:/usr/src/pack
               -t $(baseContainerTag)
-              -e RELEASE_GROUP=${{ parameters.tagName }}
-              -e STAGING_PATH=$(Build.ArtifactStagingDirectory)
+              -e RELEASE_GROUP='${{ parameters.tagName }}'
+              -e STAGING_PATH='/usr/src'
               -e PACKAGE_MANAGER='npm'
+              -e PUBLISH_NON_SCOPED='False'
               /usr/scripts/pack-packages.sh
 
         - task: PublishPipelineArtifact@1
