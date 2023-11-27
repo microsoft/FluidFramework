@@ -33,6 +33,9 @@
 		"markdown-magic-template": "^1.0.1",
 		"yargs": "^17.7.2"
 	},
+	"dependencyComments": [
+		"chalk is left at version 4 (not 5) to keep CommonJS support."
+	],
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
