@@ -122,3 +122,4 @@ extends:
     - prettier
     - check:versions
     - generate:packageList
+    additionalBuildArguments: --build-context root=.

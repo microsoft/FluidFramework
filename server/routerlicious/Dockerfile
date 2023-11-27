@@ -69,11 +69,6 @@ COPY . .
 WORKDIR /usr/src/server
 RUN npm run ci:build
 
-# Copy files that we might use during pipeline runs. Do after build because these don't affect that step so if they
-# change we want to reuse the cached layers from the commands above instead of rebuilding.
-COPY --from=root scripts/pack-packages.sh /usr/scripts/
-RUN chmod +x /usr/scripts/pack-packages.sh
-
 # Build that alfred uses
 FROM base AS runner
 
