@@ -187,7 +187,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	/**
 	 * Define a {@link TreeNodeSchema} for an object node.
 	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
+	 * @param name - Unique identifier for this schema within this factory's scope.
 	 */
 	public object<
 		const Name extends TName,
@@ -264,6 +264,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
 	 * @example
 	 * ```typescript
@@ -397,7 +399,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	/**
 	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
 	 *
-	 * The name must be unique among all TreeNodeSchema in the the document schema.
+	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
 	 * @example
 	 * ```typescript
@@ -444,7 +446,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeListNode}.
 	 *
-	 * The name must be unique among all TreeNodeSchema in the the document schema.
+	 * @param name - Unique identifier for this schema within this factory's scope.
 	 */
 	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
@@ -510,6 +512,16 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Sometimes this does not work: the exact cause has not been confirmed but if you have the file open multiple times (for example in both sides of a window split into two columns): closing the extra copy may help.
 	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
+	 *
+	 * @example
+	 * ```typescript
+	 * const factory = new SchemaFactory("example");
+	 * const recursiveReference = () => RecursiveObject;
+	 * factory.fixRecursiveReference(recursiveReference);
+	 * export class RecursiveObject extends factory.object("exampleObject", {
+	 * 	recursive: [recursiveReference],
+	 * }) {}
+	 * ```
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }

@@ -30,6 +30,6 @@ builder.fixRecursiveReference(recursiveReference);
  * @alpha
  */
 export class RecursiveObject extends builder.object("testObject", {
-	recursive: [recursiveReference],
+	recursive: builder.optional([recursiveReference]),
 	number: builder.number,
 }) {}
