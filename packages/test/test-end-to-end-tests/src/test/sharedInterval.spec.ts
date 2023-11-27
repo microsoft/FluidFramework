@@ -59,8 +59,14 @@ const assertSequenceIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(intervalCollection: IIntervalCollection<SequenceInterval>) {
+function testIntervalOperations(
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	sharedString: SharedString,
+) {
 	const intervalArray: SequenceInterval[] = [];
+	const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+	intervalCollection.attachIndex(overlappingIntervalsIndex);
+
 	let interval: SequenceInterval | undefined;
 	let id;
 
@@ -97,7 +103,9 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	let i: number;
 	let result;
 	let tempArray: SequenceInterval[] = [];
-	let iterator = intervalCollection.CreateForwardIteratorWithStartPosition(1);
+	// let iterator = intervalCollection.CreateForwardIteratorWithStartPosition(1);
+	let iterator = overlappingIntervalsIndex.createForwardIteratorWithStartPosition(1);
+
 	tempArray[0] = intervalArray[3];
 	tempArray[1] = intervalArray[4];
 	tempArray[2] = intervalArray[5];
@@ -115,7 +123,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		"Interval omitted from forward iteration with start position",
 	);
 
-	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+	// iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithEndPosition(2);
 	tempArray = [];
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[5];
@@ -134,7 +143,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		"Interval omitted from forward iteration with start position",
 	);
 
-	iterator = intervalCollection.CreateBackwardIteratorWithStartPosition(0);
+	// iterator = intervalCollection.CreateBackwardIteratorWithStartPosition(0);
+	iterator = overlappingIntervalsIndex.createBackwardIteratorWithStartPosition(0);
 	tempArray = [];
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[1];
@@ -153,7 +163,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		"Interval omitted from backward iteration with start position",
 	);
 
-	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+	// iterator = intervalCollection.CreateForwardIteratorWithEndPosition(2);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithEndPosition(2);
 	tempArray = [];
 	tempArray[0] = intervalArray[2];
 	tempArray[1] = intervalArray[5];
@@ -172,7 +183,8 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		"Interval omitted from forward iteration with end position",
 	);
 
-	iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
+	// iterator = intervalCollection.CreateBackwardIteratorWithEndPosition(1);
+	iterator = overlappingIntervalsIndex.createBackwardIteratorWithEndPosition(1);
 	tempArray = [];
 	tempArray[0] = intervalArray[7];
 	tempArray[1] = intervalArray[4];
@@ -191,22 +203,26 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		"Interval omitted from backward iteration with end position",
 	);
 
-	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+	// iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithStartPosition(-1);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
-	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+	// iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithEndPosition(99999);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
-	iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+	// iterator = intervalCollection.CreateForwardIteratorWithStartPosition(-1);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithStartPosition(-1);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
 
-	iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+	// iterator = intervalCollection.CreateForwardIteratorWithEndPosition(99999);
+	iterator = overlappingIntervalsIndex.createForwardIteratorWithEndPosition(99999);
 	for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
 		assert(false, "Iterator with OOB position should not produce a result");
 	}
@@ -281,7 +297,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			intervals = sharedString.getIntervalCollection("intervals");
 			overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
 			intervals.attachIndex(overlappingIntervalsIndex);
-			testIntervalOperations(intervals);
+			testIntervalOperations(intervals, sharedString);
 		});
 
 		afterEach(() => {
@@ -483,6 +499,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
+			const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString2);
+			intervals2.attachIndex(overlappingIntervalsIndex);
 
 			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
 				assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
@@ -490,7 +508,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			let i: number;
 			let result;
 			let tempArray: SequenceInterval[] = [];
-			let iterator = intervals2.CreateForwardIteratorWithStartPosition(1);
+			// let iterator = intervals2.CreateForwardIteratorWithStartPosition(1);
+			let iterator = overlappingIntervalsIndex.createForwardIteratorWithStartPosition(1);
 			tempArray[0] = intervalArray[3];
 			tempArray[1] = intervalArray[4];
 			tempArray[2] = intervalArray[5];
@@ -507,7 +526,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				"Interval omitted from forward iteration with start position",
 			);
 
-			iterator = intervals2.CreateBackwardIteratorWithStartPosition(0);
+			// iterator = intervals2.CreateBackwardIteratorWithStartPosition(0);
+			iterator = overlappingIntervalsIndex.createBackwardIteratorWithStartPosition(0);
 			tempArray = [];
 			tempArray[0] = intervalArray[2];
 			tempArray[1] = intervalArray[1];
@@ -525,7 +545,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				"Interval omitted from backward iteration with start position",
 			);
 
-			iterator = intervals2.CreateBackwardIteratorWithEndPosition(1);
+			// iterator = intervals2.CreateBackwardIteratorWithEndPosition(1);
+			iterator = overlappingIntervalsIndex.createBackwardIteratorWithEndPosition(1);
 			tempArray = [];
 			tempArray[0] = intervalArray[7];
 			tempArray[1] = intervalArray[4];
