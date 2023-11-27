@@ -201,7 +201,7 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
  *
  * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
  * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
- * 
+ *
  * @internal
  */
 export const genCrossVersionCompatConfig = (): CompatConfig[] => {

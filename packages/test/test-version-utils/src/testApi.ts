@@ -353,7 +353,7 @@ export function getDataRuntimeApi(
 }
 
 /**
- * @internal 
+ * @internal
  */
 export function getDriverApi(
 	baseVersion: string,
