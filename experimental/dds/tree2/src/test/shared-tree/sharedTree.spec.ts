@@ -1213,6 +1213,32 @@ describe("SharedTree", () => {
 		provider.processMessages();
 	});
 
+	describe("Schema changes", () => {
+		it("handles two trees schematizing identically at the same time", async () => {
+			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+			const value1 = "42";
+			const value2 = "42";
+			const expectedSchema = schemaCodec.encode(stringSequenceRootSchema);
+
+			const view1 = provider.trees[0].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value1],
+			});
+
+			provider.trees[1].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [value2],
+			});
+
+			await provider.ensureSynchronized();
+			assert.deepEqual(view1.editableTree.asArray, [value1]);
+			assert.deepEqual(schemaCodec.encode(provider.trees[1].storedSchema), expectedSchema);
+			validateTreeConsistency(provider.trees[0], provider.trees[1]);
+		});
+	});
+
 	describe("Stashed ops", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);

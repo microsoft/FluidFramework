@@ -4,14 +4,20 @@
  */
 
 import { ICodecFamily, ICodecOptions } from "../codec";
-import { ChangeFamily, ChangeRebaser, Delta, TaggedChange } from "../core";
-import { fieldKinds, ModularChangeFamily, SchemaChangeFamily } from "../feature-libraries";
+import { ChangeFamily, ChangeRebaser, Delta, FieldKey, TaggedChange, tagChange } from "../core";
+import {
+	fieldKinds,
+	ModularChangeFamily,
+	ModularChangeset,
+	SchemaChangeFamily,
+} from "../feature-libraries";
+import { Mutable, fail } from "../util";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
- * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
+ * Implementation of {@link ChangeFamily} combines edits to fields and schema changes.
  *
  * @sealed
  */
@@ -39,11 +45,54 @@ export class SharedTreeChangeFamily
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
-		throw new Error("Not implemented");
+		const newChanges: Mutable<SharedTreeChange["changes"]> = [];
+		const dataChangeRun: TaggedChange<ModularChangeset>[] = [];
+		for (const topChange of changes) {
+			for (const change of topChange.change.changes) {
+				if (change.type === "schema") {
+					if (dataChangeRun.length > 0) {
+						newChanges.push({
+							type: "data",
+							change: this.modularChangeFamily.compose(dataChangeRun),
+						});
+					}
+					newChanges.push(change);
+				} else {
+					dataChangeRun.push(tagChange(change.change, topChange.revision));
+				}
+			}
+		}
+		return { changes: newChanges };
 	}
 
 	public invert(change: TaggedChange<SharedTreeChange>, isRollback: boolean): SharedTreeChange {
-		throw new Error("Not implemented");
+		const invertInnerChange: (
+			innerChange: SharedTreeChange["changes"][number],
+		) => SharedTreeChange["changes"][number] = (innerChange) => {
+			switch (innerChange.type) {
+				case "data":
+					return {
+						type: "data",
+						change: this.modularChangeFamily.invert(
+							tagChange(innerChange.change, change.revision),
+							isRollback,
+						),
+					};
+				case "schema":
+					return {
+						type: "schema",
+						change: this.schemaChangeFamily.invert(
+							tagChange(innerChange.change, change.revision),
+							isRollback,
+						),
+					};
+				default:
+					fail("Unknown SharedTree change type.");
+			}
+		};
+		return {
+			changes: change.change.changes.map(invertInnerChange).reverse(),
+		};
 	}
 
 	public rebase(

@@ -12,8 +12,7 @@ import { ModularChangeset, SchemaChange } from "../feature-libraries/";
 export interface SharedTreeChange {
 	/**
 	 * The changes to apply.
-	 * @remarks while not expressable in TypeScript, these changes must follow a strictly alternating pattern (i.e. there will never be two elements
-	 * of the same type in a row)
+	 * @remarks while not expressable in TypeScript, these changes should never have two `ModularChangeset`s adjacent in the list.
 	 */
 	readonly changes: readonly (
 		| { type: "data"; change: ModularChangeset }
