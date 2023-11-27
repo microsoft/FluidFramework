@@ -62,7 +62,7 @@ export const createTestContainerRuntimeFactory = (
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
 			if (containerRuntimeCtor.loadRuntime === undefined) {
-				// Note: We use the deprecated load here to allow for cross-major version compat testing.
+				// Note: We use the deprecated load from v1.x here to allow for cross-major version compat testing.  Can be removed when we no longer support v1.x.
 				return containerRuntimeCtor.load(
 					context,
 					[
