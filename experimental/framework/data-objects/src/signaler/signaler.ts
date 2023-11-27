@@ -11,6 +11,7 @@ import { assert } from "@fluidframework/core-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { CircularBuffer } from "./utils";
 
 
@@ -75,8 +76,6 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 
 	private readonly signalerId: string | undefined;
 
-	private readonly signalStatQueue: CircularBuffer<SignalStatistics>;
-
 	constructor(
 		/**
 		 * Object to wrap that can submit and listen to signals
@@ -95,13 +94,6 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		});
 		this.signalerId = signalerId ? `#${signalerId}` : undefined;
 		this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-			const currentStats = this.signalStatQueue.getLast();
-			if (currentStats) {
-				currentStats.toClient.count++;
-				currentStats.toClient.size += JSON.stringify(message.content).length;
-				currentStats.toClient.packetCount++;
-				currentStats.toClient.packetSize += JSON.stringify(message.content).length;
-			}
 			const clientId = message.clientId;
 			// Only call listeners when the runtime is connected and if the signal has an
 			// identifiable sender clientId.  The listener is responsible for deciding how
@@ -110,10 +102,6 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 				this.emitter.emit(message.type, clientId, local, message.content);
 			}
 		});
-
-		this.signalStatQueue = new CircularBuffer<SignalStatistics>(10);
-
-		setInterval(() => this.signalStatQueue.add(new SignalStatistics()), 1000);
 	}
 
 	private getSignalerSignalName(signalName: string): string {
@@ -138,23 +126,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
-
-			const currentStats = this.signalStatQueue.getLast();
-			if (currentStats) {
-				currentStats.fromClient.count++;
-				currentStats.fromClient.size += JSON.stringify(payload).length;
-				currentStats.fromClient.packetCount++;
-				currentStats.fromClient.packetSize += JSON.stringify(payload).length;
-			}
 		}
-	}
-
-	public stats(): SignalStatistics[] | undefined{
-		const currentStats = this.signalStatQueue.getLastN(this.signalStatQueue.getBufferLength());
-		if (currentStats) {
-			return currentStats;
-		}
-		return undefined;
 	}
 }
 
@@ -191,7 +163,9 @@ class SignalStatistics {
 			packetSize: 0,
 		};
 
-		setInterval(() => this.timespan < 1000 ? this.timespan += 1 : null, 1);
+		// Update the timespan ever 100ms
+		const timespanInterval = setInterval(() => 
+			this.timespan < 1000 ? this.timespan += 100 : clearInterval(timespanInterval), 100);
 	}
 }
 
@@ -232,6 +206,40 @@ export class Signaler
 {
 	private _signaler: InternalSignaler | undefined;
 
+	private readonly signalStatQueue: CircularBuffer<SignalStatistics>;
+
+	constructor(props)
+	{
+		super(props);
+
+		this.signalStatQueue = new CircularBuffer<SignalStatistics>(10);
+		setInterval(() => this.signalStatQueue.add(new SignalStatistics()), 1000);
+
+
+		/*
+		* Assumes signals will be sent using container runtime
+		* Can use data store runtime by using this.runtime
+		*/
+		this.context.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			// Get the current period's statistics object and update it
+			const currentStats = this.signalStatQueue.getLast();
+			if (currentStats && message.content) {
+				// Check if the signal is from this client
+				if (message.clientId === this.context.clientId) {
+					currentStats.fromClient.count++;
+					currentStats.fromClient.size += JSON.stringify(message.content).length;
+					currentStats.fromClient.packetCount++;
+					currentStats.fromClient.packetSize += JSON.stringify(message.content).length;
+				}
+
+				currentStats.toClient.count++;
+				currentStats.toClient.size += JSON.stringify(message.content).length;
+				currentStats.toClient.packetCount++;
+				currentStats.toClient.packetSize += JSON.stringify(message.content).length;
+			}
+		});
+	}
+
 	private get signaler(): InternalSignaler {
 		assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
 		return this._signaler;
@@ -242,7 +250,7 @@ export class Signaler
 	public static readonly factory = new DataObjectFactory(Signaler.Name, Signaler, [], {});
 
 	protected async hasInitialized() {
-		this._signaler = new InternalSignaler(this.runtime);
+		this._signaler = new InternalSignaler(this.context.containerRuntime as IContainerRuntime);
 		this.signaler.on("error", (error) => {
 			this.emit("error", error);
 		});
@@ -262,9 +270,14 @@ export class Signaler
 
 	public submitSignal(signalName: string, payload?: Jsonable) {
 		this.signaler.submitSignal(signalName, payload);
+
 	}
 
-	public stats(): SignalStatistics[] | undefined {
-		return this.signaler.stats();
+	public stats(): SignalStatistics | undefined {
+		return this.signalStatQueue.getLast();
+	}
+
+	public statsQueue(): SignalStatistics[] | undefined {
+		return this.signalStatQueue.getLastN(this.signalStatQueue.getBufferLength());
 	}
 }

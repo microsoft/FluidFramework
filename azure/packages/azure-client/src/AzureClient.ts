@@ -27,6 +27,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { AzureAudience } from "./AzureAudience";
+import { AzureSignalStats } from "./AzureSignalStats";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
 	type AzureClientProps,
@@ -225,6 +226,7 @@ export class AzureClient {
 	private getContainerServices(container: IContainer): AzureContainerServices {
 		return {
 			audience: new AzureAudience(container),
+			signalStats: new AzureSignalStats(container),
 		};
 	}
 

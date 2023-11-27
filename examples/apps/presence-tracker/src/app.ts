@@ -38,7 +38,7 @@ async function start() {
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
-	renderStats(model.signalStats, contentDiv);
+	renderStats(model.focusTracker.getSignaler(), contentDiv);
 	renderFocusPresence(model.focusTracker, contentDiv);
 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
 	

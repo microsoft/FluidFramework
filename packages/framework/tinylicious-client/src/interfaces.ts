@@ -6,7 +6,6 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { TinyliciousSignalStats } from "./TinyliciousSignalStats";
 // Re-export so developers can build loggers without pulling in core-interfaces
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
@@ -66,8 +65,6 @@ export interface TinyliciousContainerServices {
 	 * listeners for when the roster has any changes from users joining/leaving the session
 	 */
 	audience: ITinyliciousAudience;
-
-	signalStats: TinyliciousSignalStats;
 }
 
 /**
@@ -96,29 +93,3 @@ export interface TinyliciousMember extends IMember {
  * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
-
-/**
-* Data for signals transmitted between clients
-*/
-export interface ISignalTransmissionData {
-	/**
-	 * Count of signals
-	 */
-	count: number;
-
-	/**
-	 * Approximation of cumulative signal payloads in bytes
-	 */
-	size: number;
-
-	/**
-	 * Count of packets used for signals 
-	 */
-	packetCount: number;
-
-	/**
-	 * Approximation of cumulative signal payloads in bytes
-	 */
-	packetSize: number;
-
-}

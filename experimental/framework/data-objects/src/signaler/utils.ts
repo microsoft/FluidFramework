@@ -48,7 +48,7 @@ export class CircularBuffer<T> {
 	}
   
 	/**
-	 * Pushes new items to this buffer. (like Array#push)
+	 * Pushes new items to this buffer
 	 * @param items - Items to push to this buffer.
 	 */
 	public add(...items: T[]): void {
@@ -81,7 +81,6 @@ export class CircularBuffer<T> {
   
 	/**
 	 * Returns the first item.
-	 * Same as #get(0).
 	 */
 	public getFirst(): T | undefined {
 		return this.get(0);
@@ -89,7 +88,6 @@ export class CircularBuffer<T> {
   
 	/**
 	 * Returns the last item.
-	 * Same as #get(-1) or #get(length - 1).
 	 */
 	public getLast(): T | undefined {
 		return this.get(-1);
@@ -159,7 +157,7 @@ export class CircularBuffer<T> {
 	}
   
 	/**
-	 * Converts the circular buffer to a JavaScript standard array.
+	 * Converts the circular buffer to an array.
 	 */
 	public toArray(): T[] {
 		return this.buffer.slice(this.pos).concat(this.buffer.slice(0, this.pos));
@@ -167,7 +165,7 @@ export class CircularBuffer<T> {
   
 	/**
 	 * Imports an array to this buffer. (overwrites)
-	 * @param data - JavaScript standard array.
+	 * @param data - an array.
 	 * @param resize - If true, sets the maximum size to the input data array length.
 	 */
 	public fromArray(data: T[], resize = false): void {
