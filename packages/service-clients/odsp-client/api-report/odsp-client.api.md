@@ -8,14 +8,18 @@ import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
-import { IOdspTokenProvider } from '@fluidframework/odsp-driver';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-export { IOdspTokenProvider }
+// @alpha
+export interface IOdspTokenProvider {
+    fetchStorageToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
+}
 
 // @alpha @sealed
 export class OdspClient {

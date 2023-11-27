@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { type ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { type IUser } from "@fluidframework/protocol-definitions";
-import { IOdspTokenProvider } from "@fluidframework/odsp-driver";
+import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IOdspTokenProvider } from "./token";
 
 /**
  * Defines the necessary properties that will be applied to all containers

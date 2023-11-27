@@ -59,4 +59,3 @@ export { ICacheAndTracker, type EpochTracker, FetchType, FetchTypeInternal } fro
 export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils";
 export { SnapshotFormatSupportType } from "./fetchSnapshot";
 export { ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
-export { IOdspTokenProvider } from "./token";
