@@ -24,6 +24,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	FieldEditDescription,
+	intoDelta,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -50,7 +51,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	}
 
 	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
-		return this.modularFamily.intoDelta(change);
+		return intoDelta(change, this.modularFamily.fieldKinds);
 	}
 
 	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {

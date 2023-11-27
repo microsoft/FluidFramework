@@ -700,69 +700,6 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
-		// Return an empty delta for changes with constraint violations
-		if ((change.constraintViolationCount ?? 0) > 0) {
-			return emptyDelta;
-		}
-
-		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		const rootDelta: Mutable<Delta.Root> = {};
-		const fieldDeltas = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
-		if (fieldDeltas.size > 0) {
-			rootDelta.fields = fieldDeltas;
-		}
-		if (change.builds && change.builds.size > 0) {
-			const builds: Delta.DetachedNodeBuild[] = [];
-			forEachInNestedMap(change.builds, (tree, major, minor) => {
-				builds.push({
-					id: makeDetachedNodeId(major ?? revision, minor),
-					trees: [cursorForJsonableTreeNode(tree)],
-				});
-			});
-			rootDelta.build = builds;
-		}
-		return rootDelta;
-	}
-
-	/**
-	 * @param change - The change to convert into a delta.
-	 * @param repairStore - The store to query for repair data.
-	 * @param path - The path of the node being altered by the change as defined by the input context.
-	 * Undefined for the root and for nodes that do not exist in the input context.
-	 */
-	private intoDeltaImpl(
-		change: FieldChangeMap,
-		revision: RevisionTag | undefined,
-		idAllocator: MemoizedIdRangeAllocator,
-	): Map<FieldKey, Delta.FieldChanges> {
-		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
-		for (const [field, fieldChange] of change) {
-			const fieldRevision = fieldChange.revision ?? revision;
-			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.FieldMap =>
-					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
-				idAllocator,
-			);
-			if (!isEmptyFieldChanges(deltaField)) {
-				delta.set(field, deltaField);
-			}
-		}
-		return delta;
-	}
-
-	private deltaFromNodeChange(
-		{ change, revision }: TaggedChange<NodeChangeset>,
-		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.FieldMap {
-		if (change.fieldChanges !== undefined) {
-			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
-		}
-		// TODO: update the API to allow undefined to be returned here
-		return new Map();
-	}
-
 	private pruneFieldMap(changeset: FieldChangeMap): FieldChangeMap | undefined {
 		const prunedChangeset: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of changeset) {
@@ -797,6 +734,74 @@ export class ModularChangeFamily
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+export function intoDelta(
+	{ change, revision }: TaggedChange<ModularChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Delta.Root {
+	// Return an empty delta for changes with constraint violations
+	if ((change.constraintViolationCount ?? 0) > 0) {
+		return emptyDelta;
+	}
+
+	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
+	const rootDelta: Mutable<Delta.Root> = {};
+	const fieldDeltas = intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
+	if (fieldDeltas.size > 0) {
+		rootDelta.fields = fieldDeltas;
+	}
+	if (change.builds && change.builds.size > 0) {
+		const builds: Delta.DetachedNodeBuild[] = [];
+		forEachInNestedMap(change.builds, (tree, major, minor) => {
+			builds.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				trees: [cursorForJsonableTreeNode(tree)],
+			});
+		});
+		rootDelta.build = builds;
+	}
+	return rootDelta;
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ * @param repairStore - The store to query for repair data.
+ * @param path - The path of the node being altered by the change as defined by the input context.
+ * Undefined for the root and for nodes that do not exist in the input context.
+ */
+function intoDeltaImpl(
+	change: FieldChangeMap,
+	revision: RevisionTag | undefined,
+	idAllocator: MemoizedIdRangeAllocator,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Map<FieldKey, Delta.FieldChanges> {
+	const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
+	for (const [field, fieldChange] of change) {
+		const fieldRevision = fieldChange.revision ?? revision;
+		const deltaField = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
+			tagChange(fieldChange.change, fieldRevision),
+			(childChange): Delta.FieldMap =>
+				deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator, fieldKinds),
+			idAllocator,
+		);
+		if (!isEmptyFieldChanges(deltaField)) {
+			delta.set(field, deltaField);
+		}
+	}
+	return delta;
+}
+
+function deltaFromNodeChange(
+	{ change, revision }: TaggedChange<NodeChangeset>,
+	idAllocator: MemoizedIdRangeAllocator,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Delta.FieldMap {
+	if (change.fieldChanges !== undefined) {
+		return intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
+	}
+	// TODO: update the API to allow undefined to be returned here
+	return new Map();
 }
 
 /**

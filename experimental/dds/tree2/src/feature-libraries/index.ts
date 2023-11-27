@@ -129,6 +129,7 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	RemovedTreesFromChild,
+	intoDelta,
 } from "./modular-schema";
 
 export {
