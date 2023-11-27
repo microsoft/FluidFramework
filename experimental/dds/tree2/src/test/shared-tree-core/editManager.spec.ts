@@ -29,6 +29,7 @@ import { createTestUndoRedoStacks } from "../utils";
 import {
 	TestEditManager,
 	editManagerFactory,
+	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils";
@@ -639,7 +640,7 @@ describe("EditManager", () => {
 			for (const { rebasedEditCount: localCount, trunkEditCount: trunkCount } of scenarios) {
 				// This test leads to the following branching structure:
 				// (0)-(T1)-...-(Tc)
-				//  +----------------(L1)-...-(Lc)
+				//  └----------------(L1)-...-(Lc)
 				// Note that the EditManager is first fed the local edits, then the trunk edits.
 				// We reset the rebase/invert/compose counters before T1 is received.
 				it(`Rebase ${localCount} local commits over ${trunkCount} trunk commits`, () => {
@@ -687,7 +688,7 @@ describe("EditManager", () => {
 			for (const { rebasedEditCount: peerCount, trunkEditCount: trunkCount } of scenarios) {
 				// This test leads to the following branching structure:
 				// (0)-(T1)-...-(Tc)
-				//  +----------------(P1)-...-(Pc)
+				//  └----------------(P1)-...-(Pc)
 				// We reset the rebase/invert/compose counters before P1 is received.
 				it(`Rebase ${peerCount} peer commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
@@ -704,9 +705,9 @@ describe("EditManager", () => {
 					};
 					const expected = {
 						// For each peer edit received (factor of P),
-						// we the new peer edit (factor of 1) over...
+						// we rebase the new peer edit (factor of 1) over...
 						// - the inverse of each peer edit before it: (P - 1) / 2
-						// - each the trunk edits: T
+						// - each of the trunk edits: T
 						// - the rebased version of each peer edit before it: (P - 1) / 2
 						rebased: peerCount * (peerCount - 1 + trunkCount),
 						// For each peer edit received (factor of P),
@@ -726,6 +727,74 @@ describe("EditManager", () => {
 				});
 			}
 		});
+		describe("Peer commit rebasing for peer with advancing (but not tip) seq ref#", () => {
+			for (const editCount of [1, 2, 10]) {
+				// This test leads to the following branching structure:
+				// (0)-(T1)-...-(Tc-1)-(Tc)
+				//  |    |          └-----------------(Pc)
+				//  |    └-----------------------(P2)
+				//  └-----------------------(P1)
+				// We reset the rebase/invert/compose counters before P1 is received.
+				it(`for ${editCount} peer commits and ${editCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					const manager = editManagerFactory({ rebaser }).manager;
+					const run = rebaseAdvancingPeerEditsOverTrunkEdits(editCount, manager, true);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const P = editCount;
+					const T = editCount;
+					const expected = {
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//   we rebase all edits on the branch over the one new trunk edit.
+						//   For the Kth peer edit there are K-1 edits to rebase.
+						//   We rebase each peer edit (factor of K - 1) over...
+						//     - the inverse of each peer edit before it: (K - 2) / 2
+						//     - the one new trunk edit: 1
+						//     - the rebased version of each peer edit before it: (K - 2) / 2
+						//   This adds up to (K - 1)² rebases for the Kth branch rebase.
+						//   The number of the first n squares is [n(n+1)(2n+1)]/6
+						//   Summing over all P branch rebases gives us: [(P-1)*P*(2*(P-1)+1)]/6
+						// As part of rebasing thew new peer edit to the tip of the trunk,
+						//   For the Kth peer edit, we rebase it over...
+						//   - the inverse of the peer edits on the peer branch: K - 1
+						//   - the trunk edits that were not contributed by that peer: T - (K - 1)
+						//   - the the rebased version of the peer edits (now on the trunk): K - 1
+						//   This adds up to T + K - 1 rebases for the Kth edit.
+						//   Summing over all P edit rebases gives us: P*T + (P-1)*P/2
+						rebased: ((P - 1) * P * (2 * (P - 1) + 1)) / 6 + P * T + ((P - 1) * P) / 2,
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//   For the Kth peer edit there are K-1 edits to invert.
+						//   Summing over all P branch rebases gives us: (P - 1) * P / 2
+						// As part of rebasing thew new peer edit to the tip of the trunk,
+						//   For the Kth peer edit, there are K - 1 edits to invert.
+						//   Summing over all P branch rebases gives us: (P - 1) * P / 2
+						inverted: (P - 1) * P,
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//   for the Kth peer edit there are K-1 on the branch to rebase.
+						//   we compose...
+						//     - the inverse of all peer edits: K - 1
+						//     - the one new trunk edit: 1
+						//     - the rebased version of each peer edit: K - 1
+						//   This adds up to (2 * K - 1) edits composed for the Kth branch rebase.
+						//   The branch rebase for K=1 is skipped (there are no prior edits then) which means we don't
+						//   key the +1 composed edit it would otherwise contribute.
+						//   Accounting for that and summing over all P branch rebases gives us: P * P - 1
+						// As part of updating the local branch,
+						//   for the Kth peer edit we compose that peer edit: 1
+						//   Summing over all P branch rebases gives us: P
+						composed: P * P - 1 + P,
+					};
+					assert.deepEqual(actual, expected);
+				});
+			}
+		});
 		describe("Single peer commit on top of existing peer branch", () => {
 			describe("with peer commit ref# to the trunk edit that the existing peer branch should rebase over", () => {
 				for (const {
@@ -734,10 +803,10 @@ describe("EditManager", () => {
 				} of scenarios) {
 					// This test leads to the following branching structure:
 					// (0)-(T1)-...-(Tc)
-					//  |             +----------------(P+)
-					//  +----------------(P1)-...-(Pc)
+					//  |             └----------------(P+)
+					//  └----------------(P1)-...-(Pc)
 					// We reset the rebase/invert/compose counters before P+ is received.
-					it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
+					it(`For an existing peer branch with ${peerCount} commits unaware of ${trunkCount} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
 						rebasePeerEditsOverTrunkEdits(peerCount, trunkCount, manager);
@@ -762,7 +831,7 @@ describe("EditManager", () => {
 							// As part of rebasing the peer branch that contains the phase-1 edits,
 							// we rebase each peer (factor of P) edit over...
 							// - the inverse of each peer edit before it: (P - 1) / 2
-							// - each the trunk edits: T
+							// - each of the trunk edits: T
 							// - the fully rebased version of each peer edit before it: (P - 1) / 2
 							// As part of rebasing P+,
 							// we rebase P+ (factor of 1) over...
@@ -801,10 +870,10 @@ describe("EditManager", () => {
 				} of scenarios) {
 					// This test leads to the following branching structure:
 					// (0)-(T1)-...-(Tc)-(T+)
-					//  |              +----------------------(P+)
-					//  +-----------------------(P1)-...-(Pc)
+					//  |             └----------------------(P+)
+					//  └-----------------------(P1)-...-(Pc)
 					// We reset the rebase/invert/compose counters before P+ is received.
-					it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
+					it(`For an existing peer branch with ${peerCount} commits unaware of ${trunkCount}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
 						rebasePeerEditsOverTrunkEdits(peerCount, trunkCount + 1, manager);
@@ -829,7 +898,7 @@ describe("EditManager", () => {
 							// As part of rebasing the peer branch that contains the phase-1 edits,
 							// we rebase each peer (factor of P) edit over...
 							// - the inverse of each peer edit before it: (P - 1) / 2
-							// - each the trunk edits: T
+							// - each of the trunk edits: T
 							// - the fully rebased version of each peer edit before it: (P - 1) / 2
 							// As part of rebasing P+,
 							// we rebase P+ (factor of 1) over...

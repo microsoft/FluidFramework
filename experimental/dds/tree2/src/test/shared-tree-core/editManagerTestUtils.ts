@@ -125,6 +125,57 @@ export function rebasePeerEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
+/**
+ * Establishes the following branching structure:
+ * ```text
+ * (0)-(T1)-...-(Tc-1)-(Tc)
+ *  |    |          └-----------------(Pc)
+ *  |    └-----------------------(P2)
+ *  └-----------------------(P1)
+ * ```
+ */
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+): void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: true,
+): () => void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: boolean = false,
+): void | (() => void) {
+	for (let iChange = 0; iChange < editCount; iChange++) {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "trunk",
+			},
+			brand(iChange + 1),
+			brand(iChange),
+		);
+	}
+	const peerEdits = makeArray(editCount, () => ({
+		change: TestChange.emptyChange,
+		revision: mintRevisionTag(),
+		sessionId: "peer",
+	}));
+	const run = () => {
+		for (let iChange = 0; iChange < editCount; iChange++) {
+			manager.addSequencedChange(
+				peerEdits[iChange],
+				brand(iChange + editCount + 1),
+				brand(iChange),
+			);
+		}
+	};
+	return defer ? run : run();
+}
+
 export function rebaseConcurrentPeerEdits(
 	peerCount: number,
 	editsPerPeerCount: number,
