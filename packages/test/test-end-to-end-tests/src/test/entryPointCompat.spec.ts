@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	describeInstallVersions,
-	describeNoCompat,
+	describeCompat,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
 import {
