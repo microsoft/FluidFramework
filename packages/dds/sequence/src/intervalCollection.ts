@@ -939,8 +939,29 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	map(fn: (interval: TInterval) => void): void;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * automatically added to the collection. Users are advised to independently attach the
+	 * index to the collection and utilize the API accordingly, for instance:
+	 * ```typescript
+	 * const endpointIndex = createEndpointIndex(sharedString);
+	 * collection.attachIndex(endpointIndex);
+	 * const result1 = endpointIndex.previousInterval(pos);
+	 * ```
+	 * If an index is used repeatedly, applications should generally attach it once and store it in memory.
+	 */
 	previousInterval(pos: number): TInterval | undefined;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * automatically added to the collection. Users are advised to independently attach the
+	 * index to the collection and utilize the API accordingly, for instance:
+	 * ```typescript
+	 * const endpointIndex = createEndpointIndex(sharedString);
+	 * collection.attachIndex(endpointIndex);
+	 * const result2 = endpointIndex.nextInterval(pos);
+	 * ```
+	 */
 	nextInterval(pos: number): TInterval | undefined;
 }
 
