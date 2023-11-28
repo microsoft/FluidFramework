@@ -321,18 +321,18 @@ export function withSchemaValidation<
 	}
 	const compiledFormat = validator.compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat) => {
-			const encoded = codec.encode(obj);
+		encode: (obj: TInMemoryFormat, idCompressor: IIdCompressor) => {
+			const encoded = codec.encode(obj, idCompressor);
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
-		decode: (encoded: TEncodedFormat) => {
+		decode: (encoded: TEncodedFormat, idCompressor: IIdCompressor) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
-			return codec.decode(encoded) as unknown as TInMemoryFormat;
+			return codec.decode(encoded, idCompressor) as unknown as TInMemoryFormat;
 		},
 	};
 }

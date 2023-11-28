@@ -1402,6 +1402,10 @@ export class ContainerRuntime
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
+		if (this.idCompressorEnabled) {
+			this.idCompressor = idCompressor;
+		}
+
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
@@ -1418,10 +1422,6 @@ export class ContainerRuntime
 		}
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
-
-		if (this.idCompressorEnabled) {
-			this.idCompressor = idCompressor;
-		}
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (

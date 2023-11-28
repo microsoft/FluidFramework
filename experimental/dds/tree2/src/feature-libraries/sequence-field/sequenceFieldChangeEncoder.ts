@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { Attach, Changeset, Detach, Mark, MarkEffect, NoopMarkType } from "./format";
+import { idCompressorBlobName } from "@fluidframework/container-runtime/dist/summary";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
@@ -68,6 +70,16 @@ function makeV0Codec<TNodeChange>(
 					...mark,
 					...encodeEffect(mark),
 				} as Mark<JsonCompatibleReadOnly>;
+
+				if (idCompressor !== undefined && encodedMark.cellId?.revision !== undefined) {
+					encodedMark.cellId = {
+						...encodedMark.cellId,
+						revision: idCompressor.normalizeToOpSpace(
+							encodedMark.cellId.revision as SessionSpaceCompressedId,
+						),
+					};
+				}
+
 				if (mark.changes !== undefined) {
 					encodedMark.changes = childCodec.encode(mark.changes);
 				}

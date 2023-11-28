@@ -416,7 +416,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		return this.applyChange(
 			change,
-			mintRevisionTag(),
+			this.idGenerator(),
 			revertibleKind === RevertibleKind.Default || revertibleKind === RevertibleKind.Redo
 				? RevertibleKind.Undo
 				: RevertibleKind.Redo,
