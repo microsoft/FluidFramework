@@ -29,6 +29,7 @@ import {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+	ISignalMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
@@ -112,6 +113,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+	(event: "OpMessage", listener: (message: ISequencedDocumentMessage, local: boolean) => void);
+	(event: "SignalMessage", listener: (message: ISignalMessage, local: boolean) => void);
 }
 
 /**

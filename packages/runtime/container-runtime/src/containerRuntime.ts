@@ -2166,6 +2166,7 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+		this.emit("OpMessage", messageArg, local);
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			if (modernRuntimeMessage) {
 				this.processCore({
@@ -2217,6 +2218,8 @@ export class ContainerRuntime
 			}
 
 			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+
+			this.emit("op", local);
 
 			this.emit("op", message, messageWithContext.modernRuntimeMessage);
 
@@ -2330,6 +2333,7 @@ export class ContainerRuntime
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
+		this.emit("SignalMessage", message, local);
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
 			clientId: message.clientId,

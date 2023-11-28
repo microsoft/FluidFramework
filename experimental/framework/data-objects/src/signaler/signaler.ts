@@ -12,6 +12,7 @@ import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ISequencedDocumentMessage, ISignalMessage } from "@fluidframework/protocol-definitions";
 import { CircularBuffer } from "./utils";
 
 
@@ -131,7 +132,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 
 
 
-class SignalStatistics {
+class GeneralStats {
 	/**
 	 * Length of time (milliseconds) these statistics cover
 	 */
@@ -140,26 +141,26 @@ class SignalStatistics {
 	/**
 	 * Statistics for signals sent by client
 	 */
-	public fromClient: ISignalTransmissionData;
+	public fromClient: ITransmissionData;
 
 	/**
 	 * Statistics for signals sent to client
 	 */
-	public toClient: ISignalTransmissionData;
+	public toClient: ITransmissionData;
 
 	constructor() {
 		this.timespan = 0;
 		this.fromClient = {
-			count: 0,
-			size: 0,
-			packetCount: 0,
-			packetSize: 0,
+			MessageCount: 0,
+			MessageDataSize: 0,
+			OperationCount: 0,
+			SignalCount: 0,
 		};
 		this.toClient = {
-			count: 0,
-			size: 0,
-			packetCount: 0,
-			packetSize: 0,
+			MessageCount: 0,
+			MessageDataSize: 0,
+			OperationCount: 0,
+			SignalCount: 0,
 		};
 
 		// Update the timespan ever 100ms
@@ -172,26 +173,17 @@ class SignalStatistics {
 /**
 * Data for signals transmitted between clients
 */
-export interface ISignalTransmissionData {
-	/**
-	 * Count of signals
-	 */
-	count: number;
+export interface ITransmissionData {
 
-	/**
-	 * Approximation of cumulative signal payloads in bytes
-	 */
-	size: number;
+	MessageCount: number;
 
-	/**
-	 * Count of packets used for signals 
-	 */
-	packetCount: number;
+	MessageDataSize: number;
 
-	/**
-	 * Approximation of cumulative signal payloads in bytes
-	 */
-	packetSize: number;
+	OperationCount: number;
+
+	SignalCount: number;
+
+	SignalPacketCount?: number;
 
 }
 
@@ -205,38 +197,81 @@ export class Signaler
 {
 	private _signaler: InternalSignaler | undefined;
 
-	private readonly signalStatQueue: CircularBuffer<SignalStatistics>;
+	private readonly statQueue: CircularBuffer<GeneralStats>;
 
 	constructor(props)
 	{
 		super(props);
 
-		this.signalStatQueue = new CircularBuffer<SignalStatistics>(10);
-		setInterval(() => this.signalStatQueue.add(new SignalStatistics()), 1000);
+		this.statQueue = new CircularBuffer<GeneralStats>(10);
+		setInterval(() => this.statQueue.add(new GeneralStats()), 1000);
 
+
+		/**
+		 * Collect Container Runtime Operations
+		 */
+		this.context.containerRuntime.on("op", (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+			// Get the current period's statistics object and update it
+			const currentStats = this.statQueue.getLast();
+			if (currentStats) {
+				// Check if the signal is from this client
+				if (op.clientId === this.context.clientId) {
+					currentStats.fromClient.OperationCount++;
+				}
+				currentStats.toClient.OperationCount++;
+			}
+		});
 
 		/*
-		* Assumes signals will be sent using container runtime
-		* Can use data store runtime by using this.runtime
+		* Collects Container Runtime Signals
 		*/
 		this.context.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 			// Get the current period's statistics object and update it
-			const currentStats = this.signalStatQueue.getLast();
+			const currentStats = this.statQueue.getLast();
 			if (currentStats && message.content) {
 				// Check if the signal is from this client
-				if (message.clientId === this.context.clientId) {
-					currentStats.fromClient.count++;
-					currentStats.fromClient.size += JSON.stringify(message.content).length;
-					currentStats.fromClient.packetCount++;
-					currentStats.fromClient.packetSize += JSON.stringify(message.content).length;
+				if (local) {
+					currentStats.fromClient.SignalCount++;
 				}
-
-				currentStats.toClient.count++;
-				currentStats.toClient.size += JSON.stringify(message.content).length;
-				currentStats.toClient.packetCount++;
-				currentStats.toClient.packetSize += JSON.stringify(message.content).length;
+				currentStats.toClient.SignalCount++;
 			}
 		});
+
+		/**
+		 * Collect Container Runtime Operation Messages
+		 */
+		this.context.containerRuntime.on("OpMessage", (message: ISequencedDocumentMessage, local: boolean) => {
+			// Get the current period's statistics object and update it
+			const currentStats = this.statQueue.getLast();
+			if (currentStats && message.contents) {
+				// Check if the message is from this client
+				if (local) {
+					currentStats.fromClient.MessageCount++;
+					currentStats.fromClient.MessageDataSize += JSON.stringify(message.contents).length;
+				}
+				currentStats.toClient.MessageCount++;
+				currentStats.toClient.MessageDataSize += JSON.stringify(message.contents).length;
+			}
+		});
+
+		/**
+		 * Collect Container Runtime Signal Messages
+		 */
+		this.context.containerRuntime.on("SignalMessage", (message: ISignalMessage, local: boolean) => {
+			// Get the current period's statistics object and update it
+			const currentStats = this.statQueue.getLast();
+			if (currentStats && message.content) {
+				// Check if the message is from this client
+				if (local) {
+					currentStats.fromClient.MessageCount++;
+					currentStats.fromClient.MessageDataSize += JSON.stringify(message.content).length;
+				}
+				currentStats.toClient.MessageCount++;
+				currentStats.toClient.MessageDataSize += JSON.stringify(message.content).length;
+			}
+		});
+
+		
 	}
 
 	private get signaler(): InternalSignaler {
@@ -272,11 +307,11 @@ export class Signaler
 
 	}
 
-	public stats(): SignalStatistics | undefined {
-		return this.signalStatQueue.getLast();
+	public stats(): GeneralStats | undefined {
+		return this.statQueue.getLast();
 	}
 
-	public statsQueue(): SignalStatistics[] | undefined {
-		return this.signalStatQueue.getLastN(this.signalStatQueue.getBufferLength());
+	public statsQueue(): GeneralStats[] | undefined {
+		return this.statQueue.getLastN(this.statQueue.getBufferLength());
 	}
 }
