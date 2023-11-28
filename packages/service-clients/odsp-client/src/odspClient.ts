@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 import { v4 as uuid } from "uuid";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
-	createOdspCreateContainerRequest,
-	createOdspUrl,
-	isOdspResolvedUrl,
-} from "@fluidframework/odsp-driver";
+	AttachState,
+	IContainer,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	type ContainerSchema,
 	createDOProviderContainerRuntimeFactory,
@@ -20,16 +21,17 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
-	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
+	createOdspCreateContainerRequest,
+	createOdspUrl,
+	isOdspResolvedUrl,
+} from "@fluidframework/odsp-driver";
+import type {
+	OdspResourceTokenFetchOptions,
+	TokenResponse,
+} from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
-import type { ITokenResponse } from "@fluidframework/azure-client";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
 
@@ -43,27 +45,26 @@ export class OdspClient {
 	private readonly urlResolver: OdspDriverUrlResolver;
 
 	public constructor(private readonly properties: OdspClientProps) {
-		const getSharePointToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
+		const getStorageToken = async (options: OdspResourceTokenFetchOptions) => {
+			const tokenResponse: TokenResponse =
 				await this.properties.connection.tokenProvider.fetchStorageToken(
 					options.siteUrl,
-					"",
+					options.refresh,
 				);
-			return {
-				token: tokenResponse.jwt,
-			};
+			return tokenResponse;
 		};
 
-		const getPushServiceToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
-				await this.properties.connection.tokenProvider.fetchOrdererToken(options.siteUrl);
-			return {
-				token: tokenResponse.jwt,
-			};
+		const getWebsocketToken = async (options: OdspResourceTokenFetchOptions) => {
+			const tokenResponse: TokenResponse =
+				await this.properties.connection.tokenProvider.fetchWebsocketToken(
+					options.siteUrl,
+					options.refresh,
+				);
+			return tokenResponse;
 		};
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			getSharePointToken,
-			getPushServiceToken,
+			getStorageToken,
+			getWebsocketToken,
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
