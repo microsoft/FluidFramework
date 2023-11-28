@@ -1675,7 +1675,7 @@ describe("Editing", () => {
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),
 			// then the number of scenarios overwhelms the test browser.
 			// Should be committed with the constant set to false.
-			const individualTests = true;
+			const individualTests = false;
 			const nbNodes = 3;
 			const nbPeers = 2;
 			const testRemoveRevive = true;
@@ -1856,7 +1856,7 @@ describe("Editing", () => {
 						// except for which peer does which set of actions.
 						// It also helps simulate different peers learning of the same edit at different times.
 						for (let downhillPeer = iPeer + 1; downhillPeer < nbPeers; downhillPeer++) {
-							peers[downhillPeer].rebaseOnto(peer);
+							peers[downhillPeer].rebaseOnto(tree);
 							present[downhillPeer][affectedNode] = presence;
 						}
 						present[iPeer][affectedNode] = presence;
