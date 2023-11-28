@@ -225,7 +225,7 @@ describe("PropertyDDS summarizer", () => {
 		// Summarize
 		await summarizeNow(summarizer.summarizer);
 
-		const runtime = (summarizer as any).runtime as ContainerRuntime;
+		const runtime = (summarizer.summarizer as any).runtime as ContainerRuntime;
 		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
 			| IFluidHandle<ITestFluidObject>
 			| undefined;
