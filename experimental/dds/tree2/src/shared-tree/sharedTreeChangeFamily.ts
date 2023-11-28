@@ -4,7 +4,7 @@
  */
 
 import { ICodecFamily, ICodecOptions } from "../codec";
-import { ChangeFamily, ChangeRebaser, Delta, FieldKey, TaggedChange, tagChange } from "../core";
+import { ChangeFamily, ChangeRebaser, Delta, TaggedChange, tagChange } from "../core";
 import {
 	fieldKinds,
 	ModularChangeFamily,
@@ -26,6 +26,10 @@ export class SharedTreeChangeFamily
 		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		ChangeRebaser<SharedTreeChange>
 {
+	public static emptyChange: SharedTreeChange = {
+		changes: [{ type: "data", change: ModularChangeFamily.emptyChange }],
+	};
+
 	public readonly codecs: ICodecFamily<SharedTreeChange>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 	private readonly schemaChangeFamily: SchemaChangeFamily;

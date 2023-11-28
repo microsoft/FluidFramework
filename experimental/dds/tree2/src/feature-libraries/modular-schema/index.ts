@@ -56,5 +56,6 @@ export {
 	GlobalEditDescription,
 	FieldEditDescription,
 	revisionMetadataSourceFromInfo,
+	intoDelta,
 } from "./modularChangeFamily";
 export { makeModularChangeCodec } from "./modularChangeCodecs";

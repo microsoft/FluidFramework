@@ -50,11 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
 
 trigger:
   branches:
@@ -124,7 +119,6 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'

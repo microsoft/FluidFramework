@@ -14,7 +14,9 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeTypeSet,
 } from "../core";
-import { brand, fail } from "../util";
+// Drilling into `domains` to reduce the magnitude of cycles introduced here
+// eslint-disable-next-line import/no-internal-modules
+import { leaf } from "../domains/leafDomain";
 import {
 	allowsValue,
 	type ContextuallyTypedNodeData,
@@ -30,6 +32,7 @@ import {
 	type TreeDataContext,
 	type TreeNodeSchema,
 } from "../feature-libraries";
+import { brand, fail } from "../util";
 import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
@@ -161,11 +164,49 @@ function valueToMapTree(
 	const schema = getSchema(context, type);
 	assert(allowsValue(schema.leafValue, value), "Unsupported schema for provided primitive.");
 
+	const mappedValue = mapUnsupportedPrimitive(value, typeSet);
+
 	return {
-		value,
+		value: mappedValue,
 		type,
 		fields: new Map(),
 	};
+}
+
+/**
+ * Checks an incoming value to ensure it is compatible with our serialization format.
+ * For unsupported values with a schema-compatible replacement, return the replacement value.
+ * For unsupported values without a schema-compatible replacement, throw.
+ * For supported values, return the input.
+ */
+function mapUnsupportedPrimitive(
+	// eslint-disable-next-line @rushstack/no-new-null
+	value: boolean | number | string | IFluidHandle | null,
+	typeSet: TreeTypeSet,
+	// eslint-disable-next-line @rushstack/no-new-null
+): boolean | number | string | IFluidHandle | null {
+	switch (typeof value) {
+		case "number": {
+			if (Object.is(value, -0)) {
+				// Our serialized data format does not support -0.
+				// Map such input to +0.
+				return 0;
+			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
+				// Our serialized data format does not support NaN nor +/-∞.
+				// If the schema supports `null`, fall back to that. Otherwise, throw.
+				// This is intended to match JSON's behavior for such values.
+				if (typeSet?.has(leaf.null.name) ?? false) {
+					return null;
+				} else {
+					throw new TypeError(`Received unsupported numeric value: ${value}.`);
+				}
+			} else {
+				return value;
+			}
+		}
+		default:
+			return value;
+	}
 }
 
 function arrayToMapTree(

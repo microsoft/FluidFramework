@@ -45,6 +45,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
+    addChannel(channel: IChannel): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;

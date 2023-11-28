@@ -224,6 +224,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
+	intoDelta,
 } from "./default-schema";
 
 export {
@@ -276,3 +277,5 @@ export {
 	makeSchemaChangeCodec,
 	ISchemaEditor,
 } from "./schema-editing";
+
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";
