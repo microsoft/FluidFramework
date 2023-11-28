@@ -539,7 +539,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 	});
 });
 
-describeNoCompat("addChannel() tests for the SharedMap", (getTestObjectProvider) => {
+describeCompat("addChannel() tests for the SharedMap", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
