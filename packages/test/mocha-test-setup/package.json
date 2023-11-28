@@ -15,11 +15,14 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"ci:build:docs": "api-extractor run",
@@ -50,6 +53,7 @@
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
@@ -57,6 +61,14 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			},
 			"tsc": [
 				"...",
 				"typetests:gen"

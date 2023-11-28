@@ -2,6 +2,15 @@
 
 Proposal for changes to the [schema system](./stored-and-view-schema.md).
 
+## Status
+
+Mostly implemented, but some significant changes were made after implementation:
+
+1. Struct was renamed to Object.
+2. The new API which leveraged this design to avoid the need for free functions and symbols was implemented then decided not to be used as the package API, so its use of reserved field names no longer makes much sense.
+3. A migration away from using reserved field names has started.
+   The future of custom field names (which differ from the keys) is unclear as the new Proxy based API does not clearly separate where field keys and field names would be used.
+
 ## Motivation
 
 The current schema system has several issues:
@@ -104,13 +113,13 @@ Workstream 2
 
 Workstream 3
 
-1.  Adjust stored schema (encoding and/or validation) so that having one type have more than one of value, fields and extra local fields is invalid.
+1.  (Done) Adjust stored schema (encoding and/or validation) so that having one type have more than one of value, fields and extra local fields is invalid.
 2.  Simplify code where possible based on this above assumption (for example schema compatibility comparisons).
 
 ### Mid term
 
 -   Add support for custom field names for struct fields.
--   (Being does as editable-tree-2) Update editable tree (and schema aware APIs) to leverage node kinds.
+-   (Done) Update editable tree (and schema aware APIs) to leverage node kinds.
 -   (Done) Define base node API and implementation
 -   (Done) Extend base for each kind.
 -   (Done) Remove use of symbols on editable tree APIs
