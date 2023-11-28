@@ -202,7 +202,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const allBuilds: ChangeAtomIdMap<EncodedChunk> = new Map();
 		for (const { revision, change } of changes) {
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
@@ -781,9 +781,12 @@ export function intoDelta(
 	if (change.builds && change.builds.size > 0) {
 		const builds: Delta.DetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
+			const cursor = decode(tree).cursor();
+			assert(cursor.getFieldLength() === 1, "each encoded chunk should only contain 1 node.");
+			cursor.enterNode(0);
 			builds.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
-				trees: [cursorForJsonableTreeNode(tree)],
+				trees: [cursor],
 			});
 		});
 		rootDelta.build = builds;

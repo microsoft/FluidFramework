@@ -227,7 +227,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
-			assert.deepEqual(delta, expected);
+			assertDeltaEqual(delta, expected);
 		});
 
 		it("cross-field move and inverse with nested changes", () => {

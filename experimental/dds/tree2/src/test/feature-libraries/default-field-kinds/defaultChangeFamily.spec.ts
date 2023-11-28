@@ -29,6 +29,7 @@ import {
 	TreeSchema,
 	buildForest,
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
