@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { MapGetSet } from "./utils";
+
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
  * As it is a nested map, size() will return the number of distinct key1s.
@@ -13,14 +15,6 @@
  * @alpha
  */
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
-
-/**
- * Subset of the `Map` interface that's also compatible with WeakMap and other similar APIs.
- */
-export interface SimpleMap<Key, Value> {
-	get(key: Key): Value | undefined;
-	set(key: Key, value: Value): void;
-}
 
 /**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
@@ -80,7 +74,7 @@ export function setInNestedMap<Key1, Key2, Value>(
  * This is equivalent to a get or default that adds the default to the map.
  */
 export function getOrAddInMap<Key, Value>(
-	map: SimpleMap<Key, Value>,
+	map: MapGetSet<Key, Value>,
 	key: Key,
 	value: Value,
 ): Value {
