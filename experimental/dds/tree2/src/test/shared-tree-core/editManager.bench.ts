@@ -80,6 +80,7 @@ describe("EditManager - Bench", () => {
 							rebasedEditCount,
 							trunkEditCount,
 							rebaser,
+							"None",
 							true,
 						);
 

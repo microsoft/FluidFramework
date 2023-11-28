@@ -636,32 +636,216 @@ describe("EditManager", () => {
 		];
 
 		describe("Local commit rebasing", () => {
-			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
-				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
+			for (const { rebasedEditCount: localCount, trunkEditCount: trunkCount } of scenarios) {
+				// This test leads to the following branching structure:
+				// (0)-(T1)-...-(Tc)
+				//  +----------------(L1)-...-(Lc)
+				// Note that the EditManager is first fed the local edits, then the trunk edits.
+				// We reset the rebase/invert/compose counters before T1 is received.
+				it(`Rebase ${localCount} local commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
-					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
-					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
-					assert.equal(
-						rebaser.composedCount,
-						trunkEditCount * (rebasedEditCount * 2 + 1),
+					const run = rebaseLocalEditsOverTrunkEdits(
+						localCount,
+						trunkCount,
+						rebaser,
+						true,
 					);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// For each trunk edit received (factor of T),
+						// we rebase each local edit (factor of L) over...
+						// - the inverse of each local edit before it: (L - 1) / 2
+						// - the new trunk edit: 1
+						// - the rebased version of each local edit before it: (L - 1) / 2
+						rebased: trunkCount * localCount * localCount,
+						// For each trunk edit received (factor of T),
+						// we invert...
+						// - each local edit once: L
+						inverted: trunkCount * localCount,
+						// For each trunk edit received (factor of T),
+						// we compose...
+						// - the inverse of each local edits: L
+						// - the trunk edit:  1
+						// - the rebased version of each local edits: L
+						// This compose is part of the code path updating the local branch.
+						composed: trunkCount * (localCount * 2 + 1),
+					};
+					assert.deepEqual(actual, expected);
 				});
 			}
 		});
-		describe("Peer commit rebasing", () => {
-			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
-				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
+		describe("Peer commit rebasing for peer with fixed seq ref#", () => {
+			for (const { rebasedEditCount: peerCount, trunkEditCount: trunkCount } of scenarios) {
+				// This test leads to the following branching structure:
+				// (0)-(T1)-...-(Tc)
+				//  +----------------(P1)-...-(Pc)
+				// We reset the rebase/invert/compose counters before P1 is received.
+				it(`Rebase ${peerCount} peer commits over ${trunkCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
-					assert.equal(
-						rebaser.rebasedCount,
-						trunkEditCount * rebasedEditCount +
-							rebasedEditCount * (rebasedEditCount - 1),
+					const run = rebasePeerEditsOverTrunkEdits(
+						peerCount,
+						trunkCount,
+						rebaser,
+						"None",
+						true,
 					);
-
-					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
-					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// For each peer edit received (factor of P),
+						// we the new peer edit (factor of 1) over...
+						// - the inverse of each peer edit before it: (P - 1) / 2
+						// - each the trunk edits: T
+						// - the rebased version of each peer edit before it: (P - 1) / 2
+						rebased: peerCount * (peerCount - 1 + trunkCount),
+						// For each peer edit received (factor of P),
+						// we invert...
+						// - each peer edit before it: (P - 1) / 2
+						// However, we avoid recomputing the inverse for the same change,
+						// so in the end we only invert (once) each peer edit that has peer edit after it.
+						inverted: peerCount - 1,
+						// For each peer edit received (factor of P),
+						// we compose...
+						// - the rebased version of that peer edit: 1
+						// This compose is part of the code path updating the local branch.
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: peerCount,
+					};
+					assert.deepEqual(actual, expected);
+				});
+			}
+		});
+		describe("Peer commit rebasing for peer with fully updated seq ref#", () => {
+			for (const { rebasedEditCount: peerCount, trunkEditCount: trunkCount } of scenarios) {
+				// This test leads to the following branching structure:
+				// (0)-(T1)-...-(Tc)
+				//  |             +----------------(P+)
+				//  +----------------(P1)-...-(Pc)
+				// We reset the rebase/invert/compose counters before P+ is received.
+				it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					const run = rebasePeerEditsOverTrunkEdits(
+						peerCount,
+						trunkCount,
+						rebaser,
+						"CaughtUp",
+						true,
+					);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// As part of rebasing the peer branch that contains the phase-1 edits,
+						// we rebase each peer (factor of P) edit over...
+						// - the inverse of each peer edit before it: (P - 1) / 2
+						// - each the trunk edits: T
+						// - the fully rebased version of each peer edit before it: (P - 1) / 2
+						// As part of rebasing P+,
+						// we rebase P+ (factor of 1) over...
+						// - the inverse of each peer edit before it: P
+						// - the trunk edits since its inception, which are the rebased phase-1 edits: P
+						// Note: this last rebase phase doesn't seem to be needed for this scenario.
+						rebased:
+							peerCount * (peerCount - 1 + trunkCount) + 1 * (peerCount + peerCount),
+						// As part of rebasing the peer branch, we invert...
+						// - each of the phase-1 peer edits: P
+						// This is so that we can rebase them over the trunk edits.
+						// Note: the last of the phase-1 peer edit does not actually need to be inverted.
+						// As part of rebasing P+, we invert...
+						// - each of the phase-1 peer edits: P
+						// This is so that we can rebase P+ over the their inverse.
+						inverted: peerCount + peerCount,
+						// As part of rebasing the peer branch, we compose...
+						// - the inverse of the phase-1 peer edits: P
+						// - the trunk edits: T
+						// - the rebased version of the phase-1 peer edits: P
+						// Note: the output of the composition doesn't appear to be consumed.
+						// As part of rebasing the local branch, we compose...
+						// - the phase-2 peer edit: 1
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: peerCount + trunkCount + peerCount + 1,
+					};
+					assert.deepEqual(actual, expected);
+				});
+			}
+		});
+		describe("Peer commit rebasing for peer with not fully updated seq ref#", () => {
+			for (const { rebasedEditCount: peerCount, trunkEditCount: trunkCount } of scenarios) {
+				// This test leads to the following branching structure:
+				// (0)-(T1)-...-(Tc)-(T+)
+				//  |              +----------------------(P+)
+				//  +-----------------------(P1)-...-(Pc)
+				// We reset the rebase/invert/compose counters before P+ is received.
+				it(`Rebase a peer branch with ${peerCount} commits over ${trunkCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					const run = rebasePeerEditsOverTrunkEdits(
+						peerCount,
+						trunkCount,
+						rebaser,
+						"NotCaughtUp",
+						true,
+					);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// As part of rebasing the peer branch that contains the phase-1 edits,
+						// we rebase each peer (factor of P) edit over...
+						// - the inverse of each peer edit before it: (P - 1) / 2
+						// - each the trunk edits: T
+						// - the fully rebased version of each peer edit before it: (P - 1) / 2
+						// As part of rebasing P+,
+						// we rebase P+ (factor of 1) over...
+						// - the inverse of each peer edit before it (which are based on commit Tc): P
+						// - the one remaining trunk edit T+: 1
+						// - each peer fully rebased peer edit before it (which are based on commit T+): P
+						rebased:
+							peerCount * (peerCount - 1 + trunkCount) +
+							1 * (peerCount + 1 + peerCount),
+						// As part of rebasing the peer branch, we invert...
+						// - each of the phase-1 peer edits (which are based on commit 0): P
+						// This is so that we can phase-1 up to Tc.
+						// As part of rebasing P+ to the tip of the trunk, we invert...
+						// - each of the phase-1 peer edits (which are based on commit Tc): P
+						// This is so that we can rebase P+ over the inverse of the phase-1 peer edits and up to T+.
+						inverted: peerCount + peerCount,
+						// As part of rebasing the peer branch, we compose...
+						// - the inverse of the phase-1 peer edits: P
+						// - the trunk edits up to the ref# of P+: T
+						// - the rebased version of the phase-1 peer edits: P
+						// As part of rebasing the local branch, we compose...
+						// - the phase-2 peer edit P+: 1
+						// Note: this that composition is only needed to bake the RevisionTag into the changeset.
+						composed: peerCount + trunkCount + peerCount + 1,
+					};
+					assert.deepEqual(actual, expected);
 				});
 			}
 		});
