@@ -55,6 +55,11 @@ export type InsertableObjectFromSchemaRecord<
 
 /**
  * Schema for a tree node.
+ * @typeParam Name - The full (including scope) name/identifier for the schema.
+ * @typeParam Kind - Which kind of node this schema is for.
+ * @typeParam Specification - Details defining the schema for this node. Format depends on the `Kind`.
+ * @typeParam TNode - API for nodes that use this schema.
+ * @typeParam TBuild - Data which can be used to construct an unhydrated node of this type.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
  * @alpha
