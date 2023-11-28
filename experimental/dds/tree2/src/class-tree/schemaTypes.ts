@@ -124,8 +124,6 @@ export interface TreeNodeSchemaCore<
 
 /**
  * Types for use in fields.
- *
- * "Any" is boxed in an array to allow use as variadic parameter.
  * @alpha
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -250,8 +248,8 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
  * @alpha
  */
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
-	any,
-	any,
+	string,
+	NodeKind,
 	infer TNode
 >
 	? TNode
@@ -276,9 +274,9 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * @alpha
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
-	any,
-	any,
-	any,
+	string,
+	NodeKind,
+	unknown,
 	infer TBuild
 >
 	? TBuild

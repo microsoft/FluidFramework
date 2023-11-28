@@ -18,7 +18,7 @@ import {
 	ObjectNodeSchema as FlexObjectNodeSchema,
 	schemaIsLeaf,
 } from "../feature-libraries";
-import { brand, fail, getOrCreate, isReadonlyArray } from "../util";
+import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
 import { extractFactoryContent, getClassSchema, simpleSchemaSymbol } from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
@@ -75,7 +75,7 @@ export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
 	const schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema> = new Map();
 	const field = convertField(schemaMap, root);
 	const nodeSchema = new Map(
-		Array.from(schemaMap.entries(), ([key, value]) => {
+		mapIterable(schemaMap, ([key, value]) => {
 			const schema = value();
 			const classSchema = getClassSchema(schema);
 			if (classSchema === undefined) {
@@ -135,7 +135,7 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 ]);
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * Normalizes an {@link ImplicitAllowedTypes} into an {@link AllowedTypes}.
  */
 export function convertAllowedTypes(
 	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,
@@ -150,7 +150,12 @@ export function convertAllowedTypes(
 const builder = { name: "simple schema" };
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into {@link AllowedTypes}.
+ * Converts a {@link TreeNodeSchema} into a {@link FlexTreeNodeSchema}.
+ * Ensures all types reachable from `schema` are included in `schemaMap`.
+ *
+ * Return value (and entries in map) are lazy to allow recursive types to work.
+ * This laziness does NOT extend to adding entries to `schemaMap`:
+ * all referenced types are added to it before this function returns.
  */
 export function convertNodeSchema(
 	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,

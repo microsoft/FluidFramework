@@ -1405,7 +1405,7 @@ export class NodeBase {
 }
 
 // @alpha
-type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<any, any, any, infer TBuild> ? TBuild : never;
+type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @alpha
 export interface NodeData {
@@ -1420,7 +1420,7 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<any, any, infer TNode> ? TNode : never;
+type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @alpha
 export type NodeIndex = number;
