@@ -11,6 +11,18 @@ import { ITenantDocument } from "./tenantManager";
  */
 export interface ITenantRepository {
 	/**
+	 * Finds queries in the database
+	 *
+	 * @param query - data we want to find
+	 * @param sort - object with property we use to sort on, whose value is 0 for descending order and 1 for ascending
+	 * @param limit - optional. if set, limits the number of documents/records the cursor will return.
+	 * Our mongo layer internally used 2000 by default.
+	 * @param skip - optional. If set, defines the number of documents to skip in the results set.
+	 * @returns The sorted results of the query.
+	 */
+	find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]>;
+
+	/**
 	 * Finds one query in the database
 	 *
 	 * @param query - data we want to find
@@ -18,11 +30,6 @@ export interface ITenantRepository {
 	 * @returns The value of the query in the database.
 	 */
 	findOne(query: any, options?: any): Promise<ITenantDocument>;
-
-	/**
-	 * @returns All values in the database.
-	 */
-	findAll(): Promise<ITenantDocument[]>;
 
 	/**
 	 * Finds the query in the database. If it exists, update the value to set.
@@ -49,11 +56,11 @@ export interface ITenantRepository {
 
 export class MongoTenantRepository implements ITenantRepository {
 	constructor(private readonly collection: ICollection<ITenantDocument>) {}
+	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
+		return this.collection.find(query, sort, limit, skip);
+	}
 	async findOne(query: any, options?: any): Promise<ITenantDocument> {
 		return this.collection.findOne(query, options);
-	}
-	async findAll(): Promise<ITenantDocument[]> {
-		return this.collection.findAll();
 	}
 	async update(filter: any, set: any, addToSet: any, options?: any): Promise<void> {
 		return this.collection.update(filter, set, addToSet, options);

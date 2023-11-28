@@ -665,15 +665,52 @@ export class TenantManager {
 	 * Retrieves all the raw database tenant documents
 	 */
 	private async getAllTenantDocuments(includeDisabledTenant = false): Promise<ITenantDocument[]> {
-		const allFound = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantRepository.findAll(),
-		);
+		const allFound: ITenantDocument[] = [];
+		let batchOffsetId = "";
+		const batchFetchSize = 2000;
+		try {
+			// eslint-disable-next-line no-constant-condition
+			while (true) {
+				// Avoid using findAll(), it will read all records from database and load in client side memory,
+				// which will be a concern for timing, networkIO, and client memory in the future
+				// Also we have a limit of 2000 records when using find() implicitly, we should use this mechanism to
+				// work around it to get the full results.
+				const tenantDocumentBatch = await this.getTenantDocumentsByBatch(
+					batchOffsetId,
+					batchFetchSize,
+				);
+				allFound.push(...tenantDocumentBatch);
+				const batchSize = tenantDocumentBatch.length;
+				if (batchSize < batchFetchSize) {
+					// last batch, no need further.
+					break;
+				}
+				batchOffsetId = tenantDocumentBatch[batchSize - 1]._id;
+			}
+		} catch (err) {
+			Lumberjack.error(`Database failed to find all tenants.`, undefined, err);
+			return Promise.reject(new Error("Failed to retrieve all tenants from Database."));
+		}
 
 		allFound.forEach((found) => {
 			this.attachDefaultsToTenantDocument(found);
 		});
 
 		return includeDisabledTenant ? allFound : allFound.filter((found) => !found.disabled);
+	}
+
+	/**
+	 * Retrieves raw database tenant documents by batch
+	 */
+	private async getTenantDocumentsByBatch(
+		batchOffsetId: string,
+		batchSize: number,
+	): Promise<ITenantDocument[]> {
+		const query = {
+			_id: { $gt: batchOffsetId },
+		};
+		const sort = { _id: 1 };
+		return this.tenantRepository.find(query, sort, batchSize);
 	}
 
 	/**
