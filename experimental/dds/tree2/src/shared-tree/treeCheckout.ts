@@ -279,8 +279,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
-			if (event.change !== undefined) {
-				const delta = intoDelta(event.change);
+			const change = event.change();
+			if (change !== undefined) {
+				const delta = intoDelta(change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
 				const combinedVisitor = combineVisitors(
 					[this.forest.acquireVisitor(), anchorVisitor],

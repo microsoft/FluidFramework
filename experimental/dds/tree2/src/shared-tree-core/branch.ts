@@ -42,15 +42,19 @@ import { TransactionStack } from "./transactionStack";
  * transaction completes and all pending commits are replaced with a single squash commit.
  */
 export type SharedTreeBranchChange<TChange> =
-	| { type: "append"; change: TaggedChange<TChange>; newCommits: readonly GraphCommit<TChange>[] }
+	| {
+			type: "append";
+			change: () => TaggedChange<TChange>;
+			newCommits: readonly GraphCommit<TChange>[];
+	  }
 	| {
 			type: "remove";
-			change: TaggedChange<TChange> | undefined;
+			change: () => TaggedChange<TChange> | undefined;
 			removedCommits: readonly GraphCommit<TChange>[];
 	  }
 	| {
 			type: "replace";
-			change: TaggedChange<TChange> | undefined;
+			change: () => TaggedChange<TChange> | undefined;
 			removedCommits: readonly GraphCommit<TChange>[];
 			newCommits: readonly GraphCommit<TChange>[];
 	  };
@@ -186,7 +190,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(change, revision),
+			change: () => tagChange(change, revision),
 			newCommits: [newHead],
 		} as const;
 
@@ -262,7 +266,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const changeEvent = {
 			type: "replace",
-			change: undefined,
+			change: () => undefined,
 			removedCommits: commits,
 			newCommits: [newHead],
 		} as const;
@@ -307,7 +311,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const changeEvent = {
 			type: "remove",
-			change: change === undefined ? undefined : makeAnonChange(change),
+			change: () => (change === undefined ? undefined : makeAnonChange(change)),
 			removedCommits: commits,
 		} as const;
 
@@ -447,31 +451,39 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
 	 */
-	public rebaseOnto(branch: SharedTreeBranch<TEditor, TChange>, upTo = branch.getHead()): void {
+	public rebaseOnto(
+		branch: SharedTreeBranch<TEditor, TChange>,
+		upTo = branch.getHead(),
+	):
+		| [
+				change: () => TChange | undefined,
+				removedCommits: GraphCommit<TChange>[],
+				newCommits: GraphCommit<TChange>[],
+		  ]
+		| undefined {
 		this.assertNotDisposed();
 
-		const hasListeners = this.hasListeners("beforeChange") || this.hasListeners("afterChange");
-
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(hasListeners, this, branch, upTo);
+		const rebaseResult = this.rebaseBranch(this, branch, upTo);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
-		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
+		const [newHead, changeThunk, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
 			type: "replace",
-			change: change === undefined ? undefined : makeAnonChange(change),
+			change: () => {
+				const change = changeThunk();
+				return change === undefined ? undefined : makeAnonChange(change);
+			},
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		} as const;
-		if (hasListeners) {
-			this.emit("beforeChange", changeEvent);
-		}
+		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 
 		// update revertible commits that have been rebased
@@ -479,9 +491,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.updateRevertibleCommit(commit);
 		});
 
-		if (hasListeners) {
-			this.emit("afterChange", changeEvent);
-		}
+		this.emit("afterChange", changeEvent);
+		return [changeThunk, deletedSourceCommits, newCommits];
 	}
 
 	/**
@@ -505,7 +516,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
-		const rebaseResult = this.rebaseBranch(false, branch, this);
+		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -515,7 +526,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		const changeEvent = {
 			type: "append",
-			change: makeAnonChange(change),
+			change: () => makeAnonChange(change),
 			newCommits: sourceCommits,
 		} as const;
 
@@ -527,7 +538,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
-		computeSourceChange: boolean,
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
@@ -537,13 +547,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.changeFamily.rebaser,
-			computeSourceChange,
-			head,
-			upTo,
-			onto.getHead(),
-		);
+		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;

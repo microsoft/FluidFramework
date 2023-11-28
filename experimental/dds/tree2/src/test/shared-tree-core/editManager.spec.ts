@@ -1373,8 +1373,9 @@ function addSequencedChange(
 ): Delta.Root {
 	let delta: Delta.Root = emptyDelta;
 	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
-		if (change !== undefined) {
-			delta = asDelta(change.change.intentions);
+		const changeset = change();
+		if (changeset !== undefined) {
+			delta = asDelta(changeset.change.intentions);
 		}
 	});
 	editManager.addSequencedChange(...args);
