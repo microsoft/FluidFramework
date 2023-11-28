@@ -736,6 +736,9 @@ export class ModularChangeFamily
 	}
 }
 
+/**
+ * @param change - The change to convert into a delta.
+ */
 export function intoDelta(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
