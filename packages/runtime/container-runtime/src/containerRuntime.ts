@@ -2219,8 +2219,6 @@ export class ContainerRuntime
 
 			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
-			this.emit("op", local);
-
 			this.emit("op", message, messageWithContext.modernRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
