@@ -1,12 +1,8 @@
-# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License.
-
-# include-git-tag-steps
-
+# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
+# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
 parameters:
 - name: tagName
   type: string
-
 steps:
 - ${{ if ne(parameters.tagName, '') }}:
   - checkout: self
