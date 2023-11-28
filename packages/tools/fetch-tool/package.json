@@ -52,10 +52,10 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.17.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

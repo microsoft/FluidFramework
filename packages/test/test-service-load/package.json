@@ -98,9 +98,9 @@
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"commander": "^5.1.0",
+		"commander": "^11.1.0",
 		"ps-node": "^0.1.6",
-		"start-server-and-test": "^1.11.7",
+		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^2.0.2"
 	},
 	"devDependencies": {
@@ -109,14 +109,14 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
-		"c8": "^7.7.1",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
+		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

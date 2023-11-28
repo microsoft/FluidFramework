@@ -57,8 +57,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"jsrsasign": "^10.5.25",
-		"uuid": "^9.0.0"
+		"jsrsasign": "^10.9.0",
+		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
@@ -69,16 +69,16 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.7.2.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/jsrsasign": "^8.0.8",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
-		"@types/uuid": "^9.0.2",
+		"@types/jsrsasign": "^10.5.12",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
+		"@types/uuid": "^9.0.7",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},

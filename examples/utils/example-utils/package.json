@@ -50,12 +50,12 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
+		"@fluidframework/server-local-server": "^2.0.2",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
-		"uuid": "^9.0.0"
+		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
@@ -63,11 +63,11 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/node": "^16.18.38",
-		"@types/uuid": "^9.0.2",
+		"@types/node": "^18.17.1",
+		"@types/uuid": "^9.0.7",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

@@ -42,28 +42,28 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@microsoft/applicationinsights-web": "^2.8.11"
+		"@microsoft/applicationinsights-web": "^3.0.5"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
-		"@types/sinon": "^7.0.13",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
+		"@types/sinon": "^17.0.2",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
-		"eslint-plugin-jest": "~27.4.2",
+		"eslint-plugin-jest": "~27.6.0",
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"sinon": "^7.4.2",
-		"tslib": "^1.10.0",
+		"rimraf": "^5.0.5",
+		"sinon": "^17.0.1",
+		"tslib": "^2.6.2",
 		"typescript": "~5.1.6"
 	},
 	"fluid": {

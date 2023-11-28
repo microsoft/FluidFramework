@@ -68,15 +68,15 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
+		"@fluidframework/server-local-server": "^2.0.2",
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"agentkeepalive": "^4.5.0",
-		"axios": "^0.26.0",
-		"semver": "^7.5.3",
-		"uuid": "^9.0.0"
+		"axios": "^1.6.2",
+		"semver": "^7.5.4",
+		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
@@ -84,12 +84,12 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/node": "^16.18.38",
-		"c8": "^7.7.1",
+		"@types/node": "^18.17.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {

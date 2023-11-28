@@ -67,9 +67,9 @@
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-services-client": "^2.0.1",
+		"@fluidframework/server-services-client": "^2.0.2",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^0.26.0"
+		"axios": "^1.6.2"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
@@ -83,20 +83,20 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
-		"@types/uuid": "^9.0.2",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
+		"@types/uuid": "^9.0.7",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"start-server-and-test": "^1.11.7",
+		"rimraf": "^5.0.5",
+		"start-server-and-test": "^2.0.3",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
-		"uuid": "^9.0.0"
+		"uuid": "^9.0.1"
 	},
 	"fluidBuild": {
 		"tasks": {

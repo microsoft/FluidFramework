@@ -60,10 +60,10 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
-		"best-random": "^1.0.0",
+		"best-random": "^1.0.3",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
-		"use-resize-observer": "^7.0.0"
+		"use-resize-observer": "^9.1.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
@@ -72,19 +72,19 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
+		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.1.6"
 	},
 	"fluid": {

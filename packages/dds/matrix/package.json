@@ -87,9 +87,9 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@tiny-calc/nano": "0.0.0-alpha.5",
-		"events": "^3.1.0",
-		"tslib": "^1.10.0"
+		"@tiny-calc/nano": "0.0.0-alpha.2",
+		"events": "^3.3.0",
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@fluid-private/test-dds-utils": "workspace:~",
@@ -102,25 +102,25 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@tiny-calc/micro": "0.0.0-alpha.5",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
-		"best-random": "^1.0.0",
-		"c8": "^7.7.1",
+		"@tiny-calc/micro": "0.0.0-alpha.2",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.17.1",
+		"best-random": "^1.0.3",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"hotloop": "^1.2.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
+		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.5",
 		"ts-node": "^10.9.1",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
-		"uuid": "^9.0.0"
+		"uuid": "^9.0.1"
 	},
 	"fluidBuild": {
 		"tasks": {
