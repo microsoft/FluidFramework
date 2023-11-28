@@ -3,42 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IChannel,
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { TreeField } from "../simple-tree";
-import { TreeFieldSchema } from "../feature-libraries";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events";
-import { IDisposable } from "../util";
-import { SharedTree, SharedTreeOptions } from "./sharedTree";
-import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
-import { CheckoutEvents } from "./treeCheckout";
-
-/**
- * Configuration to specialize a Tree DDS for a particular use.
- * @alpha
- */
-export interface TypedTreeOptions extends SharedTreeOptions {
-	/**
-	 * Name appended to {@link @fluidframework/datastore-definitions#IChannelFactory."type"} to identify this factory configuration.
-	 * @privateRemarks
-	 * TODO: evaluate if this design is a good idea, or if "subtype" should be removed.
-	 * TODO: evaluate if schematize should be separated from DDS construction.
-	 */
-	readonly subtype: string;
-}
-
+import { IDisposable, disposeSymbol } from "../util";
+import { FlexTreeView, type CheckoutEvents } from "../shared-tree";
+import { getProxyForField } from "../simple-tree";
+import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries";
+import {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+	TreeFieldFromImplicitField,
+} from "./schemaTypes";
 /**
  * Channel for a Tree DDS.
  * @alpha
  */
 export interface ITree extends IChannel {
 	/**
-	 * Returns a tree known to be compatible with the provided schema with a schema aware API based on that schema.
+	 * Returns a tree that is known to be compatible with the provided schema. The returned tree exposes an API that is schema-aware.
 	 *
 	 * @remarks
 	 * If the tree is uninitialized (has no schema and no content), the tree is initialized with the provided `initialTree` and `schema`.
@@ -70,9 +52,26 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
 	 */
-	schematizeOld<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TreeView<TreeField<TRoot>>;
+	schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+}
+
+/**
+ * @alpha
+ */
+export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	/**
+	 * @param schema - The schema which the application wants to view the tree with.
+	 * @param initialTree - Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 * If the `initialTree` returns any actual node instances, they should be recreated each time the `initialTree` runs.
+	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
+	 */
+	public constructor(
+		public readonly schema: TSchema,
+		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
+	) {}
 }
 
 /**
@@ -89,8 +88,6 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 */
 	readonly root: TRoot;
 
-	// TODO: root setter.
-
 	/**
 	 * Events for the tree.
 	 */
@@ -98,37 +95,24 @@ export interface TreeView<in out TRoot> extends IDisposable {
 }
 
 /**
- * A channel factory that creates an {@link ITree}.
- * @alpha
+ * Implementation of TreeView wrapping a FlexTreeView.
  */
-export class TypedTreeFactory implements IChannelFactory {
-	public readonly type: string;
-	public readonly attributes: IChannelAttributes;
+export class WrapperTreeView<
+	in out TSchema extends ImplicitFieldSchema,
+	TView extends FlexTreeView<FlexTreeFieldSchema>,
+> implements TreeView<TreeFieldFromImplicitField<TSchema>>
+{
+	public constructor(public readonly view: TView) {}
 
-	public constructor(private readonly options: TypedTreeOptions) {
-		this.type = `https://graph.microsoft.com/types/tree/${options.subtype}`;
-
-		this.attributes = {
-			type: this.type,
-			snapshotFormatVersion: "0.0.0",
-			packageVersion: "0.0.0",
-		};
+	public [disposeSymbol](): void {
+		this.view[disposeSymbol]();
 	}
 
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ITree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
-		await tree.load(services);
-		return tree;
+	public get events(): ISubscribable<CheckoutEvents> {
+		return this.view.checkout.events;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ITree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
-		tree.initializeLocal();
-		return tree;
+	public get root(): TreeFieldFromImplicitField<TSchema> {
+		return getProxyForField(this.view.editableTree) as TreeFieldFromImplicitField<TSchema>;
 	}
 }

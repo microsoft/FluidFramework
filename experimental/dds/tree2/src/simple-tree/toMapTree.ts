@@ -52,7 +52,7 @@ import { InsertableTreeField, InsertableTypedNode } from "./insertable";
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  *
- * @returns A cursor for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
+ * @returns A cursor (in nodes mode) for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
  */
 export function cursorFromNodeData(
 	data: InsertableTypedNode<TreeNodeSchema>,
