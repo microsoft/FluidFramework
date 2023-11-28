@@ -71,12 +71,12 @@ describe("rebaseBranch", () => {
 		const n3 = newCommit(3);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n3, n2),
+			() => rebaseBranch(new TestChangeRebaser(), true, n3, n2),
 			(e: Error) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n2, n3, n1),
+			() => rebaseBranch(new TestChangeRebaser(), true, n2, n3, n1),
 			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
@@ -90,7 +90,7 @@ describe("rebaseBranch", () => {
 
 		// (1)
 		//  └─ 2 ─ 3
-		const [n3_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n3, n1);
+		const [n3_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n3, n1);
 		assert.equal(n3_1, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
@@ -109,7 +109,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─ 2 ─(3)
 		//         └─ 4'─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n3);
+		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n5, n3);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
@@ -133,7 +133,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─(2)─ 3
 		//     └─ 4'─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n2, n3);
+		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n5, n2, n3);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
@@ -159,7 +159,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─(2)─ 3 ─ 4
 		//         └─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n2, n4);
+		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3],
@@ -185,7 +185,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
-		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n5, n4);
+		const [n5_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3, 4],
@@ -210,7 +210,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─ 2 ─(3)─ 4
 		//         └─
-		const [n3_2, change, commits] = rebaseBranch(new TestChangeRebaser(), n3_1, n3, n4);
+		const [n3_2, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n3_1, n3, n4);
 		assert.equal(n3_2, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
@@ -231,7 +231,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
-		const [n5_1] = rebaseBranch(new TestChangeRebaser(), n5, n4);
+		const [n5_1] = rebaseBranch(new TestChangeRebaser(), true, n5, n4);
 	});
 });
 

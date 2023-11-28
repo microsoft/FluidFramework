@@ -446,22 +446,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
-	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
-	 * or undefined if nothing changed
 	 */
-	public rebaseOnto(
-		branch: SharedTreeBranch<TEditor, TChange>,
-		upTo = branch.getHead(),
-	):
-		| [
-				change: TChange | undefined,
-				removedCommits: GraphCommit<TChange>[],
-				newCommits: GraphCommit<TChange>[],
-		  ]
-		| undefined {
+	public rebaseOnto(branch: SharedTreeBranch<TEditor, TChange>, upTo = branch.getHead()): void {
 		this.assertNotDisposed();
+
+		const hasListeners = this.hasListeners("beforeChange") || this.hasListeners("afterChange");
+
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this, branch, upTo);
+		const rebaseResult = this.rebaseBranch(hasListeners, this, branch, upTo);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -477,8 +469,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		} as const;
-
-		this.emit("beforeChange", changeEvent);
+		if (hasListeners) {
+			this.emit("beforeChange", changeEvent);
+		}
 		this.head = newHead;
 
 		// update revertible commits that have been rebased
@@ -486,8 +479,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.updateRevertibleCommit(commit);
 		});
 
-		this.emit("afterChange", changeEvent);
-		return [change, deletedSourceCommits, newCommits];
+		if (hasListeners) {
+			this.emit("afterChange", changeEvent);
+		}
 	}
 
 	/**
@@ -511,7 +505,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
-		const rebaseResult = this.rebaseBranch(branch, this);
+		const rebaseResult = this.rebaseBranch(false, branch, this);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -533,6 +527,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
+		computeSourceChange: boolean,
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
@@ -542,7 +537,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
+		const rebaseResult = rebaseBranch(
+			this.changeFamily.rebaser,
+			computeSourceChange,
+			head,
+			upTo,
+			onto.getHead(),
+		);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;
