@@ -82,10 +82,6 @@ describe("makeMitigatedChangeFamily", () => {
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 	});
 	describe("catches errors from", () => {
-		it("intoDelta", () => {
-			errorLog.length = 0;
-			assert.deepEqual(errorLog, ["intoDelta"]);
-		});
 		it("rebase", () => {
 			errorLog.length = 0;
 			assert.equal(mitigatedThrowingRebaser.rebase(arg1, arg2), fallback);
