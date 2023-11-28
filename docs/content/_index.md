@@ -7,7 +7,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 
 {{< jumbotron
   lead=`<strong>Real-time. Multiuser. Collaboration.</strong>`
-  subText="Empower collaborative innovation with Fluid Framework's seamless, high-performance client/server tech stack for real-time applications."
+  subText="Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications."
   img="https://www.youtube.com/embed/1okQVFqlMxU"
 >}}
 
@@ -17,7 +17,7 @@ summary: "An open-source client technology stack that enables real-time collabor
   img="https://www.youtube.com/embed/1okQVFqlMxU"
 >}} -->
 
-<div class="value-props">
+<!-- <div class="value-props">
         <div class="container">
             <div class="row">
                 <div class="col-sm-3 col-xs-6"><a class="value-prop" id="home-value-prop-better-perf-link" href="#better-perf"><div class="value-prop-icon better-perf"></div>Better Performance</a></div>
@@ -26,8 +26,41 @@ summary: "An open-source client technology stack that enables real-time collabor
                 <div class="col-sm-3 col-xs-6"><a class="value-prop" id="home-value-prop-open-source-link" href="#open-source"><div class="value-prop-icon open-source"></div>Open Source</a></div>
             </div>
         </div>
+</div> -->
+<div class="value-props">
+    <h2><strong>Start building today</strong></h2>
+    <h2><strong>Why Fluid?</strong></h2>
+    <h2><strong>Start building with Fluid</strong></h2>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-3 col-xs-6">
+                    <div class="value-prop" id="home-value-prop-better-perf-link">
+                        <div class="value-prop-icon better-perf"></div>
+                        <b>Industry-leading speed, scale, reliability, security, and cost</b>
+                    </div>
+                </div>
+                <div class="col-sm-3 col-xs-6">
+                    <div class="value-prop" id="home-value-prop-easy-to-use-link">
+                        <div class="value-prop-icon easy-to-use"></div>
+                        <b>Easy to use</b>
+                    </div>
+                </div>
+                <div class="col-sm-3 col-xs-6">
+                    <div class="value-prop" id="home-value-prop-open-source-link">
+                        <div class="value-prop-icon open-source"></div>
+                        <b>Open Source</b>
+                    </div>
+                </div>
+                <div class="col-sm-3 col-xs-6">
+                    <div class="value-prop" id="home-value-prop-open-source-link">
+                        <div class="value-prop-icon open-source"></div>
+                            <b>Better Performance</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>
-
 
 {{<swimlane_container fullPage="yes">}}
     <div class="swimlane customers">
@@ -99,6 +132,13 @@ summary: "An open-source client technology stack that enables real-time collabor
                 </div>
             </div>
         </div>
+    {{<swimlane
+        id="better-perf"
+        title="Better Performance"
+        subTitle="There is a significant difference in capacity depending on whether users are purely viewers vs. editors. Adding viewers scales far more than adding editors because each editor increases the volume of changes and viewers do not"
+        img="/images/first-value-prop.png"
+        imgAlt="better performance"
+      >}}
     {{<swimlane
         id="better-perf"
         title="Better Performance"
