@@ -305,7 +305,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 // @public (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt);
+    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
     attachState: AttachState;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;

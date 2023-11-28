@@ -23,7 +23,7 @@ FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
-                               @fluid-tools/markdown-magic and markdown-magic are valid.
+                               @fluid-tools/benchmark and benchmark are valid.
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
   -x, --skipChecks             Skip all checks.
@@ -104,7 +104,7 @@ FLAGS
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
-                               @fluid-tools/markdown-magic and markdown-magic are valid.
+                               @fluid-tools/benchmark and benchmark are valid.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

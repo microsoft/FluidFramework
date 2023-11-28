@@ -331,7 +331,10 @@ function composeMarks<TNodeChange>(
 
 		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
-			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
+			return withNodeChange(
+				{ count: baseMark.count, cellId: baseMark.cellId },
+				localNodeChange,
+			);
 		}
 		return normalizeCellRename(
 			{

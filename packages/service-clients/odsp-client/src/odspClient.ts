@@ -8,7 +8,8 @@ import {
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
@@ -31,8 +32,6 @@ import type {
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
 
@@ -108,9 +107,10 @@ export class OdspClient {
 		});
 		const container = await loader.resolve({ url });
 
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer({
+			container,
+			rootDataObject: await this.getContainerEntryPoint(container),
+		});
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -148,8 +148,7 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -191,5 +190,16 @@ export class OdspClient {
 				createServiceMember: createOdspAudienceMember,
 			}),
 		};
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> | undefined =
+			await container.getEntryPoint();
+		assert(rootDataObject !== undefined, "entryPoint must exist");
+		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
+		if (rootDataObject.IRootDataObject === undefined) {
+			return rootDataObject as IRootDataObject;
+		}
+		return rootDataObject.IRootDataObject;
 	}
 }
