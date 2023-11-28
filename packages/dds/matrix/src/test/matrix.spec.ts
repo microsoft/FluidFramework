@@ -1170,6 +1170,7 @@ describe("Matrix", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
+					assert((instance.id = "matrix2"), "matrix should be correct");
 					eventRaised = true;
 				});
 
@@ -1240,6 +1241,7 @@ describe("Matrix", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
+					assert((instance.id = "matrix2"), "matrix should be correct");
 					eventRaised = true;
 				});
 
