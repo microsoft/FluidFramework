@@ -39,6 +39,7 @@ module.exports = (env) => {
 		devServer: {
 			static: {
 				directory: path.join(__dirname, "tests"),
+				watch: false,
 			},
 		},
 		plugins: [

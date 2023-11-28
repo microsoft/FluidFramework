@@ -12,6 +12,6 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../../dist/test/jest",
-		"types": ["jest", "jest-environment-puppeteer", "node", "puppeteer"],
+		"types": ["jest", "node", "puppeteer"],
 	},
 }
