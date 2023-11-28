@@ -138,6 +138,8 @@ extends:
     taskLint: false
     taskBuildDocs: true
     publishDocs: true
+    # We only care about pipeline run telemetry for the automated runs on the main branch, not for PR runs. And since
+    # we don't batch commits for CI pipeline runs, the only reason we see in main for automated runs is IndividualCI.
     telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
     - webpack
