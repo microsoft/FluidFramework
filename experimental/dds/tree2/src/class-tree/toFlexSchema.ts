@@ -236,7 +236,7 @@ export function convertNodeSchema(
 
 /**
  * A symbol for storing FlexTreeSchema on TreeNodeSchema.
- * Only set when TreeNodeSchema are wrapping existing FlexTreeSchema (done for as with leaves).
+ * Eagerly set on leaves, and lazily set for other cases.
  */
 export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
 
