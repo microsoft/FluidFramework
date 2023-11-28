@@ -64,6 +64,8 @@ export function rebaseLocalEditsOverTrunkEdits(
 	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", () => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
@@ -97,6 +99,8 @@ export function rebasePeerEditsOverTrunkEdits(
 	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", () => {});
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
@@ -148,6 +152,8 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", () => {});
 	for (let iChange = 0; iChange < editCount; iChange++) {
 		manager.addSequencedChange(
 			{
@@ -194,6 +200,8 @@ export function rebaseConcurrentPeerEdits(
 	defer: boolean = false,
 ): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", () => {});
 	const peerEdits: Commit<TestChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
