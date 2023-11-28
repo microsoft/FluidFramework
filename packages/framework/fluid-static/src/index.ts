@@ -36,4 +36,5 @@ export {
 	MemberChangedListener,
 	Myself,
 	SharedObjectClass,
+	IProvideRootDataObject,
 } from "./types";

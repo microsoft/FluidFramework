@@ -50,21 +50,20 @@ export function editManagerFactory(options: {
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
@@ -84,21 +83,20 @@ export function rebaseLocalEditsOverTrunkEdits(
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
@@ -121,6 +119,57 @@ export function rebasePeerEditsOverTrunkEdits(
 				peerEdits[iChange],
 				brand(iChange + trunkEditCount + 1),
 				brand(0),
+			);
+		}
+	};
+	return defer ? run : run();
+}
+
+/**
+ * Establishes the following branching structure:
+ * ```text
+ * (0)-(T1)-...-(Tc-1)-(Tc)
+ *  |    |          └-----------------(Pc)
+ *  |    └-----------------------(P2)
+ *  └-----------------------(P1)
+ * ```
+ */
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+): void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: true,
+): () => void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: boolean = false,
+): void | (() => void) {
+	for (let iChange = 0; iChange < editCount; iChange++) {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "trunk",
+			},
+			brand(iChange + 1),
+			brand(iChange),
+		);
+	}
+	const peerEdits = makeArray(editCount, () => ({
+		change: TestChange.emptyChange,
+		revision: mintRevisionTag(),
+		sessionId: "peer",
+	}));
+	const run = () => {
+		for (let iChange = 0; iChange < editCount; iChange++) {
+			manager.addSequencedChange(
+				peerEdits[iChange],
+				brand(iChange + editCount + 1),
+				brand(iChange),
 			);
 		}
 	};
