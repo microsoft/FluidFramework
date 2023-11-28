@@ -21,10 +21,8 @@ export interface IOdspTokenProvider {
 	 * and so a fresh token is required.
 	 *
 	 * Default: `false`.
-	 *
-	 * NOTE: This parameter will be made required in the future.
 	 */
-	fetchWebsocketToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
+	fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 
 	/**
 	 * Fetches the storage token from host.
@@ -35,8 +33,6 @@ export interface IOdspTokenProvider {
 	 * and so a fresh token is required.
 	 *
 	 * Default: `false`.
-	 *
-	 * NOTE: This parameter will be made required in the future.
 	 */
-	fetchStorageToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
+	fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }

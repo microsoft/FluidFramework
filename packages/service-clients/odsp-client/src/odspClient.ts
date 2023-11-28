@@ -48,13 +48,19 @@ export class OdspClient {
 	public constructor(private readonly properties: OdspClientProps) {
 		const getStorageToken = async (options: OdspResourceTokenFetchOptions) => {
 			const tokenResponse: TokenResponse =
-				await this.properties.connection.tokenProvider.fetchStorageToken(options.siteUrl);
+				await this.properties.connection.tokenProvider.fetchStorageToken(
+					options.siteUrl,
+					options.refresh,
+				);
 			return tokenResponse;
 		};
 
 		const getWebsocketToken = async (options: OdspResourceTokenFetchOptions) => {
 			const tokenResponse: TokenResponse =
-				await this.properties.connection.tokenProvider.fetchWebsocketToken(options.siteUrl);
+				await this.properties.connection.tokenProvider.fetchWebsocketToken(
+					options.siteUrl,
+					options.refresh,
+				);
 			return tokenResponse;
 		};
 		this.documentServiceFactory = new OdspDocumentServiceFactory(

@@ -17,8 +17,8 @@ export type IOdspAudience = IServiceAudience<OdspMember>;
 
 // @alpha
 export interface IOdspTokenProvider {
-    fetchStorageToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
-    fetchWebsocketToken(siteUrl: string, refresh?: boolean): Promise<TokenResponse>;
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }
 
 // @alpha @sealed
