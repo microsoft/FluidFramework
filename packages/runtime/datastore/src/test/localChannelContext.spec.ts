@@ -41,9 +41,7 @@ describe("LocalChannelContext Tests", () => {
 		const dataStoreRuntime = loadRuntime(dataStoreContext, sharedObjectRegistry);
 		const codeBlock = () =>
 			new LocalChannelContext(
-				invalidId,
-				sharedObjectRegistry,
-				"SomeType",
+				{ id: invalidId } as any as IChannel,
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
