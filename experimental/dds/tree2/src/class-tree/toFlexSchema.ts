@@ -194,7 +194,7 @@ export function convertNodeSchema(
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexTreeFieldSchema> = Object.create(null);
 				for (const [key, value] of Object.entries(info)) {
-					// This code has to be careful to avoid assigned to __proto__ or similar built in fields.
+					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, key, {
 						enumerable: true,
 						configurable: false,

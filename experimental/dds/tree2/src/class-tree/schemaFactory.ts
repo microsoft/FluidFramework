@@ -53,7 +53,7 @@ import {
  * This is because the instance type (the tree node type) for leaves are not objects,
  * so those instances can't be instances of a schema based class.
  * @privateRemarks
- * This class referees to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
+ * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
 class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	implements
@@ -156,8 +156,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	public readonly handle = makeLeaf(leaf.handle);
 
 	/**
-	 * Construct a class the provides the common parts all TreeNodeSchemaClass share.
-	 * More specific schema extends this class.
+	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
+	 * More specific schema extend this class.
 	 */
 	private nodeSchema<Name extends TName | string, TKind extends NodeKind, T>(
 		name: Name,
@@ -171,7 +171,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public static readonly info = t;
 			/**
 			 * This constructor only does validation of the input, and should be passed the argument from the derived type unchanged.
-			 * It it up to the derived type to actually do something with this value.
+			 * It is up to the derived type to actually do something with this value.
 			 */
 			public constructor(input: FlexTreeNode | unknown) {
 				super();
@@ -189,6 +189,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				);
 			}
 		}
+		// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
 		markEager(schema);
 		return schema;
 	}

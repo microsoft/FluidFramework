@@ -9,7 +9,7 @@ The main differences from the old schema system (SchemaBuilder and its related t
 2. The new system is designed from scratch to work at the same abstraction layer and data model as used in simple-tree.
    This means concepts like `List` are supported in a first class way, and the focus is on kinds of nodes (List, Object, Map), and not on FieldKinds.
    No extra special cases and carve-outs are needed to support cases the internal data-model supports:
-   tests for those cases will simple not use this wrapper layer and can use the pre-existing schema builder instead.
+   tests for those cases will simply not use this wrapper layer and can use the pre-existing schema builder instead.
 3. Schema are classes, and the instance types of those classes are what gets exposed in the tree API.
    This has many benefits:
     1. Users don't have to use `typeof` or invoke any type meta-functions to get the node types they want to pass around: just use the class/schema name as the type.
