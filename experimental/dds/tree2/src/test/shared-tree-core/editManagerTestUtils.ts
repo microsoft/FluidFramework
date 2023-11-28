@@ -10,12 +10,7 @@ import {
 	ChangeFamilyEditor,
 	mintRevisionTag,
 } from "../../core";
-import {
-	TestChangeFamily,
-	TestChange,
-	testChangeFamilyFactory,
-	TestChangeRebaser,
-} from "../testChange";
+import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
@@ -61,28 +56,31 @@ export function editManagerFactory<TChange = TestChange>(
 	return manager;
 }
 
-export function rebaseLocalEditsOverTrunkEdits(
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseLocalEditsOverTrunkEdits(
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseLocalEditsOverTrunkEdits(
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
-		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+		manager.localBranch.apply(mintChange(), mintRevisionTag());
 	}
 	const trunkEdits = makeArray(trunkEditCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "trunk",
 	}));
@@ -94,27 +92,30 @@ export function rebaseLocalEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
-export function rebasePeerEditsOverTrunkEdits(
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebasePeerEditsOverTrunkEdits(
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebasePeerEditsOverTrunkEdits(
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: "trunk",
 			},
@@ -123,7 +124,7 @@ export function rebasePeerEditsOverTrunkEdits(
 		);
 	}
 	const peerEdits = makeArray(peerEditCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
@@ -148,24 +149,27 @@ export function rebasePeerEditsOverTrunkEdits(
  *  └-----------------------(P1)
  * ```
  */
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	for (let iChange = 0; iChange < editCount; iChange++) {
 		manager.addSequencedChange(
 			{
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: "trunk",
 			},
@@ -174,7 +178,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 		);
 	}
 	const peerEdits = makeArray(editCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
@@ -190,28 +194,31 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
-export function rebaseConcurrentPeerEdits(
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseConcurrentPeerEdits(
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseConcurrentPeerEdits(
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
-	const peerEdits: Commit<TestChange>[] = [];
+	const peerEdits: Commit<TChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 			peerEdits.push({
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: `p${iPeer}`,
 			});

@@ -664,7 +664,13 @@ describe("EditManager", () => {
 				it(`Rebase ${L} local commits over ${T} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = testChangeEditManagerFactory({ rebaser }).manager;
-					const run = rebaseLocalEditsOverTrunkEdits(L, T, manager, true);
+					const run = rebaseLocalEditsOverTrunkEdits(
+						L,
+						T,
+						manager,
+						() => TestChange.emptyChange,
+						true,
+					);
 					rebaser.rebasedCount = 0;
 					rebaser.invertedCount = 0;
 					rebaser.composedCount = 0;
@@ -727,7 +733,13 @@ describe("EditManager", () => {
 				it(`Rebase ${P} peer commits over ${T} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = testChangeEditManagerFactory({ rebaser }).manager;
-					const run = rebasePeerEditsOverTrunkEdits(P, T, manager, true);
+					const run = rebasePeerEditsOverTrunkEdits(
+						P,
+						T,
+						manager,
+						() => TestChange.emptyChange,
+						true,
+					);
 					rebaser.rebasedCount = 0;
 					rebaser.invertedCount = 0;
 					rebaser.composedCount = 0;
@@ -792,7 +804,12 @@ describe("EditManager", () => {
 				it(`for ${editCount} peer commits and ${editCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
 					const manager = testChangeEditManagerFactory({ rebaser }).manager;
-					const run = rebaseAdvancingPeerEditsOverTrunkEdits(editCount, manager, true);
+					const run = rebaseAdvancingPeerEditsOverTrunkEdits(
+						editCount,
+						manager,
+						() => TestChange.emptyChange,
+						true,
+					);
 					rebaser.rebasedCount = 0;
 					rebaser.invertedCount = 0;
 					rebaser.composedCount = 0;
@@ -890,7 +907,7 @@ describe("EditManager", () => {
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(P, T, manager);
+						rebasePeerEditsOverTrunkEdits(P, T, manager, () => TestChange.emptyChange);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
@@ -976,7 +993,12 @@ describe("EditManager", () => {
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(P, T + 1, manager);
+						rebasePeerEditsOverTrunkEdits(
+							P,
+							T + 1,
+							manager,
+							() => TestChange.emptyChange,
+						);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;

@@ -41,6 +41,7 @@ describe("EditManager - Bench", () => {
 		readonly name: string;
 		readonly changeFamily: ChangeFamily<any, TChange>;
 		readonly mintChange: () => TChange;
+		readonly maxEditCount: number;
 	}
 
 	const defaultFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
@@ -55,17 +56,22 @@ describe("EditManager - Bench", () => {
 			name: "TestChange",
 			changeFamily: testChangeFamilyFactory(new NoOpChangeRebaser()),
 			mintChange: () => TestChange.emptyChange,
+			maxEditCount: Number.POSITIVE_INFINITY,
 		},
 		{
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
-			mintChange: () => makeEditMinter(defaultFamily, sequencePrepend),
+			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
+			maxEditCount: 500,
 		},
 	];
 	for (const family of families) {
 		describe(`family: ${family.name}`, () => {
 			describe("Local commit rebasing", () => {
 				for (const { type, rebasedEditCount, trunkEditCount } of scenarios) {
+					if (rebasedEditCount * trunkEditCount > family.maxEditCount) {
+						continue;
+					}
 					benchmark({
 						type,
 						title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
@@ -81,6 +87,7 @@ describe("EditManager - Bench", () => {
 									rebasedEditCount,
 									trunkEditCount,
 									manager,
+									family.mintChange,
 									true,
 								);
 
@@ -99,6 +106,9 @@ describe("EditManager - Bench", () => {
 			});
 			describe("Peer commit rebasing (fix ref seq#)", () => {
 				for (const { type, rebasedEditCount: peerEditCount, trunkEditCount } of scenarios) {
+					if (peerEditCount * trunkEditCount > family.maxEditCount) {
+						continue;
+					}
 					benchmark({
 						type,
 						title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
@@ -114,6 +124,7 @@ describe("EditManager - Bench", () => {
 									peerEditCount,
 									trunkEditCount,
 									manager,
+									family.mintChange,
 									true,
 								);
 
@@ -136,6 +147,9 @@ describe("EditManager - Bench", () => {
 					{ type: BenchmarkType.Perspective, editCount: 10 },
 					{ type: BenchmarkType.Measurement, editCount: 100 },
 				]) {
+					if (editCount ** 2 > family.maxEditCount) {
+						continue;
+					}
 					benchmark({
 						type,
 						title: `for ${editCount} peer commits and ${editCount} trunk commits`,
@@ -150,6 +164,7 @@ describe("EditManager - Bench", () => {
 								const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
 									editCount,
 									manager,
+									family.mintChange,
 									true,
 								);
 
@@ -180,6 +195,9 @@ describe("EditManager - Bench", () => {
 					{ type: BenchmarkType.Measurement, peerCount: 20, editsPerPeerCount: 20 },
 				];
 				for (const { type, peerCount, editsPerPeerCount } of multiPeerScenarios) {
+					if (peerCount * editsPerPeerCount > family.maxEditCount) {
+						continue;
+					}
 					benchmark({
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
@@ -195,6 +213,7 @@ describe("EditManager - Bench", () => {
 									peerCount,
 									editsPerPeerCount,
 									manager,
+									family.mintChange,
 									true,
 								);
 
