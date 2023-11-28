@@ -15,7 +15,7 @@ import {
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { SharedSegmentSequence, SharedString, createEndpointIndex } from "@fluidframework/sequence";
+import { SharedSegmentSequence } from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
 import { SubSequence } from "./sharedSequence";
 
@@ -357,15 +357,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 	private getSegment(row: number, col: number) {
 		const pos = rowColToPosition(row, col);
 		return this.getContainingSegment(pos);
-	}
-
-	public getNextInterval(label: string) {
-		const collection = this.getIntervalCollection(label);
-		const endpointIndex = createEndpointIndex({
-			client: this.client,
-		} as unknown as SharedString);
-		collection.attachIndex(endpointIndex);
-		return endpointIndex.nextInterval(0);
 	}
 }
 

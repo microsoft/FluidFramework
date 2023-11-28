@@ -7,7 +7,12 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
+import {
+	IntervalType,
+	SequenceDeltaEvent,
+	SharedString,
+	createEndpointIndex,
+} from "@fluidframework/sequence";
 import {
 	positionToRowCol,
 	rowColToPosition,
@@ -77,8 +82,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
-	public async getRange(label: string) {
-		const interval = this.matrix.getNextInterval(label);
+	public async getRange(label: string): Promise<CellRange> {
+		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
+		const intervals = this.matrix.getIntervalCollection(label);
+		intervals.attachIndex(endpointIndex);
+		const interval = endpointIndex.nextInterval(0);
+		intervals.detachIndex(endpointIndex);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 

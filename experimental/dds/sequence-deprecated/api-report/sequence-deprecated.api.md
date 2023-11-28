@@ -16,7 +16,6 @@ import { ISegment } from '@fluidframework/merge-tree';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { PropertySet } from '@fluidframework/merge-tree';
-import { SequenceInterval } from '@fluidframework/sequence';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
 import { SharedSequence } from '@fluidframework/sequence';
@@ -148,8 +147,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     // (undocumented)
     getItem(row: number, col: number): // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
     Jsonable<string | number | boolean | IFluidHandle> | undefined;
-    // (undocumented)
-    getNextInterval(label: string): SequenceInterval | undefined;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet | undefined;
     // (undocumented)
