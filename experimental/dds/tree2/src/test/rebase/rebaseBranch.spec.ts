@@ -212,7 +212,7 @@ describe("rebaseBranch", () => {
 
 		// 1 ─(2)─ 3 ─ 4 ─ 5
 		//             └─ 6
-		const [n6_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n6, n2, n5);
+		const [n6_1, change, commits] = rebaseBranch(new TestChangeRebaser(), true, n6, n2, n5);
 		const newPath = getPath(n2, n6_1);
 		assertChanges(
 			newPath,
