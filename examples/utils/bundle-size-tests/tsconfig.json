@@ -4,7 +4,6 @@
 		"module": "esnext",
 		"outDir": "lib",
 		"jsx": "react",
-		"types": ["puppeteer"],
 	},
 	"include": ["src/**/*"],
 }

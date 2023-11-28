@@ -48,7 +48,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@mixer/webpack-bundle-compare": "^0.1.1",
 		"@types/node": "^18.17.1",
-		"@types/puppeteer": "7.0.4",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
