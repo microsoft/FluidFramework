@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
-// eslint-disable-next-line import/no-deprecated
 import { addProperties, PropertySet } from "./properties";
 import {
 	refHasTileLabels,
-	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabels,
 	ReferencePosition,
 	refTypeIncludesFlag,
@@ -133,7 +133,6 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public addProperties(newProps: PropertySet, op?: ICombiningOp) {
-		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps, op);
 	}
 
@@ -357,7 +356,6 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount++;
 			}
@@ -377,7 +375,6 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(lref.getSegment(), lref.getOffset(), undefined);
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
@@ -477,7 +474,6 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
-				// eslint-disable-next-line import/no-deprecated
 				if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 					this.hierRefCount--;
 					localRefs.hierRefCount++;
@@ -516,7 +512,6 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}
@@ -550,7 +545,6 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}

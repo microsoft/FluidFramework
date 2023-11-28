@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail } from "../util";
+import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -38,15 +38,11 @@ import { EmptyKey, FieldKey } from "../core";
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
-import {
-	TreeField,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-} from "./types";
+import { TreeField, TypedNode, TreeListNode, TreeMapNode, TreeObjectNode } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
+import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
+import { IterableTreeListContent } from "./iterableTreeListContent";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -147,7 +143,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				return Reflect.get(target, key, proxy);
 			},
-			set(target, key, value) {
+			set(target, key, value: InsertableTreeNodeUnion<AllowedTypes>) {
 				const editNode = getEditNode(proxy);
 				const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
@@ -168,15 +164,21 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| FlexTreeOptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
+						const cursor = cursorFromNodeData(
+							content,
+							editNode.context,
+							fieldSchema.types,
+						);
 						modifyChildren(
 							editNode,
 							() => {
-								typedField.content = content;
+								typedField.content = cursor;
 							},
 							() => hydrateProxies(typedField.boxedContent),
 						);
 						break;
 					}
+
 					default:
 						fail("invalid FieldKind");
 				}
@@ -219,16 +221,16 @@ const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
-	iterable: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
 	insertedAtIndex: number,
+	content: (
+		| InsertableTreeNodeUnion<AllowedTypes>
+		| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
+	)[],
 ): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
-	if (typeof iterable === "string") {
-		throw new TypeError(
-			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
-		);
-	}
 	return extractContentArray(
-		(Array.isArray(iterable) ? iterable : Array.from(iterable)) as ContextuallyTypedNodeData[],
+		content.flatMap((c) =>
+			c instanceof IterableTreeListContent ? Array.from(c) : c,
+		) as ContextuallyTypedNodeData[],
 		insertedAtIndex,
 	);
 }
@@ -249,19 +251,37 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	at: {
 		value(this: TreeListNode, index: number): FlexTreeUnknownUnboxed | undefined {
-			return getSequenceField(this).at(index);
+			const field = getSequenceField(this);
+			const val = field.boxedAt(index);
+
+			if (val === undefined) {
+				return val;
+			}
+
+			return getOrCreateNodeProxy(val) as FlexTreeUnknownUnboxed;
 		},
 	},
 	insertAt: {
 		value(
 			this: TreeListNode,
 			index: number,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
+			...value: (
+				| InsertableTreeNodeUnion<AllowedTypes>
+				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
+			)[]
 		): void {
-			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
+			const sequenceField = getSequenceField(this);
+
+			const { content, hydrateProxies } = contextualizeInsertedListContent(index, value);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAt(index, content),
+				() => sequenceField.insertAt(index, cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -269,12 +289,23 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	insertAtStart: {
 		value(
 			this: TreeListNode,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
+			...value: (
+				| InsertableTreeNodeUnion<AllowedTypes>
+				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
+			)[]
 		): void {
-			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
+			const sequenceField = getSequenceField(this);
+
+			const { content, hydrateProxies } = contextualizeInsertedListContent(0, value);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtStart(content),
+				() => sequenceField.insertAtStart(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -282,15 +313,26 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	insertAtEnd: {
 		value(
 			this: TreeListNode,
-			value: Iterable<TreeNodeUnion<AllowedTypes, "javaScript">>,
+			...value: (
+				| InsertableTreeNodeUnion<AllowedTypes>
+				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
+			)[]
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
-				value,
 				this.length,
+				value,
 			);
+			const cursor = cursorFromFieldData(
+				content,
+				sequenceField.context,
+				sequenceField.schema,
+			);
+
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtEnd(content),
+				() => sequenceField.insertAtEnd(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -486,13 +528,22 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 
+			if (maybeIndex === undefined) {
+				// Pass the proxy as the receiver here, so that any methods on
+				// the prototype receive `proxy` as `this`.
+				return Reflect.get(dispatch, key, proxy) as unknown;
+			}
+
+			const value = field.boxedAt(maybeIndex);
+
+			if (value === undefined) {
+				return undefined;
+			}
+
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
-			return maybeIndex !== undefined
-				? getOrCreateNodeProxy(field.boxedAt(maybeIndex))
-				: // Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-				  (Reflect.get(dispatch, key, proxy) as unknown);
+			return getOrCreateNodeProxy(value);
 		},
 		set: (target, key, newValue, receiver) => {
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
@@ -520,13 +571,14 @@ function createListProxy<TTypes extends AllowedTypes>(): TreeListNode<TTypes> {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
+				const val = field.boxedAt(maybeIndex);
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
 					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
 					//       inner field.
-					value: getOrCreateNodeProxy(field.boxedAt(maybeIndex)),
+					value: val === undefined ? val : getOrCreateNodeProxy(val),
 					writable: true, // For MVP, disallow setting indexed properties.
 					enumerable: true,
 					configurable: true,
@@ -592,14 +644,17 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode<MapNodeSchema>,
 			key: string,
-			value: TreeNodeUnion<AllowedTypes, "javaScript">,
+			value: InsertableTreeNodeUnion<AllowedTypes>,
 		): TreeMapNode<MapNodeSchema> {
+			const node = getEditNode(this);
+
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
+			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
 			modifyChildren(
-				getEditNode(this),
-				(mapNode) => mapNode.set(key, content),
+				node,
+				(mapNode) => mapNode.set(key, cursor),
 				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
 			);
 			return this;
@@ -633,7 +688,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(): TreeMapNode<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<TreeMapNode<TSchema>>(
-		new Map<string, TreeField<TSchema["info"], "sharedTree", "notEmpty">>(),
+		new Map<string, TreeField<TSchema["info"], "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -669,7 +724,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(): TreeMapNode<TSchema> {
  */
 export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
-	content: TypedNode<TSchema, "javaScript">,
+	content: InsertableTypedNode<TSchema>,
 ): TreeObjectNode<TSchema> {
 	// Shallow copy the content and then add the type name symbol to it.
 	const contentCopy = { ...content };
@@ -683,7 +738,7 @@ type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
-interface ExtractedFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScript">> {
+interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>> {
 	/** The content with the factory subtrees replaced. */
 	content: T;
 	/**
@@ -718,13 +773,13 @@ interface ExtractedFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScrip
  * }
  * ```
  */
-export function extractFactoryContent<T extends TypedNode<TreeNodeSchema, "javaScript">>(
+export function extractFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>(
 	content: T,
 ): ExtractedFactoryContent<T> {
 	if (isFluidHandle(content)) {
 		return { content, hydrateProxies: noopHydrator };
-	} else if (Array.isArray(content)) {
-		return extractContentArray(content);
+	} else if (isReadonlyArray(content)) {
+		return extractContentArray(content) as ExtractedFactoryContent<T>;
 	} else if (content instanceof Map) {
 		return extractContentMap(content);
 	} else if (content !== null && typeof content === "object") {
@@ -740,11 +795,11 @@ export function extractFactoryContent<T extends TypedNode<TreeNodeSchema, "javaS
 /**
  * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
  */
-function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]>(
-	input: T,
+function extractContentArray<T extends InsertableTypedNode<TreeNodeSchema>>(
+	input: readonly T[],
 	insertedAtIndex = 0,
-): ExtractedFactoryContent<T> {
-	const output = [] as unknown as T;
+): ExtractedFactoryContent<T[]> {
+	const output: T[] = [];
 	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
 	for (let i = 0; i < input.length; i++) {
 		const { content, hydrateProxies } = extractFactoryContent(input[i]);
@@ -777,7 +832,7 @@ function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]
 	};
 }
 
-function extractContentMap<T extends Map<string, TypedNode<TreeNodeSchema, "javaScript">>>(
+function extractContentMap<T extends Map<string, InsertableTypedNode<TreeNodeSchema>>>(
 	input: T,
 ): ExtractedFactoryContent<T> {
 	const output = new Map() as T;
@@ -855,7 +910,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 function getListChildNode(
 	listNode: FlexTreeFieldNode<FieldNodeSchema>,
 	index: number,
-): FlexTreeNode {
+): FlexTreeNode | undefined {
 	const field = listNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,

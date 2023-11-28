@@ -5,12 +5,7 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import {
-	cursorForJsonableTreeNode,
-	SequenceField as SF,
-	NodeChangeset,
-} from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
 import { brand } from "../../../util";
 
 enum Operation {
@@ -39,16 +34,7 @@ export function generateRandomChange(
 				childChangeGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
 			);
 		case Operation.Insert:
-			return builder.insert(
-				random.integer(0, maxIndex),
-				[
-					cursorForJsonableTreeNode({
-						type: leaf.number.name,
-						value: random.integer(0, Number.MAX_SAFE_INTEGER),
-					}),
-				],
-				brand(0),
-			);
+			return builder.insert(random.integer(0, maxIndex), 1, brand(0));
 		case Operation.Delete:
 			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
 		default:

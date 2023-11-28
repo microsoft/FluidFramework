@@ -14,7 +14,6 @@ import {
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
@@ -41,6 +40,8 @@ import {
 	ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
@@ -63,7 +64,7 @@ describe("PropertyDDS summarizer", () => {
 		const container = await (load
 			? objProvider.loadTestContainer()
 			: objProvider.makeTestContainer());
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 		let summarizer;
 		if (withSummarizer) {
@@ -127,15 +128,6 @@ describe("PropertyDDS summarizer", () => {
 		} = await getClient(true);
 		await objProvider.ensureSynchronized();
 
-		// Test debugging code
-		// container.deltaManager.inbound.on("op", (task: any) => {
-		//     console.info(task);
-		// });
-
-		// container.deltaManager.outbound.on("op", (task: any) => {
-		//     console.info(task);
-		// });
-
 		// 2- Insert array with u1 as user
 		u1.root.insert(USERS, PropertyFactory.create("NodeProperty", "array"));
 		u1.commit();
@@ -160,25 +152,11 @@ describe("PropertyDDS summarizer", () => {
 		// updates are triggered that do not affect the propertyDDS
 		dataObject1.root.set("c2", "aaa");
 		dataObject2.root.set("c2", "aaa");
+		await objProvider.ensureSynchronized();
 
 		// Now we wait until the msn has sufficiently advanced that the pruning below
 		// will remove all remoteChanges
-		const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
-		await new Promise((resolve) => {
-			const waitForMSN = () => {
-				if (
-					container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
-					container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber
-				) {
-					resolve(undefined);
-				}
-
-				void objProvider.ensureSynchronized().then((x) => {
-					setTimeout(waitForMSN, 5);
-				});
-			};
-			waitForMSN();
-		});
+		await synchronizeMSN(container2, container1);
 
 		// Summarize
 		await summarizeNow(summarizer.summarizer);
@@ -196,6 +174,106 @@ describe("PropertyDDS summarizer", () => {
 
 		expect(u1.root.get<ArrayProperty>(USERS)?.getValues().length).to.equal(1);
 	});
+
+	it("Scenario 2 (repeated summarization)", async function () {
+		/**
+		 * This test produces a scenario where we have an empty remoteChanges array in the summarizer client
+		 * and then get more changes that cannot yet be pruned away, because the MSN continues to point to the
+		 * previous head commit.
+		 *
+		 * We used to have a bug that was caused by this, where the prune code would prune the remote changes
+		 * but not the unrebased remote changes, causing rebase errors.
+		 */
+		this.timeout(30000);
+
+		// 1- U1 joins together with summarizer
+		const {
+			client: u1,
+			summarizer,
+			dataObject: dataObject1,
+			container: container1,
+		} = await getClient(true);
+		await objProvider.ensureSynchronized();
+
+		// 2- Make some modifications
+		u1.root.insert("c1", PropertyFactory.create("NodeProperty"));
+		u1.commit();
+		await objProvider.ensureSynchronized();
+
+		u1.root.insert("c2", PropertyFactory.create("NodeProperty"));
+		u1.commit();
+
+		await objProvider.ensureSynchronized();
+
+		const {
+			client: u2,
+			dataObject: dataObject2,
+			container: container2,
+		} = await getClient(false, true);
+		await objProvider.ensureSynchronized();
+
+		// We do two changes to a different DDS (the root map), to make sure, that
+		// updates are triggered that do not affect the propertyDDS
+		dataObject1.root.set("c2", "aaa");
+		dataObject2.root.set("c2", "aaa");
+		await objProvider.ensureSynchronized();
+
+		// Now we wait until the msn has sufficiently advanced that the pruning below
+		// will remove all remoteChanges
+		await synchronizeMSN(container2, container1);
+
+		// Summarize
+		await summarizeNow(summarizer.summarizer);
+
+		const runtime = (summarizer.summarizer as any).runtime as ContainerRuntime;
+		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+			| IFluidHandle<ITestFluidObject>
+			| undefined;
+		if (entryPoint === undefined) {
+			throw new Error("default dataStore must exist");
+		}
+		const summarizerDataObject = await entryPoint.get();
+		const summarizerClient =
+			await summarizerDataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
+
+		// Make changes only on u1, u2 must not advance to make sure
+		// the msn is not advanced
+		u1.root.insert("a", PropertyFactory.create("NodeProperty"));
+		u1.commit();
+
+		u1.root.insert("b", PropertyFactory.create("NodeProperty"));
+		u1.commit();
+
+		await objProvider.opProcessingController.processOutgoing(container1);
+		await objProvider.opProcessingController.processIncoming(container1);
+
+		// Summarize again
+		await summarizeNow(summarizer.summarizer);
+
+		// Make sure the summarizer did not delete any of the unrebased changes
+		expect(summarizerClient.remoteChanges.length).to.equal(2);
+		expect(Object.keys(summarizerClient.unrebasedRemoteChanges).length).to.equal(2);
+	});
+
+	async function synchronizeMSN(container2: IContainer, container1: IContainer) {
+		const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
+		await new Promise((resolve) => {
+			const waitForMSN = () => {
+				if (
+					container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
+					container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber
+				) {
+					resolve(undefined);
+					return;
+				}
+
+				void objProvider.ensureSynchronized().then((x) => {
+					setTimeout(waitForMSN, 5);
+				});
+			};
+			waitForMSN();
+		});
+	}
 });
 
 describe("PropertyTree", () => {
@@ -309,12 +387,12 @@ function executePerPropertyTreeType(
 
 			// Create a Container for the first client.
 			container1 = await createContainer();
-			dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedPropertyTree1 = await dataObject1.getSharedObject(propertyDdsId);
 
 			// Load the Container that was created by the first client.
 			container2 = await loadContainer();
-			dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
 		});
 

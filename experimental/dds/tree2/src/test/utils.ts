@@ -12,7 +12,6 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ChannelFactoryRegistry,
@@ -66,6 +65,7 @@ import {
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
+	mapRootChanges,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -257,7 +257,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
@@ -300,7 +300,7 @@ export class TestTreeProvider {
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
 			TestTreeProvider.treeId,
 		));
@@ -477,9 +477,18 @@ export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
+export function assertDeltaFieldMapEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
 	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * Assert two Delta are equal, handling cursors.
+ */
+export function assertDeltaEqual(a: Delta.Root, b: Delta.Root): void {
+	const aTree = mapRootChanges(a, mapTreeFromCursor);
+	const bTree = mapRootChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -962,19 +971,21 @@ export const wrongSchema = new SchemaBuilder({
 }).intoSchema(SchemaBuilder.sequence(Any));
 
 export function applyTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	applyDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function announceTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function createTestUndoRedoStacks(

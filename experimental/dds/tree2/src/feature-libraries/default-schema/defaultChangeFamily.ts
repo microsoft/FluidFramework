@@ -23,6 +23,7 @@ import {
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	FieldEditDescription,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -35,6 +36,8 @@ export type DefaultChangeset = ModularChangeset;
  */
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
+
+	public static readonly emptyChange: DefaultChangeset = ModularChangeFamily.emptyChange;
 
 	public constructor(codecOptions: ICodecOptions) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
@@ -136,10 +139,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
-				const id = this.modularBuilder.generateId();
-				const buildId = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, id, buildId),
+					valueFieldKind.changeHandler.editor.set(newContent, {
+						fill: this.modularBuilder.generateId(),
+						detach: this.modularBuilder.generateId(),
+					}),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -153,12 +157,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const optionalChange =
 					newContent === undefined
 						? optional.changeHandler.editor.clear(wasEmpty, id)
-						: optional.changeHandler.editor.set(
-								newContent,
-								wasEmpty,
-								id,
-								this.modularBuilder.generateId(),
-						  );
+						: optional.changeHandler.editor.set(newContent, wasEmpty, {
+								fill: this.modularBuilder.generateId(),
+								detach: this.modularBuilder.generateId(),
+						  });
 				const change: FieldChangeset = brand(optionalChange);
 				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
@@ -226,11 +228,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			this.modularBuilder.submitChanges(
 				[
 					{
+						type: "field",
 						field: sourceField,
 						fieldKind: sequence.identifier,
 						change: brand(moveOut),
 					},
 					{
+						type: "field",
 						field: adjustedAttachField,
 						fieldKind: sequence.identifier,
 						change: brand(moveIn),
@@ -251,13 +255,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const firstId = this.modularBuilder.generateId(length);
+				const build = this.modularBuilder.buildTrees(firstId, content);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, content, firstId),
+					sequence.changeHandler.editor.insert(index, length, firstId),
 				);
-				this.modularBuilder.submitChange(
+				const attach: FieldEditDescription = {
+					type: "field",
 					field,
-					sequence.identifier,
+					fieldKind: sequence.identifier,
 					change,
+				};
+				// The changes have to be submitted together, otherwise they will be assigned different revisions,
+				// which will prevent the build ID and the insert ID from matching.
+				this.modularBuilder.submitChanges(
+					[build, attach],
 					brand((firstId as number) + length - 1),
 				);
 			},

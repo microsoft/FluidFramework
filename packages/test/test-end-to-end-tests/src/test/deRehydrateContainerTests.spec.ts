@@ -35,8 +35,7 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
@@ -183,11 +182,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	let request: IRequest;
 	const loaderContainerTracker = new LoaderContainerTracker();
 
-	async function createDetachedContainerAndGetRootDataStore() {
+	async function createDetachedContainerAndGetEntryPoint() {
 		const container: IContainer = await loader.createDetachedContainer(codeDetails);
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const defaultDataStore = response.value as TestFluidObject;
+		const defaultDataStore = (await container.getEntryPoint()) as TestFluidObject;
 		return {
 			container,
 			defaultDataStore,
@@ -219,15 +217,20 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	}
 
 	const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
-		const peerDataStore = await requestFluidObject<ITestFluidObject>(
-			await containerRuntime.createDataStore(["default"]),
-			"/",
-		);
+		const dataStore = await containerRuntime.createDataStore(["default"]);
+		const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 		return {
 			peerDataStore,
 			peerDataStoreRuntimeChannel: peerDataStore.channel,
 		};
 	};
+
+	async function getDataObjectFromContainer(container: IContainer, key: string) {
+		const entryPoint = (await container.getEntryPoint()) as TestFluidObject;
+		const handle: IFluidHandle<TestFluidObject> | undefined = entryPoint.root.get(key);
+		assert(handle !== undefined, `handle for [${key}] must exist`);
+		return handle.get();
+	}
 
 	const getSnapshotTreeFromSerializedSnapshot = (container: IContainer) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -253,8 +256,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 	const tests = () => {
 		it("Dehydrated container snapshot", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
 			// Check for protocol attributes
@@ -300,8 +302,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Dehydrated container snapshot 2 times with changes in between", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
 			// Create a channel
 			const channel = defaultDataStore.runtime.createChannel(
@@ -342,8 +343,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Dehydrated container snapshot with dataStore handle stored in map of other bound dataStore", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 			// Create another dataStore
 			const peerDataStore = await createPeerDataStore(
@@ -368,16 +368,16 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Rehydrate container from snapshot and check contents before attach", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 
 			const snapshotTree = container.serialize();
 
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 			// Check for default data store
-			const response = await container2.request({ url: "/" });
-			assert.strictEqual(response.status, 200, "Component should exist!!");
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container2.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, "Component should exist!!");
+			const defaultDataStore = entryPoint as TestFluidObject;
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -409,7 +409,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Rehydrate container from snapshot and check contents after attach", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 
 			const snapshotTree = container.serialize();
 
@@ -417,9 +417,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			await container2.attach(request);
 
 			// Check for default data store
-			const response = await container2.request({ url: "/" });
-			assert.strictEqual(response.status, 200, "Component should exist!!");
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container2.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, "Component should exist!!");
+			const defaultDataStore = entryPoint as TestFluidObject;
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -451,7 +451,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Rehydrate container multiple times round trip serialize/deserialize", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 			let container1 = container;
 			for (let i = 0; i < 5; ++i) {
 				const snapshotTree1 = container1.serialize();
@@ -459,9 +459,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			}
 
 			// Check for default data store
-			const response = await container1.request({ url: "/" });
-			assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container1.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, "Component should exist!!");
+			const defaultDataStore = entryPoint as TestFluidObject;
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -493,11 +493,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Storage in detached container", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 
 			const snapshotTree = container.serialize();
-			const response = await container.request({ url: "/" });
-			const defaultDataStore = response.value as TestFluidObject;
+			const defaultDataStore = (await container.getEntryPoint()) as TestFluidObject;
 			assert(
 				defaultDataStore.context.storage !== undefined,
 				"Storage should be present in detached data store",
@@ -513,8 +512,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			const container2: IContainer =
 				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-			const response2 = await container2.request({ url: "/" });
-			const defaultDataStore2 = response2.value as TestFluidObject;
+			const defaultDataStore2 = (await container2.getEntryPoint()) as TestFluidObject;
 			assert(
 				defaultDataStore2.context.storage !== undefined,
 				"Storage should be present in rehydrated data store",
@@ -530,10 +528,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Change contents of dds, then rehydrate and then check summary", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 
-			const responseBefore = await container.request({ url: "/" });
-			const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
+			const defaultDataStoreBefore = (await container.getEntryPoint()) as TestFluidObject;
 			const sharedStringBefore =
 				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 			const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
@@ -564,8 +561,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-			const responseAfter = await container2.request({ url: "/" });
-			const defaultComponentAfter = responseAfter.value as TestFluidObject;
+			const defaultComponentAfter = (await container2.getEntryPoint()) as TestFluidObject;
 			const sharedStringAfter =
 				await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 			const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
@@ -615,18 +611,16 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Rehydrate container from summary, change contents of dds and then check summary", async () => {
-			const { container } = await createDetachedContainerAndGetRootDataStore();
+			const { container } = await createDetachedContainerAndGetEntryPoint();
 			let str = "AA";
-			const response1 = await container.request({ url: "/" });
-			const defaultComponent1 = response1.value as TestFluidObject;
+			const defaultComponent1 = (await container.getEntryPoint()) as TestFluidObject;
 			const sharedString1 =
 				await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
 			sharedString1.insertText(0, str);
 			const snapshotTree = container.serialize();
 
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-			const responseBefore = await container2.request({ url: "/" });
-			const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
+			const defaultDataStoreBefore = (await container2.getEntryPoint()) as TestFluidObject;
 			const sharedStringBefore =
 				await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 			const sharedMapBefore =
@@ -636,8 +630,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			sharedMapBefore.set("0", str);
 
 			await container2.attach(request);
-			const responseAfter = await container2.request({ url: "/" });
-			const defaultComponentAfter = responseAfter.value as TestFluidObject;
+			const defaultComponentAfter = (await container.getEntryPoint()) as TestFluidObject;
 			const sharedStringAfter =
 				await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 			const sharedMapAfter =
@@ -659,13 +652,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				"dds from rehydrated container and check reflection of changes in other container",
 			async () => {
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetRootDataStore();
+					await createDetachedContainerAndGetEntryPoint();
 
 				// Create and reference another dataStore
 				const { peerDataStore: dataStore2 } = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				defaultDataStore.root.set("dataStore2", dataStore2.handle);
+				const dataStore2Key = "dataStore2";
+				defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
 				await provider.ensureSynchronized();
 
 				const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -689,18 +683,15 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				const container2 = await loader2.resolve({ url: requestUrl2 });
 
 				// Get the sharedString1 from dataStore2 in rehydrated container.
-				const responseBefore = await rehydratedContainer.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore2FromRC = responseBefore.value as TestFluidObject;
+				const dataStore2FromRC = await getDataObjectFromContainer(
+					rehydratedContainer,
+					dataStore2Key,
+				);
 				const sharedMapFromRC =
 					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 				sharedMapFromRC.set("1", "B");
 
-				const responseAfter = await container2.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore3 = responseAfter.value as TestFluidObject;
+				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
 				const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 
 				await loaderContainerTracker.ensureSynchronized();
@@ -719,13 +710,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				"in it check reflection of changes in rehydrated container",
 			async function () {
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetRootDataStore();
+					await createDetachedContainerAndGetEntryPoint();
 
 				// Create and reference another dataStore
 				const { peerDataStore: dataStore2 } = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				defaultDataStore.root.set("dataStore2", dataStore2.handle);
+				const dataStore2Key = "dataStore2";
+				defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
 				await provider.ensureSynchronized();
 
 				const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -749,18 +741,15 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				const container2 = await loader2.resolve({ url: requestUrl2 });
 
 				// Get the sharedString1 from dataStore2 in container2.
-				const responseBefore = await container2.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore3 = responseBefore.value as TestFluidObject;
+				const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
 				const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
 				sharedMap3.set("1", "B");
 
 				// Get the sharedString1 from dataStore2 in rehydrated container.
-				const responseAfter = await rehydratedContainer.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore2FromRC = responseAfter.value as TestFluidObject;
+				const dataStore2FromRC = await getDataObjectFromContainer(
+					rehydratedContainer,
+					dataStore2Key,
+				);
 				const sharedMapFromRC =
 					await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
 
@@ -779,8 +768,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		);
 
 		it("Container rehydration with not bounded dataStore handle stored in root of other bounded dataStore", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 			// Create another dataStore
 			const peerDataStore = await createPeerDataStore(
@@ -789,16 +777,21 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
 			const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			rootOfDataStore1.set("dataStore2", dataStore2.handle);
+			const dataStore2Key = "dataStore2";
+			rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
 
 			const snapshotTree = container.serialize();
 			const rehydratedContainer =
 				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-			const response = await rehydratedContainer.request({
-				url: `/${dataStore2.context.id}`,
-			});
-			const dataStore2FromRC = response.value as TestFluidObject;
+			const rehydratedEntryPoint =
+				(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
+			const rehydratedRootOfDataStore =
+				await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+			const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+				rehydratedRootOfDataStore.get(dataStore2Key);
+			assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+			const dataStore2FromRC = await dataStore2Handle.get();
 			assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
 			assert.strictEqual(
 				dataStore2FromRC.runtime.id,
@@ -808,8 +801,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		});
 
 		it("Container rehydration with not bounded dds handle stored in root of bounded dataStore", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 			// Create another not bounded dds
 			const ddsId = "notbounddds";
@@ -819,19 +811,22 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			);
 
 			const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			rootOfDataStore1.set("dd2", dds2.handle);
+			const dds2Key = "dds2";
+			rootOfDataStore1.set(dds2Key, dds2.handle);
 
 			const snapshotTree = container.serialize();
 			const rehydratedContainer =
 				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-			const response = await rehydratedContainer.request({
-				url: `/${defaultDataStore.runtime.id}/${ddsId}`,
-			});
-			const ddd2FromRC = response.value as SharedString;
-			assert(ddd2FromRC, "ddd2 should have been serialized properly");
-			assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
-			assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+			const rehydratedEntryPoint =
+				(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
+			const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+			const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+			assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+			const dds2FromRC = await dds2Handle.get();
+			assert(dds2FromRC, "ddd2 should have been serialized properly");
+			assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+			assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 		});
 
 		it(
@@ -839,7 +834,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				"also stores handle not bounded data store",
 			async () => {
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetRootDataStore();
+					await createDetachedContainerAndGetEntryPoint();
 
 				// Create another not bounded dataStore
 				const peerDataStore = await createPeerDataStore(
@@ -853,28 +848,34 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 					ddsId,
 					SharedMap.getFactory().type,
 				) as SharedMap;
-				dds2.set("dataStore2", dataStore2.handle);
+				const dataStore2Key = "dataStore2";
+				dds2.set(dataStore2Key, dataStore2.handle);
 
 				const rootOfDataStore1 =
 					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-				rootOfDataStore1.set("dd2", dds2.handle);
+				const dds2Key = "dds2";
+				rootOfDataStore1.set(dds2Key, dds2.handle);
 
 				const snapshotTree = container.serialize();
 				const rehydratedContainer =
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-				const responseForDDS = await rehydratedContainer.request({
-					url: `/${defaultDataStore.runtime.id}/${ddsId}`,
-				});
-				const ddd2FromRC = responseForDDS.value as SharedString;
-				assert(ddd2FromRC, "ddd2 should have been serialized properly");
-				assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
-				assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+				const rehydratedEntryPoint =
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
+				const rootOfDds2 =
+					await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+				const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+				const dds2FromRC = await dds2Handle.get();
 
-				const responseForDataStore = await rehydratedContainer.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
+				assert(dds2FromRC, "dds2 should have been serialized properly");
+				assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
+
+				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+					dds2FromRC.get(dataStore2Key);
+				assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+				const dataStore2FromRC = await dataStore2Handle.get();
 				assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
 				assert.strictEqual(
 					dataStore2FromRC.runtime.id,
@@ -889,7 +890,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 				"The not bounded data store also stores handle not bounded dds",
 			async () => {
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetRootDataStore();
+					await createDetachedContainerAndGetEntryPoint();
 
 				// Create another not bounded dataStore
 				const peerDataStore = await createPeerDataStore(
@@ -904,28 +905,35 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 					SharedMap.getFactory().type,
 				) as SharedMap;
 				const rootOfDataStore2 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
-				rootOfDataStore2.set("dds2", dds2.handle);
+				const dds2Key = "dds2";
+				rootOfDataStore2.set(dds2Key, dds2.handle);
 
 				const rootOfDataStore1 =
 					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-				rootOfDataStore1.set("dataStore2", dataStore2.handle);
+				const dataStore2Key = "dataStore2";
+				rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
 
 				const snapshotTree = container.serialize();
 				const rehydratedContainer =
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-				const responseForDDS = await rehydratedContainer.request({
-					url: `/${dataStore2.runtime.id}/${ddsId}`,
-				});
-				const ddd2FromRC = responseForDDS.value as SharedString;
-				assert(ddd2FromRC, "ddd2 should have been serialized properly");
-				assert.strictEqual(ddd2FromRC.id, ddsId, "DDS id should match");
-				assert.strictEqual(ddd2FromRC.id, dds2.id, "Both dds id should match");
+				const rehydratedEntryPoint =
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
+				const rehydratedRootOfDataStore2 =
+					await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+					rehydratedRootOfDataStore2.get(dataStore2Key);
+				assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+				const dataStore2FromRC = await dataStore2Handle.get();
 
-				const responseForDataStore = await rehydratedContainer.request({
-					url: `/${dataStore2.context.id}`,
-				});
-				const dataStore2FromRC = responseForDataStore.value as TestFluidObject;
+				const rootOfDds2 = await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
+				const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+				const dds2FromRC = await dds2Handle.get();
+				assert(dds2FromRC, "ddd2 should have been serialized properly");
+				assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
+
 				assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
 				assert.strictEqual(
 					dataStore2FromRC.runtime.id,
@@ -936,8 +944,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		);
 
 		it("Not bounded/Unreferenced data store should not get serialized on container serialization", async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 			// Create another not bounded dataStore
 			await createPeerDataStore(defaultDataStore.context.containerRuntime);

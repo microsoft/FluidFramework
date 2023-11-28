@@ -236,10 +236,15 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 1);
 	});
 
-	// This test triggers 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
-	// didn't properly track state related to the detached node the edit affects.
-	// When unskipping this test, it may be desirable to add assertions verifying the final state of the two trees.
-	it.skip("Regression test for 0x4a6", async () => {
+	/**
+	 * This test triggered 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
+	 * didn't properly track state related to the detached node the edit affects.
+	 *
+	 * This test should basically be covered by lower-level editing tests now
+	 * (see "can rebase a node replacement and a dependent edit to the new node incrementally")
+	 * but for now is kept here for slightly higher e2e coverage for this sort of thing.
+	 */
+	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -288,6 +293,16 @@ describe("SharedTreeCore", () => {
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
 		rootNode.boxedChild.content = 43;
 		containerRuntimeFactory.processAllMessages();
+		assert.deepEqual(tree1.contentSnapshot().tree, [
+			{
+				type: node.name,
+			},
+		]);
+		assert.deepEqual(tree2.contentSnapshot().tree, [
+			{
+				type: node.name,
+			},
+		]);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
