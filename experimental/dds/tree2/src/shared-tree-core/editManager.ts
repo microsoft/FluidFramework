@@ -364,15 +364,17 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
+		let prevSequenceNumber = 0;
 		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => {
 			const metadata =
 				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 			const commit: SequencedCommit<TChangeset> = {
 				change: c.change,
 				revision: c.revision,
-				sequenceNumber: metadata.sequenceId.sequenceNumber,
+				sequenceNumber: brand(metadata.sequenceId.sequenceNumber - prevSequenceNumber),
 				sessionId: metadata.sessionId,
 			};
+			prevSequenceNumber = metadata.sequenceId.sequenceNumber;
 			if (metadata.sequenceId.indexInBatch !== undefined) {
 				commit.indexInBatch = metadata.sequenceId.indexInBatch;
 			}
@@ -415,15 +417,16 @@ export class EditManager<
 		// when hydrating the peer branches below
 		const trunkRevisionCache = new Map<RevisionTag, GraphCommit<TChangeset>>();
 		trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
+		let prevSequenceNumber: SeqNumber = brand(0);
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
+				const sequenceNumber: SeqNumber = brand(c.sequenceNumber + prevSequenceNumber);
+				prevSequenceNumber = sequenceNumber;
 				const sequenceId: SequenceId =
 					c.indexInBatch === undefined
-						? {
-								sequenceNumber: c.sequenceNumber,
-						  }
+						? { sequenceNumber }
 						: {
-								sequenceNumber: c.sequenceNumber,
+								sequenceNumber,
 								indexInBatch: c.indexInBatch,
 						  };
 				const commit = mintCommit(base, c);

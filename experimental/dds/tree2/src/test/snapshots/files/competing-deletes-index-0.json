@@ -62,7 +62,7 @@
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000008",
-                      "sequenceNumber": 4,
+                      "sequenceNumber": 1,
                       "sessionId": "beefbeef-beef-4000-8000-000000000002"
                     },
                     {
@@ -92,7 +92,7 @@
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000009",
-                      "sequenceNumber": 5,
+                      "sequenceNumber": 1,
                       "sessionId": "beefbeef-beef-4000-8000-000000000003"
                     }
                   ],
