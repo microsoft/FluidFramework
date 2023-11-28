@@ -40,6 +40,7 @@ import {
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
+	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
@@ -573,11 +574,16 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer works only with clients with no local changes. A data store in attaching
-					// state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x588 /* Local data store detected in attaching state during summarize */,
-					);
+					// state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					if (context.attachState === AttachState.Attaching) {
+						// Formerly assert 0x588
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state during summarize",
+							"summarize",
+						);
+						throw error;
+					}
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -675,11 +681,17 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer client and hence GC works only with clients with no local changes. A data store in
-					// attaching state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x589 /* Local data store detected in attaching state while running GC */,
-					);
+					// attaching state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					// Formerly assert 0x589
+					if (context.attachState === AttachState.Attaching) {
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state while running GC",
+							"getGCData",
+						);
+						throw error;
+					}
+
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
