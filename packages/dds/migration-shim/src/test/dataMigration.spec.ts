@@ -18,7 +18,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -31,9 +30,9 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type Typed,
-	type ITreeView,
 	disposeSymbol,
+	type TreeView,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -109,8 +108,8 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchema> {
-	return tree.schematizeInternal({
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -197,7 +196,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
-		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
 		// Initialize the legacy tree with some data
@@ -214,13 +213,13 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 	it("Can Hot Swap", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		// Transition the container to write mode so we send the client join op first.
 		testObj1._root.set("a", "value");
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		assert(
 			shim1.currentTree.attributes.type === legacySharedTreeFactory.type,
@@ -273,8 +272,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1: Typed<typeof inventorySchema> = view1.editableTree.content;
-		const treeNode2: Typed<typeof inventorySchema> = view2.editableTree.content;
+		const treeNode1 = view1.root;
+		const treeNode2 = view2.root;
 
 		// Validate migrated values of the old tree match the new tree
 		const migratedValue1 = treeNode1.quantity;
@@ -293,7 +292,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 	it("Can Hot Swap, summarize, and load from that summary", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 
 		// Hot swap
@@ -318,7 +317,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 
 		// Validate that we loaded a shared tree immediately
@@ -330,11 +329,11 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		// Get the migrated values from the new tree
 		const tree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(tree1);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode1 = view1.root;
 
 		const tree2 = shim2.currentTree;
 		const view2 = getNewTreeView(tree2);
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode2 = view2.root;
 		const migratedValue2 = treeNode2.quantity;
 		assert(
 			migratedValue2 === originalValue,

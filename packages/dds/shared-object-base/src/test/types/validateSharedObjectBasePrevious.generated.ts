@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_FluidSerializer():
     TypeOnly<old.FluidSerializer>;
 declare function use_current_ClassDeclaration_FluidSerializer(
-    use: TypeOnly<current.FluidSerializer>);
+    use: TypeOnly<current.FluidSerializer>): void;
 use_current_ClassDeclaration_FluidSerializer(
     get_old_ClassDeclaration_FluidSerializer());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_FluidSerializer(
 declare function get_current_ClassDeclaration_FluidSerializer():
     TypeOnly<current.FluidSerializer>;
 declare function use_old_ClassDeclaration_FluidSerializer(
-    use: TypeOnly<old.FluidSerializer>);
+    use: TypeOnly<old.FluidSerializer>): void;
 use_old_ClassDeclaration_FluidSerializer(
     get_current_ClassDeclaration_FluidSerializer());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_FluidSerializer(
 declare function get_old_InterfaceDeclaration_IFluidSerializer():
     TypeOnly<old.IFluidSerializer>;
 declare function use_current_InterfaceDeclaration_IFluidSerializer(
-    use: TypeOnly<current.IFluidSerializer>);
+    use: TypeOnly<current.IFluidSerializer>): void;
 use_current_InterfaceDeclaration_IFluidSerializer(
     get_old_InterfaceDeclaration_IFluidSerializer());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IFluidSerializer(
 declare function get_current_InterfaceDeclaration_IFluidSerializer():
     TypeOnly<current.IFluidSerializer>;
 declare function use_old_InterfaceDeclaration_IFluidSerializer(
-    use: TypeOnly<old.IFluidSerializer>);
+    use: TypeOnly<old.IFluidSerializer>): void;
 use_old_InterfaceDeclaration_IFluidSerializer(
     get_current_InterfaceDeclaration_IFluidSerializer());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IFluidSerializer(
 declare function get_old_InterfaceDeclaration_ISerializedHandle():
     TypeOnly<old.ISerializedHandle>;
 declare function use_current_InterfaceDeclaration_ISerializedHandle(
-    use: TypeOnly<current.ISerializedHandle>);
+    use: TypeOnly<current.ISerializedHandle>): void;
 use_current_InterfaceDeclaration_ISerializedHandle(
     get_old_InterfaceDeclaration_ISerializedHandle());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ISerializedHandle(
 declare function get_current_InterfaceDeclaration_ISerializedHandle():
     TypeOnly<current.ISerializedHandle>;
 declare function use_old_InterfaceDeclaration_ISerializedHandle(
-    use: TypeOnly<old.ISerializedHandle>);
+    use: TypeOnly<old.ISerializedHandle>): void;
 use_old_InterfaceDeclaration_ISerializedHandle(
     get_current_InterfaceDeclaration_ISerializedHandle());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ISerializedHandle(
 declare function get_old_InterfaceDeclaration_ISharedObject():
     TypeOnly<old.ISharedObject>;
 declare function use_current_InterfaceDeclaration_ISharedObject(
-    use: TypeOnly<current.ISharedObject>);
+    use: TypeOnly<current.ISharedObject>): void;
 use_current_InterfaceDeclaration_ISharedObject(
     get_old_InterfaceDeclaration_ISharedObject());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ISharedObject(
 declare function get_current_InterfaceDeclaration_ISharedObject():
     TypeOnly<current.ISharedObject>;
 declare function use_old_InterfaceDeclaration_ISharedObject(
-    use: TypeOnly<old.ISharedObject>);
+    use: TypeOnly<old.ISharedObject>): void;
 use_old_InterfaceDeclaration_ISharedObject(
     get_current_InterfaceDeclaration_ISharedObject());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ISharedObject(
 declare function get_old_InterfaceDeclaration_ISharedObjectEvents():
     TypeOnly<old.ISharedObjectEvents>;
 declare function use_current_InterfaceDeclaration_ISharedObjectEvents(
-    use: TypeOnly<current.ISharedObjectEvents>);
+    use: TypeOnly<current.ISharedObjectEvents>): void;
 use_current_InterfaceDeclaration_ISharedObjectEvents(
     get_old_InterfaceDeclaration_ISharedObjectEvents());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_ISharedObjectEvents(
 declare function get_current_InterfaceDeclaration_ISharedObjectEvents():
     TypeOnly<current.ISharedObjectEvents>;
 declare function use_old_InterfaceDeclaration_ISharedObjectEvents(
-    use: TypeOnly<old.ISharedObjectEvents>);
+    use: TypeOnly<old.ISharedObjectEvents>): void;
 use_old_InterfaceDeclaration_ISharedObjectEvents(
     get_current_InterfaceDeclaration_ISharedObjectEvents());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_ISharedObjectEvents(
 declare function get_old_ClassDeclaration_SharedObject():
     TypeOnly<old.SharedObject>;
 declare function use_current_ClassDeclaration_SharedObject(
-    use: TypeOnly<current.SharedObject>);
+    use: TypeOnly<current.SharedObject>): void;
 use_current_ClassDeclaration_SharedObject(
     get_old_ClassDeclaration_SharedObject());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_SharedObject(
 declare function get_current_ClassDeclaration_SharedObject():
     TypeOnly<current.SharedObject>;
 declare function use_old_ClassDeclaration_SharedObject(
-    use: TypeOnly<old.SharedObject>);
+    use: TypeOnly<old.SharedObject>): void;
 use_old_ClassDeclaration_SharedObject(
     get_current_ClassDeclaration_SharedObject());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_SharedObject(
 declare function get_old_ClassDeclaration_SharedObjectCore():
     TypeOnly<old.SharedObjectCore>;
 declare function use_current_ClassDeclaration_SharedObjectCore(
-    use: TypeOnly<current.SharedObjectCore>);
+    use: TypeOnly<current.SharedObjectCore>): void;
 use_current_ClassDeclaration_SharedObjectCore(
     get_old_ClassDeclaration_SharedObjectCore());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_SharedObjectCore(
 declare function get_current_ClassDeclaration_SharedObjectCore():
     TypeOnly<current.SharedObjectCore>;
 declare function use_old_ClassDeclaration_SharedObjectCore(
-    use: TypeOnly<old.SharedObjectCore>);
+    use: TypeOnly<old.SharedObjectCore>): void;
 use_old_ClassDeclaration_SharedObjectCore(
     get_current_ClassDeclaration_SharedObjectCore());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_SharedObjectCore(
 declare function get_old_ClassDeclaration_SummarySerializer():
     TypeOnly<old.SummarySerializer>;
 declare function use_current_ClassDeclaration_SummarySerializer(
-    use: TypeOnly<current.SummarySerializer>);
+    use: TypeOnly<current.SummarySerializer>): void;
 use_current_ClassDeclaration_SummarySerializer(
     get_old_ClassDeclaration_SummarySerializer());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_SummarySerializer(
 declare function get_current_ClassDeclaration_SummarySerializer():
     TypeOnly<current.SummarySerializer>;
 declare function use_old_ClassDeclaration_SummarySerializer(
-    use: TypeOnly<old.SummarySerializer>);
+    use: TypeOnly<old.SummarySerializer>): void;
 use_old_ClassDeclaration_SummarySerializer(
     get_current_ClassDeclaration_SummarySerializer());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_SummarySerializer(
 declare function get_old_EnumDeclaration_ValueType():
     TypeOnly<old.ValueType>;
 declare function use_current_EnumDeclaration_ValueType(
-    use: TypeOnly<current.ValueType>);
+    use: TypeOnly<current.ValueType>): void;
 use_current_EnumDeclaration_ValueType(
     get_old_EnumDeclaration_ValueType());
 
@@ -233,7 +233,7 @@ use_current_EnumDeclaration_ValueType(
 declare function get_current_EnumDeclaration_ValueType():
     TypeOnly<current.ValueType>;
 declare function use_old_EnumDeclaration_ValueType(
-    use: TypeOnly<old.ValueType>);
+    use: TypeOnly<old.ValueType>): void;
 use_old_EnumDeclaration_ValueType(
     get_current_EnumDeclaration_ValueType());
 
@@ -245,7 +245,7 @@ use_old_EnumDeclaration_ValueType(
 declare function get_old_FunctionDeclaration_createSingleBlobSummary():
     TypeOnly<typeof old.createSingleBlobSummary>;
 declare function use_current_FunctionDeclaration_createSingleBlobSummary(
-    use: TypeOnly<typeof current.createSingleBlobSummary>);
+    use: TypeOnly<typeof current.createSingleBlobSummary>): void;
 use_current_FunctionDeclaration_createSingleBlobSummary(
     get_old_FunctionDeclaration_createSingleBlobSummary());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_createSingleBlobSummary(
 declare function get_current_FunctionDeclaration_createSingleBlobSummary():
     TypeOnly<typeof current.createSingleBlobSummary>;
 declare function use_old_FunctionDeclaration_createSingleBlobSummary(
-    use: TypeOnly<typeof old.createSingleBlobSummary>);
+    use: TypeOnly<typeof old.createSingleBlobSummary>): void;
 use_old_FunctionDeclaration_createSingleBlobSummary(
     get_current_FunctionDeclaration_createSingleBlobSummary());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_createSingleBlobSummary(
 declare function get_old_VariableDeclaration_isSerializedHandle():
     TypeOnly<typeof old.isSerializedHandle>;
 declare function use_current_VariableDeclaration_isSerializedHandle(
-    use: TypeOnly<typeof current.isSerializedHandle>);
+    use: TypeOnly<typeof current.isSerializedHandle>): void;
 use_current_VariableDeclaration_isSerializedHandle(
     get_old_VariableDeclaration_isSerializedHandle());
 
@@ -281,7 +281,7 @@ use_current_VariableDeclaration_isSerializedHandle(
 declare function get_current_VariableDeclaration_isSerializedHandle():
     TypeOnly<typeof current.isSerializedHandle>;
 declare function use_old_VariableDeclaration_isSerializedHandle(
-    use: TypeOnly<typeof old.isSerializedHandle>);
+    use: TypeOnly<typeof old.isSerializedHandle>): void;
 use_old_VariableDeclaration_isSerializedHandle(
     get_current_VariableDeclaration_isSerializedHandle());
 
@@ -293,7 +293,7 @@ use_old_VariableDeclaration_isSerializedHandle(
 declare function get_old_FunctionDeclaration_makeHandlesSerializable():
     TypeOnly<typeof old.makeHandlesSerializable>;
 declare function use_current_FunctionDeclaration_makeHandlesSerializable(
-    use: TypeOnly<typeof current.makeHandlesSerializable>);
+    use: TypeOnly<typeof current.makeHandlesSerializable>): void;
 use_current_FunctionDeclaration_makeHandlesSerializable(
     get_old_FunctionDeclaration_makeHandlesSerializable());
 
@@ -305,7 +305,7 @@ use_current_FunctionDeclaration_makeHandlesSerializable(
 declare function get_current_FunctionDeclaration_makeHandlesSerializable():
     TypeOnly<typeof current.makeHandlesSerializable>;
 declare function use_old_FunctionDeclaration_makeHandlesSerializable(
-    use: TypeOnly<typeof old.makeHandlesSerializable>);
+    use: TypeOnly<typeof old.makeHandlesSerializable>): void;
 use_old_FunctionDeclaration_makeHandlesSerializable(
     get_current_FunctionDeclaration_makeHandlesSerializable());
 
@@ -317,7 +317,7 @@ use_old_FunctionDeclaration_makeHandlesSerializable(
 declare function get_old_FunctionDeclaration_parseHandles():
     TypeOnly<typeof old.parseHandles>;
 declare function use_current_FunctionDeclaration_parseHandles(
-    use: TypeOnly<typeof current.parseHandles>);
+    use: TypeOnly<typeof current.parseHandles>): void;
 use_current_FunctionDeclaration_parseHandles(
     get_old_FunctionDeclaration_parseHandles());
 
@@ -329,7 +329,7 @@ use_current_FunctionDeclaration_parseHandles(
 declare function get_current_FunctionDeclaration_parseHandles():
     TypeOnly<typeof current.parseHandles>;
 declare function use_old_FunctionDeclaration_parseHandles(
-    use: TypeOnly<typeof old.parseHandles>);
+    use: TypeOnly<typeof old.parseHandles>): void;
 use_old_FunctionDeclaration_parseHandles(
     get_current_FunctionDeclaration_parseHandles());
 
@@ -341,7 +341,7 @@ use_old_FunctionDeclaration_parseHandles(
 declare function get_old_FunctionDeclaration_serializeHandles():
     TypeOnly<typeof old.serializeHandles>;
 declare function use_current_FunctionDeclaration_serializeHandles(
-    use: TypeOnly<typeof current.serializeHandles>);
+    use: TypeOnly<typeof current.serializeHandles>): void;
 use_current_FunctionDeclaration_serializeHandles(
     get_old_FunctionDeclaration_serializeHandles());
 
@@ -353,6 +353,6 @@ use_current_FunctionDeclaration_serializeHandles(
 declare function get_current_FunctionDeclaration_serializeHandles():
     TypeOnly<typeof current.serializeHandles>;
 declare function use_old_FunctionDeclaration_serializeHandles(
-    use: TypeOnly<typeof old.serializeHandles>);
+    use: TypeOnly<typeof old.serializeHandles>): void;
 use_old_FunctionDeclaration_serializeHandles(
     get_current_FunctionDeclaration_serializeHandles());

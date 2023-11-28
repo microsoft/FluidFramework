@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TextSegment } from "@fluidframework/merge-tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-private/test-version-utils";
 import { FlowDocument } from "../document/index.js";
 import { SegmentSpan } from "../document/segmentspan.js";
@@ -17,7 +16,7 @@ describeLoaderCompat("SegmentSpan", (getTestObjectProvider) => {
 	before(async () => {
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());
-		doc = await requestFluidObject<FlowDocument>(container, "default");
+		doc = await getContainerEntryPointBackCompat<FlowDocument>(container);
 	});
 
 	function setup(chunks: string[]) {

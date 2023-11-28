@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	cursorForJsonableTreeNode,
@@ -39,7 +38,7 @@ import {
 	ForestType,
 	ISharedTree,
 	ITreeCheckout,
-	ITreeView,
+	FlexTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
@@ -106,7 +105,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = tree.schematizeInternal({
+			const view = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -119,7 +118,7 @@ describe("SharedTree", () => {
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -143,7 +142,7 @@ describe("SharedTree", () => {
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
 			tree.storedSchema.update(schema);
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
@@ -442,7 +441,7 @@ describe("SharedTree", () => {
 		};
 		initializeTestTree(summarizingTree.view, initialState);
 
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
 		const fooField: FieldKey = brand("foo");
 		runSynchronous(summarizingTree.view, () => {
@@ -646,7 +645,9 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
 			provider.processMessages();
@@ -674,6 +675,59 @@ describe("SharedTree", () => {
 			unsubscribe();
 		});
 
+		it("inserts of multiple nodes in a sequence field", () => {
+			const value = "A";
+			const value2 = "B";
+			const value3 = "C";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
+			provider.processMessages();
+
+			// Insert node
+			tree1.editableTree.insertAtStart(value3);
+			tree1.editableTree.insertAtStart(value2);
+			tree1.editableTree.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual(tree1.editableTree.asArray, [value, value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value, value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, []);
+			assert.deepEqual(tree2.editableTree.asArray, []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
+			unsubscribe();
+		});
+
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
@@ -687,7 +741,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 
 			provider.processMessages();
 			const tree2 =
@@ -697,7 +751,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Validate insertion
 			validateTreeContent(tree2.checkout, content);
@@ -743,6 +797,123 @@ describe("SharedTree", () => {
 			unsubscribe1();
 			unsubscribe2();
 		});
+
+		/**
+		 * the collab window includes all sequenced edits after the minimum sequence number
+		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
+		 */
+		it("refresher for repair data out of collab window", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C", "D"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
+
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(content);
+
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
+
+			// remove in first tree
+			root1.removeAt(0);
+
+			provider.processMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// send edits to move the collab window up
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// ensure the remove is out of the collab window
+			assert(removeSequenceNumber < provider.minimumSequenceNumber);
+			undoStack[0]?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["A", "B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "D"]);
+
+			assert.equal(redoStack.length, 1);
+			redoStack.pop()?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			unsubscribe();
+		});
+
+		describe("can concurrently restore and edit removed tree", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
+			for (const scenario of ["restore then change", "change then restore"]) {
+				it(`with the ${scenario} sequenced`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					const tree1 = provider.trees[0].schematize(content);
+					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+						createTestUndoRedoStacks(tree1.events);
+					const tree2 = provider.trees[1].schematize(content);
+					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+						createTestUndoRedoStacks(tree2.events);
+
+					provider.processMessages();
+
+					// Validate insertion
+					validateTreeContent(tree2.view.checkout, content);
+
+					// edit subtree
+					tree2.root[0].insertAtEnd("b");
+					provider.processMessages();
+					assert.deepEqual(tree1.root, [["a", "b"]]);
+					assert.deepEqual(tree2.root, [["a", "b"]]);
+
+					// delete subtree
+					tree1.root.removeAt(0);
+					provider.processMessages();
+					assert.deepEqual(tree1.root, []);
+					assert.deepEqual(tree2.root, []);
+
+					if (scenario === "restore then change") {
+						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert();
+					} else {
+						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert();
+					}
+
+					provider.processMessages();
+					// check the undo happened
+					assert.deepEqual(tree1.root, [["a"]]);
+					assert.deepEqual(tree2.root, [["a"]]);
+
+					unsubscribe1();
+					unsubscribe2();
+				});
+			}
+		});
 	});
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
@@ -764,12 +935,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Insert node
 			tree1.editableTree.insertAtStart([value]);
@@ -822,10 +993,10 @@ describe("SharedTree", () => {
 			validateViewConsistency(tree1.checkout, tree2.checkout);
 
 			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.checkout,
+				tree1.checkout.events,
 			);
 			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				tree2.checkout,
+				tree2.checkout.events,
 			);
 
 			const root1 = tree1.editableTree;
@@ -885,7 +1056,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = assertSchema(
 				await dataStore.getSharedObject<ISharedTree>("TestSharedTree"),
 				stringSequenceRootSchema,
@@ -1025,6 +1196,23 @@ describe("SharedTree", () => {
 			"A",
 		]);
 	});
+
+	it("doesn't submit an op for a change that crashes", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [tree1, tree2] = provider.trees;
+
+		tree2.on("pre-op", () => {
+			assert.fail();
+		});
+
+		assert.throws(() =>
+			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 99),
+		);
+
+		provider.processMessages();
+	});
+
 	describe("Stashed ops", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
@@ -1039,7 +1227,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
@@ -1061,7 +1249,7 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.objectRecursive("Node", {
+			const rootNodeSchema = testSchemaBuilder.object("Node", {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});
@@ -1203,7 +1391,7 @@ describe("SharedTree", () => {
 function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
 	schema: TreeSchema<TRoot>,
-): ITreeView<TRoot> {
+): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }
 

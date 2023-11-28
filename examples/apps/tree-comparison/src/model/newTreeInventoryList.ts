@@ -8,7 +8,7 @@ import {
 	ForestType,
 	ISharedTree,
 	Tree,
-	ProxyNode,
+	TypedNode,
 	SchemaBuilder,
 	SharedTreeFactory,
 	typeboxValidator,
@@ -32,10 +32,10 @@ const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// The number in stock
 	quantity: builder.number,
 });
-type InventoryItemNode = ProxyNode<typeof inventoryItemSchema>;
+type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
 
 const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = ProxyNode<typeof inventoryItemList>;
+type InventoryItemList = TypedNode<typeof inventoryItemList>;
 
 const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList,
@@ -110,15 +110,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this.inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
+		this.inventoryItemList.insertAtEnd({
+			// In a real-world scenario, this is probably a known unique inventory ID (rather than
+			// randomly generated).  Randomly generating here just for convenience.
+			id: uuid(),
+			name,
+			quantity,
+		});
 	};
 
 	public readonly getItems = (): IInventoryItem[] => {

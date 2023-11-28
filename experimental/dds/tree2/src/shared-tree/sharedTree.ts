@@ -48,8 +48,9 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
-	ProxyRoot,
+	makeMitigatedChangeFamily,
 } from "../feature-libraries";
+import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { TreeView, type ITree } from "./simpleTree";
@@ -60,7 +61,7 @@ import {
 	schematize,
 } from "./schematizedTree";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
-import { ITreeView, CheckoutView } from "./treeView";
+import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -108,7 +109,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 */
 	schematizeInternal<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ITreeView<TRoot>;
+	): FlexTreeView<TRoot>;
 
 	/**
 	 * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
@@ -128,7 +129,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	requireSchema<TRoot extends TreeFieldSchema>(
 		schema: TreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
-	): ITreeView<TRoot> | undefined;
+	): FlexTreeView<TRoot> | undefined;
 }
 
 /**
@@ -176,9 +177,32 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			options,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
-		const changeFamily = new DefaultChangeFamily(options);
+		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const changeFamily = makeMitigatedChangeFamily(
+			defaultChangeFamily,
+			DefaultChangeFamily.emptyChange,
+			(error: unknown) => {
+				// TODO:6344 Add telemetry for these errors.
+				// Rethrowing the error has a different effect depending on the context in which the
+				// ChangeFamily was invoked:
+				// - If the ChangeFamily was invoked as part of incoming op processing, rethrowing the error
+				// will cause the runtime to disconnect the client, log a severe error, and not reconnect.
+				// This will not cause the host application to crash because it is not on the stack at that time.
+				// TODO: let the host application know that the client is now disconnected.
+				// - If the ChangeFamily was invoked as part of dealing with a local change, rethrowing the
+				// error will cause the host application to crash. This is not ideal, but is better than
+				// letting the application either send an invalid change to the server or allowing the
+				// application to continue working when its local branches contain edits that cannot be
+				// reflected in its views.
+				// The best course of action for a host application in such a state is to restart.
+				// TODO: let the host application know about this situation and provide a way to
+				// programmatically reload the SharedTree container.
+				throw error;
+			},
+		);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
@@ -192,6 +216,7 @@ export class SharedTree
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
+			changeFamily,
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
@@ -207,8 +232,8 @@ export class SharedTree
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): CheckoutView<TRoot> | undefined {
-		assert(this.hasView2 === false, "Cannot create second view from tree.");
+	): CheckoutFlexTreeView<TRoot> | undefined {
+		assert(this.hasView2 === false, 0x7f1 /* Cannot create second view from tree. */);
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
@@ -220,13 +245,13 @@ export class SharedTree
 		}
 
 		this.hasView2 = true;
-		const view2 = new CheckoutView(
+		const view2 = new CheckoutFlexTreeView(
 			this.view,
 			schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
 			() => {
-				assert(this.hasView2, "unexpected dispose");
+				assert(this.hasView2, 0x7f2 /* unexpected dispose */);
 				this.hasView2 = false;
 			},
 		);
@@ -265,8 +290,8 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): CheckoutView<TRoot> {
-		assert(this.hasView2 === false, "Cannot create second view from tree.");
+	): CheckoutFlexTreeView<TRoot> {
+		assert(this.hasView2 === false, 0x7f3 /* Cannot create second view from tree. */);
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -286,7 +311,7 @@ export class SharedTree
 						const fieldEditor = this.editor.optionalField(field);
 						assert(
 							content.length <= 1,
-							"optional field content should normalize at most one item",
+							0x7f4 /* optional field content should normalize at most one item */,
 						);
 						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
 						break;
@@ -319,16 +344,9 @@ export class SharedTree
 
 	public schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TreeView<ProxyRoot<TreeSchema<TRoot>>> {
+	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
 		const view = this.schematizeInternal(config);
-		const result = {
-			get root(): ProxyRoot<TreeSchema<TRoot>> {
-				return view.root;
-			},
-			events: view.checkout.events,
-			[disposeSymbol]: () => view[disposeSymbol](),
-		};
-		return result;
+		return new WrapperTreeView(view);
 	}
 
 	/**
@@ -436,5 +454,28 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
+	}
+}
+
+/**
+ * Implementation of TreeView wrapping a FlexTreeView.
+ */
+export class WrapperTreeView<
+	in out TRoot extends TreeFieldSchema,
+	TView extends FlexTreeView<TRoot>,
+> implements TreeView<TreeField<TRoot>>
+{
+	public constructor(public readonly view: TView) {}
+
+	public [disposeSymbol](): void {
+		this.view[disposeSymbol]();
+	}
+
+	public get events(): ISubscribable<CheckoutEvents> {
+		return this.view.checkout.events;
+	}
+
+	public get root(): TreeRoot<TreeSchema<TRoot>> {
+		return getProxyForField(this.view.editableTree);
 	}
 }

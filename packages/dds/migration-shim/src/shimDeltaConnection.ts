@@ -9,7 +9,8 @@ import {
 	type IDeltaConnection,
 	type IDeltaHandler,
 } from "@fluidframework/datastore-definitions";
-import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
+import { assert } from "@fluidframework/core-utils";
+import { type IUnstampedContents, type IShimDeltaHandler } from "./types.js";
 
 /**
  * Represents a connection to a Shim data store that can receive and submit deltas.
@@ -81,7 +82,11 @@ export class StampDeltaConnection implements IDeltaConnection {
 	}
 
 	// This is for submitting v2 ops
-	public submit(messageContent: IStampedContents, localOpMetadata: unknown): void {
+	public submit(messageContent: IUnstampedContents, localOpMetadata: unknown): void {
+		assert(
+			messageContent.fluidMigrationStamp === undefined,
+			0x835 /* Should not be stamping ops twice! */,
+		);
 		messageContent.fluidMigrationStamp = {
 			...this.attributes,
 		};
