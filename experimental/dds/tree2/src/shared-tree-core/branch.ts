@@ -11,7 +11,6 @@ import {
 	findAncestor,
 	GraphCommit,
 	mintCommit,
-	mintRevisionTag,
 	tagChange,
 	TaggedChange,
 	rebaseBranch,

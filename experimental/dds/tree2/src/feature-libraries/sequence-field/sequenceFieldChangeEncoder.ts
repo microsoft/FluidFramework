@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
+import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { Attach, Changeset, Detach, Mark, MarkEffect, NoopMarkType } from "./format";
-import { idCompressorBlobName } from "@fluidframework/container-runtime/dist/summary";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
