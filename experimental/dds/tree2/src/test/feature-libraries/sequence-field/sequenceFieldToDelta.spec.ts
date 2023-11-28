@@ -8,13 +8,10 @@ import {
 	RevisionTag,
 	Delta,
 	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
 	tagChange,
-	deltaForSet,
 	emptyFieldChanges,
 } from "../../../core";
 import {
@@ -22,23 +19,13 @@ import {
 	FieldKinds,
 	NodeChangeset,
 	SequenceField as SF,
-	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
-import { brand, makeArray } from "../../../util";
+import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { composeAnonChanges, toDelta } from "./utils";
 
-const type: TreeNodeSchemaIdentifier = brand("Node");
-const nodeX = { type, value: 0 };
-const nodeY = { type, value: 1 };
-const content = [nodeX];
-const content2 = [nodeX, nodeY];
-const contentCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
-const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) =>
-	cursorForJsonableTreeNode(node),
-);
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
@@ -47,11 +34,6 @@ const tag2: RevisionTag = mintRevisionTag();
 const fooField = brand<FieldKey>("foo");
 const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 const deltaNodeId: Delta.DetachedNodeId = { major: cellId.revision, minor: cellId.localId };
-const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
-
-function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-	return makeArray(count, () => cursorForJsonableTreeNode({ type: DUMMY_REVIVED_NODE_TYPE }));
-}
 
 function toDeltaShallow(change: TestChangeset): Delta.FieldChanges {
 	deepFreeze(change);
@@ -93,7 +75,9 @@ describe("SequenceField - toDelta", () => {
 
 	it("insert", () => {
 		const changeset = Change.insert(0, 1);
-		const expected = deltaForSet(contentCursor, { minor: 0 });
+		const expected = {
+			local: [{ count: 1, attach: { minor: 0 } }],
+		};
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -258,7 +242,6 @@ describe("SequenceField - toDelta", () => {
 			{ count: 1, fields: childChange1Delta },
 		];
 		const expected: Delta.FieldChanges = {
-			build: [{ id: { major: tag, minor: 52 }, trees: [contentCursor] }],
 			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
@@ -269,17 +252,6 @@ describe("SequenceField - toDelta", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
 		const buildId = { major: tag, minor: 0 };
 		const expected: Delta.FieldChanges = {
-			build: [
-				{
-					id: buildId,
-					trees: [
-						cursorForJsonableTreeNode({
-							type,
-							value: 0,
-						}),
-					],
-				},
-			],
 			global: [{ id: buildId, fields: childChange1Delta }],
 			local: [{ count: 1, attach: buildId }],
 		};
@@ -313,23 +285,12 @@ describe("SequenceField - toDelta", () => {
 		const nodeChange = {
 			fieldChanges: new Map([[fooField, nestedChange]]),
 		};
-		const changeset = [Mark.insert(content, brand(0), { changes: nodeChange })];
+		const changeset = [Mark.insert(1, brand(0), { changes: nodeChange })];
 		const nestedMoveDelta = new Map([
 			[fooField, { local: [{ attach: { minor: moveId }, count: 42 }] }],
 		]);
 		const buildId = { minor: 0 };
 		const expected: Delta.FieldChanges = {
-			build: [
-				{
-					id: buildId,
-					trees: [
-						cursorForJsonableTreeNode({
-							type,
-							value: 0,
-						}),
-					],
-				},
-			],
 			global: [{ id: buildId, fields: nestedMoveDelta }],
 			local: [{ count: 1, attach: buildId }],
 		};
@@ -345,12 +306,11 @@ describe("SequenceField - toDelta", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
 		it("insert & delete", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
 			const expected: Delta.FieldChanges = {
-				build: [{ id: buildId, trees: contentCursor2 }],
 				rename: [{ count: 2, oldId: buildId, newId: { minor: 2 } }],
 			};
 			assertFieldChangesEqual(delta, expected);
@@ -358,7 +318,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
@@ -366,7 +326,6 @@ describe("SequenceField - toDelta", () => {
 			const buildId = { minor: 0 };
 			const id = { minor: 2 };
 			const expected: Delta.FieldChanges = {
-				build: [{ id: buildId, trees: contentCursor2 }],
 				rename: [{ oldId: buildId, newId: id, count: 2 }],
 				local: [{ count: 1 }, { count: 2, attach: id }],
 			};
@@ -391,7 +350,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move & delete", () => {
 			const changeset = [
-				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
@@ -400,7 +359,6 @@ describe("SequenceField - toDelta", () => {
 			const id1 = { minor: 2 };
 			const id2 = { minor: 4 };
 			const expected: Delta.FieldChanges = {
-				build: [{ id: buildId, trees: contentCursor2 }],
 				rename: [
 					{ count: 2, oldId: buildId, newId: id1 },
 					{ count: 2, oldId: id1, newId: id2 },

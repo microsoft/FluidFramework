@@ -15,10 +15,13 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -60,6 +63,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/devtools-core": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
 	},
@@ -76,6 +80,7 @@
 		"@types/mocha": "^9.1.1",
 		"c8": "^7.7.1",
 		"chai": "^4.2.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
@@ -90,6 +95,14 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			},
 			"tsc": [
 				"...",
 				"typetests:gen"

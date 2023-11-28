@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	cursorForJsonableTreeNode,
@@ -799,6 +798,68 @@ describe("SharedTree", () => {
 			unsubscribe2();
 		});
 
+		/**
+		 * the collab window includes all sequenced edits after the minimum sequence number
+		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
+		 */
+		it("refresher for repair data out of collab window", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C", "D"],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
+
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematizeInternal(content);
+
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
+
+			// remove in first tree
+			root1.removeAt(0);
+
+			provider.processMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// send edits to move the collab window up
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+			root2.insertAt(3, ["y"]);
+			provider.processMessages();
+			root1.removeAt(3);
+			provider.processMessages();
+
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			// ensure the remove is out of the collab window
+			assert(removeSequenceNumber < provider.minimumSequenceNumber);
+			undoStack[0]?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["A", "B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["A", "B", "C", "D"]);
+
+			assert.equal(redoStack.length, 1);
+			redoStack.pop()?.revert();
+
+			provider.processMessages();
+			assert.deepEqual(root1.asArray, ["B", "C", "D"]);
+			assert.deepEqual(root2.asArray, ["B", "C", "D"]);
+
+			unsubscribe();
+		});
+
 		describe("can concurrently restore and edit removed tree", () => {
 			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
 			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
@@ -824,7 +885,7 @@ describe("SharedTree", () => {
 					validateTreeContent(tree2.view.checkout, content);
 
 					// edit subtree
-					tree2.root[0].insertAtEnd(["b"]);
+					tree2.root[0].insertAtEnd("b");
 					provider.processMessages();
 					assert.deepEqual(tree1.root, [["a", "b"]]);
 					assert.deepEqual(tree2.root, [["a", "b"]]);
@@ -995,7 +1056,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = assertSchema(
 				await dataStore.getSharedObject<ISharedTree>("TestSharedTree"),
 				stringSequenceRootSchema,
@@ -1166,7 +1227,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();

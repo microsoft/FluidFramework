@@ -17,6 +17,7 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
@@ -25,19 +26,36 @@ export interface ContainerSchema {
     initialObjects: LoadableObjectClassRecord;
 }
 
+// @public (undocumented)
+export function createDOProviderContainerRuntimeFactory(props: {
+    schema: ContainerSchema;
+}): IRuntimeFactory;
+
+// @public (undocumented)
+export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
+    container: IContainer;
+    rootDataObject: IRootDataObject;
+}): IFluidContainer<TContainerSchema>;
+
+// @public (undocumented)
+export function createServiceAudience<M extends IMember = IMember>(props: {
+    container: IContainer;
+    createServiceMember: (audienceMember: IClient) => M;
+}): IServiceAudience<M>;
+
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: IFluidDataStoreFactory;
 } & LoadableObjectCtor<T>;
 
-// @public
+// @public @deprecated
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
 }
 
-// @public
+// @public @deprecated
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
     constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
@@ -94,8 +112,14 @@ export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
 };
 
+// @public (undocumented)
+export interface IProvideRootDataObject {
+    // (undocumented)
+    readonly IRootDataObject?: IRootDataObject;
+}
+
 // @public
-export interface IRootDataObject {
+export interface IRootDataObject extends IProvideRootDataObject {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     readonly initialObjects: LoadableObjectRecord;
 }
@@ -136,7 +160,7 @@ export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
 
-// @public
+// @public @deprecated
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
     constructor(
     container: IContainer);

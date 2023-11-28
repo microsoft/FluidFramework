@@ -41,8 +41,11 @@ import {
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
@@ -324,6 +327,21 @@ describe("ModularChangeFamily", () => {
 			]),
 		};
 
+		it("prioritizes earlier build entries when faced with duplicates", () => {
+			const change1: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+			};
+			const change2: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+			};
+			assert.deepEqual(
+				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
+				change1,
+			);
+		});
+
 		it("compose specific ○ specific", () => {
 			const expectedCompose: ModularChangeset = {
 				fieldChanges: new Map([
@@ -594,12 +612,14 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = new Map([
-				[fieldA, nodeDelta],
-				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
-			]);
+			const expectedDelta: Delta.Root = {
+				fields: new Map([
+					[fieldA, nodeDelta],
+					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+				]),
+			};
 
-			const actual = family.intoDelta(makeAnonChange(rootChange1a));
+			const actual = intoDelta(makeAnonChange(rootChange1a), family.fieldKinds);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});

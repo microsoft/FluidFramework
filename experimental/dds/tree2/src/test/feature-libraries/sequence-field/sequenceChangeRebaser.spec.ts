@@ -15,6 +15,8 @@ import {
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
+import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
@@ -27,8 +29,9 @@ import {
 	toDelta,
 	withNormalizedLineage,
 	withoutLineage,
+	rebase,
 } from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -62,9 +65,12 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"MInsert",
 		(i) =>
-			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
+			composeAnonChanges([
+				Change.insert(i, 1, brand(42)),
+				Change.modify(i, TestChange.mint([], 2)),
+			]),
 	],
-	["Insert", (i) => Change.insert(i, 2, 42)],
+	["Insert", (i) => Change.insert(i, 2, brand(42))],
 	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
@@ -341,6 +347,169 @@ describe("SequenceField - Rebaser Axioms", () => {
 			}
 		}
 	});
+});
+
+interface TestState {
+	/**
+	 * The current length of the sequence being edited
+	 */
+	length: number;
+	/**
+	 * The highest index that will be iterated to to generate inserts, deletes, and moves
+	 */
+	maxIndex: number;
+	/**
+	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
+	 * deletes that operate on one node at a time and then 3 nodes at a time.
+	 */
+	numNodes: number[];
+}
+
+type SequenceFieldTestState = FieldStateTree<TestState, TestChangeset>;
+
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = function* (
+	state: SequenceFieldTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<SequenceFieldTestState> {
+	const { numNodes, maxIndex } = state.content;
+	const iterationCap = Math.min(maxIndex, state.content.length);
+
+	// Undo the most recent edit
+	if (state.mostRecentEdit !== undefined) {
+		assert(state.parent?.content !== undefined, "Must have parent state to undo");
+		const undoIntention = mintIntention();
+		const invertedEdit = invert(state.mostRecentEdit.changeset);
+		yield {
+			content: state.parent.content,
+			mostRecentEdit: {
+				changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+				intention: undoIntention,
+				description: `Undo:${state.mostRecentEdit.description}`,
+			},
+			parent: state,
+		};
+	}
+
+	for (const nodeCount of numNodes) {
+		for (let i = 0; i <= iterationCap; i++) {
+			// Insert nodeCount nodes
+			const insertIntention = mintIntention();
+			yield {
+				content: {
+					length: state.content.length + nodeCount,
+					maxIndex,
+					numNodes,
+				},
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.insert(i, nodeCount),
+						tagFromIntention(insertIntention),
+					),
+					intention: insertIntention,
+					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
+				},
+				parent: state,
+			};
+
+			// Don't generate deletes past the length of the sequence
+			if (i + nodeCount <= state.content.length) {
+				// Delete nodeCount nodes
+				const deleteIntention = mintIntention();
+				yield {
+					content: {
+						length: state.content.length - nodeCount,
+						maxIndex,
+						numNodes,
+					},
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.delete(i, nodeCount),
+							tagFromIntention(deleteIntention),
+						),
+						intention: deleteIntention,
+						description: `Delete${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}At${i}`,
+					},
+					parent: state,
+				};
+			}
+
+			// Only generate moves when we're moving less than the length of the whole sequence
+			if (state.content.length > nodeCount) {
+				// MoveIn nodeCount nodes
+				const moveInIntention = mintIntention();
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.move(1, nodeCount, i),
+							tagFromIntention(moveInIntention),
+						),
+						intention: moveInIntention,
+						description: `MoveIn${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}From1To${i}`,
+					},
+					parent: state,
+				};
+
+				// MoveOut nodeCount nodes
+				const moveOutIntention = mintIntention();
+				yield {
+					content: state.content,
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.move(i, nodeCount, 1),
+							tagFromIntention(moveOutIntention),
+						),
+						intention: moveOutIntention,
+						description: `MoveOut${nodeCount}${
+							nodeCount === 1 ? "Node" : "Nodes"
+						}From${i}To1`,
+					},
+					parent: state,
+				};
+			}
+		}
+	}
+};
+
+describe.skip("SequenceField - State-based Rebaser Axioms", () => {
+	runExhaustiveComposeRebaseSuite(
+		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
+		generateChildStates,
+		{
+			rebase,
+			invert,
+			compose: (changes, metadata) => compose(changes),
+			rebaseComposed: (metadata, change, ...baseChanges) => {
+				const composedChanges = compose(baseChanges);
+				return rebase(change, makeAnonChange(composedChanges));
+			},
+			assertEqual: (change1, change2) => {
+				if (change1 === undefined && change2 === undefined) {
+					return true;
+				}
+
+				if (change1 === undefined || change2 === undefined) {
+					return false;
+				}
+
+				return assert.deepEqual(
+					withoutLineage(change1.change),
+					withoutLineage(change2.change),
+				);
+			},
+		},
+		{
+			groupSubSuites: true,
+		},
+	);
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {
