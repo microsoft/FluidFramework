@@ -57,7 +57,6 @@ export type InsertableObjectFromSchemaRecord<
  * Schema for a tree node.
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.
- * @typeParam Specification - Details defining the schema for this node. Format depends on the `Kind`.
  * @typeParam TNode - API for nodes that use this schema.
  * @typeParam TBuild - Data which can be used to construct an unhydrated node of this type.
  * @remarks
@@ -67,12 +66,11 @@ export type InsertableObjectFromSchemaRecord<
 export type TreeNodeSchema<
 	Name extends string = string,
 	Kind extends NodeKind = NodeKind,
-	Specification = unknown,
 	TNode = unknown,
 	TBuild = never,
 > =
-	| TreeNodeSchemaClass<Name, Kind, Specification, TNode, TBuild>
-	| TreeNodeSchemaNonClass<Name, Kind, Specification, TNode, TBuild>;
+	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild>;
 
 /**
  * Schema which is not a class.
@@ -85,10 +83,9 @@ export type TreeNodeSchema<
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,
 	out Kind extends NodeKind = NodeKind,
-	out Specification = unknown,
 	out TNode = unknown,
 	in TInsertable = never,
-> extends TreeNodeSchemaCore<Name, Kind, Specification> {
+> extends TreeNodeSchemaCore<Name, Kind> {
 	create(data: TInsertable): TNode;
 }
 
@@ -105,10 +102,9 @@ export interface TreeNodeSchemaNonClass<
 export interface TreeNodeSchemaClass<
 	out Name extends string = string,
 	out Kind extends NodeKind = NodeKind,
-	out Specification = unknown,
 	out TNode = unknown,
 	in TInsertable = never,
-> extends TreeNodeSchemaCore<Name, Kind, Specification> {
+> extends TreeNodeSchemaCore<Name, Kind> {
 	new (data: TInsertable): TNode;
 }
 
@@ -256,7 +252,6 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	any,
 	any,
-	any,
 	infer TNode
 >
 	? TNode
@@ -281,7 +276,6 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * @alpha
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
-	any,
 	any,
 	any,
 	any,

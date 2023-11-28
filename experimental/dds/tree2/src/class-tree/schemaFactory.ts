@@ -56,8 +56,7 @@ import {
  * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
 class LeafNodeSchema<T extends FlexLeafNodeSchema>
-	implements
-		TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>>
+	implements TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, TreeValue<T["info"]>>
 {
 	public readonly identifier: T["name"];
 	public readonly kind = NodeKind.Leaf;
@@ -78,7 +77,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
-): TreeNodeSchema<T["name"], NodeKind.Leaf, T["leafValue"], TreeValue<T["info"]>> {
+): TreeNodeSchema<T["name"], NodeKind.Leaf, TreeValue<T["info"]>> {
 	return new LeafNodeSchema(schema);
 }
 
@@ -163,7 +162,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		name: Name,
 		kind: TKind,
 		t: T,
-	): TreeNodeSchemaClass<`${TScope}.${Name}`, TKind, T, NodeBase, FlexTreeNode | unknown> {
+	): TreeNodeSchemaClass<`${TScope}.${Name}`, TKind, NodeBase, FlexTreeNode | unknown> {
 		const identifier = this.scoped(name);
 		class schema extends NodeBase {
 			public static readonly identifier = identifier;
@@ -208,7 +207,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Object,
-		T,
 		ObjectFromSchemaRecord<T>,
 		InsertableObjectFromSchemaRecord<T>
 	> {
@@ -233,7 +231,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		return schema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Object,
-			T,
 			ObjectFromSchemaRecord<T>,
 			InsertableObjectFromSchemaRecord<T>
 		>;
@@ -267,7 +264,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.Map<${string}>`,
 		NodeKind.Map,
-		T,
 		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	>;
@@ -288,7 +284,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
-		T,
 		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	>;
@@ -299,7 +294,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		NodeKind.Map,
-		T,
 		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	> {
@@ -318,7 +312,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.Map,
-				T,
 				TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 				ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 			>;
@@ -333,7 +326,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
-		T,
 		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	> {
@@ -359,7 +351,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		return schema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Map,
-			T,
 			TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
 			ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 		>;
@@ -401,7 +392,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
 		NodeKind.List,
-		T,
 		TreeListNode<T>,
 		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 	>;
@@ -422,7 +412,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.List,
-		T,
 		TreeListNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	>;
@@ -433,7 +422,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		NodeKind.List,
-		T,
 		TreeListNode<T>,
 		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 	> {
@@ -445,7 +433,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.List,
-				T,
 				TreeListNode<T>,
 				Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 			>;
@@ -465,7 +452,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.List,
-		T,
 		TreeListNode<T>,
 		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 	> {
@@ -497,7 +483,6 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		return schema as unknown as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.List,
-			T,
 			TreeListNode<T>,
 			Iterable<TreeNodeFromImplicitAllowedTypes<T>>
 		>;
@@ -546,12 +531,11 @@ export function createTree<T extends TreeNodeSchema>(
 			any,
 			any,
 			any,
-			any,
 			InsertableTypedNode<T> | FlexTreeNode
 		>)(data) as NodeFromSchema<T>;
 	}
 	return (
-		schema as TreeNodeSchemaNonClass<any, any, any, any, InsertableTypedNode<T> | FlexTreeNode>
+		schema as TreeNodeSchemaNonClass<any, any, any, InsertableTypedNode<T> | FlexTreeNode>
 	).create(data) as NodeFromSchema<T>;
 }
 
