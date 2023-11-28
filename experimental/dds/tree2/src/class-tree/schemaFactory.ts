@@ -123,7 +123,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 *
 	 * @remarks
 	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
-	 * - `NaN`, and the infinities should not be used.
+	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
 	 * - `-0` may be converted to `0` in some cases.
 	 *
 	 * These limitations match the limitations of JSON.
