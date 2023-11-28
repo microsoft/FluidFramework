@@ -6,10 +6,16 @@ summary: "An open-source client technology stack that enables real-time collabor
 ---
 
 {{< jumbotron
-  lead=`Data Sync <strong>Reimagined</strong>`
-  subText="Real time. Web first. Open source."
+  lead=`<strong>Real-time. Multiuser. Collaboration.</strong>`
+  subText="Empower collaborative innovation with Fluid Framework's seamless, high-performance client/server tech stack for real-time applications."
   img="https://www.youtube.com/embed/1okQVFqlMxU"
 >}}
+
+ <!-- {{< jumbotron
+   lead=`Data Sync <strong>Reimagined</strong>`
+  subText="Real time. Web first. Open source."
+  img="https://www.youtube.com/embed/1okQVFqlMxU"
+>}} -->
 
 <div class="value-props">
         <div class="container">
@@ -101,7 +107,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         imgAlt="better performance"
       >}}
     
-    {{<swimlane
+    <!-- {{<swimlane
         id="easy-to-use"
         title="Easy to use"
         subTitle="There is a significant difference in capacity depending on whether users are purely viewers vs. editors. Adding viewers scales far more than adding editors because each editor increases the volume of changes and viewers do not"
@@ -125,8 +131,9 @@ summary: "An open-source client technology stack that enables real-time collabor
         img="/images/fourth-value-prop.png"
         imgAlt="open-source"
         pos="right"
-      >}}    
+      >}}     -->
 {{</swimlane_container>}}
+
 
 <!-- {{< cta_container  >}}
   {{< cta
