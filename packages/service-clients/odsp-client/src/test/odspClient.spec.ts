@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-nodejs-modules
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -19,6 +19,7 @@ function createOdspClient(): OdspClient {
 		driveId: process.env.drive__id as string,
 	};
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return new OdspClient({ connection: connectionProperties });
 }
 
