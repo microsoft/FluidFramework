@@ -10,10 +10,16 @@ import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITokenProvider } from '@fluidframework/azure-client';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+// @alpha
+export interface IOdspTokenProvider {
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+}
 
 // @alpha @sealed
 export class OdspClient {
@@ -41,7 +47,7 @@ export interface OdspClientProps {
 export interface OdspConnectionConfig {
     driveId: string;
     siteUrl: string;
-    tokenProvider: ITokenProvider;
+    tokenProvider: IOdspTokenProvider;
 }
 
 // @alpha
