@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -148,17 +148,13 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	it("should add clients in audience as expected in write mode", async () => {
 		// Create a client - client1.
 		const client1Container = await createContainer();
-		const client1DataStore = await requestFluidObject<TestDataObject>(
-			client1Container,
-			"default",
-		);
+		const client1DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client1Container);
 
 		// Load a second client - client2.
 		const client2Container = await loadContainer();
-		const client2DataStore = await requestFluidObject<TestDataObject>(
-			client2Container,
-			"default",
-		);
+		const client2DataStore =
+			await getContainerEntryPointBackCompat<TestDataObject>(client2Container);
 
 		// Perform operations to move the clients to "write" mode (if not already in write mode).
 		client1DataStore._root.set("testKey1", "testValue1");

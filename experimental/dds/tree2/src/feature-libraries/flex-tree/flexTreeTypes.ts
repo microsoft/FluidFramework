@@ -548,7 +548,7 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
  * @alpha
  */
 export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
-	| SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible>
+	| SchemaAware.TypedField<TSchema>
 	| ITreeCursorSynchronous;
 
 /**
@@ -558,7 +558,7 @@ export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
  * @alpha
  */
 export type FlexibleNodeContent<TTypes extends AllowedTypes> =
-	| SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>
+	| SchemaAware.AllowedTypesToTypedTrees<TTypes>
 	| ITreeCursorSynchronous;
 
 /**
@@ -570,7 +570,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> =
  * @alpha
  */
 export type FlexibleNodeSubSequence<TTypes extends AllowedTypes> =
-	| Iterable<SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>>
+	| Iterable<SchemaAware.AllowedTypesToTypedTrees<TTypes>>
 	| ITreeCursorSynchronous;
 
 /**
@@ -617,7 +617,7 @@ export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> exten
 	 * Gets a boxed node of this field by its index.
 	 * Note that a node must exist at the given index.
 	 */
-	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes>;
+	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.

@@ -93,6 +93,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
+    // @deprecated
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
@@ -332,7 +333,7 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ICombiningOp {
     // (undocumented)
     defaultValue?: any;
@@ -408,7 +409,7 @@ export interface IMergeNodeCommon {
 
 // @public (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-    // (undocumented)
+    // @deprecated (undocumented)
     combiningOp?: ICombiningOp;
     // (undocumented)
     pos1?: number;
@@ -828,6 +829,7 @@ export class PropertiesManager {
 // @public (undocumented)
 export enum PropertiesRollback {
     None = 0,
+    // @deprecated
     Rewrite = 2,
     Rollback = 1
 }

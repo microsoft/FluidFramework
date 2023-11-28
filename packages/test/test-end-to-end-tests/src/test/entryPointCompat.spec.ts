@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { describeLoaderCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import {
+	describeInstallVersions,
+	describeNoCompat,
+	getVersionedTestObjectProvider,
+} from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -14,6 +18,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { pkgVersion } from "../packageVersion.js";
 
 describe("entryPoint compat", () => {
 	let provider: ITestObjectProvider;
@@ -54,6 +59,7 @@ describe("entryPoint compat", () => {
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
 		});
 
+		// TODO: Remove this test when request is removed from Container AB#4991
 		it("request pattern", async () => {
 			const container = await createContainer();
 			const requestResult = await container.request({ url: "/" });
@@ -62,6 +68,7 @@ describe("entryPoint compat", () => {
 			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
 		});
 
+		// TODO: Remove this test when request is removed from Container AB#4991
 		it("both entryPoint and request pattern", async () => {
 			const container = await createContainer();
 			const entryPoint = await container.getEntryPoint?.();
@@ -76,10 +83,19 @@ describe("entryPoint compat", () => {
 		});
 	});
 
-	// Simulating old loader code
-	describeLoaderCompat("loader compat", (getTestObjectProvider) => {
+	const loaderWithRequest = "2.0.0-internal.7.0.0";
+	describeInstallVersions({
+		requestAbsoluteVersions: [loaderWithRequest],
+	})("loader compat", (_) => {
 		beforeEach(async () => {
-			provider = getTestObjectProvider();
+			provider = await getVersionedTestObjectProvider(
+				pkgVersion, // base version
+				loaderWithRequest,
+			);
+		});
+
+		afterEach(() => {
+			provider.reset();
 		});
 
 		it("request pattern works", async () => {

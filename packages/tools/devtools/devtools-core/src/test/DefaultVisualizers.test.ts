@@ -20,8 +20,6 @@ import {
 	AllowedUpdateType,
 	SchemaBuilder,
 	SharedTreeFactory,
-	valueSymbol,
-	typeNameSymbol,
 	leaf,
 } from "@fluid-experimental/tree2";
 
@@ -433,19 +431,13 @@ describe("DefaultVisualizers unit tests", () => {
 					{
 						childField: "Hello world!",
 						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.string.name,
-								[valueSymbol]: "Hello world again!",
-							},
+							leafField: "Hello world again!",
 						},
 					},
 					{
 						childField: true,
 						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.boolean.name,
-								[valueSymbol]: false, // TODO: Use a handle here.
-							},
+							leafField: false, // TODO: Use a handle here.
 						},
 					},
 				],

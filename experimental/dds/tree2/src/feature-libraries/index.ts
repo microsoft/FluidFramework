@@ -62,9 +62,10 @@ export {
 	cursorsForTypedFieldData,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	getPossibleTypes,
 } from "./contextuallyTyped";
 
-export { assertAllowedValue, isFluidHandle } from "./valueUtilities";
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
@@ -220,6 +221,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
 } from "./default-schema";
 
 export {
@@ -264,3 +266,4 @@ import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

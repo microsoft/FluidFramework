@@ -19,6 +19,7 @@ import {
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
 	Revertible,
+	ChangeFamily,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -27,6 +28,7 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
+	intoDelta,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
@@ -150,7 +152,7 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: DefaultChangeFamily;
+	changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
@@ -264,7 +266,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
+		private readonly changeFamily: ChangeFamily<DefaultEditBuilder, DefaultChangeset>,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
@@ -278,7 +280,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const delta = this.changeFamily.intoDelta(event.change);
+				const delta = intoDelta(event.change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
 				const combinedVisitor = combineVisitors(
 					[this.forest.acquireVisitor(), anchorVisitor],

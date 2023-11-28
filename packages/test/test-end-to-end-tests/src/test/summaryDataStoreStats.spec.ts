@@ -18,7 +18,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
@@ -116,7 +115,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.
-		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		mainDataStore._root.set("test", "value");
 
 		await provider.ensureSynchronized();
