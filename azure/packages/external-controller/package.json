@@ -58,7 +58,7 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.1.0",
-		"axios": "^1.6.2",
+		"axios": "^0.26.0",
 		"events": "^3.3.0",
 		"fluid-framework": "workspace:~",
 		"uuid": "^9.0.1"

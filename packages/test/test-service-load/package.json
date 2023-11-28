@@ -98,7 +98,7 @@
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"commander": "^11.1.0",
+		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^2.0.2"

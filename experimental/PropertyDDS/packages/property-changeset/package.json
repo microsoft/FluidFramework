@@ -61,7 +61,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
-		"ajv": "8.12.0",
+		"ajv": "7.1.1",
 		"ajv-keywords": "5.1.0",
 		"async": "^3.2.5",
 		"fastest-json-copy": "^1.0.1",

@@ -45,7 +45,7 @@
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^3.3.3",
-		"vue": "~3.3.9"
+		"vue": "~2.6.14"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",

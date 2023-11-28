@@ -15,7 +15,7 @@ import { validateCommandLineArgs } from "./utils";
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions,@typescript-eslint/no-floating-promises
 	yargs
 		.strict()
 		.version(false)
@@ -83,7 +83,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 						demandOption: false,
 						default: false,
 					}),
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (argv) => {
 				const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
 				if (argsError) {

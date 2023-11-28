@@ -51,7 +51,7 @@ async function evaluateBrowserHash(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const browserHashFn: string = HashBrowser.__get__("digestBuffer").toString();
 
-	const hashCharCodeString = (await page.evaluate(
+	const hashCharCodeString = await page.evaluate(
 		async (fn: string, f: string, alg: "SHA-1" | "SHA-256") => {
 			// convert back into Uint8Array
 			const fileCharCodes = Array.prototype.map.call([...f], (char: string) => {
@@ -75,7 +75,7 @@ async function evaluateBrowserHash(
 		browserHashFn,
 		fileCharCodeString,
 		algorithm,
-	)) as string;
+	);
 
 	// reconstruct the Uint8Array from the string
 	const charCodes = Array.prototype.map.call([...hashCharCodeString], (char: string) => {

@@ -51,7 +51,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"buffer": "^6.0.3",
 		"denque": "^2.1.0",
-		"lru-cache": "^10.1.0",
+		"lru-cache": "^6.0.0",
 		"sorted-btree": "^1.8.1",
 		"uuid": "^9.0.1"
 	},

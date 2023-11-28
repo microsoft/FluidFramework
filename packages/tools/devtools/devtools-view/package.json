@@ -48,7 +48,7 @@
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.112.9",
-		"@fluentui/react-components": "~9.41.0",
+		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-hooks": "^8.6.33",
 		"@fluentui/react-icons": "^2.0.223",
 		"@fluid-experimental/devtools-core": "workspace:~",

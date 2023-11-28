@@ -57,7 +57,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"idb": "^7.1.1"
+		"idb": "^6.1.2"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",

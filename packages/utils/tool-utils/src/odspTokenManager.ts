@@ -14,7 +14,7 @@ import {
 	getLoginPageUrl,
 	TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { Mutex } from "async-mutex";
 import { debug } from "./debug";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
