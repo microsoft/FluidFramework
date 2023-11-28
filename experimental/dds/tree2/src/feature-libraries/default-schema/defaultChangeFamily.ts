@@ -8,14 +8,14 @@ import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
-	Delta,
 	UpPath,
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
-	TaggedChange,
 	compareFieldUpPaths,
 	topDownPath,
+	Delta,
+	TaggedChange,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -24,7 +24,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	FieldEditDescription,
-	intoDelta,
+	intoDelta as intoModularDelta,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -52,13 +52,16 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
-		return intoDelta(change, this.modularFamily.fieldKinds);
-	}
-
 	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
 		return new DefaultEditBuilder(this, changeReceiver);
 	}
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ */
+export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.Root {
+	return intoModularDelta(taggedChange, fieldKinds);
 }
 
 /**

@@ -750,6 +750,7 @@ export class ModularChangeFamily
 
 /**
  * @param change - The change to convert into a delta.
+ * @param fieldKinds - The field kinds to delegate to.
  */
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,

@@ -129,7 +129,6 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	RemovedTreesFromChild,
-	intoDelta,
 } from "./modular-schema";
 
 export {
@@ -222,6 +221,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
 } from "./default-schema";
 
 export {
