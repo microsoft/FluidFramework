@@ -55,7 +55,9 @@ are generated (empty entries are current versions):
 
 In addition to the layer version combinations seen above, this package also provides functions to generate variations
 intended to test all layers of one version against all layers of another version in tests that feature more than one client.
-This is applied in our cross version tests where we test the current version against the most recent **public** release.
+The intention is to simulate scenarios where the client that created a document was using a different version than the client
+loading the document. These variations are applied in our cross version tests where we test the current version against the
+most recent **public** release.
 
 For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
 Therefore, we would test the following combinations:
