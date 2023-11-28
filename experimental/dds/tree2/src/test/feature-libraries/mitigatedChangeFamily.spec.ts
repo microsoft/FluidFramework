@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeFamily, ChangeFamilyEditor, Delta, TaggedChange, emptyDelta } from "../../core";
+import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core";
 import { makeMitigatedChangeFamily } from "../../feature-libraries";
 
 const fallback = "Fallback";
@@ -14,10 +14,6 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		throw new Error("buildEditor");
-	},
-	intoDelta: (change: TaggedChange<string>): Delta.Root => {
-		assert.equal(change, arg1);
-		throw new Error("intoDelta");
 	},
 	rebaser: {
 		compose: (changes: TaggedChange<string>[]): string => {
@@ -41,10 +37,6 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
 		assert.equal(changeReceiver, arg1);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
-	},
-	intoDelta: (change: TaggedChange<string>): Delta.Root => {
-		assert.equal(change, arg1);
-		return "intoDelta" as unknown as Delta.Root;
 	},
 	rebaser: {
 		compose: (changes: TaggedChange<string>[]): string => {
@@ -79,7 +71,6 @@ const returningRebaser = returningFamily.rebaser;
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
-		assert.equal(mitigatedReturningFamily.intoDelta(arg1), returningFamily.intoDelta(arg1));
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2),
 			returningRebaser.rebase(arg1, arg2),
@@ -91,11 +82,6 @@ describe("makeMitigatedChangeFamily", () => {
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 	});
 	describe("catches errors from", () => {
-		it("intoDelta", () => {
-			errorLog.length = 0;
-			assert.equal(mitigatedThrowingFamily.intoDelta(arg1), emptyDelta);
-			assert.deepEqual(errorLog, ["intoDelta"]);
-		});
 		it("rebase", () => {
 			errorLog.length = 0;
 			assert.equal(mitigatedThrowingRebaser.rebase(arg1, arg2), fallback);

@@ -28,6 +28,7 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
+	intoDelta,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
@@ -279,7 +280,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const delta = this.changeFamily.intoDelta(event.change);
+				const delta = intoDelta(event.change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
 				const combinedVisitor = combineVisitors(
 					[this.forest.acquireVisitor(), anchorVisitor],

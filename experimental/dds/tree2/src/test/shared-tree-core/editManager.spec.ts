@@ -1262,7 +1262,7 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead()),
+						asDelta(manager.localBranch.getHead().change.intentions),
 						asDelta([seq]),
 					);
 					break;
@@ -1405,7 +1405,7 @@ function addSequencedChange(
 	let delta: Delta.Root = emptyDelta;
 	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
 		if (change !== undefined) {
-			delta = editManager.changeFamily.intoDelta(change);
+			delta = asDelta(change.change.intentions);
 		}
 	});
 	editManager.addSequencedChange(...args);
