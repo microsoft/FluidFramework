@@ -40,6 +40,8 @@ import {
 	ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
@@ -223,8 +225,14 @@ describe("PropertyDDS summarizer", () => {
 		// Summarize
 		await summarizeNow(summarizer.summarizer);
 
-		const summarizerDataObject =
-			(await summarizer.container.getEntryPoint()) as ITestFluidObject;
+		const runtime = (summarizer as any).runtime as ContainerRuntime;
+		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+			| IFluidHandle<ITestFluidObject>
+			| undefined;
+		if (entryPoint === undefined) {
+			throw new Error("default dataStore must exist");
+		}
+		const summarizerDataObject = await entryPoint.get();
 		const summarizerClient =
 			await summarizerDataObject.getSharedObject<SharedPropertyTree>(propertyDdsId);
 
