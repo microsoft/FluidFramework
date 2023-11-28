@@ -28,9 +28,8 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import type { ITokenResponse } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
 
@@ -107,9 +106,10 @@ export class OdspClient {
 		});
 		const container = await loader.resolve({ url });
 
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer({
+			container,
+			rootDataObject: await this.getContainerEntryPoint(container),
+		});
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -147,8 +147,7 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -163,13 +162,13 @@ export class OdspClient {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
+			await container.attach(createNewRequest);
 
 			const resolvedUrl = container.resolvedUrl;
 
 			if (resolvedUrl === undefined || !isOdspResolvedUrl(resolvedUrl)) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			await container.attach(createNewRequest);
 
 			/**
 			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
@@ -190,5 +189,16 @@ export class OdspClient {
 				createServiceMember: createOdspAudienceMember,
 			}),
 		};
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> | undefined =
+			await container.getEntryPoint();
+		assert(rootDataObject !== undefined, "entryPoint must exist");
+		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
+		if (rootDataObject.IRootDataObject === undefined) {
+			return rootDataObject as IRootDataObject;
+		}
+		return rootDataObject.IRootDataObject;
 	}
 }

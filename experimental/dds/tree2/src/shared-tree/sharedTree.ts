@@ -48,6 +48,7 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
+	makeMitigatedChangeFamily,
 } from "../feature-libraries";
 import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -179,7 +180,29 @@ export class SharedTree
 			options,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
-		const changeFamily = new DefaultChangeFamily(options);
+		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const changeFamily = makeMitigatedChangeFamily(
+			defaultChangeFamily,
+			DefaultChangeFamily.emptyChange,
+			(error: unknown) => {
+				// TODO:6344 Add telemetry for these errors.
+				// Rethrowing the error has a different effect depending on the context in which the
+				// ChangeFamily was invoked:
+				// - If the ChangeFamily was invoked as part of incoming op processing, rethrowing the error
+				// will cause the runtime to disconnect the client, log a severe error, and not reconnect.
+				// This will not cause the host application to crash because it is not on the stack at that time.
+				// TODO: let the host application know that the client is now disconnected.
+				// - If the ChangeFamily was invoked as part of dealing with a local change, rethrowing the
+				// error will cause the host application to crash. This is not ideal, but is better than
+				// letting the application either send an invalid change to the server or allowing the
+				// application to continue working when its local branches contain edits that cannot be
+				// reflected in its views.
+				// The best course of action for a host application in such a state is to restart.
+				// TODO: let the host application know about this situation and provide a way to
+				// programmatically reload the SharedTree container.
+				throw error;
+			},
+		);
 		super(
 			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
@@ -193,6 +216,7 @@ export class SharedTree
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
+			changeFamily,
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.

@@ -629,6 +629,40 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
 		});
 
+		it("move, remove, restore", () => {
+			const tree1 = makeTreeFromJson(["a", "b"]);
+			const tree2 = tree1.fork();
+
+			const cursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, cursor);
+			cursor.enterNode(1);
+			const anchorB = cursor.buildAnchor();
+			cursor.free();
+
+			const { undoStack } = createTestUndoRedoStacks(tree2.events);
+
+			tree2.editor.sequenceField(rootField).move(1, 1, 0);
+			tree2.editor.sequenceField(rootField).delete(0, 1);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			undoStack.pop()!.revert();
+
+			// This merge causes the move, remove, and restore to be composed and applied in one changeset on tree1
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], ["b", "a"]);
+
+			const nodeBPath = tree1.locate(anchorB) ?? assert.fail();
+			const actual = {
+				parent: nodeBPath.parent,
+				parentField: nodeBPath.parentField,
+				parentIndex: nodeBPath.parentIndex,
+			};
+			const expected = { parent: undefined, parentField: rootFieldKey, parentIndex: 0 };
+			assert.deepEqual(actual, expected);
+		});
+
 		it("move adjacent nodes to separate destinations", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const tree2 = tree.fork();
@@ -1440,8 +1474,7 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		// TODO: Enable once optional field applies nested changes to removed subtrees
-		it.skip("can rebase a move over the deletion of the source parent", () => {
+		it("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
 
@@ -1660,7 +1693,7 @@ describe("Editing", () => {
 			const nbNodes = 3;
 			const nbPeers = 2;
 			const testRemoveRevive = true;
-			const testMoveReturn = false;
+			const testMoveReturn = true;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
 
 			const [outerFixture, innerFixture] = individualTests
