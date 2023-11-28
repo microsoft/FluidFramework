@@ -3,37 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
-import { IOdspTokenProvider } from "../token";
+import * as jwt from "jsonwebtoken";
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { IOdspTokenProvider } from "../token";
 
-/**
- * Provides an in memory implementation of {@link @fluidframework/routerlicious-driver#ITokenProvider} that can be
- * used to insecurely connect to the Fluid Relay.
- *
- * As the name implies, this is not secure and should not be used in production.
- * It simply makes examples where authentication is not relevant easier to bootstrap.
- */
 export class OdspTestTokenProvider implements IOdspTokenProvider {
 	constructor() {}
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchOrdererToken}
-	 */
-	public async fetchWebsocketToken(tenantId: string, refresh: boolean): Promise<TokenResponse> {
+	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
+		const pushScopes = [
+			"offline_access",
+			"https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
+		];
 		return {
 			fromCache: true,
-			token: ""
+			token: this.generateToken(siteUrl, pushScopes),
 		};
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchStorageToken}
-	 */
-	public async fetchStorageToken(tenantId: string, refresh: boolean): Promise<TokenResponse> {
+	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
+		const sharePointScopes = [`${siteUrl}/Container.Selected`];
 		return {
 			fromCache: true,
-			token: ""
+			token: this.generateToken(siteUrl, sharePointScopes),
 		};
+	}
+
+	private generateToken(siteUrl: string, scopes: string[]): string {
+		const secretKey = process.env.client__secret; // Replace with your secret key
+		const expiresIn = "1h"; // Set the token expiration time as per your requirement
+
+		const payload = {
+			siteUrl,
+			scopes,
+		};
+
+		const token: string = jwt.sign(payload, secretKey, { expiresIn });
+		return token;
 	}
 }
