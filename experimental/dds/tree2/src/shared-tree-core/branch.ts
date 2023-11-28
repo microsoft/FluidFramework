@@ -44,17 +44,17 @@ import { TransactionStack } from "./transactionStack";
 export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "append";
-			change: () => TaggedChange<TChange>;
+			change: TaggedChange<TChange>;
 			newCommits: readonly GraphCommit<TChange>[];
 	  }
 	| {
 			type: "remove";
-			change: () => TaggedChange<TChange> | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: readonly GraphCommit<TChange>[];
 	  }
 	| {
 			type: "replace";
-			change: () => TaggedChange<TChange> | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: readonly GraphCommit<TChange>[];
 			newCommits: readonly GraphCommit<TChange>[];
 	  };
@@ -191,7 +191,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const taggedChange = tagChange(change, revision);
 		const changeEvent = {
 			type: "append",
-			change: () => taggedChange,
+			get change() {
+				return taggedChange;
+			},
 			newCommits: [newHead],
 		} as const;
 
@@ -267,7 +269,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const changeEvent = {
 			type: "replace",
-			change: () => undefined,
+			get change() {
+				return undefined;
+			},
 			removedCommits: commits,
 			newCommits: [newHead],
 		} as const;
@@ -313,7 +317,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const taggedChange = change === undefined ? undefined : makeAnonChange(change);
 		const changeEvent = {
 			type: "remove",
-			change: () => taggedChange,
+			get change() {
+				return taggedChange;
+			},
 			removedCommits: commits,
 		} as const;
 
@@ -478,7 +484,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
 			type: "replace",
-			change: () => {
+			get change() {
 				const change = changeThunk();
 				return change === undefined ? undefined : makeAnonChange(change);
 			},
@@ -526,9 +532,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Compute the net change to this branch
 		const [newHead, _, { sourceCommits }] = rebaseResult;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
+		const taggedChange = makeAnonChange(change);
 		const changeEvent = {
 			type: "append",
-			change: () => makeAnonChange(change),
+			get change(): TaggedChange<TChange> {
+				return taggedChange;
+			},
 			newCommits: sourceCommits,
 		} as const;
 
