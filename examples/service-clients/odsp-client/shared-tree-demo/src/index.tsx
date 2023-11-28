@@ -1,12 +1,7 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 /* eslint-disable react/jsx-key */
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { loadFluidData, containerSchema } from "./fluid";
+import { loadFluidData, containerSchema } from "./infra/fluid";
 import { initializeDevtools } from "@fluid-experimental/devtools";
 import { devtoolsLogger } from "./infra/clientProps";
 import { ITree } from "@fluid-experimental/tree2";

@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "fluid-framework";
 import { SharedTreeFactory } from "@fluid-experimental/tree2";

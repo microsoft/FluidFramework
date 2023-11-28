@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import React, { ReactNode, useEffect, useState } from "react";
 import { TreeView } from "@fluid-experimental/tree2";
 import { App, Letter } from "./schema";

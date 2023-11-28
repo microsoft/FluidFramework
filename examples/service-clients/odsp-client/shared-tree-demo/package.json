@@ -2,18 +2,13 @@
 	"name": "@fluid-example/shared-tree-demo",
 	"version": "2.0.0-internal.7.4.0",
 	"private": true,
-	"description": "Integrating an external data source with Fluid data.",
+	"description": "",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/external-data"
+		"directory": "examples/service-clients/odsp-client/shared-tree-demo"
 	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -27,11 +22,11 @@
 		"prepack": "npm run webpack",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"start": "webpack serve",
-		"start:test": "webpack serve --config webpack.test.js",
+		"start": "cross-env FLUID_CLIENT='local' webpack-dev-server",
+		"start:client:test": "webpack serve --config webpack.test.js",
 		"test": "npm run test:jest",
 		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -59,11 +54,6 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools": "workspace:~",
-		"@fluid-tools/build-cli": "^0.28.0",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/debug": "^4.1.7",
 		"@types/node": "^17.0.45",
 		"@types/randomcolor": "^0.5.6",
@@ -74,7 +64,7 @@
 		"cross-env": "^7.0.3",
 		"css-loader": "^5",
 		"dotenv-webpack": "^7.1.1",
-		"eslint": "^8.23.1",
+		"eslint": "~8.50.0",
 		"eslint-plugin-react": "^7.31.8",
 		"html-webpack-plugin": "^4.5.2",
 		"markdown-magic": "^2.6.1",
@@ -88,19 +78,5 @@
 		"webpack": "^5.88.2",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "^4.15.1"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
-	},
-	"typeValidation": {
-		"disabled": true,
-		"broken": {}
 	}
 }
