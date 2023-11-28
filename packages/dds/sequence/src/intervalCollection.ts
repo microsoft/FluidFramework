@@ -948,6 +948,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * collection.attachIndex(endpointIndex);
 	 * const result1 = endpointIndex.previousInterval(pos);
 	 * ```
+	 * If an index is used repeatedly, applications should generally attach it once and store it in memory.
 	 */
 	previousInterval(pos: number): TInterval | undefined;
 
