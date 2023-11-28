@@ -148,10 +148,7 @@ export function rebaseOverChanges(
 			rebase(
 				currChange.change,
 				base,
-				rebaseRevisionMetadataFromInfo(
-					revisionInfo,
-					baseChanges.map((c) => c.revision),
-				),
+				rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
 			),
 			currChange.revision,
 		);

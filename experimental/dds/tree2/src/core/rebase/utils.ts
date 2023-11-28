@@ -308,7 +308,11 @@ export function revisionMetadataSourceFromInfo(
 		return index === undefined ? undefined : revInfos[index];
 	};
 
-	return { getIndex, tryGetInfo };
+	const hasRollback = (revision: RevisionTag): boolean => {
+		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+	};
+
+	return { getIndex, tryGetInfo, hasRollback };
 }
 
 export function rebaseChangeOverChanges<TChange>(

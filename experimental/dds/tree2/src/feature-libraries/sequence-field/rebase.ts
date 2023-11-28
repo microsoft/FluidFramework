@@ -160,7 +160,8 @@ function rebaseMarkList<TNodeChange>(
 				0x816 /* Mark which empties cells should have a detach ID */,
 			);
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
-			addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
+			const detachBlock = getOrAddEmptyToMap(detachBlocks, detachId.revision);
+			addIdRange(detachBlock, {
 				id: detachId.localId,
 				count: baseMark.count,
 			});
@@ -178,7 +179,7 @@ function rebaseMarkList<TNodeChange>(
 				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
 			);
 
-			setMarkAdjacentCells(rebasedMark, detachBlocks.get(rebasedMark.cellId.revision) ?? []);
+			setMarkAdjacentCells(rebasedMark, detachBlock);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
@@ -881,6 +882,9 @@ function shouldReceiveLineage(
 	metadata: RevisionMetadataSource,
 ): boolean {
 	if (cellRevision === undefined) {
+		// An undefined cell revision means that the cell was created by the changeset we are rebasing.
+		// Since this cell was been empty for all base revisions, it should receive lineage from all of them.
+		// TODO: This cell does not need lineage from roll-forward revisions.
 		return true;
 	}
 
@@ -951,7 +955,7 @@ function compareCellPositions(
 	}
 
 	if (newId !== undefined) {
-		const cmp = compareLineages(baseId.lineage, newId.lineage);
+		const cmp = compareLineages(baseId, newId, metadata);
 		if (cmp !== 0) {
 			return Math.sign(cmp) * Infinity;
 		}

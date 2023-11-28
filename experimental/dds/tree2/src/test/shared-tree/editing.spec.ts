@@ -1675,7 +1675,7 @@ describe("Editing", () => {
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),
 			// then the number of scenarios overwhelms the test browser.
 			// Should be committed with the constant set to false.
-			const individualTests = false;
+			const individualTests = true;
 			const nbNodes = 3;
 			const nbPeers = 2;
 			const testRemoveRevive = true;

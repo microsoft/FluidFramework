@@ -949,9 +949,15 @@ describe("SequenceField - Rebase", () => {
 		const insertB = [Mark.insert(1, brand(0))];
 		const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
 
-		const c2 = rebase(insertC, deleteA);
-		const c3 = rebase(c2, insertB);
-		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
+		const c2 = rebase(insertC, deleteA, tag1);
+		const c3 = rebase(c2, insertB, tag2);
+		const expected = [
+			{ count: 1 },
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
 		assert.deepEqual(c3, expected);
 	});
 

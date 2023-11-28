@@ -69,9 +69,10 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
-	getBaseRevisions: () => assert.fail("Unexpected revision index query"),
+	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
+	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
