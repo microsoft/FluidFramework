@@ -164,6 +164,14 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 
+		// Subscribe to events on the backing anchorNode
+		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
+			this[internalEmitterSymbol].emit("afterChange", anchorNodeInEvent);
+		});
+		this.#anchorNode.on("beforeChange", (anchorNodeInEvent: AnchorNode) => {
+			this[internalEmitterSymbol].emit("beforeChange", anchorNodeInEvent);
+		});
+
 		this[internalEmitterSymbol].on("beforeChange", (treeNode) => {
 			this.onInternalEvent("beforeChange", treeNode);
 		});
@@ -334,14 +342,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 					...(this.listeners.get("beforeChange") ?? []),
 					listener,
 				]);
-				const unsubscribeFromAnchorBeforeChange = this.#anchorNode.on(
-					"beforeChange",
-					(anchorNode: AnchorNode) => {
-						this[internalEmitterSymbol].emit("beforeChange", anchorNode);
-					},
-				);
 				return () => {
-					unsubscribeFromAnchorBeforeChange();
 					this.listeners.set(
 						"beforeChange",
 						this.listeners.get("beforeChange")?.filter((x) => x !== listener) ?? [],
@@ -353,14 +354,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 					...(this.listeners.get("afterChange") ?? []),
 					listener,
 				]);
-				const unsubscribeFromAnchorBeforeChange = this.#anchorNode.on(
-					"afterChange",
-					(anchorNode: AnchorNode) => {
-						this[internalEmitterSymbol].emit("afterChange", anchorNode);
-					},
-				);
 				return () => {
-					unsubscribeFromAnchorBeforeChange();
 					this.listeners.set(
 						"afterChange",
 						this.listeners.get("afterChange")?.filter((x) => x !== listener) ?? [],

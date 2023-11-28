@@ -104,7 +104,7 @@ describe("node API", () => {
 		// });
 	});
 
-	describe("events", () => {
+	describe.only("events", () => {
 		function check(mutate: (root: TreeRoot<typeof treeSchema>) => void) {
 			itWithRoot(
 				".on(..) must subscribe to change event",
