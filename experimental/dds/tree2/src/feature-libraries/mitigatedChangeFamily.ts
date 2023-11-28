@@ -3,14 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	Delta,
-	TaggedChange,
-	emptyDelta,
-} from "../core";
+import { ChangeFamily, ChangeFamilyEditor, ChangeRebaser, TaggedChange } from "../core";
 
 /**
  * Makes a given `ChangeFamily` safer to use by wrapping some of its functions in try-catch blocks.
@@ -34,14 +27,6 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 	return {
 		buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
 			return unmitigatedChangeFamily.buildEditor(changeReceiver);
-		},
-		intoDelta: (change: TaggedChange<TChange>): Delta.Root => {
-			try {
-				return unmitigatedChangeFamily.intoDelta(change);
-			} catch (error: unknown) {
-				onError(error);
-				return emptyDelta;
-			}
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
