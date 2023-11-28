@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core";
 import { capitalize } from "../util";
 import {
@@ -19,6 +20,7 @@ import {
 	FlexTreeTypedNode,
 	boxedIterator,
 	onNextChange,
+	internalEmitterSymbol,
 } from "../feature-libraries";
 
 const nodeContent = Symbol();
@@ -103,6 +105,8 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexT
 	public [boxedIterator](): IterableIterator<FlexTreeField> {
 		return rawObjectNodeError();
 	}
+
+	public readonly [internalEmitterSymbol] = new TypedEventEmitter<EditableTreeEvents>();
 
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,

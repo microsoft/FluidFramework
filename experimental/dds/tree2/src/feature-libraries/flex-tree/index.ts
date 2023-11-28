@@ -26,6 +26,7 @@ export {
 	TreeStatus,
 	FlexTreeTyped,
 	onNextChange,
+	internalEmitterSymbol,
 	FlexTreeUnknownUnboxed,
 } from "./flexTreeTypes";
 

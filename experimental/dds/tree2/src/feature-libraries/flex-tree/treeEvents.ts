@@ -28,6 +28,34 @@ export interface TreeEvent {
 	 * The node of the tree where the listener receiving the event is attached.
 	 */
 	readonly target: FlexTreeNode;
+
+	/**
+	 * When called, prevents this event from bubbling up to the parent node.
+	 */
+	stopPropagation(): void;
+}
+
+export class TreeEventImplementation implements TreeEvent {
+	/**
+	 * {@inheritdoc TreeEvent.target}
+	 */
+	public readonly target: FlexTreeNode;
+
+	public constructor(target: FlexTreeNode) {
+		this.target = target;
+	}
+
+	private _propagationStopped: boolean = false;
+	public get propagationStopped(): boolean {
+		return this._propagationStopped;
+	}
+
+	/**
+	 * {@inheritdoc TreeEvent.stopPropagation}
+	 */
+	public stopPropagation(): void {
+		this._propagationStopped = true;
+	}
 }
 
 /**

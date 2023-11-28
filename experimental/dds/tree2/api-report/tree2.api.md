@@ -15,6 +15,7 @@ import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
 export interface Adapters {
@@ -630,6 +631,8 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
 export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<FlexTreeField>;
+    // (undocumented)
+    [internalEmitterSymbol]: TypedEventEmitter<EditableTreeEvents>;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
     // (undocumented)
@@ -1820,6 +1823,7 @@ export interface TreeDataContext {
 
 // @alpha
 export interface TreeEvent {
+    stopPropagation(): void;
     readonly target: FlexTreeNode;
 }
 

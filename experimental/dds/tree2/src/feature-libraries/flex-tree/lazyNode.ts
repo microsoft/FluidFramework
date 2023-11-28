@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	Value,
 	Anchor,
@@ -38,7 +39,7 @@ import {
 } from "../typed-schema";
 import { FieldKinds } from "../default-schema";
 import { LocalNodeKey } from "../node-key";
-import { EditableTreeEvents, TreeEvent } from "./treeEvents";
+import { EditableTreeEvents, TreeEvent, TreeEventImplementation } from "./treeEvents";
 import { Context } from "./context";
 import {
 	FlexTreeFieldNode,
@@ -58,6 +59,7 @@ import {
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	onNextChange,
+	internalEmitterSymbol,
 } from "./flexTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -161,6 +163,13 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
 		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
+
+		this[internalEmitterSymbol].on("beforeChange", (treeNode) => {
+			this.onInternalEvent("beforeChange", treeNode);
+		});
+		this[internalEmitterSymbol].on("afterChange", (treeNode) => {
+			this.onInternalEvent("afterChange", treeNode);
+		});
 	}
 
 	public is<TSchemaInner extends TreeNodeSchema>(
@@ -264,6 +273,35 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
+	private readonly listeners = new Map<
+		keyof EditableTreeEvents,
+		EditableTreeEvents[keyof EditableTreeEvents][]
+	>();
+	public readonly [internalEmitterSymbol] = new TypedEventEmitter<EditableTreeEvents>();
+
+	private readonly onInternalEvent = (
+		eventName: keyof EditableTreeEvents,
+		anchorNode: AnchorNode,
+	) => {
+		let treeNode: FlexTreeNode | undefined = anchorNode.slots.get(lazyTreeSlot);
+		assert(treeNode !== undefined, 0x7d3 /* tree node not found in anchor node slots */);
+
+		const event = new TreeEventImplementation(treeNode);
+		for (const listener of this.listeners.get(eventName) ?? []) {
+			// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+			// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+			// for changing and subtreeChanging match the one for beforeChange and afterChange.
+			listener(event as unknown as AnchorNode & TreeEvent);
+		}
+		if (event.propagationStopped) {
+			return;
+		}
+		treeNode = treeNode.parentField.parent.parent;
+		if (treeNode !== undefined) {
+			treeNode[internalEmitterSymbol].emit(eventName, treeNode);
+		}
+	};
+
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -292,38 +330,42 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 				return unsubscribeFromSubtreeChange;
 			}
 			case "beforeChange": {
-				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
+				this.listeners.set("beforeChange", [
+					...(this.listeners.get("beforeChange") ?? []),
+					listener,
+				]);
+				const unsubscribeFromAnchorBeforeChange = this.#anchorNode.on(
 					"beforeChange",
 					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d3 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+						this[internalEmitterSymbol].emit("beforeChange", anchorNode);
 					},
 				);
-				return unsubscribeFromChildrenBeforeChange;
+				return () => {
+					unsubscribeFromAnchorBeforeChange();
+					this.listeners.set(
+						"beforeChange",
+						this.listeners.get("beforeChange")?.filter((x) => x !== listener) ?? [],
+					);
+				};
 			}
 			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
+				this.listeners.set("afterChange", [
+					...(this.listeners.get("afterChange") ?? []),
+					listener,
+				]);
+				const unsubscribeFromAnchorBeforeChange = this.#anchorNode.on(
 					"afterChange",
 					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d4 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+						this[internalEmitterSymbol].emit("afterChange", anchorNode);
 					},
 				);
-				return unsubscribeFromChildrenAfterChange;
+				return () => {
+					unsubscribeFromAnchorBeforeChange();
+					this.listeners.set(
+						"afterChange",
+						this.listeners.get("afterChange")?.filter((x) => x !== listener) ?? [],
+					);
+				};
 			}
 			default:
 				unreachableCase(eventName);
