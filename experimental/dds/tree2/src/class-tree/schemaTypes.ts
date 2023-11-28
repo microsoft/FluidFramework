@@ -272,7 +272,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> =
  * Currently this assumes factory functions take exactly one argument.
  * This could be changed if needed.
  *
- * These factory function can also take an FlexTreeNode, but this is not exposed in the public facing types.
+ * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
  * @alpha
  */
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
