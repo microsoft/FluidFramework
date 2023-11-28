@@ -21,7 +21,7 @@ import { brand, makeArray } from "../../util";
 
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
-export function editManagerFactory(options: {
+export function testChangeEditManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
 	autoDiscardRevertibles?: boolean;
@@ -29,12 +29,27 @@ export function editManagerFactory(options: {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
-	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const family = testChangeFamilyFactory(options.rebaser);
+	const manager = editManagerFactory(family, {
+		sessionId: options.sessionId,
+		autoDiscardRevertibles: options.autoDiscardRevertibles,
+	});
+
+	return { manager, family };
+}
+
+export function editManagerFactory<TChange = TestChange>(
+	family: ChangeFamily<any, TChange>,
+	options: {
+		sessionId?: SessionId;
+		autoDiscardRevertibles?: boolean;
+	} = {},
+): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
+	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const manager = new EditManager<
 		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
+		TChange,
+		ChangeFamily<ChangeFamilyEditor, TChange>
 	>(family, options.sessionId ?? "0");
 
 	if (autoDiscardRevertibles === true) {
@@ -43,8 +58,7 @@ export function editManagerFactory(options: {
 			revertible.discard();
 		});
 	}
-
-	return { manager, family };
+	return manager;
 }
 
 export function rebaseLocalEditsOverTrunkEdits(
@@ -179,21 +193,20 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 export function rebaseConcurrentPeerEdits(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebaseConcurrentPeerEdits(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebaseConcurrentPeerEdits(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	const peerEdits: Commit<TestChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
