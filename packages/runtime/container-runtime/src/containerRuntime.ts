@@ -708,14 +708,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 }
 
 /**
- * This function is not supported publicly and exists for e2e testing
- * @internal
- */
-export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	return createSummarizer(loader, url);
-}
-
-/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  * @public
