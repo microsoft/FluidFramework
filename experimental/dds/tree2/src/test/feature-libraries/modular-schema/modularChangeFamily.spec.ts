@@ -41,8 +41,11 @@ import {
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
@@ -616,7 +619,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const actual = family.intoDelta(makeAnonChange(rootChange1a));
+			const actual = intoDelta(makeAnonChange(rootChange1a), family.fieldKinds);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});

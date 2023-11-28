@@ -221,6 +221,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
 } from "./default-schema";
 
 export {
