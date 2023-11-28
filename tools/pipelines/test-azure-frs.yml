@@ -214,14 +214,6 @@ stages:
             cleanDestinationFolder: false
             overwriteExistingFiles: false
 
-        # - task: Bash@3
-        #   displayName: echo folder structure
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: $(Build.SourcesDirectory)
-        #     script: |
-        #       find . | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
-
         - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml
