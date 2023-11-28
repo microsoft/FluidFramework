@@ -80,10 +80,6 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
-		"@types/expect-puppeteer": "5.0.6",
-		"@types/jest": "29.5.10",
-		"@types/jest-environment-puppeteer": "5.0.6",
-		"@types/puppeteer": "7.0.4",
 		"@types/uuid": "^9.0.7",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.2",

@@ -40,7 +40,7 @@ describe("presence-tracker", () => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		const innerHTML = await page.evaluate((element) => element.innerHTML.trim(), elementHandle);
 		console.log(innerHTML.startsWith("Current user"));
-		expect(innerHTML).toMatch(/^Current user:/);
+		expect(innerHTML).toMatchTextContent(/^Current user:/);
 	});
 
 	it("Current User is missing focus", async () => {

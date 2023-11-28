@@ -75,7 +75,6 @@
 		"@storybook/react": "^7.5.3",
 		"@types/cheerio": "0.22.35",
 		"@types/enzyme": "3.10.16",
-		"@types/jest": "29.5.10",
 		"@types/node": "^18.17.1",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
