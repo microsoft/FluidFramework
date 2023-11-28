@@ -108,7 +108,6 @@ export function nodeDataToMapTree(
 		return valueToMapTree(data, context, typeSet);
 	}
 	switch (typeof data) {
-		case "undefined":
 		case "number":
 		case "string":
 		case "boolean":
