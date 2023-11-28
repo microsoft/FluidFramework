@@ -67,6 +67,8 @@ export interface ITelemetryProperties {
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
+ *
+ * @internal
  */
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
@@ -90,6 +92,8 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
+ *
+ * @internal
  */
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
@@ -148,6 +152,8 @@ export interface ILoggingError extends Error {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryLoggerExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
+ *
+ * @internal
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**

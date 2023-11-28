@@ -42,6 +42,7 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
+		"lint:api-extractor": "api-extractor run --local --config ./api-extractor-lint.json",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -111,6 +112,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_AzureClient": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

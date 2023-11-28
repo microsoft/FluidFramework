@@ -42,7 +42,7 @@ export function createChildLogger(props?: {
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;
 
-// @public (undocumented)
+// @internal
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
 // @public
@@ -130,7 +130,7 @@ export const hasErrorInstanceId: (x: unknown) => x is {
     errorInstanceId: string;
 };
 
-// @public
+// @internal
 export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
     getBoolean(name: string): boolean | undefined;
@@ -146,7 +146,7 @@ export interface IConfigProvider extends IConfigProviderBase {
     getStringArray(name: string): string[] | undefined;
 }
 
-// @public
+// @internal
 export interface IConfigProviderBase {
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
@@ -267,7 +267,7 @@ export interface ITelemetryPropertiesExt {
     [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
-// @public (undocumented)
+// @internal
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
 
 // @internal
@@ -285,7 +285,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 // @public
 export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
-// @public (undocumented)
+// @internal
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
 // @public
@@ -310,7 +310,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     toTelemetryLogger(): ITelemetryLoggerExt;
 }
 
-// @public
+// @internal
 export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
     // (undocumented)
     config: IConfigProvider;
@@ -363,7 +363,7 @@ export class SampledTelemetryHelper implements IDisposable {
     measure<T>(codeToMeasure: () => T, bucket?: string): T;
 }
 
-// @public
+// @internal
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public

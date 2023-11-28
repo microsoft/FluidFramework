@@ -11,7 +11,6 @@ import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
@@ -29,6 +28,8 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
+    // (undocumented)
+    readonly configProvider: IConfigProviderBase | undefined;
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
@@ -42,6 +43,8 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    // (undocumented)
+    readonly properties: AzureClientProps;
 }
 
 // @public
@@ -113,10 +116,6 @@ export interface AzureUser<T = any> extends IUser {
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
-
-export { ITelemetryBaseEvent }
-
-export { ITelemetryBaseLogger }
 
 export { ITokenClaims }
 

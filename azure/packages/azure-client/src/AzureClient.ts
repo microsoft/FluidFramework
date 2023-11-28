@@ -57,13 +57,13 @@ const MAX_VERSION_COUNT = 5;
 export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
-	private readonly configProvider: IConfigProviderBase | undefined;
+	public readonly configProvider: IConfigProviderBase | undefined;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
 	 */
-	public constructor(private readonly properties: AzureClientProps) {
+	public constructor(public readonly properties: AzureClientProps) {
 		// remove trailing slash from URL if any
 		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
 		this.urlResolver = new AzureUrlResolver();

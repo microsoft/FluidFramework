@@ -20,18 +20,18 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @public (undocumented)
+// @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
 }): IRuntimeFactory;
 
-// @public (undocumented)
+// @internal
 export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
     container: IContainer;
     rootDataObject: IRootDataObject;
@@ -48,14 +48,14 @@ export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: IFluidDataStoreFactory;
 } & LoadableObjectCtor<T>;
 
-// @public @deprecated
+// @internal @deprecated
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
     constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
@@ -67,7 +67,6 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
     dispose(): void;
     get disposed(): boolean;
     get initialObjects(): InitialObjects<TContainerSchema>;
-    // @internal
     readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
     get isDirty(): boolean;
 }
@@ -78,7 +77,7 @@ export interface IConnection {
     mode: "write" | "read";
 }
 
-// @public
+// @internal
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
@@ -107,7 +106,7 @@ export interface IMember {
     userId: string;
 }
 
-// @public
+// @internal
 export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
 };

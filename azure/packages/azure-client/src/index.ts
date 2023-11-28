@@ -24,10 +24,10 @@ export type {
 	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
 } from "./interfaces";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
 export { ScopeType } from "@fluidframework/protocol-definitions";
+
+export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

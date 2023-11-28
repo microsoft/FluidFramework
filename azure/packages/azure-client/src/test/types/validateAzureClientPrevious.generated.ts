@@ -55,6 +55,7 @@ declare function get_old_ClassDeclaration_AzureClient():
 declare function use_current_ClassDeclaration_AzureClient(
     use: TypeOnly<current.AzureClient>): void;
 use_current_ClassDeclaration_AzureClient(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AzureClient());
 
 /*

@@ -61,6 +61,8 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
  *
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
+ *
+ * @internal
  */
 export interface ContainerSchema {
 	/**
