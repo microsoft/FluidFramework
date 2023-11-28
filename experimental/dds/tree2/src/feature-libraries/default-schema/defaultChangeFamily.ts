@@ -38,6 +38,8 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
+	public static readonly emptyChange: DefaultChangeset = ModularChangeFamily.emptyChange;
+
 	public constructor(codecOptions: ICodecOptions) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
 	}

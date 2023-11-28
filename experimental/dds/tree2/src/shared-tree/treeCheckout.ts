@@ -19,6 +19,7 @@ import {
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
 	Revertible,
+	ChangeFamily,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -150,7 +151,7 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: DefaultChangeFamily;
+	changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
@@ -264,7 +265,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
+		private readonly changeFamily: ChangeFamily<DefaultEditBuilder, DefaultChangeset>,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
