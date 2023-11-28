@@ -75,18 +75,6 @@ export function tryGetEditNodeTarget(editNode: FlexTreeNode): TreeNode | undefin
  * If the given target is already mapped to an edit node, the existing mapping will be overwritten.
  * If the given edit node is already mapped to a different target, this function will fail.
  */
-export function setEditNode<T extends TreeObjectNode<ObjectNodeSchema>>(
-	target: T,
-	editNode: FlexTreeObjectNode,
-): T;
-export function setEditNode<T extends TreeListNode>(
-	target: T,
-	editNode: FlexTreeFieldNode<FieldNodeSchema>,
-): T;
-export function setEditNode<T extends TreeMapNode<MapNodeSchema>>(
-	target: T,
-	editNode: FlexTreeMapNode<MapNodeSchema>,
-): T;
 export function setEditNode<T extends TreeNode>(target: T, editNode: FlexTreeNode): T {
 	assert(
 		tryGetEditNodeTarget(editNode) === undefined,

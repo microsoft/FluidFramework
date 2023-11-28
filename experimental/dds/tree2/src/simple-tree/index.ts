@@ -15,7 +15,9 @@ export {
 	TreeObjectNode,
 	TreeRoot,
 	TreeNode,
+	Unhydrated,
 	TreeListNodeBase,
+	TreeMapNodeBase,
 } from "./types";
 export { IterableTreeListContent } from "./iterableTreeListContent";
 export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
