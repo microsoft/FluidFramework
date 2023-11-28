@@ -478,21 +478,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
-		const [newHead, changeThunk, { deletedSourceCommits, targetCommits, sourceCommits }] =
-			rebaseResult;
+		const { newSourceHead, sourceChange, commits } = rebaseResult;
+		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
 			type: "replace",
 			get change() {
-				const change = changeThunk();
+				const change = sourceChange();
 				return change === undefined ? undefined : makeAnonChange(change);
 			},
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		} as const;
 		this.emit("beforeChange", changeEvent);
-		this.head = newHead;
+		this.head = newSourceHead;
 
 		// update revertible commits that have been rebased
 		sourceCommits.forEach((commit) => {
@@ -500,7 +500,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		this.emit("afterChange", changeEvent);
-		return [changeThunk, deletedSourceCommits, newCommits];
+		return [sourceChange, deletedSourceCommits, newCommits];
 	}
 
 	/**
@@ -530,7 +530,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// Compute the net change to this branch
-		const [newHead, _, { sourceCommits }] = rebaseResult;
+		const sourceCommits = rebaseResult.commits.sourceCommits;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		const taggedChange = makeAnonChange(change);
 		const changeEvent = {
@@ -542,7 +542,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		} as const;
 
 		this.emit("beforeChange", changeEvent);
-		this.head = newHead;
+		this.head = rebaseResult.newSourceHead;
 		this.emit("afterChange", changeEvent);
 		return [change, sourceCommits];
 	}
@@ -559,8 +559,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
-		const [rebasedHead] = rebaseResult;
-		if (this.head === rebasedHead) {
+		if (this.head === rebaseResult.newSourceHead) {
 			return undefined;
 		}
 
