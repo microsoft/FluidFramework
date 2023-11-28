@@ -195,7 +195,6 @@ extends:
                   releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
                   buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
                   nonScopedPackages: '${{ parameters.nonScopedPackages }}'
-                readonly: true
               - group: ado-feeds
               - name: testCoverage
                 value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
@@ -208,6 +207,7 @@ extends:
               # used in a few places in the pipeline to push custom telemetry to Kusto.
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
             steps:
               # Setup
               - checkout: self
