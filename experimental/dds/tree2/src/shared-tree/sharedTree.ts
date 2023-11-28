@@ -55,10 +55,10 @@ import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import {
 	ITree,
 	TreeConfiguration,
-	TreeNodeSchema,
 	WrapperTreeView as ClassWrapperTreeView,
-	NodeFromSchema,
 	toFlexConfig,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
 } from "../class-tree";
 import { TreeView, type ITree as OldSimpleTree } from "./simpleTree";
 import {
@@ -333,9 +333,9 @@ export class SharedTree
 		return new WrapperTreeView(view);
 	}
 
-	public schematize<TRoot extends TreeNodeSchema>(
+	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<NodeFromSchema<TRoot>> {
+	): TreeView<TreeFieldFromImplicitField<TRoot>> {
 		const flexConfig = toFlexConfig(config);
 		const view = this.schematizeInternal(flexConfig);
 		return new ClassWrapperTreeView(view);

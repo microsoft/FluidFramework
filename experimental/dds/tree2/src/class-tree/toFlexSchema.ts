@@ -23,19 +23,21 @@ import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexLi
 import { extractFactoryContent, getClassSchema, simpleSchemaSymbol } from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
-import { TreeNode, Unhydrated } from "../simple-tree";
 import { cursorFromNodeData } from "../simple-tree/toMapTree";
 import {
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes";
 import { TreeConfiguration } from "./tree";
 
 /**
+ * Returns a cursor (in nodes mode) for the root node.
+ *
  * @privateRemarks
  * Ideally this would work on any node, not just the root,
  * and the schema would come from the unhydrated node.
@@ -43,7 +45,7 @@ import { TreeConfiguration } from "./tree";
  */
 export function cursorFromUnhydratedRoot(
 	schema: TreeSchema,
-	tree: Unhydrated<TreeNode>,
+	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree);
 	return (
@@ -55,7 +57,8 @@ export function cursorFromUnhydratedRoot(
 export function toFlexConfig(config: TreeConfiguration): InitializeAndSchematizeConfiguration {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
-	const initialTree = [cursorFromUnhydratedRoot(schema, unhydrated as Unhydrated<TreeNode>)];
+	const initialTree =
+		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
 	return {
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,

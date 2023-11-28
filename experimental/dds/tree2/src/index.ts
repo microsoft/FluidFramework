@@ -209,7 +209,7 @@ export {
 	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema,
+	ImplicitFieldSchema as FlexImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
@@ -280,6 +280,8 @@ export {
 	Tree,
 	TreeApi,
 	NodeBase,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
 } from "./class-tree";
 export { TreeFactory, TreeOptions } from "./treeFactory";
 

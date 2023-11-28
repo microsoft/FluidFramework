@@ -13,6 +13,8 @@ export {
 	TreeNodeSchemaCore,
 	TreeListNode,
 	NodeBase,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
 } from "./schemaTypes";
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi } from "./treeApi";

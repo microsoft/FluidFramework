@@ -7,9 +7,13 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events";
 import { IDisposable, disposeSymbol } from "../util";
 import { FlexTreeView, type CheckoutEvents } from "../shared-tree";
-import { getProxyForField, type Unhydrated } from "../simple-tree";
+import { getProxyForField } from "../simple-tree";
 import { TreeFieldSchema as FlexTreeFieldSchema } from "../feature-libraries";
-import { NodeFromSchema, TreeNodeSchema } from "./schemaTypes";
+import {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+	TreeFieldFromImplicitField,
+} from "./schemaTypes";
 /**
  * Channel for a Tree DDS.
  * @alpha
@@ -48,26 +52,25 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
 	 */
-	schematize<TRoot extends TreeNodeSchema>(
+	schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<NodeFromSchema<TRoot>>;
+	): TreeView<TreeFieldFromImplicitField<TRoot>>;
 }
 
 /**
  * @alpha
  */
-export class TreeConfiguration<TSchema extends TreeNodeSchema = TreeNodeSchema> {
+export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
+	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param initialTree - Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
-	 * @param schema - The schema which the application wants to view the tree with.
-	 * @privateRemarks
-	 * This always results in a monomorphic required root.
-	 * Could use ImplicitFieldSchema for more flexibility.
+	 * If the `initialTree` returns any actual node instances, they should be recreated each time the `initialTree` runs.
+	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
-		public readonly initialTree: () => Unhydrated<NodeFromSchema<TSchema>>,
+		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 	) {}
 }
 
@@ -95,9 +98,9 @@ export interface TreeView<in out TRoot> extends IDisposable {
  * Implementation of TreeView wrapping a FlexTreeView.
  */
 export class WrapperTreeView<
-	in out TSchema extends TreeNodeSchema,
+	in out TSchema extends ImplicitFieldSchema,
 	TView extends FlexTreeView<FlexTreeFieldSchema>,
-> implements TreeView<NodeFromSchema<TSchema>>
+> implements TreeView<TreeFieldFromImplicitField<TSchema>>
 {
 	public constructor(public readonly view: TView) {}
 
@@ -109,7 +112,7 @@ export class WrapperTreeView<
 		return this.view.checkout.events;
 	}
 
-	public get root(): NodeFromSchema<TSchema> {
-		return getProxyForField(this.view.editableTree) as NodeFromSchema<TSchema>;
+	public get root(): TreeFieldFromImplicitField<TSchema> {
+		return getProxyForField(this.view.editableTree) as TreeFieldFromImplicitField<TSchema>;
 	}
 }

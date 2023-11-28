@@ -6,13 +6,11 @@
 // Used by public types, but not part of the desired API surface
 
 export {
-	ImplicitFieldSchema,
 	ObjectFromSchemaRecord,
 	InsertableObjectFromSchemaRecord,
 	TreeNodeFromImplicitAllowedTypes,
 	ImplicitAllowedTypes,
 	FieldKind,
-	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
 	AllowedTypes,
 	FieldSchema,
