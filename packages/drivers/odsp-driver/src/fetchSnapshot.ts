@@ -164,7 +164,7 @@ export async function fetchSnapshotWithRedeem(
 				// If redeem failed, that most likely means user has no permissions to access a file,
 				// and thus it's not worth it logging extra errors - same error will be logged by end-to-end
 				// flow (container open) based on a failure above.
-				logger.sendErrorEvent(
+				logger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
 						errorType: error.errorType,

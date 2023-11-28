@@ -21,16 +21,25 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 	isEmptyFieldChanges,
+	ITreeCursor,
+	ChangeAtomIdMap,
+	JsonableTree,
+	makeDetachedNodeId,
+	emptyDelta,
 } from "../../core";
 import {
 	brand,
+	forEachInNestedMap,
 	getOrAddEmptyToMap,
+	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	isReadonlyArray,
 	Mutable,
 } from "../../util";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
@@ -67,6 +76,8 @@ import {
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
+	public static readonly emptyChange: ModularChangeset = makeModularChangeset(new Map());
+
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(
@@ -131,6 +142,16 @@ export class ModularChangeFamily
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		if (changes.length === 1) {
+			const { fieldChanges, builds, constraintViolationCount } = changes[0].change;
+			return makeModularChangeset(
+				fieldChanges,
+				maxId,
+				revInfos,
+				constraintViolationCount,
+				builds,
+			);
+		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
@@ -142,7 +163,7 @@ export class ModularChangeFamily
 
 		const composedFields = this.composeFieldMaps(
 			changesWithoutConstraintViolations.map((change) =>
-				tagChange(change.change.fieldChanges, change.revision),
+				tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
 			),
 			genId,
 			crossFieldTable,
@@ -172,7 +193,35 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		return makeModularChangeset(composedFields, idState.maxId, revInfos);
+		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
+		for (const { revision, change } of changes) {
+			if (change.builds) {
+				for (const [revisionKey, innerMap] of change.builds) {
+					const setRevisionKey = revisionKey ?? revision;
+					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
+					for (const [id, tree] of innerMap) {
+						// Check for duplicate builds and prefer earlier ones.
+						// There are two scenarios where we might get duplicate builds:
+						// - In compositions of rebase sandwiches:
+						// In that case, the trees are identical and it doesn't matter which one we pick.
+						// - In compositions of commits that needed to include repair data refreshers (e.g., undos):
+						// In that case, it's possible for the refreshers to contain different trees because the latter
+						// refresher may already reflect the changes made by the commit that includes the earlier
+						// refresher. This composition includes the changes made by the commit that includes the
+						// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+						// the produced changeset will build a tree one which those changes have already been applied
+						// and also try to apply the changes again, effectively applying them twice.
+						// Note that it would in principle be possible to adopt the later build and exclude from the
+						// composition all the changes already reflected on the tree, but that is not something we
+						// care to support at this time.
+						if (!innerDstMap.has(id)) {
+							innerDstMap.set(id, tree);
+						}
+					}
+				}
+			}
+		}
+		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, allBuilds);
 	}
 
 	private composeFieldMaps(
@@ -305,7 +354,7 @@ export class ModularChangeFamily
 		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 
 		const invertedFields = this.invertFieldMap(
-			tagChange(change.change.fieldChanges, change.revision),
+			tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -438,7 +487,7 @@ export class ModularChangeFamily
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
-			tagChange(over.change.fieldChanges, over.revision),
+			tagChange(over.change.fieldChanges, revisionFromTaggedChange(over)),
 			genId,
 			crossFieldTable,
 			() => true,
@@ -479,6 +528,7 @@ export class ModularChangeFamily
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
+			change.builds,
 		);
 	}
 
@@ -662,54 +712,6 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
-		// Return an empty delta for changes with constraint violations
-		if ((change.constraintViolationCount ?? 0) > 0) {
-			return new Map();
-		}
-
-		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
-	}
-
-	/**
-	 * @param change - The change to convert into a delta.
-	 * @param repairStore - The store to query for repair data.
-	 * @param path - The path of the node being altered by the change as defined by the input context.
-	 * Undefined for the root and for nodes that do not exist in the input context.
-	 */
-	private intoDeltaImpl(
-		change: FieldChangeMap,
-		revision: RevisionTag | undefined,
-		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Root {
-		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
-		for (const [field, fieldChange] of change) {
-			const fieldRevision = fieldChange.revision ?? revision;
-			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.FieldMap =>
-					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
-				idAllocator,
-			);
-			if (!isEmptyFieldChanges(deltaField)) {
-				delta.set(field, deltaField);
-			}
-		}
-		return delta;
-	}
-
-	private deltaFromNodeChange(
-		{ change, revision }: TaggedChange<NodeChangeset>,
-		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.FieldMap {
-		if (change.fieldChanges !== undefined) {
-			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
-		}
-		// TODO: update the API to allow undefined to be returned here
-		return new Map();
-	}
-
 	private pruneFieldMap(changeset: FieldChangeMap): FieldChangeMap | undefined {
 		const prunedChangeset: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of changeset) {
@@ -744,6 +746,80 @@ export class ModularChangeFamily
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ * @param fieldKinds - The field kinds to delegate to.
+ */
+export function intoDelta(
+	taggedChange: TaggedChange<ModularChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Delta.Root {
+	const change = taggedChange.change;
+	// Return an empty delta for changes with constraint violations
+	if ((change.constraintViolationCount ?? 0) > 0) {
+		return emptyDelta;
+	}
+
+	const revision = revisionFromTaggedChange(taggedChange);
+	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
+	const rootDelta: Mutable<Delta.Root> = {};
+	const fieldDeltas = intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
+	if (fieldDeltas.size > 0) {
+		rootDelta.fields = fieldDeltas;
+	}
+	if (change.builds && change.builds.size > 0) {
+		const builds: Delta.DetachedNodeBuild[] = [];
+		forEachInNestedMap(change.builds, (tree, major, minor) => {
+			builds.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				trees: [cursorForJsonableTreeNode(tree)],
+			});
+		});
+		rootDelta.build = builds;
+	}
+	return rootDelta;
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ * @param repairStore - The store to query for repair data.
+ * @param path - The path of the node being altered by the change as defined by the input context.
+ * Undefined for the root and for nodes that do not exist in the input context.
+ */
+function intoDeltaImpl(
+	change: FieldChangeMap,
+	revision: RevisionTag | undefined,
+	idAllocator: MemoizedIdRangeAllocator,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Map<FieldKey, Delta.FieldChanges> {
+	const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
+	for (const [field, fieldChange] of change) {
+		const fieldRevision = fieldChange.revision ?? revision;
+		const deltaField = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
+			tagChange(fieldChange.change, fieldRevision),
+			(childChange): Delta.FieldMap =>
+				deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator, fieldKinds),
+			idAllocator,
+		);
+		if (!isEmptyFieldChanges(deltaField)) {
+			delta.set(field, deltaField);
+		}
+	}
+	return delta;
+}
+
+function deltaFromNodeChange(
+	{ change, revision }: TaggedChange<NodeChangeset>,
+	idAllocator: MemoizedIdRangeAllocator,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Delta.FieldMap {
+	if (change.fieldChanges !== undefined) {
+		return intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
+	}
+	// TODO: update the API to allow undefined to be returned here
+	return new Map();
 }
 
 /**
@@ -961,6 +1037,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
+	builds?: ChangeAtomIdMap<JsonableTree>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -971,6 +1048,9 @@ function makeModularChangeset(
 	}
 	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
 		changeset.constraintViolationCount = constraintViolationCount;
+	}
+	if (builds !== undefined && builds.size > 0) {
+		changeset.builds = builds;
 	}
 	return changeset;
 }
@@ -1006,6 +1086,31 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(change);
 	}
 
+	public buildTrees(
+		firstId: ChangesetLocalId,
+		newContent: ITreeCursor | readonly ITreeCursor[],
+	): GlobalEditDescription {
+		const content = isReadonlyArray(newContent) ? newContent : [newContent];
+		const length = content.length;
+		if (length === 0) {
+			return { type: "global" };
+		}
+		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const innerMap = new Map();
+		builds.set(undefined, innerMap);
+		let id = firstId;
+		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+		for (const tree of content.map(jsonableTreeFromCursor)) {
+			assert(!innerMap.has(id), "Unexpected duplicate build ID");
+			innerMap.set(id, tree);
+			id = brand((id as number) + 1);
+		}
+		return {
+			type: "global",
+			builds,
+		};
+	}
+
 	/**
 	 * Adds a change to the edit builder
 	 * @param field - the field which is being edited
@@ -1026,9 +1131,17 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
-				makeModularChangeset(
-					this.buildChangeMap(change.field, change.fieldKind, change.change),
-				),
+				change.type === "global"
+					? makeModularChangeset(
+							new Map(),
+							undefined,
+							undefined,
+							undefined,
+							change.builds,
+					  )
+					: makeModularChangeset(
+							this.buildChangeMap(change.field, change.fieldKind, change.change),
+					  ),
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
@@ -1087,11 +1200,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 /**
  * @alpha
  */
-export interface EditDescription {
+export interface FieldEditDescription {
+	type: "field";
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
+
+/**
+ * @alpha
+ */
+export interface GlobalEditDescription {
+	type: "global";
+	builds?: ChangeAtomIdMap<JsonableTree>;
+}
+
+/**
+ * @alpha
+ */
+export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {
 	revInfos: RevisionInfo[];
@@ -1122,4 +1249,17 @@ function revisionInfoFromTaggedChange(
 		revInfos.push(info);
 	}
 	return revInfos;
+}
+
+function revisionFromTaggedChange(change: TaggedChange<ModularChangeset>): RevisionTag | undefined {
+	return change.revision ?? revisionFromRevInfos(change.change.revisions);
+}
+
+function revisionFromRevInfos(
+	revInfos: undefined | readonly RevisionInfo[],
+): RevisionTag | undefined {
+	if (revInfos === undefined || revInfos.length !== 1) {
+		return undefined;
+	}
+	return revInfos[0].revision;
 }
