@@ -880,7 +880,7 @@ describe("EditManager", () => {
 					//     └───────────────(P1)─...─(Pc)
 					// By the end of the test, the EditManager has the following structure:
 					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)─(P+)
-					//                   └──(P1)─...─(Pc)─(P+)
+					//                                      └─
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
@@ -904,31 +904,19 @@ describe("EditManager", () => {
 						};
 						const expected = {
 							// As part of rebasing the peer branch that contains the phase-1 edits,
-							//   we rebase all P edits on the branch over all T trunk edits.
-							//     The Ith peer edit is rebased over...
-							//       - the inverse of each peer edit before it: I - 1
-							//       - each of the trunk edits: T
-							//       - the fully rebased version of each peer edit before it: I - 1
-							//     This adds up to T + 2I - 2 rebases for the Ith edit.
-							//   Summing over all P edits transforms I into P(P + 1)/2
-							//   Which gives us: PT + 2P(P + 1)/2 - 2P
-							//   Which simplifies to: P(T + P - 1)
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no rebasing.
 							// As part of rebasing P+ to the tip of the trunk,
-							//   we rebase P+ over...
-							//     - the inverse of each peer edit before it: P
-							//     - the trunk edits since its inception, which are the rebased phase-1 edits: P
-							//   This adds up to 2P rebases.
-							//   Note: this last rebase phase doesn't seem to be needed for this scenario.
-							// Adding both terms:
-							rebased: P * (T + P - 1) + 2 * P,
+							//   we realize that it is based on the tip of the trunk.
+							//   It therefore undergoes no rebasing.
+							rebased: 0,
 							// As part of rebasing the peer branch that contains the phase-1 edits,
-							//   we rebase all P edits on the branch over all T trunk edits.
-							//   We therefore invert...
-							//     - each of the phase-1 peer edits: P
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no inverting.
 							// As part of rebasing P+, we invert...
 							//   - each of the phase-1 peer edits: P
 							// Adding both terms and simplifying:
-							inverted: P * 2,
+							inverted: P,
 							// As part of rebasing the peer branch, we compose...
 							//   - the inverse of the phase-1 peer edits: P
 							//   - the trunk edits: T
