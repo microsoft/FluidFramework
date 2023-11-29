@@ -251,7 +251,7 @@ export {
 	TreeStatus,
 	FlexTreeTyped,
 	Context,
-	TreeEvent,
+	ITreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
