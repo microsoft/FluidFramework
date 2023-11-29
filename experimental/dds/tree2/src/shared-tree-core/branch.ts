@@ -21,6 +21,7 @@ import {
 	RevertibleKind,
 	RevertResult,
 	DiscardResult,
+	BranchRebaseResult,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
@@ -462,13 +463,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
 		upTo = branch.getHead(),
-	):
-		| [
-				change: () => TChange | undefined,
-				removedCommits: GraphCommit<TChange>[],
-				newCommits: GraphCommit<TChange>[],
-		  ]
-		| undefined {
+	): BranchRebaseResult<TChange> | undefined {
 		this.assertNotDisposed();
 
 		// Rebase this branch onto the given branch
@@ -500,7 +495,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		this.emit("afterChange", changeEvent);
-		return [() => rebaseResult.sourceChange, deletedSourceCommits, newCommits];
+		return rebaseResult;
 	}
 
 	/**
