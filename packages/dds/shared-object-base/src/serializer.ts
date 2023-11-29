@@ -61,10 +61,10 @@ export interface IFluidSerializer {
 /**
  * Use for readonly view of Json compatible data that can also contain {@link @fluidframework/core-interfaces#IFluidHandle}s.
  *
- * To be "Json compatible" requires that the data is acyclic
+ * To be "Json compatible" requires that the data is acyclic.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
+ * but instead mostly restricts access to the json compatible subset.
  *
  * See also {@link isFluidHandle}.
  *
@@ -85,13 +85,23 @@ export type FluidSerializableReadOnly =
 /**
  * Check if a value in {@link FluidSerializableReadOnly} data is an {@link @fluidframework/core-interfaces#IFluidHandle}.
  *
- * Warning: Non-IFluidHandle objects with a key "IFluidHandle" used to be unconditionally interpreted as IFluidHandle and currently assert.
+ * Warning: Non-IFluidHandle objects with a key "IFluidHandle" used to be unconditionally interpreted as IFluidHandle.
+ * Now some of these cases assert.
  *
  * @remarks
- * This is sound to use on data that is actually valid Json + IFluidHandles (but not on `unknown` data)
- * because IFluidHandles are not json compatible, and thus can be robustly distinguished from json compatible data with no false positives or false negatives.
- * Unfortunately TypeScript doesn't prevent non-json compatible data (such as data with function and cycles) from being used as `FluidSerializableReadOnly`,
- * so some of this correctness still depends on the caller to ensure they didn't use such data as FluidSerializableReadOnly invalidly.
+ * Its possible to have serializable data that looks like an {@link @fluidframework/core-interfaces#IFluidHandle} but isn't one.
+ * This function can not distinguish these from real IFluidHandles in all cases: changes to the IFluidHandle would be required to ensure this is always possible.
+ *
+ * For now this is a best effort implementation.
+ *
+ * @privateRemarks
+ * Any of the following changes to IFluidHandle would solve the ambiguity problem:
+ *
+ * - "IFluidHandle" property could be required to be a cyclic reference back to the parent.
+ *
+ * - IFluidHandle could be made into a class which could be detected with `instanceof`.
+ *
+ * - IFluidHandle could be identified using a dedicated symbol.
  *
  * @public
  */
@@ -99,19 +109,43 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	if (typeof value !== "object" || value === null) {
 		return false;
 	}
-	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
-	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
-	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
-	const isHandle = handle === value;
-	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
-	// do an extra test.
+	const partialHandle = value as Partial<IFluidHandle>;
+	const innerHandle = partialHandle.IFluidHandle;
+	if (innerHandle === undefined) {
+		return false;
+	}
+
+	// At this point, the value is known to be an object with an IFluidHandle.
+	// This function will heuristically validate that object really is an IFluidHandle.
+	// If the object fails this check, it will assert to detect problematic data that would have incorrectly been treated as a handle in previous versions of the serializer.
+
 	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
 	const getMember = (value as Partial<IFluidHandle>).get;
 	assert(
-		(typeof getMember === "function") === isHandle,
-		"Fluid handle detection via get method should match detection via IFluidHandle field",
+		typeof getMember === "function",
+		"Fluid handle detection found IFluidHandle field, but not have a get method",
 	);
-	return isHandle;
+
+	// If the handle is not a cyclic reference, validate the inner one as well:
+	if (value !== innerHandle) {
+		assert(
+			typeof innerHandle === "object" && innerHandle !== null,
+			"Fluid handle detection found IFluidHandle field, but it was not an object",
+		);
+
+		assert(
+			innerHandle.IFluidHandle?.IFluidHandle?.IFluidHandle?.IFluidHandle !== undefined,
+			"Fluid handle detection found IFluidHandle field, but it did not have IFluidHandle members recursively",
+		);
+
+		const innerGetMember = (innerHandle as Partial<IFluidHandle>).get;
+		assert(
+			typeof innerGetMember === "function",
+			"Fluid handle detection found IFluidHandle field, but it did not have a get method",
+		);
+	}
+
+	return true;
 }
 
 /**

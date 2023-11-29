@@ -53,20 +53,59 @@ describe("FluidSerializer", () => {
 	}
 
 	it("isFluidHandle", () => {
+		// Cyclic reference case
+		assert(isFluidHandle(new MockHandle(5)));
+		// Non cyclic case
+		assert(
+			isFluidHandle({
+				IFluidHandle: new MockHandle(5),
+				get: () => assert.fail(),
+				isAttached: false,
+				attachGraph: () => assert.fail(),
+				bind: () => assert.fail(),
+				absolutePath: "",
+			} satisfies IFluidHandle),
+		);
+
 		assert(!isFluidHandle(0));
 		assert(!isFluidHandle({}));
 		assert(!isFluidHandle(undefined));
 		assert(!isFluidHandle(null));
 		assert(!isFluidHandle([]));
-		assert(isFluidHandle(new MockHandle(5)));
-		assert(!isFluidHandle({ IFluidHandle: 5 }));
-		assert(!isFluidHandle({ IFluidHandle: {} }));
+
 		const loopy = { IFluidHandle: {} };
 		loopy.IFluidHandle = loopy;
-		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
-		// Thus this case asserts:
+
+		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via IFluidHandle field.
+		// Check that cases failing those checks assert:
+
+		// Invalid inner type
+		assert.throws(
+			() => isFluidHandle({ IFluidHandle: 5 }),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
+		// Invalid inner handle
+		assert.throws(
+			() => isFluidHandle({ IFluidHandle: {} }),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
+		// Cyclic ref but invalid
 		assert.throws(
 			() => isFluidHandle(loopy),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
+		// Invalid inner handle
+		assert.throws(
+			() =>
+				isFluidHandle({
+					IFluidHandle: 5,
+					get: () => {},
+				} as unknown as FluidSerializableReadOnly),
+			(e: Error) => validateAssertionError(e, /IFluidHandle/),
+		);
+		// Valid inner handle, but invalid outer one.
+		assert.throws(
+			() => isFluidHandle({ IFluidHandle: new MockHandle(5), get: 5 }),
 			(e: Error) => validateAssertionError(e, /IFluidHandle/),
 		);
 	});
