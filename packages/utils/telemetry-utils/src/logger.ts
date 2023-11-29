@@ -44,7 +44,7 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  *
- * @privateRemarks Please do not modify existing entries for backwards compatibility.
+ * @privateRemarks Please do not modify existing entries, to maintain backwards compatibility.
  *
  * @internal
  */
