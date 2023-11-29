@@ -31,7 +31,6 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
-import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -761,8 +760,6 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
-    // @deprecated
-    static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -844,9 +841,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 // @public
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
-
-// @internal
-export function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer>;
 
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";

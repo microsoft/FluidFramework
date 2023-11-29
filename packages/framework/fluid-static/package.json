@@ -124,6 +124,19 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_FluidContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_ServiceAudience": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

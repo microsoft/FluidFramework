@@ -26,6 +26,7 @@ import {
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
+	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -116,7 +117,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
-		const delta = defaultChangeFamily.intoDelta(taggedChange);
+		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
 		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();

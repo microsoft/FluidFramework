@@ -28,21 +28,27 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree';
+import { MapLike } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaRevertible } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaType } from '@fluidframework/merge-tree';
 import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
+import { reservedMarkerIdKey } from '@fluidframework/merge-tree';
+import { reservedRangeLabelsKey } from '@fluidframework/merge-tree';
+import { reservedTileLabelsKey } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
+import { TrackingGroup } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
@@ -59,6 +65,8 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 
 // @alpha
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
+
+export { BaseSegment }
 
 // @public (undocumented)
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
@@ -323,6 +331,8 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }
 
+export { ISegment }
+
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
@@ -391,6 +401,26 @@ export interface IValueOpEmitter {
     // @deprecated
     emit(opName: IntervalOpType, previousValue: undefined, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
 }
+
+export { LocalReferencePosition }
+
+export { MapLike }
+
+export { Marker }
+
+export { MergeTreeDeltaType }
+
+export { PropertySet }
+
+export { ReferencePosition }
+
+export { ReferenceType }
+
+export { reservedMarkerIdKey }
+
+export { reservedRangeLabelsKey }
+
+export { reservedTileLabelsKey }
 
 // @alpha
 export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
@@ -707,5 +737,9 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
+
+export { TextSegment }
+
+export { TrackingGroup }
 
 ```
