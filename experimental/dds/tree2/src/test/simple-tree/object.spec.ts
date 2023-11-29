@@ -46,7 +46,6 @@ function testObjectLike(testCases: TestCase[]) {
 				const real = initialTree;
 				const proxy = view.root;
 
-				// We do not use 'itWithRoot()' so we can pretty-print the 'proxy' in the test title.
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
 					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
 				});
@@ -438,16 +437,12 @@ describe("Object-like", () => {
 			// const schema = _.intoSchema(parent);
 			// const before: string[] = [];
 			// const after = ["A"];
-			// itWithRoot(
-			// 	`(${pretty(before)} -> ${pretty(after)})`,
-			// 	schema,
-			// 	{ list: before },
-			// 	(root) => {
-			// 		assert.deepEqual(root.list, before);
-			// 		root.list = after;
-			// 		assert.deepEqual(root.list, after);
-			// 	},
-			// );
+			// it(`(${pretty(before)} -> ${pretty(after)})`, () => {
+			// 	const root = getRoot(schema, { list: before });
+			// 	assert.deepEqual(root.list, before);
+			// 	root.list = after;
+			// 	assert.deepEqual(root.list, after);
+			// });
 		});
 
 		describe.skip("optional list", () => {
@@ -459,19 +454,14 @@ describe("Object-like", () => {
 			// const schema = _.intoSchema(parent);
 			// const before: string[] = [];
 			// const after = ["A"];
-			// itWithRoot(
-			// 	`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
-			// 	schema,
-			// 	// TODO: Remove explicit undefined once implicit undefined is supported.
-			// 	{ list: undefined },
-			// 	(root) => {
-			// 		assert.equal(root.list, undefined);
-			// 		root.list = before;
-			// 		assert.deepEqual(root.list, before);
-			// 		root.list = after;
-			// 		assert.deepEqual(root.list, after);
-			// 	},
-			// );
+			// it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
+			// 	const root = getRoot(schema, { list: undefined });
+			// 	assert.equal(root.list, undefined);
+			// 	root.list = before;
+			// 	assert.deepEqual(root.list, before);
+			// 	root.list = after;
+			// 	assert.deepEqual(root.list, after);
+			// });
 		});
 
 		describe("required map", () => {
