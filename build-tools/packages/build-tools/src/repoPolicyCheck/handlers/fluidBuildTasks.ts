@@ -472,6 +472,8 @@ export const handlers: Handler[] = [
 					// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
 					// is when the whole command is "tsc".
 					(command.startsWith("tsc ") || command === "tsc") &&
+					// tsc --watch tasks are long-running processes and don't need the standard task deps
+					!command.includes("--watch") &&
 					!ignore.has(script)
 				) {
 					try {
