@@ -166,17 +166,17 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 
 		// Subscribe to events on the backing anchorNode
 		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
-			this[internalEmitterSymbol].emit("afterChange", anchorNodeInEvent);
+			this[internalEmitterSymbol].emit("afterChange");
 		});
 		this.#anchorNode.on("beforeChange", (anchorNodeInEvent: AnchorNode) => {
-			this[internalEmitterSymbol].emit("beforeChange", anchorNodeInEvent);
+			this[internalEmitterSymbol].emit("beforeChange");
 		});
 
-		this[internalEmitterSymbol].on("beforeChange", (treeNode) => {
-			this.onInternalEvent("beforeChange", treeNode);
+		this[internalEmitterSymbol].on("beforeChange", () => {
+			this.#onInternalEvent("beforeChange");
 		});
-		this[internalEmitterSymbol].on("afterChange", (treeNode) => {
-			this.onInternalEvent("afterChange", treeNode);
+		this[internalEmitterSymbol].on("afterChange", () => {
+			this.#onInternalEvent("afterChange");
 		});
 	}
 
@@ -281,21 +281,15 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
-	private readonly listeners = new Map<
+	readonly #listeners = new Map<
 		keyof EditableTreeEvents,
 		EditableTreeEvents[keyof EditableTreeEvents][]
 	>();
 	public readonly [internalEmitterSymbol] = new TypedEventEmitter<EditableTreeEvents>();
 
-	private readonly onInternalEvent = (
-		eventName: keyof EditableTreeEvents,
-		anchorNode: AnchorNode,
-	) => {
-		let treeNode: FlexTreeNode | undefined = anchorNode.slots.get(lazyTreeSlot);
-		assert(treeNode !== undefined, 0x7d3 /* tree node not found in anchor node slots */);
-
-		const event = new TreeEventImplementation(treeNode);
-		for (const listener of this.listeners.get(eventName) ?? []) {
+	readonly #onInternalEvent = (eventName: keyof EditableTreeEvents) => {
+		const event = new TreeEventImplementation(this);
+		for (const listener of this.#listeners.get(eventName) ?? []) {
 			// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 			// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 			// for changing and subtreeChanging match the one for beforeChange and afterChange.
@@ -304,9 +298,9 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		if (event.propagationStopped) {
 			return;
 		}
-		treeNode = treeNode.parentField.parent.parent;
-		if (treeNode !== undefined) {
-			treeNode[internalEmitterSymbol].emit(eventName, treeNode);
+		const parentNode = this.parentField.parent.parent;
+		if (parentNode !== undefined) {
+			parentNode[internalEmitterSymbol].emit(eventName);
 		}
 	};
 
@@ -338,26 +332,26 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 				return unsubscribeFromSubtreeChange;
 			}
 			case "beforeChange": {
-				this.listeners.set("beforeChange", [
-					...(this.listeners.get("beforeChange") ?? []),
+				this.#listeners.set("beforeChange", [
+					...(this.#listeners.get("beforeChange") ?? []),
 					listener,
 				]);
 				return () => {
-					this.listeners.set(
+					this.#listeners.set(
 						"beforeChange",
-						this.listeners.get("beforeChange")?.filter((x) => x !== listener) ?? [],
+						this.#listeners.get("beforeChange")?.filter((x) => x !== listener) ?? [],
 					);
 				};
 			}
 			case "afterChange": {
-				this.listeners.set("afterChange", [
-					...(this.listeners.get("afterChange") ?? []),
+				this.#listeners.set("afterChange", [
+					...(this.#listeners.get("afterChange") ?? []),
 					listener,
 				]);
 				return () => {
-					this.listeners.set(
+					this.#listeners.set(
 						"afterChange",
-						this.listeners.get("afterChange")?.filter((x) => x !== listener) ?? [],
+						this.#listeners.get("afterChange")?.filter((x) => x !== listener) ?? [],
 					);
 				};
 			}
