@@ -189,12 +189,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			change,
 		});
 
-		const taggedChange = tagChange(change, revision);
 		const changeEvent = {
 			type: "append",
-			get change() {
-				return taggedChange;
-			},
+			change: tagChange(change, revision),
 			newCommits: [newHead],
 		} as const;
 
@@ -270,9 +267,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const changeEvent = {
 			type: "replace",
-			get change() {
-				return undefined;
-			},
+			change: undefined,
 			removedCommits: commits,
 			newCommits: [newHead],
 		} as const;
@@ -315,12 +310,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
 
-		const taggedChange = change === undefined ? undefined : makeAnonChange(change);
 		const changeEvent = {
 			type: "remove",
-			get change() {
-				return taggedChange;
-			},
+			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: commits,
 		} as const;
 

@@ -73,10 +73,7 @@ export interface BranchRebaseResult<TChange> {
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
- * @returns a tuple containing:
- * - the head of a rebased source branch
- * - a thunk that can compute the cumulative change to the source branch (undefined if no change occurred),
- * - details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. For example:
@@ -109,10 +106,7 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
- * @returns a tuple containing:
- * - the head of a rebased source branch
- * - a thunk that can compute the cumulative change to the source branch (undefined if no change occurred),
- * - details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
