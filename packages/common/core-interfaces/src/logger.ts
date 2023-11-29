@@ -152,8 +152,6 @@ export interface ILoggingError extends Error {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryLoggerExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- *
- * @internal
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**
