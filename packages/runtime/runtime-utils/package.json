@@ -110,6 +110,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
