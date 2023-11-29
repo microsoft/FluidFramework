@@ -44,7 +44,7 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  *
- * @privateRemarks Please do not modify existing entries for backwards compatibility.
+ * @privateRemarks Please do not modify existing entries, to maintain backwards compatibility.
  *
  * @internal
  */
@@ -107,8 +107,8 @@ export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
-// TODO: add docs
 /**
+ * String used to concatenate the namespace of parent loggers and their child loggers.
  * @internal
  */
 export const eventNamespaceSeparator = ":" as const;
@@ -495,18 +495,17 @@ export interface MultiSinkLoggerProperties {
 	namespace?: string;
 
 	/**
-	 * Default properties that will be applied events.
+	 * Default properties that will be applied to all events flowing through this logger.
 	 */
 	properties?: ITelemetryLoggerPropertyBags;
 
 	/**
-	 * The base loggers that will logged to after processing.
+	 * The base loggers that this logger will forward the logs to, after it processes them.
 	 */
 	loggers?: (ITelemetryBaseLogger | undefined)[];
 
 	/**
-	 * The logger will attempt to copy those loggers properties to this logger if they are of a known type.
-	 * I.e. one from this package.
+	 * If true, the logger will attempt to copy the custom properties (if they are of a known type, i.e. one from this package) of all the base loggers passed to it, to apply them itself to logs that flow through.
 	 */
 	tryInheritProperties?: true;
 }
@@ -614,7 +613,7 @@ export class MultiSinkLogger extends TelemetryLogger {
  * @remarks
  * By default, all events are logged, but the client can override this behavior.
  *
- * For example, there is rarely a need to record start event, as we really after
+ * For example, there is rarely a need to record a start event, as we're really after
  * success / failure tracking, including duration (on success).
  *
  * @internal
