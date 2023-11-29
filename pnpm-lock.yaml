@@ -9705,7 +9705,6 @@ importers:
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-utils': link:../../test/test-utils
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.28.0_dgt3pekvdbgd2jliwm43ktglpe
@@ -9713,6 +9712,7 @@ importers:
       '@fluidframework/build-tools': 0.28.0_@types+node@16.18.65
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/test-utils': link:../../test/test-utils
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.65
       '@types/mocha': 9.1.1
       '@types/node': 16.18.65
