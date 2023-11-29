@@ -9,7 +9,6 @@ import {
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
-	type ITelemetryBaseLogger,
 	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -124,11 +123,10 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
  * @returns The outcome of the condition
  */
 function logIfFalse(
-	condition: unknown,
-	logger: ITelemetryBaseLogger,
+	condition: boolean,
+	logger: ITelemetryLoggerExt,
 	event: string | ITelemetryGenericEventExt,
 ): condition is true {
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (condition) {
 		return true;
 	}
