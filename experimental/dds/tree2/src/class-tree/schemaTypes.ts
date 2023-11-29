@@ -5,7 +5,7 @@
 
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { TreeListNodeBase, Unhydrated } from "../simple-tree";
+import { Unhydrated } from "../simple-tree";
 
 /**
  * Base type which all nodes extend.
@@ -13,17 +13,6 @@ import { TreeListNodeBase, Unhydrated } from "../simple-tree";
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeBase {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeListNodeBase<
-		TreeNodeFromImplicitAllowedTypes<TTypes>,
-		Unhydrated<TreeNodeFromImplicitAllowedTypes<TTypes>>, // TODO: insertion type.
-		TreeListNode
-	> {}
 
 /**
  * Helper used to produce types for object nodes.
@@ -159,6 +148,7 @@ export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
+	// This class is used with instanceof, and therefore should have nominal typing.
 	protected _typeCheck?: MakeNominal;
 
 	/**

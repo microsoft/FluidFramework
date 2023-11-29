@@ -56,6 +56,21 @@ export interface RebasedCommits<TChange> {
 	sourceCommits: GraphCommit<TChange>[];
 }
 
+export interface BranchRebaseResult<TChange> {
+	/**
+	 * The head of a rebased source branch.
+	 */
+	readonly newSourceHead: GraphCommit<TChange>;
+	/**
+	 * A thunk that computes the cumulative change to the source branch (undefined if no change occurred)
+	 */
+	readonly sourceChange: TChange | undefined;
+	/**
+	 * Details about how the commits on the source branch changed
+	 */
+	readonly commits: RebasedCommits<TChange>;
+}
+
 /**
  * Rebases a source branch onto another commit in a target branch.
  *
@@ -65,8 +80,7 @@ export interface RebasedCommits<TChange> {
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. For example:
@@ -87,11 +101,7 @@ export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-];
+): BranchRebaseResult<TChange>;
 
 /**
  * Rebases a source branch onto another commit in a target branch.
@@ -103,8 +113,7 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
@@ -133,21 +142,13 @@ export function rebaseBranch<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-];
+): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-] {
+): BranchRebaseResult<TChange> {
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -164,11 +165,11 @@ export function rebaseBranch<TChange>(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
 			0x676 /* target commit is not in target branch */,
 		);
-		return [
-			sourceHead,
-			undefined,
-			{ deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
-		];
+		return {
+			newSourceHead: sourceHead,
+			sourceChange: undefined,
+			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+		};
 	}
 
 	// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
@@ -215,15 +216,15 @@ export function rebaseBranch<TChange>(
 		for (const c of sourcePath) {
 			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
-		return [
-			sourceCommits[sourceCommits.length - 1] ?? newBase,
-			undefined,
-			{
+		return {
+			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
+			sourceChange: undefined,
+			commits: {
 				deletedSourceCommits,
 				targetCommits,
 				sourceCommits,
 			},
-		];
+		};
 	}
 
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
@@ -249,17 +250,21 @@ export function rebaseBranch<TChange>(
 		);
 	}
 
-	const toCompose = [...inverses, ...targetRebasePath];
-	const composed = changeRebaser.compose(toCompose);
-	return [
-		newHead,
-		composed,
-		{
+	let netChange: TChange | undefined;
+	return {
+		newSourceHead: newHead,
+		get sourceChange() {
+			if (netChange === undefined) {
+				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
+			}
+			return netChange;
+		},
+		commits: {
 			deletedSourceCommits,
 			targetCommits,
 			sourceCommits,
 		},
-	];
+	};
 }
 
 /**

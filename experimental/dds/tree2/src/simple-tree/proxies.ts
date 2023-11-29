@@ -39,18 +39,10 @@ import { EmptyKey, FieldKey } from "../core";
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
-import {
-	TreeField,
-	TypedNode,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	TreeNode,
-	Unhydrated,
-} from "./types";
+import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
+import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
-import { IterableTreeListContent } from "./iterableTreeListContent";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
@@ -278,7 +270,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 /**
  * Given a list proxy, returns its underlying LazySequence field.
  */
-export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode) =>
+export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNodeOld) =>
 	getEditNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
@@ -313,7 +305,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(this: TreeListNode, index: number): FlexTreeUnknownUnboxed | undefined {
+		value(this: TreeListNodeOld, index: number): FlexTreeUnknownUnboxed | undefined {
 			const field = getSequenceField(this);
 			const val = field.boxedAt(index);
 
@@ -326,7 +318,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAt: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			index: number,
 			...value: (
 				| InsertableTreeNodeUnion<AllowedTypes>
@@ -351,7 +343,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtStart: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			...value: (
 				| InsertableTreeNodeUnion<AllowedTypes>
 				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
@@ -375,7 +367,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtEnd: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			...value: (
 				| InsertableTreeNodeUnion<AllowedTypes>
 				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
@@ -401,17 +393,17 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	removeAt: {
-		value(this: TreeListNode, index: number): void {
+		value(this: TreeListNodeOld, index: number): void {
 			getSequenceField(this).removeAt(index);
 		},
 	},
 	removeRange: {
-		value(this: TreeListNode, start?: number, end?: number): void {
+		value(this: TreeListNodeOld, start?: number, end?: number): void {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
 	moveToStart: {
-		value(this: TreeListNode, sourceIndex: number, source?: TreeListNode): void {
+		value(this: TreeListNodeOld, sourceIndex: number, source?: TreeListNodeOld): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
 			} else {
@@ -420,7 +412,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	moveToEnd: {
-		value(this: TreeListNode, sourceIndex: number, source?: TreeListNode): void {
+		value(this: TreeListNodeOld, sourceIndex: number, source?: TreeListNodeOld): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
 			} else {
@@ -429,7 +421,12 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	moveToIndex: {
-		value(this: TreeListNode, index: number, sourceIndex: number, source?: TreeListNode): void {
+		value(
+			this: TreeListNodeOld,
+			index: number,
+			sourceIndex: number,
+			source?: TreeListNodeOld,
+		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
 			} else {
@@ -439,10 +436,10 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToStart: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: TreeListNode,
+			source?: TreeListNodeOld,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToStart(
@@ -457,10 +454,10 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToEnd: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: TreeListNode,
+			source?: TreeListNodeOld,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToEnd(
@@ -475,11 +472,11 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToIndex: {
 		value(
-			this: TreeListNode,
+			this: TreeListNodeOld,
 			index: number,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: TreeListNode,
+			source?: TreeListNodeOld,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToIndex(
@@ -575,7 +572,7 @@ function asIndex(key: string | symbol, length: number) {
 function createListProxy<TTypes extends AllowedTypes>(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
-): TreeListNode<TTypes> {
+): TreeListNodeOld<TTypes> {
 	const targetObject = customTargetObject ?? [];
 
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
@@ -588,7 +585,7 @@ function createListProxy<TTypes extends AllowedTypes>(
 		customTargetObject ??
 		Object.create(listPrototype, {
 			length: {
-				get(this: TreeListNode) {
+				get(this: TreeListNodeOld) {
 					return getSequenceField(this).length;
 				},
 				set() {},
@@ -600,7 +597,7 @@ function createListProxy<TTypes extends AllowedTypes>(
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
-	const proxy: TreeListNode<TTypes> = new Proxy<TreeListNode<TTypes>>(targetObject as any, {
+	const proxy: TreeListNodeOld<TTypes> = new Proxy<TreeListNodeOld<TTypes>>(targetObject as any, {
 		get: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);

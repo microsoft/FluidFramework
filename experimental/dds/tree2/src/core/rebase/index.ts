@@ -41,6 +41,7 @@ export {
 	findAncestor,
 	findCommonAncestor,
 	rebaseBranch,
+	BranchRebaseResult,
 	rebaseChange,
 	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
