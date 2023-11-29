@@ -19,7 +19,6 @@ import {
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	getIntention,
-	RebaseRevisionMetadata,
 	setInCrossFieldMap,
 } from "../modular-schema";
 import {

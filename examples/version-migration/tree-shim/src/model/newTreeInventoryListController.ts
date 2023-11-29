@@ -87,7 +87,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
 	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
-		const view = tree.schematize({
+		const view = tree.schematizeOld({
 			initialTree: initialTree ?? {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
@@ -128,7 +128,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		// 3. On all loads, gets an (untyped) view of the data (the contents can't be accessed directly from the sharedTree).
 		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
 		// reach in and grab the inventoryItems list.
-		this._inventoryItemList = this._tree.schematize({
+		this._inventoryItemList = this._tree.schematizeOld({
 			initialTree: {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.

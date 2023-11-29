@@ -373,4 +373,123 @@ describe("toMapTree", () => {
 
 		assert.deepEqual(actual, expected);
 	});
+
+	// Our data serialization format does not support certain numeric values.
+	// These tests are intended to verify the mapping behaviors for those values.
+	describe("Incompatible numeric value handling", () => {
+		function assertFallback(value: number, expectedFallbackValue: unknown): void {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+
+			// The current fallbacks we generate are `number` and `null`.
+			// This list will need to be expanded if that set changes and we wish to test the associated scenarios.
+			const rootSchema = schemaBuilder.optional([schemaBuilder.number, schemaBuilder.null]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const result = nodeDataToMapTree(value, { schema }, schema.rootFieldSchema.types);
+			assert.equal(result.value, expectedFallbackValue);
+		}
+
+		function assertValueThrows(value: number): void {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+
+			// Schema doesn't support null, so numeric values that fall back to null should throw
+			const schema = schemaBuilder.intoSchema(schemaBuilder.number);
+			assert.throws(() =>
+				nodeDataToMapTree(
+					Number.POSITIVE_INFINITY,
+					{ schema },
+					schema.rootFieldSchema.types,
+				),
+			);
+		}
+
+		it("NaN (falls back to null if allowed by the schema)", () => {
+			assertFallback(Number.NaN, null);
+		});
+
+		it("NaN (throws if fallback type is not allowed by the schema)", () => {
+			assertValueThrows(Number.NaN);
+		});
+
+		it("+∞ (throws if fallback type is not allowed by the schema)", () => {
+			assertValueThrows(Number.POSITIVE_INFINITY);
+		});
+
+		it("+∞ (falls back to null if allowed by the schema)", () => {
+			assertFallback(Number.POSITIVE_INFINITY, null);
+		});
+
+		it("-∞ (throws if fallback type is not allowed by the schema)", () => {
+			assertValueThrows(Number.NEGATIVE_INFINITY);
+		});
+
+		it("-∞ (falls back to null if allowed by the schema)", () => {
+			assertFallback(Number.NEGATIVE_INFINITY, null);
+		});
+
+		// Fallback for -0 is +0, so it is supported in all cases
+		it("-0", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const schema = schemaBuilder.intoSchema(schemaBuilder.number);
+
+			const result = nodeDataToMapTree(-0, { schema }, schema.rootFieldSchema.types);
+			assert.equal(result.value, +0);
+		});
+
+		it("List containing `undefined` (maps values to null if allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [
+				schemaBuilder.number,
+				schemaBuilder.null,
+			]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			const actual = nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types);
+
+			const expected: MapTree = {
+				type: rootSchema.name,
+				fields: new Map([
+					[
+						EmptyKey,
+						[
+							{
+								value: 42,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+							{
+								value: 37,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("List containing `undefined` (throws if fallback type is not allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [schemaBuilder.number]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			assert.throws(() => nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types));
+		});
+	});
 });

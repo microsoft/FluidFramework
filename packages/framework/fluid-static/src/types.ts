@@ -96,11 +96,15 @@ export interface ContainerSchema {
 	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 
+export interface IProvideRootDataObject {
+	readonly IRootDataObject?: IRootDataObject;
+}
+
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
  */
-export interface IRootDataObject {
+export interface IRootDataObject extends IProvideRootDataObject {
 	/**
 	 * Provides a record of the initial objects defined on creation.
 	 */

@@ -183,7 +183,7 @@ export function rebaseBranch<TChange>(
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
-		} else if (i >= targetCommitIndex) {
+		} else if (i > targetCommitIndex) {
 			break;
 		}
 	}

@@ -26,8 +26,11 @@ import {
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import { defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	intoDelta,
+	ModularChangeFamily,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
@@ -79,8 +82,8 @@ describe("ModularChangeFamily integration", () => {
 				tagChange(move, tag1),
 				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
 			);
-			const rebasedDelta = family.intoDelta(makeAnonChange(rebased));
-			const expectedDelta = family.intoDelta(makeAnonChange(expected));
+			const rebasedDelta = intoDelta(makeAnonChange(rebased), family.fieldKinds);
+			const expectedDelta = intoDelta(makeAnonChange(expected), family.fieldKinds);
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
@@ -104,8 +107,12 @@ describe("ModularChangeFamily integration", () => {
 				tagChange(remove, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
-			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
-			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
+			const rebasedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(rebased), family.fieldKinds),
+			);
+			const expectedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(expected), family.fieldKinds),
+			);
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
@@ -232,7 +239,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const delta = family.intoDelta(makeAnonChange(composed));
+			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			assert.deepEqual(delta, expected);
 		});
 
@@ -266,7 +273,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
-			const actual = family.intoDelta(makeAnonChange(composed));
+			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: Delta.Root = {
 				build: [
 					{
@@ -328,8 +335,12 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-			const actualDelta = normalizeDelta(family.intoDelta(makeAnonChange(composed)));
-			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
+			const actualDelta = normalizeDelta(
+				intoDelta(makeAnonChange(composed), family.fieldKinds),
+			);
+			const expectedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(expected), family.fieldKinds),
+			);
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
 	});
@@ -458,7 +469,7 @@ describe("ModularChangeFamily integration", () => {
 					[brand("bar"), { local: [moveOut2, moveIn2] }],
 				]),
 			};
-			const actual = family.intoDelta(makeAnonChange(change));
+			const actual = intoDelta(makeAnonChange(change), family.fieldKinds);
 			assert.deepEqual(actual, expected);
 		});
 	});

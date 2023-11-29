@@ -109,7 +109,7 @@ const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
 function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryFieldSchema>> {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},
