@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
+import { isFluidHandle } from "@fluidframework/shared-object-base";
 import {
 	BufferFormat,
 	EncoderCache,
@@ -22,7 +23,6 @@ import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
 import {
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-	isFluidHandle,
 } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";

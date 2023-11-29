@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidSerializableReadOnly, isFluidHandle } from "@fluidframework/shared-object-base";
 import { Value, ValueSchema, TreeValue } from "../core";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
@@ -32,45 +32,6 @@ export function valueSchemaAllows<TSchema extends ValueSchema>(
 		default:
 			unreachableCase(schema);
 	}
-}
-
-/**
- * Use for readonly view of Json compatible data that can also contain IFluidHandles.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- */
-export type FluidSerializableReadOnly =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| readonly FluidSerializableReadOnly[]
-	| {
-			readonly [P in string]?: FluidSerializableReadOnly;
-	  };
-
-// TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
-		return false;
-	}
-
-	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
-	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
-	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
-	const isHandle = handle === value;
-	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
-	// do an extra test.
-	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
-	const getMember = (value as Partial<IFluidHandle>).get;
-	if (typeof getMember !== "function") {
-		return false;
-	}
-
-	return isHandle;
 }
 
 export function assertAllowedValue(

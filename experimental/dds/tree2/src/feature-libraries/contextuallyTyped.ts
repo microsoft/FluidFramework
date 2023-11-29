@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { isFluidHandle } from "@fluidframework/shared-object-base";
 import { fail, isReadonlyArray } from "../util";
 import {
 	EmptyKey,
@@ -32,7 +33,7 @@ import {
 } from "./typed-schema";
 import { cursorForMapTreeNode } from "./mapTreeCursor";
 import { AllowedTypesToTypedTrees, TypedField, TypedNode } from "./schema-aware";
-import { isFluidHandle, allowsValue } from "./valueUtilities";
+import { allowsValue } from "./valueUtilities";
 import { TreeDataContext } from "./fieldGenerator";
 
 /**

@@ -6,6 +6,7 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 
+import { isFluidHandle } from "@fluidframework/shared-object-base";
 import {
 	type FieldKey,
 	type MapTree,
@@ -27,7 +28,6 @@ import {
 	getFieldSchema,
 	getPossibleTypes,
 	getPrimaryField,
-	isFluidHandle,
 	Multiplicity,
 	type TreeDataContext,
 	type TreeNodeSchema,

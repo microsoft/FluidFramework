@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { isFluidHandle } from "@fluidframework/shared-object-base";
 import {
 	ITreeCursor,
 	EmptyKey,
@@ -13,7 +14,7 @@ import {
 	ITreeCursorSynchronous,
 } from "../../core";
 import { JsonCompatible } from "../../util";
-import { CursorAdapter, isFluidHandle, stackTreeNodeCursor } from "../../feature-libraries";
+import { CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries";
 import { leaf } from "../leafDomain";
 import { jsonArray, jsonObject } from "./jsonDomainSchema";
 

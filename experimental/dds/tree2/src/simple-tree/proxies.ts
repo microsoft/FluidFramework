@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { FluidSerializableReadOnly, isFluidHandle } from "@fluidframework/shared-object-base";
 import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
@@ -31,7 +32,6 @@ import {
 	onNextChange,
 	ContextuallyTypedNodeData,
 	typeNameSymbol,
-	isFluidHandle,
 } from "../feature-libraries";
 import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
@@ -874,7 +874,7 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
 export function extractFactoryContent<
 	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
 >(content: T): ExtractedFactoryContent<T> {
-	if (isFluidHandle(content)) {
+	if (isFluidHandle(content as FluidSerializableReadOnly | undefined)) {
 		return { content, hydrateProxies: noopHydrator };
 	} else if (isReadonlyArray(content)) {
 		return extractContentArray(content) as ExtractedFactoryContent<T>;

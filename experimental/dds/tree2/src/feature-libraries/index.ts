@@ -64,7 +64,7 @@ export {
 	getPossibleTypes,
 } from "./contextuallyTyped";
 
-export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+export { allowsValue, assertAllowedValue } from "./valueUtilities";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 

@@ -9,29 +9,11 @@ import { ValueSchema } from "../../core";
 
 import {
 	allowsValue,
-	isFluidHandle,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/valueUtilities";
 
 describe("valueUtilities", () => {
-	it("isFluidHandle", () => {
-		assert(!isFluidHandle(0));
-		assert(!isFluidHandle({}));
-		assert(!isFluidHandle(undefined));
-		assert(!isFluidHandle(null));
-		assert(!isFluidHandle([]));
-		assert(!isFluidHandle({ get: () => {} }));
-		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
-		assert(isFluidHandle(new MockHandle(5)));
-		assert(!isFluidHandle({ IFluidHandle: 5 }));
-		assert(!isFluidHandle({ IFluidHandle: {} }));
-		const loopy = { IFluidHandle: {} };
-		loopy.IFluidHandle = loopy;
-		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
-		assert(!isFluidHandle(loopy));
-	});
-
 	it("allowsValue", () => {
 		assert(!allowsValue(ValueSchema.FluidHandle, undefined));
 		assert(!allowsValue(ValueSchema.Boolean, undefined));
