@@ -102,7 +102,7 @@ const entryPoint = await container.getEntryPoint();
 | `IContainer.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 | 2.0.0-internal.8.0.0 |
 | `IDataStore.IFluidRouter`                                                                    | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `ILoader` and `Loader`                                       | 2.0.0-internal.6.0.0 | 2.0.0-internal.8.0.0 |
-| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                            | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                            | 2.0.0-internal.6.0.0 | 2.0.0-internal.8.0.0 |
 | `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`         | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `IFluidDataStoreChannel`                                     | 2.0.0-internal.6.0.0 |                      |
 | `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                             | 2.0.0-internal.6.0.0 |                      |

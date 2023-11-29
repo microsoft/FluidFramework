@@ -67,6 +67,16 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerRuntime": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
+			}
+		}
 	}
 }
