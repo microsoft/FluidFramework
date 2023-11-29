@@ -85,19 +85,19 @@ export type FluidSerializableReadOnly =
 /**
  * Check if a value in {@link FluidSerializableReadOnly} data is an {@link @fluidframework/core-interfaces#IFluidHandle}.
  *
- * Warning: Non-IFluidHandle objects with a key "IFluidHandle" used to be unconditionally interpreted as IFluidHandle.
- * Now some of these cases assert.
+ * Warning: Non-IFluidHandle objects with a key "IFluidHandle" will cause an assert.
+ * Prior to version 2.0.0-internal.7.4.0, they were unconditionally interpreted as IFluidHandle.
  *
  * @remarks
  * Its possible to have serializable data that looks like an {@link @fluidframework/core-interfaces#IFluidHandle} but isn't one.
- * This function can not distinguish these from real IFluidHandles in all cases: changes to the IFluidHandle would be required to ensure this is always possible.
+ * This function cannot distinguish these from real IFluidHandles in all cases: changes to the IFluidHandle would be required to ensure this is always possible.
  *
  * For now this is a best effort implementation.
  *
  * @privateRemarks
  * Any of the following changes to IFluidHandle would solve the ambiguity problem:
  *
- * - "IFluidHandle" property could be required to be a cyclic reference back to the parent.
+ * - The "IFluidHandle" property could be required to be a cyclic reference back to the parent.
  *
  * - IFluidHandle could be made into a class which could be detected with `instanceof`.
  *
