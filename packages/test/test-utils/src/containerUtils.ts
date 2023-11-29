@@ -5,6 +5,8 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtils";
 
 /**
@@ -45,4 +47,18 @@ export async function waitForContainerConnection(
 			? new Promise(executor)
 			: timeoutPromise(executor, timeoutOptions);
 	}
+}
+
+/**
+ * This function should ONLY be used for back compat purposes
+ * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
+ * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
+ */
+export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
+	if (container.getEntryPoint !== undefined) {
+		return (await container.getEntryPoint()) as T;
+	}
+	const response: IResponse = await (container as any).request({ url: "/" });
+	assert(response.status === 200, "requesting '/' should return default data object");
+	return response.value as T;
 }

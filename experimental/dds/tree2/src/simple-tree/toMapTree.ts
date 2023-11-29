@@ -14,7 +14,9 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeTypeSet,
 } from "../core";
-import { brand, fail } from "../util";
+// Drilling into `domains` to reduce the magnitude of cycles introduced here
+// eslint-disable-next-line import/no-internal-modules
+import { leaf } from "../domains/leafDomain";
 import {
 	allowsValue,
 	type ContextuallyTypedNodeData,
@@ -28,10 +30,10 @@ import {
 	isFluidHandle,
 	Multiplicity,
 	type TreeDataContext,
-	type TreeFieldSchema,
 	type TreeNodeSchema,
 } from "../feature-libraries";
-import { type TreeField, type TypedNode } from "./types";
+import { brand, fail } from "../util";
+import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
  * Module notes:
@@ -50,10 +52,10 @@ import { type TreeField, type TypedNode } from "./types";
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  *
- * @returns A cursor for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
+ * @returns A cursor (in nodes mode) for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
  */
 export function cursorFromNodeData(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): CursorWithNode<MapTree> | undefined {
@@ -70,7 +72,7 @@ export function cursorFromNodeData(
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  */
 export function cursorFromFieldData(
-	data: TreeField<TreeFieldSchema, "javaScript">,
+	data: InsertableTreeField,
 	context: TreeDataContext,
 	fieldSchema: TreeFieldStoredSchema,
 ): CursorWithNode<MapTree> {
@@ -81,11 +83,22 @@ export function cursorFromFieldData(
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
  * @param data - The input tree to be converted.
+ * If the data is an unsupported value (e.g. NaN), a fallback value will be used when supported,
+ * otherwise an error will be thrown.
+ *
+ * Fallbacks:
+ *
+ * * `NaN` =\> `null`
+ *
+ * * `+/-∞` =\> `null`
+ *
+ * * `-0` =\> `+0`
+ *
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  * @param typeSet - The set of types allowed by the parent context. Used to validate the input tree.
  */
 export function nodeDataToMapTree(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -96,9 +109,7 @@ export function nodeDataToMapTree(
 	}
 	switch (typeof data) {
 		case "number":
-			return valueToMapTree(data, context, typeSet);
 		case "string":
-			return valueToMapTree(data, context, typeSet);
 		case "boolean":
 			return valueToMapTree(data, context, typeSet);
 		default: {
@@ -111,7 +122,7 @@ export function nodeDataToMapTree(
 			} else {
 				// Assume record-like object
 				return recordToMapTree(
-					data as Record<string, TypedNode<TreeNodeSchema, "javaScript">>,
+					data as Record<string, InsertableTypedNode<TreeNodeSchema>>,
 					context,
 					typeSet,
 				);
@@ -123,10 +134,12 @@ export function nodeDataToMapTree(
 /**
  * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s.
  * @param data - The input tree to be converted.
+ * If the input is a sequence containing 1 or more `undefined` values, those values will be mapped as `null` if supported.
+ * Othewise, an error will be thrown.
  * @param context - Describes the context into which the data is being created. See {@link FlexTreeEntity.context}.
  */
 export function fieldDataToMapTrees(
-	data: TreeField<TreeFieldSchema, "javaScript">,
+	data: InsertableTreeField,
 	context: TreeDataContext,
 	fieldSchema: TreeFieldStoredSchema,
 ): MapTree[] {
@@ -138,18 +151,31 @@ export function fieldDataToMapTrees(
 		);
 		return [];
 	}
+
+	const typeSet = fieldSchema.types;
+
 	if (multiplicity === Multiplicity.Sequence) {
 		assert(Array.isArray(data), "Expected an array as sequence input.");
-		const children = Array.from(data, (child) =>
-			nodeDataToMapTree(child, context, fieldSchema.types),
-		);
+		const children = Array.from(data, (child) => {
+			// We do not support undefined sequence entries.
+			// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+			let childWithFallback = child;
+			if (child === undefined) {
+				if (typeSet?.has(leaf.null.name) ?? false) {
+					childWithFallback = null;
+				} else {
+					throw new TypeError(`Received unsupported list entry value: ${child}.`);
+				}
+			}
+			return nodeDataToMapTree(childWithFallback, context, typeSet);
+		});
 		return children;
 	}
 	assert(
 		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
 		"A single value was provided for an unsupported field",
 	);
-	return [nodeDataToMapTree(data, context, fieldSchema.types)];
+	return [nodeDataToMapTree(data, context, typeSet)];
 }
 
 function valueToMapTree(
@@ -158,19 +184,60 @@ function valueToMapTree(
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	const type = getType(value, context, typeSet);
+	const mappedValue = mapValueWithFallbacks(value, typeSet);
+
+	const type = getType(mappedValue, context, typeSet);
 	const schema = getSchema(context, type);
-	assert(allowsValue(schema.leafValue, value), "Unsupported schema for provided primitive.");
+	assert(
+		allowsValue(schema.leafValue, mappedValue),
+		"Unsupported schema for provided primitive.",
+	);
 
 	return {
-		value,
+		value: mappedValue,
 		type,
 		fields: new Map(),
 	};
 }
 
+/**
+ * Checks an incoming value to ensure it is compatible with our serialization format.
+ * For unsupported values with a schema-compatible replacement, return the replacement value.
+ * For unsupported values without a schema-compatible replacement, throw.
+ * For supported values, return the input.
+ */
+function mapValueWithFallbacks(
+	// eslint-disable-next-line @rushstack/no-new-null
+	value: boolean | number | string | IFluidHandle | null,
+	typeSet: TreeTypeSet,
+	// eslint-disable-next-line @rushstack/no-new-null
+): boolean | number | string | IFluidHandle | null {
+	switch (typeof value) {
+		case "number": {
+			if (Object.is(value, -0)) {
+				// Our serialized data format does not support -0.
+				// Map such input to +0.
+				return 0;
+			} else if (Number.isNaN(value) || !Number.isFinite(value)) {
+				// Our serialized data format does not support NaN nor +/-∞.
+				// If the schema supports `null`, fall back to that. Otherwise, throw.
+				// This is intended to match JSON's behavior for such values.
+				if (typeSet?.has(leaf.null.name) ?? false) {
+					return null;
+				} else {
+					throw new TypeError(`Received unsupported numeric value: ${value}.`);
+				}
+			} else {
+				return value;
+			}
+		}
+		default:
+			return value;
+	}
+}
+
 function arrayToMapTree(
-	data: TypedNode<TreeNodeSchema, "javaScript">[],
+	data: InsertableTypedNode<TreeNodeSchema>[],
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -196,7 +263,7 @@ function arrayToMapTree(
 }
 
 function mapToMapTree(
-	data: Map<string, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Map<string, InsertableTypedNode<TreeNodeSchema>>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -221,7 +288,7 @@ function mapToMapTree(
 }
 
 function recordToMapTree(
-	data: Record<string | number | symbol, TypedNode<TreeNodeSchema, "javaScript">>,
+	data: Record<string | number | symbol, InsertableTypedNode<TreeNodeSchema>>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
@@ -252,7 +319,7 @@ function recordToMapTree(
 }
 
 function getType(
-	data: TypedNode<TreeNodeSchema, "javaScript">,
+	data: InsertableTypedNode<TreeNodeSchema>,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): TreeNodeSchemaIdentifier {
