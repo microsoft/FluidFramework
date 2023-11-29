@@ -46,6 +46,9 @@ class RootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
+	public get IRootDataObject() {
+		return this;
+	}
 
 	private get initialObjectsDir() {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -153,9 +156,8 @@ export function createDOProviderContainerRuntimeFactory(props: {
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
- * @deprecated use {@link createDOProviderContainerRuntimeFactory} instead
  */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{

@@ -126,6 +126,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			}
+		}
 	}
 }

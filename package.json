@@ -375,8 +375,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
-			"engine.io-client@6.5.2": "patches/engine.io-client@6.5.2.patch"
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch"
 		}
 	}
 }

@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./componentTypes";

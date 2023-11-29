@@ -14,17 +14,11 @@ import {
 } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-	IMergeTreeInsertMsg,
-	ReferenceType,
-	reservedRangeLabelsKey,
-	MergeTreeDeltaType,
-} from "@fluidframework/merge-tree";
-import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString, ReferenceType, reservedRangeLabelsKey } from "@fluidframework/sequence";
 import { EditorView } from "prosemirror-view";
 import { create404Response } from "@fluidframework/runtime-utils";
 
@@ -33,12 +27,13 @@ import React, { useEffect, useRef } from "react";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 
-function createTreeMarkerOps(
+function insertMarkers(
+	text: SharedString,
 	treeRangeLabel: string,
 	beginMarkerPos: number,
 	endMarkerPos: number,
 	nodeType: string,
-): IMergeTreeInsertMsg[] {
+) {
 	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
@@ -47,18 +42,8 @@ function createTreeMarkerOps(
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	return [
-		{
-			seg: { marker: { refType: ReferenceType.Simple }, props: beginMarkerProps },
-			pos1: beginMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-		{
-			seg: { marker: { refType: ReferenceType.Simple }, props: endMarkerProps },
-			pos1: endMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-	];
+	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
+	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
 }
 
 /**
@@ -108,8 +93,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
-			text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
+			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

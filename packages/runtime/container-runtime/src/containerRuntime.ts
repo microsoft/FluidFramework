@@ -694,7 +694,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		const response = await (resolvedContainer as any).request({
+			url: `/${summarizerRequestUrl}`,
+		});
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
@@ -705,14 +707,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		throw new UsageError("Fluid object does not implement ISummarizer");
 	}
 	return fluidObject.ISummarizer;
-}
-
-/**
- * This function is not supported publicly and exists for e2e testing
- * @internal
- */
-export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	return createSummarizer(loader, url);
 }
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 
 export type TableDocumentItem = any;
 
