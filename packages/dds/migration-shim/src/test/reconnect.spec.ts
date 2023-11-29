@@ -121,7 +121,7 @@ const schema = builder.intoSchema(quantityType);
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getNewTreeView(tree: ISharedTree) {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},
@@ -175,7 +175,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const quantity = getQuantity(legacyTree);
 			newTree
-				.schematize({
+				.schematizeOld({
 					initialTree: {
 						quantity,
 					},

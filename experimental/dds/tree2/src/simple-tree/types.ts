@@ -24,6 +24,17 @@ import { InsertableTreeNodeUnion } from "./insertable";
 import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
 
 /**
+ * Type alias to document which values are un-hydrated.
+ *
+ * Un-hydrated values are nodes produced from schema's create functions that haven't been inserted into a tree yet.
+ *
+ * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
+ * This no-op wrapper is used instead.
+ * @alpha
+ */
+export type Unhydrated<T> = T;
+
+/**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  *
  * @privateRemarks
@@ -34,7 +45,7 @@ import { IterableTreeListContent, createIterableTreeListContent } from "./iterab
  * Using default parameters, this could be combined with TypedNode.
  * @alpha
  */
-export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
+export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
@@ -274,8 +285,18 @@ export type TreeObjectNodeFields<
  *
  * @alpha
  */
-export interface TreeMapNode<TSchema extends MapNodeSchema>
-	extends ReadonlyMap<string, TreeField<TSchema["info"], "notEmpty">> {
+export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
+	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
+
+/**
+ * A map of string keys to tree objects.
+ *
+ * @privateRemarks
+ * Add support for `clear` once we have established merge semantics for it.
+ *
+ * @alpha
+ */
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
@@ -283,9 +304,9 @@ export interface TreeMapNode<TSchema extends MapNodeSchema>
 	 * @param value - The value of the element to add to the map.
 	 *
 	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeBase.delete} with that key.
 	 */
-	set(key: string, value: TreeField<TSchema["info"], "notEmpty"> | undefined): void;
+	set(key: string, value: TIn | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.

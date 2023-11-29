@@ -58,6 +58,8 @@ import {
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	onNextChange,
+	FlexTreeEntityKind,
+	flexTreeMarker,
 } from "./flexTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -126,6 +128,9 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	extends LazyEntity<TSchema, Anchor>
 	implements FlexTreeNode
 {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
+		return FlexTreeEntityKind.Node;
+	}
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
 	 */

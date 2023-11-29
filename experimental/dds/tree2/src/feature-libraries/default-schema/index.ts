@@ -21,6 +21,7 @@ export {
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
+	intoDelta,
 } from "./defaultChangeFamily";
 
 export { defaultSchemaPolicy } from "./defaultSchema";
