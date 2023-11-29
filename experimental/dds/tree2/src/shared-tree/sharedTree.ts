@@ -54,7 +54,15 @@ import {
 import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
-import { TreeView, type ITree } from "./simpleTree";
+import {
+	ITree,
+	TreeConfiguration,
+	WrapperTreeView as ClassWrapperTreeView,
+	toFlexConfig,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+} from "../class-tree";
+import { TreeView, type ITree as OldSimpleTree } from "./simpleTree";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
@@ -92,7 +100,7 @@ export interface SharedTreeContentSnapshot {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, ITree {
+export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -103,7 +111,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITree.schematize}, but returns a more powerful type exposing more package internal information.
+	 * Like {@link ITreeOld.schematizeOld}, but returns a more powerful type exposing more package internal information.
 	 * @privateRemarks
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
@@ -348,11 +356,19 @@ export class SharedTree
 		);
 	}
 
-	public schematize<TRoot extends TreeFieldSchema>(
+	public schematizeOld<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
 		const view = this.schematizeInternal(config);
 		return new WrapperTreeView(view);
+	}
+
+	public schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+		const flexConfig = toFlexConfig(config);
+		const view = this.schematizeInternal(flexConfig);
+		return new ClassWrapperTreeView(view);
 	}
 
 	/**

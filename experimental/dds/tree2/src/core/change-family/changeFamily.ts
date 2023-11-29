@@ -4,16 +4,10 @@
  */
 
 import { ICodecFamily } from "../../codec";
-import { ChangeRebaser, TaggedChange } from "../rebase";
-import { Delta } from "../tree";
+import { ChangeRebaser } from "../rebase";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
-
-	/**
-	 * @param change - The change to convert into a delta.
-	 */
-	intoDelta(change: TaggedChange<TChange>): Delta.Root;
 
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange>;

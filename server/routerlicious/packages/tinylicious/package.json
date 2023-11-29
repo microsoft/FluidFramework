@@ -1,7 +1,6 @@
 {
 	"name": "tinylicious",
 	"version": "3.0.0",
-	"private": true,
 	"description": "Tiny, test implementation of the routerlicious reference service",
 	"homepage": "https://fluidframework.com",
 	"repository": {

@@ -6,17 +6,12 @@ set -eux -o pipefail
 # It also outputs a packagePublishOrder.txt file that contains the order that the packages should be published in.
 
 echo PACKAGE_MANAGER=$PACKAGE_MANAGER
-echo PUBLISH_NON_SCOPED=$PUBLISH_NON_SCOPED
 echo RELEASE_GROUP=$RELEASE_GROUP
 echo STAGING_PATH=$STAGING_PATH
 
 mkdir $STAGING_PATH/pack/
 mkdir $STAGING_PATH/pack/scoped/
 mkdir $STAGING_PATH/test-files/
-
-if [[ "$PUBLISH_NON_SCOPED" == "True" ]]; then
-  mkdir $STAGING_PATH/pack/non-scoped/
-fi
 
 if [ -f ".releaseGroup" ]; then
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack" && \

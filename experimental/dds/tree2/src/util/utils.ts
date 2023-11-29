@@ -462,7 +462,7 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
 /**
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
- * TODO: align this with core-utils/IDisposable.
+ * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
  * @alpha
  */
 export interface IDisposable {
