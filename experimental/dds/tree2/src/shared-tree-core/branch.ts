@@ -478,14 +478,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
-		const { newSourceHead, sourceChange, commits } = rebaseResult;
+		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
 			type: "replace",
 			get change() {
-				const change = sourceChange();
+				const change = rebaseResult.sourceChange;
 				return change === undefined ? undefined : makeAnonChange(change);
 			},
 			removedCommits: deletedSourceCommits,
@@ -500,7 +500,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		this.emit("afterChange", changeEvent);
-		return [sourceChange, deletedSourceCommits, newCommits];
+		return [() => rebaseResult.sourceChange, deletedSourceCommits, newCommits];
 	}
 
 	/**

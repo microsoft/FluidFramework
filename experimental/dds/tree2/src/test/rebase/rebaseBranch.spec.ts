@@ -96,7 +96,7 @@ describe("rebaseBranch", () => {
 			commits,
 		} = rebaseBranch(new TestChangeRebaser(), n3, n1);
 		assert.equal(n3_1, n3);
-		assert.equal(sourceChange(), undefined);
+		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
 		assert.deepEqual(commits.targetCommits, []);
 		assert.deepEqual(commits.sourceCommits, [n2, n3]);
@@ -124,7 +124,7 @@ describe("rebaseBranch", () => {
 			{ inputContext: [1, 2, 3], intentions: [4], outputContext: [1, 2, 3, 4] },
 			{ inputContext: [1, 2, 3, 4], intentions: [5], outputContext: [1, 2, 3, 4, 5] },
 		);
-		assertOutputContext(sourceChange(), 1, 2, 3, 4, 5);
+		assertOutputContext(sourceChange, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
@@ -152,7 +152,7 @@ describe("rebaseBranch", () => {
 			{ inputContext: [1, 2], intentions: [4], outputContext: [1, 2, 4] },
 			{ inputContext: [1, 2, 4], intentions: [5], outputContext: [1, 2, 4, 5] },
 		);
-		assertOutputContext(sourceChange(), 1, 2, 4, 5);
+		assertOutputContext(sourceChange, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2]);
 		assert.deepEqual(commits.sourceCommits, newPath);
@@ -182,7 +182,7 @@ describe("rebaseBranch", () => {
 			intentions: [5],
 			outputContext: [1, 2, 3, 5],
 		});
-		assert.equal(sourceChange(), undefined);
+		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
@@ -212,7 +212,7 @@ describe("rebaseBranch", () => {
 			intentions: [5],
 			outputContext: [1, 2, 3, 4, 5],
 		});
-		assertOutputContext(sourceChange(), 1, 2, 3, 4, 5);
+		assertOutputContext(sourceChange, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, newPath);
@@ -244,7 +244,7 @@ describe("rebaseBranch", () => {
 			TestChange.mint([1, 2, 3], 4),
 			TestChange.mint([1, 2, 3, 4], 6),
 		);
-		assertOutputContext(sourceChange(), 1, 2, 3, 4, 6);
+		assertOutputContext(sourceChange, 1, 2, 3, 4, 6);
 		assert.deepEqual(commits.deletedSourceCommits, [n3_1, n4_1, n6]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, [n6_1]);
@@ -268,7 +268,7 @@ describe("rebaseBranch", () => {
 			commits,
 		} = rebaseBranch(new TestChangeRebaser(), n3_1, n3, n4);
 		assert.equal(n3_2, n3);
-		assert.equal(sourceChange(), undefined);
+		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, []);

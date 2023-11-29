@@ -57,7 +57,7 @@ export interface BranchRebaseResult<TChange> {
 	/**
 	 * A thunk that computes the cumulative change to the source branch (undefined if no change occurred)
 	 */
-	readonly sourceChange: () => TChange | undefined;
+	readonly sourceChange: TChange | undefined;
 	/**
 	 * Details about how the commits on the source branch changed
 	 */
@@ -166,7 +166,7 @@ export function rebaseBranch<TChange>(
 		);
 		return {
 			newSourceHead: sourceHead,
-			sourceChange: () => undefined,
+			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
 		};
 	}
@@ -217,7 +217,7 @@ export function rebaseBranch<TChange>(
 		}
 		return {
 			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
-			sourceChange: () => undefined,
+			sourceChange: undefined,
 			commits: {
 				deletedSourceCommits,
 				targetCommits,
@@ -252,7 +252,7 @@ export function rebaseBranch<TChange>(
 	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		sourceChange: () => {
+		get sourceChange() {
 			if (netChange === undefined) {
 				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
 			}
