@@ -9,8 +9,8 @@ import type { Static, TSchema } from "@sinclair/typebox";
 import { FluidSerializer } from "@fluidframework/shared-object-base";
 import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { JsonValidator } from "../../codec";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { JsonValidator } from "../../codec";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = addFormats(new Ajv({ strict: false, allErrors: true }), [
@@ -36,7 +36,7 @@ class MockHandleContext implements IFluidHandleContext {
 		return this;
 	}
 
-	constructor(
+	public constructor(
 		public readonly absolutePath = "",
 		public readonly routeContext?: IFluidHandleContext,
 	) {}
