@@ -1,8 +1,4 @@
 variables:
   branch_list:
-    previous:
-      lts:
-      - "1.0"
-    current:
-      main:
-      - "2.0"
+    previous: 'lts'
+    current: 'main'
