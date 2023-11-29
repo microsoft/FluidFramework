@@ -168,7 +168,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes,
-	TreeNodeSchema,
+	TreeNodeSchema as FlexTreeNodeSchema,
 	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
@@ -209,7 +209,7 @@ export {
 	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema,
+	ImplicitFieldSchema as FlexImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
@@ -234,14 +234,16 @@ export {
 	TreeFieldInner,
 	TypedNode,
 	TreeNodeUnion,
-	TreeListNode,
+	TreeListNode as TreeListNodeOld,
 	TreeMapNode,
 	TreeObjectNode,
-	Tree,
-	TreeApi,
+	Tree as TreeOld,
+	TreeApi as TreeApiOld,
 	TreeNode,
 	TreeObjectFactory,
 	FactoryTreeSchema,
+	TreeMapNodeBase,
+	Unhydrated,
 } from "./simple-tree";
 
 export {
@@ -260,13 +262,29 @@ export {
 	ForestType,
 	TypedTreeFactory,
 	TypedTreeOptions,
-	ITree,
+	ITree as ITreeOld,
 	SharedTreeContentSnapshot,
 	FlexTreeView,
-	TreeView,
+	TreeView as TreeViewOld,
 	ITreeViewFork,
 	buildTreeConfiguration,
 } from "./shared-tree";
+
+export {
+	ITree,
+	TreeNodeSchema,
+	TreeConfiguration,
+	TreeView,
+	SchemaFactory,
+	TreeListNode,
+	Tree,
+	TreeApi,
+	NodeBase,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	TreeNodeEvents,
+} from "./class-tree";
+export { TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
