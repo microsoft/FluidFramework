@@ -9,7 +9,7 @@ import { EventEmitter } from "events";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
- * Note: These contents really don't belong in this package.
+ * Note: The contents of this file really don't belong in this package, as they are only intended for internal use.
  * They should be moved into the `core-utils` package in the future.
  */
 
