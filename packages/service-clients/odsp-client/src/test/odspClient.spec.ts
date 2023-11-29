@@ -14,6 +14,9 @@ import { OdspConnectionConfig } from "../interfaces";
 import { OdspClient } from "../odspClient";
 import { OdspTestTokenProvider } from "./odspTestTokenProvider";
 
+/**
+ * Interface representing the credentials required for testing odsp-client.
+ */
 export interface OdspTestCredentials {
 	clientId: string;
 	clientSecret: string;
@@ -21,6 +24,9 @@ export interface OdspTestCredentials {
 	password: string;
 }
 
+/**
+ * Default test credentials for odsp-client.
+ */
 const clientCreds: OdspTestCredentials = {
 	clientId: "<client_id>",
 	clientSecret: "<client_secret>",
@@ -28,11 +34,17 @@ const clientCreds: OdspTestCredentials = {
 	password: "<password>",
 };
 
+/**
+ * Creates an instance of the odsp-client with the specified test credentials.
+ *
+ * @returns OdspClient - An instance of the odsp-client.
+ */
 function createOdspClient(): OdspClient {
+	// Configuration for connecting to the ODSP service.
 	const connectionProperties: OdspConnectionConfig = {
-		tokenProvider: new OdspTestTokenProvider(clientCreds),
+		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
-		driveId: "<drive_id>",
+		driveId: "<raas_drive_id>",
 	};
 
 	return new OdspClient({ connection: connectionProperties });

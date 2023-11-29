@@ -13,6 +13,9 @@ import {
 import { IOdspTokenProvider } from "../token";
 import { OdspTestCredentials } from "./odspClient.spec";
 
+/**
+ * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
+ */
 export class OdspTestTokenProvider implements IOdspTokenProvider {
 	private readonly creds: OdspTestCredentials;
 
