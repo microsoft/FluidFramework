@@ -126,25 +126,27 @@ stages:
               mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
               mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
 
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        - task: Bash@3
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
+        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
+        - task: CopyFiles@2
+          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
+          inputs:
+            sourceFolder: ${{ variables.testWorkspace }}
+            contents: '.npmrc'
+            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+        - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              cp ${{ variables.testWorkspace }}/.npmrc . ;
-              npm i;
+            command: 'install'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
 
         # Run tests
-        - task: Bash@3
+        - task: Npm@1
           displayName: Run execution-time tests - ${{ testPackage }}
           inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              echo "Run execution-time tests for ${{ testPackage }}"
-              npm run test:benchmark:report;
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            customCommand: 'run test:benchmark:report'
 
         # Consolidate output files
         - task: CopyFiles@2
