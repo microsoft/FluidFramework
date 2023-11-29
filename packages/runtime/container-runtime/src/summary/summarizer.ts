@@ -135,7 +135,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		if (resolvedContainer.getEntryPoint !== undefined) {
 			fluidObject = await resolvedContainer.getEntryPoint();
 		} else {
-			const response = await resolvedContainer.request({ url: "_summarizer" });
+			const response = await (resolvedContainer as any).request({ url: "_summarizer" });
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw responseToException(response, request);
 			}

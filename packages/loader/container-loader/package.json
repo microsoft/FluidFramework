@@ -125,6 +125,12 @@
 			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Loader": {
+				"backCompat": false
 			}
 		}
 	}

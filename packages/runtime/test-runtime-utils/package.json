@@ -112,6 +112,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }

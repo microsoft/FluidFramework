@@ -694,7 +694,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		const response = await (resolvedContainer as any).request({
+			url: `/${summarizerRequestUrl}`,
+		});
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
