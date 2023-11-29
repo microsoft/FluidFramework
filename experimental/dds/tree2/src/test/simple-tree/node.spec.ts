@@ -139,7 +139,13 @@ describe("node API", () => {
 				mutate(root);
 
 				const numChanges = log.length;
+				assert(
+					numChanges > 0,
+					"Must receive change notifications after subscribing to event.",
+				);
+
 				unsubscribe();
+
 				mutate(root);
 
 				assert.equal(
