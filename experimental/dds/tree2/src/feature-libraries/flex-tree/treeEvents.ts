@@ -23,7 +23,7 @@ import { FlexTreeNode } from "./flexTreeTypes";
  *
  * @alpha
  */
-export interface TreeEvent {
+export interface ITreeEvent {
 	/**
 	 * The node of the tree where the listener receiving the event is attached.
 	 */
@@ -35,9 +35,14 @@ export interface TreeEvent {
 	stopPropagation(): void;
 }
 
-export class TreeEventImplementation implements TreeEvent {
+/**
+ * {@inheritDoc ITreeEvent}
+ *
+ * @alpha
+ */
+export class TreeEvent implements ITreeEvent {
 	/**
-	 * {@inheritdoc TreeEvent.target}
+	 * {@inheritdoc ITreeEvent.target}
 	 */
 	public readonly target: FlexTreeNode;
 
@@ -51,7 +56,7 @@ export class TreeEventImplementation implements TreeEvent {
 	}
 
 	/**
-	 * {@inheritdoc TreeEvent.stopPropagation}
+	 * {@inheritdoc ITreeEvent.stopPropagation}
 	 */
 	public stopPropagation(): void {
 		this._propagationStopped = true;
@@ -92,7 +97,7 @@ export interface EditableTreeEvents {
 	/**
 	 * Raised on a node right before a change is applied to one of its fields or the fields of a descendant node.
 	 *
-	 * @param event - The event object. See {@link TreeEvent} for details.
+	 * @param event - The event object. See {@link ITreeEvent} for details.
 	 *
 	 * @remarks
 	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.afterChange}) is dependent
@@ -114,12 +119,12 @@ export interface EditableTreeEvents {
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
 	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
-	beforeChange(event: TreeEvent): void;
+	beforeChange(event: ITreeEvent): void;
 
 	/**
 	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
 	 *
-	 * @param event - The event object. See {@link TreeEvent} for details.
+	 * @param event - The event object. See {@link ITreeEvent} for details.
 	 *
 	 * @remarks
 	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.beforeChange}) is dependent
@@ -141,5 +146,5 @@ export interface EditableTreeEvents {
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
 	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
-	afterChange(event: TreeEvent): void;
+	afterChange(event: ITreeEvent): void;
 }

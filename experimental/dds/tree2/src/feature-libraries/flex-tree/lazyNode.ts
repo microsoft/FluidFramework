@@ -39,7 +39,7 @@ import {
 } from "../typed-schema";
 import { FieldKinds } from "../default-schema";
 import { LocalNodeKey } from "../node-key";
-import { EditableTreeEvents, TreeEvent, TreeEventImplementation } from "./treeEvents";
+import { EditableTreeEvents, ITreeEvent, TreeEvent } from "./treeEvents";
 import { Context } from "./context";
 import {
 	FlexTreeFieldNode,
@@ -302,12 +302,12 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	 * @param eventName - Name of the event that was emitted.
 	 */
 	readonly #onInternalEvent = (eventName: keyof EditableTreeEvents) => {
-		const event = new TreeEventImplementation(this);
+		const event = new TreeEvent(this);
 		for (const listener of this.#listeners.get(eventName) ?? []) {
 			// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 			// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 			// for changing and subtreeChanging match the one for beforeChange and afterChange.
-			listener(event as unknown as AnchorNode & TreeEvent);
+			listener(event as unknown as AnchorNode & ITreeEvent);
 		}
 		if (event.propagationStopped) {
 			return;
@@ -330,7 +330,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode as unknown as AnchorNode & ITreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
@@ -341,7 +341,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode as unknown as AnchorNode & ITreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
