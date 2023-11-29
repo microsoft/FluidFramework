@@ -5,7 +5,6 @@
 
 export { getProxyForField } from "./proxies";
 export {
-	TreeListNode,
 	TreeObjectNodeFields,
 	TreeField,
 	TreeFieldInner,
@@ -19,7 +18,7 @@ export {
 	TreeListNodeBase,
 	TreeMapNodeBase,
 } from "./types";
-export { IterableTreeListContent } from "./iterableTreeListContent";
+export { TreeListNodeOld, TreeListNode, IterableTreeListContent } from "./treeListNode";
 export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { nodeApi as Tree, TreeApi } from "./node";
 export {

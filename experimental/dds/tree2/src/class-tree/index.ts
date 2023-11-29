@@ -11,10 +11,11 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	TreeListNode,
 	NodeBase,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
+	ImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes";
 export { SchemaFactory } from "./schemaFactory";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";
