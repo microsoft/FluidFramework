@@ -159,6 +159,9 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -256,6 +259,7 @@ export {
 	FlexTreeUnknownUnboxed,
 	onNextChange,
 	internalEmitterSymbol,
+	isFlexTreeNode,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";

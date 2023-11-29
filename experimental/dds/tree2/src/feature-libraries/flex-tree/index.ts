@@ -28,6 +28,7 @@ export {
 	onNextChange,
 	internalEmitterSymbol,
 	FlexTreeUnknownUnboxed,
+	isFlexTreeNode,
 } from "./flexTreeTypes";
 
 export {

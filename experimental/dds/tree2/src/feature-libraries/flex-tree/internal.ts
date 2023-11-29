@@ -19,6 +19,8 @@ export {
 	FixedSizeTypeArrayToTypedFlexTree,
 	FlexTreeTypedNodeUnionHelper,
 	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
 } from "./flexTreeTypes";
 
 export { NodeKeys } from "./nodeKeys";

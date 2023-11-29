@@ -22,6 +22,8 @@ import {
 	onNextChange,
 	internalEmitterSymbol,
 } from "../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { FlexTreeEntityKind, flexTreeMarker } from "../feature-libraries/flex-tree/flexTreeTypes";
 
 const nodeContent = Symbol();
 interface HasNodeContent<T> {
@@ -81,6 +83,10 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexT
 		content: TContent,
 	) {
 		this[nodeContent] = content;
+	}
+
+	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
+		return rawObjectNodeError();
 	}
 
 	// Use a symbol here so that it will never collide with a field name

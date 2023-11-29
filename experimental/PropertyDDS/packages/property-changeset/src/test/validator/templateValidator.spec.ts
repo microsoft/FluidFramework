@@ -106,7 +106,7 @@ import { TemplateValidator } from "../../templateValidator";
 					expect(result.errors[0].message).to.have.string(
 						"'TeamLeoValidation2:PointID' is not valid",
 					);
-					expect(result.errors[0].dataPath).to.equal("/typeid");
+					expect(result.errors[0].instancePath).to.equal("/typeid");
 					return result;
 				};
 				return validate(expectations, template);
@@ -121,7 +121,7 @@ import { TemplateValidator } from "../../templateValidator";
 					expect(result).property("isValid", false);
 					expect(result.typeid).to.equal(template.typeid);
 					expect(result.errors.length).to.be.at.least(1);
-					expect(result.errors[0].dataPath).to.equal("/typeid");
+					expect(result.errors[0].instancePath).to.equal("/typeid");
 					return result;
 				};
 
@@ -1083,7 +1083,7 @@ import { TemplateValidator } from "../../templateValidator";
 				};
 
 				return validate(
-					expectationsGenerator("/constants should NOT have fewer than 1 items"),
+					expectationsGenerator("/constants must NOT have fewer than 1 items"),
 					ConstantEmptyArray,
 					null,
 					true,
@@ -1097,7 +1097,7 @@ import { TemplateValidator } from "../../templateValidator";
 				};
 
 				return validate(
-					expectationsGenerator("/constants/0 should have required property 'id'"),
+					expectationsGenerator("/constants/0 must have required property 'id'"),
 					ConstantNoId,
 					null,
 					true,
@@ -1116,10 +1116,10 @@ import { TemplateValidator } from "../../templateValidator";
 						// console.log(result.errors);
 						expect(result.errors.length).to.equal(5);
 						expect(result.errors[3].message).to.include(
-							"should have required property 'inherits'",
+							"must have required property 'inherits'",
 						);
 						expect(result.errors[4].message).to.include(
-							"/constants/0 should have required property 'typeid'",
+							"/constants/0 must have required property 'typeid'",
 						);
 						return result;
 					},
