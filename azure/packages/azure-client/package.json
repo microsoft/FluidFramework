@@ -112,10 +112,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_AzureClient": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
