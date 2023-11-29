@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { FieldKinds, TreeEvent } from "../../../feature-libraries";
+import { FieldKinds, ITreeEvent } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
@@ -675,17 +675,17 @@ describe("beforeChange/afterChange events", () => {
 		let childBeforeChangeFired = false;
 		let childAfterChangeFired = false;
 
-		root.on("beforeChange", (event: TreeEvent) => {
+		root.on("beforeChange", (event: ITreeEvent) => {
 			rootBeforeChangeFired = true;
 		});
-		root.on("afterChange", (event: TreeEvent) => {
+		root.on("afterChange", (event: ITreeEvent) => {
 			rootAfterChangeFired = true;
 		});
-		root.child.on("beforeChange", (event: TreeEvent) => {
+		root.child.on("beforeChange", (event: ITreeEvent) => {
 			childBeforeChangeFired = true;
 			event.stopPropagation();
 		});
-		root.child.on("afterChange", (event: TreeEvent) => {
+		root.child.on("afterChange", (event: ITreeEvent) => {
 			childAfterChangeFired = true;
 			event.stopPropagation();
 		});

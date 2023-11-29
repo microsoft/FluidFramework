@@ -219,7 +219,7 @@ export {
 	AllowedTypeSet,
 	SchemaBuilderOptions,
 	FlexTreeTyped,
-	TreeEvent,
+	ITreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,

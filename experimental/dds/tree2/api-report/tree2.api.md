@@ -393,8 +393,8 @@ export const disposeSymbol: unique symbol;
 
 // @alpha
 export interface EditableTreeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
+    afterChange(event: ITreeEvent): void;
+    beforeChange(event: ITreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -1123,6 +1123,12 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 }
 
 // @alpha
+export interface ITreeEvent {
+    stopPropagation(): void;
+    readonly target: FlexTreeNode;
+}
+
+// @alpha
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
     buildFieldAnchor(): FieldAnchor;
@@ -1818,12 +1824,6 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: TreeStoredSchema;
-}
-
-// @alpha
-export interface TreeEvent {
-    stopPropagation(): void;
-    readonly target: FlexTreeNode;
 }
 
 // @alpha
