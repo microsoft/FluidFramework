@@ -20,8 +20,7 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
-import { InsertableTreeNodeUnion } from "./insertable";
-import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
+import { IterableTreeListContent, TreeListNode } from "./treeListNode";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -46,35 +45,6 @@ export type Unhydrated<T> = T;
  * @alpha
  */
 export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
-	extends TreeListNodeBase<
-		TreeNodeUnion<TTypes>,
-		InsertableTreeNodeUnion<TTypes>,
-		TreeListNode
-	> {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export const TreeListNode = {
-	/**
-	 * Wrap an iterable of content to be inserted into a list.
-	 * @remarks
-	 * The object returned by this function can be inserted into a list as an element.
-	 * Its contents will be inserted sequentially in the corresponding location in the list.
-	 * @example
-	 * ```ts
-	 * list.insertAtEnd(list.inline(iterable))
-	 * ```
-	 */
-	inline: <T>(content: Iterable<T>) => createIterableTreeListContent(content),
-};
 
 /**
  * A generic List type, used to defined types like {@link (TreeListNode:interface)}.

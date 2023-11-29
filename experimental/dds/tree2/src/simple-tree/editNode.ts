@@ -15,7 +15,8 @@ import {
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
 } from "../feature-libraries";
-import { TreeObjectNode, TreeListNode, TreeMapNode, TreeNode } from "./types";
+import { TreeObjectNode, TreeMapNode, TreeNode } from "./types";
+import { TreeListNode } from "./treeListNode";
 
 /** Associates an edit node with a target object  */
 const targetSymbol = Symbol("EditNodeTarget");

@@ -40,7 +40,6 @@ export {
 export { FactoryObjectNodeSchema, FactoryObjectNodeSchemaRecursive } from "./domains";
 
 export {
-	NodeFromSchema,
 	NodeKind,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
