@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { FieldKinds } from "../../../feature-libraries";
+import { FieldKinds, TreeEvent } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
@@ -655,6 +655,55 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterCounter, 1);
 		assert.strictEqual(childBeforeCounter, 1);
 		assert.strictEqual(childAfterCounter, 1);
+	});
+
+	it("stopPropagation works", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematizeInternal({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).editableTree.content;
+
+		let rootBeforeChangeFired = false;
+		let rootAfterChangeFired = false;
+		let childBeforeChangeFired = false;
+		let childAfterChangeFired = false;
+
+		root.on("beforeChange", (event: TreeEvent) => {
+			rootBeforeChangeFired = true;
+		});
+		root.on("afterChange", (event: TreeEvent) => {
+			rootAfterChangeFired = true;
+		});
+		root.child.on("beforeChange", (event: TreeEvent) => {
+			childBeforeChangeFired = true;
+			event.stopPropagation();
+		});
+		root.child.on("afterChange", (event: TreeEvent) => {
+			childAfterChangeFired = true;
+			event.stopPropagation();
+		});
+
+		assert.strictEqual(rootBeforeChangeFired, false);
+		assert.strictEqual(rootAfterChangeFired, false);
+		assert.strictEqual(childBeforeChangeFired, false);
+		assert.strictEqual(childAfterChangeFired, false);
+
+		// Apply a change that causes events to fire
+		root.child.myInnerString = "new string in original child";
+
+		// Events should have fired on the child node
+		assert.strictEqual(childBeforeChangeFired, true);
+		assert.strictEqual(childAfterChangeFired, true);
+		// Events should NOT have fired on the root node because the child called stopPropagation().
+		assert.strictEqual(rootBeforeChangeFired, false);
+		assert.strictEqual(rootAfterChangeFired, false);
 	});
 });
 
