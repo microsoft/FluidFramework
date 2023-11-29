@@ -42,7 +42,7 @@ export interface TreeApi {
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
-	 * If `node` is an element in a {@link TreeListNode}, this returns the index of `node` in the list (a `number`).
+	 * If `node` is an element in a {@link (TreeListNode:interface)}, this returns the index of `node` in the list (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: NodeBase): string | number;

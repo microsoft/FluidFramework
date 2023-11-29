@@ -4,17 +4,29 @@
  */
 
 import { AllowedTypes } from "../feature-libraries";
+import { type ImplicitAllowedTypes, type TreeNodeFromImplicitAllowedTypes } from "../class-tree";
 import { InsertableTreeNodeUnion } from "./insertable";
-import { TreeListNodeBase, TreeNodeUnion } from "./types";
+import { TreeListNodeBase, TreeNodeUnion, Unhydrated } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
-export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
+export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
 	extends TreeListNodeBase<
 		TreeNodeUnion<TTypes>,
 		InsertableTreeNodeUnion<TTypes>,
+		TreeListNodeOld
+	> {}
+
+/**
+ * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
+export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+	extends TreeListNodeBase<
+		TreeNodeFromImplicitAllowedTypes<TTypes>,
+		Unhydrated<TreeNodeFromImplicitAllowedTypes<TTypes>>, // TODO: insertion type.
 		TreeListNode
 	> {}
 
@@ -26,7 +38,7 @@ export const TreeListNode = {
 	/**
 	 * Wrap an iterable of items to inserted as consecutive items in a list.
 	 * @remarks
-	 * The object returned by this function can be inserted into a {@link TreeListNode}.
+	 * The object returned by this function can be inserted into a {@link TreeListNodeOld}.
 	 * Its contents will be inserted consecutively in the corresponding location in the list.
 	 * @example
 	 * ```ts
@@ -43,7 +55,7 @@ const create = Symbol("Create IterableTreeListContent");
 
 /**
  * Used to insert iterable content into a {@link (TreeListNode:interface)}.
- * Use {@link (TreeListNodeOld:variable).inline} to create an instance of this type.
+ * Use {@link (TreeListNode:variable).inline} to create an instance of this type.
  * @privateRemarks
  * TODO: Figure out how to link {@link TreeListNode.inline} above such that it works with API-Extractor.
  * @alpha
