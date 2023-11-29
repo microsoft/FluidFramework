@@ -11,6 +11,7 @@ import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
@@ -116,6 +117,10 @@ export interface AzureUser<T = any> extends IUser {
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
+
+export { ITelemetryBaseEvent }
+
+export { ITelemetryBaseLogger }
 
 export { ITokenClaims }
 
