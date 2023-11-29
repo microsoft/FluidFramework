@@ -154,7 +154,7 @@ export class SharedMatrix<T = any>
 	private pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
-	private setCellPolicySwitchOpSeqNumber: number;
+	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
 	// Used to track if there is any reentrancy in setCell code.
 	private reentrantCount: number = 0;
 
@@ -174,7 +174,7 @@ export class SharedMatrix<T = any>
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
 
-		this.setCellPolicySwitchOpSeqNumber =
+		this.setCellLwwToFwwPolicySwitchOpSeqNumber =
 			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
@@ -246,7 +246,7 @@ export class SharedMatrix<T = any>
 	}
 
 	public isSetCellConflictResolutionPolicyFWW() {
-		return this.setCellPolicySwitchOpSeqNumber > -1;
+		return this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1;
 	}
 
 	public getCell(row: number, col: number): MatrixItem<T> {
@@ -530,7 +530,7 @@ export class SharedMatrix<T = any>
 					this.cells.snapshot(),
 					this.pending.snapshot(),
 					this.cellLastWriteTracker.snapshot(),
-					this.setCellPolicySwitchOpSeqNumber,
+					this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 				],
 				this.handle,
 			),
@@ -665,8 +665,9 @@ export class SharedMatrix<T = any>
 					referenceSeqNumber,
 				} = localOpMetadata as ISetOpMetadata;
 
-				// Policy is not FWW. So behave accordingly.
-				if (this.setCellPolicySwitchOpSeqNumber > -1) {
+				// Policy is FWW now. So behave accordingly. We want to check the current mode here and not that
+				// whether op was made in FWW or not.
+				if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
 					const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
 					const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
 					if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
@@ -748,7 +749,7 @@ export class SharedMatrix<T = any>
 				cellData,
 				pendingCliSeqData,
 				cellLastWriteTracker,
-				setCellPolicySwitchOpSeqNumber,
+				setCellLwwToFwwPolicySwitchOpSeqNumber,
 			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
 			this.cells = SparseArray2D.load(cellData);
@@ -756,11 +757,12 @@ export class SharedMatrix<T = any>
 			// Old summaries will not have this info, so check that.
 			if (cellLastWriteTracker !== undefined) {
 				assert(
-					setCellPolicySwitchOpSeqNumber !== undefined,
+					setCellLwwToFwwPolicySwitchOpSeqNumber !== undefined,
 					"Both tracker and seq number should be present",
 				);
 				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
-				this.setCellPolicySwitchOpSeqNumber = setCellPolicySwitchOpSeqNumber;
+				this.setCellLwwToFwwPolicySwitchOpSeqNumber =
+					setCellLwwToFwwPolicySwitchOpSeqNumber;
 			}
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
@@ -768,7 +770,8 @@ export class SharedMatrix<T = any>
 	}
 
 	/**
-	 * Tells whether the setCell op should be applied or not based on First Write Win policy.
+	 * Tells whether the setCell op should be applied or not based on First Write Win policy. It assumes
+	 * we are in FWW mode.
 	 */
 	private shouldSetCellBasedOnFWW(
 		rowHandle: Handle,
@@ -779,14 +782,11 @@ export class SharedMatrix<T = any>
 		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
-		if (
+		return (
 			lastCellModificationDetails === undefined ||
 			lastCellModificationDetails.clientId === message.clientId ||
 			message.referenceSequenceNumber >= lastCellModificationDetails.seqNum
-		) {
-			return true;
-		}
-		return false;
+		);
 	}
 
 	/**
@@ -795,8 +795,8 @@ export class SharedMatrix<T = any>
 	 */
 	private isSetCellOpMadeInFWWPolicy(message: ISequencedDocumentMessage) {
 		if (
-			this.setCellPolicySwitchOpSeqNumber !== -1 &&
-			message.referenceSequenceNumber >= this.setCellPolicySwitchOpSeqNumber
+			this.setCellLwwToFwwPolicySwitchOpSeqNumber !== -1 &&
+			message.referenceSequenceNumber >= this.setCellLwwToFwwPolicySwitchOpSeqNumber
 		) {
 			return true;
 		}
@@ -821,7 +821,7 @@ export class SharedMatrix<T = any>
 				break;
 			default: {
 				if (contents.type === MatrixOp.changeSetCellPolicy) {
-					this.setCellPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
+					this.setCellLwwToFwwPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
 					return;
 				}
 
@@ -954,7 +954,7 @@ export class SharedMatrix<T = any>
 	 * and not from FWW to LWW. An op will be sent to communicate this to other clients.
 	 */
 	public switchSetCellPolicy() {
-		if (this.setCellPolicySwitchOpSeqNumber === -1) {
+		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1) {
 			if (this.isAttached()) {
 				const op: ISetCellChangePolicyOp = {
 					type: MatrixOp.changeSetCellPolicy,
@@ -962,7 +962,7 @@ export class SharedMatrix<T = any>
 
 				this.submitLocalMessage(op);
 			} else {
-				this.setCellPolicySwitchOpSeqNumber = 0;
+				this.setCellLwwToFwwPolicySwitchOpSeqNumber = 0;
 			}
 		}
 	}
