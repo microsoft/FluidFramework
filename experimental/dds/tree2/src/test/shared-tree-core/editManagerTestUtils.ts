@@ -56,12 +56,56 @@ export function editManagerFactory<TChange = TestChange>(
 	return manager;
 }
 
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Apply local edit L1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each L)
+ * - Apply local edit Lc with a ref seq# pointing to edit 0
+ * -- we start measuring from here
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(L1)─...─(Lc)
+ * ```
+ *
+ * @param localEditCount - The number of local edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: () => TChange,
 ): void;
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Apply local edit L1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each L)
+ * - Apply local edit Lc with a ref seq# pointing to edit 0
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(L1)─...─(Lc)
+ * ```
+ *
+ * @param localEditCount - The number of local edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the local edits when invoked.
+ */
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
@@ -94,12 +138,55 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	return defer ? run : run();
 }
 
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit 0
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(P1)─...─(Pc)
+ * ```
+ *
+ * @param peerEditCount - The number of peer edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: () => TChange,
 ): void;
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit 0
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(P1)─...─(Pc)
+ * ```
+ *
+ * @param peerEditCount - The number of peer edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
@@ -145,19 +232,57 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 }
 
 /**
- * Establishes the following branching structure:
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
  * ```text
- * (0)-(T1)-...-(Tc-1)-(Tc)
- *  |    |          └-----------------(Pc)
- *  |    └-----------------------(P2)
- *  └-----------------------(P1)
+ * (0)─(T1)─...─(Tc─1)─(Tc)
+ *   |    |          └──────(P1)─(P2)─...─(Pc)
+ *   |    └─────────────────(P1)─(P2)
+ *   └──────────────────────(P1)
  * ```
+ *
+ * @param editCount - The number of peer and trunk edits to generate.
+ * The total number of edits generated will be twice that.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
  */
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: () => TChange,
 ): void;
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc─1)─(Tc)
+ *   |    |          └──────(P1)─(P2)─...─(Pc)
+ *   |    └─────────────────(P1)─(P2)
+ *   └──────────────────────(P1)
+ * ```
+ *
+ * @param editCount - The number of peer and trunk edits to generate.
+ * The total number of edits generated will be twice that.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
@@ -200,6 +325,26 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	return defer ? run : run();
 }
 
+/**
+ * Simulates the following inputs to the EditManager:
+ * Each peer edit is sequenced in a round-robin fashion starting with the first edit from peer 1 then
+ * the first edit from peer 2, etc. Then the second edit from each peer (in the same peer order) etc.
+ * All edit have a reference sequence number of 0.
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)
+ *   ├─(P1E1)───────────────(P1E2)──────...──────(P1Ek)
+ *   ├────────(P2E1)───────────────(P2E2)──────...──────(P2Ek)
+ *   ├...
+ *   └───────────────(PnE1)───────────────(PnE2)──────...──────(PnEk)
+ * ```
+ *
+ * @param peerCount - The number of peer to generate edits for.
+ * @param editCount - The number of edits to generate per peer.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
@@ -207,6 +352,28 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	mintChange: () => TChange,
 	defer: true,
 ): () => void;
+/**
+ * Simulates the following inputs to the EditManager:
+ * Each peer edit is sequenced in a round-robin fashion starting with the first edit from peer 1 then
+ * the first edit from peer 2, etc. Then the second edit from each peer (in the same peer order) etc.
+ * All edit have a reference sequence number of 0.
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)
+ *   ├─(P1E1)───────────────(P1E2)──────...──────(P1Ek)
+ *   ├────────(P2E1)───────────────(P2E2)──────...──────(P2Ek)
+ *   ├...
+ *   └───────────────(PnE1)───────────────(PnE2)──────...──────(PnEk)
+ * ```
+ *
+ * @param peerCount - The number of peer to generate edits for.
+ * @param editCount - The number of edits to generate per peer.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,

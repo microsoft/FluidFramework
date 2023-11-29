@@ -8,12 +8,11 @@ import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../fe
 
 export type Editor = (builder: DefaultEditBuilder) => void;
 
-let builtChangeset: DefaultChangeset | undefined;
-
 export function makeEditMinter(
 	family: DefaultChangeFamily,
 	editor: Editor,
 ): () => DefaultChangeset {
+	let builtChangeset: DefaultChangeset | undefined;
 	const innerEditor = family.buildEditor((change) => {
 		assert(builtChangeset === undefined);
 		builtChangeset = change;

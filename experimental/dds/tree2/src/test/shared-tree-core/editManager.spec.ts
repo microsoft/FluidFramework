@@ -718,9 +718,9 @@ describe("EditManager", () => {
 				//   ...(incrementing the ref seq# for each T)
 				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
 				//   => we start measuring from here
-				//   - Add local edit P1 with a ref seq# pointing to edit 0
+				//   - Add peer edit P1 with a ref seq# pointing to edit 0
 				//   ...(not incrementing the ref seq# for each P)
-				//   - Add local edit Pc with a ref seq# pointing to edit 0
+				//   - Add peer edit Pc with a ref seq# pointing to edit 0
 				// This defines the following relationships between edits:
 				//   (0)─(T1)─...─(Tc)
 				//     └───────────────(P1)─...─(Pc)
@@ -787,9 +787,9 @@ describe("EditManager", () => {
 				//   ...(incrementing the ref seq# for each T)
 				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
 				//   => we start measuring from here
-				//   - Add local edit P1 with a ref seq# pointing to edit 0
+				//   - Add peer edit P1 with a ref seq# pointing to edit 0
 				//   ...(incrementing the ref seq# for each P)
-				//   - Add local edit Pc with a ref seq# pointing to edit Tc-1
+				//   - Add peer edit Pc with a ref seq# pointing to edit Tc-1
 				// This defines the following relationships between edits:
 				//   (0)─(T1)─...─(Tc─1)─(Tc)
 				//     |    |          └──────(P1)─(P2)─...─(Pc)
@@ -878,11 +878,11 @@ describe("EditManager", () => {
 					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
 					//   ...(incrementing the ref seq# for each T)
 					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
-					//   - Add local edit P1 with a ref seq# pointing to edit 0
+					//   - Add peer edit P1 with a ref seq# pointing to edit 0
 					//   ...(not incrementing the ref seq# for each P)
-					//   - Add local edit Pc with a ref seq# pointing to edit 0
+					//   - Add peer edit Pc with a ref seq# pointing to edit 0
 					//   => we start measuring from here
-					//   - Add local edit P+ with a ref seq# pointing to edit Tc
+					//   - Add peer edit P+ with a ref seq# pointing to edit Tc
 					// This defines the following relationships between edits:
 					//   (0)─(T1)─...─(Tc)
 					//     |             └─(P1)─...─(Pc)─(P+)
@@ -949,11 +949,11 @@ describe("EditManager", () => {
 					//   ...(incrementing the ref seq# for each T)
 					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
 					//   - Add trunk edit T+ with a ref seq# pointing to edit Tc
-					//   - Add local edit P1 with a ref seq# pointing to edit 0
+					//   - Add peer edit P1 with a ref seq# pointing to edit 0
 					//   ...(not incrementing the ref seq# for each P)
-					//   - Add local edit Pc with a ref seq# pointing to edit 0
+					//   - Add peer edit Pc with a ref seq# pointing to edit 0
 					//   => we start measuring from here
-					//   - Add local edit P+ with a ref seq# pointing to edit Tc
+					//   - Add peer edit P+ with a ref seq# pointing to edit Tc
 					// This defines the following relationships between edits:
 					//   (0)─(T1)─...─(Tc)─(T+)
 					//     |             └──────(P1)─...─(Pc)─(P+)
