@@ -228,13 +228,13 @@ export {
 } from "./feature-libraries";
 
 export {
-	IterableTreeListContent,
 	TreeObjectNodeFields,
 	TreeField,
 	TreeFieldInner,
 	TypedNode,
 	TreeNodeUnion,
-	TreeListNode as TreeListNodeOld,
+	TreeListNode,
+	TreeListNodeOld,
 	TreeMapNode,
 	TreeObjectNode,
 	Tree as TreeOld,
@@ -244,6 +244,7 @@ export {
 	FactoryTreeSchema,
 	TreeMapNodeBase,
 	Unhydrated,
+	IterableTreeListContent,
 } from "./simple-tree";
 
 export {
@@ -276,7 +277,6 @@ export {
 	TreeConfiguration,
 	TreeView,
 	SchemaFactory,
-	TreeListNode,
 	Tree,
 	TreeApi,
 	NodeBase,

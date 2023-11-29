@@ -20,7 +20,7 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
-import { IterableTreeListContent, TreeListNode } from "./treeListNode";
+import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -44,7 +44,7 @@ export type Unhydrated<T> = T;
  * Using default parameters, this could be combined with TypedNode.
  * @alpha
  */
-export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
+export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 /**
  * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
@@ -349,7 +349,7 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 	: TSchema extends MapNodeSchema
 	? TreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? TreeListNode<TSchema["info"]["allowedTypes"]>
+	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema>
 	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>
