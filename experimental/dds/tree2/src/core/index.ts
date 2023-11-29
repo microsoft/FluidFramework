@@ -170,6 +170,7 @@ export {
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
+	BranchRebaseResult,
 	rebaseChange,
 } from "./rebase";
 
