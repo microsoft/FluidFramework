@@ -62,7 +62,7 @@ export interface ITelemetryPropertiesExt {
 
 /**
  * Interface for logging telemetry statements.
- * @remarks Can contain any number of properties that get serialized as json payload.
+ * @remarks May contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  *
