@@ -38,6 +38,7 @@ describe("FluidSerializer", () => {
 	// Type tests for FluidSerializableReadOnly
 	{
 		const use = (x: FluidSerializableReadOnly) => undefined;
+		// These types of values are allowed
 		[[], {}, 5, null, "", { x: 5 }, [[]], true, new MockHandle(1)].map(use);
 		const symbol: unique symbol = Symbol("test");
 
