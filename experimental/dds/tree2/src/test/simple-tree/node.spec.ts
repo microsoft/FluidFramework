@@ -138,15 +138,14 @@ describe("node API", () => {
 
 				mutate(root);
 
-				const numChangesBeforeUnsubscribe = log.length;
+				const numChanges = log.length;
 				unsubscribe();
 				mutate(root);
-				const numChangesAfterUnsubscribe = log.length;
 
 				assert.equal(
-					numChangesBeforeUnsubscribe,
-					numChangesAfterUnsubscribe,
-					"Must not receive change notifications after unsubscribing from event.",
+					log.length,
+					numChanges,
+					"Mutation after unsubscribe must not emit change events.",
 				);
 			});
 		}
