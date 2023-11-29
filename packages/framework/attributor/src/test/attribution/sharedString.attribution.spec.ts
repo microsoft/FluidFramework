@@ -32,7 +32,7 @@ import {
 	IFluidDataStoreRuntime,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IClient, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
@@ -73,9 +73,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 	} as IAudience;
 }
 
-interface PropertySet {
-	[name: string]: any;
-}
+type PropertySet = Record<string, any>;
 
 interface Client {
 	sharedString: SharedString;
@@ -91,34 +89,43 @@ interface FuzzTestState extends BaseFuzzTestState {
 	serializer?: Encoder<IAttributor, string>;
 }
 
-interface ClientSpec {
-	stringId: string;
-}
+// Type aliases are used here instead of interfaces to avoid ts error 2345:
+//   Index signature for type 'string' is missing in type 'Operation[]'
+// when sent to writeJson which requires Jsonable<unknown>.
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 
-interface RangeSpec {
+type ClientSpec = {
+	stringId: string;
+};
+
+type RangeSpec = {
 	start: number;
 	end: number;
-}
+};
 
-interface AddText extends ClientSpec {
+type AddText = ClientSpec & {
 	type: "addText";
 	index: number;
 	content: string;
 	props?: PropertySet;
-}
+};
 
-interface RemoveRange extends ClientSpec, RangeSpec {
-	type: "removeRange";
-}
+type RemoveRange = ClientSpec &
+	RangeSpec & {
+		type: "removeRange";
+	};
 
-interface AnnotateRange extends ClientSpec, RangeSpec {
-	type: "annotateRange";
-	properties: PropertySet;
-}
+type AnnotateRange = ClientSpec &
+	RangeSpec & {
+		type: "annotateRange";
+		properties: PropertySet;
+	};
 
-interface Synchronize {
+type Synchronize = {
 	type: "synchronize";
-}
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions */
 
 type TextOperation = AddText | RemoveRange | AnnotateRange;
 
@@ -362,11 +369,11 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	return { operations, generator };
 }
 
-function readJson(filepath: string): Jsonable {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" }));
+function readJson<T extends Jsonable<unknown>>(filepath: string): Jsonable<T> {
+	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as Jsonable<T>;
 }
 
-function writeJson(filepath: string, content: Jsonable) {
+function writeJson(filepath: string, content: Jsonable<unknown>) {
 	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf-8" });
 }
 
@@ -403,7 +410,37 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 	});
 }
 
-const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => {
+// ISummaryTree is not serializable due to Uint8Array content in ISummaryBlob.
+// SerializableISummaryTree is a version of ISummaryTree with Uint8Array content removed.
+type SerializableISummaryTree = ExcludeDeeply<ISummaryTree, Uint8Array>;
+
+type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends object
+	? { [K in keyof TBase]: ExcludeDeeply<TBase[K], Exclusion> }
+	: TBase;
+
+/**
+ * Validates that summary tree does not have a blob with a Uint8Array as content.
+ *
+ * @param summary - Summary tree to validate
+ */
+function assertSerializableSummary(
+	summary: ISummaryTree,
+): asserts summary is SerializableISummaryTree {
+	Object.values(summary.tree).forEach((value) => {
+		switch (value.type) {
+			case SummaryType.Tree:
+				assertSerializableSummary(value);
+				break;
+			case SummaryType.Blob:
+				assert(typeof value.content === "string");
+				break;
+			default:
+				break;
+		}
+	});
+}
+
+const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
 	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
@@ -412,6 +449,7 @@ const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => 
 	if (state.attributor && state.serializer) {
 		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
+	assertSerializableSummary(summary);
 	return summary;
 };
 

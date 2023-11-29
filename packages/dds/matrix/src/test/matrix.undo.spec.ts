@@ -21,7 +21,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 			let dataStoreRuntime: MockFluidDataStoreRuntime;
 			let matrix1: SharedMatrix<number | string>;
 			// Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-			let consumer1: TestConsumer<undefined | null | number | string>;
+			let consumer1: TestConsumer<number | string>;
 			let undo1: UndoRedoStackManager;
 			let expect: <T>(expected: readonly (readonly MatrixItem<T>[])[]) => Promise<void>;
 

@@ -6,7 +6,7 @@
 import * as path from "path";
 import { strict as assert } from "assert";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { JsonableType } from "@fluidframework/datastore-definitions";
 import {
 	combineReducers,
 	createWeightedGenerator,
@@ -25,7 +25,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable;
+	value: JsonableType;
 }
 
 interface DeleteKey {

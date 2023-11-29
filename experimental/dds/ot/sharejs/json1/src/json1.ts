@@ -54,7 +54,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		return Json1OTType.apply(state, op) as Doc;
 	}
 
-	public insert(path: Path, value: Serializable) {
+	public insert(path: Path, value: Serializable<unknown>) {
 		this.apply(insertOp(path, value as Doc));
 	}
 
@@ -66,7 +66,7 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
 		this.apply(removeOp(path, value));
 	}
 
-	public replace(path: Path, oldValue: Serializable, newValue: Serializable) {
+	public replace(path: Path, oldValue: Serializable<unknown>, newValue: Serializable<unknown>) {
 		this.apply(replaceOp(path, oldValue as Doc, newValue as Doc));
 	}
 }

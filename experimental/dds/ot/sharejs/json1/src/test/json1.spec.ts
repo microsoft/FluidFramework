@@ -40,7 +40,7 @@ describe("SharedJson1", () => {
 			ot.replace([], null, {});
 		});
 
-		const expect = (expected: Jsonable) => {
+		const expect = (expected: Jsonable<unknown>) => {
 			assert.deepEqual(ot.get(), expected);
 		};
 
@@ -109,7 +109,7 @@ describe("SharedJson1", () => {
 				expect([]);
 			});
 
-			const expect = (expected?: Jsonable) => {
+			const expect = (expected?: Jsonable<unknown>) => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = doc1.get();

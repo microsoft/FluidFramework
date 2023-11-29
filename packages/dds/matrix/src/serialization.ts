@@ -12,7 +12,7 @@ import { bufferToString } from "@fluid-internal/client-utils";
 export const serializeBlob = (
 	handle: IFluidHandle,
 	path: string,
-	snapshot: Serializable,
+	snapshot: Serializable<unknown>,
 	serializer: IFluidSerializer,
 ) => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 

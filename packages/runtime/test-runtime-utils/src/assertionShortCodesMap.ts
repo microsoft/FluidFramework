@@ -776,7 +776,7 @@ export const shortCodeMap = {
 	"0x4ad": "Should not be called when connection is already present!",
 	"0x4ae": "Connection should be disposed by now",
 	"0x4af": "Received message from user not in the audience",
-	"0x4b0": "Encoded timestamps should be an array of nummbers",
+	"0x4b0": "Encoded timestamps should be an array of numbers",
 	"0x4b1": "serialized attribution columns should have the same length",
 	"0x4b2": "new client has different payload from existing one",
 	"0x4b3": "have connection",

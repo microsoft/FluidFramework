@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
 
@@ -18,7 +17,7 @@ import { IErrorEvent } from "@fluidframework/core-interfaces";
 /**
  * @internal
  */
-export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
+export type SignalListener = (clientId: string, local: boolean, payload: any) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
@@ -48,7 +47,7 @@ export interface ISignaler {
 	 * @param signalName - The name of the signal
 	 * @param payload - The data to send with the signal
 	 */
-	submitSignal(signalName: string, payload?: Jsonable);
+	submitSignal(signalName: string, payload?: any);
 }
 
 /**
@@ -122,7 +121,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal(signalName: string, payload?: any) {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
@@ -168,7 +167,7 @@ export class Signaler
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal(signalName: string, payload?: any) {
 		this.signaler.submitSignal(signalName, payload);
 	}
 }

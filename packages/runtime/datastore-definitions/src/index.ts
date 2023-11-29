@@ -19,6 +19,11 @@ export {
 	IDeltaHandler,
 } from "./channel";
 export { IFluidDataStoreRuntime, IFluidDataStoreRuntimeEvents } from "./dataStoreRuntime";
-export { Jsonable } from "./jsonable";
+export type {
+	Jsonable,
+	JsonableType,
+	JsonableTypeWith,
+	Internal_InterfaceOfJsonableTypesWith,
+} from "./jsonable";
 export { Serializable } from "./serializable";
 export { IChannelAttributes } from "./storage";
