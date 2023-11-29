@@ -28,7 +28,6 @@
 		"rebuild": "npm run clean && npm run build",
 		"start": "concurrently \"npm:watch:*\" \"npm:start:client\"",
 		"start:client": "webpack serve --config webpack.config.js",
-		"stop": "pm2 stop pm2.ecosystem.config.js",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
