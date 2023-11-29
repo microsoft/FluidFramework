@@ -15,7 +15,7 @@ import { IEvent } from "@fluidframework/core-interfaces";
  * @internal
  *
  * @privateRemarks
- * This probably doesn't belong in this package.
+ * This probably doesn't belong in this package, as it is not telemetry-specific, and is really only intended for internal fluid-framework use.
  * We should consider moving it to the `core-utils` package.
  */
 export class EventEmitterWithErrorHandling<
