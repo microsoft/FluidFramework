@@ -531,7 +531,11 @@ export const handlers: Handler[] = [
  * @param tasksToIgnore - List of fluid-build tasks (usually npm scripts) that should be ignored.
  * @returns
  */
-function shouldProcessScriptForTsc(script: string, command: string, tasksToIgnore: Set<string>): boolean {
+function shouldProcessScriptForTsc(
+	script: string,
+	command: string,
+	tasksToIgnore: Set<string>,
+): boolean {
 	return (
 		// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
 		// is when the whole command is "tsc".
