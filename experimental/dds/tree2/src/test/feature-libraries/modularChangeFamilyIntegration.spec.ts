@@ -318,6 +318,34 @@ describe("ModularChangeFamily integration", () => {
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
+
+		it("prunes its output", () => {
+			const a: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("foo"),
+						{
+							fieldKind: sequence.identifier,
+							change: brand([]),
+						},
+					],
+				]),
+			};
+			const b: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("bar"),
+						{
+							fieldKind: sequence.identifier,
+							change: brand([]),
+						},
+					],
+				]),
+			};
+
+			const composed = family.compose([makeAnonChange(a), makeAnonChange(b)]);
+			assert.deepEqual(composed, ModularChangeFamily.emptyChange);
+		});
 	});
 
 	describe("invert", () => {

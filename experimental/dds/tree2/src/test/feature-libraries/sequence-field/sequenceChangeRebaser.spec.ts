@@ -8,12 +8,10 @@ import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../fe
 import {
 	ChangesetLocalId,
 	makeAnonChange,
-	emptyFieldChanges,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
@@ -26,14 +24,13 @@ import {
 	invert,
 	rebaseOverComposition,
 	rebaseTagged,
-	toDelta,
 	withNormalizedLineage,
 	withoutLineage,
 	rebase,
+	prune,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
-const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -265,8 +262,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 					tagRollbackInverse(inv, tag2, taggedChange.revision),
 				];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -282,8 +279,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 				tracker.apply(inv);
 				const changes = [inv, taggedChange];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -567,8 +564,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
+		assert.deepEqual(actual, []);
 	});
 
 	// See bug 4104

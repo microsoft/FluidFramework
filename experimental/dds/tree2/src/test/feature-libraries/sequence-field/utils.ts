@@ -46,6 +46,16 @@ export function compose(
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
 
+export function prune(
+	change: TestChangeset,
+	childPruner?: (child: TestChange) => TestChange | undefined,
+): TestChangeset {
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
+	);
+}
+
 export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
 	return shallowCompose(changes.map(makeAnonChange));
 }
