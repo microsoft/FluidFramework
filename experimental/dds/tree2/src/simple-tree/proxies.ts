@@ -874,13 +874,19 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
 export function extractFactoryContent<
 	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
 >(content: T): ExtractedFactoryContent<T> {
-	if (isFluidHandle(content as FluidSerializableReadOnly | undefined)) {
-		return { content, hydrateProxies: noopHydrator };
-	} else if (isReadonlyArray(content)) {
+	if (isReadonlyArray(content)) {
 		return extractContentArray(content) as ExtractedFactoryContent<T>;
 	} else if (content instanceof Map) {
 		return extractContentMap(content);
 	} else if (content !== null && typeof content === "object") {
+		const flexNode = tryGetEditNode(content);
+		// Only run isFluidHandle if content can't be an unhydrated node,
+		// since accessing some members of unhydrated nodes is an error and isFluidHandle may access members.
+		if (flexNode === undefined) {
+			if (isFluidHandle(content as FluidSerializableReadOnly | undefined)) {
+				return { content, hydrateProxies: noopHydrator };
+			}
+		}
 		return extractContentObject(content);
 	} else {
 		return {
