@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src tests",
 		"eslint:fix": "eslint --format stylish src tests --fix",
@@ -24,24 +25,22 @@
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fences": "npm run good-fences",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"start": "react-scripts start",
-		"test": "react-scripts test",
-		"eject": "react-scripts eject",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore"
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"start": "react-scripts start",
+		"test": "react-scripts test"
 	},
 	"dependencies": {
-		"@testing-library/jest-dom": "^5.17.0",
+		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^13.4.0",
-		"@testing-library/user-event": "^13.5.0",
-		"@types/jest": "^27.5.2",
+		"@testing-library/user-event": "^14.4.3",
+		"@types/jest": "29.5.3",
 		"@types/node": "^16.18.65",
-		"@types/react": "^18.2.39",
-		"@types/react-dom": "^18.2.17",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"react-scripts": "5.0.1",
-		"typescript": "^4.9.5"
+		"@types/react": "^17.0.44",
+		"@types/react-dom": "^17.0.18",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.2",
+		"typescript": "~5.1.6"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
@@ -55,7 +54,7 @@
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
 		"@types/lodash.isequal": "^4.5.6",
-		"@types/node": "^16.18.38",
+		"@types/node": "^16.18.65",
 		"@types/node-fetch": "^2.5.10",
 		"@types/puppeteer": "1.3.0",
 		"@types/react": "^17.0.44",
