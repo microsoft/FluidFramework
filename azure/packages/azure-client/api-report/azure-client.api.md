@@ -29,8 +29,6 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    // (undocumented)
-    readonly configProvider: IConfigProviderBase | undefined;
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
@@ -44,8 +42,6 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    // (undocumented)
-    readonly properties: AzureClientProps;
 }
 
 // @public

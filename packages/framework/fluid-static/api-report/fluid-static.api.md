@@ -26,12 +26,12 @@ export interface ContainerSchema {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @internal
+// @public (undocumented)
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
 }): IRuntimeFactory;
 
-// @internal
+// @public (undocumented)
 export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
     container: IContainer;
     rootDataObject: IRootDataObject;
@@ -48,14 +48,14 @@ export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: IFluidDataStoreFactory;
 } & LoadableObjectCtor<T>;
 
-// @internal @deprecated
+// @public @deprecated
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
 }
 
-// @internal @deprecated
+// @public @deprecated
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<TContainerSchema> {
     constructor(container: IContainer, rootDataObject: IRootDataObject);
     attach(): Promise<string>;
@@ -67,6 +67,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
     dispose(): void;
     get disposed(): boolean;
     get initialObjects(): InitialObjects<TContainerSchema>;
+    // @internal
     readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
     get isDirty(): boolean;
 }

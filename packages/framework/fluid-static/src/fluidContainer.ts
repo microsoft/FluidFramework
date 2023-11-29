@@ -212,11 +212,6 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	dispose(): void;
 }
 
-/**
- * TODO
- *
- * @internal
- */
 export function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
@@ -235,8 +230,6 @@ export function createFluidContainer<
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead.
- *
- * @internal
  */
 export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>

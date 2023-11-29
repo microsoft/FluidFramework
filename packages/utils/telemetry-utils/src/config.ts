@@ -11,8 +11,6 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 
 /**
  * Base interface for providing configurations to enable/disable/control features
- *
- * @public
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;
@@ -20,8 +18,6 @@ export interface IConfigProviderBase {
 
 /**
  * Explicitly typed interface for reading configurations
- *
- * @internal
  */
 export interface IConfigProvider extends IConfigProviderBase {
 	getBoolean(name: string): boolean | undefined;
@@ -35,8 +31,6 @@ export interface IConfigProvider extends IConfigProviderBase {
  * Creates a base configuration provider based on `sessionStorage`
  *
  * @returns A lazy initialized base configuration provider with `sessionStorage` as the underlying config store
- *
- * @internal
  */
 export const sessionStorageConfigProvider = new Lazy<IConfigProviderBase>(() =>
 	inMemoryConfigProvider(safeSessionStorage()),
@@ -252,8 +246,6 @@ export class CachedConfigProvider implements IConfigProvider {
 
 /**
  * A type containing both a telemetry logger and a configuration provider
- *
- * @internal
  */
 export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
@@ -267,11 +259,6 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-/**
- * TODO
- *
- * @internal
- */
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 ): MonitoringContext<L> {
@@ -281,11 +268,6 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
-/**
- * TODO
- *
- * @internal
- */
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
@@ -312,11 +294,6 @@ function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	return typeof maybeConfig?.getRawConfig === "function";
 }
 
-/**
- * TODO
- *
- * @internal
- */
 export function createChildMonitoringContext(
 	props: Parameters<typeof createChildLogger>[0],
 ): MonitoringContext {
