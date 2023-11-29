@@ -105,7 +105,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = tree.schematize({
+			const view = tree.schematizeOld({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -118,7 +118,7 @@ describe("SharedTree", () => {
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematize({
+			const schematized = tree.schematizeOld({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -142,7 +142,7 @@ describe("SharedTree", () => {
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
 			tree.storedSchema.update(schema);
-			const schematized = tree.schematize({
+			const schematized = tree.schematizeOld({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
@@ -872,10 +872,10 @@ describe("SharedTree", () => {
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: [["a"]] as any,
 					} satisfies InitializeAndSchematizeConfiguration;
-					const tree1 = provider.trees[0].schematize(content);
+					const tree1 = provider.trees[0].schematizeOld(content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
 						createTestUndoRedoStacks(tree1.events);
-					const tree2 = provider.trees[1].schematize(content);
+					const tree2 = provider.trees[1].schematizeOld(content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
 						createTestUndoRedoStacks(tree2.events);
 
