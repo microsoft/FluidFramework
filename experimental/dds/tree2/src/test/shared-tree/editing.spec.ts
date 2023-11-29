@@ -441,9 +441,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		// This test fails due to the sequence rebaser failing to line up the removal of A with the insert of A.
-		// See BUG 5351
-		it.skip("can rebase insert and delete over insert in the same gap", () => {
+		it("can rebase insert and delete over insert in the same gap", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 

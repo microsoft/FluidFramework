@@ -527,9 +527,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
 	});
 
-	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
-	// See BUG 5351
-	it.skip("(Insert, delete) ↷ adjacent insert", () => {
+	it("(Insert, delete) ↷ adjacent insert", () => {
 		const insertT = tagChange(Change.insert(0, 1), tag1);
 		const insertA = tagChange(Change.insert(0, 1), tag2);
 		const deleteB = tagChange(Change.delete(0, 1), tag3);
