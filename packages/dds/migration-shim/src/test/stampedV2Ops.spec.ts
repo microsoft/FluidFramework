@@ -123,7 +123,7 @@ const quantityType = builder.object("quantityObj", {
 const schema = builder.intoSchema(quantityType);
 
 function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},
@@ -177,7 +177,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const quantity = getQuantity(legacyTree);
 			newTree
-				.schematize({
+				.schematizeOld({
 					initialTree: {
 						quantity,
 					},

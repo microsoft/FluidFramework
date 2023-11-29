@@ -143,7 +143,7 @@ const handleType = builder.object("handleObj", {
 const schema = builder.intoSchema(handleType);
 
 function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			handle: undefined,
 		},
@@ -197,7 +197,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const handle = getHandle(legacyTree);
 			newTree
-				.schematize({
+				.schematizeOld({
 					initialTree: {
 						handle,
 					},

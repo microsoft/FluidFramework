@@ -435,5 +435,61 @@ describe("toMapTree", () => {
 			const result = nodeDataToMapTree(-0, { schema }, schema.rootFieldSchema.types);
 			assert.equal(result.value, +0);
 		});
+
+		it("List containing `undefined` (maps values to null if allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [
+				schemaBuilder.number,
+				schemaBuilder.null,
+			]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			const actual = nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types);
+
+			const expected: MapTree = {
+				type: rootSchema.name,
+				fields: new Map([
+					[
+						EmptyKey,
+						[
+							{
+								value: 42,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+							{
+								value: 37,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("List containing `undefined` (throws if fallback type is not allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [schemaBuilder.number]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			assert.throws(() => nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types));
+		});
 	});
 });

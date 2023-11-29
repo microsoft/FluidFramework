@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -159,6 +158,9 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -255,6 +257,7 @@ export {
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	isFlexTreeNode,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
