@@ -5642,6 +5642,7 @@ importers:
 
   experimental/dds/tree:
     specifiers:
+      '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
@@ -5690,6 +5691,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-experimental/tree2': link:../tree2
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
