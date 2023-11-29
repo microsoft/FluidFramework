@@ -387,8 +387,10 @@ function getSlideToSegment(
 			result.seg = seg;
 			return false;
 		}
-		// TODO: ADO#3715 moveSeq should be taken into account here
-		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+		if (
+			cache !== undefined &&
+			(seg.removedSeq === segment.removedSeq || seg.movedSeq === segment.movedSeq)
+		) {
 			cache.set(seg, result);
 		}
 		return true;
@@ -2477,7 +2479,7 @@ export class MergeTree {
 			_segment.endpointType === undefined
 		) {
 			throw new UsageError(
-				"Can only create SlideOnRemove or Transient local reference position on a removed segment",
+				"Can only create SlideOnRemove or Transient local reference position on a removed or obliterated segment",
 			);
 		}
 
