@@ -1,4 +1,8 @@
-lts:
-	- "1.0"
-main:
-	- "2.0"
+variables:
+  branch_list:
+    previous:
+      lts:
+      - "1.0"
+    current:
+      main:
+      - "2.0"

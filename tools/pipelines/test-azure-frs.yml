@@ -80,6 +80,8 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
+  # branch list
+  - template: ../../docs/data/versions.yaml
 
 # no PR triggers
 trigger:
@@ -128,6 +130,7 @@ stages:
       steps:
         - checkout: none
         - script: |
+            echo $(branch_list)
             echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
             echo BASE_URL: $(BASE_URL)
             echo RELEASE_VERSION: $(RELEASE_VERSION)
