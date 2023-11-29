@@ -21,7 +21,7 @@ export interface OdspTestCredentials {
 	password: string;
 }
 
-const creds: OdspTestCredentials = {
+const clientCreds: OdspTestCredentials = {
 	clientId: "<client_id>",
 	clientSecret: "<client_secret>",
 	username: "<email_id>",
@@ -30,7 +30,7 @@ const creds: OdspTestCredentials = {
 
 function createOdspClient(): OdspClient {
 	const connectionProperties: OdspConnectionConfig = {
-		tokenProvider: new OdspTestTokenProvider(creds),
+		tokenProvider: new OdspTestTokenProvider(clientCreds),
 		siteUrl: "<site_url>",
 		driveId: "<drive_id>",
 	};
@@ -89,7 +89,7 @@ describe("OdspClient", () => {
 	 */
 	it("can attach a container", async () => {
 		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		// TODO: uncomment this.
 		// if (container.connectionState !== ConnectionState.Connected) {
@@ -100,11 +100,64 @@ describe("OdspClient", () => {
 		// 	});
 		// }
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
 			"Container is not attached after attach is called",
+		);
+	});
+
+	/**
+	 * Scenario: Test if attaching a container twice fails.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("cannot attach a container twice", async () => {
+		const { container } = await client.createContainer(schema);
+		const itemId = await container.attach();
+
+		// TODO: uncomment this.
+		// if (container.connectionState !== ConnectionState.Connected) {
+		// 	await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+		// 		durationMs: connectTimeoutMs,
+		// 		errorMsg: "container connect() timeout",
+		// 	});
+		// }
+
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is attached after attach is called",
+		);
+		await assert.rejects(container.attach(), () => true, "Container should not attach twice");
+	});
+
+	/**
+	 * Scenario: test if ODSP Client can get an existing container.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("can retrieve existing ODSP container successfully", async () => {
+		const { container: newContainer } = await client.createContainer(schema);
+		const itemId = await newContainer.attach();
+
+		// TODO: uncomment this.
+		// if (newContainer.connectionState !== ConnectionState.Connected) {
+		// 	await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+		// 		durationMs: connectTimeoutMs,
+		// 		errorMsg: "container connect() timeout",
+		// 	});
+		// }
+
+		const resources = client.getContainer(itemId, schema);
+		await assert.doesNotReject(
+			resources,
+			() => true,
+			"container cannot be retrieved from ODSP",
 		);
 	});
 });
