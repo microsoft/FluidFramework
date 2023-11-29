@@ -9676,8 +9676,8 @@ importers:
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
@@ -9704,8 +9704,8 @@ importers:
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@fluidframework/test-utils': link:../../test/test-utils
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.28.0_dgt3pekvdbgd2jliwm43ktglpe

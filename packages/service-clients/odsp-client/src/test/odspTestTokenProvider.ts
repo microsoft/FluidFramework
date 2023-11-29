@@ -3,42 +3,64 @@
  * Licensed under the MIT License.
  */
 
-import * as jwt from "jsonwebtoken";
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import {
+	IClientConfig,
+	TokenRequestCredentials,
+	getFetchTokenUrl,
+	unauthPostAsync,
+} from "@fluidframework/odsp-doclib-utils";
 import { IOdspTokenProvider } from "../token";
+import { OdspTestCredentials } from "./odspClient.spec";
 
 export class OdspTestTokenProvider implements IOdspTokenProvider {
-	constructor() {}
+	private readonly creds: OdspTestCredentials;
+
+	constructor(credentials: OdspTestCredentials) {
+		this.creds = credentials;
+	}
 
 	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScopes = [
-			"offline_access",
-			"https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
-		];
+		const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
+		const tokens = await this.fetchTokens(siteUrl, pushScope);
 		return {
 			fromCache: true,
-			token: this.generateToken(siteUrl, pushScopes),
+			token: tokens.accessToken,
 		};
 	}
 
 	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const sharePointScopes = [`${siteUrl}/Container.Selected`];
+		const sharePointScopes = `${siteUrl}/Container.Selected`;
+		const tokens = await this.fetchTokens(siteUrl, sharePointScopes);
 		return {
 			fromCache: true,
-			token: this.generateToken(siteUrl, sharePointScopes),
+			token: tokens.accessToken,
 		};
 	}
 
-	private generateToken(siteUrl: string, scopes: string[]): string {
-		const secretKey = process.env.client__secret; // Replace with your secret key
-		const expiresIn = "1h"; // Set the token expiration time as per your requirement
-
-		const payload = {
-			siteUrl,
-			scopes,
+	private async fetchTokens(siteUrl: string, scope: string) {
+		const server = new URL(siteUrl).host;
+		const clientConfig: IClientConfig = {
+			clientId: this.creds.clientId,
+			clientSecret: this.creds.clientSecret,
 		};
+		const credentials: TokenRequestCredentials = {
+			grant_type: "password",
+			username: this.creds.username,
+			password: this.creds.password,
+		};
+		const body = {
+			scope,
+			client_id: clientConfig.clientId,
+			client_secret: clientConfig.clientSecret,
+			...credentials,
+		};
+		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
 
-		const token: string = jwt.sign(payload, secretKey, { expiresIn });
-		return token;
+		const parsedResponse = await response.json();
+		const accessToken = parsedResponse.access_token;
+		const refreshToken = parsedResponse.refresh_token;
+
+		return { accessToken, refreshToken };
 	}
 }
