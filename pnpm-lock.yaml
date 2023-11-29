@@ -9670,14 +9670,16 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
       copyfiles: ^2.4.1
@@ -9696,11 +9698,11 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/fluid-static': link:../../framework/fluid-static
+      '@fluidframework/map': link:../../dds/map
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.1
     devDependencies:
@@ -9709,7 +9711,9 @@ importers:
       '@fluidframework/build-tools': 0.28.0_@types+node@16.18.65
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/test-utils': link:../../test/test-utils
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.65
+      '@types/mocha': 9.1.1
       '@types/node': 16.18.65
       c8: 7.14.0
       copyfiles: 2.4.1
