@@ -528,7 +528,7 @@ export const handlers: Handler[] = [
  * Helper to determine if a script/command should be processed by the handler for tsc fluid-build tasks.
  * @param script - The name of the npm script in package.json.
  * @param command - The command that the npm script executes.
- * @param tasksToIgnore - List of fluid build tasks (usually npm scripts) that should be ignored.
+ * @param tasksToIgnore - List of fluid-build tasks (usually npm scripts) that should be ignored.
  * @returns
  */
 function shouldProcessScriptForTsc(script: string, command: string, tasksToIgnore: Set<string>): boolean {
