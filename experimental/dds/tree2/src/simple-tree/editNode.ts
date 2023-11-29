@@ -15,7 +15,8 @@ import {
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
 } from "../feature-libraries";
-import { TreeObjectNode, TreeListNode, TreeMapNode, TreeNode } from "./types";
+import { TreeObjectNode, TreeMapNode, TreeNode } from "./types";
+import { TreeListNodeOld } from "./treeListNode";
 
 /** Associates an edit node with a target object  */
 const targetSymbol = Symbol("EditNodeTarget");
@@ -39,7 +40,7 @@ export function getEditNode<TSchema extends ObjectNodeSchema>(
 	target: TreeObjectNode<TSchema>,
 ): FlexTreeObjectNode;
 export function getEditNode<TTypes extends AllowedTypes>(
-	target: TreeListNode<TTypes>,
+	target: TreeListNodeOld<TTypes>,
 ): FlexTreeFieldNode<FieldNodeSchema>;
 export function getEditNode<TSchema extends MapNodeSchema>(
 	target: TreeMapNode<TSchema>,

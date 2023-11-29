@@ -15,7 +15,7 @@ import {
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
-import { TreeMapNodeBase } from "../simple-tree";
+import { TreeListNode, TreeMapNodeBase } from "../simple-tree";
 import {
 	createNodeProxy,
 	createRawObjectProxy,
@@ -39,7 +39,6 @@ import {
 	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
-	TreeListNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -363,7 +362,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @remarks
 	 * The identifier for this List is defined as a function of the provided types.
@@ -403,7 +402,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
@@ -447,7 +446,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 */

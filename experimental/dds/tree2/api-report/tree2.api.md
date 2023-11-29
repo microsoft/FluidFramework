@@ -1074,7 +1074,6 @@ declare namespace InternalTypes {
         Sequence,
         FactoryObjectNodeSchema,
         FactoryObjectNodeSchemaRecursive,
-        NodeFromSchema,
         NodeKind,
         TreeNodeSchemaClass,
         TreeNodeSchemaNonClass,
@@ -1420,7 +1419,7 @@ export interface NodeExistsConstraint {
 }
 
 // @alpha
-type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @alpha
 export type NodeIndex = number;
@@ -2037,6 +2036,11 @@ TreeListNode> {
 }
 
 // @alpha
+export const TreeListNode: {
+    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+};
+
+// @alpha
 interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
     insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
     insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
@@ -2060,11 +2064,6 @@ interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T
 // @alpha
 export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes> extends TreeListNodeBase<TreeNodeUnion<TTypes>, InsertableTreeNodeUnion<TTypes>, TreeListNodeOld> {
 }
-
-// @alpha
-export const TreeListNodeOld: {
-    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
-};
 
 // @alpha (undocumented)
 export interface TreeLocation {
