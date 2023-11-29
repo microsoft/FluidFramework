@@ -668,7 +668,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					end: count,
 				});
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("beforeChange", this.parent);
+					this.parent.events.emit("beforeChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -691,7 +691,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					...destination,
 				};
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("afterChange", this.parent);
+					this.parent.events.emit("afterChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -736,7 +736,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					index: 0,
 				});
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("beforeChange", this.parent);
+					this.parent.events.emit("beforeChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -760,7 +760,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					end: count,
 				});
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("afterChange", this.parent);
+					this.parent.events.emit("afterChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -810,7 +810,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					index: 0,
 				});
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("beforeChange", this.parent);
+					this.parent.events.emit("beforeChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -846,7 +846,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					end: newContent.end - newContent.start,
 				});
 				if (this.parent instanceof PathNode) {
-					this.parent?.events.emit("afterChange", this.parent);
+					this.parent.events.emit("afterChange", this.parent);
 				}
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
