@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import {
+	MigrationShim,
+	MigrationShimFactory,
+	SharedTree as LegacySharedTree,
+	SharedTreeShim,
+	SharedTreeShimFactory,
+} from "@fluid-experimental/tree";
+// eslint-disable-next-line import/no-internal-modules
+import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
 import {
 	ForestType,
 	ISharedTree,
@@ -13,14 +21,6 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import {
-	MigrationShim,
-	MigrationShimFactory,
-	SharedTreeShim,
-	SharedTreeShimFactory,
-} from "@fluid-experimental/migration-shim";
-// eslint-disable-next-line import/no-internal-modules
-import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController";
 import { NewTreeInventoryListController } from "./newTreeInventoryListController";
