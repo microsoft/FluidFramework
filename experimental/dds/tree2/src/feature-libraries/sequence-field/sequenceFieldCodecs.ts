@@ -143,38 +143,41 @@ function makeV0Codec<TNodeChange>(
 	});
 
 	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId> = {
-		encode: (id: CellId): Encoded.CellId => {
+		encode: ({ localId, adjacentCells, lineage, revision }: CellId): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
-				localId: id.localId,
-				adjacentCells: id.adjacentCells?.map(({ id, count }) => [id, count]),
-				lineage: id.lineage?.map(({ revision, id, count, offset }) => [
+				localId,
+				adjacentCells: adjacentCells?.map(({ id, count }) => [id, count]),
+				// eslint-disable-next-line @typescript-eslint/no-shadow
+				lineage: lineage?.map(({ revision, id, count, offset }) => [
 					revision,
 					id,
 					count,
 					offset,
 				]),
-				revision: id.revision,
+				revision,
 			};
 			return encoded;
 		},
-		decode: (id: Encoded.CellId): CellId => {
+		decode: ({ localId, adjacentCells, lineage, revision }: Encoded.CellId): CellId => {
 			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
 			const decoded: Mutable<CellId> = {
-				localId: id.localId,
+				localId,
 			};
-			if (id.revision !== undefined) {
-				decoded.revision = id.revision;
+			if (revision !== undefined) {
+				decoded.revision = revision;
 			}
-			if (id.adjacentCells !== undefined) {
-				decoded.adjacentCells = id.adjacentCells.map(([localId, count]) => ({
+			if (adjacentCells !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-shadow
+				decoded.adjacentCells = adjacentCells.map(([localId, count]) => ({
 					id: localId,
 					count,
 				}));
 			}
-			if (id.lineage !== undefined) {
-				decoded.lineage = id.lineage.map(([revision, id, count, offset]) => ({
+			if (lineage !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-shadow
+				decoded.lineage = lineage.map(([revision, id, count, offset]) => ({
 					revision,
 					id,
 					count,
