@@ -54,7 +54,7 @@ export interface CompatApis {
 }
 
 // @internal (undocumented)
-export type CompatVersionKind = "Full" | "NoCompat" | "LoaderCompat" | string;
+export type CompatVersionKind = "FullCompat" | "NoCompat" | "LoaderCompat";
 
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
@@ -86,7 +86,7 @@ export const DataRuntimeApi: {
 // @internal (undocumented)
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
-// @internal (undocumented)
+// @internal
 export const describeCompat: DescribeCompat;
 
 // @internal (undocumented)

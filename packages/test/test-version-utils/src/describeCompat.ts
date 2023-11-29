@@ -26,7 +26,7 @@ await mochaGlobalSetup();
 /**
  * @internal
  */
-export type CompatVersionKind = "Full" | "NoCompat" | "LoaderCompat" | string;
+export type CompatVersionKind = "FullCompat" | "NoCompat" | "LoaderCompat";
 
 /*
  * Mocha Utils for test to generate the compat variants.
@@ -174,22 +174,12 @@ function createCompatDescribe(): DescribeCompat {
 	return d;
 }
 
-// function createOldCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
-// 	const d: DescribeCompat = (name, tests) =>
-// 		describe(name, createCompatSuite(tests, compatFilter));
-// 	d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
-// 	d.only = (name, tests) => describe.only(name, createCompatSuite(tests, compatFilter));
-// 	d.noCompat = (name, tests) => describe(name, createCompatSuite(tests, [CompatKind.None]));
-// 	return d;
-// }
-
-// export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
-
-// export const describeLoaderCompat: DescribeCompat = createCompatDescribe([
-// 	CompatKind.None,
-// 	CompatKind.Loader,
-// ]);
 /**
+ * `describeCompat` expects 3 arguments (name: string, compatVersionKind: CompatVersionKind, tests).
+ * There are three compatVersionKind options to generate different combinations, depending of the need of the tests:
+ * `FullCompat`: generate test variants with compat combinations that varies the version for all layers.
+ * `LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
+ * `NoCompat` - generate one test variant that doesn't varies version of any layers.
  * @internal
  */
 export const describeCompat: DescribeCompat = createCompatDescribe();
