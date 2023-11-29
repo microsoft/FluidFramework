@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTreeEvents, TreeStatus } from "../feature-libraries";
+import { TreeStatus } from "../feature-libraries";
 import { TreeNode, Tree as TreeSimple } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { getClassSchema } from "../simple-tree/proxies";
@@ -51,10 +51,10 @@ export interface TreeApi {
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
-	on<K extends keyof EditableTreeEvents>(
+	on<K extends keyof TreeNodeEvents>(
 		node: NodeBase,
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: TreeNodeEvents[K],
 	): () => void;
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
@@ -77,3 +77,14 @@ export const nodeApi: TreeApi = {
 		>;
 	},
 };
+
+/**
+ * A collection of events that can be raised by a {@link NodeBase}.
+ * @alpha
+ */
+export interface TreeNodeEvents {
+	/**
+	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
+	 */
+	afterChange(): void;
+}

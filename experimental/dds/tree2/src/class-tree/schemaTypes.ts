@@ -159,6 +159,7 @@ export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
+	// This class is used with instanceof, and therefore should have nominal typing.
 	protected _typeCheck?: MakeNominal;
 
 	/**
