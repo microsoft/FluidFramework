@@ -4701,6 +4701,7 @@ importers:
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -4764,6 +4765,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@16.18.65
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
       '@fluidframework/driver-definitions': link:../../../../packages/common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
@@ -9535,7 +9537,6 @@ importers:
   packages/service-clients/odsp-client:
     specifiers:
       '@fluid-tools/build-cli': ^0.28.0
-      '@fluidframework/azure-client': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/common-definitions': ^1.0.0
@@ -9565,7 +9566,6 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
-      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
       '@fluidframework/common-definitions': 1.0.0
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader

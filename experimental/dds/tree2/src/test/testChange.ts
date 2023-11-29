@@ -298,7 +298,6 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
 }
