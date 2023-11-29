@@ -19,7 +19,7 @@ import { FieldKinds, TreeFieldSchema, jsonableTreeFromCursor } from "../../featu
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("ContextuallyTyped", () => {
-	it("isPrimitiveValue", () => {
+	it("isTreeValue", () => {
 		assert(isTreeValue(0));
 		assert(isTreeValue(0.001));
 		assert(isTreeValue(NaN));
