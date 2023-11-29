@@ -35,4 +35,10 @@ export {
 	verifyChangeRebaser,
 	Violation,
 } from "./verifyChangeRebaser";
-export { findAncestor, findCommonAncestor, rebaseBranch, rebaseChange } from "./utils";
+export {
+	findAncestor,
+	findCommonAncestor,
+	rebaseBranch,
+	BranchRebaseResult,
+	rebaseChange,
+} from "./utils";

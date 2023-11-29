@@ -836,23 +836,12 @@ describe("EditManager", () => {
 						// Adding both terms:
 						inverted: (P - 1) * P,
 						// As part of rebasing the peer branch that contains the prior peer edits,
-						//   for the Ith peer edit there are I - 1 edits on the branch.
-						//   We therefore compose...
-						//     - the inverse of all peer edits: I - 1
-						//     - the one new trunk edit: 1
-						//     - the rebased version of each peer edit: I - 1
-						//   This adds up to 2I - 1 edits composed for the Ith branch rebase.
-						//   Summing over all P transforms I into P(P + 1)/2
-						//   Which gives us: 2P(P + 1)/2 - P
-						//   Which simplifies to: P²
-						//   However, the branch rebase for I=1 is skipped (there are no prior edits then)
-						//   This mean which means we don't get the +1 composed edit it would otherwise contribute.
-						//   Accounting for that gives us: P² - 1
+						//  the composition is skipped because no subscribers exist to read the net change.
 						// As part of updating the local branch,
 						//   for the Ith peer edit we compose that peer edit: 1
 						//   Summing over all P branch rebases gives us: P
 						// Adding both terms:
-						composed: P * P - 1 + P,
+						composed: P,
 					};
 					assert.deepEqual(actual, expected);
 				});
@@ -880,7 +869,7 @@ describe("EditManager", () => {
 					//     └───────────────(P1)─...─(Pc)
 					// By the end of the test, the EditManager has the following structure:
 					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)─(P+)
-					//                   └──(P1)─...─(Pc)─(P+)
+					//                                      └─
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = editManagerFactory({ rebaser }).manager;
@@ -904,41 +893,26 @@ describe("EditManager", () => {
 						};
 						const expected = {
 							// As part of rebasing the peer branch that contains the phase-1 edits,
-							//   we rebase all P edits on the branch over all T trunk edits.
-							//     The Ith peer edit is rebased over...
-							//       - the inverse of each peer edit before it: I - 1
-							//       - each of the trunk edits: T
-							//       - the fully rebased version of each peer edit before it: I - 1
-							//     This adds up to T + 2I - 2 rebases for the Ith edit.
-							//   Summing over all P edits transforms I into P(P + 1)/2
-							//   Which gives us: PT + 2P(P + 1)/2 - 2P
-							//   Which simplifies to: P(T + P - 1)
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no rebasing.
 							// As part of rebasing P+ to the tip of the trunk,
-							//   we rebase P+ over...
-							//     - the inverse of each peer edit before it: P
-							//     - the trunk edits since its inception, which are the rebased phase-1 edits: P
-							//   This adds up to 2P rebases.
-							//   Note: this last rebase phase doesn't seem to be needed for this scenario.
-							// Adding both terms:
-							rebased: P * (T + P - 1) + 2 * P,
+							//   we realize that it is based on the tip of the trunk.
+							//   It therefore undergoes no rebasing.
+							rebased: 0,
 							// As part of rebasing the peer branch that contains the phase-1 edits,
-							//   we rebase all P edits on the branch over all T trunk edits.
-							//   We therefore invert...
-							//     - each of the phase-1 peer edits: P
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no inverting.
 							// As part of rebasing P+, we invert...
 							//   - each of the phase-1 peer edits: P
 							// Adding both terms and simplifying:
-							inverted: P * 2,
-							// As part of rebasing the peer branch, we compose...
-							//   - the inverse of the phase-1 peer edits: P
-							//   - the trunk edits: T
-							//   - the rebased version of the phase-1 peer edits: P
-							// Note: the output of the composition doesn't appear to be consumed.
+							inverted: P,
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//  the composition is skipped because no subscribers exist to read the net change.
 							// As part of rebasing the local branch, we compose...
 							//   - the phase-2 peer edit: 1
 							// Note: this composition is only needed to bake the RevisionTag into the changeset.
 							// Adding both terms and simplifying:
-							composed: P * 2 + T + 1,
+							composed: 1,
 						};
 						assert.deepEqual(actual, expected);
 					});
@@ -1021,20 +995,15 @@ describe("EditManager", () => {
 							//   This adds up P inverts.
 							// Adding both terms:
 							inverted: 2 * P,
-							// As part of rebasing the peer branch,
-							//   we compose...
-							//     - the inverse of the phase-1 peer edits: P
-							//     - the trunk edits up to the ref# of P+: T
-							//     - the rebased version of the phase-1 peer edits: P
-							//   This adds up 2P + T edits composed.
-							// Note: the output of the composition doesn't appear to be consumed.
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//  the composition is skipped because no subscribers exist to read the net change.
 							// As part of rebasing the local branch,
 							//   we compose...
 							//     - the phase-2 peer edit P+: 1
 							//   This adds up 1 edit composed.
 							// Note: this composition is only needed to bake the RevisionTag into the changeset.
 							// Adding both terms:
-							composed: 2 * P + T + 1,
+							composed: 1,
 						};
 						assert.deepEqual(actual, expected);
 					});

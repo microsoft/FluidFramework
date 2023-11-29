@@ -423,7 +423,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 		const schema = builder.intoSchema(rootNodeSchema);
 
-		sharedTree.schematize({
+		sharedTree.schematizeOld({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: {
