@@ -11,7 +11,7 @@ import { NodeBase, NodeKind, TreeNodeSchema } from "./schemaTypes";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * @alpha
+ * @beta
  * @privateRemarks
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
@@ -64,7 +64,7 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @alpha
+ * @beta
  */
 export const nodeApi: TreeApi = {
 	...(TreeSimple as unknown as TreeApi),
@@ -80,7 +80,7 @@ export const nodeApi: TreeApi = {
 
 /**
  * A collection of events that can be raised by a {@link NodeBase}.
- * @alpha
+ * @beta
  */
 export interface TreeNodeEvents {
 	/**
