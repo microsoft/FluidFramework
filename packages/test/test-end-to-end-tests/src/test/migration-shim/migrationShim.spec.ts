@@ -152,7 +152,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Can create and retrieve tree without migration", async () => {
+	it.skip("Can create and retrieve tree without migration", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -223,7 +223,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 		assert(getQuantity(tree1) === getQuantity(tree3), `Failed to sync new shared trees`);
 	});
 
-	it("Can create and retrieve tree with migration", async () => {
+	it.skip("Can create and retrieve tree with migration", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

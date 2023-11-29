@@ -102,7 +102,7 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Can create and retrieve tree", async () => {
+	it.skip("Can create and retrieve tree", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

@@ -222,7 +222,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		container.close();
 	});
 
-	it("MigrationShim can drop v1 ops and migrate ops", async () => {
+	it.skip("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

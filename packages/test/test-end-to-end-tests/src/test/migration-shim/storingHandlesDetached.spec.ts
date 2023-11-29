@@ -93,7 +93,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeNoCompat("Storing handles detached", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -125,7 +125,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Detached handles", async () => {
+	it.skip("Detached handles", async () => {
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 
 		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);

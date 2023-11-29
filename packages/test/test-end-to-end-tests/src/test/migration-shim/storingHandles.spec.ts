@@ -152,7 +152,7 @@ function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.roo
 	});
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeNoCompat("Storing handles", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
