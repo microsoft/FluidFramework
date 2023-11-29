@@ -459,6 +459,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
+	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
