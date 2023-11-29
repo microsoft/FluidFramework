@@ -22,6 +22,10 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
+# There are some packages outside the routerlicious folder that we need to build, so we copy the package to the /usr directory
+WORKDIR /usr
+COPY --from=root tools/changelog-generator-wrapper/package*.json tools/changelog-generator-wrapper/
+
 # Copy over and build the server
 WORKDIR /usr/src/server
 
@@ -49,6 +53,7 @@ COPY packages/services-telemetry/package*.json packages/services-telemetry/
 COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
+COPY packages/tinylicious/package*.json packages/tinylicious/
 
 RUN corepack enable
 

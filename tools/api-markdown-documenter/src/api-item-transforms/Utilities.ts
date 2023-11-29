@@ -5,13 +5,9 @@
 import { ApiItem, IResolveDeclarationReferenceResult } from "@microsoft/api-extractor-model";
 import { DocDeclarationReference } from "@microsoft/tsdoc";
 
-import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import {
-	getDocumentPathForApiItem,
-	getLinkForApiItem,
-	getUnscopedPackageName,
-} from "./ApiItemUtilities";
+import { Link } from "../Link";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities";
 import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
@@ -30,10 +26,6 @@ export function createDocument(
 	sections: SectionNode[],
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
-	const associatedPackage = documentItem.getAssociatedPackage();
-	const packageName =
-		associatedPackage === undefined ? undefined : getUnscopedPackageName(associatedPackage);
-
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
 		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
@@ -42,11 +34,7 @@ export function createDocument(
 	const frontMatter = generateFrontMatter(documentItem, config);
 
 	return new DocumentNode({
-		documentItemMetadata: {
-			apiItemName: documentItem.displayName,
-			apiItemKind: documentItem.kind,
-			packageName,
-		},
+		apiItem: documentItem,
 		children: contents,
 		documentPath: getDocumentPathForApiItem(documentItem, config),
 		frontMatter,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
@@ -88,7 +89,11 @@ export class ProseMirrorTransactionBuilder {
 
 	private readonly things = new Array<IThing>();
 
-	constructor(state: EditorState, private readonly schema: Schema, sharedString: SharedString) {
+	constructor(
+		state: EditorState,
+		private readonly schema: Schema,
+		sharedString: SharedString,
+	) {
 		this.transaction = state.tr;
 		this.transaction.setMeta("fluid-local", true);
 

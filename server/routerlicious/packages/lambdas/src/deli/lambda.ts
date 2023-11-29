@@ -714,6 +714,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		if (this.serviceConfiguration.enableLumberjack) {
 			this.logSessionEndMetrics(closeType);
+			if (
+				this.checkpointService?.getLocalCheckpointEnabled() &&
+				!this.globalCheckpointOnly &&
+				closeType === LambdaCloseType.ActivityTimeout
+			) {
+				Lumberjack.info(
+					`Closing due to ActivityTimeout before NoClient op`,
+					getLumberBaseProperties(this.documentId, this.tenantId),
+				);
+			}
 		}
 	}
 
@@ -1967,7 +1977,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
+					localCheckpointEnabled: this.checkpointService?.getLocalCheckpointEnabled(),
+					globalCheckpointOnly: this.globalCheckpointOnly,
+					localCheckpoint:
+						this.checkpointService?.getLocalCheckpointEnabled() &&
+						!this.globalCheckpointOnly,
 				};
+				const checkpointReason = CheckpointReason[checkpointParams.reason];
+				lumberjackProperties.checkpointReason = checkpointReason;
+				const checkpointMessage = `Writing checkpoint. Reason: ${checkpointReason}`;
+				Lumberjack.info(checkpointMessage, lumberjackProperties);
 				this.checkpointContext
 					.checkpoint(
 						checkpointParams,
@@ -1977,10 +1996,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					.catch((error) => {
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
-				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				lumberjackProperties.checkpointReason = checkpointReason;
-				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
-				Lumberjack.info(checkpointResult, lumberjackProperties);
 			})
 			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;

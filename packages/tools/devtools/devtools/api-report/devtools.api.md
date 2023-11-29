@@ -33,7 +33,7 @@ export interface IDevtools extends IDisposable {
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-// @public (undocumented)
+// @public
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
 ```

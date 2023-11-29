@@ -14,6 +14,8 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
@@ -24,9 +26,10 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
 	bindTelemetryContext,
+	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
+import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
@@ -46,9 +49,11 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
+	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -70,6 +75,10 @@ export function create(
 
 	app.use(compression());
 	app.use(bindTelemetryContext());
+	if (httpServerConfig?.connectionTimeoutMs) {
+		// If connectionTimeoutMs configured and not 0, bind timeout context.
+		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
@@ -110,6 +119,7 @@ export function create(
 		documentDeleteService,
 		tokenRevocationManager,
 		revokedTokenChecker,
+		collaborationSessionEventEmitter,
 	);
 
 	app.use(routes.api);

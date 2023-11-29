@@ -15,10 +15,10 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+  $ flub typetests [-v | --quiet] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
+    [--concurrency <value>] [--all | --dir <value> | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--reset]
-    [-p | --exact <value> | -r | --disable] [-n | --enable]
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   -n, --normalize

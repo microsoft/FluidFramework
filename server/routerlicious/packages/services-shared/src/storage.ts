@@ -16,6 +16,7 @@ import {
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
 	ISession,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -128,6 +129,7 @@ export class DocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
+		messageBrokerId?: string,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
 		const gitManager = await this.tenantManager.getTenantGitManager(
@@ -208,6 +210,9 @@ export class DocumentStorage implements IDocumentStorage {
 			throw error;
 		}
 
+		// Storage is known to take too long sometimes. Check timeout before continuing.
+		getGlobalTimeoutContext().checkTimeout();
+
 		const deli: IDeliState = {
 			clients: undefined,
 			durableSequenceNumber: sequenceNumber,
@@ -250,6 +255,11 @@ export class DocumentStorage implements IDocumentStorage {
 			isSessionAlive: true,
 			isSessionActive: false,
 		};
+
+		// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
+		if (messageBrokerId) {
+			session.messageBrokerId = messageBrokerId;
+		}
 
 		Lumberjack.info(
 			`Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,

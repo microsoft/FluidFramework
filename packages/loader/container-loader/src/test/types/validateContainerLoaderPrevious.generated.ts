@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_EnumDeclaration_ConnectionState():
     TypeOnly<old.ConnectionState>;
 declare function use_current_EnumDeclaration_ConnectionState(
-    use: TypeOnly<current.ConnectionState>);
+    use: TypeOnly<current.ConnectionState>): void;
 use_current_EnumDeclaration_ConnectionState(
     get_old_EnumDeclaration_ConnectionState());
 
@@ -41,7 +41,7 @@ use_current_EnumDeclaration_ConnectionState(
 declare function get_current_EnumDeclaration_ConnectionState():
     TypeOnly<current.ConnectionState>;
 declare function use_old_EnumDeclaration_ConnectionState(
-    use: TypeOnly<old.ConnectionState>);
+    use: TypeOnly<old.ConnectionState>): void;
 use_old_EnumDeclaration_ConnectionState(
     get_current_EnumDeclaration_ConnectionState());
 
@@ -53,7 +53,7 @@ use_old_EnumDeclaration_ConnectionState(
 declare function get_old_InterfaceDeclaration_ICodeDetailsLoader():
     TypeOnly<old.ICodeDetailsLoader>;
 declare function use_current_InterfaceDeclaration_ICodeDetailsLoader(
-    use: TypeOnly<current.ICodeDetailsLoader>);
+    use: TypeOnly<current.ICodeDetailsLoader>): void;
 use_current_InterfaceDeclaration_ICodeDetailsLoader(
     get_old_InterfaceDeclaration_ICodeDetailsLoader());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ICodeDetailsLoader(
 declare function get_current_InterfaceDeclaration_ICodeDetailsLoader():
     TypeOnly<current.ICodeDetailsLoader>;
 declare function use_old_InterfaceDeclaration_ICodeDetailsLoader(
-    use: TypeOnly<old.ICodeDetailsLoader>);
+    use: TypeOnly<old.ICodeDetailsLoader>): void;
 use_old_InterfaceDeclaration_ICodeDetailsLoader(
     get_current_InterfaceDeclaration_ICodeDetailsLoader());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 declare function get_old_InterfaceDeclaration_IContainerExperimental():
     TypeOnly<old.IContainerExperimental>;
 declare function use_current_InterfaceDeclaration_IContainerExperimental(
-    use: TypeOnly<current.IContainerExperimental>);
+    use: TypeOnly<current.IContainerExperimental>): void;
 use_current_InterfaceDeclaration_IContainerExperimental(
     get_old_InterfaceDeclaration_IContainerExperimental());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IContainerExperimental(
 declare function get_current_InterfaceDeclaration_IContainerExperimental():
     TypeOnly<current.IContainerExperimental>;
 declare function use_old_InterfaceDeclaration_IContainerExperimental(
-    use: TypeOnly<old.IContainerExperimental>);
+    use: TypeOnly<old.IContainerExperimental>): void;
 use_old_InterfaceDeclaration_IContainerExperimental(
     get_current_InterfaceDeclaration_IContainerExperimental());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IContainerExperimental(
 declare function get_old_TypeAliasDeclaration_IDetachedBlobStorage():
     TypeOnly<old.IDetachedBlobStorage>;
 declare function use_current_TypeAliasDeclaration_IDetachedBlobStorage(
-    use: TypeOnly<current.IDetachedBlobStorage>);
+    use: TypeOnly<current.IDetachedBlobStorage>): void;
 use_current_TypeAliasDeclaration_IDetachedBlobStorage(
     get_old_TypeAliasDeclaration_IDetachedBlobStorage());
 
@@ -113,7 +113,7 @@ use_current_TypeAliasDeclaration_IDetachedBlobStorage(
 declare function get_current_TypeAliasDeclaration_IDetachedBlobStorage():
     TypeOnly<current.IDetachedBlobStorage>;
 declare function use_old_TypeAliasDeclaration_IDetachedBlobStorage(
-    use: TypeOnly<old.IDetachedBlobStorage>);
+    use: TypeOnly<old.IDetachedBlobStorage>): void;
 use_old_TypeAliasDeclaration_IDetachedBlobStorage(
     get_current_TypeAliasDeclaration_IDetachedBlobStorage());
 
@@ -125,7 +125,7 @@ use_old_TypeAliasDeclaration_IDetachedBlobStorage(
 declare function get_old_InterfaceDeclaration_IFluidModuleWithDetails():
     TypeOnly<old.IFluidModuleWithDetails>;
 declare function use_current_InterfaceDeclaration_IFluidModuleWithDetails(
-    use: TypeOnly<current.IFluidModuleWithDetails>);
+    use: TypeOnly<current.IFluidModuleWithDetails>): void;
 use_current_InterfaceDeclaration_IFluidModuleWithDetails(
     get_old_InterfaceDeclaration_IFluidModuleWithDetails());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IFluidModuleWithDetails(
 declare function get_current_InterfaceDeclaration_IFluidModuleWithDetails():
     TypeOnly<current.IFluidModuleWithDetails>;
 declare function use_old_InterfaceDeclaration_IFluidModuleWithDetails(
-    use: TypeOnly<old.IFluidModuleWithDetails>);
+    use: TypeOnly<old.IFluidModuleWithDetails>): void;
 use_old_InterfaceDeclaration_IFluidModuleWithDetails(
     get_current_InterfaceDeclaration_IFluidModuleWithDetails());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IFluidModuleWithDetails(
 declare function get_old_InterfaceDeclaration_ILoaderOptions():
     TypeOnly<old.ILoaderOptions>;
 declare function use_current_InterfaceDeclaration_ILoaderOptions(
-    use: TypeOnly<current.ILoaderOptions>);
+    use: TypeOnly<current.ILoaderOptions>): void;
 use_current_InterfaceDeclaration_ILoaderOptions(
     get_old_InterfaceDeclaration_ILoaderOptions());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ILoaderOptions(
 declare function get_current_InterfaceDeclaration_ILoaderOptions():
     TypeOnly<current.ILoaderOptions>;
 declare function use_old_InterfaceDeclaration_ILoaderOptions(
-    use: TypeOnly<old.ILoaderOptions>);
+    use: TypeOnly<old.ILoaderOptions>): void;
 use_old_InterfaceDeclaration_ILoaderOptions(
     get_current_InterfaceDeclaration_ILoaderOptions());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ILoaderOptions(
 declare function get_old_InterfaceDeclaration_ILoaderProps():
     TypeOnly<old.ILoaderProps>;
 declare function use_current_InterfaceDeclaration_ILoaderProps(
-    use: TypeOnly<current.ILoaderProps>);
+    use: TypeOnly<current.ILoaderProps>): void;
 use_current_InterfaceDeclaration_ILoaderProps(
     get_old_InterfaceDeclaration_ILoaderProps());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_ILoaderProps(
 declare function get_current_InterfaceDeclaration_ILoaderProps():
     TypeOnly<current.ILoaderProps>;
 declare function use_old_InterfaceDeclaration_ILoaderProps(
-    use: TypeOnly<old.ILoaderProps>);
+    use: TypeOnly<old.ILoaderProps>): void;
 use_old_InterfaceDeclaration_ILoaderProps(
     get_current_InterfaceDeclaration_ILoaderProps());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_ILoaderProps(
 declare function get_old_InterfaceDeclaration_ILoaderServices():
     TypeOnly<old.ILoaderServices>;
 declare function use_current_InterfaceDeclaration_ILoaderServices(
-    use: TypeOnly<current.ILoaderServices>);
+    use: TypeOnly<current.ILoaderServices>): void;
 use_current_InterfaceDeclaration_ILoaderServices(
     get_old_InterfaceDeclaration_ILoaderServices());
 
@@ -209,9 +209,33 @@ use_current_InterfaceDeclaration_ILoaderServices(
 declare function get_current_InterfaceDeclaration_ILoaderServices():
     TypeOnly<current.ILoaderServices>;
 declare function use_old_InterfaceDeclaration_ILoaderServices(
-    use: TypeOnly<old.ILoaderServices>);
+    use: TypeOnly<old.ILoaderServices>): void;
 use_old_InterfaceDeclaration_ILoaderServices(
     get_current_InterfaceDeclaration_ILoaderServices());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IParsedUrl": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IParsedUrl():
+    TypeOnly<old.IParsedUrl>;
+declare function use_current_InterfaceDeclaration_IParsedUrl(
+    use: TypeOnly<current.IParsedUrl>): void;
+use_current_InterfaceDeclaration_IParsedUrl(
+    get_old_InterfaceDeclaration_IParsedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IParsedUrl": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IParsedUrl():
+    TypeOnly<current.IParsedUrl>;
+declare function use_old_InterfaceDeclaration_IParsedUrl(
+    use: TypeOnly<old.IParsedUrl>): void;
+use_old_InterfaceDeclaration_IParsedUrl(
+    get_current_InterfaceDeclaration_IParsedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -221,7 +245,7 @@ use_old_InterfaceDeclaration_ILoaderServices(
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
     TypeOnly<old.IProtocolHandler>;
 declare function use_current_InterfaceDeclaration_IProtocolHandler(
-    use: TypeOnly<current.IProtocolHandler>);
+    use: TypeOnly<current.IProtocolHandler>): void;
 use_current_InterfaceDeclaration_IProtocolHandler(
     get_old_InterfaceDeclaration_IProtocolHandler());
 
@@ -233,7 +257,7 @@ use_current_InterfaceDeclaration_IProtocolHandler(
 declare function get_current_InterfaceDeclaration_IProtocolHandler():
     TypeOnly<current.IProtocolHandler>;
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
-    use: TypeOnly<old.IProtocolHandler>);
+    use: TypeOnly<old.IProtocolHandler>): void;
 use_old_InterfaceDeclaration_IProtocolHandler(
     get_current_InterfaceDeclaration_IProtocolHandler());
 
@@ -245,7 +269,7 @@ use_old_InterfaceDeclaration_IProtocolHandler(
 declare function get_old_ClassDeclaration_Loader():
     TypeOnly<old.Loader>;
 declare function use_current_ClassDeclaration_Loader(
-    use: TypeOnly<current.Loader>);
+    use: TypeOnly<current.Loader>): void;
 use_current_ClassDeclaration_Loader(
     get_old_ClassDeclaration_Loader());
 
@@ -257,7 +281,7 @@ use_current_ClassDeclaration_Loader(
 declare function get_current_ClassDeclaration_Loader():
     TypeOnly<current.Loader>;
 declare function use_old_ClassDeclaration_Loader(
-    use: TypeOnly<old.Loader>);
+    use: TypeOnly<old.Loader>): void;
 use_old_ClassDeclaration_Loader(
     get_current_ClassDeclaration_Loader());
 
@@ -269,7 +293,7 @@ use_old_ClassDeclaration_Loader(
 declare function get_old_TypeAliasDeclaration_ProtocolHandlerBuilder():
     TypeOnly<old.ProtocolHandlerBuilder>;
 declare function use_current_TypeAliasDeclaration_ProtocolHandlerBuilder(
-    use: TypeOnly<current.ProtocolHandlerBuilder>);
+    use: TypeOnly<current.ProtocolHandlerBuilder>): void;
 use_current_TypeAliasDeclaration_ProtocolHandlerBuilder(
     get_old_TypeAliasDeclaration_ProtocolHandlerBuilder());
 
@@ -281,9 +305,33 @@ use_current_TypeAliasDeclaration_ProtocolHandlerBuilder(
 declare function get_current_TypeAliasDeclaration_ProtocolHandlerBuilder():
     TypeOnly<current.ProtocolHandlerBuilder>;
 declare function use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
-    use: TypeOnly<old.ProtocolHandlerBuilder>);
+    use: TypeOnly<old.ProtocolHandlerBuilder>): void;
 use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     get_current_TypeAliasDeclaration_ProtocolHandlerBuilder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isLocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isLocationRedirectionError():
+    TypeOnly<typeof old.isLocationRedirectionError>;
+declare function use_current_FunctionDeclaration_isLocationRedirectionError(
+    use: TypeOnly<typeof current.isLocationRedirectionError>): void;
+use_current_FunctionDeclaration_isLocationRedirectionError(
+    get_old_FunctionDeclaration_isLocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isLocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isLocationRedirectionError():
+    TypeOnly<typeof current.isLocationRedirectionError>;
+declare function use_old_FunctionDeclaration_isLocationRedirectionError(
+    use: TypeOnly<typeof old.isLocationRedirectionError>): void;
+use_old_FunctionDeclaration_isLocationRedirectionError(
+    get_current_FunctionDeclaration_isLocationRedirectionError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -293,7 +341,7 @@ use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
 declare function get_old_FunctionDeclaration_requestResolvedObjectFromContainer():
     TypeOnly<typeof old.requestResolvedObjectFromContainer>;
 declare function use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
-    use: TypeOnly<typeof current.requestResolvedObjectFromContainer>);
+    use: TypeOnly<typeof current.requestResolvedObjectFromContainer>): void;
 use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
     get_old_FunctionDeclaration_requestResolvedObjectFromContainer());
 
@@ -305,9 +353,57 @@ use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
 declare function get_current_FunctionDeclaration_requestResolvedObjectFromContainer():
     TypeOnly<typeof current.requestResolvedObjectFromContainer>;
 declare function use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
-    use: TypeOnly<typeof old.requestResolvedObjectFromContainer>);
+    use: TypeOnly<typeof old.requestResolvedObjectFromContainer>): void;
 use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
     get_current_FunctionDeclaration_requestResolvedObjectFromContainer());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling():
+    TypeOnly<typeof old.resolveWithLocationRedirectionHandling>;
+declare function use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    use: TypeOnly<typeof current.resolveWithLocationRedirectionHandling>): void;
+use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_resolveWithLocationRedirectionHandling": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling():
+    TypeOnly<typeof current.resolveWithLocationRedirectionHandling>;
+declare function use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    use: TypeOnly<typeof old.resolveWithLocationRedirectionHandling>): void;
+use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
+    get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_tryParseCompatibleResolvedUrl():
+    TypeOnly<typeof old.tryParseCompatibleResolvedUrl>;
+declare function use_current_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    use: TypeOnly<typeof current.tryParseCompatibleResolvedUrl>): void;
+use_current_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    get_old_FunctionDeclaration_tryParseCompatibleResolvedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_tryParseCompatibleResolvedUrl():
+    TypeOnly<typeof current.tryParseCompatibleResolvedUrl>;
+declare function use_old_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    use: TypeOnly<typeof old.tryParseCompatibleResolvedUrl>): void;
+use_old_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    get_current_FunctionDeclaration_tryParseCompatibleResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -317,7 +413,7 @@ use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
 declare function get_old_FunctionDeclaration_waitContainerToCatchUp():
     TypeOnly<typeof old.waitContainerToCatchUp>;
 declare function use_current_FunctionDeclaration_waitContainerToCatchUp(
-    use: TypeOnly<typeof current.waitContainerToCatchUp>);
+    use: TypeOnly<typeof current.waitContainerToCatchUp>): void;
 use_current_FunctionDeclaration_waitContainerToCatchUp(
     get_old_FunctionDeclaration_waitContainerToCatchUp());
 
@@ -329,6 +425,6 @@ use_current_FunctionDeclaration_waitContainerToCatchUp(
 declare function get_current_FunctionDeclaration_waitContainerToCatchUp():
     TypeOnly<typeof current.waitContainerToCatchUp>;
 declare function use_old_FunctionDeclaration_waitContainerToCatchUp(
-    use: TypeOnly<typeof old.waitContainerToCatchUp>);
+    use: TypeOnly<typeof old.waitContainerToCatchUp>): void;
 use_old_FunctionDeclaration_waitContainerToCatchUp(
     get_current_FunctionDeclaration_waitContainerToCatchUp());

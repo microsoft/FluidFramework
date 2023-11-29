@@ -12,7 +12,6 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -129,9 +128,8 @@ describe("rebaser", () => {
 						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
 						: tester.main;
 
-				const [result] = rebaseBranch(
+				const { newSourceHead } = rebaseBranch(
 					new DummyChangeRebaser(),
-					new MockRepairDataStoreProvider(),
 					tester.branch,
 					base,
 					tester.main,
@@ -141,7 +139,7 @@ describe("rebaser", () => {
 				const expectedBaseIndex = main.indexOf(expected[0]);
 				assert.notEqual(expectedBaseIndex, -1, "Expected expected base to be in main");
 				const mainBeforeExpected = main.slice(0, expectedBaseIndex);
-				tester.assertParentage(result, ...[...mainBeforeExpected, ...expected]);
+				tester.assertParentage(newSourceHead, ...[...mainBeforeExpected, ...expected]);
 			});
 		}
 

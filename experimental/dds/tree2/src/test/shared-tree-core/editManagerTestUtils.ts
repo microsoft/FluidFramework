@@ -16,7 +16,6 @@ import {
 	testChangeFamilyFactory,
 	TestChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
@@ -25,37 +24,48 @@ export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestCh
 export function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
+	autoDiscardRevertibles?: boolean;
 }): {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
+	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TestChange,
 		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? "0", new MockRepairDataStoreProvider());
+	>(family, options.sessionId ?? "0");
+
+	if (autoDiscardRevertibles === true) {
+		// by default, discard revertibles in the edit manager tests
+		manager.localBranch.on("revertible", (revertible) => {
+			revertible.discard();
+		});
+	}
+
 	return { manager, family };
 }
 
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebaseLocalEditsOverTrunkEdits(
 	localEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
 	}
@@ -75,21 +85,22 @@ export function rebaseLocalEditsOverTrunkEdits(
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 ): void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits(
 	peerEditCount: number,
 	trunkEditCount: number,
-	rebaser: TestChangeRebaser,
+	manager: TestEditManager,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
@@ -118,6 +129,59 @@ export function rebasePeerEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
+/**
+ * Establishes the following branching structure:
+ * ```text
+ * (0)-(T1)-...-(Tc-1)-(Tc)
+ *  |    |          └-----------------(Pc)
+ *  |    └-----------------------(P2)
+ *  └-----------------------(P1)
+ * ```
+ */
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+): void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: true,
+): () => void;
+export function rebaseAdvancingPeerEditsOverTrunkEdits(
+	editCount: number,
+	manager: TestEditManager,
+	defer: boolean = false,
+): void | (() => void) {
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", ({ change }) => {});
+	for (let iChange = 0; iChange < editCount; iChange++) {
+		manager.addSequencedChange(
+			{
+				change: TestChange.emptyChange,
+				revision: mintRevisionTag(),
+				sessionId: "trunk",
+			},
+			brand(iChange + 1),
+			brand(iChange),
+		);
+	}
+	const peerEdits = makeArray(editCount, () => ({
+		change: TestChange.emptyChange,
+		revision: mintRevisionTag(),
+		sessionId: "peer",
+	}));
+	const run = () => {
+		for (let iChange = 0; iChange < editCount; iChange++) {
+			manager.addSequencedChange(
+				peerEdits[iChange],
+				brand(iChange + editCount + 1),
+				brand(iChange),
+			);
+		}
+	};
+	return defer ? run : run();
+}
+
 export function rebaseConcurrentPeerEdits(
 	peerCount: number,
 	editsPerPeerCount: number,
@@ -136,6 +200,8 @@ export function rebaseConcurrentPeerEdits(
 	defer: boolean = false,
 ): void | (() => void) {
 	const manager = editManagerFactory({ rebaser }).manager;
+	// Subscribe to the local branch to emulate the behavior of SharedTree
+	manager.localBranch.on("afterChange", ({ change }) => {});
 	const peerEdits: Commit<TestChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {

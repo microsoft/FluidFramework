@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { List, ListNode, walkList } from "./collections";
@@ -12,7 +14,6 @@ import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
 	refHasTileLabels,
-	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabels,
 	ReferencePosition,
 	refTypeIncludesFlag,
@@ -37,7 +38,7 @@ export const SlidingPreference = {
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
  */
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 /**
  * @internal
@@ -355,7 +356,6 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount++;
 			}
@@ -375,7 +375,6 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(lref.getSegment(), lref.getOffset(), undefined);
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
@@ -441,7 +440,9 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.before?.includes(listNode) ||
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.at?.includes(listNode) ||
 			refsAtOffset?.after?.includes(listNode)
 		) {
@@ -473,7 +474,6 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
-				// eslint-disable-next-line import/no-deprecated
 				if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 					this.hierRefCount--;
 					localRefs.hierRefCount++;
@@ -512,7 +512,6 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}
@@ -546,7 +545,6 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}

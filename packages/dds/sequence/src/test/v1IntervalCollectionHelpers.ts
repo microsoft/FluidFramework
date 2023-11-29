@@ -29,6 +29,7 @@ import {
 	SequenceInterval,
 	IIntervalHelpers,
 	createSequenceInterval,
+	IntervalOpType,
 } from "../intervals";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
@@ -61,8 +62,9 @@ class V1SequenceIntervalCollectionFactory
 	public store(
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return Array.from(value, (interval) =>
-			interval?.serialize(),
+		return Array.from(
+			value,
+			(interval) => interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}
 }
@@ -80,7 +82,7 @@ export class V1SequenceIntervalCollectionValueType
 		return V1SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<string, IValueOperation<V1IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<V1IntervalCollection<SequenceInterval>>> {
 		return V1SequenceIntervalCollectionValueType._ops;
 	}
 

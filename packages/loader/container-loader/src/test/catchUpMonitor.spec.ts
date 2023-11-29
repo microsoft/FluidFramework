@@ -12,7 +12,10 @@ class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
-	constructor(public lastSequenceNumber: number = 5, public lastKnownSeqNumber: number = 10) {
+	constructor(
+		public lastSequenceNumber: number = 5,
+		public lastKnownSeqNumber: number = 10,
+	) {
 		super();
 	}
 

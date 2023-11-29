@@ -16,7 +16,7 @@ import {
 	SaveInfo,
 	take,
 	BaseFuzzTestState,
-} from '@fluid-internal/stochastic-test-utils';
+} from '@fluid-private/stochastic-test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';
@@ -436,7 +436,7 @@ export class IdCompressorTestNetwork {
 		): Iterable<
 			[
 				current: [compressor: IdCompressor, idData: TestIdData],
-				next?: [compressor: IdCompressor, idData: TestIdData]
+				next?: [compressor: IdCompressor, idData: TestIdData],
 			]
 		> {
 			let current = getNextLogWithEntryAt(0, columnIndex);

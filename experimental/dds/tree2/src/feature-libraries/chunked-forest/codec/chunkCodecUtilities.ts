@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { FluidSerializableReadOnly } from "@fluidframework/shared-object-base";
 import { _InlineTrick, assertValidIndex, fail, objectToMap } from "../../../util";
 import { TreeChunk } from "../chunk";
-import { assertAllowedValue } from "../../contextuallyTyped";
+import { assertAllowedValue } from "../../valueUtilities";
 import { TreeValue } from "../../../core";
 
 /**

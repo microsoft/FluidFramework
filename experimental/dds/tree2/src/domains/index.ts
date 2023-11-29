@@ -4,22 +4,20 @@
  */
 
 export {
+	SchemaBuilder,
+	FactoryObjectNodeSchema,
+	FactoryObjectNodeSchemaRecursive,
+} from "./schemaBuilder";
+
+export {
 	cursorToJsonObject,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
 	jsonRoot,
 	jsonSchema,
-	jsonString,
 	singleJsonCursor,
 } from "./json";
 
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey";
 
-import * as leaf from "./leafDomain";
-export { leaf };
-
-import * as testRecursiveDomain from "./testRecursiveDomain";
-export { testRecursiveDomain };
+export { leaf } from "./leafDomain";

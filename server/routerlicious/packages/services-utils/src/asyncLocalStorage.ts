@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import type { Request, Response, NextFunction } from "express";
 import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
+import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 /**
  * DEPRECATED
@@ -70,7 +70,9 @@ export const bindCorrelationId =
 		headerName: string = CorrelationIdHeaderName,
 	) =>
 	(req: Request, res: Response, next: NextFunction): void => {
-		const id: string = req.header(headerName) ?? uuid();
+		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
+		const id: string =
+			telemetryContextProperties.correlationId ?? req.header(headerName) ?? uuid();
 		res.setHeader(headerName, id);
 		if (altAsyncLocalStorage) {
 			altAsyncLocalStorage.run(id, () => next());

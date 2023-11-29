@@ -1,5 +1,0 @@
-{
-	"tags": ["typed-tree"],
-	"exports": ["index"],
-	"imports": ["feature-libraries", "shared-tree"]
-}

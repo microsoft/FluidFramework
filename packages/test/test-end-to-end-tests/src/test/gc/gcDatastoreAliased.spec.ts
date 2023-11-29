@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
+	getContainerEntryPointBackCompat,
 	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
@@ -19,7 +19,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -34,7 +34,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 	});
 
 	async function waitForSummary(container: IContainer) {
-		const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
@@ -44,14 +44,13 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 	it("An unreferenced datastore when aliased becomes referenced.", async () => {
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);
-		const mainDataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
-		const mainDataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+		const mainDataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
+		const mainDataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
 		await waitForContainerConnection(container1);
 		await waitForContainerConnection(container2);
 
-		const dataStore2 = await mainDataStore1._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore2 =
+			await mainDataStore1._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
 		// Make dataStore2 visible but unreferenced by referencing/unreferencing it.
 		mainDataStore1._root.set("dataStore2", dataObject2);
@@ -107,10 +106,9 @@ describeNoCompat("GC Data Store Aliased No Compat", (getTestObjectProvider) => {
 		await waitForContainerConnection(remoteContainer);
 
 		// Create and alias datastore
-		const mainDatastore = await requestFluidObject<ITestDataObject>(container, "default");
-		const aliasedDataStore = await mainDatastore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const mainDatastore = (await container.getEntryPoint()) as ITestDataObject;
+		const aliasedDataStore =
+			await mainDatastore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const alias = "alias";
 		await aliasedDataStore.trySetAlias(alias);
 
@@ -136,10 +134,9 @@ describeNoCompat("GC Data Store Aliased No Compat", (getTestObjectProvider) => {
 		await waitForContainerConnection(remoteContainer);
 
 		// Create and alias datastore
-		const mainDatastore = await requestFluidObject<ITestDataObject>(container, "default");
-		const aliasedDataStore = await mainDatastore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const mainDatastore = (await container.getEntryPoint()) as ITestDataObject;
+		const aliasedDataStore =
+			await mainDatastore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const alias = "alias";
 		const handleKey = "handle";
 		await aliasedDataStore.trySetAlias(alias);

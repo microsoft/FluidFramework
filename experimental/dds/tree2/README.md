@@ -1,6 +1,27 @@
 # @fluid-experimental/tree2
 
-This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+
+## Status
+
+Notable consideration that early adopters should be wary of:
+
+-   The persisted format is not stable and long term support for persisted format is not yet in effect.
+    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
+    Current estimate for LTS is April 2024.
+-   SharedTree currently has unbounded memory growth:
+    -   Removed content is retained forever.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
+-   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -90,9 +111,6 @@ This package can be developed using any of the [regular workflows for working on
 -   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
-
-This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
-If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
 
 ## Architecture
 
@@ -313,7 +331,6 @@ Some of the principles used to guide this are:
     Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
 
 These approaches have led to a dependency structure that looks roughly like the diagram below.
-A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
 In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
 
 ```mermaid
@@ -326,28 +343,24 @@ flowchart
             schema-view
             forest-->schema-stored
             rebase-->tree
-            change-family-->repair
-            rebase-->repair
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
-            undo-->rebase
-            undo-->change-family
+            revertible-->rebase
         end
         core-->events-->util
         core-->id-compressor-->util
         core-->codec-->util
         feature-->shared-tree-core
         shared-tree-core-->core
-        shared-tree-->feature
+        shared-tree-->simple-tree
+        simple-tree-->feature
         external-utilities-->feature
         subgraph feature ["feature-libraries"]
             direction TB
-            schema-aware-->defaultSchema
-            schema-aware-->contextuallyTyped
-            editable-tree-->contextuallyTyped
-            editable-tree-->node-key
+            flex-tree-->contextuallyTyped
+            flex-tree-->node-key
             defaultRebaser
             contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
@@ -363,7 +376,7 @@ flowchart
         subgraph domains
             JSON
         end
-        domains-->feature
+        domains-->simple-tree
     end
     package-->runtime["Fluid runtime"]
 ```

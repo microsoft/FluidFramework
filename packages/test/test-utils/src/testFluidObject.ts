@@ -5,13 +5,7 @@
 
 // eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	FluidObject,
-	IProvideFluidRouter,
-} from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	FluidObjectHandle,
 	FluidDataStoreRuntime,
@@ -42,7 +36,7 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -92,7 +86,7 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		// eslint-disable-next-line import/no-deprecated
@@ -202,12 +196,13 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
+				// The provideEntryPoint callback below always returns FluidDataStoreRuntime, so this cast is safe
+				const dataObject = (await rt.entryPoint.get()) as FluidDataStoreRuntime;
 				assert(
-					maybeRouter.IFluidRouter !== undefined,
+					dataObject.request !== undefined,
 					"entryPoint should have been initialized by now",
 				);
-				return maybeRouter.IFluidRouter.request(request);
+				return dataObject.request(request);
 			},
 		);
 

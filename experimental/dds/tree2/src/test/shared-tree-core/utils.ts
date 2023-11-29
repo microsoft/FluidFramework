@@ -7,7 +7,6 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
 import { typeboxValidator } from "../../external-utilities";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
-import { MockRepairDataStoreProvider } from "../utils";
 
 /**
  * A `SharedTreeCore` with
@@ -29,7 +28,6 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		super(
 			summarizables,
 			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
-			new MockRepairDataStoreProvider(),
 			{ jsonValidator: typeboxValidator },
 			id,
 			runtime,

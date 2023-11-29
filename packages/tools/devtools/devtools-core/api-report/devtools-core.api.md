@@ -247,8 +247,8 @@ export const EditType: {
     readonly Null: "null";
 };
 
-// @internal (undocumented)
-export type EditType = typeof EditType[keyof typeof EditType];
+// @internal
+export type EditType = (typeof EditType)[keyof typeof EditType];
 
 // @public
 export interface FluidDevtoolsProps {

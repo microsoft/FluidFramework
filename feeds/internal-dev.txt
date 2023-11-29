@@ -1,0 +1,7 @@
+@fluid-private/test-version-utils
+@fluid-private/test-pairwise-generator
+@fluid-private/test-end-to-end-tests
+@fluid-private/test-drivers
+@fluid-private/stochastic-test-utils
+@fluid-private/test-loader-utils
+@fluid-private/test-dds-utils

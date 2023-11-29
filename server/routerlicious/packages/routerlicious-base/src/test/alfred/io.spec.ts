@@ -753,9 +753,10 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						// wait for throttler to be checked
 						await Sinon.clock.nextAsync();
 
-						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
-							signalUsageStorageId,
-						);
+						const usageData =
+							await testThrottleAndUsageStorageManager.getUsageData(
+								signalUsageStorageId,
+							);
 						assert.equal(usageData.value, signalCount + 1);
 						assert.equal(usageData.clientId, connectMessage.clientId);
 						assert.equal(usageData.tenantId, testTenantId);

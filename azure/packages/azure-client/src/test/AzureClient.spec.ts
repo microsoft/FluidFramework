@@ -18,7 +18,7 @@ import { AzureClient } from "../AzureClient";
 import { type AzureLocalConnectionConfig } from "../interfaces";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
-	const connectionProps: AzureLocalConnectionConfig = {
+	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(
 			"fooBar",
 			{
@@ -30,7 +30,7 @@ function createAzureClient(scopes?: ScopeType[]): AzureClient {
 		endpoint: "http://localhost:7070",
 		type: "local",
 	};
-	return new AzureClient({ connection: connectionProps });
+	return new AzureClient({ connection: connectionProperties });
 }
 
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
@@ -75,7 +75,7 @@ describe("AzureClient", () => {
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("Created container is detached", async () => {
+	it("created container is detached", async () => {
 		const { container } = await client.createContainer(schema);
 		assert.strictEqual(
 			container.attachState,
@@ -166,22 +166,22 @@ describe("AzureClient", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const consoleErrorFn = console.error;
+		const consoleErrorFunction = console.error;
 		console.error = (): void => {};
 		const containerAndServicesP = client.getContainer("containerConfig", schema);
 
-		const errorFn = (error: Error): boolean => {
+		const errorFunction = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 			return true;
 		};
 
 		await assert.rejects(
 			containerAndServicesP,
-			errorFn,
+			errorFunction,
 			"Azure Client can load a non-existent container",
 		);
 		// eslint-disable-next-line require-atomic-updates
-		console.error = consoleErrorFn;
+		console.error = consoleErrorFunction;
 	});
 
 	/**
@@ -250,5 +250,20 @@ describe("AzureClient", () => {
 			"write",
 			"Getting a container with only write permission is not in write mode",
 		);
+	});
+
+	/**
+	 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
+	 * schema type is statically known.
+	 */
+	it("preserves types of 'initialObjects'", async () => {
+		const { container } = await client.createContainer({
+			initialObjects: {
+				map1: SharedMap,
+			},
+		});
+
+		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
+		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);
 	});
 });

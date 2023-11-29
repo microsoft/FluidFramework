@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
@@ -17,7 +18,13 @@ export enum PropertiesRollback {
 	/** Rollback */
 	Rollback,
 
-	/** Rollback of a rewrite */
+	/**
+	 * Rollback of a rewrite
+	 *
+	 * @deprecated We no longer intend to support this functionality and it will
+	 * be removed in a future release. There is no replacement for this
+	 * functionality.
+	 */
 	Rewrite,
 }
 
@@ -160,10 +167,8 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			if (!newProps) {
-				// eslint-disable-next-line no-param-reassign
-				newProps = createMap<any>();
-			}
+			// eslint-disable-next-line no-param-reassign
+			newProps ??= createMap<any>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}

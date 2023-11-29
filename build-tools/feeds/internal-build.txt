@@ -1,0 +1,4 @@
+@fluid-tools/version-tools
+@fluidframework/bundle-size-tools
+@fluidframework/build-tools
+@fluid-tools/build-cli

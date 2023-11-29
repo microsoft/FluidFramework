@@ -4,13 +4,7 @@
 # include-publish-npm-package-steps template to publish NPM packages/projects
 
 parameters:
-- name: namespace
-  type: boolean
-
-- name: feedName
-  type: string
-
-- name: devFeedName
+- name: feedUrl
   type: string
 
 - name: feedKind
@@ -33,32 +27,11 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
-    ${{ if eq(parameters.namespace, true) }}:
-      ${{ if ne(parameters.feedKind, 'official') }}:
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedName }}
-          echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-      ${{ if eq(parameters.feedKind, 'official') }}:
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedName }}
-          echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-    ${{ if eq(parameters.namespace, false) }}:
-      script: |
-        echo Generating .npmrc for ${{ parameters.feedName }}
-        echo "registry=${{ parameters.feedName }}" >> ./.npmrc
-        echo "always-auth=true" >> ./.npmrc
-        cat .npmrc
+    script: |
+      echo Generating .npmrc for ${{ parameters.feedUrl }}
+      echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
@@ -149,7 +122,7 @@ steps:
                   done
                 fi
 
-                baseURL="${${{ parameters.feedName }}%/registry/}"
+                baseURL="${${{ parameters.feedUrl }}%/registry/}"
                 feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
 
                 response=$(curl -f -s -X PATCH \

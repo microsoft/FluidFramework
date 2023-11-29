@@ -81,12 +81,18 @@ import {
 import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
+/**
+ * @public
+ */
 export enum DataStoreMessageType {
 	// Creates a new channel
 	Attach = "attach",
 	ChannelOp = "op",
 }
 
+/**
+ * @public
+ */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
 	// is async or we need a new API to split the synchronous vs. asynchronous creation.
@@ -95,13 +101,15 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
+ *
+ * @public
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated - Instantiate the class using its constructor instead.
+	 * @deprecated Instantiate the class using its constructor instead.
 	 *
 	 * Loads the data store runtime
 	 * @param context - The data store context
@@ -127,7 +135,7 @@ export class FluidDataStoreRuntime
 	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -424,34 +432,70 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
+	/**
+	 * Api which allows caller to create the channel first and then add it to the runtime.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel. Also the runtime used to create the channel object should be same to which
+	 * it is added.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
+	public addChannel(channel: IChannel): void {
+		const id = channel.id;
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
 
 		this.verifyNotClosed();
 
+		assert(!this.contexts.has(id), "addChannel() with existing ID");
+
+		const type = channel.attributes.type;
+		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+	}
+
+	public createChannel(id: string = uuid(), type: string): IChannel {
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+
+		this.verifyNotClosed();
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
-		this.notBoundedChannelContextSet.add(id);
+
+		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
+		const factory = this.sharedObjectRegistry.get(type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		const channel = factory.create(this, id);
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+		return channel;
+	}
+
+	private createChannelContext(channel: IChannel) {
+		this.notBoundedChannelContextSet.add(channel.id);
 		const context = new LocalChannelContext(
-			id,
-			this.sharedObjectRegistry,
-			type,
+			channel,
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(content, localOpMetadata) =>
+				this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
-		this.contexts.set(id, context);
-
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
-
-		return context.channel;
+		this.contexts.set(channel.id, context);
 	}
 
 	/**
@@ -852,9 +896,15 @@ export class FluidDataStoreRuntime
 		this.submit(type, content, localOpMetadata);
 	}
 
-	public submitSignal(type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed();
-		return this.dataStoreContext.submitSignal(type, content);
+		return this.dataStoreContext.submitSignal(type, content, targetClientId);
 	}
 
 	/**
@@ -1114,6 +1164,8 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
+ *
+ * @public
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1134,6 +1186,8 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
+ *
+ * @public
  */
 export const mixinSummaryHandler = (
 	handler: (

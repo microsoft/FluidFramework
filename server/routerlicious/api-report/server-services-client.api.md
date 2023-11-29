@@ -7,7 +7,6 @@
 import * as api from '@fluidframework/protocol-definitions';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
-import { AxiosRequestHeaders } from 'axios';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -95,10 +94,13 @@ export function generateUser(): IUser;
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @public (undocumented)
+export const getGlobalTimeoutContext: () => ITimeoutContext;
+
+// @public (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: RawAxiosRequestHeaders): Promise<void>;
 
 // @public (undocumented)
 export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
@@ -375,6 +377,7 @@ export interface ISession {
     historianUrl: string;
     isSessionActive: boolean;
     isSessionAlive: boolean;
+    messageBrokerId?: string;
     ordererUrl: string;
 }
 
@@ -392,6 +395,13 @@ export interface ISummaryTree extends ISummaryTree_2 {
 // @public
 export interface ISummaryUploadManager {
     writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+}
+
+// @public (undocumented)
+export interface ITimeoutContext {
+    bindTimeout(maxDurationMs: number, callback: () => void): void;
+    bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
+    checkTimeout(): void;
 }
 
 // @public (undocumented)
@@ -577,6 +587,9 @@ export abstract class RestWrapper {
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
+
+// @public (undocumented)
+export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @public
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

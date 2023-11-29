@@ -155,6 +155,8 @@ const snapshotFileName = "header";
  *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
+ *
+ * @public
  */
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
 	/**
@@ -483,6 +485,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as IPactMapOperation<T>;
 

@@ -1472,7 +1472,10 @@ class FlowCursor extends Cursor {
 	public presenceInfo: ILocalPresenceInfo | undefined;
 	public presenceInfoUpdated = true;
 
-	constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
+	constructor(
+		public viewportDiv: HTMLDivElement,
+		public pos = 0,
+	) {
 		super(viewportDiv, pos);
 	}
 

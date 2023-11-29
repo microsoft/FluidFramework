@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -17,7 +16,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
@@ -87,15 +86,14 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to swept", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const { container, summarizer } = await loadSummarizer(mainContainer);
 
 		// create datastore and blob
-		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataStoreHandle = dataStore.entryPoint;
 		assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
 		const dataObject = (await dataStoreHandle.get()) as ITestDataObject;

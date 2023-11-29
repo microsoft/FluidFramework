@@ -11,7 +11,7 @@ import {
 	makeRandom,
 	performFuzzActions,
 	take,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
 import { BaseSegment, ISegment } from "../mergeTreeNodes";
@@ -297,7 +297,7 @@ describe("AttributionCollection", () => {
 
 	describe("serializeAttributionCollections and populateAttributionCollections round-trip", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const seg = (length: number): ISegment => ({ cachedLength: length } as ISegment);
+		const seg = (length: number): ISegment => ({ cachedLength: length }) as ISegment;
 		const testCases: {
 			name: string;
 			blob: SerializedAttributionCollection;
