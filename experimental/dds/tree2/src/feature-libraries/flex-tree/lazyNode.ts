@@ -287,6 +287,8 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	>();
 	readonly #internalEmitter = new TypedEventEmitter<EditableTreeEvents>();
 
+	// Note: as far as we can tell, @ineritdoc probably doesn't work for symbol-keyed properties; using it anyway to follow
+	// the usual documentation patterns and because it still points people reading the code to the relevant documentation.
 	/**
 	 * {@inheritdoc FlexTreeNode.[internalEmitterSymbol]}
 	 */
