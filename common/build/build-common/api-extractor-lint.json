@@ -47,7 +47,6 @@
 		"@fluid-internal/.*",
 		"@fluid-experimental/.*",
 		"@fluid-private/.*",
-		"@fluid-tools/.*",
-		"fluid-framework"
+		"@fluid-tools/.*"
 	]
 }
