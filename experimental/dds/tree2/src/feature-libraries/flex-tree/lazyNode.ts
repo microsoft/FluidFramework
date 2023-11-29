@@ -164,6 +164,11 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 
+		this.#listeners = {
+			beforeChange: [],
+			afterChange: [],
+		};
+
 		// Subscribe to events on the backing anchorNode
 		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
 			this.#internalEmitter.emit("afterChange");
@@ -283,10 +288,12 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
-	readonly #listeners = new Map<
-		keyof EditableTreeEvents,
-		EditableTreeEvents[keyof EditableTreeEvents][]
-	>();
+	readonly #listeners: {
+		[eventName in keyof Pick<
+			EditableTreeEvents,
+			"beforeChange" | "afterChange"
+		>]: EditableTreeEvents[eventName][];
+	};
 	readonly #internalEmitter = new TypedEventEmitter<EditableTreeEvents>();
 
 	// Note: as far as we can tell, @ineritdoc probably doesn't work for symbol-keyed properties; using it anyway to follow
@@ -303,9 +310,11 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	 *
 	 * @param eventName - Name of the event that was emitted.
 	 */
-	readonly #onInternalEvent = (eventName: keyof EditableTreeEvents) => {
+	readonly #onInternalEvent = (
+		eventName: keyof Pick<EditableTreeEvents, "afterChange" | "beforeChange">,
+	) => {
 		const event = new TreeEvent(this);
-		for (const listener of this.#listeners.get(eventName) ?? []) {
+		for (const listener of this.#listeners[eventName]) {
 			// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 			// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 			// for changing and subtreeChanging match the one for beforeChange and afterChange.
@@ -347,27 +356,17 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 				);
 				return unsubscribeFromSubtreeChange;
 			}
-			case "beforeChange": {
-				this.#listeners.set("beforeChange", [
-					...(this.#listeners.get("beforeChange") ?? []),
-					listener,
-				]);
-				return () => {
-					this.#listeners.set(
-						"beforeChange",
-						this.#listeners.get("beforeChange")?.filter((x) => x !== listener) ?? [],
-					);
-				};
-			}
+			case "beforeChange":
 			case "afterChange": {
-				this.#listeners.set("afterChange", [
-					...(this.#listeners.get("afterChange") ?? []),
-					listener,
-				]);
+				// Type narrowing and casts to make TS happy, because the switch() statement having entered this branch doesn't
+				// seem to be enough.
+				const localEventName: "beforeChange" | "afterChange" = eventName;
+				this.#listeners[localEventName].push(
+					listener as EditableTreeEvents["beforeChange"],
+				);
 				return () => {
-					this.#listeners.set(
-						"afterChange",
-						this.#listeners.get("afterChange")?.filter((x) => x !== listener) ?? [],
+					this.#listeners[localEventName] = this.#listeners[localEventName].filter(
+						(x) => x !== listener,
 					);
 				};
 			}
