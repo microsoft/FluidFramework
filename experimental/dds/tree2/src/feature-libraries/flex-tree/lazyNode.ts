@@ -172,6 +172,8 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			this.#internalEmitter.emit("beforeChange");
 		});
 
+		// Set up listeners for internal emitter. This will handle events triggered by this node, and by other nodes
+		// that get the emitter and make it fire (e.g. child nodes that want to bubble up events).
 		this.#internalEmitter.on("beforeChange", () => {
 			this.#onInternalEvent("beforeChange");
 		});
