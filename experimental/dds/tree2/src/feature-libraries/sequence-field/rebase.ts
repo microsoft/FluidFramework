@@ -50,7 +50,7 @@ import {
 	MarkEffect,
 	MoveOut,
 	MoveIn,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	getMoveEffect,

@@ -4,13 +4,8 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import {
-	EncodedChunkGeneric,
-	IdentifierOrIndex,
-	ShapeIndex,
-	unionOptions,
-	Count,
-} from "./formatGeneric";
+import { EncodedChunkGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric";
+import { unionOptions } from "../../../codec";
 
 // TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
 export const version = 1.0;

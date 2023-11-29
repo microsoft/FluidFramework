@@ -41,7 +41,7 @@ import {
 	AttachAndDetach,
 	MarkEffect,
 	InverseAttachFields,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {

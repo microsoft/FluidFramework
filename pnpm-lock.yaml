@@ -5773,6 +5773,8 @@ importers:
       '@types/ungap__structured-clone': ^0.3.0
       '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
+      ajv: ^8.12.0
+      ajv-formats: ^2.1.1
       c8: ^7.7.1
       cross-env: ^7.0.3
       dependency-cruiser: ^14.1.0
@@ -5825,6 +5827,8 @@ importers:
       '@types/node': 16.18.65
       '@types/ungap__structured-clone': 0.3.3
       '@types/uuid': 9.0.7
+      ajv: 8.12.0
+      ajv-formats: 2.1.1_ajv@8.12.0
       c8: 7.14.0
       cross-env: 7.0.3
       dependency-cruiser: 14.1.2
@@ -23666,8 +23670,10 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.12.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -40634,7 +40640,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /scoped-regex/2.1.0:
