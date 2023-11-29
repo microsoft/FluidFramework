@@ -22,6 +22,8 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
+ *
+ * @public
  */
 export type LoadableObjectClass<T extends IFluidLoadable> =
 	| DataObjectClass<T>
@@ -62,7 +64,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
  *
- * @internal
+ * @public
  */
 export interface ContainerSchema {
 	/**

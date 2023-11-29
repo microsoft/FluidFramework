@@ -15,7 +15,7 @@ import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./ty
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
  *
- * @internal
+ * @public
  */
 export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
@@ -97,7 +97,7 @@ export interface IFluidContainerEvents extends IEvent {
  *
  * @remarks Note: external implementations of this interface are not supported.
  *
- * @internal
+ * @public
  */
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends IEventProvider<IFluidContainerEvents> {

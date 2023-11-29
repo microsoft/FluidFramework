@@ -68,7 +68,7 @@ export interface ITelemetryProperties {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  *
- * @internal
+ * @public
  */
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
@@ -93,7 +93,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  *
- * @internal
+ * @public
  */
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;

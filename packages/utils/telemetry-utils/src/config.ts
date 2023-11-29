@@ -12,7 +12,7 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 /**
  * Base interface for providing configurations to enable/disable/control features
  *
- * @internal
+ * @public
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;

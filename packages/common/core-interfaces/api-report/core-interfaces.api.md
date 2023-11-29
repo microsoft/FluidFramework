@@ -409,7 +409,7 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
 }
 
-// @internal
+// @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -417,7 +417,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @internal
+// @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
     minLogLevel?: LogLevel;

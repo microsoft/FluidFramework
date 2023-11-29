@@ -1,6 +1,6 @@
 /*
 	This configuration is specifically constructed to be used as a "linter" configuration.
-	It runs api-extractor in a mode where all other fluid packages are bundled in its analysis.
+	It runs api-extractor in a mode where all other Fluid packages are bundled in its analysis.
 	Here we are specifically looking to ensure that cross-package references are release-tag-compatible.
 */
 {
