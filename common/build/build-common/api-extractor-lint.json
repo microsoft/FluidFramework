@@ -5,11 +5,7 @@
 */
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"compiler": {
-		"tsconfigFilePath": "<projectFolder>/tsconfig.json"
-	},
-	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
-
+	"extends": "@fluidframework/build-common/api-extractor-base.json",
 	"apiReport": {
 		// Don't generate API report in lint pass
 		"enabled": false
@@ -28,8 +24,21 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			"default": {
-				// Disable rules by default. We will enable specific rules we want to enforce in the linter pass below.
+			// Don't validate forgotten exports across package boundaries.
+			// This is an explicit policy choice.
+			"ae-forgotten-export": {
+				"logLevel": "none"
+			},
+			// Don't check for explicit release tags in other packages.
+			// Each package validates this for themselves, so there is no need to re-validate here.
+			"ae-missing-release-tag": {
+				"logLevel": "none"
+			},
+			// Links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// when their members are bundled.
+			// See https://github.com/microsoft/rushstack/issues/3521
+			// Omit this check from the cross-package lint step.
+			"ae-unresolved-link": {
 				"logLevel": "none"
 			},
 
@@ -37,7 +46,7 @@
 			// Ensure that release tags of API members are compatible **across package boundaries**.
 			"ae-incompatible-release-tags": {
 				"logLevel": "error",
-				"addToApiReportFile": false // Fail build
+				"addToApiReportFile": false
 			}
 		}
 	},

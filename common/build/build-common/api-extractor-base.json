@@ -1,11 +1,3 @@
-/*
-	Base configuration for packages using API-Extractor in their builds.
-	Generates...
-	* type-rollups for different release levels
-	* API report
-	* API metadata (for API docs generation)
-	* Validates invariants we care about (fail build for violations)
-*/
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 
