@@ -14,8 +14,8 @@ import {
 	markEager,
 } from "../feature-libraries";
 import { leaf } from "../domains";
-import { TreeValue } from "../core";
-import { TreeMapNodeBase } from "../simple-tree";
+import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
+import { TreeListNode, TreeMapNodeBase } from "../simple-tree";
 import {
 	createNodeProxy,
 	createRawObjectProxy,
@@ -39,7 +39,6 @@ import {
 	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
-	TreeListNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -56,9 +55,9 @@ import {
  * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
 class LeafNodeSchema<T extends FlexLeafNodeSchema>
-	implements TreeNodeSchemaNonClass<T["name"], NodeKind.Leaf, TreeValue<T["info"]>>
+	implements TreeNodeSchemaNonClass<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>>
 {
-	public readonly identifier: T["name"];
+	public readonly identifier: UnbrandedName<T>;
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T["info"];
 	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
@@ -67,7 +66,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 
 	public constructor(schema: T) {
 		setFlexSchemaFromClassSchema(this, schema);
-		this.identifier = schema.name;
+		this.identifier = schema.name as UnbrandedName<T>;
 		this.info = schema.info;
 	}
 }
@@ -77,9 +76,15 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
-): TreeNodeSchema<T["name"], NodeKind.Leaf, TreeValue<T["info"]>> {
+): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>> {
 	return new LeafNodeSchema(schema);
 }
+
+type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
+	infer Name extends string
+>
+	? Name
+	: T["name"];
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -357,7 +362,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @remarks
 	 * The identifier for this List is defined as a function of the provided types.
@@ -397,7 +402,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeListNode}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
@@ -441,7 +446,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeListNode}.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 */
