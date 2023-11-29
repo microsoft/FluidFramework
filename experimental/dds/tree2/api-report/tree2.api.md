@@ -631,8 +631,7 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
 export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<FlexTreeField>;
-    // (undocumented)
-    [internalEmitterSymbol]: TypedEventEmitter<EditableTreeEvents>;
+    [internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents>;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
     // (undocumented)

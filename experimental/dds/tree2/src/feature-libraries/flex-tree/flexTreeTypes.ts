@@ -178,7 +178,15 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
 	 */
 	[onNextChange](fn: (node: FlexTreeNode) => void): () => void;
 
-	[internalEmitterSymbol]: TypedEventEmitter<EditableTreeEvents>;
+	/**
+	 * Accessor for the internal event emitter for this node.
+	 *
+	 * @remarks This is only for use by the framework itself, so a node can tell its parent to emit an event (bubble it up).
+	 *
+	 * @privateRemarks Defined as a getter instead of a plain property so it's not enumerable; otherwise some tests fail
+	 * because they iterate over the enumerable properties of tree nodes and find this one which breaks deep-equality checks.
+	 */
+	[internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents>;
 }
 
 /**

@@ -166,16 +166,16 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 
 		// Subscribe to events on the backing anchorNode
 		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
-			this[internalEmitterSymbol].emit("afterChange");
+			this.#internalEmitter.emit("afterChange");
 		});
 		this.#anchorNode.on("beforeChange", (anchorNodeInEvent: AnchorNode) => {
-			this[internalEmitterSymbol].emit("beforeChange");
+			this.#internalEmitter.emit("beforeChange");
 		});
 
-		this[internalEmitterSymbol].on("beforeChange", () => {
+		this.#internalEmitter.on("beforeChange", () => {
 			this.#onInternalEvent("beforeChange");
 		});
-		this[internalEmitterSymbol].on("afterChange", () => {
+		this.#internalEmitter.on("afterChange", () => {
 			this.#onInternalEvent("afterChange");
 		});
 	}
@@ -285,8 +285,20 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		keyof EditableTreeEvents,
 		EditableTreeEvents[keyof EditableTreeEvents][]
 	>();
-	public readonly [internalEmitterSymbol] = new TypedEventEmitter<EditableTreeEvents>();
+	readonly #internalEmitter = new TypedEventEmitter<EditableTreeEvents>();
 
+	/**
+	 * {@inheritdoc FlexTreeNode.[internalEmitterSymbol]}
+	 */
+	public [internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents> {
+		return this.#internalEmitter;
+	}
+
+	/**
+	 * Handler for internal events emitted by this node's own internal emitter.
+	 *
+	 * @param eventName - Name of the event that was emitted.
+	 */
 	readonly #onInternalEvent = (eventName: keyof EditableTreeEvents) => {
 		const event = new TreeEventImplementation(this);
 		for (const listener of this.#listeners.get(eventName) ?? []) {
@@ -300,7 +312,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		}
 		const parentNode = this.parentField.parent.parent;
 		if (parentNode !== undefined) {
-			parentNode[internalEmitterSymbol].emit(eventName);
+			parentNode[internalEmitterSymbol]().emit(eventName);
 		}
 	};
 

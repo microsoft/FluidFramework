@@ -106,7 +106,9 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexT
 		return rawObjectNodeError();
 	}
 
-	public readonly [internalEmitterSymbol] = new TypedEventEmitter<EditableTreeEvents>();
+	public [internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents> {
+		return rawObjectNodeError();
+	}
 
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
