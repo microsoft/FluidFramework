@@ -39,18 +39,10 @@ import { EmptyKey, FieldKey } from "../core";
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
-import {
-	TreeField,
-	TypedNode,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	TreeNode,
-	Unhydrated,
-} from "./types";
+import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
+import { TreeListNode, IterableTreeListContent } from "./treeListNode";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
-import { IterableTreeListContent } from "./iterableTreeListContent";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */

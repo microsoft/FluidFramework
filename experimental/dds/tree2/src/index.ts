@@ -283,6 +283,7 @@ export {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
+	NodeFromSchema,
 } from "./class-tree";
 export { TreeFactory, TreeOptions } from "./treeFactory";
 
