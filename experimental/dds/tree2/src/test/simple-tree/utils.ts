@@ -9,7 +9,7 @@ import {
 	TreeSchema,
 	SchemaAware,
 } from "../../feature-libraries";
-import { TreeField, InsertableTreeRoot, TreeFieldInner } from "../../simple-tree";
+import { InsertableTreeRoot, TreeFieldInner } from "../../simple-tree";
 import { treeViewWithContent } from "../utils";
 import { SchemaBuilder } from "../../domains";
 
