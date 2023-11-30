@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "lint:api-extractor"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "lint:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -71,7 +71,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"lint:api-extractor": [...tscDependsOn, "commonjs"],
+		"lint:release-tags": [...tscDependsOn, "commonjs"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
