@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag, TaggedChange } from "../core";
-import { RevisionMetadataSource } from "../feature-libraries";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.

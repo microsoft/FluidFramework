@@ -7,9 +7,8 @@ import {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ChangeRebaser,
-	Delta,
+	RevisionMetadataSource,
 	TaggedChange,
-	emptyDelta,
 } from "../core";
 
 /**
@@ -34,14 +33,6 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 	return {
 		buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
 			return unmitigatedChangeFamily.buildEditor(changeReceiver);
-		},
-		intoDelta: (change: TaggedChange<TChange>): Delta.Root => {
-			try {
-				return unmitigatedChangeFamily.intoDelta(change);
-			} catch (error: unknown) {
-				onError(error);
-				return emptyDelta;
-			}
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
@@ -69,8 +60,12 @@ export function makeMitigatedRebaser<TChange>(
 		invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
 			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
 		},
-		rebase: (change: TChange, over: TaggedChange<TChange>): TChange => {
-			return withFallback(() => unmitigatedRebaser.rebase(change, over));
+		rebase: (
+			change: TChange,
+			over: TaggedChange<TChange>,
+			revisionMetadata: RevisionMetadataSource,
+		): TChange => {
+			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
 	};
 }
