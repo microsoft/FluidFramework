@@ -724,13 +724,6 @@ export class ContainerRuntime
 		IProvideFluidHandleContext
 {
 	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
-	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
@@ -1733,9 +1726,10 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. This method needs to stay private until LTS version of Loader moves to "2.0.0-internal.7.0.0".
 	 */
-	public async request(request: IRequest): Promise<IResponse> {
+	// @ts-expect-error expected to be used by LTS Loaders and Containers
+	private async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];

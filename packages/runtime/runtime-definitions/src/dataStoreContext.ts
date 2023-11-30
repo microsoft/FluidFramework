@@ -196,12 +196,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	orderSequentially(callback: () => void): void;
 
 	/**
-	 * Executes a request against the container runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
