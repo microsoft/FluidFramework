@@ -17,17 +17,16 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src tests",
-		"eslint:fix": "eslint --format stylish src tests --fix",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fences": "npm run good-fences",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"start": "react-scripts start",
+		"start": "cross-env FLUID_CLIENT='local' webpack-dev-server",
 		"test": "react-scripts test"
 	},
 	"dependencies": {
@@ -81,5 +80,19 @@
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.6.0",
 		"webpack-merge": "^5.8.0"
+	},
+	"fluid": {
+		"browser": {
+			"umd": {
+				"files": [
+					"dist/main.bundle.js"
+				],
+				"library": "main"
+			}
+		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }
