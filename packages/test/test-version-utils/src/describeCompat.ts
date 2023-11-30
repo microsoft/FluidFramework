@@ -7,7 +7,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
 import { assert } from "@fluidframework/core-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { configList, mochaGlobalSetup } from "./compatConfig.js";
+import { CompatConfig, configList, mochaGlobalSetup } from "./compatConfig.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
@@ -45,86 +45,7 @@ function createCompatSuite(
 			describe(config.name, function () {
 				let provider: ITestObjectProvider;
 				let resetAfterEach: boolean;
-				let apis: CompatApis;
-
-				// If this is cross version compat scenario, make sure we use the correct versions
-				if (config.kind === CompatKind.CrossVersion) {
-					assert(
-						config.createWith !== undefined,
-						"createWith must be defined for cross version tests",
-					);
-					assert(
-						config.loadWith !== undefined,
-						"loadWith must be defined for cross version tests",
-					);
-
-					const dataRuntime = getDataRuntimeApi(
-						baseVersion,
-						config.createWith.base,
-						/** adjustMajorPublic */ true,
-					);
-					const dataRuntimeForLoading = getDataRuntimeApi(
-						baseVersion,
-						config.loadWith.base,
-						/** adjustMajorPublic */ true,
-					);
-
-					apis = {
-						containerRuntime: getContainerRuntimeApi(
-							baseVersion,
-							config.createWith.base,
-							/** adjustMajorPublic */ true,
-						),
-						containerRuntimeForLoading: getContainerRuntimeApi(
-							baseVersion,
-							config.loadWith.base,
-							/** adjustMajorPublic */ true,
-						),
-
-						dataRuntime,
-						dataRuntimeForLoading,
-
-						dds: dataRuntime.dds,
-						ddsForLoading: dataRuntimeForLoading.dds,
-
-						driver: getDriverApi(
-							baseVersion,
-							config.createWith.base,
-							/** adjustMajorPublic */ true,
-						),
-						driverForLoading: getDriverApi(
-							baseVersion,
-							config.loadWith.base,
-							/** adjustMajorPublic */ true,
-						),
-
-						loader: getLoaderApi(
-							baseVersion,
-							config.createWith.base,
-							/** adjustMajorPublic */ true,
-						),
-						loaderForLoading: getLoaderApi(
-							baseVersion,
-							config.loadWith.base,
-							/** adjustMajorPublic */ true,
-						),
-					};
-				} else {
-					const dataRuntimeApi = getDataRuntimeApi(
-						testBaseVersion(config.dataRuntime),
-						config.dataRuntime,
-					);
-					apis = {
-						containerRuntime: getContainerRuntimeApi(
-							testBaseVersion(config.containerRuntime),
-							config.containerRuntime,
-						),
-						dataRuntime: dataRuntimeApi,
-						dds: dataRuntimeApi.dds,
-						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
-						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
-					};
-				}
+				const apis: CompatApis = getVersionedApis(config);
 
 				before(async function () {
 					try {
@@ -186,6 +107,81 @@ function createCompatSuite(
 				});
 			});
 		}
+	};
+}
+
+/**
+ * Get versioned APIs for the given config.
+ */
+function getVersionedApis(config: CompatConfig): CompatApis {
+	// If this is cross version compat scenario, make sure we use the correct versions
+	if (config.kind === CompatKind.CrossVersion) {
+		assert(
+			config.createWith !== undefined,
+			"createWith must be defined for cross version tests",
+		);
+		assert(config.loadWith !== undefined, "loadWith must be defined for cross version tests");
+		const dataRuntime = getDataRuntimeApi(
+			baseVersion,
+			config.createWith.base,
+			/** adjustMajorPublic */ true,
+		);
+		const dataRuntimeForLoading = getDataRuntimeApi(
+			baseVersion,
+			config.loadWith.base,
+			/** adjustMajorPublic */ true,
+		);
+		return {
+			containerRuntime: getContainerRuntimeApi(
+				baseVersion,
+				config.createWith.base,
+				/** adjustMajorPublic */ true,
+			),
+			containerRuntimeForLoading: getContainerRuntimeApi(
+				baseVersion,
+				config.loadWith.base,
+				/** adjustMajorPublic */ true,
+			),
+			dataRuntime,
+			dataRuntimeForLoading,
+			dds: dataRuntime.dds,
+			ddsForLoading: dataRuntimeForLoading.dds,
+			driver: getDriverApi(
+				baseVersion,
+				config.createWith.base,
+				/** adjustMajorPublic */ true,
+			),
+			driverForLoading: getDriverApi(
+				baseVersion,
+				config.loadWith.base,
+				/** adjustMajorPublic */ true,
+			),
+			loader: getLoaderApi(
+				baseVersion,
+				config.createWith.base,
+				/** adjustMajorPublic */ true,
+			),
+			loaderForLoading: getLoaderApi(
+				baseVersion,
+				config.loadWith.base,
+				/** adjustMajorPublic */ true,
+			),
+		};
+	}
+
+	const dataRuntimeApi = getDataRuntimeApi(
+		testBaseVersion(config.dataRuntime),
+		config.dataRuntime,
+	);
+	return {
+		containerRuntime: getContainerRuntimeApi(
+			testBaseVersion(config.containerRuntime),
+			config.containerRuntime,
+		),
+		dataRuntime: dataRuntimeApi,
+		dds: dataRuntimeApi.dds,
+		driver: getDriverApi(testBaseVersion(config.driver), config.driver),
+		loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
 	};
 }
 

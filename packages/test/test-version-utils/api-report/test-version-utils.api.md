@@ -210,22 +210,22 @@ export type ExpectedEvents = ITelemetryGenericEvent[] | Partial<Record<TestDrive
 // @internal (undocumented)
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;
 
-// @internal (undocumented)
+// @internal
 export function getContainerRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof ContainerRuntimeApi;
 
 // @internal (undocumented)
 export const getCurrentBenchmarkType: (currentType: DescribeE2EDocSuite) => BenchmarkType;
 
-// @internal (undocumented)
+// @internal
 export function getDataRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DataRuntimeApi;
 
 // @internal (undocumented)
 export const getDataStoreFactory: (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory;
 
-// @internal (undocumented)
+// @internal
 export function getDriverApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DriverApi;
 
-// @internal (undocumented)
+// @internal
 export function getLoaderApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof LoaderApi;
 
 // @internal (undocumented)
