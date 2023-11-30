@@ -22,7 +22,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
-import { SharedSegmentSequence, SubSequence } from "./";
+import { SharedSegmentSequence } from "./sequence";
+import { SubSequence } from "./sharedSequence";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
