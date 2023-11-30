@@ -278,7 +278,6 @@ describe("defaultFieldKinds", () => {
 					fakeIdAllocator,
 					failCrossFieldManager,
 					rebaseRevisionMetadataFromInfo([], []),
-					1,
 				),
 				change2.change,
 			);
