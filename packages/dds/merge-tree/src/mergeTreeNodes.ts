@@ -175,8 +175,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	propertyManager?: PropertiesManager;
 	/**
 	 * Local seq at which this segment was inserted.
-	 * If this is defined, `seq` will be UnassignedSequenceNumber.
+	 * This is defined if an only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
+	 * Semantically, `localSeq`s provide an ordering on in-flight merge-tree operations:
+	 * for operations stamped with localSeqs `a` and `b`, `a < b` if and only if `a` was submitted before `b`.
 	 * 
 	 * @remarks - This field is roughly analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
 	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
