@@ -9,29 +9,29 @@ import {
 	buildTreeConfiguration,
 } from "@fluid-experimental/tree2";
 
-const sb = new SchemaBuilder({ scope: "fc1db2e8-0a00-11ee-be56-0242ac120002" });
+const schemaBuilder = new SchemaBuilder({ scope: "fc1db2e8-0a00-11ee-be56-0242ac120002" });
 
-export const position = sb.object("position", {
-	x: sb.number,
-	y: sb.number,
+export const position = schemaBuilder.object("position", {
+	x: schemaBuilder.number,
+	y: schemaBuilder.number,
 });
 
-export const letter = sb.object("letter", {
+export const letter = schemaBuilder.object("letter", {
 	position,
-	character: sb.string,
-	id: sb.string,
+	character: schemaBuilder.string,
+	id: schemaBuilder.string,
 });
 
-export const app = sb.object("app", {
-	letters: sb.list(letter),
-	word: sb.list(letter),
+export const app = schemaBuilder.object("app", {
+	letters: schemaBuilder.list(letter),
+	word: schemaBuilder.list(letter),
 });
 
 export type App = TypedNode<typeof app>;
 export type Letter = TypedNode<typeof letter>;
 export type Position = TypedNode<typeof position>;
 
-export const appSchema = sb.intoSchema(app);
+export const appSchema = schemaBuilder.intoSchema(app);
 
 export const appSchemaConfig = buildTreeConfiguration({
 	schema: appSchema,
