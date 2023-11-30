@@ -73,7 +73,7 @@ export const nodeApi: TreeApi = {
 		value: unknown,
 		schema: TSchema,
 	): value is NodeFromSchema<TSchema> => {
-		return TreeSimple.is(value, getFlexSchema(schema)) ?? false;
+		return TreeSimple.is(value, getFlexSchema(schema));
 	},
 	schema<T extends NodeBase>(node: NodeBase): TreeNodeSchema<string, NodeKind, unknown, T> {
 		return getClassSchema(TreeSimple.schema(node as TreeNode)) as TreeNodeSchema<
