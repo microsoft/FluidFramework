@@ -523,7 +523,11 @@ export class GarbageCollector implements IGarbageCollector {
 
 				/** GC step */
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
-				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
+				event.end({
+					...gcStats,
+					timestamp: currentReferenceTimestampMs,
+					sweep: this.configs.shouldRunSweep,
+				});
 
 				/** Post-GC steps */
 				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
