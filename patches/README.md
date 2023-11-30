@@ -20,6 +20,8 @@ As soon as a version of the package is released with the changes in that PR, thi
 
 This patch adds a required fix to make it possible to validate release tag compatibility across package boundaries.
 The relevant changes can be found on this branch: https://github.com/Josmithr/rushstack/tree/fix-bundledPackages-incompatible-release-tags
+Related github issue: https://github.com/microsoft/rushstack/issues/4430
 
 It also adds the ability to specify `bundledPackages` using regular expressions, rather than exact-match package names.
 The relevant changes can be found on this branch: https://github.com/Josmithr/rushstack/tree/regexp-bundledPackages
+Related github issue: https://github.com/microsoft/rushstack/issues/4426
