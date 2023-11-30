@@ -57,7 +57,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -79,7 +79,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}

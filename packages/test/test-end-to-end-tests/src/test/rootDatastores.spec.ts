@@ -116,7 +116,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		const alias = "alias";
 
 		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -144,7 +144,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Assign multiple data stores to the same alias, first write wins, same container", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -176,7 +176,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Aliasing a datastore is idempotent", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -192,7 +192,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Aliasing a datastore while aliasing", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -233,7 +233,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
 			async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed.
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
@@ -262,7 +262,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		);
 
 		it("Aliasing a datastore during an alias operation with the same name", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -287,7 +287,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Aliasing a previously aliased datastore will fail", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -303,7 +303,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Aliasing a datastore which previously failed to alias will succeed", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -334,7 +334,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		});
 
 		it("Assign multiple data stores to the same alias, first write wins, different containers", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -360,7 +360,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			"Assign multiple data stores to the same alias, first write wins, " +
 				"different containers from snapshot",
 			async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed.
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
@@ -428,7 +428,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		);
 
 		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed.
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
