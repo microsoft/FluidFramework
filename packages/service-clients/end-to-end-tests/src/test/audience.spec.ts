@@ -43,7 +43,7 @@ describe("Fluid audience", () => {
 	 */
 	it("can find original member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -52,7 +52,7 @@ describe("Fluid audience", () => {
 			});
 		}
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -75,7 +75,7 @@ describe("Fluid audience", () => {
 	 */
 	it("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -84,7 +84,7 @@ describe("Fluid audience", () => {
 			});
 		}
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -104,7 +104,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(containerId, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, clientCreds.username);
@@ -131,7 +131,7 @@ describe("Fluid audience", () => {
 	 */
 	it("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -149,7 +149,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(containerId, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, clientCreds.username);

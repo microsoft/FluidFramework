@@ -41,7 +41,7 @@ describe("Fluid data updates", () => {
 	 */
 	it("can set DDSes as initial objects for a container", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const containerId = await newContainer.attach();
+		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -50,7 +50,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const resources = client.getContainer(containerId, schema);
+		const resources = client.getContainer(itemId, schema);
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -72,7 +72,7 @@ describe("Fluid data updates", () => {
 	 */
 	it("can change DDSes within initialObjects value", async () => {
 		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -86,7 +86,7 @@ describe("Fluid data updates", () => {
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
-		const { container: containerGet } = await client.getContainer(containerId, schema);
+		const { container: containerGet } = await client.getContainer(itemId, schema);
 		const map1Get = containerGet.initialObjects.map1 as SharedMap;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
@@ -105,7 +105,7 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -124,7 +124,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo2",
 		);
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(itemId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -152,7 +152,7 @@ describe("Fluid data updates", () => {
 			},
 		};
 		const { container } = await client.createContainer(doSchema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -175,7 +175,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo3",
 		);
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(itemId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -212,7 +212,7 @@ describe("Fluid data updates", () => {
 
 		assert.strictEqual(mdo2.value, 3);
 
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -221,7 +221,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(itemId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
 		const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
 

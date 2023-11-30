@@ -46,8 +46,8 @@ describe("Container create scenarios", () => {
 		);
 
 		// Make sure we can attach.
-		const containerId = await container.attach();
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		const itemId = await container.attach();
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 	});
 
 	/**
@@ -58,7 +58,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("can attach a container", async () => {
 		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -67,7 +67,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -83,7 +83,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("cannot attach a container twice", async () => {
 		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -92,7 +92,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -109,7 +109,7 @@ describe("Container create scenarios", () => {
 	 */
 	it("can retrieve existing ODSP container successfully", async () => {
 		const { container: newContainer } = await client.createContainer(schema);
-		const containerId = await newContainer.attach();
+		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -118,7 +118,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		const resources = client.getContainer(containerId, schema);
+		const resources = client.getContainer(itemId, schema);
 		await assert.doesNotReject(
 			resources,
 			() => true,
