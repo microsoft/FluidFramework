@@ -282,9 +282,9 @@ export function validateObjectNodeFieldName(
 	describeField: () => string,
 	errors: string[],
 ): void {
-	// TODO: support custom field keys.
+	// TODO: Remove conflicts between possible field keys and editable-tree API members.
 	const suggestion =
-		"Pick a different field name to avoid property name collisions in the tree API. In the future, it will be possible to pick a separate field name for use in identifiers in the the API (to fix errors like this one) while keeping the field key (used everywhere else, including in persisted data) for compatibility but this is not implemented yet.";
+		"Pick a different field name to avoid property name collisions in the implementation. In the future this list of reserved names will be removed.";
 
 	if (bannedFieldNames.has(name)) {
 		errors.push(

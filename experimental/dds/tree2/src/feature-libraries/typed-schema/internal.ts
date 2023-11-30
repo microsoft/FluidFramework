@@ -23,4 +23,5 @@ export {
 	ExtractItemType,
 	ArrayHasFixedLength,
 	ExtractListItemType,
+	FlexListToUnion,
 } from "./flexList";
