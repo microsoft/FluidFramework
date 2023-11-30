@@ -9,6 +9,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 	},
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: ["./src/tsconfig.json"],
 	},
 };
