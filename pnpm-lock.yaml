@@ -9661,7 +9661,7 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/service-clients/end-to-end-tests:
+  packages/service-clients/end-to-end-tests/odsp-client:
     specifiers:
       '@fluid-experimental/odsp-client': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -9701,23 +9701,23 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
-      '@fluid-experimental/odsp-client': link:../odsp-client
-      '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluid-experimental/odsp-client': link:../../odsp-client
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/common-definitions': 1.0.0
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/counter': link:../../dds/counter
-      '@fluidframework/fluid-static': link:../../framework/fluid-static
-      '@fluidframework/map': link:../../dds/map
-      '@fluidframework/matrix': link:../../dds/matrix
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
-      '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
-      '@fluidframework/sequence': link:../../dds/sequence
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../test/test-utils
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/odsp-doclib-utils': link:../../../utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver-definitions': link:../../../drivers/odsp-driver-definitions
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../test/test-utils
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
