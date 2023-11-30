@@ -211,10 +211,11 @@ function createDeleteMark<TChange = never>(
 }
 
 /**
- * @param count - The number of nodes to move out.
- * @param markId - The id to associate with the mark.
+ * @param count - The number of nodes to move.
+ * @param markId - The id to associate with the marks.
  * Defines how later edits refer the emptied cells.
  * @param overrides - Any additional properties to add to the mark.
+ * @returns A pair of marks, the first for moving out, the second for moving in.
  */
 function createMoveMarks<TChange = never>(
 	count: number,
