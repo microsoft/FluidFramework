@@ -20,6 +20,8 @@ import { OptionalChangeset } from "../../../feature-libraries/optional-field";
 import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -275,7 +277,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					rebaseRevisionMetadataFromInfo([], []),
 				),
 				change2.change,
 			);
@@ -301,7 +303,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					rebaseRevisionMetadataFromInfo([], []),
 				),
 				childChange3,
 			);
