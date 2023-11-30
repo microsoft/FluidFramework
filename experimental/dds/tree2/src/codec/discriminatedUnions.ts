@@ -25,7 +25,7 @@ export const unionOptions: ObjectOptions = {
 
 /**
  * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
- * where the function to apply depends on the which value from the union it holds.
+ * where the function to apply depends on which value from the union it holds.
  *
  * This uses a rather non-standard encoding of the union where it is an object with many differently named optional fields,
  * and which of the fields is populated determines the content type.
