@@ -1,32 +1,27 @@
-# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License.
-
-# build-protocol-definitions pipeline
-
+# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
+# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
 name: $(Build.BuildId)
-
 parameters:
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
   type: string
   default: none
   values:
-    - none
-    - prerelease
-    - release
+  - none
+  - prerelease
+  - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
   default: default
   values:
-    - default
-    - skip
-    - force
+  - default
+  - skip
+  - force
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-
 trigger:
   branches:
     include:
@@ -50,7 +45,6 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-
 pr:
   branches:
     include:
@@ -70,9 +64,8 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
@@ -81,4 +74,4 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     tagName: protocol-definitions
-    taskTest: [] # no tests
+    taskTest: []
