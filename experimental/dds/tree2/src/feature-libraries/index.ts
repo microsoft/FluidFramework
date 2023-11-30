@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -60,13 +59,14 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	FieldGenerator,
-	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
-	assertAllowedValue,
-	isFluidHandle,
+	getPossibleTypes,
 } from "./contextuallyTyped";
+
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
 export { ForestSummarizer } from "./forestSummarizer";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
@@ -98,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -119,11 +119,7 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
@@ -158,6 +154,9 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -173,7 +172,13 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -214,6 +219,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
 } from "./default-schema";
 
 export {
@@ -247,6 +253,7 @@ export {
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	isFlexTreeNode,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
@@ -258,3 +265,4 @@ import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

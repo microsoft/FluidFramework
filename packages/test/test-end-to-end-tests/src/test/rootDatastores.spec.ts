@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -25,6 +24,7 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
@@ -71,10 +71,10 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
 		container1 = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
 		container2 = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		await provider.ensureSynchronized();
 	};
@@ -121,7 +121,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				provider.defaultCodeDetails,
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			const ds1 = await runtimeOf(dataObject).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject).createDataStore(packageName);
 
@@ -313,7 +313,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+			const dataObject3 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
 			await provider.ensureSynchronized();
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
@@ -375,7 +376,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 						[LoaderHeader.version]: version,
 					}, // requestHeader
 				);
-				const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+				const dataObject3 =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
 				const aliasResult3 = await ds3.trySetAlias(alias);
 

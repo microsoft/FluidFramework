@@ -10,10 +10,16 @@ import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITokenProvider } from '@fluidframework/azure-client';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+// @alpha
+export interface IOdspTokenProvider {
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+}
 
 // @alpha @sealed
 export class OdspClient {
@@ -24,7 +30,7 @@ export class OdspClient {
         services: OdspContainerServices;
     }>;
     // (undocumented)
-    getContainer(sharingUrl: string, containerSchema: ContainerSchema): Promise<{
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
         container: IFluidContainer;
         services: OdspContainerServices;
     }>;
@@ -40,15 +46,13 @@ export interface OdspClientProps {
 // @alpha
 export interface OdspConnectionConfig {
     driveId: string;
-    folderPath: string;
     siteUrl: string;
-    tokenProvider: ITokenProvider;
+    tokenProvider: IOdspTokenProvider;
 }
 
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
-    tenantAttributes: () => Promise<OdspServiceAttributes>;
 }
 
 // @alpha
@@ -57,12 +61,6 @@ export interface OdspMember extends IMember {
     email: string;
     // (undocumented)
     name: string;
-}
-
-// @alpha
-export interface OdspServiceAttributes {
-    driveId: string;
-    itemId: string;
 }
 
 // (No @packageDocumentation comment for this package)

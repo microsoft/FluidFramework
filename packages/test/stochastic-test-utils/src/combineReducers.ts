@@ -6,6 +6,9 @@
 import { assert } from "@fluidframework/core-utils";
 import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types";
 
+/**
+ * @internal
+ */
 export function combineReducers<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
@@ -23,6 +26,9 @@ export function combineReducers<
 	};
 }
 
+/**
+ * @internal
+ */
 export function combineReducersAsync<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,

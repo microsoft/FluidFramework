@@ -12,7 +12,7 @@ import {
 	assertPlainNumberIntervals,
 	createTestInterval,
 	generateRandomIntervals,
-} from "./intervalIndexUtils";
+} from "./intervalIndexTestUtils";
 
 class TestStartpointInRangeIndex implements IStartpointInRangeIndex<Interval> {
 	private readonly intervals: Interval[];

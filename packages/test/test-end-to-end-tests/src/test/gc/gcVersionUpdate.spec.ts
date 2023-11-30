@@ -13,7 +13,6 @@ import {
 	gcTreeKey,
 	IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -114,10 +113,10 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	 * running different GC versions.
 	 */
 	async function setupGCVersionUpdateInMetadata(container: IContainer, gcVersionDiff: number) {
-		const ds = await requestFluidObject<ITestFluidObject>(container, "default");
+		const summarizer = await container.getEntryPoint();
 
 		// Override the getMetadata function in GarbageCollector to update the gcFeature property.
-		const containerRuntime = ds.context.containerRuntime as IContainerRuntimeWithPrivates;
+		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
 		let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;
 		const getMetadataOverride = () => {
 			getMetadataFunc = getMetadataFunc.bind(containerRuntime.garbageCollector);
@@ -136,19 +135,18 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
-		const dataStore1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 		dataStore1Id = dataStore1.context.id;
 
 		// Create couple more data stores and mark them as referenced.
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type),
-			"",
-		);
+		const containerRuntime = dataStore1.context.containerRuntime;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore2", dataStore2.handle);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type),
-			"",
-		);
+		const dataStore3 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore3", dataStore3.handle);
 		dataStore2Id = dataStore2.context.id;
 		dataStore3Id = dataStore3.context.id;

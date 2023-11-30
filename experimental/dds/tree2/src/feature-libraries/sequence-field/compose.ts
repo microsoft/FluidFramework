@@ -4,14 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import {
-	CrossFieldManager,
-	CrossFieldTarget,
-	getIntention,
+	ChangeAtomId,
+	makeAnonChange,
 	RevisionMetadataSource,
-} from "../modular-schema";
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+} from "../../core";
+import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
+import { CrossFieldManager, CrossFieldTarget, getIntention } from "../modular-schema";
 import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -22,8 +24,8 @@ import {
 	MoveEffectTable,
 	getModifyAfter,
 	MoveEffect,
-	isMoveDestination,
-	isMoveSource,
+	isMoveIn,
+	isMoveOut,
 } from "./moveEffectTable";
 import {
 	getInputLength,
@@ -168,11 +170,8 @@ function composeMarks<TNodeChange>(
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
-			if (
-				isMoveDestination(newAttachAndDetach.attach) &&
-				isMoveSource(newAttachAndDetach.detach)
-			) {
-				assert(isMoveSource(baseMark), 0x808 /* Unexpected mark type */);
+			if (isMoveIn(newAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
+				assert(isMoveOut(baseMark), 0x808 /* Unexpected mark type */);
 
 				// The base changeset and new changeset both move these nodes.
 				// Call the original position of the nodes A, the position after the base changeset is applied B,
@@ -237,11 +236,8 @@ function composeMarks<TNodeChange>(
 	if (isCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (
-				isMoveDestination(baseAttachAndDetach.attach) &&
-				isMoveSource(baseAttachAndDetach.detach)
-			) {
-				assert(isMoveDestination(newMark), 0x809 /* Unexpected mark type */);
+			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
+				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -290,7 +286,7 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		if (isMoveDestination(baseMark) && nodeChange !== undefined) {
+		if (isMoveIn(baseMark) && nodeChange !== undefined) {
 			setModifyAfter(moveEffects, getEndpoint(baseMark, undefined), nodeChange, composeChild);
 			return baseMark;
 		}
@@ -303,13 +299,13 @@ function composeMarks<TNodeChange>(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
 
-		if (isMoveDestination(attach) && nodeChange !== undefined) {
+		if (isMoveIn(attach) && nodeChange !== undefined) {
 			setModifyAfter(moveEffects, getEndpoint(attach, undefined), nodeChange, composeChild);
 
 			localNodeChange = undefined;
 		}
 
-		if (isMoveDestination(attach) && isMoveSource(detach)) {
+		if (isMoveIn(attach) && isMoveOut(detach)) {
 			const finalSource = getEndpoint(attach, undefined);
 			const finalDest = getEndpoint(detach, newRev);
 
@@ -337,7 +333,10 @@ function composeMarks<TNodeChange>(
 
 		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
-			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
+			return withNodeChange(
+				{ count: baseMark.count, cellId: baseMark.cellId },
+				localNodeChange,
+			);
 		}
 		return normalizeCellRename(
 			{
@@ -689,7 +688,7 @@ function compareCellPositions(
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
 	}
 
-	const cmp = compareLineages(baseCellId.lineage, newCellId.lineage);
+	const cmp = compareLineages(baseCellId, newCellId, metadata);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
 	}

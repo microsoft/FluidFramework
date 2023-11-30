@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeNodeSchemaIdentifier } from "../../core";
-import { mapFieldsChanges, mapTreeFromCursor, cursorForMapTreeNode } from "../../feature-libraries";
+import { mapTreeFromCursor, cursorForMapTreeNode, mapRootChanges } from "../../feature-libraries";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -34,23 +34,26 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const input: Delta.Root = new Map<FieldKey, Delta.FieldChanges>([
-				[
-					fooField,
-					{
-						build: [{ id: detachId, trees: [nodeXCursor] }],
-						local: [
-							{
-								count: 1,
-								fields: nestedCursorInsert,
-							},
-						],
-						global: [{ id: detachId, fields: nestedCursorInsert }],
-					},
-				],
-			]);
+			const input: Delta.Root = {
+				build: [{ id: detachId, trees: [nodeXCursor] }],
+				fields: new Map<FieldKey, Delta.FieldChanges>([
+					[
+						fooField,
+						{
+							build: [{ id: detachId, trees: [nodeXCursor] }],
+							local: [
+								{
+									count: 1,
+									fields: nestedCursorInsert,
+								},
+							],
+							global: [{ id: detachId, fields: nestedCursorInsert }],
+						},
+					],
+				]),
+			};
 			deepFreeze(input);
-			const actual = mapFieldsChanges(input, mapTreeFromCursor);
+			const actual = mapRootChanges(input, mapTreeFromCursor);
 			const nestedMapTreeInsert = new Map<FieldKey, Delta.FieldChanges<MapTree>>([
 				[
 					fooField,
@@ -66,21 +69,24 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const expected: Delta.Root<MapTree> = new Map<FieldKey, Delta.FieldChanges<MapTree>>([
-				[
-					fooField,
-					{
-						build: [{ id: detachId, trees: [nodeX] }],
-						local: [
-							{
-								count: 1,
-								fields: nestedMapTreeInsert,
-							},
-						],
-						global: [{ id: detachId, fields: nestedMapTreeInsert }],
-					},
-				],
-			]);
+			const expected: Delta.Root<MapTree> = {
+				build: [{ id: detachId, trees: [nodeX] }],
+				fields: new Map<FieldKey, Delta.FieldChanges<MapTree>>([
+					[
+						fooField,
+						{
+							build: [{ id: detachId, trees: [nodeX] }],
+							local: [
+								{
+									count: 1,
+									fields: nestedMapTreeInsert,
+								},
+							],
+							global: [{ id: detachId, fields: nestedMapTreeInsert }],
+						},
+					],
+				]),
+			};
 			deepFreeze(expected);
 			assert.deepEqual(actual, expected);
 		});
