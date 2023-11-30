@@ -54,7 +54,7 @@ import {
 	addRevision,
 	normalizeCellRename,
 	asAttachAndDetach,
-	isCellRename,
+	isImpactfulCellRename,
 	settleMark,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -170,7 +170,7 @@ function composeMarks<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
-	if (isCellRename(newMark)) {
+	if (isImpactfulCellRename(newMark, newRev, revisionMetadata)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
@@ -205,7 +205,7 @@ function composeMarks<TNodeChange>(
 			);
 		}
 
-		if (isCellRename(baseMark)) {
+		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach, newRev, revisionMetadata);
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
@@ -237,7 +237,7 @@ function composeMarks<TNodeChange>(
 
 		return withRevision(normalizeCellRename(newAttachAndDetach, nodeChange), newRev);
 	}
-	if (isCellRename(baseMark)) {
+	if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
 			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {

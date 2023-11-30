@@ -311,8 +311,15 @@ export function isDetachOfRemovedNodes(
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function isCellRename(mark: Mark<unknown>): mark is CellMark<CellRename, unknown> {
-	return isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark);
+export function isImpactfulCellRename(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): mark is CellMark<CellRename, unknown> {
+	return (
+		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
+		isImpactful(mark, revision, revisionMetadata)
+	);
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
