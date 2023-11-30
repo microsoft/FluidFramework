@@ -45,9 +45,9 @@ export class UnreferencedStateTracker {
 		private readonly inactiveTimeoutMs: number,
 		/** The current reference timestamp used to track how long this node has been unreferenced for. */
 		currentReferenceTimestampMs: number,
+		//* add tombstoneSweepDelayMs
 		/** The time after which node transitions to SweepReady state; undefined if session expiry is disabled. */
 		private readonly sweepTimeoutMs: number | undefined, //* Rename to tombstoneTimeoutMs
-		//* add tombstoneSweepDelayMs
 	) {
 		if (this.sweepTimeoutMs !== undefined) {
 			assert(

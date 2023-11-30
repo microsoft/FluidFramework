@@ -82,6 +82,7 @@ describe("GC Telemetry Tracker", () => {
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+			tombstoneSweepDelayMs: 0,
 			tombstoneEnforcementAllowed: false,
 			throwOnTombstoneLoad: false,
 			throwOnTombstoneUsage: false,

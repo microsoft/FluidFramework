@@ -35,6 +35,7 @@ import {
 	runGCKey,
 	runSweepKey,
 	defaultInactiveTimeoutMs,
+	defaultTombstoneSweepDelayMs,
 	gcTestModeKey,
 	nextGCVersion,
 	stableGCVersion,
@@ -824,6 +825,28 @@ describe("Garbage Collection configurations", () => {
 					(e: IErrorBase) => e.errorType === "usageError",
 					"inactiveTimeout must not be greater than sweepTimeout",
 				);
+			});
+		});
+		describe("tombstoneSweepDelayMs", () => {
+			const testCases: {
+				option: number | undefined;
+				expectedResult: number;
+			}[] = [
+				{ option: 123, expectedResult: 123 },
+				{ option: 0, expectedResult: 0 },
+				{ option: -1, expectedResult: 0 },
+				{ option: undefined, expectedResult: defaultTombstoneSweepDelayMs },
+			];
+			testCases.forEach((testCase) => {
+				it(`Test Case ${JSON.stringify(testCase)}`, () => {
+					gc = createGcWithPrivateMembers(
+						{} /* metadata */,
+						{
+							tombstoneSweepDelayMs: testCase.option,
+						},
+					);
+					assert.equal(gc.configs.tombstoneSweepDelayMs, testCase.expectedResult);
+				});
 			});
 		});
 		describe("testMode", () => {
