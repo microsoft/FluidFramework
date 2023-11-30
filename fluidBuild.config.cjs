@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "lint:release-tags"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -71,7 +71,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"lint:release-tags": ["tsc"],
+		"check:release-tags": ["tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
