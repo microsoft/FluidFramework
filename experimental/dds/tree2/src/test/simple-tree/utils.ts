@@ -9,7 +9,7 @@ import {
 	TreeSchema,
 	SchemaAware,
 } from "../../feature-libraries";
-import { TreeField, InsertableTreeRoot } from "../../simple-tree";
+import { InsertableTreeRoot, TreeFieldInner } from "../../simple-tree";
 import { treeViewWithContent } from "../utils";
 import { SchemaBuilder } from "../../domains";
 
@@ -24,31 +24,18 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 	const root = fn(builder);
 	return builder.intoSchema(root);
 }
-/**
- * @deprecated Write a normal `it` test. Doing so allows:
- * 1. Selecting between viewWithContent and {@link readonlyTreeWithContent} or some other setup.
- * 2. Navigate to test source and similar tools and IDE integration to work.
- * 3. Use of `it.only` and `it.skip`.
- * 4. Easier understanding of what is a test for new people looking at the test files.
- * 5. Consistent test patterns for users of APIs other than context.root.
- * 6. Ability to write async tests.
- */
-
-export function itWithRoot<TRoot extends TreeFieldSchema>(
-	title: string,
+export function getRoot<TRoot extends TreeFieldSchema>(
 	schema: TreeSchema<TRoot>,
 	initialTree: InsertableTreeRoot<TreeSchema<TRoot>>,
-	fn: (root: TreeField<(typeof schema)["rootFieldSchema"]>) => void,
-): void {
-	it(title, () => {
-		const view = treeViewWithContent({
-			schema,
-			initialTree: initialTree as SchemaAware.TypedField<TRoot>,
-		});
-		const root = view.root;
-		fn(root);
+): TreeFieldInner<TRoot["kind"], TRoot["allowedTypes"], "maybeEmpty"> {
+	const view = treeViewWithContent({
+		schema,
+		initialTree: initialTree as SchemaAware.TypedField<TRoot>,
 	});
+
+	return view.root;
 }
+
 /**
  * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
  */
