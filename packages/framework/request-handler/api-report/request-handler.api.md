@@ -4,11 +4,7 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
