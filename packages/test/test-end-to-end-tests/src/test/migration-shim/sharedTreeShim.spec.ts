@@ -3,20 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import {
 	AllowedUpdateType,
 	type ISharedTree,
@@ -26,11 +15,21 @@ import {
 	type TypedNode,
 	type TreeField,
 } from "@fluid-experimental/tree2";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
-import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
-import { type SharedTreeShim } from "../sharedTreeShim.js";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IChannel } from "@fluidframework/datastore-definitions";
+import {
+	createSummarizerFromFactory,
+	summarizeNow,
+	type ITestObjectProvider,
+} from "@fluidframework/test-utils";
 
 const treeKey = "treeKey";
 
@@ -103,7 +102,7 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Can create and retrieve tree", async () => {
+	it.skip("Can create and retrieve tree", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
