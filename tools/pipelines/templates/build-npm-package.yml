@@ -240,7 +240,6 @@ extends:
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
-                      nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                       interdependencyRange='${{ parameters.interdependencyRange }}'
                       packageTypesOverride='${{ parameters.packageTypesOverride }}'
 
@@ -249,7 +248,6 @@ extends:
                       componentDetection=${{ variables.componentDetection }}
                       publish=${{ variables.publish }}
                       canRelease=${{ variables.canRelease }}
-                      publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
                       pnpmStorePath=${{ variables.pnpmStorePath }}
 
                       release=$(release)"
@@ -387,23 +385,12 @@ extends:
                     displayName: npm pack
                     env:
                       PACKAGE_MANAGER: '${{ parameters.packageManager }}'
-                      PUBLISH_NON_SCOPED: '${{ variables.publishNonScopedPackages }}'
                       RELEASE_GROUP: '${{ parameters.tagName }}'
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
                       targetType: filePath
                       workingDirectory: '${{ parameters.buildDirectory }}'
                       filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
-                  - ${{ if eq(variables.publishNonScopedPackages, true) }}:
-                      - ${{ each parameter in parameters.nonScopedPackages }}:
-                          - task: Bash@3
-                            displayName: 'Move Non-Scoped Package ${{parameter}}'
-                            inputs:
-                              targetType: inline
-                              workingDirectory: '${{ parameters.buildDirectory }}'
-                              script: |
-                                mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -574,34 +561,29 @@ extends:
       - ${{ if eq(variables.publish, true) }}:
           - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
             parameters:
-              namespace: '${{ parameters.namespace }}'
               tagName: '${{ parameters.tagName }}'
               isReleaseGroup: '${{ parameters.isReleaseGroup }}'
-              publishNonScopedPackages: '${{ variables.publishNonScopedPackages }}'
               publishOverride: '${{ parameters.publishOverride }}'
               releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
               buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
               nonScopedPackages: '${{ parameters.nonScopedPackages }}'
 
       # Capture per-pipeline stage results
-      - stage: upload_run_telemetry
-        displayName: Upload pipeline run telemetry to Kusto
-        condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
-        dependsOn:
-          - build
-        jobs:
-          - job: upload_run_telemetry
-            displayName: Upload pipeline run telemetry to Kusto
-            pool: Small-1ES
-            variables:
+      # Capture pipeline stage results
+      - ${{ if eq(parameters.telemetry, true) }}:
+        - stage: upload_run_telemetry
+          displayName: Upload pipeline run telemetry to Kusto
+          condition: succeededOrFailed()
+          dependsOn:
+            - build
+          jobs:
+            - job: upload_run_telemetry
+              displayName: Upload pipeline run telemetry to Kusto
+              pool: Small
+              variables:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
-            steps:
+              steps:
               - template: /tools/pipelines/templates/1ES/include-telemetry-setup.yml@self
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)

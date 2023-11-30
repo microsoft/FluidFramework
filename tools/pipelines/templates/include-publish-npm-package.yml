@@ -59,13 +59,11 @@ stages:
     jobs:
     - template: include-publish-npm-package-deployment.yml
       parameters:
-        namespace: ${{ parameters.namespace }}
         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
         feedKind: internal-dev
         # Environment should match the condition for publish_npm_internal_build
         environment: package-build-feed
         pool: ${{ parameters.pool }}
-        publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.

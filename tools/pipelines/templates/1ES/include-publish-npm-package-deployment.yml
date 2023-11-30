@@ -4,9 +4,6 @@
 # include-publish-npm-package-deployment
 
 parameters:
-- name: namespace
-  type: boolean
-
 - name: feedKind
   type: string
 
@@ -15,10 +12,6 @@ parameters:
 
 - name: environment
   type: string
-
-- name: publishNonScopedPackages
-  type: boolean
-  default: false
 
 - name: pool
   type: object
@@ -55,21 +48,11 @@ jobs:
           - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
           - template: /tools/pipelines/templates/1ES/include-publish-npm-package-steps.yml@self
             parameters:
-              namespace: ${{ parameters.namespace }}
               artifactPath: scoped
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
-            - template: /tools/pipelines/templates/1ES/include-publish-npm-package-steps.yml@self
-              parameters:
-                namespace: false
-                artifactPath: non-scoped
-                feedUrl: ${{ parameters.feedUrl }}
-                feedKind: ${{ parameters.feedKind }}
-                customEndPoint: ${{ parameters.customEndPoint }}
-                publishFlags: ${{ parameters.publishFlags }}
-          - template: /tools/pipelines/templates/1ES/include-git-tag-steps.yml@self
+          - template: include-git-tag-steps.yml
             parameters:
               tagName: ${{ parameters.tagName }}
