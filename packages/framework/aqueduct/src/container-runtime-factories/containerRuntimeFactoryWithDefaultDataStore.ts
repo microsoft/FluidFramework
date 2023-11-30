@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
@@ -11,8 +11,8 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
@@ -58,13 +58,16 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
-		const getDefaultObject = async (
-			req: IRequest,
-			runtime: IContainerRuntime,
-		): Promise<IResponse> => {
-			return req.url === "" || req.url === "/" || req.url.startsWith("/?")
-				? { mimeType: "fluid/object", status: 200, value: await provideEntryPoint(runtime) }
-				: create404Response(req);
+		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+			const parser = RequestParser.create(request);
+			if (parser.pathParts.length === 0) {
+				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
+				return (runtime as ContainerRuntime).resolveHandle({
+					url: `/${defaultDataStoreId}${parser.query}`,
+					headers: request.headers,
+				});
+			}
+			return undefined; // continue search
 		};
 
 		super({

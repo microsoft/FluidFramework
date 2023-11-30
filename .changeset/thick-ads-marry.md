@@ -15,6 +15,7 @@ The following `requestHandler` utilities have been removed:
 -   `createFluidObjectResponse`
 -   `rootDataStoreRequestHandler`
 -   `handleFromLegacyUri`
+-   `RuntimeRequestHandlerBuilder`
 
 Please migrate all usage to the new `entryPoint` pattern.
 

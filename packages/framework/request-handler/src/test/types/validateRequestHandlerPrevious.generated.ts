@@ -48,26 +48,14 @@ use_old_TypeAliasDeclaration_RuntimeRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
+* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RuntimeRequestHandlerBuilder():
-    TypeOnly<old.RuntimeRequestHandlerBuilder>;
-declare function use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<current.RuntimeRequestHandlerBuilder>): void;
-use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    get_old_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
+* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RuntimeRequestHandlerBuilder():
-    TypeOnly<current.RuntimeRequestHandlerBuilder>;
-declare function use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<old.RuntimeRequestHandlerBuilder>): void;
-use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    get_current_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
 /*
 * Validate forward compat by using old type in place of current type

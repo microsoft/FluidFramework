@@ -118,7 +118,7 @@ const entryPoint = await container.getEntryPoint();
 | `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 <!-- prettier-ignore-end -->
 
-The removal of the following items will need to wait for the LTS version of the `Loader` to reach "2.0.0-internal.7.0.0":
+The removal of some items will need to wait for the LTS version of the `Loader` to reach "2.0.0-internal.7.0.0". This is because old `Loader` or `Container` code doesn't know about the new `entryPoint` pattern and will still attempt to use the `request` pattern. The following items are affected:
 
 -   `requestHandler` property in `ContainerRuntime.loadRuntime(...)`, `BaseContainerRuntimeFactory`, `ContainerRuntimeFactoryWithDefaultDataStore`, `mixinAttributor`, `RuntimeFactory`, `TestContainerRuntimeFactory`
 -   `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`

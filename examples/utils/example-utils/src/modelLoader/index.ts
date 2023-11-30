@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
+export { IDetachedModel, IModelLoader } from "./interfaces";
 export {
 	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,

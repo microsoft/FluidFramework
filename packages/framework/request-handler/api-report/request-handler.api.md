@@ -9,19 +9,11 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public @deprecated
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
-
-// @public @deprecated
-export class RuntimeRequestHandlerBuilder {
-    // (undocumented)
-    handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse>;
-    // (undocumented)
-    pushHandler(...handlers: RuntimeRequestHandler[]): void;
-}
 
 // (No @packageDocumentation comment for this package)
 

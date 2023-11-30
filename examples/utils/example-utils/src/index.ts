@@ -40,7 +40,6 @@ export {
 	IModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
-	ModelMakerCallback,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,

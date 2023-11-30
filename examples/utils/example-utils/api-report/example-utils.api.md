@@ -246,9 +246,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 }
 
 // @public
-export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
-
-// @public
 export type SameContainerMigrationState = "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "uploadingV2Summary" | "submittingV2Summary" | "migrated";
 
 // @public (undocumented)

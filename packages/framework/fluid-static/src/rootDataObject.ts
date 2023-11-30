@@ -8,10 +8,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ContainerSchema,
 	DataObjectClass,
@@ -183,13 +184,16 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			}
 			return entryPoint.get();
 		};
-		const getDefaultObject = async (
-			req: IRequest,
-			runtime: IContainerRuntime,
-		): Promise<IResponse> => {
-			return req.url === "" || req.url === "/" || req.url.startsWith("/?")
-				? { mimeType: "fluid/object", status: 200, value: await provideEntryPoint(runtime) }
-				: create404Response(req);
+		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+			const parser = RequestParser.create(request);
+			if (parser.pathParts.length === 0) {
+				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
+				return (runtime as ContainerRuntime).resolveHandle({
+					url: `/${rootDataStoreId}${parser.query}`,
+					headers: request.headers,
+				});
+			}
+			return undefined; // continue search
 		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],

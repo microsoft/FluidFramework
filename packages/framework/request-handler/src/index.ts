@@ -4,7 +4,4 @@
  */
 
 export { RuntimeRequestHandler } from "./requestHandlers";
-export {
-	buildRuntimeRequestHandler,
-	RuntimeRequestHandlerBuilder,
-} from "./runtimeRequestHandlerBuilder";
+export { buildRuntimeRequestHandler } from "./runtimeRequestHandlerBuilder";

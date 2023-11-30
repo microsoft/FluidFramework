@@ -10,11 +10,11 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
  * Create a container runtime factory class that allows you to set runtime options
@@ -67,17 +67,16 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return entryPoint.get();
 			};
-			const getDefaultObject = async (
-				req: IRequest,
-				runtime: IContainerRuntime,
-			): Promise<IResponse> => {
-				return req.url === "" || req.url === "/" || req.url.startsWith("/?")
-					? {
-							mimeType: "fluid/object",
-							status: 200,
-							value: await provideEntryPoint(runtime),
-					  }
-					: create404Response(req);
+			const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+				const parser = RequestParser.create(request);
+				if (parser.pathParts.length === 0) {
+					// This cast is safe as ContainerRuntime.loadRuntime is called below
+					return (runtime as ContainerRuntime).resolveHandle({
+						url: `/default${parser.query}`,
+						headers: request.headers,
+					});
+				}
+				return undefined; // continue search
 			};
 			return containerRuntimeCtor.loadRuntime({
 				context,
