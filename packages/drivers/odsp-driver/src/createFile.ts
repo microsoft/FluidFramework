@@ -13,7 +13,6 @@ import {
 	OdspErrorType,
 	ShareLinkInfoType,
 	ISharingLinkKind,
-	ShareLinkTypes,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -60,7 +59,6 @@ export async function createNewFluidFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -99,7 +97,6 @@ export async function createNewFluidFile(
 			newFileInfo.createLinkType,
 			content,
 			enableSingleRequestForShareLinkWithCreate,
-			enableShareLinkWithCreate,
 		);
 	}
 
@@ -138,10 +135,9 @@ export async function createNewFluidFile(
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
-	requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
+	requestedSharingLinkKind: ISharingLinkKind | undefined,
 	response: ICreateFileResponse,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
 	if (!requestedSharingLinkKind) {
 		return;
@@ -154,7 +150,6 @@ function extractShareLinkData(
 		}
 		shareLinkInfo = {
 			createLink: {
-				type: requestedSharingLinkKind,
 				link: sharing.sharingLink
 					? {
 							scope: sharing.sharingLink.scope,
@@ -165,19 +160,6 @@ function extractShareLinkData(
 					: undefined,
 				error: sharing.error,
 				shareId: sharing.shareId,
-			},
-		};
-	} else if (enableShareLinkWithCreate) {
-		const { sharing, sharingLink, sharingLinkErrorReason } = response;
-		if (!sharingLink && !sharingLinkErrorReason) {
-			return;
-		}
-		shareLinkInfo = {
-			createLink: {
-				type: requestedSharingLinkKind,
-				link: sharingLink,
-				error: sharingLinkErrorReason,
-				shareId: sharing?.shareId,
 			},
 		};
 	}

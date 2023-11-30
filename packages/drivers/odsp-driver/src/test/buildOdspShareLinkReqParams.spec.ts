@@ -28,11 +28,6 @@ describe("buildOdspShareLinkReqParams", () => {
 		);
 	});
 
-	it("Should return appropriate query parameters when a ShareLinkTypes enum value is provided", async () => {
-		const result = buildOdspShareLinkReqParams(ShareLinkTypes.csl);
-		assert.strictEqual(result, `createLinkType=${ShareLinkTypes.csl}`);
-	});
-
 	it("Should return undefined when the input is undefined", async () => {
 		const result = buildOdspShareLinkReqParams(undefined);
 		assert.strictEqual(result, undefined);

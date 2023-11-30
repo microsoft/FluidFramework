@@ -15,15 +15,6 @@ export interface IOdspUrlParts {
 }
 
 /**
- * @deprecated Use ISharingLinkKind type instead.
- * Type of shareLink requested/created when creating the file for the first time.
- * @alpha
- */
-export enum ShareLinkTypes {
-	csl = "csl",
-}
-
-/**
  * Sharing scope of the share links created for a file.
  * @alpha
  */
@@ -76,22 +67,15 @@ export interface ShareLinkInfoType {
 	 * We create a new file in ODSP with the /snapshot api call. Applications then need to make a separate apis call to
 	 * create a sharing link for that file. To reduce the number of network calls, ODSP now provides a feature
 	 * where we can create a share link along with creating a file by passing a query parameter called
-	 * createShareLink (deprecated) or createLinkScope and createLinkRole. createLink object below saves the information
+	 * createLinkScope and createLinkRole. createLink object below saves the information
 	 * from the /snapshot api response.
 	 */
 	createLink?: {
-		/**
-		 * @deprecated
-		 * Type of shareLink requested/created when creating the file for the first time. The 'type' property here
-		 * represents the type of sharing link requested.
-		 * Will be deprecated soon. Type of sharing link will be present in the link:ISharingLink property below.
-		 */
-		type?: ShareLinkTypes | ISharingLinkKind;
 
 		/**
 		 * Share link created when the file is created for the first time with /snapshot api call.
 		 */
-		link?: string | ISharingLink;
+		link?: ISharingLink;
 
 		/**
 		 * Error message if creation of sharing link fails with /snapshot api call
