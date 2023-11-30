@@ -1924,7 +1924,7 @@ export interface TreeAdapter {
 
 // @alpha
 export interface TreeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is TSchema extends TreeNodeSchema<string, NodeKind, unknown, infer T> ? T : never;
+    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: NodeBase): string | number;
     on<K extends keyof TreeNodeEvents>(node: NodeBase, eventName: K, listener: TreeNodeEvents[K]): () => void;
     parent(node: NodeBase): NodeBase | undefined;
