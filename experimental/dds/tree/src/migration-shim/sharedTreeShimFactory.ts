@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from '@fluidframework/core-utils';
 import {
 	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type IChannelServices,
 	type IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+} from '@fluidframework/datastore-definitions';
 
-import { type SharedTreeFactory } from "@fluid-experimental/tree2";
-import { SharedTreeShim } from "./sharedTreeShim.js";
-import { attributesMatch } from "./utils.js";
+import { type SharedTreeFactory } from '@fluid-experimental/tree2';
+import { SharedTreeShim } from './sharedTreeShim.js';
+import { attributesMatch } from './utils.js';
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedTreeShim}.
@@ -60,13 +60,10 @@ export class SharedTreeShimFactory implements IChannelFactory {
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
-		attributes: IChannelAttributes,
+		attributes: IChannelAttributes
 	): Promise<SharedTreeShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a SharedTreeShimFactory and checking its attributes/type matches the oldFactory.
-		assert(
-			attributesMatch(attributes, this.factory.attributes),
-			0x7ef /* Attributes do not match */,
-		);
+		assert(attributesMatch(attributes, this.factory.attributes), 0x7ef /* Attributes do not match */);
 		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);
 		await sharedTreeShim.load(services);
 		return sharedTreeShim;
