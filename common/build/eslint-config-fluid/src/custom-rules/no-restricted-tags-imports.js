@@ -135,6 +135,7 @@ module.exports = {
 						const importedFile = project.addSourceFileAtPath(importedFilePath);
 						const declaration = importedFile.getFunction(importedName);
 						if (declaration) {
+							// Extract comments associated with the imported item.
 							const jsDocs = declaration.getJsDocs();
 							jsDocs.forEach((doc) => {
 								const docTags = doc.getTags().map((docTag) => {
@@ -143,10 +144,11 @@ module.exports = {
 								docTags.forEach((tag) => {
 									// Check if the tag is restricted
 									if (restrictedTags.has(tag)) {
+										// Check for any exceptions that allow the use of this tag
 										if (exceptions[tag] && exceptions[tag].has(importSource)) {
-											return; // This import is an exception, so it's allowed
+											return;
 										}
-										// The imported item has a restricted tag, throw an error.
+										// Report a violation if a restricted tag is used without an exception
 										context.report({
 											node: specifier,
 											message: `Importing ${tag} tagged items is not allowed: ${importedName}`,
