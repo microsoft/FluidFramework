@@ -20,6 +20,8 @@ import {
 	makeDetachedFieldIndex,
 	Revertible,
 	ChangeFamily,
+	ITreeCursor,
+	JsonableTree,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -29,6 +31,7 @@ import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
 	intoDelta,
+	jsonableTreeFromCursor,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
@@ -141,6 +144,15 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
+	 * This list is guaranteed to contain nodes that are recoverable through undo/redo on this checkout.
+	 * The list may also contain additional nodes.
+	 *
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
+	 */
+	getRemovedJsonableTrees(): [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -367,6 +379,30 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public dispose(): void {
 		this.branch.dispose();
+	}
+
+	public getRemovedJsonableTrees(): [string | number | undefined, number, JsonableTree][] {
+		return this.getRemovedTrees(jsonableTreeFromCursor);
+	}
+
+	private getRemovedTrees<TTree>(
+		contentReader: (cursor: ITreeCursor) => TTree,
+	): [string | number | undefined, number, TTree][] {
+		const trees: [string | number | undefined, number, TTree][] = [];
+		const cursor = this.forest.allocateCursor();
+		for (const { id, root } of this.removedTrees.entries()) {
+			const parentField = this.removedTrees.toFieldKey(root);
+			this.forest.moveCursorToPath(
+				{ parent: undefined, parentField, parentIndex: 0 },
+				cursor,
+			);
+			const tree = contentReader(cursor);
+			if (tree !== undefined) {
+				trees.push([id.major, id.minor, tree]);
+			}
+		}
+		cursor.free();
+		return trees;
 	}
 }
 

@@ -525,10 +525,6 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	}
 }
 
-export function noRepair(): Delta.ProtoNode[] {
-	assert.fail("Unexpected request for repair data");
-}
-
 export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
@@ -580,8 +576,16 @@ export function validateViewConsistency(
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	validateSnapshotConsistency(
-		{ tree: toJsonableTree(treeA), schema: treeA.storedSchema },
-		{ tree: toJsonableTree(treeB), schema: treeB.storedSchema },
+		{
+			tree: toJsonableTree(treeA),
+			schema: treeA.storedSchema,
+			removed: treeA.getRemovedJsonableTrees(),
+		},
+		{
+			tree: toJsonableTree(treeB),
+			schema: treeB.storedSchema,
+			removed: treeA.getRemovedJsonableTrees(),
+		},
 		idDifferentiator,
 	);
 }
@@ -594,7 +598,16 @@ export function validateSnapshotConsistency(
 	assert.deepEqual(
 		treeA.tree,
 		treeB.tree,
-		`Inconsistent json representation: ${idDifferentiator}`,
+		`Inconsistent document tree json representation: ${idDifferentiator}`,
+	);
+	// Note: removed trees are not currently GCed, which allows us to expect that all clients should share the same
+	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
+	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
+	// should be consistent about the content being stored (the third tuple entry).
+	assert.deepEqual(
+		treeA.removed,
+		treeB.removed,
+		`Inconsistent removed trees json representation: ${idDifferentiator}`,
 	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
