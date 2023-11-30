@@ -232,7 +232,7 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 					return {
 						name: `compat cross version - create with ${resolvedCreateVersion} + load with ${resolvedLoadVersion}`,
 						kind: CompatKind.CrossVersion,
-						// Note: `compatVersion` is used to determine what versions are needed to be installed.
+						// Note: `compatVersion` is used to determine what versions need to be installed.
 						// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
 						// installed, since we switch the create/load versions in the test permutations.
 						compatVersion: resolvedCreateVersion,
