@@ -17,7 +17,7 @@ export const position = sb.object("position", {
 });
 
 export const letter = sb.object("letter", {
-	position: position,
+	position,
 	character: sb.string,
 	id: sb.string,
 });
