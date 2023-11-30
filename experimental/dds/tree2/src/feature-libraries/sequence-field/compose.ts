@@ -53,6 +53,8 @@ import {
 	normalizeCellRename,
 	asAttachAndDetach,
 	isCellRename,
+	isImpactful,
+	omitMarkEffect,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -124,7 +126,7 @@ function composeMarkLists<TNodeChange>(
 			);
 			factory.push(baseMark);
 		} else if (baseMark === undefined) {
-			factory.push(composeMark(newMark, newRev, composeChild));
+			factory.push(composeMark(newMark, newRev, revisionMetadata, composeChild));
 		} else {
 			// Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
 			// start at the same location in the revision after the base changes.
@@ -272,7 +274,10 @@ function composeMarks<TNodeChange>(
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
 		if (isNoopMark(baseMark)) {
-			return withNodeChange(newMark, nodeChange);
+			return withNodeChange(
+				composeMark(newMark, newRev, revisionMetadata, () => nodeChange),
+				nodeChange,
+			);
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
@@ -403,12 +408,19 @@ function composeChildChanges<TNodeChange>(
 	}
 }
 
-function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
+function composeMark<TMark extends Mark<TNodeChange>, TNodeChange = unknown>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
 	composeChild: NodeChangeComposer<TNodeChange>,
-): TMark {
-	const cloned = cloneMark(mark);
+): TMark | CellMark<NoopMark, TNodeChange> {
+	const cloned: TMark | CellMark<NoopMark, TNodeChange> = isImpactful(
+		mark,
+		revision,
+		revisionMetadata,
+	)
+		? cloneMark(mark)
+		: omitMarkEffect(mark);
 	if (
 		cloned.cellId !== undefined &&
 		cloned.cellId.revision === undefined &&

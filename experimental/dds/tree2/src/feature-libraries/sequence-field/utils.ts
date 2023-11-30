@@ -1072,6 +1072,21 @@ export function extractMarkEffect<TEffect extends MarkEffect>(
 	return effect as unknown as TEffect;
 }
 
+// TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
+export function omitMarkEffect<TChildChange>(
+	mark: CellMark<unknown, TChildChange>,
+): CellMark<NoopMark, TChildChange> {
+	const { cellId, count, changes } = mark;
+	const noopMark: CellMark<NoopMark, TChildChange> = { count };
+	if (cellId !== undefined) {
+		noopMark.cellId = cellId;
+	}
+	if (changes !== undefined) {
+		noopMark.changes = changes;
+	}
+	return noopMark;
+}
+
 export function withNodeChange<
 	TMark extends CellMark<TKind, TNodeChange>,
 	TKind extends MarkEffect,

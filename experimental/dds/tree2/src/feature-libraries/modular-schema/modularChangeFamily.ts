@@ -169,7 +169,6 @@ export class ModularChangeFamily
 			crossFieldTable,
 			revisionMetadata,
 		);
-		const composedAndPrunedFields = this.pruneFieldMap(composedFields);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
@@ -223,7 +222,7 @@ export class ModularChangeFamily
 			}
 		}
 		return makeModularChangeset(
-			composedAndPrunedFields,
+			this.pruneFieldMap(composedFields),
 			idState.maxId,
 			revInfos,
 			undefined,
