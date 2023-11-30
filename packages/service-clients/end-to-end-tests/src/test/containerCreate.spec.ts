@@ -19,7 +19,10 @@ describe("Container create scenarios", () => {
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createOdspClient();
+		client = createOdspClient(
+			process.env.odsp__client__site__url as string,
+			process.env.odsp__client__drive__id as string,
+		);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,

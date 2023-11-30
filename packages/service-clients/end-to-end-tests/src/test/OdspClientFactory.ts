@@ -26,10 +26,10 @@ export interface OdspTestCredentials {
  * Default test credentials for odsp-client.
  */
 export const clientCreds: OdspTestCredentials = {
-	clientId: "process.env.client__id",
-	clientSecret: "process.env.client__secret",
-	username: "process.env.odsp__login__username",
-	password: "process.env.odsp__login__password",
+	clientId: "process.env.odsp__client__client__id",
+	clientSecret: "process.env.odsp__client__client__secret",
+	username: "process.env.odsp__client__login__username",
+	password: "process.env.odsp__client__login__password",
 };
 
 /**
@@ -37,17 +37,15 @@ export const clientCreds: OdspTestCredentials = {
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
+	siteUrl: string,
+	driveId: string,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
-	const siteUrl = process.env.odsp__siteUrl as string;
-
-	const driveId = process.env.odsp__driveId as string;
-
-	if (siteUrl === undefined) {
+	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
-	if (driveId === undefined) {
+	if (driveId === "" || driveId === undefined) {
 		throw new Error("RaaS drive id is missing");
 	}
 

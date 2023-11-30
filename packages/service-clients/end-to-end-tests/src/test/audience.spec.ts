@@ -25,7 +25,10 @@ describe("Fluid audience", () => {
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createOdspClient();
+		client = createOdspClient(
+			process.env.odsp__client__site__url as string,
+			process.env.odsp__client__drive__id as string,
+		);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -94,6 +97,8 @@ describe("Fluid audience", () => {
 
 		// TODO: pass siteUrl and driveID
 		const client2 = createOdspClient(
+			process.env.odsp__client2__site__url as string,
+			process.env.odsp__client2__drive__id as string,
 			undefined,
 			configProvider({
 				"Fluid.Container.ForceWriteConnection": true,
@@ -137,6 +142,8 @@ describe("Fluid audience", () => {
 
 		// pass client2 siteUrl and driveId
 		const client2 = createOdspClient(
+			process.env.odsp__client2__site__url as string,
+			process.env.odsp__client2__drive__id as string,
 			undefined,
 			configProvider({
 				"Fluid.Container.ForceWriteConnection": true,
