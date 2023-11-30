@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -125,7 +129,7 @@ const dataStoreFactory2 = new DataObjectFactory(
 	createDataStoreRuntime(),
 );
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+	(runtime as ContainerRuntime).resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerRuntimeBase,
@@ -472,7 +472,7 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],

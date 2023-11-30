@@ -749,7 +749,8 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 );
 
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+	// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
+	(runtime as ContainerRuntime).resolveHandle(request);
 
 export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({

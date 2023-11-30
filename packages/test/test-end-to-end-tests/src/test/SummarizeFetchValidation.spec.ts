@@ -73,7 +73,7 @@ const dataStoreFactory1 = new DataObjectFactory(
 	[],
 );
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+	(runtime as ContainerRuntime).resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],

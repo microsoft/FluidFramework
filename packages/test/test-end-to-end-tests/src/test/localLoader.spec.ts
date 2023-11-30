@@ -28,6 +28,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const counterKey = "count";
 
@@ -116,7 +117,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			(runtime as ContainerRuntime).resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
@@ -143,7 +144,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			(runtime as ContainerRuntime).resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],

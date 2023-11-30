@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/test-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";
@@ -69,7 +70,7 @@ describe("Logging Last Connection Mode ", () => {
 		);
 
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			(runtime as ContainerRuntime).resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],

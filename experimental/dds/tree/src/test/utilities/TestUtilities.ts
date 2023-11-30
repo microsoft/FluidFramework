@@ -8,7 +8,7 @@ import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
-import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
+import { SummaryCollection, DefaultSummaryConfiguration, ContainerRuntime } from '@fluidframework/container-runtime';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import {
 	MockContainerRuntimeFactory,
@@ -325,7 +325,8 @@ export async function setUpLocalServerTestSharedTree(
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		// This cast is safe as ContainerRuntime.loadRuntime is used in TestContainerRuntimeFactory
+		(runtime as ContainerRuntime).resolveHandle(request);
 
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(

@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerMessageType,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
@@ -63,7 +67,7 @@ describe("Ops on Reconnect", () => {
 		const defaultFactory = createDataStoreFactory("default", factory);
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			(runtime as ContainerRuntime).resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [

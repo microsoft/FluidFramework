@@ -21,6 +21,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const versionWithChunking = "0.56.0";
 
@@ -39,7 +40,7 @@ describeInstallVersions(
 	afterEach(async () => provider.reset());
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		(runtime as ContainerRuntime).resolveHandle(request);
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

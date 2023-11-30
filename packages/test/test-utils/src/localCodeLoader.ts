@@ -20,7 +20,7 @@ import {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 export type SupportedExportInterfaces = Partial<
 	IProvideRuntimeFactory &
@@ -67,7 +67,9 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					const innerRequestHandler = async (
 						request: IRequest,
 						runtime: IContainerRuntimeBase,
-					) => runtime.IFluidHandleContext.resolveHandle(request);
+					) =>
+						// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
+						(runtime as ContainerRuntime).resolveHandle(request);
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,

@@ -15,7 +15,6 @@ import {
 	IRequest,
 	IResponse,
 	FluidObject,
-	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -246,11 +245,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**

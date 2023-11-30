@@ -7,6 +7,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { assert } from "@fluidframework/core-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
+	ContainerRuntime,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -89,7 +90,8 @@ export async function createSummarizerFromFactory(
 	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
+		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
 		{

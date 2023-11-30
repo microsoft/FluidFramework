@@ -12,6 +12,7 @@ import {
 	IContainerRuntimeOptions,
 	SummaryCollection,
 	ISummaryConfiguration,
+	ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -60,7 +61,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		},
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{

@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -56,7 +60,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	};
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		(runtime as ContainerRuntime).resolveHandle(request);
 
 	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
