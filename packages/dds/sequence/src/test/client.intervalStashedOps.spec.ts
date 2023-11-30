@@ -14,9 +14,10 @@ import { IntervalOpType, SequenceInterval } from "../intervals";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IMapValueTypeOperation } from "../defaultMap";
 import { assertIntervals } from "./intervalUtils";
 
-describe.skip("Interval Stashed Ops on client ", () => {
+describe.only("Interval Stashed Ops on client ", () => {
 	const localUserLongId = "localUser";
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
@@ -41,65 +42,85 @@ describe.skip("Interval Stashed Ops on client ", () => {
 		sharedString.connect(services1);
 	});
 
-	describe("applyStashedOp", () => {
-		// might want to want to import/implement assertintervals
+	describe.only("applyStashedOp", () => {
 		let collection: IIntervalCollection<SequenceInterval>;
-		let id: string;
+		let intervalId: string;
+		const label = "test";
+		let startingInterval;
+		let startingIntervalWithProps;
 		beforeEach(() => {
 			sharedString.insertText(0, "hello world");
-			collection = sharedString.getIntervalCollection("test");
-			id = collection.add({ start: 0, end: 5, props: { a: 1 } }).getIntervalId();
+			collection = sharedString.getIntervalCollection(label);
+			startingInterval = { start: 0, end: 5 };
+			startingIntervalWithProps = { ...startingInterval, props: { a: 1 } };
+			intervalId = collection.add(startingInterval).getIntervalId();
 		});
 		it("for add interval", () => {
 			const interval = { start: 5, end: 10 };
-			const opArgs = {
-				type: IntervalOpType.ADD,
-				interval,
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.ADD,
+					value: interval,
+				},
 			};
 
 			const metadata = sharedString["applyStashedOp"](opArgs);
-			assertIntervals(sharedString, collection, [interval]);
+			assertIntervals(sharedString, collection, [startingInterval, interval]);
 		});
 		it("for delete interval", () => {
-			const opArgs = {
-				type: IntervalOpType.DELETE,
-				id,
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.DELETE,
+					value: { properties: { intervalId } },
+				},
 			};
 			const metadata = sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, []);
-			assert.equal(collection.getIntervalById(id), undefined);
+			assert.equal(collection.getIntervalById(intervalId), undefined);
 		});
 		it("for change interval", () => {
-			const interval = collection.getIntervalById(id);
-			const opArgs = {
-				type: IntervalOpType.CHANGE,
-				interval,
-				newInterval: { start: 5, end: 10 },
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: { start: 5, end: 10, properties: { intervalId } },
+				},
 			};
 			const metadata = sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 5, end: 10 }]);
 		});
 		it("for interval property change", () => {
-			const interval = collection.getIntervalById(id);
+			const interval = collection.getIntervalById(intervalId);
 			assert(interval !== undefined);
-			const opArgs = {
-				type: IntervalOpType.PROPERTY_CHANGED,
-				interval,
-				props: { a: 2 },
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.PROPERTY_CHANGED,
+					value: { properties: { intervalId, a: 2 } },
+				},
 			};
 			const metadata = sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
 		});
 		it("for string position remove", () => {
-			const opArgs = {
-				type: IntervalOpType.POSITION_REMOVE,
-				start: 1,
-				end: 5,
+			const opArgs: IMapValueTypeOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.POSITION_REMOVE,
+					value: { start: 1, end: 5, properties: { intervalId } },
+				},
 			};
 			const metadata = sharedString["applyStashedOp"](opArgs);
-			assert.equal(sharedString.getText(), "hworld");
-			assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+			assert.equal(sharedString.getText(), "h world");
+			assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
 		});
 	});
 });

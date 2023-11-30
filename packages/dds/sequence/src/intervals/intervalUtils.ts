@@ -93,33 +93,36 @@ export interface IIntervalOp {
 }
 
 export interface IIntervalAddMsg extends IIntervalOp {
-	type: typeof IntervalOpType.ADD;
-	interval: { start: SequencePlace; end: SequencePlace; props?: PropertySet };
+	opName: typeof IntervalOpType.ADD;
+	value: SerializedIntervalDelta;
 }
 
 export interface IIntervalRemoveMsg extends IIntervalOp {
-	type: typeof IntervalOpType.DELETE;
-	id: string;
+	opName: typeof IntervalOpType.DELETE;
+	value: SerializedIntervalDelta;
 }
 
 export interface IIntervalChangeMsg extends IIntervalOp {
-	type: typeof IntervalOpType.CHANGE;
-	id: string;
-	start: SequencePlace;
-	end: SequencePlace;
+	opName: typeof IntervalOpType.CHANGE;
+	value: SerializedIntervalDelta;
 }
 
 export interface IIntervalChangePropertiesMsg extends IIntervalOp {
-	type: typeof IntervalOpType.PROPERTY_CHANGED;
-	id: string;
-	props: PropertySet;
+	opName: typeof IntervalOpType.PROPERTY_CHANGED;
+	value: SerializedIntervalDelta;
 }
 
 export interface IIntervalPositionRemoveMsg extends IIntervalOp {
-	type: typeof IntervalOpType.POSITION_REMOVE;
-	start: number;
-	end: number;
+	opName: typeof IntervalOpType.POSITION_REMOVE;
+	value: SerializedIntervalDelta;
 }
+
+export type IIntervalDeltaOp =
+	| IIntervalAddMsg
+	| IIntervalRemoveMsg
+	| IIntervalChangeMsg
+	| IIntervalChangePropertiesMsg
+	| IIntervalPositionRemoveMsg;
 
 /**
  * @public

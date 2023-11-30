@@ -95,7 +95,7 @@ const testKey2 = "another test key";
 const testValue = "test value";
 const testIncrementValue = 5;
 const testStart = 0;
-const testEnd = 5;
+const testEnd = 3;
 
 type SharedObjCallback = (
 	container: IContainer,
@@ -209,7 +209,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeNoCompat.only("stashed ops", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -267,9 +267,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			counter.increment(testIncrementValue);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
-			const collection = (
-				await d.getSharedObject<SharedString>(stringId)
-			).getIntervalCollection(collectionId);
+			const string = await d.getSharedObject<SharedString>(stringId);
+			const collection = string.getIntervalCollection(collectionId);
 			collection.add({ start: testStart, end: testEnd });
 			// Submit a message with an unrecognized type
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
@@ -421,6 +420,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("doesn't resend successful op", async function () {
+		const id = collection1.add({ start: testStart, end: testEnd }).getIntervalId();
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
 			map.set(testKey, "something unimportant");
@@ -432,13 +432,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			directory.set(testKey, "I will be erased");
 			const string = await d.getSharedObject<SharedString>(stringId);
 			const collection = string.getIntervalCollection(collectionId);
-			collection.add({ start: testStart + 1, end: testEnd + 1 });
+			collection.removeIntervalById(id);
 		});
 
 		map1.set(testKey, testValue);
 		cell1.set(testValue);
 		counter1.increment(testIncrementValue);
 		directory1.set(testKey, testValue);
+		collection1.change(id, testStart + 1, testEnd + 1);
 		await provider.ensureSynchronized();
 
 		// load with pending ops, which it should not resend because they were already sent successfully

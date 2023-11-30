@@ -25,6 +25,7 @@ import {
 	IMapMessageLocalMetadata,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
+import { IIntervalDeltaOp } from "./intervals";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -308,7 +309,7 @@ export class DefaultMap<T> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op as IMapOperation);
 		}
-		throw new Error("no apply stashed op handler");
+		return op as IMapOperation;
 	}
 
 	/**
@@ -414,10 +415,7 @@ export class DefaultMap<T> {
 				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
 			},
 			getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
-				assert(
-					false,
-					0x016 /* "apply stashed op not implemented for custom value type ops" */,
-				);
+				return op.value as unknown as IIntervalDeltaOp;
 			},
 		});
 
