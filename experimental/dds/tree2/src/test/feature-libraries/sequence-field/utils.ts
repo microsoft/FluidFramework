@@ -27,10 +27,6 @@ import {
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
-export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
-	return compose(changes.map(makeAnonChange));
-}
-
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
@@ -44,10 +40,6 @@ export function compose(
 	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
-}
-
-export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
-	return shallowCompose(changes.map(makeAnonChange));
 }
 
 export function shallowCompose<T>(

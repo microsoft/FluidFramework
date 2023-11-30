@@ -8,17 +8,9 @@ import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	mintRevisionTag,
-	RevisionTag,
-	TreeNodeSchemaIdentifier,
-} from "../../../core";
+import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
-import { composeAnonChanges } from "./utils";
 
-const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;
@@ -38,10 +30,10 @@ export const cases: {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, brand(1)),
 	modify: SF.sequenceFieldEditor.buildChildChange(0, TestChange.mint([], 1)),
-	modify_insert: composeAnonChanges([
-		createInsertChangeset(1, 1, brand(1)),
-		createModifyChangeset(1, TestChange.mint([], 2)),
-	]),
+	modify_insert: [
+		createSkipMark(1),
+		createInsertMark(1, brand(1), { changes: TestChange.mint([], 2) }),
+	],
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
@@ -224,6 +216,23 @@ function createDeleteMark<TChange = never>(
  * Defines how later edits refer the emptied cells.
  * @param overrides - Any additional properties to add to the mark.
  */
+function createMoveMarks<TChange = never>(
+	count: number,
+	markId: ChangesetLocalId | ChangeAtomId,
+	overrides?: Partial<SF.CellMark<(SF.MoveOut & SF.MoveIn) | { changes?: TChange }, TChange>>,
+): [moveOut: SF.CellMark<SF.MoveOut, TChange>, moveIn: SF.CellMark<SF.MoveIn, never>] {
+	const moveOut = createMoveOutMark(count, markId, overrides);
+	const { changes: _, ...overridesWithNoChanges } = overrides ?? {};
+	const moveIn = createMoveInMark(count, markId, overridesWithNoChanges);
+	return [moveOut, moveIn];
+}
+
+/**
+ * @param count - The number of nodes to move out.
+ * @param markId - The id to associate with the mark.
+ * Defines how later edits refer the emptied cells.
+ * @param overrides - Any additional properties to add to the mark.
+ */
 function createMoveOutMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
@@ -311,6 +320,10 @@ function createModifyMark<TChange>(
 	return mark;
 }
 
+function createSkipMark(count: number): SF.CellMark<SF.NoopMark, never> {
+	return { count };
+}
+
 function createAttachAndDetachMark<TChange>(
 	attach: SF.CellMark<SF.Attach, TChange>,
 	detach: SF.CellMark<SF.Detach, TChange>,
@@ -349,9 +362,11 @@ export const MarkMaker = {
 	onEmptyCell: overrideCellId,
 	insert: createInsertMark,
 	revive: createReviveMark,
+	skip: createSkipMark,
 	pin: createPinMark,
 	delete: createDeleteMark,
 	modify: createModifyMark,
+	move: createMoveMarks,
 	moveOut: createMoveOutMark,
 	moveIn: createMoveInMark,
 	returnTo: createReturnToMark,

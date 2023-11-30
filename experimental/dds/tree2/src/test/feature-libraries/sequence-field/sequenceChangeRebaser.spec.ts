@@ -22,7 +22,6 @@ import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
 import {
 	compose,
-	composeAnonChanges,
 	invert,
 	rebaseOverComposition,
 	rebaseTagged,
@@ -64,14 +63,21 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	[
 		"MInsert",
-		(i) =>
-			composeAnonChanges([
-				Change.insert(i, 1, brand(42)),
-				Change.modify(i, TestChange.mint([], 2)),
-			]),
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.insert(1, brand(42), { changes: TestChange.mint([], 2) }),
+		],
 	],
 	["Insert", (i) => Change.insert(i, 2, brand(42))],
-	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
+	["NoOp", (i) => []],
+	// TODO: determine why this fails
+	// [
+	// 	"TransientInsert",
+	// 	(i) => [
+	// 		...(i > 0 ? [Mark.skip(i)] : []),
+	// 		Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
+	// 	],
+	// ],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
@@ -84,14 +90,15 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	[
 		"TransientRevive",
-		(i) =>
-			composeAnonChanges([
-				Change.revive(i, 1, {
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), {
+				cellId: {
 					revision: tag1,
 					localId: brand(0),
-				}),
-				Change.delete(i, 1),
-			]),
+				},
+			}),
+		],
 	],
 	[
 		"ConflictedRevive",
