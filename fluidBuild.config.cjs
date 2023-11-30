@@ -13,7 +13,6 @@ module.exports = {
 		"ci:build": {
 			dependsOn: [
 				"compile",
-				// TODO: why are we not running all of `lint` here?
 				"eslint",
 				"check:release-tags",
 				"ci:build:docs",
