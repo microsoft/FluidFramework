@@ -76,7 +76,7 @@ describe("Garbage Collection Tests", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
 	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
-	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4"];
+	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
@@ -1721,10 +1721,10 @@ describe("Garbage Collection Tests", () => {
 				// Unreference another data store node.
 				defaultGCData.gcNodes[nodes[0]] = [];
 
-				// There should be 3 unreferenced node / data stores.
+				// There should be 1 more unreferenced node / data store.
 				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount = 3;
-				expectedStats.unrefDataStoreCount = 3;
+				expectedStats.unrefNodeCount++;
+				expectedStats.unrefDataStoreCount++;
 				expectedStats.updatedNodeCount = 1;
 				expectedStats.updatedDataStoreCount = 1;
 
@@ -1734,10 +1734,10 @@ describe("Garbage Collection Tests", () => {
 				// Unreference another data store node
 				defaultGCData.gcNodes["/"] = [];
 
-				// There should be 4 unreferenced node / data stores now.
+				// There should be 1 more unreferenced node / data store.
 				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount = 4;
-				expectedStats.unrefDataStoreCount = 4;
+				expectedStats.unrefNodeCount++;
+				expectedStats.unrefDataStoreCount++;
 				expectedStats.updatedNodeCount = 1;
 				expectedStats.updatedDataStoreCount = 1;
 
@@ -1757,10 +1757,10 @@ describe("Garbage Collection Tests", () => {
 				// Unreference another data store node.
 				defaultGCData.gcNodes[nodes[0]] = [];
 
-				// There should be 3 unreferenced node / data stores.
+				// There should be 1 more unreferenced node / data store.
 				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount = 3;
-				expectedStats.unrefDataStoreCount = 3;
+				expectedStats.unrefNodeCount++;
+				expectedStats.unrefDataStoreCount++;
 				expectedStats.updatedNodeCount = 1;
 				expectedStats.updatedDataStoreCount = 1;
 
@@ -1770,10 +1770,10 @@ describe("Garbage Collection Tests", () => {
 				// Add a new reference.
 				defaultGCData.gcNodes[nodes[0]] = [nodes[2]];
 
-				// There should be 2 unreferenced node / data stores now.
+				// There should be 1 less unreferenced node / data store.
 				// There should be 1 node / data store whose reference state got updated.
-				expectedStats.unrefNodeCount = 2;
-				expectedStats.unrefDataStoreCount = 2;
+				expectedStats.unrefNodeCount--;
+				expectedStats.unrefDataStoreCount--;
 				expectedStats.updatedNodeCount = 1;
 				expectedStats.updatedDataStoreCount = 1;
 
@@ -1781,6 +1781,10 @@ describe("Garbage Collection Tests", () => {
 				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
 			});
 
+			/**
+			 * The deleted stats work with sweep disabled as well because we use sweep ready nodes to
+			 * generate them.
+			 */
 			it("can generate stats with deleted nodes", async () => {
 				const expectedStats = initialStats;
 				let gcStats = await garbageCollector.collectGarbage({});
@@ -1804,6 +1808,10 @@ describe("Garbage Collection Tests", () => {
 				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats");
 			});
 
+			/**
+			 * The deleted stats work with sweep disabled as well because we use sweep ready nodes to
+			 * generate them.
+			 */
 			it("can generate stats with deleted nodes after multiple sweep runs", async () => {
 				const expectedStats = initialStats;
 				let gcStats = await garbageCollector.collectGarbage({});
@@ -1830,16 +1838,16 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodes[0]] = [];
 
 				if (sweepEnabled) {
-					// If sweep is enabled, there should only be 3 nodes and data stores since 2 got deleted in last run.
-					// Out of the 3, 1 should be unreferenced.
-					expectedStats.nodeCount = 3;
-					expectedStats.dataStoreCount = 3;
+					// If sweep is enabled, there should be 2 less nodes / data stores since they got deleted.
+					// There should be 1 new unreferenced node / data store.
+					expectedStats.nodeCount -= 2;
+					expectedStats.dataStoreCount -= 2;
 					expectedStats.unrefNodeCount = 1;
 					expectedStats.unrefDataStoreCount = 1;
 				} else {
-					// If sweep is disabled, the unreferenced nodes should now be 3.
-					expectedStats.unrefNodeCount = 3;
-					expectedStats.unrefDataStoreCount = 3;
+					// If sweep is disabled, there should be 1 more unreferenced node / data store.
+					expectedStats.unrefNodeCount++;
+					expectedStats.unrefDataStoreCount++;
 				}
 				// There should be 1 node / data store whose reference state got updated.
 				expectedStats.updatedNodeCount = 1;
@@ -1851,26 +1859,57 @@ describe("Garbage Collection Tests", () => {
 				// Advance the clock past sweep timeout again so that unreferenced node is deleted.
 				clock.tick(sweepTimeoutMs + 1);
 
-				// The deleted node / data store count is now 2. No nodes are updated since last run.
+				// No nodes are updated since the last run.
+				// There should be 1 more deleted node / data store.
 				expectedStats.updatedNodeCount = 0;
 				expectedStats.updatedDataStoreCount = 0;
-				expectedStats.deletedNodeCount = 3;
-				expectedStats.deletedDataStoreCount = 3;
+				expectedStats.deletedNodeCount++;
+				expectedStats.deletedDataStoreCount++;
 
 				gcStats = await garbageCollector.collectGarbage({});
 				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 3");
 
 				if (sweepEnabled) {
-					// If sweep is enabled, there should only be 2 nodes and data stores since 1 got deleted in last run.
-					// Both the nodes are referenced.
-					expectedStats.nodeCount = 2;
-					expectedStats.dataStoreCount = 2;
+					// If sweep is enabled, there should be 1 less node / data store since it got deleted.
+					// There shouldn't be any unreferenced node / data store.
+					expectedStats.nodeCount--;
+					expectedStats.dataStoreCount--;
 					expectedStats.unrefNodeCount = 0;
 					expectedStats.unrefDataStoreCount = 0;
 				}
 
 				gcStats = await garbageCollector.collectGarbage({});
 				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 4");
+			});
+
+			it("can generate stats with new nodes", async () => {
+				const expectedStats = initialStats;
+				let gcStats = await garbageCollector.collectGarbage({});
+				assert.deepStrictEqual(
+					gcStats,
+					expectedStats,
+					"The stats for first GC run should be same as initial stats",
+				);
+
+				// Add 2 new nodes and make one of them unreferenced.
+				defaultGCData.gcNodes["/"].push(nodes[4]);
+				defaultGCData.gcNodes[nodes[4]] = [];
+				defaultGCData.gcNodes[nodes[5]] = [];
+
+				// There should be 2 more nodes / data stores.
+				// There should be 1 more unreferenced node / data store.
+				// There should be 1 node / data store whose referenced state got updated.
+				expectedStats.nodeCount += 2;
+				expectedStats.dataStoreCount += 2;
+				expectedStats.lifetimeNodeCount += 2;
+				expectedStats.lifetimeDataStoreCount += 2;
+				expectedStats.unrefNodeCount++;
+				expectedStats.unrefDataStoreCount++;
+				expectedStats.updatedNodeCount = 1;
+				expectedStats.updatedDataStoreCount = 1;
+
+				gcStats = await garbageCollector.collectGarbage({});
+				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats");
 			});
 		};
 
