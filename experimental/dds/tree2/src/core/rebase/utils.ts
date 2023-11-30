@@ -4,14 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { Mutable } from "../../util";
 import {
 	ChangeRebaser,
+	RevisionInfo,
+	RevisionMetadataSource,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -229,6 +232,9 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
+	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
+	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
 		const editsToCompose: TaggedChange<TChange>[] = [
@@ -236,7 +242,7 @@ export function rebaseBranch<TChange>(
 			currentComposedEdit,
 		];
 		if (sourceSet.has(c.revision)) {
-			const change = changeRebaser.rebase(c.change, currentComposedEdit);
+			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
@@ -282,13 +288,72 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const changeRebasedToRef = sourcePath.reduceRight(
-		(newChange, branchCommit) =>
-			changeRebaser.rebase(newChange, inverseFromCommit(changeRebaser, branchCommit, true)),
-		change,
+	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	inverses.reverse();
+	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
+}
+
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index >= 0 ? index : undefined;
+	};
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+	};
+
+	const hasRollback = (revision: RevisionTag): boolean => {
+		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+	};
+
+	return { getIndex, tryGetInfo, hasRollback };
+}
+
+export function rebaseChangeOverChanges<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	changeToRebase: TChange,
+	changesToRebaseOver: TaggedChange<TChange>[],
+) {
+	const revisionMetadata = revisionMetadataSourceFromInfo(
+		getRevInfoFromTaggedChanges(changesToRebaseOver),
 	);
 
-	return targetPath.reduce((a, b) => changeRebaser.rebase(a, b), changeRebasedToRef);
+	return changesToRebaseOver.reduce(
+		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		changeToRebase,
+	);
+}
+
+// TODO: Deduplicate
+function getRevInfoFromTaggedChanges(changes: TaggedChange<unknown>[]): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return revInfos;
+}
+
+// TODO: Deduplicate
+function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }
 
 function inverseFromCommit<TChange>(
