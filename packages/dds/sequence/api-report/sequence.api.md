@@ -265,9 +265,6 @@ export const IntervalOpType: {
     readonly POSITION_REMOVE: "positionRemove";
 };
 
-// @alpha (undocumented)
-export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
-
 // @alpha
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 

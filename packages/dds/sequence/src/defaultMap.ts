@@ -313,7 +313,7 @@ export class DefaultMap<T> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.messageHandlers.get(type)!.getStashedOpLocalMetadata(op);
 		}
-		return op as IMapOperation;
+		return op;
 	}
 
 	/**
