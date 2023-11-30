@@ -1,6 +1,5 @@
 ---
 "@fluidframework/container-runtime-definitions": major
-"@fluidframework/core-interfaces": major
 "@fluidframework/runtime-definitions": major
 ---
 
