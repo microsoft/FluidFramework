@@ -19,16 +19,18 @@ function isTagValid(tag, context) {
 			message: `Invalid tag format in rule configuration: '{${tag}}'. Tags should start with '@'.`,
 			data: { tag },
 		});
+		return false;
 	} else {
 		return true;
 	}
 }
 
 /**
- * Processes the tags array to ensure all tags are valid.
+ * Filters the tags array to ensure all tags are valid.
  * @param tags - Array of tags to be processed.
  * @param context - The context object provided by ESLint.
  * @returns A set of validated tags.
+ * Note: Invalid tags will be reported.
  */
 function processTags(tags, context) {
 	return new Set(tags.filter((tag) => isTagValid(tag, context)));
@@ -38,7 +40,8 @@ function processTags(tags, context) {
  * Validate the exceptions object, ensuring all tags and paths are valid.
  * @param exceptions - The exceptions object from the rule configuration.
  * @param context - The context object provided by ESLint.
- * @returns - An object with tags as keys and Sets of paths as values.
+ * @returns An object with tags as keys and Sets of paths as values.
+ * ex: { '@alpha': Set(2) { './exceptionFile.ts', './exceptionFile2.ts' } }
  */
 function processExceptions(exceptions, context) {
 	const processedExceptions = {};
@@ -68,10 +71,9 @@ module.exports = {
 		type: "problem",
 		docs: {
 			description:
-				"This rule restricts imports from specified tags or non-public APIs. This to prevent accidental dependencies on internal, unstable or undocumented parts of the codebase.",
+				"This rule restricts imports based on one or more TSDoc tags they're annotated with. This can be used to enforce release tag rules against imports and prevent accidental dependencies on internal, unstable or undocumented parts of the codebase.",
 			category: "Best Practices",
 		},
-		fixable: "code",
 		schema: [
 			{
 				type: "object",
@@ -101,24 +103,24 @@ module.exports = {
 		const options = context.options[0] || {};
 		const restrictedTags = processTags(options.tags, context);
 		const exceptions = processExceptions(options.exceptions, context);
-		const project = new Project();
 
 		let tsConfigPath;
 		if (context.parserOptions.project) {
 			// Resolve the relative path to an absolute path
 			tsConfigPath = path.resolve(context.getCwd(), context.parserOptions.project);
 		} else {
-			// Fallback to a default/test path or handle absence of tsconfig.json as needed
-			tsConfigPath = path.join(__dirname, "../test/mockFiles/**/*.ts");
+			context.report({
+				node: null,
+				message:
+					"A 'tsconfig.json' file is required but was not found in the ESLint config under parserOptions.project.",
+			});
 		}
-		project.addSourceFilesAtPaths(tsConfigPath);
+		const project = new Project({ tsConfigFilePath: tsConfigPath });
 
-		// const sourceFile = project.getSourceFileOrThrow("mockModule.ts");
 		return {
 			ImportDeclaration(node) {
 				const importSource = node.source.value;
 				const currentFilePath = context.getFilename();
-
 				// For each item being imported
 				node.specifiers.forEach((specifier) => {
 					if (specifier.type === "ImportSpecifier") {

@@ -27,13 +27,15 @@ describe("ESLint Rule Tests", function () {
 				],
 			},
 			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "./tsconfig.json"),
+			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
 			path.join(__dirname, "mockFiles", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
-
 		assert.strictEqual(result.errorCount, 2, "Should have two errors");
 		assert.strictEqual(
 			result.messages[0].message,
@@ -60,6 +62,9 @@ describe("ESLint Rule Tests", function () {
 				],
 			},
 			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "./tsconfig.json"),
+			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
 			path.join(__dirname, "mockFiles", file),
