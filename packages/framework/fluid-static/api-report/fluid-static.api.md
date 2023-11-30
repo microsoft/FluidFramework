@@ -87,7 +87,7 @@ export type InitialObjects<T extends ContainerSchema> = {
 // @public (undocumented)
 export interface IProvideRootDataObject {
     // (undocumented)
-    readonly IRootDataObject?: IRootDataObject;
+    readonly IRootDataObject: IRootDataObject;
 }
 
 // @public
