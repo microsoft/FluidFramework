@@ -665,62 +665,44 @@ export class SharedMatrix<T = any>
 					referenceSeqNumber,
 				} = localOpMetadata as ISetOpMetadata;
 
-				// Policy is FWW now. So behave accordingly. We want to check the current mode here and not that
-				// whether op was made in FWW or not.
-				if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
-					const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-					const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
-					if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-						const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+				// If after rebasing the op, we get a valid row/col number, that means the row/col
+				// handles have not been recycled and we can safely use them.
+				const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
+				const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+				if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+					const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+						rowHandle,
+						colHandle,
+					);
+					// If the mode is LWW, then send the op.
+					// Otherwise if the current mode is FWW and if we generated this op, after seeing the
+					// last set op, or it is the first set op for the cell, then regenerate the op,
+					// otherwise raise conflict. We want to check the current mode here and not that
+					// whether op was made in FWW or not.
+					if (
+						this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1 ||
+						lastCellModificationDetails === undefined ||
+						referenceSeqNumber >= lastCellModificationDetails.seqNum
+					) {
+						this.sendSetCellOp(
+							row,
+							col,
+							setOp.value,
 							rowHandle,
 							colHandle,
+							localSeq,
+							rowsRefSeq,
+							colsRefSeq,
 						);
-						// If we generated this op, after seeing the last set op, or it is the first
-						// set op for the cell, then regenerate the op, otherwise raise conflict.
-						if (
-							lastCellModificationDetails === undefined ||
-							referenceSeqNumber >= lastCellModificationDetails.seqNum
-						) {
-							this.sendSetCellOp(
-								row,
-								col,
-								setOp.value,
-								rowHandle,
-								colHandle,
-								localSeq,
-								rowsRefSeq,
-								colsRefSeq,
-							);
-						} else {
-							this.emit(
-								"conflict",
-								row,
-								col,
-								this.cells.getCell(rowHandle, colHandle), // Current value
-								parseHandles(setOp.value, this.serializer), // Ignored value
-								this,
-							);
-						}
-					}
-				} else {
-					// If there are more pending local writes to the same row/col handle, it is important
-					// to skip resubmitting this op since it is possible the row/col handle has been recycled
-					// and now refers to a different position than when this op was originally submitted.
-					if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-						const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-						const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
-						if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-							this.sendSetCellOp(
-								row,
-								col,
-								setOp.value,
-								rowHandle,
-								colHandle,
-								localSeq,
-								rowsRefSeq,
-								colsRefSeq,
-							);
-						}
+					} else {
+						this.emit(
+							"conflict",
+							row,
+							col,
+							this.cells.getCell(rowHandle, colHandle), // Current value
+							parseHandles(setOp.value, this.serializer), // Ignored value
+							this,
+						);
 					}
 				}
 				break;
