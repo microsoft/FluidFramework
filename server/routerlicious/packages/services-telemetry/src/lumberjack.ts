@@ -196,7 +196,12 @@ export class Lumberjack {
 	) {
 		this.errorOnIncompleteSetup();
 		const lumberProperties = this._options.enableGlobalTelemetryContext
-			? { ...properties, ...getGlobalTelemetryContext().getProperties() }
+			? {
+					...(properties instanceof Map
+						? Object.fromEntries(properties.entries())
+						: properties),
+					...getGlobalTelemetryContext().getProperties(),
+			  }
 			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,

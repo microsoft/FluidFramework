@@ -3,28 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
-import {
-	type ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
+	type MigrationShim,
+	MigrationShimFactory,
 	SharedTree as LegacySharedTree,
+	type SharedTreeShim,
+	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	AllowedUpdateType,
 	type ISharedTree,
@@ -34,12 +25,21 @@ import {
 	type TreeView,
 	type TreeField,
 } from "@fluid-experimental/tree2";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { MigrationShimFactory } from "../migrationShimFactory.js";
-import { type MigrationShim } from "../migrationShim.js";
-import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
-import { type SharedTreeShim } from "../sharedTreeShim.js";
+import { type IChannel } from "@fluidframework/datastore-definitions";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

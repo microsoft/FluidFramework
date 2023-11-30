@@ -13,7 +13,6 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeNodeSchemaIdentifier,
 	RevisionInfo,
 } from "../../../core";
 import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
@@ -25,7 +24,6 @@ import { brand } from "../../../util";
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	compose,
-	composeAnonChanges,
 	invert,
 	rebaseOverChanges,
 	rebaseOverComposition,
@@ -36,8 +34,6 @@ import {
 	rebase,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-
-const type: TreeNodeSchemaIdentifier = brand("Node");
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag1: RevisionTag = mintRevisionTag();
@@ -70,14 +66,20 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	[
 		"MInsert",
-		(i) =>
-			composeAnonChanges([
-				Change.insert(i, 1, brand(42)),
-				Change.modify(i, TestChange.mint([], 2)),
-			]),
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.insert(1, brand(42), { changes: TestChange.mint([], 2) }),
+		],
 	],
 	["Insert", (i) => Change.insert(i, 2, brand(42))],
-	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
+	["NoOp", (i) => []],
+	[
+		"TransientInsert",
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
+		],
+	],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
@@ -90,14 +92,15 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	[
 		"TransientRevive",
-		(i) =>
-			composeAnonChanges([
-				Change.revive(i, 1, {
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), {
+				cellId: {
 					revision: tag1,
 					localId: brand(0),
-				}),
-				Change.delete(i, 1),
-			]),
+				},
+			}),
+		],
 	],
 	[
 		"ConflictedRevive",
