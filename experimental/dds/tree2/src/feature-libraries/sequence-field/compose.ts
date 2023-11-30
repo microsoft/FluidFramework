@@ -409,7 +409,7 @@ function composeChildChanges<TNodeChange>(
 	}
 }
 
-function composeMark<TMark extends Mark<TNodeChange>, TNodeChange = unknown>(
+function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
