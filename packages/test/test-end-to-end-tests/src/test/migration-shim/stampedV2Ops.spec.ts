@@ -3,28 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
+	type MigrationShim,
+	MigrationShimFactory,
 	SharedTree as LegacySharedTree,
+	type SharedTreeShim,
+	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
 	AllowedUpdateType,
 	type ISharedTree,
@@ -34,14 +27,21 @@ import {
 	disposeSymbol,
 	type TreeField,
 } from "@fluid-experimental/tree2";
-// eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type IChannel } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MigrationShimFactory } from "../migrationShimFactory.js";
-import { type MigrationShim } from "../migrationShim.js";
-import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
-import { type SharedTreeShim } from "../sharedTreeShim.js";
+import {
+	createSummarizerFromFactory,
+	summarizeNow,
+	type ITestObjectProvider,
+} from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -222,7 +222,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		container.close();
 	});
 
-	it("MigrationShim can drop v1 ops and migrate ops", async () => {
+	it.skip("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

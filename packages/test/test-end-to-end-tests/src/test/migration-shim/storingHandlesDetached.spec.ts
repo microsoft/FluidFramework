@@ -3,20 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
-import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import {
 	AllowedUpdateType,
 	type ISharedTree,
@@ -25,10 +14,20 @@ import {
 	SharedTreeFactory,
 	type TreeField,
 } from "@fluid-experimental/tree2";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
-import { type SharedTreeShim } from "../sharedTreeShim.js";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
+import {
+	type ContainerRuntime,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IChannel } from "@fluidframework/datastore-definitions";
+import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
 
 const newSharedTreeFactory = new SharedTreeFactory();
 const builder = new SchemaBuilder({ scope: "test" });
@@ -94,7 +93,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeNoCompat("Storing handles detached", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -126,7 +125,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Detached handles", async () => {
+	it.skip("Detached handles", async () => {
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 
 		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);

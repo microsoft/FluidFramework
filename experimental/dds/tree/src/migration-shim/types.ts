@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { type ISharedTree } from "@fluid-experimental/tree2";
-import { type SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import { type ISharedTree } from '@fluid-experimental/tree2';
 import {
 	type IChannel,
 	type IChannelAttributes,
 	type IChannelServices,
 	type IDeltaHandler,
-} from "@fluidframework/datastore-definitions";
-import { type IMigrationOp } from "./migrationShim.js";
+} from '@fluidframework/datastore-definitions';
+import { type SharedTree as LegacySharedTree } from '../SharedTree';
+import { type IMigrationOp } from './migrationShim.js';
 
 /**
  * An interface for a shim delta handler intercepts another delta handler.

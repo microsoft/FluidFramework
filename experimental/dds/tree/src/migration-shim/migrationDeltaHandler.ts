@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { type IOpContents, type IShimDeltaHandler } from "./types.js";
-import { attributesMatch, isBarrierOp, isStampedOp } from "./utils.js";
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
+import { assert } from '@fluidframework/core-utils';
+import { type IOpContents, type IShimDeltaHandler } from './types.js';
+import { attributesMatch, isBarrierOp, isStampedOp } from './utils.js';
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -26,10 +26,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		public readonly processMigrateOp: (
 			message: ISequencedDocumentMessage,
 			local: boolean,
-			localOpMetadata: unknown,
+			localOpMetadata: unknown
 		) => boolean,
 		private readonly submitLocalMessage: (message: IOpContents) => void,
-		private readonly attributes: IChannelAttributes,
+		private readonly attributes: IChannelAttributes
 	) {}
 	// Introduction of invariant, we always expect an old handler.
 	public hasTreeDeltaHandler(): boolean {
@@ -74,24 +74,14 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			this.legacyTreeHandler = treeDeltaHandler;
 			return;
 		}
-		assert(
-			this.isUsingOldV1(),
-			0x7e4 /* Can only swap handlers after the old handler is loaded */,
-		);
+		assert(this.isUsingOldV1(), 0x7e4 /* Can only swap handlers after the old handler is loaded */);
 		this.newTreeHandler = treeDeltaHandler;
 		assert(this.isUsingNewV2(), 0x7e5 /* Should be using new handler after swap */);
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
-		assert(
-			!this.isPreAttachState(),
-			0x82c /* Can't process ops before attaching tree handler */,
-		);
+		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			message.type !== MessageType.Operation
@@ -144,7 +134,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {
 		const opContents = contents as IOpContents;
 		if (isBarrierOp(opContents)) {
-			throw new Error("MigrationShim does not support rollback of barrier ops");
+			throw new Error('MigrationShim does not support rollback of barrier ops');
 		}
 		return this.treeDeltaHandler.rollback?.(contents, localOpMetadata);
 	}
@@ -160,10 +150,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	 * @returns whether or not we should drop the op
 	 */
 	private shouldDropOp(contents: IOpContents): boolean {
-		assert(
-			!this.isPreAttachState(),
-			0x82d /* Can't process ops before attaching tree handler */,
-		);
+		assert(!this.isPreAttachState(), 0x82d /* Can't process ops before attaching tree handler */);
 		// Don't drop ops when we are in v1 state
 		if (this.isUsingOldV1()) {
 			return false;
@@ -177,7 +164,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		// Don't drop v2 ops in v2 state
 		assert(
 			attributesMatch(contents.fluidMigrationStamp, this.attributes),
-			0x82e /* Unexpected v2 op with mismatched attributes */,
+			0x82e /* Unexpected v2 op with mismatched attributes */
 		);
 		return false;
 	}
