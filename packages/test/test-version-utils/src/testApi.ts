@@ -301,6 +301,14 @@ function throwNotFound(layer: string, version: string): never {
 }
 
 /**
+ * Used to fetch a given version of the Loader API.
+ * 
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ * 
  * @internal
  */
 export function getLoaderApi(
@@ -321,6 +329,14 @@ export function getLoaderApi(
 }
 
 /**
+ * Used to fetch a given version of the Container Runtime API.
+ * 
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ * 
  * @internal
  */
 export function getContainerRuntimeApi(
@@ -337,6 +353,14 @@ export function getContainerRuntimeApi(
 }
 
 /**
+ * Used to fetch a given version of the Data Runtime API.
+ * 
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ * 
  * @internal
  */
 export function getDataRuntimeApi(
@@ -353,6 +377,14 @@ export function getDataRuntimeApi(
 }
 
 /**
+ * Used to fetch a given version of the Driver API.
+ * 
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ * 
  * @internal
  */
 export function getDriverApi(
