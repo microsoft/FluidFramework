@@ -13,8 +13,9 @@ import {
 	tagRollbackInverse,
 	ChangesetLocalId,
 	ChangeAtomId,
+	RevisionInfo,
 } from "../../../core";
-import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";

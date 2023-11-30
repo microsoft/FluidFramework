@@ -2,40 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IEvent,
-	type IFluidHandle,
-	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import { AttachState } from '@fluidframework/container-definitions';
+import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import {
 	type IChannelAttributes,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from '@fluidframework/datastore-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import {
-	type SharedTreeFactory as LegacySharedTreeFactory,
-	type SharedTree as LegacySharedTree,
-} from "@fluid-experimental/tree";
-import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
-import { assert } from "@fluidframework/core-utils";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type EventEmitterEventType } from "@fluid-internal/client-utils";
-import {
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-} from "@fluidframework/telemetry-utils";
-import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
-import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
-import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
-import { ShimHandle } from "./shimHandle.js";
-import { type IShim, type IOpContents } from "./types.js";
+} from '@fluidframework/runtime-definitions';
+import { type SharedTreeFactory, type ISharedTree } from '@fluid-experimental/tree2';
+import { assert } from '@fluidframework/core-utils';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { type EventEmitterEventType } from '@fluid-internal/client-utils';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
+import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
+import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
+import { ShimHandle } from './shimHandle.js';
+import { type IShim, type IOpContents } from './types.js';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -46,7 +36,7 @@ export interface IMigrationEvent extends IEvent {
 	/**
 	 * Event that is emitted when the migration is complete.
 	 */
-	(event: "migrated", listener: () => void);
+	(event: 'migrated', listener: () => void);
 }
 
 /**
@@ -56,7 +46,7 @@ export interface IMigrationOp {
 	/**
 	 * Type of the migration operation.
 	 */
-	type: "barrier";
+	type: 'barrier';
 	/**
 	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
 	 * accurately reason about what state of the document was before the migration op initiated at.
@@ -90,19 +80,14 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
 		private readonly newTreeFactory: SharedTreeFactory,
-		private readonly populateNewSharedObjectFn: (
-			legacyTree: LegacySharedTree,
-			newTree: ISharedTree,
-		) => void,
+		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ISharedTree) => void
 	) {
-		super((event: EventEmitterEventType, e: unknown) =>
-			this.eventListenerErrorHandler(event, e),
-		);
+		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
 			this.processMigrateOp,
 			this.submitLocalMessage,
-			this.newTreeFactory.attributes,
+			this.newTreeFactory.attributes
 		);
 		this.handle = new ShimHandle<MigrationShim>(this);
 	}
@@ -111,7 +96,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			message.type !== MessageType.Operation ||
-			(message.contents as Partial<IMigrationOp>).type !== "barrier"
+			(message.contents as Partial<IMigrationOp>).type !== 'barrier'
 		) {
 			return false;
 		}
@@ -121,7 +106,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		this.populateNewSharedObjectFn(this.legacyTree, newTree);
 		this.newTree = newTree;
 		this.reconnect();
-		this.emit("migrated");
+		this.emit('migrated');
 		return true;
 	};
 
@@ -147,10 +132,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.eventListenerErrorHandler}
 	 */
 	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
-		const error = DataProcessingError.wrapIfUnrecognized(
-			e,
-			"SharedObjectEventListenerException",
-		);
+		const error = DataProcessingError.wrapIfUnrecognized(e, 'SharedObjectEventListenerException');
 		error.addTelemetryProperties({ emittedEventName: String(event) });
 
 		this.closeWithError(error);
@@ -190,7 +172,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
 		const migrateOp: IMigrationOp = {
-			type: "barrier",
+			type: 'barrier',
 			oldAttributes: this.legacyTreeFactory.attributes,
 			newAttributes: this.newTreeFactory.attributes,
 		};
@@ -211,7 +193,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 			this.runtime,
 			this.id,
 			shimServices,
-			this.legacyTreeFactory.attributes,
+			this.legacyTreeFactory.attributes
 		)) as LegacySharedTree;
 	}
 	public create(): void {
@@ -224,7 +206,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
+		telemetryContext?: ITelemetryContext | undefined
 	): ISummaryTreeWithStats {
 		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
@@ -232,14 +214,9 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined
 	): Promise<ISummaryTreeWithStats> {
-		return this.currentTree.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-			incrementalSummaryContext,
-		);
+		return this.currentTree.summarize(fullTree, trackState, telemetryContext, incrementalSummaryContext);
 	}
 	public isAttached(): boolean {
 		return this.currentTree.isAttached();
@@ -262,7 +239,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 			deltaConnection: new StampDeltaConnection(
 				this.services.deltaConnection,
 				this.migrationDeltaHandler,
-				this.newTree.attributes,
+				this.newTree.attributes
 			),
 		};
 		this.newTree.connect(this.postMigrationServices);
@@ -278,12 +255,12 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(
 			this.services === undefined && this.preMigrationDeltaConnection === undefined,
-			0x7e9 /* Already connected */,
+			0x7e9 /* Already connected */
 		);
 		this.services = services;
 		this.preMigrationDeltaConnection = new PreMigrationDeltaConnection(
 			this.services.deltaConnection,
-			this.migrationDeltaHandler,
+			this.migrationDeltaHandler
 		);
 		const shimServices: IShimChannelServices = {
 			objectStorage: this.services.objectStorage,
