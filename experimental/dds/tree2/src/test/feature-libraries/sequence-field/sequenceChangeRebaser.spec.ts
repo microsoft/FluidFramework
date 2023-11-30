@@ -13,7 +13,6 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeNodeSchemaIdentifier,
 	RevisionInfo,
 } from "../../../core";
 import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
@@ -35,8 +34,6 @@ import {
 	rebase,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-
-const type: TreeNodeSchemaIdentifier = brand("Node");
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag1: RevisionTag = mintRevisionTag();
@@ -76,14 +73,13 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	["Insert", (i) => Change.insert(i, 2, brand(42))],
 	["NoOp", (i) => []],
-	// TODO: determine why this fails
-	// [
-	// 	"TransientInsert",
-	// 	(i) => [
-	// 		...(i > 0 ? [Mark.skip(i)] : []),
-	// 		Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
-	// 	],
-	// ],
+	[
+		"TransientInsert",
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
+		],
+	],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
