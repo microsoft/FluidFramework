@@ -243,7 +243,7 @@ infer Head,
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 // @alpha
-export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
+export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | number | string | boolean | null | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ContextuallyTypedNodeDataObject {
@@ -1575,9 +1575,6 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 
 // @alpha
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
-
-// @alpha @deprecated (undocumented)
-export type PrimitiveValue = string | boolean | number;
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;

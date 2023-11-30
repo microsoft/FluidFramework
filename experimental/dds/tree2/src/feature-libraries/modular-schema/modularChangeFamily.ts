@@ -21,10 +21,13 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 	isEmptyFieldChanges,
-	ITreeCursor,
+	RevisionMetadataSource,
+	RevisionInfo,
+	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
 	JsonableTree,
 	makeDetachedNodeId,
+	ITreeCursor,
 	emptyDelta,
 } from "../../core";
 import {
@@ -52,8 +55,8 @@ import {
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
-	RevisionMetadataSource,
 	NodeExistenceState,
+	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
 import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -66,7 +69,6 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 	NodeExistsConstraint,
-	RevisionInfo,
 } from "./modularChangeTypes";
 
 /**
@@ -469,6 +471,7 @@ export class ModularChangeFamily
 	public rebase(
 		change: ModularChangeset,
 		over: TaggedChange<ModularChangeset>,
+		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
@@ -479,19 +482,22 @@ export class ModularChangeFamily
 		};
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
-		const revInfos: RevisionInfo[] = [];
-		revInfos.push(...revisionInfoFromTaggedChange(over));
-		if (change.revisions !== undefined) {
-			revInfos.push(...change.revisions);
-		}
-		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
+
+		const getBaseRevisions = () =>
+			revisionInfoFromTaggedChange(over).map((info) => info.revision);
+
+		const rebaseMetadata = {
+			...revisionMetadata,
+			getBaseRevisions,
+		};
+
 		const rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
 			tagChange(over.change.fieldChanges, revisionFromTaggedChange(over)),
 			genId,
 			crossFieldTable,
 			() => true,
-			revisionMetadata,
+			rebaseMetadata,
 			constraintState,
 		);
 
@@ -518,7 +524,7 @@ export class ModularChangeFamily
 					(node) => node,
 					genId,
 					newCrossFieldManager(crossFieldTable),
-					revisionMetadata,
+					rebaseMetadata,
 				);
 			}
 		}
@@ -538,7 +544,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
-		revisionMetadata: RevisionMetadataSource,
+		revisionMetadata: RebaseRevisionMetadata,
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
@@ -659,7 +665,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
-		revisionMetadata: RevisionMetadataSource,
+		revisionMetadata: RebaseRevisionMetadata,
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): NodeChangeset | undefined {
@@ -824,27 +830,26 @@ function deltaFromNodeChange(
 
 /**
  * @alpha
+ * @param revInfos - This should describe all revisions in the rebase path, even if not part of the current base changeset.
+ * @param baseRevisions - The set of revisions in the changeset being rebased over
+ * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
  */
-export function revisionMetadataSourceFromInfo(
+export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
-): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number | undefined => {
-		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		return index >= 0 ? index : undefined;
-	};
-	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
-		if (revision === undefined) {
-			return undefined;
+	baseRevisions: (RevisionTag | undefined)[],
+): RebaseRevisionMetadata {
+	const filteredRevisions: RevisionTag[] = [];
+	for (const revision of baseRevisions) {
+		if (revision !== undefined) {
+			filteredRevisions.push(revision);
 		}
-		const index = getIndex(revision);
-		return index === undefined ? undefined : revInfos[index];
-	};
+	}
 
-	const getRevisions = (): RevisionTag[] => {
-		return revInfos.map((info) => info.revision);
+	const getBaseRevisions = () => filteredRevisions;
+	return {
+		...revisionMetadataSourceFromInfo(revInfos),
+		getBaseRevisions,
 	};
-
-	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
