@@ -104,6 +104,6 @@ extends:
     packageManager: pnpm
     buildDirectory: azure
     tagName: azure
-    poolBuild: Large
+    poolBuild: NewLarge-linux-1ES
     checkoutSubmodules: true
     taskBundleAnalysis: false
