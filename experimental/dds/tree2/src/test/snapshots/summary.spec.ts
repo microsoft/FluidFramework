@@ -4,24 +4,21 @@
  */
 
 import path from "path";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { useAsyncDeterministicStableId } from "../../util";
-import { createSnapshot, regenTestDirectory, verifyEqualPastSnapshot } from "./utils";
+import {
+	createSnapshot,
+	dirPathTail,
+	regenTestDirectory,
+	regenerateSnapshots,
+	verifyEqualPastSnapshot,
+} from "./utils";
 import { generateTestTrees } from "./testTrees";
 
-const regenerateSnapshots = process.argv.includes("--snapshot");
-
-const dirPathTail = "src/test/snapshots/files";
-const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
+const dirPath = path.join(__dirname, `../../../${dirPathTail}/files`);
 
 function getFilepath(name: string): string {
 	return path.join(dirPath, `${name}.json`);
 }
-
-const trees: {
-	name: string;
-	summary: ISummaryTree;
-}[] = [];
 
 const testNames = new Set<string>();
 

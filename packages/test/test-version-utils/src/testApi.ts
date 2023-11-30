@@ -36,7 +36,7 @@ import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
 	ensureInstalled,
-	getRequestedRange,
+	getRequestedVersion,
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
@@ -60,17 +60,27 @@ const packageList = [
 	"@fluidframework/routerlicious-driver",
 ];
 
+/**
+ * @internal
+ */
 export interface InstalledPackage {
 	version: string;
 	modulePath: string;
 }
 
+/**
+ * @internal
+ */
 export const ensurePackageInstalled = async (
 	baseVersion: string,
 	version: number | string,
 	force: boolean,
 ): Promise<InstalledPackage | undefined> => {
-	const pkg = await ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
+	const pkg = await ensureInstalled(
+		getRequestedVersion(baseVersion, version),
+		packageList,
+		force,
+	);
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
@@ -87,19 +97,29 @@ const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
 const driverCache = new Map<string, typeof DriverApi>();
 
-// Current versions of the APIs
-const LoaderApi = {
+// #region Current versions of the APIs.
+
+/**
+ * @internal
+ */
+export const LoaderApi = {
 	version: pkgVersion,
 	Loader,
 };
 
-const ContainerRuntimeApi = {
+/**
+ * @internal
+ */
+export const ContainerRuntimeApi = {
 	version: pkgVersion,
 	ContainerRuntime,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
-const DataRuntimeApi = {
+/**
+ * @internal
+ */
+export const DataRuntimeApi = {
 	version: pkgVersion,
 	DataObject,
 	DataObjectFactory,
@@ -118,8 +138,10 @@ const DataRuntimeApi = {
 	},
 };
 
+// #endregion
+
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -138,7 +160,7 @@ async function loadContainerRuntime(
 	baseVersion: string,
 	requested?: number | string,
 ): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -158,7 +180,7 @@ async function loadContainerRuntime(
 }
 
 async function loadDataRuntime(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -220,7 +242,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 }
 
 async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -278,8 +300,11 @@ function throwNotFound(layer: string, version: string): never {
 	throw new Error(`${layer}@${version} not found. Missing install step?`);
 }
 
+/**
+ * @internal
+ */
 export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -291,11 +316,14 @@ export function getLoaderApi(baseVersion: string, requested?: number | string): 
 	return loaderApi ?? throwNotFound("Loader", version);
 }
 
+/**
+ * @internal
+ */
 export function getContainerRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
 ): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -303,11 +331,14 @@ export function getContainerRuntimeApi(
 	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
+/**
+ * @internal
+ */
 export function getDataRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
 ): typeof DataRuntimeApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -315,8 +346,11 @@ export function getDataRuntimeApi(
 	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
+/**
+ * @internal
+ */
 export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
-	const requestedStr = getRequestedRange(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -327,6 +361,9 @@ export function getDriverApi(baseVersion: string, requested?: number | string): 
 	return driverCache.get(version) ?? throwNotFound("Driver", version);
 }
 
+/**
+ * @internal
+ */
 export interface CompatApis {
 	containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
 	dataRuntime: ReturnType<typeof getDataRuntimeApi>;

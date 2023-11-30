@@ -157,6 +157,10 @@
 					"Server-Shared-Utils"
 				]
 			},
+			"OdspClient": {
+				"dirs": ["packages/service-clients/odsp-client"],
+				"deps": ["Container-Definitions", "Framework", "Driver"]
+			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],
 				"deps": ["Container-Definitions", "Framework"]

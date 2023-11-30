@@ -35,7 +35,6 @@ import {
 	IValueOpEmitter,
 	IValueOperation,
 	IValueType,
-	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
 import {
@@ -512,7 +511,7 @@ export class SequenceIntervalCollectionValueType
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<SequenceInterval>>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
@@ -552,7 +551,7 @@ export class IntervalCollectionValueType implements IValueType<IntervalCollectio
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<string, IValueOperation<IntervalCollection<Interval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<Interval>>> {
 		return IntervalCollectionValueType._ops;
 	}
 
@@ -562,21 +561,24 @@ export class IntervalCollectionValueType implements IValueType<IntervalCollectio
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
-	string,
+	IntervalOpType,
 	IValueOperation<IntervalCollection<T>>
 > {
-	const rebase = (
-		collection: IntervalCollection<T>,
-		op: IValueTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
+	const rebase: IValueOperation<IntervalCollection<T>>["rebase"] = (
+		collection,
+		op,
+		localOpMetadata,
 	) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+		if (rebasedValue === undefined) {
+			return undefined;
+		}
 		const rebasedOp = { ...op, value: rebasedValue };
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<string, IValueOperation<IntervalCollection<T>>>([
+	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
 		[
 			IntervalOpType.ADD,
 			{
@@ -919,6 +921,14 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	): void;
 
 	/**
+	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality, for instance:
+	 *
+	 * ```typescript
+	 * const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+	 * collection.attachIndex(overlappingIntervalsIndex)
+	 * const result = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+	 * ```
+	 *
 	 * @returns an array of all intervals in this collection that overlap with the interval
 	 * `[startPosition, endPosition]`.
 	 */
@@ -929,8 +939,29 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	map(fn: (interval: TInterval) => void): void;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * automatically added to the collection. Users are advised to independently attach the
+	 * index to the collection and utilize the API accordingly, for instance:
+	 * ```typescript
+	 * const endpointIndex = createEndpointIndex(sharedString);
+	 * collection.attachIndex(endpointIndex);
+	 * const result1 = endpointIndex.previousInterval(pos);
+	 * ```
+	 * If an index is used repeatedly, applications should generally attach it once and store it in memory.
+	 */
 	previousInterval(pos: number): TInterval | undefined;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * automatically added to the collection. Users are advised to independently attach the
+	 * index to the collection and utilize the API accordingly, for instance:
+	 * ```typescript
+	 * const endpointIndex = createEndpointIndex(sharedString);
+	 * collection.attachIndex(endpointIndex);
+	 * const result2 = endpointIndex.nextInterval(pos);
+	 * ```
+	 */
 	nextInterval(pos: number): TInterval | undefined;
 }
 
@@ -1867,7 +1898,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	): void {
 		if (local) {
 			// Local ops were applied when the message was created and there's no "pending delete"
-			// state to bookkeep: remote operation application takes into account possibility of
+			// state to book keep: remote operation application takes into account possibility of
 			// locally deleted interval whenever a lookup happens.
 			return;
 		}

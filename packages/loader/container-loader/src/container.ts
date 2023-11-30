@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import merge from "lodash/merge";
-
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
@@ -1123,7 +1120,6 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
 		const pendingState = await this.getPendingLocalStateCore({
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
@@ -2022,8 +2018,15 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (clientDetailsOverride !== undefined) {
-			merge(client.details, clientDetailsOverride);
+		if (this.clientDetailsOverride !== undefined) {
+			client.details = {
+				...client.details,
+				...clientDetailsOverride,
+				capabilities: {
+					...client.details.capabilities,
+					...clientDetailsOverride?.capabilities,
+				},
+			};
 		}
 		client.details.environment = [
 			client.details.environment,

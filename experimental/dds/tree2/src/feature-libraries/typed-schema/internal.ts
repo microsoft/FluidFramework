@@ -8,14 +8,9 @@
 export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./typeUtils";
 
 export {
-	TreeSchemaSpecification,
-	NormalizeObjectNodeFieldsInner,
 	NormalizeObjectNodeFields,
 	NormalizeField,
 	Fields,
-	ObjectSchemaSpecification,
-	MapSchemaSpecification,
-	LeafSchemaSpecification,
 	MapFieldSchema,
 } from "./typedTreeSchema";
 
@@ -28,4 +23,5 @@ export {
 	ExtractItemType,
 	ArrayHasFixedLength,
 	ExtractListItemType,
+	FlexListToUnion,
 } from "./flexList";

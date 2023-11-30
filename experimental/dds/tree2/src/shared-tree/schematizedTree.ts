@@ -221,7 +221,7 @@ export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
+		| SchemaAware.TypedField<TRoot>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }
@@ -248,3 +248,15 @@ export interface InitializeAndSchematizeConfiguration<
 	TRoot extends TreeFieldSchema = TreeFieldSchema,
 > extends TreeContent<TRoot>,
 		SchematizeConfiguration<TRoot> {}
+
+/**
+ * Options used to initialize (if needed) and schematize a `SharedTree`.
+ * @remarks
+ * Using this builder improves type safety and error quality over just constructing the configuration as a object.
+ * @alpha
+ */
+export function buildTreeConfiguration<T extends TreeFieldSchema>(
+	config: InitializeAndSchematizeConfiguration<T>,
+): InitializeAndSchematizeConfiguration<T> {
+	return config;
+}

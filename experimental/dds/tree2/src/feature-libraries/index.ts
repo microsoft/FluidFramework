@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -60,12 +59,14 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	FieldGenerator,
-	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
-	assertAllowedValue,
+	getPossibleTypes,
 } from "./contextuallyTyped";
+
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
 export { ForestSummarizer } from "./forestSummarizer";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
@@ -97,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -118,11 +119,7 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
@@ -141,8 +138,8 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -156,6 +153,10 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -171,7 +172,13 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -179,6 +186,10 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
+	decode,
+	uncompressedEncode,
+	schemaCompressedEncode,
+	EncodedChunk,
 } from "./chunked-forest";
 
 export {
@@ -197,7 +208,7 @@ export {
 	FieldKinds,
 	Required,
 	Optional,
-	Sequence as SequenceFieldKind,
+	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
 	DefaultChangeset,
@@ -208,59 +219,50 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
-
-export { TreeEvent, EditableTreeEvents } from "./untypedTree";
+	intoDelta,
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,
-	FieldNode,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	InternalEditableTreeTypes,
-	Leaf,
-	MapNode,
-	OptionalField,
-	RequiredField,
-	Sequence,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
 	Skip,
-	ObjectNode,
-	ObjectNodeTyped,
-	TreeContext,
-	TypedField,
-	TypedNode,
-	TypedNodeUnion,
-	TreeEntity,
-	TreeField,
-	TreeNode,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	FlexTreeContext,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
+	FlexTreeEntity,
+	FlexTreeField,
+	FlexTreeNode,
 	getTreeContext,
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	getProxyForField,
-	ObjectFields,
-	ProxyField,
-	ProxyFieldInner,
-	ProxyNode,
-	ProxyNodeUnion,
-	SharedTreeList,
-	SharedTreeMap,
-	SharedTreeObject,
-	ProxyRoot,
-	Tree,
-	TreeApi,
-	SharedTreeNode,
-	Typed,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
+	FlexTreeTyped,
 	Context,
-} from "./editable-tree-2";
+	TreeEvent,
+	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
+	isFlexTreeNode,
+} from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
+export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";
