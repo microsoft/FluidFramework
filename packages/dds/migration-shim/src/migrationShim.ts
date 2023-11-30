@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IEvent,
@@ -27,11 +26,16 @@ import {
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type EventEmitterEventType } from "@fluid-internal/client-utils";
+import {
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+} from "@fluidframework/telemetry-utils";
 import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
 import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
 import { ShimHandle } from "./shimHandle.js";
-import { type IShim, type IStampedContents } from "./types.js";
+import { type IShim, type IOpContents } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -80,7 +84,7 @@ export interface IMigrationOp {
  *
  * @internal
  */
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
+export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent> implements IShim {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -91,21 +95,18 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 			newTree: ISharedTree,
 		) => void,
 	) {
-		super();
+		super((event: EventEmitterEventType, e: unknown) =>
+			this.eventListenerErrorHandler(event, e),
+		);
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
 			this.processMigrateOp,
+			this.submitLocalMessage,
 			this.newTreeFactory.attributes,
 		);
-		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
-		// sure that attaching the handle will make it live.
 		this.handle = new ShimHandle<MigrationShim>(this);
 	}
 
-	// TODO: process migrate op implementation, it'll look something like this
-	// Maybe we just flatten the migrationDeltaHandler into this class?
-	// Or we pass in this and have some "process and submit logic here"
-	// The cost is that this class gets big.
 	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
@@ -115,7 +116,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 			return false;
 		}
 		const newTree = this.newTreeFactory.create(this.runtime, this.id);
-		assert(this.preMigrationDeltaConnection !== undefined, "Should be in v1 state");
+		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
 		this.populateNewSharedObjectFn(this.legacyTree, newTree);
 		this.newTree = newTree;
@@ -137,6 +138,55 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private newTree: ISharedTree | undefined;
 
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeError}
+	 */
+	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.eventListenerErrorHandler}
+	 */
+	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
+		const error = DataProcessingError.wrapIfUnrecognized(
+			e,
+			"SharedObjectEventListenerException",
+		);
+		error.addTelemetryProperties({ emittedEventName: String(event) });
+
+		this.closeWithError(error);
+		throw error;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeWithError}
+	 */
+	private closeWithError(error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>): void {
+		if (this.closeError === undefined) {
+			this.closeError = error;
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.verifyNotClosed}
+	 */
+	private verifyNotClosed(): void {
+		if (this.closeError !== undefined) {
+			throw this.closeError;
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.submitLocalMessage}
+	 */
+	private readonly submitLocalMessage = (message: IOpContents): void => {
+		this.verifyNotClosed();
+		// This is a copy of submit local message from SharedObject
+		if (this.isAttached()) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.services!.deltaConnection.submit(message, undefined);
+		}
+	};
+
 	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
 		const migrateOp: IMigrationOp = {
@@ -145,11 +195,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 			newAttributes: this.newTreeFactory.attributes,
 		};
 
-		// This is a copy of submit local message from SharedObject
-		if (this.isAttached()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(migrateOp as IStampedContents, undefined);
-		}
+		this.submitLocalMessage(migrateOp);
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {
@@ -158,7 +204,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	public async load(services: IChannelServices): Promise<void> {
 		const shimServices =
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
@@ -170,7 +215,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		)) as LegacySharedTree;
 	}
 	public create(): void {
-		// TODO: Should we be allowing the creation of legacy shared trees?
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
@@ -211,7 +255,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	private reconnect(): void {
 		assert(this.services !== undefined, 0x7e7 /* Not connected */);
 		assert(this.newTree !== undefined, 0x7e8 /* New tree not initialized */);
-		assert(this.postMigrationServices === undefined, "Already reconnected!");
+		assert(this.postMigrationServices === undefined, 0x830 /* Already reconnected! */);
 		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
 		this.postMigrationServices = {
 			objectStorage: this.services.objectStorage,
@@ -224,6 +268,13 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		this.newTree.connect(this.postMigrationServices);
 	}
 
+	/**
+	 * Only generate the ShimServices once as the underlying DeltaHandler can only be connected to once. If we connect
+	 * twice, we will be in a "v2" state even though we really are in a "v1" state. We will encounter unexpected op
+	 * dropping behavior or lack thereof and may corrupt the document.
+	 * @param services - the services to generate the shim services from
+	 * @returns - shim services
+	 */
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(
 			this.services === undefined && this.preMigrationDeltaConnection === undefined,

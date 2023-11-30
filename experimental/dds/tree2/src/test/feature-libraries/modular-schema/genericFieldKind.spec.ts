@@ -9,7 +9,6 @@ import {
 	GenericChangeset,
 	genericFieldKind,
 	CrossFieldManager,
-	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import {
@@ -21,9 +20,15 @@ import {
 	deltaForSet,
 } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import {
+	EncodingTestData,
+	defaultRevisionMetadataFromChanges,
+	makeEncodingTestSuite,
+} from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
 
 const valueFieldKey: FieldKey = brand("Value");
@@ -63,10 +68,11 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
-const revisionMetadata: RevisionMetadataSource = {
-	getRevisions: () => assert.fail("Unexpected revision index query"),
+const revisionMetadata: RebaseRevisionMetadata = {
+	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
+	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -85,11 +91,13 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 
 const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
+	const taggedChange = makeAnonChange(valueChange);
 	const inverse = valueHandler.rebaser.invert(
-		makeAnonChange(valueChange),
+		taggedChange,
 		unexpectedDelegate,
 		fakeIdAllocator,
 		crossFieldManager,
+		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
 	return nodeChangeFromValueChange(inverse);
 };
@@ -348,11 +356,13 @@ describe("Generic FieldKind", () => {
 				nodeChange: nodeChange2To1,
 			},
 		];
+		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
-			makeAnonChange(forward),
+			taggedChange,
 			childInverter,
 			fakeIdAllocator,
 			crossFieldManager,
+			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
 		assert.deepEqual(actual, expected);
 	});

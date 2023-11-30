@@ -69,7 +69,6 @@ export class SharedTreeShimFactory implements IChannelFactory {
 		);
 		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);
 		await sharedTreeShim.load(services);
-		// TODO: sharedTreeShim.load so we know to process v1 ops? Or we can add it to the constructor if possible.
 		return sharedTreeShim;
 	}
 
@@ -78,8 +77,6 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	 *
 	 * Should be only creating the SharedTreeShim, which will only generate a new SharedTree snapshot. That way we do
 	 * not have the capability of accidentally creating a LegacySharedTree snapshot.
-	 *
-	 * TODO: get feedback on this API.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim {
 		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);

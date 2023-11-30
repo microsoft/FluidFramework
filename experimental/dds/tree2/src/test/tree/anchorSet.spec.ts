@@ -293,7 +293,7 @@ describe("AnchorSet", () => {
 		});
 	});
 
-	it("triggers childrenChanging, treeChanging, subtreeChanging, and afterDestroy callbacks", () => {
+	it("triggers childrenChanging, childrenChanged, treeChanging, subtreeChanging, and afterDestroy callbacks", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -317,7 +317,8 @@ describe("AnchorSet", () => {
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		node0.on("childrenChanging", log.logger("childrenChange"));
+		node0.on("childrenChanging", log.logger("childrenChanging"));
+		node0.on("childrenChanged", log.logger("childrenChanged"));
 		node0.on("subtreeChanging", log.logger("subtreeChange"));
 		node0.on("afterDestroy", log.logger("afterDestroy"));
 
@@ -794,8 +795,8 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
 }
 
-function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
-	const fields: Delta.Root = new Map([
+function makeDelta(mark: Delta.Mark, path: UpPath): Delta.FieldMap {
+	const fields: Delta.FieldMap = new Map([
 		[path.parentField, { local: [{ count: path.parentIndex }, mark] }],
 	]);
 	if (path.parent === undefined) {
@@ -805,8 +806,8 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	return makeDelta({ count: 1, fields }, path.parent);
 }
 
-function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.Root {
-	const fields: Delta.Root = new Map([[path.field, changes]]);
+function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.FieldMap {
+	const fields: Delta.FieldMap = new Map([[path.field, changes]]);
 	if (path.parent === undefined) {
 		return fields;
 	}

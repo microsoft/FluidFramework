@@ -11,6 +11,33 @@ export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNo
 }
 
 /**
+ * Converts a `Delta.Root` whose tree content is represented with by `TIn` instances
+ * into a `Delta.Root`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertDeltaEqual}.
+ * @param root - The delta to convert. Not mutated.
+ * @param func - The functions used to map tree content.
+ */
+export function mapRootChanges<TIn, TOut>(
+	root: Delta.Root<TIn>,
+	func: (tree: TIn) => TOut,
+): Delta.Root<TOut> {
+	const out: Mutable<Delta.Root<TOut>> = {};
+	if (root.fields !== undefined) {
+		out.fields = mapFieldsChanges(root.fields, func);
+	}
+	if (root.build !== undefined) {
+		out.build = root.build.map(({ id, trees }) => ({
+			id,
+			trees: trees.map(func),
+		}));
+	}
+	return out;
+}
+
+/**
  * Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances
  * into a `Delta.FieldMarks`whose tree content is represented with by `TOut` instances.
  *

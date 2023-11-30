@@ -46,7 +46,7 @@ module.exports = {
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
+		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
 			...tscDependsOn,
 			"typetests:gen",
@@ -152,6 +152,15 @@ module.exports = {
 		handlerExclusions: {
 			"extraneous-lockfiles": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"fluid-build-tasks-eslint": [
+				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
+				"^azure/packages/azure-client/package.json",
+				"^azure/packages/azure-service-utils/package.json",
+				"^packages/dds/.*/package.json",
+				"^packages/drivers/.*/package.json",
+				"^packages/framework/.*/package.json",
+				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -259,7 +268,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"@fluid-internal/client-utils",
+					"tinylicious",
+				],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -319,7 +333,12 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: ["tsc:watch"],
+				ignoreTasks: [
+					"tsc:watch",
+					"watch:devtools",
+					"watch:devtools-core",
+					"watch:devtools-view",
+				],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},

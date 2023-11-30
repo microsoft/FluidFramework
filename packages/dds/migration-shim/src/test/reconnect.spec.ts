@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { type IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -18,7 +18,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -122,7 +121,7 @@ const schema = builder.intoSchema(quantityType);
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getNewTreeView(tree: ISharedTree) {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			quantity: 0,
 		},
@@ -176,7 +175,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const quantity = getQuantity(legacyTree);
 			newTree
-				.schematize({
+				.schematizeOld({
 					initialTree: {
 						quantity,
 					},
@@ -205,49 +204,65 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	const originalValue = 3;
-	const newValue = 4;
+	const loaderProps = {
+		options: { enableOfflineLoad: true },
+	};
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
-		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
-		updateQuantity(legacyTree, originalValue);
+		updateQuantity(legacyTree, 0);
 		// make sure changes are saved.
 		await provider.ensureSynchronized();
 		container.close();
 	});
 
-	it("Shims can reconnect", async () => {
+	it("Shims can reconnect and resubmit", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
-		container1.disconnect();
-		container1.connect();
 		updateQuantity(legacyTree1, 123);
-		shim1.submitMigrateOp();
 
-		// Wait for "migrated" event on both shims.
-		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
+		const container2 = await provider.loadContainer(runtimeFactory2);
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const shim2 = testObj2.getTree<MigrationShim>();
 		await provider.ensureSynchronized();
-		await promise1;
+
+		container1.disconnect();
+		updateQuantity(legacyTree1, 1);
+		updateQuantity(legacyTree1, 2);
+		updateQuantity(legacyTree1, 3);
+		updateQuantity(legacyTree1, 4);
+
+		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
+		shim2.submitMigrateOp();
+		await promise2;
+
+		container1.connect();
+		await provider.ensureSynchronized();
+		assert(getQuantity(legacyTree1) === 123, "expected quantity updates to have been dropped");
 
 		const newTree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(newTree1);
 		const node1 = view1.root;
 
+		const newTree2 = shim2.currentTree as ISharedTree;
+		const view2 = getNewTreeView(newTree2);
+		const node2 = view2.root;
+
 		container1.disconnect();
+		node1.quantity = 20;
 		container1.connect();
 
 		// Send a v2 op and check to see that they are processed.
-		node1.quantity = newValue;
 		await provider.ensureSynchronized();
-		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
+		assert.equal(node2.quantity, 20, "expected quantity values to be updated");
 		assert(!container1.closed, "Container1 should not be closed");
 
 		const { summarizer } = await createSummarizerFromFactory(
@@ -257,24 +272,268 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
+		const container3 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		const shim3 = testObj3.getTree<SharedTreeShim>();
+		const newTree3 = shim3.currentTree;
+		const view3 = getNewTreeView(newTree3);
+		const node3 = view3.root;
+		node3.quantity = 431;
+		await provider.ensureSynchronized();
+
+		container2.disconnect();
+		node3.quantity = 432;
+		container2.connect();
+
+		await provider.ensureSynchronized();
+		assert.equal(node1.quantity, 432, "expected quantity values to be updated");
+	});
+
+	it("MigrationShim can apply stashed v1 ops to v1 state", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1: IContainerExperimental = await provider.loadContainer(
+			runtimeFactory2,
+			loaderProps,
+		);
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined, "Container url should be defined");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		updateQuantity(legacyTree1, 123);
+		await provider.ensureSynchronized();
+
+		// generate stashed ops
+		await provider.opProcessingController.pauseProcessing(container1);
+		updateQuantity(legacyTree1, 1);
+		updateQuantity(legacyTree1, 2);
+		updateQuantity(legacyTree1, 3);
+		updateQuantity(legacyTree1, 4);
+		updateQuantity(legacyTree1, 5);
+		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		assert(pendingState !== undefined, "Pending state should be defined");
+
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const container2 = await loader.resolve({ url }, pendingState);
+		await provider.ensureSynchronized();
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const shim2 = testObj2.getTree<MigrationShim>();
+		const legacyTree2 = shim2.currentTree as LegacySharedTree;
+		assert(getQuantity(legacyTree2) === 5, "expected quantity updates to have been applied");
+		assert(container2.closed !== true, "Container should not be closed");
+	});
+
+	it("MigrationShim can apply stashed v2 ops to v2 state", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1: IContainerExperimental = await provider.loadContainer(
+			runtimeFactory2,
+			loaderProps,
+		);
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined, "Container url should be defined");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		updateQuantity(legacyTree1, 123);
+		shim1.submitMigrateOp();
+		await provider.ensureSynchronized();
+		const newTree1 = shim1.currentTree as ISharedTree;
+		const node1 = getNewTreeView(newTree1).root;
+
+		// generate stashed ops
+		await provider.opProcessingController.pauseProcessing(container1);
+		await container1.deltaManager.outbound.pause();
+		node1.quantity = 1;
+		node1.quantity = 2;
+		node1.quantity = 3;
+		node1.quantity = 4;
+		node1.quantity = 5;
+		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		assert(pendingState !== undefined, "Pending state should be defined");
+
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const container2 = await loader.resolve({ url }, pendingState);
+		await provider.ensureSynchronized();
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const shim2 = testObj2.getTree<MigrationShim>();
+		const newTree2 = shim2.currentTree as ISharedTree;
+		const node2 = getNewTreeView(newTree2).root;
+		assert(node2.quantity === 5, "expected quantity updates to have been applied");
+	});
+
+	it("SharedTreeShim can apply stashed v2 ops to v2 state", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1 = await provider.loadContainer(runtimeFactory2);
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined, "Container url should be defined");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		updateQuantity(legacyTree1, 123);
+		shim1.submitMigrateOp();
+		await provider.ensureSynchronized();
+		const newTree1 = shim1.currentTree as ISharedTree;
+		const view1 = getNewTreeView(newTree1);
+		const node1 = view1.root;
+
+		// summarize migration
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container1,
+			dataObjectFactory2,
+		);
+		await provider.ensureSynchronized();
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const container2: IContainerExperimental = await provider.loadContainer(
+			runtimeFactory2,
+			loaderProps,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
 		const view2 = getNewTreeView(newTree2);
 		const node2 = view2.root;
-		node2.quantity = 431;
+
+		// generate stashed ops
+		await provider.opProcessingController.pauseProcessing(container2);
+		await container2.deltaManager.outbound.pause();
+		node2.quantity = 1;
+		node2.quantity = 2;
+		node2.quantity = 3;
+		node2.quantity = 4;
+		node2.quantity = 5;
+		const pendingState = await container2.closeAndGetPendingLocalState?.();
+		assert(pendingState !== undefined, "Pending state should be defined");
+
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const container3 = await loader.resolve({ url }, pendingState);
+		await provider.ensureSynchronized();
+		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		const shim3 = testObj3.getTree<SharedTreeShim>();
+		const newTree3 = shim3.currentTree;
+		const node3 = getNewTreeView(newTree3).root;
+		assert(node3.quantity === 5, "expected quantity updates to have been applied");
+		assert(node1.quantity === 5, "expected quantity updates to have been synced");
+	});
+
+	it("Shims drop stashed v1 ops to v2 state", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1: IContainerExperimental = await provider.loadContainer(
+			runtimeFactory2,
+			loaderProps,
+		);
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		updateQuantity(legacyTree1, 123);
 		await provider.ensureSynchronized();
 
-		const disconnected = new Promise<void>((resolve) => container2.on("disconnected", resolve));
-		container2.disconnect();
-		await disconnected;
-		container2.connect();
+		const container2 = await provider.loadContainer(runtimeFactory2);
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const shim2 = testObj2.getTree<MigrationShim>();
+		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
 
-		node2.quantity = 432;
+		// generate stashed ops with a migration occurring
+		await provider.opProcessingController.pauseProcessing(container1);
+		await container1.deltaManager.outbound.pause();
+
+		shim1.submitMigrateOp();
+		updateQuantity(legacyTree1, 1);
+		updateQuantity(legacyTree1, 2);
+		updateQuantity(legacyTree1, 3);
+		updateQuantity(legacyTree1, 4);
+		updateQuantity(legacyTree1, 5);
+		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		assert(pendingState !== undefined, "Pending state should be defined");
+		shim2.submitMigrateOp();
+		await promise2;
+
+		// Summarize and load a new container
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container1,
+			dataObjectFactory2,
+		);
 		await provider.ensureSynchronized();
-		assert.equal(node2.quantity, 432, "expected quantity values to be updated");
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const container4 = await provider.loadContainer(runtimeFactory2, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const testObj4 = (await container4.getEntryPoint()) as TestDataObject;
+		const shim4 = testObj4.getTree<SharedTreeShim>();
+		const newTree4 = shim4.currentTree;
+		const view4 = getNewTreeView(newTree4);
+		const node4 = view4.root;
+
+		// Load a new container and apply stashed ops
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined, "Container url should be defined");
+		const container3 = await loader.resolve({ url }, pendingState);
+		await provider.ensureSynchronized();
+		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		const shim3 = testObj3.getTree<MigrationShim>();
+		const tree3 = shim3.currentTree as ISharedTree;
+		const view3 = getNewTreeView(tree3);
+		const node3 = view3.root;
+		assert(node3.quantity === 123, "expected quantity updates to have been dropped");
+		assert(
+			node4.quantity === 123,
+			"expected quantity updates to have been dropped after summary on new shim",
+		);
+		assert(container3.closed !== true, "Container should not be closed");
+	});
+
+	it("MigrationShim apply stashed v1 migrate ops in v1 state", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1: IContainerExperimental = await provider.loadContainer(
+			runtimeFactory2,
+			loaderProps,
+		);
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		updateQuantity(legacyTree1, 123);
+		await provider.ensureSynchronized();
+
+		const container2 = await provider.loadContainer(runtimeFactory2);
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const shim2 = testObj2.getTree<MigrationShim>();
+		const legacyTree2 = shim2.currentTree as LegacySharedTree;
+
+		// generate stashed ops with a migration occurring
+		await provider.opProcessingController.pauseProcessing(container1);
+		await container1.deltaManager.outbound.pause();
+
+		shim1.submitMigrateOp();
+		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		assert(pendingState !== undefined, "Pending state should be defined");
+		updateQuantity(legacyTree2, 1);
+		updateQuantity(legacyTree2, 2);
+		updateQuantity(legacyTree2, 3);
+		updateQuantity(legacyTree2, 4);
+		updateQuantity(legacyTree2, 5);
+		await provider.ensureSynchronized();
+
+		// Load a new container and apply stashed ops
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined, "Container url should be defined");
+		const container3 = await loader.resolve({ url }, pendingState);
+		await provider.ensureSynchronized();
+		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		const shim3 = testObj3.getTree<MigrationShim>();
+		assert(
+			shim3.currentTree.attributes.type === newSharedTreeFactory.type,
+			"Should not have migrated to new tree",
+		);
+		const tree3 = shim3.currentTree as ISharedTree;
+		const node3 = getNewTreeView(tree3).root;
+		assert(node3.quantity === 5, "expected migration to have been applied");
 	});
 });

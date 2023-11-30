@@ -369,6 +369,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	protected getPackageFileFullPath(filePath: string): string {
+		if (path.isAbsolute(filePath)) {
+			return filePath;
+		}
 		return path.join(this.node.pkg.directory, filePath);
 	}
 

@@ -12,7 +12,6 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ChannelFactoryRegistry,
@@ -42,8 +41,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	runSynchronous,
 	SharedTreeContentSnapshot,
-	ITreeView,
-	CheckoutView,
+	CheckoutFlexTreeView,
 } from "../shared-tree";
 import {
 	Any,
@@ -59,14 +57,12 @@ import {
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	normalizeNewFieldContent,
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
 	cursorForJsonableTreeNode,
-	TypedField,
+	FlexTreeTypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
+	mapRootChanges,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -97,6 +93,9 @@ import {
 	FieldKey,
 	Revertible,
 	RevertibleKind,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -110,6 +109,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { WrapperTreeView } from "../shared-tree/sharedTree";
 
 // Testing utilities
 
@@ -256,7 +257,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
@@ -299,7 +300,7 @@ export class TestTreeProvider {
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
 			TestTreeProvider.treeId,
 		));
@@ -476,9 +477,18 @@ export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
+export function assertDeltaFieldMapEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
 	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * Assert two Delta are equal, handling cursors.
+ */
+export function assertDeltaEqual(a: Delta.Root, b: Delta.Root): void {
+	const aTree = mapRootChanges(a, mapTreeFromCursor);
+	const bTree = mapRootChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -597,10 +607,10 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return viewWithContent(content, args).checkout;
+	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function viewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -609,19 +619,35 @@ export function viewWithContent<TRoot extends TreeFieldSchema>(
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 	},
-): ITreeView<TRoot> {
+): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
 	const view = createTreeCheckout({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new CheckoutView(
+	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
 		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
+}
+
+export function treeViewWithContent<TRoot extends TreeFieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+	},
+): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
+	const view: WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> = new WrapperTreeView(
+		flexTreeViewWithContent(content, args),
+	);
+	return view;
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
@@ -646,7 +672,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): TypedField<TRoot> {
+): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
 	const branch = createTreeCheckout({
 		...args,
@@ -654,7 +680,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new CheckoutView(
+	const view = new CheckoutFlexTreeView(
 		branch,
 		content.schema,
 		manager,
@@ -916,6 +942,12 @@ export function testChangeReceiver<TChange>(
 export function defaultRevisionMetadataFromChanges(
 	changes: readonly TaggedChange<unknown>[],
 ): RevisionMetadataSource {
+	return revisionMetadataSourceFromInfo(defaultRevInfosFromChanges(changes));
+}
+
+export function defaultRevInfosFromChanges(
+	changes: readonly TaggedChange<unknown>[],
+): RevisionInfo[] {
 	const revInfos: RevisionInfo[] = [];
 	for (const change of changes) {
 		if (change.revision !== undefined) {
@@ -925,7 +957,7 @@ export function defaultRevisionMetadataFromChanges(
 			});
 		}
 	}
-	return revisionMetadataSourceFromInfo(revInfos);
+	return revInfos;
 }
 
 /**
@@ -945,22 +977,26 @@ export const wrongSchema = new SchemaBuilder({
 }).intoSchema(SchemaBuilder.sequence(Any));
 
 export function applyTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	applyDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function announceTestDelta(
-	delta: Delta.Root,
+	delta: Delta.FieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta: Delta.Root = { fields: delta };
+	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ITreeCheckout): {
+export function createTestUndoRedoStacks(
+	events: ISubscribable<{ revertible(type: Revertible): void }>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -968,7 +1004,7 @@ export function createTestUndoRedoStacks(view: ITreeCheckout): {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = view.events.on("revertible", (revertible) => {
+	const unsubscribe = events.on("revertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {

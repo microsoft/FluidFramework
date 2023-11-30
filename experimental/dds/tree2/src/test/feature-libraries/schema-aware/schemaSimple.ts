@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder, leaf } from "../../../";
+import { SchemaAware, typeNameSymbol, SchemaBuilder, leaf } from "../../../";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
@@ -21,9 +21,9 @@ export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.TypedNode<typeof leaf.number, SchemaAware.ApiMode.Flexible>;
+	type FlexibleNumber = SchemaAware.TypedNode<typeof leaf.number>;
 
-	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema, SchemaAware.ApiMode.Flexible>;
+	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema>;
 
 	const point: FlexiblePoint = {
 		x: 1,
@@ -33,6 +33,6 @@ export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));
 	const point2: FlexiblePoint = {
 		[typeNameSymbol]: pointSchema.name,
 		x: 1,
-		y: { [valueSymbol]: 1 },
+		y: 1,
 	};
 }
