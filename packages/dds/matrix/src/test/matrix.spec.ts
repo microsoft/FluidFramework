@@ -1372,6 +1372,101 @@ describe("Matrix", () => {
 				// Verify that both the matrices have expected content.
 				await expect([["4th"]]);
 			});
+
+			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum and policy is switched by same client sending the set op", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				await expect([[undefined]]);
+
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				containerRuntimeFactory.processAllMessages();
+				await expect([["B"]]);
+
+				switchPolicy(matrix1);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+				// Should still behave as LWW as ref seq number of ops < switch policy seq number
+				await expect([["A"]]);
+			});
+
+			it("Client should behave as LWW if op refSeqNum < Policy switch op seqNum and policy is switched by different client sending the set op", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				await expect([[undefined]]);
+
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				containerRuntimeFactory.processAllMessages();
+				await expect([["B"]]);
+
+				switchPolicy(matrix1);
+
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+				// Should still behave as LWW as ref seq number of ops < switch policy seq number
+				await expect([["A"]]);
+			});
+
+			it("Client racing to switch policy", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				await expect([[undefined]]);
+
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				containerRuntimeFactory.processAllMessages();
+				await expect([["B"]]);
+
+				switchPolicy(matrix1);
+				switchPolicy(matrix2);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C"]);
+
+				// Should still behave as LWW as ref seq number of ops < switch policy seq number
+				await expect([["C"]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["D"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["E"]);
+
+				// Should not behave as FWW in case of conflict.
+				await expect([["D"]]);
+			});
+
+			it("client should not submit op in FWW mode when the cell is already deleted", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 2);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 2);
+				matrix1.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 1, ["A"]);
+
+				await expect([
+					[undefined, undefined],
+					[undefined, "A"],
+				]);
+
+				switchPolicy(matrix1);
+				containerRuntimeFactory.processAllMessages();
+
+				containerRuntime1.connected = false;
+				matrix1.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 1, ["B"]);
+
+				// Remove the cell. Matrix should not produce op for the same.
+				matrix2.removeCols(1, 1);
+
+				containerRuntime1.connected = true;
+
+				await expect([[undefined], [undefined]]);
+
+				containerRuntime1.connected = false;
+				matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["C"]);
+				// Remove the cell and then insert same cell again. Matrix should not produce op for the same.
+				matrix2.removeRows(1, 1);
+				matrix2.insertRows(1, 1);
+				containerRuntime1.connected = true;
+				await expect([[undefined], [undefined]]);
+			});
 		});
 	});
 });
