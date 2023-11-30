@@ -161,7 +161,7 @@ export class GCTelemetryTracker {
 					  nodeStateTracker.unreferencedTimestampMs
 					: -1,
 			timeout:
-				nodeStateTracker?.state === UnreferencedState.Inactive
+				nodeStateTracker?.state === UnreferencedState.Inactive //* What about TombstoneReady
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),

@@ -636,6 +636,7 @@ export class GarbageCollector implements IGarbageCollector {
 				// is from the ops seen, this will ensure that we keep updating unreferenced state as time moves forward.
 				nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 
+				//* Duplicate for Tombstone as well
 				// If a node is sweep ready, store it so it can be returned.
 				if (nodeStateTracker.state === UnreferencedState.SweepReady) {
 					sweepReadyNodeIds.push(nodeId);
@@ -646,6 +647,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// 3. Call the runtime to update referenced nodes in this run.
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
+		//* Return tsReady and sweepReady nodes separately
 		return sweepReadyNodeIds;
 	}
 
@@ -655,6 +657,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * 2. Clears tracking for deleted nodes.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
+	 * @param tombstoneReadyNodes - List of nodes that are tombstone ready.
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
@@ -662,6 +665,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
+		//* tombstoneReadyNodes: string[],
 		sweepReadyNodes: string[],
 		currentReferenceTimestampMs: number,
 		logger: ITelemetryLoggerExt,
@@ -677,19 +681,18 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		/**
-		 * Currently, there are 3 modes for sweep:
-		 * Test mode - Unreferenced nodes are immediately deleted without waiting for them to be sweep ready.
-		 * Tombstone mode - Sweep ready modes are marked as tombstones instead of being deleted.
-		 * Sweep mode - Sweep ready modes are deleted.
+		 * Under "Test Mode", Unreferenced nodes are immediately deleted without waiting for them to be sweep ready.
 		 *
-		 * These modes serve as staging for applications that want to enable sweep by providing an incremental
-		 * way to test and validate sweep works as expected.
+		 * Otherwise, depending on how long it's been since the node was unreferenced, it will either be
+		 * marked as Tombstone, or deleted by Sweep.
 		 */
 		if (this.configs.testMode) {
 			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted.
 			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
 			return [];
 		}
+
+		//* This all needs to be updated to run boht TS and Sweep phases
 
 		if (this.configs.tombstoneMode) {
 			this.tombstones = sweepReadyNodes;
@@ -851,6 +854,7 @@ export class GarbageCollector implements IGarbageCollector {
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
+			//* Rename above to tombstoneTimeoutMs
 		};
 	}
 

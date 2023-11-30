@@ -164,6 +164,8 @@ export function generateGCConfigs(
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
+	//* Pull tombstoneSweepDelayMs from options, defaulting to 1 day and throwing if negative
+
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
@@ -193,6 +195,7 @@ export function generateGCConfigs(
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
+		tombstoneSweepDelayMs: 1000, //* Default to 1 day. Not persisted
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,

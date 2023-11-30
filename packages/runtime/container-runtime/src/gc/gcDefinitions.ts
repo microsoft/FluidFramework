@@ -332,6 +332,12 @@ export interface IGCRuntimeOptions {
 	sessionExpiryTimeoutMs?: number;
 
 	/**
+	 * Delay between when Tombstone should run and when the object should be deleted.
+	 * If not present, a default (non-zero) valua will be used.
+	 */
+	tombstoneSweepDelayMs?: number;
+
+	/**
 	 * Allows additional GC options to be passed.
 	 */
 	[key: string]: any;
@@ -367,8 +373,11 @@ export interface IGarbageCollectorConfigs {
 	readonly runFullGC: boolean | undefined;
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
+	//* Will become tombstoneTimeoutMs
 	/** The time after which an unreferenced node is ready to be swept. */
 	readonly sweepTimeoutMs: number | undefined;
+	/** The delay between tombstone and sweep. Not persisted. */
+	readonly tombstoneSweepDelayMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
@@ -378,6 +387,8 @@ export interface IGarbageCollectorConfigs {
 	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
 	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
 	 * step for sweep where accidental sweep ready objects can be recovered.
+	 *
+	 * @deprecated //* Always tombstone-then-sweep per the delay above
 	 */
 	readonly tombstoneMode: boolean;
 	/** @see GCFeatureMatrix. */
@@ -402,6 +413,8 @@ export const UnreferencedState = {
 	Active: "Active",
 	/** The node is inactive, i.e., it should not become referenced. */
 	Inactive: "Inactive",
+	/** The node is ready to be tombstoned */
+	TombstoneReady: "TombstoneReady", //* Make sure this is accounted for propertly everywhere that deals with this state
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
