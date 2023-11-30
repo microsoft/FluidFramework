@@ -8,8 +8,6 @@ import {
 	IEventProvider,
 	IRequest,
 	IResponse,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
@@ -74,15 +72,6 @@ export interface IContainerRuntime
 	 * Indicates the attachment state of the container to a host service.
 	 */
 	readonly attachState: AttachState;
-
-	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
-	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
