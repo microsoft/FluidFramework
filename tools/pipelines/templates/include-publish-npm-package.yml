@@ -22,21 +22,6 @@ parameters:
   type: boolean
   default: false
 
-- name: publishOverride
-  type: string
-  default: default
-
-- name: releaseBuildOverride
-  type: string
-  default: none
-
-- name: nonScopedPackages
-  type: object
-  default: []
-
-- name: buildNumberInPatch
-  type: string
-
 stages:
 
 # This stage only runs for test-branch builds
