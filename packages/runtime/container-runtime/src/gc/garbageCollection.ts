@@ -587,7 +587,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// 5. Get the sweep phase stats.
 		const sweepPhaseStats = this.getSweepPhaseStats(
 			this.configs.shouldRunSweep ? this.deletedNodes : sweepReadyNodeIds,
-			sweepReadyNodeIds,
+			new Set(deletedNodeIds),
 			markPhaseStats,
 		);
 
