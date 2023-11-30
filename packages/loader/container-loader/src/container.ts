@@ -2003,7 +2003,7 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	static setupClient(
+	private static setupClient(
 		containerId: string,
 		options?: ILoaderOptions,
 		clientDetailsOverride?: IClientDetails,
