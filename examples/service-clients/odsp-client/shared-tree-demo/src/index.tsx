@@ -4,11 +4,10 @@
  */
 
 import ReactDOM from "react-dom";
-import { loadFluidData, containerSchema } from "./infra/fluid";
 import { ITree } from "@fluid-experimental/tree2";
+import { loadFluidData, schema } from "./fluid";
 import { appSchemaConfig, letter } from "./schema";
-import "./output.css";
-import { ReactApp } from "./react_app";
+import { ReactApp } from "./reactApp";
 
 async function main() {
 	// Get the root container id from the URL
@@ -17,10 +16,12 @@ async function main() {
 	let containerId = location.hash.substring(1);
 
 	// Initialize Fluid Container
-	const { container } = await loadFluidData(containerId, containerSchema);
+	const { container } = await loadFluidData(containerId, schema);
 
 	// Initialize the SharedTree Data Structure
-	const appData = (container.initialObjects.appData as ITree).schematize(appSchemaConfig as any);
+	const appData = (container.initialObjects.appData as ITree).schematize(
+		appSchemaConfig as any,
+	) as any;
 
 	const cellSize = { x: 32, y: 32 };
 	const canvasSize = { x: 10, y: 10 }; // characters across and down
@@ -49,7 +50,7 @@ async function main() {
 	ReactDOM.render(<App />, appContainer);
 
 	// If this is a new container, fill it with data
-	if (containerId.length == 0) {
+	if (containerId.length === 0) {
 		const used: { x: number; y: number }[] = [];
 		let id = 0;
 		"HELLOWORLD"
@@ -64,7 +65,7 @@ async function main() {
 					Math.floor((Math.random() * (canvasSize.y * cellSize.y)) / cellSize.y) *
 						cellSize.y,
 				);
-				if (!used.find((element) => element.x == x && element.y == y)) {
+				if (!used.find((element) => element.x === x && element.y === y)) {
 					const pos = { x, y };
 					used.push(pos);
 					appData.root.letters.insertAtEnd(
@@ -84,7 +85,7 @@ async function main() {
 
 	// If the app is in a `createNew` state - no containerId, and the container is detached, we attach the container.
 	// This uploads the container to the service and connects to the collaboration session.
-	if (containerId.length == 0) {
+	if (containerId.length === 0) {
 		containerId = await container.attach();
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session

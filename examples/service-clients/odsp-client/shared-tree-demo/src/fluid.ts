@@ -44,7 +44,7 @@ export const loadFluidData = async (
 	return { services, container };
 };
 
-export const containerSchema: ContainerSchema = {
+export const schema: ContainerSchema = {
 	initialObjects: {
 		appData: MySharedTree,
 	},

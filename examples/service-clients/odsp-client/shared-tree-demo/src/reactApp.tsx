@@ -42,7 +42,7 @@ function CanvasLetter(props: {
 			style={style}
 			onClick={() => {
 				const index = props.app.letters.indexOf(props.letter);
-				if (index != -1) props.app.word.moveToEnd(index, props.app.letters);
+				if (index !== -1) props.app.word.moveToEnd(index, props.app.letters);
 			}}
 		>
 			{props.letter.character}
@@ -59,7 +59,7 @@ function TopLetter(props: { app: App; letter: Letter }): JSX.Element {
 				return letter.character;
 			})
 			.join("");
-		if (topRow == "HELLO" || topRow == "HELLOWORLD" || topRow == "WORLD") {
+		if (topRow === "HELLO" || topRow === "HELLOWORLD" || topRow === "WORLD") {
 			setIsWinner(true);
 		} else {
 			setIsWinner(false);
@@ -75,7 +75,7 @@ function TopLetter(props: { app: App; letter: Letter }): JSX.Element {
 			className={classes}
 			onClick={() => {
 				const index = props.app.word.indexOf(props.letter);
-				if (index != -1) props.app.letters.moveToEnd(index, props.app.word);
+				if (index !== -1) props.app.letters.moveToEnd(index, props.app.word);
 			}}
 		>
 			{props.letter.character}
@@ -89,8 +89,8 @@ function Canvas(props: {
 	canvasSize: { x: number; y: number };
 }): JSX.Element {
 	const style: React.CSSProperties = {
-		width: (props.cellSize.x * props.canvasSize.x).toString() + `px`,
-		height: (props.cellSize.y * props.canvasSize.y).toString() + `px`,
+		width: `${(props.cellSize.x * props.canvasSize.x).toString()}px`,
+		height: `${(props.cellSize.y * props.canvasSize.y).toString()}px`,
 	};
 
 	return (
