@@ -129,6 +129,9 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IGCStats": {
+				"forwardCompat": false
 			}
 		}
 	}
