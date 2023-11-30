@@ -71,11 +71,11 @@ parameters:
     type: boolean
     default: false
 
-- name: buildNumberInPatch
+  - name: buildNumberInPatch
     type: string
     default:
 
-- name: publishOverride
+  - name: publishOverride
     type: string
 
   - name: releaseBuildOverride
