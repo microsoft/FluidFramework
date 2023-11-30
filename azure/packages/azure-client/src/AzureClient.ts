@@ -15,16 +15,19 @@ import {
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	type IFluidContainer,
 	type IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { AzureAudience } from "./AzureAudience";
+import { type FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
 	type AzureClientProps,
@@ -187,8 +190,11 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
-		const fluidContainer = new FluidContainer<TContainerSchema>(container, rootDataObject);
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -231,12 +237,15 @@ export class AzureClient {
 
 	private getContainerServices(container: IContainer): AzureContainerServices {
 		return {
-			audience: new AzureAudience(container),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createAzureAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema): Loader {
-		const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -268,13 +277,13 @@ export class AzureClient {
 	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
 		container: IContainer,
 		connection: AzureConnectionConfig,
-	): Promise<FluidContainer<TContainerSchema>> {
+	): Promise<IFluidContainer<TContainerSchema>> {
 		const createNewRequest = createAzureCreateNewRequest(
 			connection.endpoint,
 			getTenantId(connection),
 		);
 
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -289,9 +298,23 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = new FluidContainer<TContainerSchema>(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> | undefined =
+			await container.getEntryPoint();
+		assert(rootDataObject !== undefined, "entryPoint must exist");
+		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
+		if (rootDataObject.IRootDataObject === undefined) {
+			return rootDataObject as IRootDataObject;
+		}
+		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }

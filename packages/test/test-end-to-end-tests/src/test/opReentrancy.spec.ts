@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
@@ -14,6 +13,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
@@ -68,8 +68,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		container1 = await provider.makeTestContainer(configWithFeatureGates);
 		container2 = await provider.loadTestContainer(configWithFeatureGates);
 
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);

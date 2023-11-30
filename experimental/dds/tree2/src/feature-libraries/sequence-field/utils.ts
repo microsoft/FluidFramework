@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
 	areEqualChangeAtomIds,
@@ -18,7 +19,6 @@ import {
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	getIntention,
-	RevisionMetadataSource,
 	setInCrossFieldMap,
 } from "../modular-schema";
 import {
@@ -30,7 +30,6 @@ import {
 	Mark,
 	MoveIn,
 	MoveOut,
-	ReturnFrom,
 	NoopMark,
 	Changeset,
 	MoveId,
@@ -48,7 +47,6 @@ import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
-	MoveDestination,
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
@@ -121,11 +119,7 @@ export function getInputCellId(
 	let markRevision: RevisionTag | undefined;
 	if (isAttachAndDetachEffect(mark)) {
 		markRevision = mark.attach.revision;
-	} else {
-		assert(
-			isAttach(mark),
-			0x822 /* Only attach marks should have undefined revision in cell ID */,
-		);
+	} else if (!isNoopMark(mark)) {
 		markRevision = mark.revision;
 	}
 
@@ -157,7 +151,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		getOverrideDetachId(mark) ?? {
+		mark.detachIdOverride ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -169,12 +163,6 @@ function getIntentionIfMetadataProvided(
 	metadata: RevisionMetadataSource | undefined,
 ): RevisionTag | undefined {
 	return metadata === undefined ? revision : getIntention(revision, metadata);
-}
-
-function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
-	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
-		? mark.detachIdOverride
-		: undefined;
 }
 
 /**
@@ -244,10 +232,6 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 	if (clone.type === "AttachAndDetach") {
 		clone.attach = cloneMarkEffect(clone.attach);
 		clone.detach = cloneMarkEffect(clone.detach);
-	}
-
-	if (clone.type === "Insert" && clone.content !== undefined) {
-		clone.content = [...clone.content];
 	}
 	return clone;
 }
@@ -343,7 +327,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.cellId !== undefined;
 		case "Delete":
 		case "MoveOut":
-		case "ReturnFrom":
 		case "AttachAndDetach":
 			return true;
 		case "MoveIn":
@@ -379,7 +362,6 @@ export function isImpactful(
 		}
 		case "AttachAndDetach":
 		case "MoveOut":
-		case "ReturnFrom":
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
@@ -435,7 +417,7 @@ export function areOverlappingIdRanges(
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
-	return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
+	return type === "Delete" || type === "MoveOut";
 }
 
 export function isDeleteMark<TNodeChange>(
@@ -545,7 +527,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(getOverrideDetachId(lhs), lhsCount, getOverrideDetachId(rhs))
+		!areMergeableCellIds(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride)
 	) {
 		return undefined;
 	}
@@ -572,16 +554,11 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
+		case "MoveOut": {
+			const lhsMoveOut = lhs as MoveOut;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
-				haveMergeableIdOverrides(
-					lhsMoveOut as Partial<ReturnFrom>,
-					lhsCount,
-					rhs as Partial<ReturnFrom>,
-				) &&
+				haveMergeableIdOverrides(lhsMoveOut, lhsCount, rhs) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;
@@ -591,19 +568,7 @@ function tryMergeEffects(
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
-				if (rhs.content === undefined) {
-					assert(
-						lhsInsert.content === undefined,
-						0x827 /* Insert content type mismatch */,
-					);
-					return lhsInsert;
-				} else {
-					assert(
-						lhsInsert.content !== undefined,
-						0x828 /* Insert content type mismatch */,
-					);
-					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-				}
+				return lhsInsert;
 			}
 			break;
 		}
@@ -1003,16 +968,11 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 				...effect,
 				id: (effect.id as number) + length,
 			};
-
-			if (effect.content !== undefined) {
-				(effect1 as Insert).content = effect.content.slice(0, length);
-				(effect2 as Insert).content = effect.content.slice(length);
-			}
 			return [effect1, effect2];
 		}
 		case "MoveIn": {
 			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveDestination;
+			const move2 = effect2 as MoveIn;
 			if (move2.finalEndpoint !== undefined) {
 				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
 			}
@@ -1032,21 +992,12 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect1, effect2];
 		}
 		case "MoveOut": {
-			const effect2: TEffect = { ...effect, id: (effect.id as number) + length };
-			const move2 = effect2 as MoveOut;
-			if (move2.finalEndpoint !== undefined) {
-				move2.finalEndpoint = splitDetachEvent(move2.finalEndpoint, length);
-			}
-
-			return [effect, effect2];
-		}
-		case "ReturnFrom": {
 			const effect2 = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
 
-			const return2 = effect2 as ReturnFrom;
+			const return2 = effect2 as MoveOut;
 
 			if (return2.detachIdOverride !== undefined) {
 				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
@@ -1085,32 +1036,73 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
 }
 
+/**
+ * @returns -1 if the lineage indicates that cell1 is earlier in the field than cell2.
+ * Returns 1 if cell2 is earlier in the field.
+ * Returns 0 if the order cannot be determined from the lineage.
+ */
 export function compareLineages(
-	lineage1: readonly LineageEvent[] | undefined,
-	lineage2: readonly LineageEvent[] | undefined,
+	cell1: CellId,
+	cell2: CellId,
+	metadata: RevisionMetadataSource,
 ): number {
-	if (lineage1 === undefined || lineage2 === undefined) {
+	const [youngerFirst, youngerCell, olderCell] =
+		compareCellAge(cell1, cell2, metadata) < 0 ? [-1, cell1, cell2] : [1, cell2, cell1];
+
+	if (olderCell.lineage === undefined) {
 		return 0;
 	}
 
-	const lineage1Offsets = new Map<RevisionTag, number>();
-	for (const event of lineage1) {
-		lineage1Offsets.set(event.revision, event.offset);
+	const olderFirst = -1 * youngerFirst;
+	const youngerOffsets = new Map<RevisionTag, number>();
+	for (const event of youngerCell.lineage ?? []) {
+		youngerOffsets.set(event.revision, event.offset);
 	}
 
-	for (let i = lineage2.length - 1; i >= 0; i--) {
-		const event2 = lineage2[i];
-		const offset1 = lineage1Offsets.get(event2.revision);
-		if (offset1 !== undefined) {
-			const offset2 = event2.offset;
-			if (offset1 < offset2) {
-				return -1;
-			} else if (offset1 > offset2) {
-				return 1;
+	for (let i = olderCell.lineage.length - 1; i >= 0; i--) {
+		const event = olderCell.lineage[i];
+		const youngerOffset = youngerOffsets.get(event.revision);
+		if (youngerOffset !== undefined) {
+			const olderOffset = event.offset;
+			if (youngerOffset < olderOffset) {
+				return youngerFirst;
+			} else if (youngerOffset > olderOffset) {
+				return olderFirst;
+			}
+		} else {
+			// We've found a cell C that became empty before the younger cell was created.
+			// The younger cell should come before any such cell, so if the older cell comes after C
+			// then we know that the younger cell should come before the older cell.
+			// TODO: Account for the younger cell's tiebreak policy
+			if (event.offset !== 0) {
+				return youngerFirst;
 			}
 		}
 	}
 	return 0;
+}
+
+/**
+ * Returns 1 if cell1 has more lineage and -1 if cell2 has more lineage.
+ * Note that this will return zero if both cells are older than the revision metadata and they both
+ * have the same lineage, even if they are not the same cell.
+ */
+function compareCellAge(cell1: CellId, cell2: CellId, metadata: RevisionMetadataSource): number {
+	return (
+		getTrunkLineageLength(cell1.lineage, metadata) -
+		getTrunkLineageLength(cell2.lineage, metadata)
+	);
+}
+
+function getTrunkLineageLength(
+	lineage: LineageEvent[] | undefined,
+	metadata: RevisionMetadataSource,
+): number {
+	if (lineage === undefined) {
+		return 0;
+	}
+
+	return lineage.filter((event) => !metadata.hasRollback(event.revision)).length;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.

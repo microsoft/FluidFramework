@@ -316,6 +316,7 @@ jobs:
       # filter report
       - task: Bash@3
         displayName: Filter skipped test from report
+        condition: succeededOrFailed()
         inputs:
           workingDir: ${{ variables.testPackageDir }}/nyc
           targetType: 'inline'

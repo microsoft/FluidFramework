@@ -7,8 +7,8 @@ export type {
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
-	OdspContainerAttributes as OdspServiceAttributes,
 	IOdspAudience,
 	OdspMember,
 } from "./interfaces";
 export { OdspClient } from "./odspClient";
+export { type IOdspTokenProvider } from "./token";

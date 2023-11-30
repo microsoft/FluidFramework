@@ -45,10 +45,7 @@ function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey
 
 describe("Node Key Index", () => {
 	function createView(
-		initialTree: SchemaAware.TypedField<
-			typeof nodeSchemaData.rootFieldSchema,
-			SchemaAware.ApiMode.Simple
-		>,
+		initialTree: SchemaAware.TypedField<typeof nodeSchemaData.rootFieldSchema>,
 	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
 		return treeWithContent({ initialTree, schema: nodeSchemaData });
 	}
@@ -226,7 +223,6 @@ describe("Node Key Index", () => {
 		const view = treeWithContent(
 			{
 				initialTree: {
-					// @ts-expect-error: Strong typing for map node literals is not implemented yet
 					[nodeKeyFieldKey]: nodeKeyManager.stabilizeNodeKey(
 						nodeKeyManager.generateLocalNodeKey(),
 					),

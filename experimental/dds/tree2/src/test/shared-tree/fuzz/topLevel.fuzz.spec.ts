@@ -41,6 +41,7 @@ describe("Fuzz - Top-Level", () => {
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
+		delete: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -74,12 +75,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skipMinimization: true,
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [0, 1, 7, 14, 18, 19],
+			// Fails with 0x6a1
+			skip: [12],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -108,11 +105,6 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [1, 6, 8, 9, 16, 17, 18],
 		};
 		createDDSFuzzSuite(model, options);
 	});

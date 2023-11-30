@@ -16,6 +16,9 @@ const r11sServers = [
 	"www.eu.prague.office-int.com",
 ];
 
+/**
+ * @internal
+ */
 export class RouterliciousUrlResolver implements IUrlResolver {
 	constructor(
 		private readonly config:
@@ -156,11 +159,17 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IAlfredUser extends IUser {
 	displayName: string;
 	name: string;
 }
 
+/**
+ * @internal
+ */
 export interface IConfig {
 	serverUrl: string;
 	blobStorageUrl: string;
