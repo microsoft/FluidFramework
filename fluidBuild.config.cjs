@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
