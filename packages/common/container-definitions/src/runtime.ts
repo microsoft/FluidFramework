@@ -104,7 +104,7 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 */
-	getEntryPoint(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject>;
 }
 
 /**

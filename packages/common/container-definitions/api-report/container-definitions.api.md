@@ -140,7 +140,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
@@ -446,7 +446,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    getEntryPoint(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject>;
     // @alpha
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;

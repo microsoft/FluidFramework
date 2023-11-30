@@ -97,7 +97,7 @@ export interface ContainerSchema {
 }
 
 export interface IProvideRootDataObject {
-	readonly IRootDataObject?: IRootDataObject;
+	readonly IRootDataObject: IRootDataObject;
 }
 
 /**

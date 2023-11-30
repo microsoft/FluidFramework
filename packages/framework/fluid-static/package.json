@@ -136,6 +136,9 @@
 			"RemovedClassDeclaration_ServiceAudience": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IRootDataObject": {
+				"forwardCompat": false
 			}
 		}
 	}
