@@ -153,7 +153,7 @@ describe("editableTreeTypes", () => {
 		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
 		const child: number | undefined = sequence.at(0);
-		const childBoxed: FlexTreeTypedNode<typeof leaf.number> = sequence.boxedAt(0);
+		const childBoxed: FlexTreeTypedNode<typeof leaf.number> | undefined = sequence.boxedAt(0);
 	}
 
 	function recursiveStructExample(struct: Recursive): void {

@@ -30,7 +30,7 @@ const someType = builder.object("foo", {
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
 function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematize({
+	return tree.schematizeOld({
 		initialTree: {
 			handles: { "": [] },
 			nested: undefined,

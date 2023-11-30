@@ -144,7 +144,9 @@ class Devtools implements IDevtools {
 }
 
 /**
- * {@inheritDoc @fluid-experimental/devtools-core#initializeDevtoolsBase}
+ * Initializes the Devtools singleton and returns a handle to it.
+ *
+ * @see {@link @fluid-experimental/devtools-core#initializeDevtoolsBase}
  *
  * @public
  */

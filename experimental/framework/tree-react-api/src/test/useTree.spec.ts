@@ -25,7 +25,7 @@ describe("useTree()", () => {
 			subtype: "InventoryList",
 		});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		return tree.schematize({
+		return tree.schematizeOld({
 			initialTree: {
 				nuts: 0,
 				bolts: 0,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
+/* eslint-disable import/no-deprecated */
+
 import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
@@ -108,7 +109,6 @@ export interface ReferencePosition {
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
  */
-// eslint-disable-next-line import/no-deprecated
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;

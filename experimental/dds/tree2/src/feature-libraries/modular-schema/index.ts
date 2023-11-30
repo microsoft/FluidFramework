@@ -56,4 +56,5 @@ export {
 	GlobalEditDescription,
 	FieldEditDescription,
 	revisionMetadataSourceFromInfo,
+	intoDelta,
 } from "./modularChangeFamily";
