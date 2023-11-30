@@ -30,4 +30,5 @@ export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicio
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
 export { ScopeType } from "@fluidframework/protocol-definitions";
 
+// Re-export so developers can build loggers without pulling in core-interfaces
 export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
