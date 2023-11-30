@@ -2,12 +2,12 @@
 	"name": "@fluid-example/shared-tree-demo",
 	"version": "2.0.0-internal.7.4.0",
 	"private": true,
-	"description": "A minimal example using the react collaborative-textarea",
+	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/apps/collaborative-textarea"
+		"directory": "examples/service-clients/shared-tree-demo"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -33,20 +33,14 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/react-inputs": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-experimental/odsp-client": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"css-loader": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
