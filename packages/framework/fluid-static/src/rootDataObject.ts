@@ -6,13 +6,12 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-	// eslint-disable-next-line import/no-deprecated
-	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 import {
 	ContainerSchema,
 	DataObjectClass,
@@ -176,21 +175,29 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{},
 			registryEntries,
 		);
+		const provideEntryPoint = async (containerRuntime: IContainerRuntime) => {
+			const entryPoint =
+				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			if (entryPoint === undefined) {
+				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
+			}
+			return entryPoint.get();
+		};
+		const getDefaultObject = async (
+			req: IRequest,
+			runtime: IContainerRuntime,
+		): Promise<IResponse> => {
+			return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+				? { mimeType: "fluid/object", status: 200, value: await provideEntryPoint(runtime) }
+				: create404Response(req);
+		};
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			// eslint-disable-next-line import/no-deprecated
-			requestHandlers: [defaultRouteRequestHandler(rootDataStoreId)],
+			requestHandlers: [getDefaultObject],
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO
 			runtimeOptions: { flushMode: FlushMode.Immediate },
-			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint =
-					await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-				if (entryPoint === undefined) {
-					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
-				}
-				return entryPoint.get();
-			},
+			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

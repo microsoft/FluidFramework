@@ -22,7 +22,6 @@ import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { ILoaderProps } from '@fluidframework/container-loader';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -173,9 +172,6 @@ export interface ISameContainerMigratorEvents extends IEvent {
 export interface IVersionedModel {
     readonly version: string;
 }
-
-// @public @deprecated
-export const makeModelRequestHandler: <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";

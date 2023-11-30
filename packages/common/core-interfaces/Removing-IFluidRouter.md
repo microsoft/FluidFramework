@@ -117,3 +117,8 @@ const entryPoint = await container.getEntryPoint();
 | `requestResolvedObjectFromContainer`                                                         | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 | `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 <!-- prettier-ignore-end -->
+
+The removal of the following items will need to wait for the LTS version of the `Loader` to reach "2.0.0-internal.7.0.0":
+
+-   `requestHandler` property in `ContainerRuntime.loadRuntime(...)`, `BaseContainerRuntimeFactory`, `ContainerRuntimeFactoryWithDefaultDataStore`, `mixinAttributor`, `RuntimeFactory`, `TestContainerRuntimeFactory`
+-   `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`

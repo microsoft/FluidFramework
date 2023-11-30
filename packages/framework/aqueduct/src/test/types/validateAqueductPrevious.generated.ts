@@ -240,50 +240,26 @@ use_old_ClassDeclaration_PureDataObjectFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_defaultFluidObjectRequestHandler():
-    TypeOnly<typeof old.defaultFluidObjectRequestHandler>;
-declare function use_current_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    use: TypeOnly<typeof current.defaultFluidObjectRequestHandler>): void;
-use_current_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    get_old_FunctionDeclaration_defaultFluidObjectRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_defaultFluidObjectRequestHandler": {"backCompat": false}
+* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_defaultFluidObjectRequestHandler():
-    TypeOnly<typeof current.defaultFluidObjectRequestHandler>;
-declare function use_old_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    use: TypeOnly<typeof old.defaultFluidObjectRequestHandler>): void;
-use_old_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    get_current_FunctionDeclaration_defaultFluidObjectRequestHandler());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_defaultRouteRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_defaultRouteRequestHandler():
-    TypeOnly<typeof old.defaultRouteRequestHandler>;
-declare function use_current_VariableDeclaration_defaultRouteRequestHandler(
-    use: TypeOnly<typeof current.defaultRouteRequestHandler>): void;
-use_current_VariableDeclaration_defaultRouteRequestHandler(
-    get_old_VariableDeclaration_defaultRouteRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_defaultRouteRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_defaultRouteRequestHandler():
-    TypeOnly<typeof current.defaultRouteRequestHandler>;
-declare function use_old_VariableDeclaration_defaultRouteRequestHandler(
-    use: TypeOnly<typeof old.defaultRouteRequestHandler>): void;
-use_old_VariableDeclaration_defaultRouteRequestHandler(
-    get_current_VariableDeclaration_defaultRouteRequestHandler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -324,23 +300,11 @@ use_old_VariableDeclaration_defaultRouteRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_mountableViewRequestHandler():
-    TypeOnly<typeof old.mountableViewRequestHandler>;
-declare function use_current_VariableDeclaration_mountableViewRequestHandler(
-    use: TypeOnly<typeof current.mountableViewRequestHandler>): void;
-use_current_VariableDeclaration_mountableViewRequestHandler(
-    get_old_VariableDeclaration_mountableViewRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mountableViewRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_mountableViewRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_mountableViewRequestHandler():
-    TypeOnly<typeof current.mountableViewRequestHandler>;
-declare function use_old_VariableDeclaration_mountableViewRequestHandler(
-    use: TypeOnly<typeof old.mountableViewRequestHandler>): void;
-use_old_VariableDeclaration_mountableViewRequestHandler(
-    get_current_VariableDeclaration_mountableViewRequestHandler());

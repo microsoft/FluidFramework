@@ -144,6 +144,18 @@
 			"RemovedFunctionDeclaration_getObjectWithIdFromContainer": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_defaultRouteRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_mountableViewRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

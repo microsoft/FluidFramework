@@ -28,8 +28,3 @@ export {
 	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 } from "./container-runtime-factories";
-export {
-	defaultFluidObjectRequestHandler,
-	defaultRouteRequestHandler,
-	mountableViewRequestHandler,
-} from "./request-handlers";

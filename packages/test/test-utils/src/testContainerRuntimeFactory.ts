@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -12,10 +10,11 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
  * Create a container runtime factory class that allows you to set runtime options
@@ -68,6 +67,18 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return entryPoint.get();
 			};
+			const getDefaultObject = async (
+				req: IRequest,
+				runtime: IContainerRuntime,
+			): Promise<IResponse> => {
+				return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+					? {
+							mimeType: "fluid/object",
+							status: 200,
+							value: await provideEntryPoint(runtime),
+					  }
+					: create404Response(req);
+			};
 			return containerRuntimeCtor.loadRuntime({
 				context,
 				registryEntries: [
@@ -76,8 +87,7 @@ export const createTestContainerRuntimeFactory = (
 				],
 				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(
-					// eslint-disable-next-line import/no-deprecated
-					defaultRouteRequestHandler("default"),
+					getDefaultObject,
 					...this.requestHandlers,
 				),
 				provideEntryPoint,

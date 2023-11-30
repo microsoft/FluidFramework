@@ -11,9 +11,8 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { defaultRouteRequestHandler } from "../request-handlers";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
@@ -51,7 +50,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		defaultFactory: IFluidDataStoreFactory;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: IFluidDependencySynthesizer;
-		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
 		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
@@ -59,10 +58,18 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
+		const getDefaultObject = async (
+			req: IRequest,
+			runtime: IContainerRuntime,
+		): Promise<IResponse> => {
+			return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+				? { mimeType: "fluid/object", status: 200, value: await provideEntryPoint(runtime) }
+				: create404Response(req);
+		};
+
 		super({
 			...props,
-			// eslint-disable-next-line import/no-deprecated
-			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
+			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
 		});
 

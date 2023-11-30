@@ -16,19 +16,6 @@ import { RequestParser } from '@fluidframework/runtime-utils';
 // @public @deprecated (undocumented)
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
-// @public @deprecated (undocumented)
-export const createFluidObjectResponse: (fluidObject: FluidObject) => {
-    status: 200;
-    mimeType: "fluid/object";
-    value: FluidObject;
-};
-
-// @public @deprecated (undocumented)
-export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
-
-// @public @deprecated
-export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
-
 // @public @deprecated
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
