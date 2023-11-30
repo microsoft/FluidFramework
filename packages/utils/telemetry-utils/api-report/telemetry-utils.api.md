@@ -79,7 +79,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @internal (undocumented)
+// @internal
 export const eventNamespaceSeparator: ":";
 
 // @internal
