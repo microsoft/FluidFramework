@@ -1,6 +1,10 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-api-markdown-documenter pipeline
+
 name: $(Build.BuildId)
+
 parameters:
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
@@ -39,6 +43,7 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
+
 pr:
   branches:
     include:
@@ -58,6 +63,7 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
+
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
