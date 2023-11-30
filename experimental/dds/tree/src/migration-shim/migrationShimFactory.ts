@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from '@fluidframework/core-utils';
 import {
 	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type IChannelServices,
 	type IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import {
-	type SharedTreeFactory as LegacySharedTreeFactory,
-	type SharedTree as LegacySharedTree,
-} from "@fluid-experimental/tree";
-import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
-import { MigrationShim } from "./migrationShim.js";
-import { attributesMatch } from "./utils.js";
+} from '@fluidframework/datastore-definitions';
+import { type SharedTreeFactory, type ISharedTree } from '@fluid-experimental/tree2';
+import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+import { MigrationShim } from './migrationShim.js';
+import { attributesMatch } from './utils.js';
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.
@@ -34,10 +31,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
 		private readonly oldFactory: LegacySharedTreeFactory,
 		private readonly newFactory: SharedTreeFactory,
-		private readonly populateNewChannelFn: (
-			oldChannel: LegacySharedTree,
-			newChannel: ISharedTree,
-		) => void,
+		private readonly populateNewChannelFn: (oldChannel: LegacySharedTree, newChannel: ISharedTree) => void
 	) {}
 
 	/**
@@ -68,19 +62,16 @@ export class MigrationShimFactory implements IChannelFactory {
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
-		attributes: IChannelAttributes,
+		attributes: IChannelAttributes
 	): Promise<MigrationShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
-		assert(
-			attributesMatch(attributes, this.oldFactory.attributes),
-			0x7ea /* Attributes do not match */,
-		);
+		assert(attributesMatch(attributes, this.oldFactory.attributes), 0x7ea /* Attributes do not match */);
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,
 			this.oldFactory,
 			this.newFactory,
-			this.populateNewChannelFn,
+			this.populateNewChannelFn
 		);
 		await migrationShim.load(services);
 		return migrationShim;
@@ -100,7 +91,7 @@ export class MigrationShimFactory implements IChannelFactory {
 			runtime,
 			this.oldFactory,
 			this.newFactory,
-			this.populateNewChannelFn,
+			this.populateNewChannelFn
 		);
 		migrationShim.create();
 		return migrationShim;

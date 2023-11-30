@@ -2,26 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import {
 	type IChannelAttributes,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from '@fluidframework/datastore-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
-import { AttachState } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
-import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
-import { StampDeltaConnection } from "./shimDeltaConnection.js";
-import { ShimHandle } from "./shimHandle.js";
-import { type IShim } from "./types.js";
+} from '@fluidframework/runtime-definitions';
+import { type ISharedTree, type SharedTreeFactory } from '@fluid-experimental/tree2';
+import { AttachState } from '@fluidframework/container-definitions';
+import { assert } from '@fluidframework/core-utils';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
+import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
+import { StampDeltaConnection } from './shimDeltaConnection.js';
+import { ShimHandle } from './shimHandle.js';
+import { type IShim } from './types.js';
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.
@@ -38,7 +38,7 @@ export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
-		public readonly sharedTreeFactory: SharedTreeFactory,
+		public readonly sharedTreeFactory: SharedTreeFactory
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 		this.handle = new ShimHandle<SharedTreeShim>(this);
@@ -63,7 +63,7 @@ export class SharedTreeShim implements IShim {
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
+		telemetryContext?: ITelemetryContext | undefined
 	): ISummaryTreeWithStats {
 		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
@@ -71,14 +71,9 @@ export class SharedTreeShim implements IShim {
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined
 	): Promise<ISummaryTreeWithStats> {
-		return this.currentTree.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-			incrementalSummaryContext,
-		);
+		return this.currentTree.summarize(fullTree, trackState, telemetryContext, incrementalSummaryContext);
 	}
 	public isAttached(): boolean {
 		return this.currentTree.isAttached();
@@ -100,7 +95,7 @@ export class SharedTreeShim implements IShim {
 			this.runtime,
 			this.id,
 			shimServices,
-			this.sharedTreeFactory.attributes,
+			this.sharedTreeFactory.attributes
 		);
 	}
 
@@ -116,7 +111,7 @@ export class SharedTreeShim implements IShim {
 			deltaConnection: new StampDeltaConnection(
 				this.services.deltaConnection,
 				this.newTreeShimDeltaHandler,
-				this.sharedTreeFactory.attributes,
+				this.sharedTreeFactory.attributes
 			),
 		};
 		return shimServices;
