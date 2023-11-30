@@ -7,7 +7,7 @@ parameters:
 - name: publishOverride
   type: string
   default: default
-1
+
 - name: releaseBuildOverride
   type: string
   default: none
