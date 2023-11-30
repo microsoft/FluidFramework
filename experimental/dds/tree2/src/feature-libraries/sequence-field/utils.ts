@@ -1082,9 +1082,11 @@ export function compareLineages(
 	return 0;
 }
 
-// Returns 1 if cell1 has more lineage and -1 if cell2 has more lineage.
-// Note that this will return zero if both cells are older than the revision metadata and they both
-// have the same lineage, even if they are not the same cell.
+/**
+ * Returns 1 if cell1 has more lineage and -1 if cell2 has more lineage.
+ * Note that this will return zero if both cells are older than the revision metadata and they both
+ * have the same lineage, even if they are not the same cell.
+ */
 function compareCellAge(cell1: CellId, cell2: CellId, metadata: RevisionMetadataSource): number {
 	return (
 		getTrunkLineageLength(cell1.lineage, metadata) -
