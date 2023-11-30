@@ -45,11 +45,20 @@ export function createOdspClient(
 	 * Default test credentials for odsp-client.
 	 */
 	const clientCreds: OdspTestCredentials = {
-		clientId: "<client_id>",
-		clientSecret: "<client_secret>",
-		username: "<email_id>",
-		password: "<password>",
+		clientId: "process.env.client__id",
+		clientSecret: "process.env.client__secret",
+		username: "process.env.odsp__login__username",
+		password: "process.env.odsp__login__password",
 	};
+
+	if (
+		clientCreds.clientId === undefined ||
+		clientCreds.clientSecret === undefined ||
+		clientCreds.username === undefined ||
+		clientCreds.password === undefined
+	) {
+		throw new Error("Some of the odsp crednetials are undefined");
+	}
 
 	const connectionProps: OdspConnectionConfig = {
 		siteUrl,
