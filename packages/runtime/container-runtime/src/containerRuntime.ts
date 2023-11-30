@@ -8,8 +8,6 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
@@ -2386,28 +2384,6 @@ export class ContainerRuntime
 		}
 
 		this.dataStores.processSignal(envelope.address, transformed, local);
-	}
-
-	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
-	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-		return this.getRootDataStoreChannel(id, wait);
-	}
-
-	private async getRootDataStoreChannel(
-		id: string,
-		wait = true,
-	): Promise<IFluidDataStoreChannel> {
-		await this.dataStores.waitIfPendingAlias(id);
-		const internalId = this.internalId(id);
-		const context = await this.dataStores.getDataStore(internalId, { wait });
-		assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
-		return context.realize();
 	}
 
 	/**

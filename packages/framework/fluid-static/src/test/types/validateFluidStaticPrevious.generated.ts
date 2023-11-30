@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_IRootDataObject():
 declare function use_current_InterfaceDeclaration_IRootDataObject(
     use: TypeOnly<current.IRootDataObject>): void;
 use_current_InterfaceDeclaration_IRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootDataObject());
 
 /*
