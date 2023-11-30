@@ -1,46 +1,26 @@
-# Getting Started with Create React App
+# @fluid-example/shared-tree-demo
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This app demonstrates how to create a simple tree data structure and build a React app using that data.
 
-## Available Scripts
+## Setting up the Fluid Framework
 
-In the project directory, you can run:
+This app is designed to use
+[Azure Fluid Relay](https://aka.ms/azurefluidrelay) a Fluid relay service offered by Microsoft. You can also run a local service for development purposes. Instructions on how to set up a Fluid relay are on the [Fluid Framework website](aka.ms/fluid).
 
-### `npm start`
+One important note is that you will need to use a token provider or, purely for testing and development, use the insecure token provider. There are instructions on how to set this up on the [Fluid Framework website](aka.ms/fluid).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+All the code required to set up the Fluid Framework and SharedTree data structure is in the fluid.ts source file. Most of this code will be the same for any app. However, because SharedTree is still in the alpha stage, the code to set it up isn't optimized yet.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+One thing of particular interest is the inclusion of the useTree React hook in fluid.ts. This custom hook makes building the user interface very intuitive as it allows the developer to use typed tree data to build the UI and it ensures that any changes trigger an update to the React app.
 
-### `npm test`
+## Schema Definition
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The SharedTree schema is defined in the schema.ts source file. This schema is passed into the SharedTree when it is initialized in index.tsx. For more details, see the schema.ts comments.
 
-### `npm run build`
+## Working with Data
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Working with data in the SharedTree is very simple; however, working with distributed data is always a little more complicated than working with local data. To isolate this complexity, this app uses a set of helper functions in the helpers.ts source file that take types defined in the schema as input and modify the data in some way. Each function includes a brief description of how it works.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## User Interface
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+This app is built using React. It uses a custom hook to fetch the data from the SharedTree and automatically keep it up to date. Changes to the data are handled using the helper functions mentioned above. If you look at the code in ux.tsx, you'll find very little code that is unique to an app built with the Fluid Framework.
