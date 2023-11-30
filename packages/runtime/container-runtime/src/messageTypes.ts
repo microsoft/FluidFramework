@@ -76,6 +76,8 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
 	contents: TContents;
+	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
+	compatDetails?: IContainerRuntimeMessageCompatDetails;
 }
 
 /**
