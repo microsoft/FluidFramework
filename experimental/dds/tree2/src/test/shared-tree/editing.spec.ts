@@ -2667,6 +2667,28 @@ describe("Editing", () => {
 		unsubscribe();
 	});
 
+	it("rebase insert within revive", () => {
+		const tree = makeTreeFromJson(["y"]);
+		const tree1 = tree.fork();
+
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+		insert(tree1, 1, "a", "c");
+		remove(tree1, 1, 2); // Remove ac
+
+		const tree2 = tree1.fork();
+
+		undoStack.pop()?.revert(); // Restores ac
+		insert(tree1, 2, "b");
+		expectJsonTree(tree1, ["y", "a", "b", "c"]);
+
+		insert(tree2, 0, "x");
+		tree1.rebaseOnto(tree2);
+		tree2.merge(tree1);
+
+		const expected = ["x", "y", "a", "b", "c"];
+		expectJsonTree([tree1, tree2], expected);
+	});
+
 	describe("Can abort transactions", () => {
 		function getInnerSequenceFieldPath(outer: FieldUpPath): FieldUpPath {
 			return {
