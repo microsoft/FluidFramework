@@ -1036,6 +1036,11 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
 }
 
+/**
+ * @returns -1 if the lineage indicates that cell1 is earlier in the field than cell2.
+ * Returns 1 if cell2 is earlier in the field.
+ * Returns 0 if the order cannot be determined from the lineage.
+ */
 export function compareLineages(
 	cell1: CellId,
 	cell2: CellId,
