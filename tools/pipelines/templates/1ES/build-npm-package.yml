@@ -186,7 +186,6 @@ extends:
                   publishOverride: '${{ parameters.publishOverride }}'
                   releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
                   buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
-                  nonScopedPackages: '${{ parameters.nonScopedPackages }}'
               - group: ado-feeds
               - name: testCoverage
                 value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
@@ -559,14 +558,10 @@ extends:
 
       # Publish stage
       - ${{ if eq(variables.publish, true) }}:
-          - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
-            parameters:
-              tagName: '${{ parameters.tagName }}'
-              isReleaseGroup: '${{ parameters.isReleaseGroup }}'
-              publishOverride: '${{ parameters.publishOverride }}'
-              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-              buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
-              nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+        - template: include-publish-npm-package.yml
+          parameters:
+            tagName: ${{ parameters.tagName }}
+            isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
       # Capture per-pipeline stage results
       # Capture pipeline stage results
