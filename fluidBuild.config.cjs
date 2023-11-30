@@ -71,7 +71,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"lint:release-tags": [...tscDependsOn, "commonjs"],
+		"lint:release-tags": ["tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
