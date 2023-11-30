@@ -1103,4 +1103,21 @@ describe("SequenceField - Compose", () => {
 
 		assert.deepEqual(composed, expected);
 	});
+
+	it("delete (rollback) ○ insert", () => {
+		const insertA = tagChange([Mark.insert(1, brand(0))], tag1);
+		const deleteB = tagRollbackInverse([Mark.delete(1, brand(0))], tag3, tag2);
+		const composed = shallowCompose([deleteB, insertA]);
+
+		// B is the inverse of a new attach. Since that new attach comes after A (temporally),
+		// its tiebreak policy causes the cell to come before A's insert (spatially).
+		// When composing the rollback with A's insert, we the delete should come before the insert,
+		// even though A's insert has a tiebreak policy which puts it before other new cells.
+		const expected = [
+			Mark.delete(1, { revision: tag2, localId: brand(0) }),
+			Mark.insert(1, { revision: tag1, localId: brand(0) }),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
 });
