@@ -127,6 +127,8 @@ function composeMarkLists<TNodeChange>(
 			);
 			factory.push(baseMark);
 		} else {
+			// We only compose changesets that will not be further rebased.
+			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
 			const settledNewMark = settleMark(newMark, newRev, revisionMetadata);
 			if (baseMark === undefined) {
 				factory.push(composeMark(settledNewMark, newRev, composeChild));
