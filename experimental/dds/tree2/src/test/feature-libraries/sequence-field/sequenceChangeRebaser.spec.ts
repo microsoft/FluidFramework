@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
@@ -14,15 +14,19 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
+	RevisionInfo,
 } from "../../../core";
 import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	compose,
 	invert,
+	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
@@ -33,6 +37,8 @@ import {
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
+
+// TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -110,7 +116,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"ReturnFrom",
 		(i, max) =>
 			Change.return(i, 2, 1, {
-				revision: tag4,
+				revision: tag3,
 				localId: brand(i),
 				adjacentCells: generateAdjacentCells(max),
 			}),
@@ -119,7 +125,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"ReturnTo",
 		(i, max) =>
 			Change.return(1, 2, i, {
-				revision: tag4,
+				revision: tag3,
 				localId: brand(i),
 				adjacentCells: generateAdjacentCells(max),
 			}),
@@ -265,11 +271,11 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name, makeChange] of testChanges) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const change = makeChange(0, 0);
-				const taggedChange = tagChange(change, tag1);
+				const taggedChange = tagChange(change, tag5);
 				const inv = invert(taggedChange);
 				const changes = [
 					taggedChange,
-					tagRollbackInverse(inv, tag2, taggedChange.revision),
+					tagRollbackInverse(inv, tag6, taggedChange.revision),
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
@@ -283,8 +289,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const tracker = new SF.DetachedNodeTracker();
 				const change = makeChange(0, 0);
-				const taggedChange = tagChange(change, tag1);
-				const inv = tagRollbackInverse(invert(taggedChange), tag2, taggedChange.revision);
+				const taggedChange = tagChange(change, tag5);
+				const inv = tagRollbackInverse(invert(taggedChange), tag6, taggedChange.revision);
 				tracker.apply(taggedChange);
 				tracker.apply(inv);
 				const changes = [inv, taggedChange];
@@ -327,20 +333,19 @@ describe("SequenceField - Rebaser Axioms", () => {
 						// should have lineage describing its position relative to the newer cell.
 					} else {
 						it(title, () => {
-							const a = tagChange(makeChange1(1, 1), tag1);
-							const b = tagChange(makeChange2(1, 1), tag2);
-							const c = tagChange(makeChange3(1, 1), tag3);
+							const a = tagChange(makeChange1(1, 1), tag5);
+							const b = tagChange(makeChange2(1, 1), tag6);
+							const c = tagChange(makeChange3(1, 1), tag7);
 							const a2 = rebaseTagged(a, b);
 							const rebasedIndividually = rebaseTagged(a2, c).change;
 							const bc = compose([b, c]);
 							const rebasedOverComposition = rebaseOverComposition(
 								a.change,
 								bc,
-								revisionMetadataSourceFromInfo([
-									{ revision: tag1 },
-									{ revision: tag2 },
-									{ revision: tag3 },
-								]),
+								rebaseRevisionMetadataFromInfo(
+									[{ revision: tag6 }, { revision: tag7 }, { revision: tag5 }],
+									[tag6, tag7],
+								),
 							);
 
 							const normalizedComposition =
@@ -529,15 +534,13 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
 	});
 
-	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
-	// See BUG 5351
-	it.skip("(Insert, delete) ↷ adjacent insert", () => {
+	it("(Insert, delete) ↷ adjacent insert", () => {
 		const insertT = tagChange(Change.insert(0, 1), tag1);
 		const insertA = tagChange(Change.insert(0, 1), tag2);
 		const deleteB = tagChange(Change.delete(0, 1), tag3);
 		const insertA2 = rebaseTagged(insertA, insertT);
 		const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
-		const deleteB2 = rebaseTagged(deleteB, inverseA, insertT, insertA2);
+		const deleteB2 = rebaseOverChanges(deleteB, [inverseA, insertT, insertA2]);
 		assert.deepEqual(deleteB2.change, deleteB.change);
 	});
 
@@ -584,8 +587,57 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const moveInverse = invert(move);
 		const undo = tagChange(moveInverse, tag2);
 		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
-		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
+		const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
 		assert.deepEqual(rebasedUndo, undo);
+	});
+
+	it("delete ↷ two inverse inserts", () => {
+		// Given a branch with three changes:
+		// A: Insert x at index 0
+		// B: Insert y at index 0
+		// C: Delete y
+		// This test simulates rebasing C back to the trunk.
+
+		const changeC = tagChange([Mark.delete(1, brand(0))], tag3);
+
+		const rollbackTag2 = mintRevisionTag();
+		const changeB = tagChange([Mark.insert(1, brand(0))], tag2);
+		const inverseB = tagRollbackInverse(invert(changeB), rollbackTag2, tag2);
+
+		const rollbackTag1 = mintRevisionTag();
+		const changeA = tagChange([Mark.insert(1, brand(0))], tag1);
+		const inverseA = tagRollbackInverse(invert(changeA), rollbackTag1, tag1);
+
+		const revInfos: RevisionInfo[] = [
+			{ revision: rollbackTag2, rollbackOf: tag2 },
+			{ revision: rollbackTag1, rollbackOf: tag1 },
+			{ revision: tag1 },
+			{ revision: tag2 },
+		];
+
+		const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag2,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(cRebasedToTrunk.change, expected);
+	});
+
+	it("[insert, insert] ↷ insert", () => {
+		const insertT = tagChange([Mark.insert(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseOverChanges(insertA, [insertT]);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
+		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
+		assert.deepEqual(insertB2.change, expected);
 	});
 });
 

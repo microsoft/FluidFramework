@@ -4,27 +4,29 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import {
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
-	SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	Delta,
+	RevisionInfo,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
+	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
 
 export function composeNoVerify(
@@ -84,13 +86,16 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RevisionMetadataSource,
+	revisionMetadata?: RebaseRevisionMetadata,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
 	const metadata =
-		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+		revisionMetadata ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
+			base.revision,
+		]);
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
@@ -118,20 +123,67 @@ export function rebase(
 
 export function rebaseTagged(
 	change: TaggedChange<TestChangeset>,
-	...baseChanges: TaggedChange<TestChangeset>[]
+	baseChange: TaggedChange<TestChangeset>,
+): TaggedChange<TestChangeset> {
+	return rebaseOverChanges(change, [baseChange]);
+}
+
+export function rebaseOverChanges(
+	change: TaggedChange<TestChangeset>,
+	baseChanges: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
+	const revisionInfo = revInfos ?? defaultRevInfosForRebase(change, baseChanges);
 	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+		currChange = tagChange(
+			rebase(
+				currChange.change,
+				base,
+				rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			),
+			currChange.revision,
+		);
 	}
 
 	return currChange;
 }
 
+function defaultRevInfosForRebase(
+	change: TaggedChange<TestChangeset>,
+	baseChanges: TaggedChange<TestChangeset>[],
+): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	const rollForwards: RevisionTag[] = [];
+	for (const baseChange of baseChanges) {
+		if (baseChange.revision !== undefined) {
+			revInfos.push({
+				revision: baseChange.revision,
+				rollbackOf: baseChange.rollbackOf,
+			});
+
+			if (baseChange.rollbackOf !== undefined) {
+				rollForwards.push(baseChange.rollbackOf);
+			}
+		}
+	}
+
+	rollForwards.reverse();
+	for (const revision of rollForwards) {
+		revInfos.push({ revision });
+	}
+
+	if (change.revision !== undefined) {
+		assert(change.rollbackOf === undefined, "Should not rebase rollback changes");
+		revInfos.push({ revision: change.revision });
+	}
+	return revInfos;
+}
+
 export function rebaseOverComposition(
 	change: TestChangeset,
 	base: TestChangeset,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): TestChangeset {
 	return rebase(change, makeAnonChange(base), metadata);
 }

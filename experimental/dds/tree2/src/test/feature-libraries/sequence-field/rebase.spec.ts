@@ -4,16 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	checkDeltaEquality,
 	rebaseTagged,
 	rebase as rebaseI,
 	shallowCompose,
 	rebaseOverComposition,
+	rebaseOverChanges,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -501,7 +504,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const insertC2 = rebaseTagged(insertC, delA, insertB2);
+		const insertC2 = rebaseOverChanges(insertC, [delA, insertB2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertC2.change, expected);
 	});
@@ -513,8 +516,8 @@ describe("SequenceField - Rebase", () => {
 
 		const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
-		const insertD2 = rebaseTagged(insertD, delA, delB, delC);
-		const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+		const insertD2 = rebaseOverChanges(insertD, [delA, delB, delC]);
+		const insertE2 = rebaseOverChanges(insertE, [delA, delB, delC, insertD2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertE2.change, expected);
 	});
@@ -524,7 +527,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const moveC2 = rebaseTagged(moveC, delA, insertB2);
+		const moveC2 = rebaseOverChanges(moveC, [delA, insertB2]);
 		const expected = Change.move(2, 1, 1);
 		checkDeltaEquality(moveC2.change, expected);
 	});
@@ -931,6 +934,27 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("insert ↷ [delete, insert]", () => {
+		// Because B does not have lineage for A, we should use B's insertion's tiebreak policy
+		// and consider the cell it inserts into to be before the cell emptied by A
+		// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
+		// we should use C's lineage to deduce that it must come after B.
+		const deleteA = [Mark.delete(1, brand(0))];
+		const insertB = [Mark.insert(1, brand(0))];
+		const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
+
+		const c2 = rebase(insertC, deleteA, tag1);
+		const c3 = rebase(c2, insertB, tag2);
+		const expected = [
+			{ count: 1 },
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+		assert.deepEqual(c3, expected);
+	});
+
 	describe("Over composition", () => {
 		it("insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
@@ -942,7 +966,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				insert,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = [
@@ -969,7 +996,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				modify,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = Change.modifyDetached(0, nodeChange, {
