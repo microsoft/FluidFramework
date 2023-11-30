@@ -36,10 +36,19 @@ describe("node API", () => {
 	});
 
 	describe("is", () => {
-		it("list", () => {
+		it("object", () => {
 			const root = getRoot(treeSchema, initialTree);
 			assert.equal(Tree.is(root.object, object), true);
 			assert.equal(Tree.is(root.object, list), false);
+			assert.throws(() =>
+				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
+			);
+		});
+
+		it("list", () => {
+			const root = getRoot(treeSchema, initialTree);
+			assert.equal(Tree.is(root.list, list), true);
+			assert.equal(Tree.is(root.list, object), false);
 			assert.throws(() =>
 				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
