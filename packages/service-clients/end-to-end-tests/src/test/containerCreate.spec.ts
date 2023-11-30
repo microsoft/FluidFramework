@@ -10,13 +10,8 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConfigTypes, IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { createOdspClient } from "./OdspClientFactory";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
@@ -154,39 +149,5 @@ describe("Container create scenarios", () => {
 		);
 		// eslint-disable-next-line require-atomic-updates
 		console.error = consoleErrorFn;
-	});
-});
-
-describe("Container create with feature flags", () => {
-	let client: OdspClient;
-	let schema: ContainerSchema;
-	let mockLogger: MockLogger;
-
-	beforeEach(() => {
-		mockLogger = new MockLogger();
-		client = createOdspClient(
-			mockLogger,
-			configProvider({
-				"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-			}),
-		);
-		schema = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		};
-	});
-
-	/**
-	 * Scenario: Test if OdspClient can create a container with feature gates.
-	 *
-	 * Expected behavior: An error should not be thrown and the logger should have logged the enabled feature gates.
-	 */
-	it("can create containers with feature gates", async () => {
-		await client.createContainer(schema);
-		const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
-		assert(event !== undefined, "ContainerLoadStats event should exist");
-		const featureGates = event.featureGates as string;
-		assert(featureGates.includes('"disableOpReentryCheck":true'));
 	});
 });

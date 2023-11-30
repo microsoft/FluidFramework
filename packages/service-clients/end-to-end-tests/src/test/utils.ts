@@ -9,16 +9,16 @@ import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
 export const waitForMember = async (
 	audience: IOdspAudience,
-	userId: string,
+	username: string,
 ): Promise<OdspMember> => {
 	const allMembers = audience.getMembers();
-	const member = allMembers.get(userId);
+	const member = allMembers.get(username);
 	if (member !== undefined) {
 		return member;
 	}
 	return new Promise((resolve) => {
 		const handler = (clientId: string, newMember: IMember): void => {
-			if (newMember.userId === userId) {
+			if (newMember.userId === username) {
 				resolve(newMember as OdspMember);
 			}
 		};

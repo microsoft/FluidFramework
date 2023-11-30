@@ -23,6 +23,16 @@ export interface OdspTestCredentials {
 }
 
 /**
+ * Default test credentials for odsp-client.
+ */
+export const clientCreds: OdspTestCredentials = {
+	clientId: "process.env.client__id",
+	clientSecret: "process.env.client__secret",
+	username: "process.env.odsp__login__username",
+	password: "process.env.odsp__login__password",
+};
+
+/**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
@@ -40,16 +50,6 @@ export function createOdspClient(
 	if (driveId === undefined) {
 		throw new Error("RaaS drive id is missing");
 	}
-
-	/**
-	 * Default test credentials for odsp-client.
-	 */
-	const clientCreds: OdspTestCredentials = {
-		clientId: "process.env.client__id",
-		clientSecret: "process.env.client__secret",
-		username: "process.env.odsp__login__username",
-		password: "process.env.odsp__login__password",
-	};
 
 	if (
 		clientCreds.clientId === undefined ||
