@@ -7,7 +7,8 @@ import { TreeStatus } from "../feature-libraries";
 import { TreeNode, Tree as TreeSimple } from "../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { getClassSchema } from "../simple-tree/proxies";
-import { NodeBase, NodeKind, TreeNodeSchema } from "./schemaTypes";
+import { NodeBase, NodeFromSchema, NodeKind, TreeNodeSchema } from "./schemaTypes";
+import { getFlexSchema } from "./toFlexSchema";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -34,7 +35,7 @@ export interface TreeApi {
 	is<TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
-	): value is TSchema extends TreeNodeSchema<string, NodeKind, unknown, infer T> ? T : never;
+	): value is NodeFromSchema<TSchema>;
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
@@ -68,6 +69,12 @@ export interface TreeApi {
  */
 export const nodeApi: TreeApi = {
 	...(TreeSimple as unknown as TreeApi),
+	is: <TSchema extends TreeNodeSchema>(
+		value: unknown,
+		schema: TSchema,
+	): value is NodeFromSchema<TSchema> => {
+		return TreeSimple.is(value, getFlexSchema(schema)) ?? false;
+	},
 	schema<T extends NodeBase>(node: NodeBase): TreeNodeSchema<string, NodeKind, unknown, T> {
 		return getClassSchema(TreeSimple.schema(node as TreeNode)) as TreeNodeSchema<
 			string,
