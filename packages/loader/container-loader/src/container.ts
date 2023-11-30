@@ -500,6 +500,7 @@ export class Container
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
 
@@ -817,6 +818,10 @@ export class Container
 			});
 		};
 
+		this._containerId = uuid();
+
+		this.client = this.setupClient(this._containerId, this.options, this.clientDetailsOverride);
+
 		// Create logger for data stores to use
 		const type = this.client.details.type;
 		const interactive = this.client.details.capabilities.interactive;
@@ -824,7 +829,6 @@ export class Container
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
 
-		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -1999,8 +2003,12 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	private get client(): IClient {
-		const loaderOptionsClient = structuredClone(this.options?.client);
+	private setupClient(
+		containerId: string,
+		options?: ILoaderOptions,
+		clientDetailsOverride?: IClientDetails,
+	): IClient {
+		const loaderOptionsClient = structuredClone(options?.client);
 		const client: IClient =
 			loaderOptionsClient !== undefined
 				? (loaderOptionsClient as IClient)
@@ -2014,13 +2022,13 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (this.clientDetailsOverride !== undefined) {
-			merge(client.details, this.clientDetailsOverride);
+		if (clientDetailsOverride !== undefined) {
+			merge(client.details, clientDetailsOverride);
 		}
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
-			` containerId:${this._containerId}`,
+			` containerId:${containerId}`,
 		].join(";");
 
 		return client;
