@@ -10,7 +10,6 @@ import {
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
@@ -27,6 +26,7 @@ import {
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
+	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -89,7 +89,6 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX = { type: leaf.string.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
 
 function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 	assert.equal(actual.length, expected.length);
@@ -118,7 +117,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
-		const delta = defaultChangeFamily.intoDelta(taggedChange);
+		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
 		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();

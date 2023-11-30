@@ -13,7 +13,6 @@ import {
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
 	LocalDeltaConnectionServer,
@@ -94,12 +93,12 @@ describe("LocalTestServer", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 

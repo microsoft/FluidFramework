@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	checkDeltaEquality,
 	composeAnonChanges,
@@ -15,6 +17,7 @@ import {
 	rebase as rebaseI,
 	shallowCompose,
 	rebaseOverComposition,
+	rebaseOverChanges,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -114,19 +117,19 @@ describe("SequenceField - Rebase", () => {
 
 	it("insert ↷ delete", () => {
 		const insert = composeAnonChanges([
-			Change.insert(0, 1, 1),
-			Change.insert(3, 1, 2),
-			Change.insert(8, 1, 3),
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+			Change.insert(8, 1, brand(3)),
 		]);
 		const deletion = Change.delete(1, 3);
 		const actual = rebase(insert, deletion);
 		const expected = composeAnonChanges([
 			// Earlier insert is unaffected
-			Change.insert(0, 1, 1),
+			Change.insert(0, 1, brand(1)),
 			// Overlapping insert has its index reduced
-			Change.insert(2, 1, 2),
+			Change.insert(2, 1, brand(2)),
 			// Later insert has its index reduced
-			Change.insert(5, 1, 3),
+			Change.insert(5, 1, brand(3)),
 		]);
 		checkDeltaEquality(actual, expected);
 	});
@@ -285,7 +288,7 @@ describe("SequenceField - Rebase", () => {
 			Change.modify(0, TestChange.mint([0], 1)),
 			Change.modify(3, TestChange.mint([0], 2)),
 		]);
-		const insert = Change.insert(2, 1, 2);
+		const insert = Change.insert(2, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Modify at earlier index is unaffected
 			Change.modify(0, TestChange.mint([0], 1)),
@@ -304,7 +307,7 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(2, 1, brand(3)),
 		]);
 		// Inserts between C and D
-		const insert = Change.insert(3, 1, 2);
+		const insert = Change.insert(3, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Delete with earlier index is unaffected
 			Change.delete(0, 1, brand(0)),
@@ -319,10 +322,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ insert", () => {
-		const insertA = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
-		const insertB = Change.insert(1, 1, 3);
+		const insertA = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
+		const insertB = Change.insert(1, 1, brand(3));
 		const actual = rebase(insertA, insertB);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -393,10 +402,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ revive", () => {
-		const insert = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
+		const insert = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
 		const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) });
 		const actual = rebase(insert, revive);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -503,7 +518,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const insertC2 = rebaseTagged(insertC, delA, insertB2);
+		const insertC2 = rebaseOverChanges(insertC, [delA, insertB2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertC2.change, expected);
 	});
@@ -515,8 +530,8 @@ describe("SequenceField - Rebase", () => {
 
 		const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
-		const insertD2 = rebaseTagged(insertD, delA, delB, delC);
-		const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
+		const insertD2 = rebaseOverChanges(insertD, [delA, delB, delC]);
+		const insertE2 = rebaseOverChanges(insertE, [delA, delB, delC, insertD2]);
 		const expected = Change.insert(1, 1);
 		checkDeltaEquality(insertE2.change, expected);
 	});
@@ -526,7 +541,7 @@ describe("SequenceField - Rebase", () => {
 		const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
 		const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
 		const insertB2 = rebaseTagged(insertB, delA);
-		const moveC2 = rebaseTagged(moveC, delA, insertB2);
+		const moveC2 = rebaseOverChanges(moveC, [delA, insertB2]);
 		const expected = Change.move(2, 1, 1);
 		checkDeltaEquality(moveC2.change, expected);
 	});
@@ -561,11 +576,7 @@ describe("SequenceField - Rebase", () => {
 			revision: tag3,
 			localId: brand(0),
 		};
-		const move = [
-			Mark.returnTo(1, brand(0), cellId),
-			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
-		];
+		const move = [Mark.returnTo(1, brand(0), cellId), { count: 2 }, Mark.moveOut(1, brand(0))];
 		const expected = [Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
 		assert.deepEqual(rebased, expected);
@@ -576,11 +587,7 @@ describe("SequenceField - Rebase", () => {
 			revision: tag3,
 			localId: brand(0),
 		};
-		const move = [
-			Mark.returnFrom(1, brand(0)),
-			{ count: 2 },
-			Mark.returnTo(1, brand(0), cellId),
-		];
+		const move = [Mark.moveOut(1, brand(0)), { count: 2 }, Mark.returnTo(1, brand(0), cellId)];
 		const expected = [{ count: 2 }, Mark.pin(1, brand(0))];
 		const rebased = rebase(move, move);
 		assert.deepEqual(rebased, expected);
@@ -597,11 +604,11 @@ describe("SequenceField - Rebase", () => {
 				localId: brand(0),
 			}),
 			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 		];
 		const return2 = [
 			{ count: 2 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(0), {
 				revision: tag3,
@@ -609,7 +616,7 @@ describe("SequenceField - Rebase", () => {
 			}),
 		];
 		const expected = [
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 			{ count: 4 },
 			Mark.returnTo(1, brand(0), {
 				revision: tag3,
@@ -624,7 +631,7 @@ describe("SequenceField - Rebase", () => {
 		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
 		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
 		const expected = [
-			Mark.returnFrom(2, brand(0)),
+			Mark.moveOut(2, brand(0)),
 			{ count: 2 },
 			Mark.returnTo(2, brand(0), {
 				revision: tag1,
@@ -769,7 +776,7 @@ describe("SequenceField - Rebase", () => {
 				adjacentCells: [{ id: brand(1), count: 1 }],
 			}),
 			{ count: 1 },
-			Mark.returnFrom(1, brand(0)),
+			Mark.moveOut(1, brand(0)),
 		];
 		assert.deepEqual(rebased, expected);
 	});
@@ -796,7 +803,7 @@ describe("SequenceField - Rebase", () => {
 					localId: brand(2),
 					adjacentCells: [{ id: brand(2), count: 1 }],
 				},
-				Mark.returnFrom(1, brand(0)),
+				Mark.moveOut(1, brand(0)),
 			),
 		];
 		assert.deepEqual(rebased, expected);
@@ -861,7 +868,7 @@ describe("SequenceField - Rebase", () => {
 		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const cellDst: ChangeAtomId = { revision: tag3, localId: brand(0) };
 		const reviveAndMove = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst),
 		];
@@ -875,19 +882,19 @@ describe("SequenceField - Rebase", () => {
 		const cellDst1: ChangeAtomId = { revision: tag3, localId: brand(1) };
 		const cellDst2: ChangeAtomId = { revision: tag3, localId: brand(2) };
 		const reviveAndMove1 = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst1),
 		];
 		const reviveAndMove2 = [
-			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
+			Mark.moveOut(1, brand(1), { cellId: cellSrc }),
 			{ count: 4 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
 		const rebased = rebase(reviveAndMove2, reviveAndMove1);
 		const expected = [
 			{ count: 2 },
-			Mark.returnFrom(1, brand(1)),
+			Mark.moveOut(1, brand(1)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
@@ -933,6 +940,27 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("insert ↷ [delete, insert]", () => {
+		// Because B does not have lineage for A, we should use B's insertion's tiebreak policy
+		// and consider the cell it inserts into to be before the cell emptied by A
+		// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
+		// we should use C's lineage to deduce that it must come after B.
+		const deleteA = [Mark.delete(1, brand(0))];
+		const insertB = [Mark.insert(1, brand(0))];
+		const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
+
+		const c2 = rebase(insertC, deleteA, tag1);
+		const c3 = rebase(c2, insertB, tag2);
+		const expected = [
+			{ count: 1 },
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+		assert.deepEqual(c3, expected);
+	});
+
 	describe("Over composition", () => {
 		it("insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
@@ -944,7 +972,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				insert,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = [
@@ -971,7 +1002,10 @@ describe("SequenceField - Rebase", () => {
 			const rebased = rebaseOverComposition(
 				modify,
 				deletes,
-				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				rebaseRevisionMetadataFromInfo(
+					[{ revision: tag1 }, { revision: tag2 }],
+					[tag1, tag2],
+				),
 			);
 
 			const expected = Change.modifyDetached(0, nodeChange, {

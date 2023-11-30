@@ -71,20 +71,12 @@ parameters:
     type: boolean
     default: false
 
-  - name: namespace
-    type: boolean
-    default: true
+- name: buildNumberInPatch
+  type: string
+  default:
 
-  - name: buildNumberInPatch
-    type: string
-    default:
-
-  - name: nonScopedPackages
-    type: object
-    default: []
-
-  - name: publishOverride
-    type: string
+- name: publishOverride
+  type: string
 
   - name: releaseBuildOverride
     type: string

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
+import { Delta, makeAnonChange, RevisionMetadataSource, tagChange, TaggedChange } from "../../core";
 import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -12,7 +12,6 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	RevisionMetadataSource,
 	RemovedTreesFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler";

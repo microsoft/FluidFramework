@@ -15,7 +15,6 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -24,13 +23,15 @@ import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
+import { IRiddlerResourcesCustomizations } from "./customizations";
+import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 
 export class RiddlerResources implements IResources {
 	public webServerFactory: IWebServerFactory;
 
 	constructor(
 		public readonly config: Provider,
-		public readonly tenantsCollection: ICollection<ITenantDocument>,
+		public readonly tenantRepository: ITenantRepository,
 		public readonly tenantsCollectionName: string,
 		public readonly mongoManager: MongoManager,
 		public readonly port: any,
@@ -59,7 +60,10 @@ export class RiddlerResources implements IResources {
 }
 
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
-	public async create(config: Provider): Promise<RiddlerResources> {
+	public async create(
+		config: Provider,
+		customizations?: IRiddlerResourcesCustomizations,
+	): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
 		let cache: RedisCache;
@@ -113,6 +117,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const db: IDb = await mongoManager.getDatabase();
 
 		const collection = db.collection<ITenantDocument>(tenantsCollectionName);
+		const tenantRepository =
+			customizations?.tenantRepository ?? new MongoTenantRepository(collection);
 		const tenants = config.get("tenantConfig") as any[];
 		const upsertP = tenants.map(async (tenant) => {
 			tenant.key = secretManager.encryptSecret(tenant.key);
@@ -155,7 +161,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 		return new RiddlerResources(
 			config,
-			collection,
+			tenantRepository,
 			tenantsCollectionName,
 			mongoManager,
 			port,
@@ -175,7 +181,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
 			resources.webServerFactory,
-			resources.tenantsCollection,
+			resources.tenantRepository,
 			resources.port,
 			resources.loggerFormat,
 			resources.baseOrdererUrl,

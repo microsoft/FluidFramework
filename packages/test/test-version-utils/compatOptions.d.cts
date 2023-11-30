@@ -7,6 +7,8 @@ import { RouterliciousEndpoint, TestDriverTypes } from "@fluidframework/test-dri
 
 /**
  * Different kind of compat version config
+ *
+ * @internal
  */
 export const CompatKind: {
 	None: "None";
@@ -23,12 +25,32 @@ export const CompatKind: {
 
 /**
  * Different kind of compat version config
+ *
+ * @internal
  */
 export type CompatKind = keyof typeof CompatKind;
 
+/**
+ * @internal
+ */
 export const compatKind: CompatKind[] | undefined;
+/**
+ * @internal
+ */
 export const compatVersions: string[] | undefined;
+/**
+ * @internal
+ */
 export const driver: TestDriverTypes;
+/**
+ * @internal
+ */
 export const r11sEndpointName: RouterliciousEndpoint;
+/**
+ * @internal
+ */
 export const reinstall: boolean;
+/**
+ * @internal
+ */
 export const tenantIndex: number;

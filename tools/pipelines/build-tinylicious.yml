@@ -47,4 +47,3 @@ extends:
     taskLint: true
     taskTest:
     - test
-    namespace: false
