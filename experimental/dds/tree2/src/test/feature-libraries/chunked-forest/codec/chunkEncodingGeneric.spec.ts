@@ -14,14 +14,11 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 
 import {
-	unionOptions,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
-import {
 	Counter,
 	DeduplicationTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
+import { unionOptions } from "../../../../codec";
 
 export const Constant = Type.Literal(0);
 
