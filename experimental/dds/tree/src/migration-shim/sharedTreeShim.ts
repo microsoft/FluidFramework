@@ -14,7 +14,7 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from '@fluidframework/runtime-definitions';
-import { type ISharedTree, type SharedTreeFactory } from '@fluid-experimental/tree2';
+import { type ITree, type TreeFactory } from '@fluid-experimental/tree2';
 import { AttachState } from '@fluidframework/container-definitions';
 import { assert } from '@fluidframework/core-utils';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
@@ -38,7 +38,7 @@ export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
-		public readonly sharedTreeFactory: SharedTreeFactory
+		public readonly sharedTreeFactory: TreeFactory
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 		this.handle = new ShimHandle<SharedTreeShim>(this);
@@ -46,8 +46,8 @@ export class SharedTreeShim implements IShim {
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
 	private services?: IChannelServices;
-	private _currentTree?: ISharedTree;
-	public get currentTree(): ISharedTree {
+	private _currentTree?: ITree;
+	public get currentTree(): ITree {
 		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
 		return this._currentTree;
 	}
