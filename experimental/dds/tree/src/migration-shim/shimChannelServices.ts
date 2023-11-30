@@ -7,7 +7,7 @@ import {
 	type IDeltaConnection,
 	type IChannelServices,
 	type IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
+} from '@fluidframework/datastore-definitions';
 
 /**
  * ShimChannelServices wraps an existing IChannelServices object and provides a new ShimDeltaConnection
@@ -47,7 +47,7 @@ export class NoDeltasChannelServices implements IChannelServices {
 	}
 
 	public get deltaConnection(): IDeltaConnection {
-		throw new Error("No deltaConnection available");
+		throw new Error('No deltaConnection available');
 	}
 	public readonly objectStorage: IChannelStorageService;
 }

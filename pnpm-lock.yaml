@@ -3945,7 +3945,6 @@ importers:
   examples/version-migration/tree-shim:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/migration-shim': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-experimental/tree2': workspace:~
@@ -4003,7 +4002,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/migration-shim': link:../../../packages/dds/migration-shim
       '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
@@ -5645,6 +5643,7 @@ importers:
 
   experimental/dds/tree:
     specifiers:
+      '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
@@ -5693,6 +5692,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-experimental/tree2': link:../tree2
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -6693,85 +6693,6 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
-      eslint: 8.50.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
-  packages/dds/migration-shim:
-    specifiers:
-      '@fluid-experimental/tree': workspace:~
-      '@fluid-experimental/tree2': workspace:~
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-private/test-version-utils': workspace:~
-      '@fluid-tools/build-cli': ^0.28.0
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.28.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/container-runtime': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-definitions': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.38.3
-      '@types/mocha': ^9.1.1
-      '@types/node': ^16.18.38
-      c8: ^7.7.1
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluid-experimental/tree': link:../../../experimental/dds/tree
-      '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
-      '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-    devDependencies:
-      '@fluid-private/test-version-utils': link:../../test/test-version-utils
-      '@fluid-tools/build-cli': 0.28.0_dgt3pekvdbgd2jliwm43ktglpe
-      '@fluidframework/aqueduct': link:../../framework/aqueduct
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.28.0_@types+node@16.18.65
-      '@fluidframework/container-loader': link:../../loader/container-loader
-      '@fluidframework/container-runtime': link:../../runtime/container-runtime
-      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../test/test-utils
-      '@microsoft/api-extractor': 7.38.3_p4gemz6xo2owxftfuvjusnappy_@types+node@16.18.65
-      '@types/mocha': 9.1.1
-      '@types/node': 16.18.65
-      c8: 7.14.0
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -10228,6 +10149,8 @@ importers:
     specifiers:
       '@fluid-experimental/attributor': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
+      '@fluid-experimental/tree': workspace:~
+      '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
@@ -10295,6 +10218,8 @@ importers:
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
+      '@fluid-experimental/tree': link:../../../experimental/dds/tree
+      '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
