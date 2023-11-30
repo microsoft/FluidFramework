@@ -229,6 +229,27 @@ describe("SharedTreeObject factories", () => {
 		view.root.grand.child.map.set("a", childA.create(content));
 	});
 
+	it("hydration is not attempted on objects which are not proxies", () => {
+		// This regression test ensures that non-proxy objects inserted into the tree are
+		// not mistakenly "hydrated" as a proxy would be, falsely linking them to the content of the tree.
+		const root = getRoot(schema, initialTree);
+		const newChild = { content: 43 };
+		// `newChild` is not a proxy, so it should be copied into the tree here but otherwise remain disconnected
+		root.child = newChild;
+		const child = root.child;
+		assert.equal(child.content, 43);
+		// Mutating the tree should have no effect on `newChild`...
+		root.child.content = 44;
+		assert.equal(newChild.content, 43);
+		// ... but it should affect our handle to the child
+		assert.equal(child.content, 44);
+		// Mutating `newChild` should have no effect on the tree...
+		newChild.content = 45;
+		assert.equal(root.child.content, 44);
+		// ... and should have no effect on our handle to the child
+		assert.equal(child.content, 44);
+	});
+
 	describe("produce proxies that can be read after insertion for trees of", () => {
 		// This suite ensures that object proxies created via `foo.create` are "hydrated" after they are inserted into the tree.
 		// After insertion, each of those proxies should be the same object as the corresponding proxy in the tree.

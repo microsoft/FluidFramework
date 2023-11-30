@@ -993,7 +993,13 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 				editNode !== undefined,
 				0x7fa /* Expected edit node to be defined when hydrating object */,
 			);
-			setEditNode(input as TreeObjectNode<ObjectNodeSchema>, editNode as FlexTreeObjectNode); // This makes the input proxy usable and updates the proxy cache
+			if (rawEditNode !== undefined) {
+				// This makes the input proxy usable and updates the proxy cache
+				setEditNode(
+					input as TreeObjectNode<ObjectNodeSchema>,
+					editNode as FlexTreeObjectNode,
+				);
+			}
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				0x7fb /* Expected object node when hydrating object content */,
