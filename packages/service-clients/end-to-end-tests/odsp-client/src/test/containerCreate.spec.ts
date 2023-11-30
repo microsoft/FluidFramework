@@ -11,7 +11,14 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { createOdspClient } from "./OdspClientFactory";
+import { OdspTestCredentials, createOdspClient } from "./OdspClientFactory";
+
+const clientCreds: OdspTestCredentials = {
+	clientId: "process.env.odsp__client__client__id",
+	clientSecret: "process.env.odsp__client__client__secret",
+	username: "process.env.odsp__client__login__username",
+	password: "process.env.odsp__client__login__password",
+};
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
@@ -19,10 +26,7 @@ describe("Container create scenarios", () => {
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createOdspClient(
-			process.env.odsp__client__site__url as string,
-			process.env.odsp__client__drive__id as string,
-		);
+		client = createOdspClient(clientCreds);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -131,7 +135,7 @@ describe("Container create scenarios", () => {
 	 *
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
-	it.skip("cannot load improperly created container (cannot load a non-existent container)", async () => {
+	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 		const consoleErrorFn = console.error;
 		console.error = (): void => {};
 		const containerAndServicesP = client.getContainer("containerConfig", schema);
@@ -139,7 +143,7 @@ describe("Container create scenarios", () => {
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Odsp Client error is undefined");
 			assert.strict(
-				error.message.startsWith("R11s fetch error"),
+				error.message.startsWith("ODSP fetch error [400]"),
 				`Unexpected error: ${error.message}`,
 			);
 			return true;

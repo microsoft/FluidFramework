@@ -11,9 +11,16 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { createOdspClient } from "./OdspClientFactory";
+import { OdspTestCredentials, createOdspClient } from "./OdspClientFactory";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
+
+const clientCreds: OdspTestCredentials = {
+	clientId: "process.env.odsp__client__client__id",
+	clientSecret: "process.env.odsp__client__client__secret",
+	username: "process.env.odsp__client__login__username",
+	password: "process.env.odsp__client__login__password",
+};
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
@@ -21,10 +28,7 @@ describe("Fluid data updates", () => {
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createOdspClient(
-			process.env.odsp__client__site__url as string,
-			process.env.odsp__client__drive__id as string,
-		);
+		client = createOdspClient(clientCreds);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,

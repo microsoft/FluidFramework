@@ -23,25 +23,16 @@ export interface OdspTestCredentials {
 }
 
 /**
- * Default test credentials for odsp-client.
- */
-export const clientCreds: OdspTestCredentials = {
-	clientId: "process.env.odsp__client__client__id",
-	clientSecret: "process.env.odsp__client__client__secret",
-	username: "process.env.odsp__client__login__username",
-	password: "process.env.odsp__client__login__password",
-};
-
-/**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
-	siteUrl: string,
-	driveId: string,
+	creds: OdspTestCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
+	const siteUrl = process.env.odsp__client__siteUrl as string;
+	const driveId = process.env.odsp__client__driveId as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
@@ -50,17 +41,17 @@ export function createOdspClient(
 	}
 
 	if (
-		clientCreds.clientId === undefined ||
-		clientCreds.clientSecret === undefined ||
-		clientCreds.username === undefined ||
-		clientCreds.password === undefined
+		creds.clientId === undefined ||
+		creds.clientSecret === undefined ||
+		creds.username === undefined ||
+		creds.password === undefined
 	) {
-		throw new Error("Some of the odsp crednetials are undefined");
+		throw new Error("Some of the odsp credentials are undefined");
 	}
 
 	const connectionProps: OdspConnectionConfig = {
 		siteUrl,
-		tokenProvider: new OdspTestTokenProvider(clientCreds),
+		tokenProvider: new OdspTestTokenProvider(creds),
 		driveId,
 	};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {

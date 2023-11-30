@@ -12,12 +12,29 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { createOdspClient, clientCreds } from "./OdspClientFactory";
+import { createOdspClient, OdspTestCredentials } from "./OdspClientFactory";
 import { waitForMember } from "./utils";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
+
+/**
+ * Default test credentials for odsp-client.
+ */
+const client1Creds: OdspTestCredentials = {
+	clientId: "process.env.odsp__client__client__id",
+	clientSecret: "process.env.odsp__client__client__secret",
+	username: "process.env.odsp__client__login__username",
+	password: "process.env.odsp__client__login__password",
+};
+
+const client2Creds: OdspTestCredentials = {
+	clientId: "process.env.odsp__client2__client__id",
+	clientSecret: "process.env.odsp__client2__client__secret",
+	username: "process.env.odsp__client2__login__username",
+	password: "process.env.odsp__client2__login__password",
+};
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
@@ -25,10 +42,7 @@ describe("Fluid audience", () => {
 	let schema: ContainerSchema;
 
 	beforeEach(() => {
-		client = createOdspClient(
-			process.env.odsp__client__site__url as string,
-			process.env.odsp__client__drive__id as string,
-		);
+		client = createOdspClient(client1Creds);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -60,7 +74,7 @@ describe("Fluid audience", () => {
 		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const myself = await waitForMember(services.audience, clientCreds.username);
+		const myself = await waitForMember(services.audience, client1Creds.username);
 		assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
 
 		const members = services.audience.getMembers();
@@ -92,13 +106,12 @@ describe("Fluid audience", () => {
 		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const originalSelf = await waitForMember(services.audience, clientCreds.username);
+		const originalSelf = await waitForMember(services.audience, client1Creds.username);
 		assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
-		// TODO: pass siteUrl and driveID
+		// pass client2 credentials
 		const client2 = createOdspClient(
-			process.env.odsp__client2__site__url as string,
-			process.env.odsp__client2__drive__id as string,
+			client2Creds,
 			undefined,
 			configProvider({
 				"Fluid.Container.ForceWriteConnection": true,
@@ -107,7 +120,7 @@ describe("Fluid audience", () => {
 		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, clientCreds.username);
+		const partner = await waitForMember(servicesGet.audience, client2Creds.username);
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		const members = servicesGet.audience.getMembers();
@@ -142,8 +155,7 @@ describe("Fluid audience", () => {
 
 		// pass client2 siteUrl and driveId
 		const client2 = createOdspClient(
-			process.env.odsp__client2__site__url as string,
-			process.env.odsp__client2__drive__id as string,
+			client2Creds,
 			undefined,
 			configProvider({
 				"Fluid.Container.ForceWriteConnection": true,
@@ -152,7 +164,7 @@ describe("Fluid audience", () => {
 		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, clientCreds.username);
+		const partner = await waitForMember(servicesGet.audience, client2Creds.username);
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		let members = servicesGet.audience.getMembers();
