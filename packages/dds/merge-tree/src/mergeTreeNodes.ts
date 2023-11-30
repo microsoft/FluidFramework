@@ -174,8 +174,53 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 */
 	propertyManager?: PropertiesManager;
 	/**
-	 * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+	 * Local seq at which this segment was inserted.
+	 * If this is defined, `seq` will be UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
+	 * 
+	 * @remarks - This field is roughly analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
+	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
+	 * 
+	 * It's useful to stamp ops with such an incrementing counter because it enables reasoning about which segments existed from
+	 * the perspective of the local client at a given point in 'un-acked' time, which is necessary to support the reconnect flow.
+	 * 
+	 * For example, imagine a client with the following segments undergoes the reconnect flow:
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 * This client submitted the "C" first, then the "B" and finally the "A".
+	 * 
+	 * Since it's in the reconnect flow, it needs to resubmit those 3 ops to the server based on the initial state.
+	 * The ops it submits will be:
+	 * 1. { pos: 6, text: "C" }
+	 * 2. { pos: 6, text: "B" }
+	 * 3. { pos: 6, text: "A" }
+	 * 
+	 * since when submitting the first op, remote clients don't know that this client is about to submit the "A" and "B".
+	 * However, if the client had submitted the ops in the order "A", "B", "C" such that the segments' local state was instead:
+	 * 
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 * 
+	 * The resubmitted ops should instead be:
+	 * 1. { pos: 6, text: "A" }
+	 * 2. { pos: 7, text: "B" }
+	 * 3. { pos: 8, text: "C" }
+	 * 
+	 * since remote clients will have seen the "A" when processing the "B" as well as both the "A" and "B" when processing the "C".
 	 */
 	localSeq?: number;
 	/**
@@ -718,12 +763,20 @@ export class IncrementalMapState<TContext> {
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
-	// Lowest-numbered segment in window; no client can reference a state before this one
+
+	/**
+	 * Lowest-numbered segment in window; no client can reference a state before this one 
+	 */
 	minSeq = 0;
-	// Highest-numbered segment in window and current
-	// reference segment for this client
+	/**
+	 * Highest-numbered segment in window and current reference sequence number for this client.
+	 */
 	currentSeq = 0;
 
+	/**
+	 * Highest-numbered localSeq used for a pending segment.
+	 * See {@link ISegment.localSeq} for more information on the semantics of localSeq.
+	 */
 	localSeq = 0;
 
 	loadFrom(a: CollaborationWindow) {
