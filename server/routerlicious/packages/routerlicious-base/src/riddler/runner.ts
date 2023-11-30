@@ -11,13 +11,12 @@ import {
 	IWebServerFactory,
 	IWebServer,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
 import * as app from "./app";
-import { ITenantDocument } from "./tenantManager";
+import { ITenantRepository } from "./mongoTenantRepository";
 
 export class RiddlerRunner implements IRunner {
 	private server: IWebServer;
@@ -27,7 +26,7 @@ export class RiddlerRunner implements IRunner {
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
-		private readonly tenantsCollection: ICollection<ITenantDocument>,
+		private readonly tenantRepository: ITenantRepository,
 		private readonly port: string | number,
 		private readonly loggerFormat: string,
 		private readonly baseOrdererUrl: string,
@@ -51,7 +50,7 @@ export class RiddlerRunner implements IRunner {
 		if (includeAppLogic) {
 			// Create the HTTP server and attach alfred to it
 			const riddler = app.create(
-				this.tenantsCollection,
+				this.tenantRepository,
 				this.loggerFormat,
 				this.baseOrdererUrl,
 				this.defaultHistorianUrl,

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { type IStampedContents, type IOpContents } from "./types.js";
-import { type IMigrationOp } from "./migrationShim.js";
+import { type IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { type IStampedContents, type IOpContents } from './types.js';
+import { type IMigrationOp } from './migrationShim.js';
 
 /**
  * Checks if two channel attributes objects match.
@@ -13,10 +13,7 @@ import { type IMigrationOp } from "./migrationShim.js";
  * @param attributes2 - The second channel attributes object to compare.
  * @returns True if the two channel attributes objects match, false otherwise.
  */
-export function attributesMatch(
-	attributes1: IChannelAttributes,
-	attributes2: IChannelAttributes,
-): boolean {
+export function attributesMatch(attributes1: IChannelAttributes, attributes2: IChannelAttributes): boolean {
 	return (
 		attributes1.type === attributes2.type &&
 		attributes1.packageVersion === attributes2.packageVersion &&
@@ -30,7 +27,7 @@ export function attributesMatch(
  * @returns True if the op is a barrier op, false otherwise.
  */
 export function isBarrierOp(contents: IOpContents): contents is IMigrationOp {
-	return contents.type === "barrier";
+	return contents.type === 'barrier';
 }
 
 /**
@@ -39,5 +36,5 @@ export function isBarrierOp(contents: IOpContents): contents is IMigrationOp {
  * @returns True if the op is a barrier op, false otherwise.
  */
 export function isStampedOp(contents: IOpContents): contents is IStampedContents {
-	return "fluidMigrationStamp" in contents;
+	return 'fluidMigrationStamp' in contents;
 }

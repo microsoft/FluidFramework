@@ -7,6 +7,12 @@ import { assert } from "@fluidframework/core-utils";
 import { _InlineTrick, fail, objectToMap } from "../util";
 
 /**
+ * This module contains utilities for an encoding of a discriminated union that is efficient to validate using
+ * a JSON schema validator.
+ * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
+ */
+
+/**
  * Options to configure a TypeBox schema as a discriminated union that is simple to validate data against.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
@@ -19,7 +25,7 @@ export const unionOptions: ObjectOptions = {
 
 /**
  * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
- * where the function to apply depends on the which value from the union it holds.
+ * where the function to apply depends on which value from the union it holds.
  *
  * This uses a rather non-standard encoding of the union where it is an object with many differently named optional fields,
  * and which of the fields is populated determines the content type.
@@ -27,6 +33,50 @@ export const unionOptions: ObjectOptions = {
  * Other encodings--such as using an untagged union, then tagging the content types with a marker enum--require the schema validator to disambiguate the union members.
  * Most JSON validator implementations fail to recognize the marker enum determines which component of the discriminated union the data must be,
  * and end up checking against all candidate members of the union.
+ *
+ * @example
+ *
+ * The following union:
+ * ```typescript
+ * type Operation = Add | Subtract | Multiply | Divide;
+ *
+ * interface BinaryOperation {
+ *     readonly left: number;
+ *     readonly right: number;
+ * }
+ *
+ * interface Add extends BinaryOperation {
+ *     readonly type: "add";
+ * }
+ *
+ * interface Subtract extends BinaryOperation {
+ *     readonly type: "subtract";
+ * }
+ *
+ * interface Multiply extends BinaryOperation {
+ *     readonly type: "multiply";
+ * }
+ *
+ * interface Divide extends BinaryOperation {
+ *     readonly type: "divide";
+ * }
+ *
+ * ```
+ * Would be encoded using this strategy as:
+ * ```typescript
+ * interface EncodedBinaryOperation {
+ *     readonly left: number;
+ *     readonly right: number;
+ * }
+ *
+ * interface EncodedOperation {
+ *     add?: EncodedBinaryOperation;
+ *     subtract?: EncodedBinaryOperation;
+ *     multiply?: EncodedBinaryOperation;
+ *     divide?: EncodedBinaryOperation;
+ * }
+ * ```
+ * where only a single property of `EncodedOperation` is populated for a given encoded value.
  */
 export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends any[], TResult> {
 	private readonly library: ReadonlyMap<

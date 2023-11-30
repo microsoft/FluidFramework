@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { Delta, TaggedChange, RevisionTag, RevisionMetadataSource } from "../../core";
 import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -99,7 +99,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
+		revisionMetadata: RebaseRevisionMetadata,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
 
@@ -194,26 +194,8 @@ export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefi
  */
 export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.DetachedNodeId>;
 
-/**
- * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
- * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
- * compose or rebase operation.
- *
- * During composition, the index reflects the order of the changeset within the overall composed changeset that is
- * being produced.
- *
- * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @alpha
- */
-export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
-
-/**
- * @alpha
- */
-export interface RevisionMetadataSource {
-	readonly getRevisions: () => RevisionTag[];
-	readonly getIndex: RevisionIndexer;
-	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
+export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	readonly getBaseRevisions: () => RevisionTag[];
 }
 
 /**
