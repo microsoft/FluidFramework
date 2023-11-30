@@ -6,7 +6,6 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { PropertySet } from "@fluidframework/sequence";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -122,10 +121,13 @@ export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> 
 
 		this.root.set(ConfigKey.docId, initialState.docId);
 		this.root.set(ConfigKey.name, initialState.name);
-		this.maybeDoc = await handleFromLegacyUri<TableDocument>(
-			`/${initialState.docId}`,
-			this.context.containerRuntime,
-		).get();
+		const response = await this.context.IFluidHandleContext.resolveHandle({
+			url: `/${initialState.docId}`,
+		});
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			throw new Error("Could not resolve handle");
+		}
+		this.maybeDoc = response.value;
 		this.root.set(initialState.docId, this.maybeDoc.handle);
 		await this.ensureDoc();
 		this.createValuesRange(

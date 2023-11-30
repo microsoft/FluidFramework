@@ -119,6 +119,23 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedVariableDeclaration_createFluidObjectResponse": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_rootDataStoreRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_handleFromLegacyUri": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
