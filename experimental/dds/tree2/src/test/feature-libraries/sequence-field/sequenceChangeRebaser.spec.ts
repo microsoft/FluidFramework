@@ -606,7 +606,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 			{ revision: rollbackTag1, rollbackOf: tag1 },
 			{ revision: tag1 },
 			{ revision: tag2 },
-			{ revision: tag3 },
 		];
 
 		const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
