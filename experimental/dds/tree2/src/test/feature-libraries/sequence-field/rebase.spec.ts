@@ -941,8 +941,8 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ [delete, insert]", () => {
-		// Because B does not have lineage for A, we should B's insertion's tiebreak policy
-		// and considered the cell it inserts into to be before the cell emptied by A
+		// Because B does not have lineage for A, we should use B's insertion's tiebreak policy
+		// and consider the cell it inserts into to be before the cell emptied by A
 		// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
 		// we should use C's lineage to deduce that it must come after B.
 		const deleteA = [Mark.delete(1, brand(0))];
