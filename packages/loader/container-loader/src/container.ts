@@ -817,7 +817,11 @@ export class Container
 
 		this._containerId = uuid();
 
-		this.client = this.setupClient(this._containerId, this.options, this.clientDetailsOverride);
+		this.client = Container.setupClient(
+			this._containerId,
+			this.options,
+			this.clientDetailsOverride,
+		);
 
 		// Create logger for data stores to use
 		const type = this.client.details.type;
@@ -1999,7 +2003,7 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	private setupClient(
+	static setupClient(
 		containerId: string,
 		options?: ILoaderOptions,
 		clientDetailsOverride?: IClientDetails,
@@ -2018,7 +2022,7 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (this.clientDetailsOverride !== undefined) {
+		if (clientDetailsOverride !== undefined) {
 			client.details = {
 				...client.details,
 				...clientDetailsOverride,
