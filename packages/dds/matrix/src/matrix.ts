@@ -69,8 +69,8 @@ interface ISetCellChangePolicyOp {
 }
 
 /**
- * Events emiited by Shared Matrix.
- * @public
+ * Events emitted by Shared Matrix.
+ * @internal
  */
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 	/**
@@ -150,7 +150,7 @@ export class SharedMatrix<T = any>
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
-	private pending = new SparseArray2D<number>(); // Tracks pending writes.
+	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;

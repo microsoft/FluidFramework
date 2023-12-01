@@ -32,7 +32,7 @@ export interface IRevertible {
     revert(): any;
 }
 
-// @public
+// @internal
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
     (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
 }
