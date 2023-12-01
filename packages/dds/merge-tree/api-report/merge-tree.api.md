@@ -328,6 +328,16 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
+// @internal
+export interface IClientEvents {
+    // (undocumented)
+    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): any;
+}
+
 // @internal @deprecated (undocumented)
 export interface ICombiningOp {
     // (undocumented)

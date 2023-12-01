@@ -121,6 +121,24 @@ export class SharedNumberSequence extends SharedSequence<number> {
     id: string;
 }
 
+// @internal @deprecated (undocumented)
+export class SharedNumberSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
 // @internal @deprecated
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     // @deprecated
@@ -133,6 +151,24 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     getRange(start: number, end?: number): Serializable<T>[];
     // (undocumented)
     id: string;
+}
+
+// @internal @deprecated (undocumented)
+export class SharedObjectSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
 }
 
 export { SharedSequence }
