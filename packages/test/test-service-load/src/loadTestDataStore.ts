@@ -10,7 +10,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
@@ -748,10 +748,6 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
-	(runtime as ContainerRuntime).resolveHandle(request);
-
 export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
@@ -761,6 +757,5 @@ export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});

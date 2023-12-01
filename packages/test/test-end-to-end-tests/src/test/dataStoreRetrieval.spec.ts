@@ -4,15 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.
@@ -87,8 +85,6 @@ describeFullCompat(
 		);
 
 		let provider: ITestObjectProvider;
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			(runtime as ContainerRuntime).resolveHandle(request);
 
 		beforeEach(() => {
 			provider = getTestObjectProvider();
@@ -103,7 +99,6 @@ describeFullCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
@@ -129,7 +124,6 @@ describeFullCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);

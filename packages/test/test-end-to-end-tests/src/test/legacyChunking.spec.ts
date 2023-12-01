@@ -19,9 +19,7 @@ import {
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const versionWithChunking = "0.56.0";
 
@@ -39,8 +37,6 @@ describeInstallVersions(
 	});
 	afterEach(async () => provider.reset());
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		(runtime as ContainerRuntime).resolveHandle(request);
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -64,7 +60,6 @@ describeInstallVersions(
 			oldDataObjectFactory,
 			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
-			[innerRequestHandler],
 			{
 				// Chunking did not work with FlushMode.TurnBased,
 				// as it was breaking batching semantics. So we need

@@ -7,7 +7,6 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { assert } from "@fluidframework/core-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-	ContainerRuntime,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -15,7 +14,6 @@ import {
 import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -89,9 +87,6 @@ export async function createSummarizerFromFactory(
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
-		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
 		{
@@ -99,7 +94,6 @@ export async function createSummarizerFromFactory(
 			registryEntries: registryEntries ?? [
 				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
 			],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions: { summaryOptions: defaultSummaryOptions },
 		},
 	);
