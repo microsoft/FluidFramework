@@ -6,17 +6,26 @@
 import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
 import { IUsageData } from ".";
 
+/**
+ * @internal
+ */
 export interface IThrottlerResponse {
 	throttleStatus: boolean;
 	throttleReason: string;
 	retryAfterInMs: number;
 }
 
+/**
+ * @internal
+ */
 export interface IThrottlingMetrics extends IThrottlerResponse {
 	count: number;
 	lastCoolDownAt: number;
 }
 
+/**
+ * @internal
+ */
 export class ThrottlingError implements INackContent {
 	readonly code = 429;
 	readonly type = NackErrorType.ThrottlingError;
@@ -35,6 +44,7 @@ export class ThrottlingError implements INackContent {
 
 /**
  * Storage getter/setter with logic specific to throttling metrics and usage data.
+ * @internal
  */
 export interface IThrottleAndUsageStorageManager {
 	/**
@@ -70,6 +80,7 @@ export interface IThrottleAndUsageStorageManager {
 
 /**
  * Runs rate-limiting calculations for IThrottler.
+ * @internal
  */
 export interface IThrottlerHelper {
 	/**
@@ -91,6 +102,7 @@ export interface IThrottlerHelper {
 
 /**
  * Determines if an operation should be allowed or throttled.
+ * @internal
  */
 export interface IThrottler {
 	/**

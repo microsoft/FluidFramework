@@ -15,7 +15,7 @@ import {
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
 } from '@fluidframework/runtime-definitions';
-import { type SharedTreeFactory, type ISharedTree } from '@fluid-experimental/tree2';
+import { type TreeFactory, type ITree } from '@fluid-experimental/tree2';
 import { assert } from '@fluidframework/core-utils';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
@@ -79,8 +79,8 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
-		private readonly newTreeFactory: SharedTreeFactory,
-		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ISharedTree) => void
+		private readonly newTreeFactory: TreeFactory,
+		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
 		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
 		// TODO: consider flattening this class
@@ -121,7 +121,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		return this._legacyTree;
 	}
 
-	private newTree: ISharedTree | undefined;
+	private newTree: ITree | undefined;
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeError}
@@ -180,7 +180,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		this.submitLocalMessage(migrateOp);
 	}
 
-	public get currentTree(): LegacySharedTree | ISharedTree {
+	public get currentTree(): LegacySharedTree | ITree {
 		return this.newTree ?? this.legacyTree;
 	}
 

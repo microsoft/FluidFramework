@@ -6,7 +6,7 @@
 import EventEmitter from "events";
 
 import {
-	ISharedTree,
+	ITree,
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
@@ -100,7 +100,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
-	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
+	public static initializeTree(tree: ITree, initialTree?: any): void {
 		const view = tree.schematize(treeConfiguration);
 
 		// This is required because schematizing the tree twice will result in an error
@@ -112,7 +112,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 	private readonly _inventoryItemList: InventoryItemList;
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
-	public constructor(private readonly _tree: ISharedTree) {
+	public constructor(private readonly _tree: ITree) {
 		super();
 		// Note that although we always pass initialTree, it's only actually used on the first load and
 		// is ignored on subsequent loads.  AB#5974

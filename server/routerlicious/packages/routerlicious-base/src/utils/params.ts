@@ -10,6 +10,12 @@ import { getParam } from "@fluidframework/server-services-utils";
 
 const getParamFromRequest = (params: Params, paramName: string) =>
 	getParam(params, paramName) ?? "-";
+/**
+ * @internal
+ */
 export const getIdFromRequest = (params: Params) => getParamFromRequest(params, "id");
+/**
+ * @internal
+ */
 export const getTenantIdFromRequest = (params: Params) =>
 	getParam(params, "tenantId") ?? getIdFromRequest(params);

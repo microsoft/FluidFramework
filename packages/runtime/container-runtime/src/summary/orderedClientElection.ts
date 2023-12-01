@@ -227,7 +227,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 
 /**
  * Serialized state of IOrderedClientElection.
- * @public
+ * @internal
  */
 export interface ISerializedElection {
 	/** Sequence number at the time of the latest election. */

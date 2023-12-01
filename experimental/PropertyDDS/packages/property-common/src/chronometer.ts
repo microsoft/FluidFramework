@@ -132,6 +132,7 @@ if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 
 /**
  * Creates and starts a new Chronometer.
+ * @internal
  */
 export class Chronometer {
 	constructor() {

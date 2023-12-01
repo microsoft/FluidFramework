@@ -5,4 +5,7 @@
 
 import { CoordinateContainerRuntimeFactory } from "./container";
 
+/**
+ * @internal
+ */
 export const fluidExport = new CoordinateContainerRuntimeFactory();
