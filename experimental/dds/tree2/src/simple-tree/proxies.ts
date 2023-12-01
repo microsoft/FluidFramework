@@ -852,6 +852,7 @@ export function createRawNodeProxy<TSchema extends TreeNodeSchema>(
 		editNode = createRawNode(schema, contentCopy);
 		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
 	} else if (schema instanceof FieldNodeSchema) {
+		// simple-tree uses field nodes exclusively to represent lists
 		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
 		editNode = createRawNode(schema, contentCopy);
 		proxy = createListProxy(allowAdditionalProperties, target);
@@ -896,6 +897,8 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
 /**
  * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
  * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
+ * @param content - the content being inserted which may be, and/or may contain, factory-created content
+ * @param insertedAtIndex - if the content being inserted is list content, this must be the index in the list at which the content is being inserted
  * @returns the result of the content replacement and a {@link ExtractedFactoryContent.hydrateProxies} function which must be invoked if present.
  * @remarks
  * This functions works recursively.

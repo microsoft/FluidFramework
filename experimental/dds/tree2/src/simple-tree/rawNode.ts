@@ -41,7 +41,7 @@ interface HasNodeContent<T> {
  * Retrieve the content of a raw object node created via {@link createRawNode}.
  * @remarks
  * Raw nodes should only ever be processed as input once.
- * Therefore, this will fail if called twice on the same node.
+ * Therefore, this extraction removes the content from the node and will error if called twice on the same node.
  */
 export function extractRawNodeContent<
 	TSchema extends MapNodeSchema,
@@ -66,7 +66,7 @@ export function extractRawNodeContent(node: object): object | undefined {
 }
 
 /**
- * Creates a node that falsely pretends to satisfy the given schema while wrapping the given node content.
+ * Creates a node that pretends to satisfy the given schema while wrapping the given node content.
  * Retrieve the node content via {@link extractRawNodeContent}.
  *
  * @remarks This is useful for creating "raw" nodes: nodes which capture data about a pending insertion but are not yet inserted.
