@@ -16,6 +16,7 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -138,8 +139,18 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 // @internal
 export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
 
+// @internal
+export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
+
 // @internal (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
+
+// @internal
+export interface IDocumentIdStrategy {
+    get(): string;
+    reset(): void;
+    update(resolvedUrl?: IResolvedUrl): void;
+}
 
 // @internal (undocumented)
 export interface IOpProcessingController {
@@ -184,38 +195,24 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 
 // @internal (undocumented)
 export interface ITestObjectProvider {
-    // (undocumented)
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
-    // (undocumented)
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
-    // (undocumented)
     defaultCodeDetails: IFluidCodeDetails;
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     documentServiceFactory: IDocumentServiceFactory;
-    // (undocumented)
     driver: ITestDriver;
-    // (undocumented)
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
-    // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
-    logger: ITelemetryBaseLogger;
-    // (undocumented)
+    logger: EventAndErrorTrackingLogger | undefined;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
-    // (undocumented)
     opProcessingController: IOpProcessingController;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
+    resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
+    type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
     updateDocumentId(url: IResolvedUrl | undefined): void;
-    // (undocumented)
     urlResolver: IUrlResolver;
 }
 
@@ -308,43 +305,52 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 // @internal
 export class TestObjectProvider implements ITestObjectProvider {
-    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructor: typeof Loader,
+    driver: ITestDriver,
+    createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
-    // (undocumented)
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
-    // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
-    // (undocumented)
     get documentId(): string;
-    // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
-    // (undocumented)
     readonly driver: ITestDriver;
-    // (undocumented)
     ensureSynchronized(): Promise<void>;
-    // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
-    readonly LoaderConstructor: typeof Loader;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
-    set logger(logger: EventAndErrorTrackingLogger);
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
-    // (undocumented)
     get opProcessingController(): IOpProcessingController;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
-    // (undocumented)
+    readonly type = "TestObjectProvider";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
-    // (undocumented)
     get urlResolver(): IUrlResolver;
-    // (undocumented)
-    waitContainerToCatchUp(container: IContainer): Promise<boolean>;
+}
+
+// @internal
+export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
+    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
+    get defaultCodeDetails(): IFluidCodeDetails;
+    get documentId(): string;
+    get documentServiceFactory(): IDocumentServiceFactory;
+    get driver(): ITestDriver;
+    ensureSynchronized(): Promise<void>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    get logger(): EventAndErrorTrackingLogger;
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
+    get opProcessingController(): IOpProcessingController;
+    reset(): void;
+    resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    readonly type = "TestObjectProviderWithVersionedLoad";
+    updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
+    get urlResolver(): IUrlResolver;
 }
 
 // @internal
