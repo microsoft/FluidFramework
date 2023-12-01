@@ -323,6 +323,7 @@ export class ScribeLambdaFactory
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
 			document.isEphemeralContainer ?? false,
+			this.checkpointService.getLocalCheckpointEnabled(),
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

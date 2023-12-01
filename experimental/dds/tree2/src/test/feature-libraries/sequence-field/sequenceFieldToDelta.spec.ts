@@ -24,7 +24,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { composeAnonChanges, toDelta } from "./utils";
+import { toDelta } from "./utils";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -249,7 +249,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("insert and modify => insert", () => {
-		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
+		const changeset = [Mark.insert(1, brand(0), { changes: childChange1 })];
 		const buildId = { major: tag, minor: 0 };
 		const expected: Delta.FieldChanges = {
 			global: [{ id: buildId, fields: childChange1Delta }],

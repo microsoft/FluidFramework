@@ -391,6 +391,7 @@ export class SharedPropertyTree extends SharedObject {
 		minimumSequenceNumber: number,
 		remoteChanges: IPropertyTreeMessage[],
 		unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>,
+		remoteHeadGuid: string,
 	) {
 		// for faster lookup of remote change guids
 		const remoteChangeMap = new Map<string, number>();
@@ -422,7 +423,7 @@ export class SharedPropertyTree extends SharedObject {
 					visitedUnrebasedRemoteChanges.has(visitor.referenceGuid)
 				) {
 					const guid = visitor.referenceGuid;
-					if (guid === "") {
+					if (guid === "" || guid === remoteHeadGuid) {
 						break;
 					}
 					// since the change is not in remote it must be in unrebased
@@ -441,9 +442,9 @@ export class SharedPropertyTree extends SharedObject {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
 
-				// If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
-				// keep all remote Changes until this change has been processed
-				if (visitor.remoteHeadGuid === "") {
+				// If we have a change that refers to the start of the history (remoteHeadGuid === "" or the
+				//  provided remote head guid), we have to keep all remote Changes until this change has been processed
+				if (visitor.remoteHeadGuid === "" || visitor.remoteHeadGuid === remoteHeadGuid) {
 					visitedRemoteChanges.add(remoteChanges[0].guid);
 				}
 			}
@@ -477,10 +478,22 @@ export class SharedPropertyTree extends SharedObject {
 	public pruneHistory() {
 		const msn = this.runtime.deltaManager.minimumSequenceNumber;
 
+		let lastKnownRemoteGuid = this.headCommitGuid;
+		// We use the reference GUID of the first change in the list
+		// of remote changes as lastKnownRemoteGuid, because there
+		// might still be unrebased changes that reference this GUID
+		// as referenceGUID / remoteHeadGuid and if this happens
+		// we must make sure we preserve the remote changes and
+		// unrebased remote changes
+		if (this.remoteChanges.length > 0) {
+			lastKnownRemoteGuid = this.remoteChanges[0].referenceGuid;
+		}
+
 		const { remoteChanges, unrebasedRemoteChanges } = SharedPropertyTree.prune(
 			msn,
 			this.remoteChanges,
 			this.unrebasedRemoteChanges,
+			lastKnownRemoteGuid,
 		);
 
 		this.remoteChanges = remoteChanges;
@@ -800,7 +813,14 @@ export class SharedPropertyTree extends SharedObject {
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
-		if (startIndex === -1 && startGuid !== "") {
+		if (
+			startIndex === -1 &&
+			startGuid !== "" &&
+			// If the start GUID is the referenceGUID of the first change,
+			// we still can get the correct range, because the change with the startGuid itself
+			// if not included in the range.
+			(this.remoteChanges.length === 0 || startGuid !== this.remoteChanges[0].referenceGuid)
+		) {
 			// TODO: Consider throwing an error once clients have picked up PR #16277.
 			console.error("Unknown start GUID specified.");
 		}

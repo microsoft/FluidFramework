@@ -204,6 +204,7 @@ export const TestChange = {
 	rebase,
 	checkChangeList,
 	toDelta,
+	isEmpty,
 	codec,
 };
 deepFreeze(TestChange);
@@ -298,7 +299,10 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
+}
+
+export function isEmpty(change: TestChange): boolean {
+	return change.intentions.length === 0;
 }
