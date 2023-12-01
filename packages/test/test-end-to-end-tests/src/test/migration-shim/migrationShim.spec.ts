@@ -104,7 +104,7 @@ function getQuantity(tree: LegacySharedTree): number {
 
 const testValue = 5;
 
-describeNoCompat("MigrationShim", (getTestObjectProvider) => {
+describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
