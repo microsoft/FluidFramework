@@ -250,7 +250,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				const originalId = nextDstToSrc.get(withIntention(id)) ?? id;
+				const intentionedId = withIntention(id);
+				const originalId = current.dstToSrc.get(intentionedId) ?? intentionedId;
 				const existingChanges = childChangesByOriginalId.get(originalId);
 				const taggedChange = tagChange(childChange, revision);
 				if (existingChanges === undefined) {
@@ -278,7 +279,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			build: composedBuilds,
 			moves: composedMoves,
 			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
-				current.srcToDst.get(id)?.[0] ?? id,
+				id,
 				composeChild(childChanges),
 			]),
 		};
@@ -306,7 +307,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { revision: id.revision ?? revision, localId: id.localId };
 		};
 		for (const [src, dst] of moves) {
-			invertIdMap.set(dst, src);
+			invertIdMap.set(src, dst);
 		}
 
 		let inverseFillsSelf = false;
@@ -417,30 +418,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const overChildChangesBySrc = new RegisterMap<NodeChangeset>();
 		for (const [id, childChange] of overChange.childChanges ?? []) {
-			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, childChange);
-		}
-
-		// Maps the content occupying a given register id in the output context of `change` to the register id
-		// that content occupies in the output context of the rebased change.
-		// This is necessary since child changes to nodes are keyed on the register they occupy in the output
-		// context of the changeset, and `change` might make child changes to content which it doesn't move, but
-		// `over` does.
-		const renamedDsts = new RegisterMap<RegisterId>();
-		for (const [_, dst] of moves) {
-			renamedDsts.set(dst, dst);
-		}
-		for (const [src, dst] of overSrcToDst.entries()) {
-			if (!renamedDsts.has(src)) {
-				renamedDsts.set(src, dst);
-			}
+			overChildChangesBySrc.set(withIntention(id) ?? id, childChange);
 		}
 
 		const rebasedChildChanges: typeof childChanges = [];
 		for (const [id, childChange] of childChanges) {
-			const rebasedId = renamedDsts.get(id) ?? id;
-			// locate corresponding child change
-			const srcId = changeDstToSrc.get(id) ?? id;
-			const overChildChange = overChildChangesBySrc.get(srcId);
+			const overChildChange = overChildChangesBySrc.get(id);
+
+			const rebasedId = overSrcToDst.get(id) ?? id;
 			const rebasedChildChange = rebaseChild(
 				childChange,
 				overChildChange,
@@ -568,15 +553,12 @@ export function optionalFieldIntoDelta(
 		delta.build = builds;
 	}
 
-	const dstToSrc = new RegisterMap<RegisterId>();
-
 	let markIsANoop = true;
 	const mark: Mutable<Delta.Mark> = { count: 1 };
 
 	if (change.moves.length > 0) {
 		const renames: Delta.DetachedNodeRename[] = [];
 		for (const [src, dst] of change.moves) {
-			dstToSrc.set(dst, src);
 			if (src === "self" && dst !== "self") {
 				mark.detach = { major: dst.revision ?? revision, minor: dst.localId };
 				markIsANoop = false;
@@ -600,12 +582,11 @@ export function optionalFieldIntoDelta(
 	if (change.childChanges.length > 0) {
 		const globals: Delta.DetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
-			const srcId = dstToSrc.get(id) ?? id;
 			const childDelta = deltaFromChild(childChange);
-			if (srcId !== "self") {
+			if (id !== "self") {
 				const fields = childDelta;
 				globals.push({
-					id: { major: srcId.revision ?? revision, minor: srcId.localId },
+					id: { major: id.revision ?? revision, minor: id.localId },
 					fields,
 				});
 			} else {
