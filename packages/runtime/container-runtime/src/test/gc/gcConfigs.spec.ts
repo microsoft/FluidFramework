@@ -834,7 +834,6 @@ describe("Garbage Collection configurations", () => {
 			}[] = [
 				{ option: 123, expectedResult: 123 },
 				{ option: 0, expectedResult: 0 },
-				{ option: -1, expectedResult: 0 },
 				{ option: undefined, expectedResult: defaultTombstoneSweepDelayMs },
 			];
 			testCases.forEach((testCase) => {
@@ -847,6 +846,20 @@ describe("Garbage Collection configurations", () => {
 					);
 					assert.equal(gc.configs.tombstoneSweepDelayMs, testCase.expectedResult);
 				});
+			});
+			it("tombstoneSweepDelayMs must be non-negative", () => {
+				assert.throws(
+					() => {
+						gc = createGcWithPrivateMembers(
+							{} /* metadata */,
+							{
+								tombstoneSweepDelayMs: -1,
+							},
+						);
+					},
+					(e: IErrorBase) => e.errorType === "usageError",
+					"tombstoneSweepDelayMs must be non-negative",
+				);
 			});
 		});
 		describe("testMode", () => {

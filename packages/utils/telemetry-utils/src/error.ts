@@ -22,6 +22,25 @@ import {
 import { IFluidErrorBase } from "./fluidErrorBase";
 
 /**
+ * Throws a UsageError with the given message if the condition is not met.
+ * Use this API when `false` indicates a precondition is not met on a public API (for any FF layer).
+ *
+ * @param condition - The condition that should be true, if the condition is false a UsageError will be thrown.
+ * @param message - The message to include in the error when the condition does not hold.
+ * @param props - Telemetry props to include on the error when the condition does not hold.
+ * @internal
+ */
+export function validatePrecondition(
+	condition: boolean,
+	message: string,
+	props?: ITelemetryBaseProperties,
+): asserts condition {
+	if (!condition) {
+		throw new UsageError(message, props);
+	}
+}
+
+/**
  * Generic wrapper for an unrecognized/uncategorized error object
  *
  * @internal

@@ -18,6 +18,7 @@ export {
 	extractSafePropertiesFromMessage,
 	GenericError,
 	UsageError,
+	validatePrecondition,
 } from "./error";
 export {
 	extractLogSafeErrorProperties,

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { MonitoringContext, UsageError } from "@fluidframework/telemetry-utils";
+import {
+	MonitoringContext,
+	UsageError,
+	validatePrecondition,
+} from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
 	nextGCVersion,
@@ -27,6 +31,7 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 	gcThrowOnTombstoneLoadOptionName,
+	defaultTombstoneSweepDelayMs,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
@@ -164,7 +169,11 @@ export function generateGCConfigs(
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
-	//* Pull tombstoneSweepDelayMs from options, defaulting to 1 day and throwing if negative
+	const tombstoneSweepDelayMs =
+		createParams.gcOptions.tombstoneSweepDelayMs ?? defaultTombstoneSweepDelayMs;
+	validatePrecondition(tombstoneSweepDelayMs >= 0, "tombstoneSweepDelayMs must be non-negative", {
+		tombstoneSweepDelayMs,
+	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
@@ -195,7 +204,7 @@ export function generateGCConfigs(
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
-		tombstoneSweepDelayMs: 1000, //* Default to 1 day. Not persisted
+		tombstoneSweepDelayMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
