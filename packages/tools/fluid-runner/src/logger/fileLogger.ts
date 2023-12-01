@@ -18,6 +18,7 @@ export interface IFileLogger extends ITelemetryBaseLogger {
 
 /**
  * Desired output format for the telemetry
+ * @internal
  */
 export enum OutputFormat {
 	JSON,
@@ -27,6 +28,7 @@ export enum OutputFormat {
 /* eslint-disable tsdoc/syntax */
 /**
  * Options to provide upon creation of IFileLogger
+ * @internal
  */
 export interface ITelemetryOptions {
 	/** Desired output format used to create a specific IFileLogger implementation */
