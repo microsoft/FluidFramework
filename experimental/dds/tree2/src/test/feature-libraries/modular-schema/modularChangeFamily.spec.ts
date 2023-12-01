@@ -45,7 +45,7 @@ import {
 } from "../../utils";
 import {
 	ModularChangeFamily,
-	relevantDetachedTrees,
+	relevantDetachedTrees as relevantDetachedTreesImplementation,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily";
@@ -643,88 +643,114 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("relevantDetachedTrees", () => {
-		it("with content from different fields", () => {
-			const a1 = { major: "A", minor: 1 };
-			const a2 = { major: "A", minor: 2 };
-			const b1 = { major: "B", minor: 1 };
-			const c1 = { major: "C", minor: 1 };
-			const expected = [a1, a2, b1, c1];
-
-			const changeA = {};
-			const changeB = {};
-			const changeC = {};
-			const idA: FieldKindIdentifier = brand("FieldKindA");
-			const idB: FieldKindIdentifier = brand("FieldKindB");
-			const idC: FieldKindIdentifier = brand("FieldKindC");
-
-			const handlerA: FieldChangeHandler<any, any> = {
-				relevantRemovedTrees: (change: any) => {
-					assert.equal(change, changeA);
-					return [a1, a2];
-				},
-			} as unknown as FieldChangeHandler<any, any>;
-			const handlerB: FieldChangeHandler<any, any> = {
-				relevantRemovedTrees: (
-					change: any,
-					removedTreesFromChild: RemovedTreesFromChild,
-				) => {
-					assert.equal(change, changeB);
-					return [
-						b1,
-						...Array.from(
+	describe("relevantRemovedRoots", () => {
+		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
+		interface HasRemovedRootsRefs {
+			shallow: Delta.DetachedNodeId[];
+			nested: HasRemovedRootsRefs[];
+		}
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
+			relevantRemovedTrees: (
+				change: HasRemovedRootsRefs,
+				removedTreesFromChild: RemovedTreesFromChild,
+			) => {
+				return [
+					...change.shallow,
+					...change.nested.flatMap((c) =>
+						Array.from(
 							removedTreesFromChild({
 								fieldChanges: new Map([
-									[brand("fC"), { fieldKind: idC, change: brand(changeC) }],
+									[brand("nested"), { fieldKind, change: brand(c) }],
 								]),
 							}),
 						),
-					];
-				},
-			} as unknown as FieldChangeHandler<any, any>;
-			const handlerC: FieldChangeHandler<any, any> = {
-				relevantRemovedTrees: (change: any) => {
-					assert.equal(change, changeC);
-					return [c1];
-				},
-			} as unknown as FieldChangeHandler<any, any>;
-			const kindA = new FieldKindWithEditor(
-				idA,
-				Multiplicity.Single,
-				handlerA,
-				() => false,
-				new Set(),
-			);
-			const kindB = new FieldKindWithEditor(
-				idB,
-				Multiplicity.Single,
-				handlerB,
-				() => false,
-				new Set(),
-			);
-			const kindC = new FieldKindWithEditor(
-				idC,
-				Multiplicity.Single,
-				handlerC,
-				() => false,
-				new Set(),
-			);
+					),
+				];
+			},
+		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
+		const hasRemovedRootsRefsField = new FieldKindWithEditor(
+			fieldKind,
+			Multiplicity.Single,
+			handler,
+			() => false,
+			new Set(),
+		);
+		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+
+		function relevantDetachedTrees(
+			input: TaggedChange<ModularChangeset>,
+		): Delta.DetachedNodeId[] {
+			deepFreeze(input);
+			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+		}
+
+		it("sibling fields", () => {
+			const a1 = { major: "A", minor: 1 };
+			const a2 = { major: "A", minor: 2 };
+			const b1 = { major: "B", minor: 1 };
+
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1, a2],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [b1],
+				nested: [],
+			};
 			const input: ModularChangeset = {
 				fieldChanges: new Map([
-					[brand("fA"), { fieldKind: idA, change: brand(changeA) }],
-					[brand("fB"), { fieldKind: idB, change: brand(changeB) }],
+					[brand("fA"), { fieldKind, change: brand(changeA) }],
+					[brand("fB"), { fieldKind, change: brand(changeB) }],
 				]),
 			};
 
-			const mockFieldKinds = new Map([
-				[idA, kindA],
-				[idB, kindB],
-				[idC, kindC],
-			]);
+			const actual = relevantDetachedTrees(makeAnonChange(input));
+			assert.deepEqual(actual, [a1, a2, b1]);
+		});
 
-			const actual = relevantDetachedTrees(tagChange(input, undefined), mockFieldKinds);
-			const array = Array.from(actual);
-			assert.deepEqual(array, expected);
+		it("nested fields", () => {
+			const a1 = { major: "A", minor: 1 };
+			const c1 = { major: "C", minor: 1 };
+
+			const changeC: HasRemovedRootsRefs = {
+				shallow: [c1],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [],
+				nested: [changeC],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1],
+				nested: [changeB],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+			};
+
+			const actual = relevantDetachedTrees(makeAnonChange(input));
+			assert.deepEqual(actual, [a1, c1]);
+		});
+
+		it("default revision from tag", () => {
+			const major = mintRevisionTag();
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [{ minor: 2 }],
+				nested: [],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [changeB],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+			};
+
+			const actual = relevantDetachedTrees(tagChange(input, major));
+			assert.deepEqual(actual, [
+				{ major, minor: 1 },
+				{ major, minor: 2 },
+			]);
 		});
 	});
 
