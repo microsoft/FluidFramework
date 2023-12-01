@@ -18,10 +18,9 @@ import {
 	SummarizerStopReason,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -188,14 +187,11 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	const runtimeOptions: IContainerRuntimeOptions = {
 		gcOptions: { gcAllowed: true },
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);

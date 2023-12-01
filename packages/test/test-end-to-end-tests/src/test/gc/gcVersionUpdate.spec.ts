@@ -5,18 +5,10 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	channelsTreeName,
-	gcTreeKey,
-	IContainerRuntimeBase,
-} from "@fluidframework/runtime-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -27,7 +19,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IGCMetadata,
 	IGarbageCollector,
@@ -59,15 +50,11 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		gcOptions: { gcAllowed: true },
 	};
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		(runtime as ContainerRuntime).resolveHandle(request);
-
 	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);

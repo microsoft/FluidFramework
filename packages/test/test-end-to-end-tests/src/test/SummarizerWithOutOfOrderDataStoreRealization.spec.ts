@@ -6,12 +6,8 @@
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedMap } from "@fluidframework/map";
@@ -23,7 +19,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { pkgVersion } from "../packageVersion.js";
 
 interface ProvideSearchContent {
@@ -128,8 +124,6 @@ const dataStoreFactory2 = new DataObjectFactory(
 	[],
 	createDataStoreRuntime(),
 );
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	(runtime as ContainerRuntime).resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
@@ -142,7 +136,6 @@ const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 	{
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	},
 );

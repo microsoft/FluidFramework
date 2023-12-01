@@ -12,10 +12,7 @@ import {
 	IContainerRuntimeOptions,
 	SummaryCollection,
 	ISummaryConfiguration,
-	ContainerRuntime,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
@@ -60,14 +57,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		(runtime as ContainerRuntime).resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);
