@@ -10,7 +10,7 @@ import { type OdspMember, OdspUser } from "./interfaces";
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as OdspUser;
 	assert(
-		user.name !== undefined || user.email !== undefined,
+		user.name !== undefined || user.email !== undefined || user.oid !== undefined,
 		0x836 /* Provided user was not an "OdspUser". */,
 	);
 
@@ -18,6 +18,7 @@ export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 		userId: user.id,
 		name: user.name,
 		email: user.email,
+		oid: user.oid,
 		connections: [],
 	};
 }

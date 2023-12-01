@@ -82,6 +82,8 @@ export interface OdspUser extends IUser {
 	 * The user's email
 	 */
 	email: string;
+
+	oid: string;
 }
 
 /**
@@ -93,6 +95,7 @@ export interface OdspUser extends IUser {
 export interface OdspMember extends IMember {
 	name: string;
 	email: string;
+	oid: string;
 }
 
 /**
