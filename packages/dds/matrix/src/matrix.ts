@@ -694,15 +694,6 @@ export class SharedMatrix<T = any>
 							rowsRefSeq,
 							colsRefSeq,
 						);
-					} else {
-						this.emit(
-							"conflict",
-							row,
-							col,
-							this.cells.getCell(rowHandle, colHandle), // Current value
-							parseHandles(setOp.value, this.serializer), // Ignored value
-							this,
-						);
 					}
 				}
 				break;
@@ -729,13 +720,13 @@ export class SharedMatrix<T = any>
 			);
 			const [
 				cellData,
-				pendingCliSeqData,
+				_pendingCliSeqData,
 				cellLastWriteTracker,
 				setCellLwwToFwwPolicySwitchOpSeqNumber,
 			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
 			this.cells = SparseArray2D.load(cellData);
-			this.pending = SparseArray2D.load(pendingCliSeqData);
+
 			// Old summaries will not have this info, so check that.
 			if (cellLastWriteTracker !== undefined) {
 				assert(
@@ -823,17 +814,6 @@ export class SharedMatrix<T = any>
 								seqNum: rawMessage.sequenceNumber,
 								clientId: rawMessage.clientId,
 							});
-						} else {
-							// conflict. We would already set the right contents in the cell, when we would have received
-							// set op for that cell from other client.
-							this.emit(
-								"conflict",
-								row,
-								col,
-								this.cells.getCell(rowHandle, colHandle), // Current value
-								value, // Ignored value
-								this,
-							);
 						}
 					} else {
 						if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
@@ -863,6 +843,7 @@ export class SharedMatrix<T = any>
 								if (
 									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)
 								) {
+									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
 									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
 										seqNum: rawMessage.sequenceNumber,
@@ -870,6 +851,18 @@ export class SharedMatrix<T = any>
 									});
 									for (const consumer of this.consumers.values()) {
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
+									}
+									// Check is there are any pending changes, which will be rejected. If so raise conflict.
+									if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
+										this.pending.setCell(rowHandle, colHandle, undefined);
+										this.emit(
+											"conflict",
+											row,
+											col,
+											value, // Current value
+											previousValue, // Ignored local value
+											this,
+										);
 									}
 								}
 							} else {
