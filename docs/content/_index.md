@@ -28,8 +28,6 @@ summary: "An open-source client technology stack that enables real-time collabor
         </div>
 </div> -->
 <div class="value-props">
-    <h2><strong>Start building today</strong></h2>
-    <h2><strong>Why Fluid?</strong></h2>
     <h2><strong>Start building with Fluid</strong></h2>
         <div class="container">
             <div class="row">
