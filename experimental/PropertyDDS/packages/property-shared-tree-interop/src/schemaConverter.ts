@@ -8,7 +8,7 @@ import {
 	fail,
 	FieldKinds,
 	TreeFieldSchema,
-	SchemaBuilder,
+	SchemaBuilderBase,
 	FieldKind,
 	Any,
 	FlexTreeNodeSchema as TreeNodeSchema,
@@ -78,6 +78,8 @@ function getAllInheritingChildrenTypes(): InheritingChildrenByType {
 	return inheritingChildrenByType;
 }
 
+type SchemaBuilder = SchemaBuilderBase<string, typeof FieldKinds.required>;
+
 function buildTreeNodeSchema(
 	builder: SchemaBuilder,
 	nodeSchemaMap: Map<string, LazyTreeNodeSchema>,
@@ -142,7 +144,10 @@ function buildTreeNodeSchema(
 					!fields.has(nodePropertyField),
 					0x712 /* name collision for nodePropertyField */,
 				);
-				fields.set(nodePropertyField, SchemaBuilder.required(nodePropertySchema));
+				fields.set(
+					nodePropertyField,
+					TreeFieldSchema.create(FieldKinds.required, [nodePropertySchema]),
+				);
 			}
 			const fieldsObject = mapToObject(fields);
 			cache.nodeSchema = builder.object(typeid, fieldsObject);
@@ -309,11 +314,11 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 		}
 	}
 	return isAny
-		? SchemaBuilder.field(fieldKind, Any)
-		: SchemaBuilder.field(fieldKind, [...allowedTypes]);
+		? TreeFieldSchema.create(fieldKind, [Any])
+		: TreeFieldSchema.create(fieldKind, [...allowedTypes]);
 }
 
-const builtinBuilder = new SchemaBuilder({
+const builtinBuilder: SchemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
 	scope: "com.fluidframework.PropertyDDSBuiltIn",
 	name: "PropertyDDS to SharedTree builtin schema builder",
 	libraries: [leaf.library],
@@ -323,7 +328,7 @@ const builtinBuilder = new SchemaBuilder({
 // to be put into one library like this.
 export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
-	builtinBuilder.optional(Any),
+	TreeFieldSchema.create(FieldKinds.optional, [Any]),
 );
 const builtinLibrary = builtinBuilder.intoLibrary();
 
@@ -342,7 +347,7 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder({
+	const builder = new SchemaBuilderBase(FieldKinds.required, {
 		scope: "converted",
 		name: "PropertyDDS to SharedTree schema builder",
 		libraries: [builtinLibrary],

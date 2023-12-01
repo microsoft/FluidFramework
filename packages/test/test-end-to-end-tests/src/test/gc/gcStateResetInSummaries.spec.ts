@@ -20,7 +20,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -34,7 +34,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * This validates scenarios where due to some bug the GC state in summary is incorrect and we need to quickly recover
  * documents. Disabling GC will ensure that we are not deleting / marking things unreferenced incorrectly.
  */
-describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
+describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	const settings = {

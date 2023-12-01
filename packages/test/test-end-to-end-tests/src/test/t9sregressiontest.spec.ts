@@ -12,7 +12,7 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 // This is a regression test for https://github.com/microsoft/FluidFramework/issues/9163
-describeNoCompat("t9s issue regression test", (getTestObjectProvider) => {
+describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider) => {
 	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);

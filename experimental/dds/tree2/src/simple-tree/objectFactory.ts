@@ -25,7 +25,6 @@ export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 
 /**
  * Creates `{@link TreeObjectNode}`s of the given schema type via a `create` method.
- * @alpha
  */
 export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 	/**
@@ -42,7 +41,6 @@ export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 
 /**
  * A {@link TreeNodeSchema} which is also a {@link TreeObjectFactory}.
- * @alpha
  */
 export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema &
 	TreeObjectFactory<TSchema>;
