@@ -7,6 +7,7 @@ import { IThrottler, ThrottlingError } from "@fluidframework/server-services-cor
 
 /**
  * Throttles if an id's count exceeds limit. Exposes tracked `throttleCounts` for easy assertions.
+ * @internal
  */
 export class TestThrottler implements IThrottler {
 	public readonly throttleCounts: Map<string, number> = new Map<string, number>();

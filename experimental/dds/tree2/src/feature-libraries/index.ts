@@ -123,7 +123,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
 
 export {

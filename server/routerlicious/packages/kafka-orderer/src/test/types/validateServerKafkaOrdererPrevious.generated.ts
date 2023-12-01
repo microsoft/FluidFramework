@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_KafkaOrderer():
     TypeOnly<old.KafkaOrderer>;
 declare function use_current_ClassDeclaration_KafkaOrderer(
-    use: TypeOnly<current.KafkaOrderer>);
+    use: TypeOnly<current.KafkaOrderer>): void;
 use_current_ClassDeclaration_KafkaOrderer(
     get_old_ClassDeclaration_KafkaOrderer());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_KafkaOrderer(
 declare function get_current_ClassDeclaration_KafkaOrderer():
     TypeOnly<current.KafkaOrderer>;
 declare function use_old_ClassDeclaration_KafkaOrderer(
-    use: TypeOnly<old.KafkaOrderer>);
+    use: TypeOnly<old.KafkaOrderer>): void;
 use_old_ClassDeclaration_KafkaOrderer(
     get_current_ClassDeclaration_KafkaOrderer());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_KafkaOrderer(
 declare function get_old_ClassDeclaration_KafkaOrdererConnection():
     TypeOnly<old.KafkaOrdererConnection>;
 declare function use_current_ClassDeclaration_KafkaOrdererConnection(
-    use: TypeOnly<current.KafkaOrdererConnection>);
+    use: TypeOnly<current.KafkaOrdererConnection>): void;
 use_current_ClassDeclaration_KafkaOrdererConnection(
     get_old_ClassDeclaration_KafkaOrdererConnection());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_KafkaOrdererConnection(
 declare function get_current_ClassDeclaration_KafkaOrdererConnection():
     TypeOnly<current.KafkaOrdererConnection>;
 declare function use_old_ClassDeclaration_KafkaOrdererConnection(
-    use: TypeOnly<old.KafkaOrdererConnection>);
+    use: TypeOnly<old.KafkaOrdererConnection>): void;
 use_old_ClassDeclaration_KafkaOrdererConnection(
     get_current_ClassDeclaration_KafkaOrdererConnection());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_KafkaOrdererConnection(
 declare function get_old_ClassDeclaration_KafkaOrdererFactory():
     TypeOnly<old.KafkaOrdererFactory>;
 declare function use_current_ClassDeclaration_KafkaOrdererFactory(
-    use: TypeOnly<current.KafkaOrdererFactory>);
+    use: TypeOnly<current.KafkaOrdererFactory>): void;
 use_current_ClassDeclaration_KafkaOrdererFactory(
     get_old_ClassDeclaration_KafkaOrdererFactory());
 
@@ -89,6 +89,6 @@ use_current_ClassDeclaration_KafkaOrdererFactory(
 declare function get_current_ClassDeclaration_KafkaOrdererFactory():
     TypeOnly<current.KafkaOrdererFactory>;
 declare function use_old_ClassDeclaration_KafkaOrdererFactory(
-    use: TypeOnly<old.KafkaOrdererFactory>);
+    use: TypeOnly<old.KafkaOrdererFactory>): void;
 use_old_ClassDeclaration_KafkaOrdererFactory(
     get_current_ClassDeclaration_KafkaOrdererFactory());

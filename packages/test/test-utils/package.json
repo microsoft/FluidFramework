@@ -125,6 +125,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ITestObjectProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

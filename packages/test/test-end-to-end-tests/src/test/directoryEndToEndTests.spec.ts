@@ -24,7 +24,7 @@ import {
 	ChannelFactoryRegistry,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const directoryId = "directoryKey";
@@ -34,7 +34,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
+describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -833,7 +833,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -1261,7 +1261,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 	});
 });
 
-describeNoCompat("SharedDirectory ordering maintenance", (getTestObjectProvider) => {
+describeCompat("SharedDirectory ordering maintenance", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

@@ -5,6 +5,9 @@
 
 import type { ICache } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class TestCache implements ICache {
 	private readonly map = new Map<string, string>();
 	public async get(key: string): Promise<string> {

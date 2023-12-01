@@ -18,6 +18,7 @@ import { FileDocumentService } from "./fileDocumentService";
 /**
  * Factory for creating the file document service. Use this if you want to
  * use the local file storage as underlying storage.
+ * @internal
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(

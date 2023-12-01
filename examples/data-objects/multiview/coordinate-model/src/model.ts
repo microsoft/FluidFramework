@@ -12,6 +12,7 @@ const yKey = "y";
 
 /**
  * The Coordinate is our implementation of the ICoordinate interface.
+ * @internal
  */
 export class Coordinate extends DataObject implements ICoordinate {
 	public static readonly ComponentName = "@fluid-example/coordinate";
