@@ -13,7 +13,6 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -27,6 +26,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { IDataStore } from "@fluidframework/runtime-definitions";
 
 describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -217,7 +217,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
 			async () => {
-				const datastores: IFluidRouter[] = [];
+				const datastores: IDataStore[] = [];
 				const createAliasedDataStore = async () => {
 					try {
 						await getAliasedDataStoreEntryPoint(dataObject1, alias);
