@@ -95,6 +95,9 @@
 			},
 			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataStore": {
+				"backCompat": false
 			}
 		}
 	}

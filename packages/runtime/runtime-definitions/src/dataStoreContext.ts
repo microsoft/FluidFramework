@@ -147,38 +147,6 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Requesting will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
-	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 *
-	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
-	 */
-	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
-
-	/**
-	 * Issue a request against the DataStore for a resource within it.
-	 * @param request - The request to be issued against the DataStore
-	 *
-	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
