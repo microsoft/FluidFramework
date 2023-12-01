@@ -9585,6 +9585,85 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
+  packages/service-clients/end-to-end-tests/odsp-client:
+    specifiers:
+      '@fluid-experimental/odsp-client': workspace:~
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.28.0
+      '@fluidframework/common-definitions': ^1.0.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/counter': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/odsp-doclib-utils': workspace:~
+      '@fluidframework/odsp-driver-definitions': workspace:~
+      '@fluidframework/sequence': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^16.18.38
+      '@types/uuid': ^9.0.2
+      c8: ^7.7.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nock: ^13.3.3
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-experimental/odsp-client': link:../../odsp-client
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
+      '@fluidframework/common-definitions': 1.0.0
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/odsp-doclib-utils': link:../../../utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver-definitions': link:../../../drivers/odsp-driver-definitions
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../test/test-utils
+      cross-env: 7.0.3
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      sinon: 7.5.0
+      uuid: 9.0.1
+    devDependencies:
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.28.0_@types+node@16.18.65
+      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 16.18.65
+      '@types/uuid': 9.0.7
+      c8: 7.14.0
+      eslint: 8.50.0
+      nock: 13.4.0
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   packages/service-clients/odsp-client:
     specifiers:
       '@fluid-tools/build-cli': ^0.28.0
@@ -23402,7 +23481,7 @@ packages:
     resolution: {integrity: sha512-75lAs9H19ldmW+fAbyqHdjgdCrz0pWGXKmnqFoh8PyVd1L2RIb4RzYrSjmopeqv3E1G3/Pimu6GgLlrGbrkF7w==}
     engines: {node: '>=0.4.0'}
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.2
     dev: true
 
   /acorn-walk/7.2.0:
@@ -25036,7 +25115,7 @@ packages:
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -25044,7 +25123,7 @@ packages:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -25803,7 +25882,7 @@ packages:
     dependencies:
       colors: 0.6.2
       eyes: 0.1.8
-      winston: 0.8.0
+      winston: 0.8.3
     dev: true
 
   /cliui/3.2.0:
