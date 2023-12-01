@@ -124,6 +124,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TestFluidObject": {
+				"backCompat": false
+			}
+		}
 	}
 }

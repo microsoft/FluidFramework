@@ -157,6 +157,16 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
+			"ClassDeclaration_DataObject": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IRootDataObjectFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_PureDataObject": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IDataObjectProps": {
 				"backCompat": false
 			}

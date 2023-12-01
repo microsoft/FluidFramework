@@ -4,4 +4,4 @@
  */
 
 export { DataObjectFactory } from "./dataObjectFactory";
-export { IRootDataObjectFactory, PureDataObjectFactory } from "./pureDataObjectFactory";
+export { PureDataObjectFactory } from "./pureDataObjectFactory";

@@ -34,13 +34,6 @@ export class TestFluidObject implements ITestFluidObject {
 		return this;
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
 	public get handle(): IFluidHandle<this> {
 		return this.innerHandle;
 	}
@@ -84,9 +77,6 @@ export class TestFluidObject implements ITestFluidObject {
 		throw new Error(`Shared object with id ${id} not found.`);
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
 			? { mimeType: "fluid/object", status: 200, value: this }

@@ -11,6 +11,8 @@ import {
 	SequenceDeltaEvent,
 	ReferencePosition,
 	PropertySet,
+	SharedString,
+	createEndpointIndex,
 } from "@fluidframework/sequence";
 import {
 	positionToRowCol,
@@ -81,9 +83,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
-	public async getRange(label: string) {
+	public async getRange(label: string): Promise<CellRange> {
+		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
 		const intervals = this.matrix.getIntervalCollection(label);
-		const interval = intervals.nextInterval(0);
+		intervals.attachIndex(endpointIndex);
+		const interval = endpointIndex.nextInterval(0);
+		intervals.detachIndex(endpointIndex);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 

@@ -11,7 +11,7 @@ import {
 	SchemaBuilder,
 	FieldKind,
 	Any,
-	TreeNodeSchema,
+	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
 	brand,
 	Brand,

@@ -17,7 +17,7 @@ export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 ): FactoryTreeSchema<TSchema> {
 	return Object.defineProperty(schema, "create", {
 		value: (content: InsertableTypedNode<TSchema>): TreeObjectNode<TSchema> =>
-			createRawObjectProxy(schema, content),
+			createRawObjectProxy(schema, content, false),
 		configurable: true,
 		enumerable: true,
 	}) as FactoryTreeSchema<TSchema>;

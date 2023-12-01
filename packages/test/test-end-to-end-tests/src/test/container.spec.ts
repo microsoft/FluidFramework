@@ -44,7 +44,6 @@ import {
 	describeNoCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
 	DataCorruptionError,
@@ -293,12 +292,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -383,12 +378,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,

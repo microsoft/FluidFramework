@@ -18,11 +18,7 @@
  * @packageDocumentation
  */
 
-export {
-	DataObjectFactory,
-	IRootDataObjectFactory,
-	PureDataObjectFactory,
-} from "./data-object-factories";
+export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories";
 export { DataObject, DataObjectTypes, IDataObjectProps, PureDataObject } from "./data-objects";
 export {
 	BaseContainerRuntimeFactory,
