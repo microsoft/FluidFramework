@@ -5,14 +5,13 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { JsonCompatibleReadOnly, Mutable } from "../../util";
 import type { NodeChangeset } from "../modular-schema";
-import type {
-	NodeUpdate,
-	OptionalChangeset,
-	OptionalFieldChange,
-} from "./optionalFieldChangeTypes";
-import { EncodedOptionalChangeset, EncodedNodeUpdate } from "./optionalFieldChangeFormat";
+import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
+import {
+	EncodedOptionalChangeset,
+	EncodedRegisterId,
+	EncodedBuild,
+} from "./optionalFieldChangeFormat";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
@@ -20,97 +19,91 @@ export const makeOptionalFieldCodecFamily = (
 	childCodec: IJsonCodec<NodeChangeset>,
 ): ICodecFamily<OptionalChangeset> => makeCodecFamily([[0, makeOptionalFieldCodec(childCodec)]]);
 
+const registerIdCodec: IJsonCodec<RegisterId, EncodedRegisterId> = {
+	encode: (registerId: RegisterId) => {
+		if (registerId === "self") {
+			return 0;
+		}
+
+		return { ...registerId };
+	},
+	decode: (registerId: EncodedRegisterId) => {
+		if (registerId === 0) {
+			return "self";
+		}
+
+		return { ...registerId };
+	},
+};
+
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
 ): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
-	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-			if (change.fieldChange !== undefined) {
-				encoded.fieldChange = {
-					id: change.fieldChange.id,
-					wasEmpty: change.fieldChange.wasEmpty,
-				};
-				if (change.fieldChange.revision !== undefined) {
-					encoded.fieldChange.revision = change.fieldChange.revision;
+			if (change.build.length > 0) {
+				const builds: EncodedBuild[] = [];
+				for (const build of change.build) {
+					builds.push([build.id, build.set]);
 				}
-				if (change.fieldChange.newContent !== undefined) {
-					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
-						change.fieldChange.newContent,
-					);
+				encoded.b = builds;
+			}
+
+			if (change.moves.length > 0) {
+				encoded.m = [];
+				for (const [src, dst, type] of change.moves) {
+					encoded.m.push([
+						registerIdCodec.encode(src),
+						registerIdCodec.encode(dst),
+						type === "nodeTargeting",
+					]);
 				}
 			}
 
-			if (change.childChanges !== undefined) {
-				encoded.childChanges = change.childChanges.map(([id, childChange]) => [
-					id,
-					childCodec.encode(childChange),
-				]);
+			if (change.childChanges.length > 0) {
+				encoded.c = [];
+				for (const [id, childChange] of change.childChanges) {
+					encoded.c.push([registerIdCodec.encode(id), childCodec.encode(childChange)]);
+				}
+			}
+
+			if (change.reservedDetachId !== undefined) {
+				encoded.d = registerIdCodec.encode(change.reservedDetachId);
 			}
 
 			return encoded;
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
-			const decoded: Mutable<OptionalChangeset> = {};
-			if (encoded.fieldChange !== undefined) {
-				const decodedFieldChange: Mutable<OptionalFieldChange> = {
-					id: encoded.fieldChange.id,
-					wasEmpty: encoded.fieldChange.wasEmpty,
-				};
-				if (encoded.fieldChange.revision !== undefined) {
-					decodedFieldChange.revision = encoded.fieldChange.revision;
-				}
-				if (encoded.fieldChange.newContent !== undefined) {
-					decodedFieldChange.newContent = nodeUpdateCodec.decode(
-						encoded.fieldChange.newContent,
-					);
-				}
-				decoded.fieldChange = decodedFieldChange;
-			}
+			const moves: OptionalChangeset["moves"] =
+				encoded.m?.map(
+					([src, dst, type]) =>
+						[
+							registerIdCodec.decode(src),
+							registerIdCodec.decode(dst),
+							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
+						] as const,
+				) ?? [];
+			const decoded: OptionalChangeset = {
+				build:
+					encoded.b?.map(([id, set]) => ({
+						id,
+						set,
+					})) ?? [],
+				moves,
+				childChanges:
+					encoded.c?.map(([id, encodedChange]) => [
+						registerIdCodec.decode(id),
+						childCodec.decode(encodedChange),
+					]) ?? [],
+			};
 
-			if (encoded.childChanges !== undefined) {
-				decoded.childChanges = encoded.childChanges.map(([id, childChange]) => [
-					id,
-					childCodec.decode(childChange),
-				]);
+			if (encoded.d !== undefined) {
+				decoded.reservedDetachId = registerIdCodec.decode(encoded.d);
 			}
-
 			return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
-	};
-}
-
-function makeNodeUpdateCodec(
-	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<NodeUpdate, EncodedNodeUpdate<TAnySchema>> {
-	return {
-		encode: (update: NodeUpdate) => {
-			const encoded: EncodedNodeUpdate<TAnySchema> =
-				"revert" in update
-					? { revert: update.revert }
-					: { set: update.set, buildId: update.buildId };
-
-			if (update.changes !== undefined) {
-				encoded.changes = childCodec.encode(update.changes);
-			}
-
-			return encoded as JsonCompatibleReadOnly & EncodedNodeUpdate<TAnySchema>;
-		},
-		decode: (encoded: EncodedNodeUpdate<TAnySchema>) => {
-			const decoded: NodeUpdate =
-				"revert" in encoded
-					? { revert: encoded.revert }
-					: { set: encoded.set, buildId: encoded.buildId };
-
-			if (encoded.changes !== undefined) {
-				decoded.changes = childCodec.decode(encoded.changes);
-			}
-
-			return decoded;
-		},
-		encodedSchema: EncodedNodeUpdate(childCodec.encodedSchema ?? Type.Any()),
 	};
 }

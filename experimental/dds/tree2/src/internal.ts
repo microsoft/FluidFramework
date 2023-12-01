@@ -37,10 +37,22 @@ export {
 	Sequence,
 } from "./feature-libraries";
 
-export {
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-	testRecursiveDomain,
-} from "./domains";
+export { FactoryObjectNodeSchema, FactoryObjectNodeSchemaRecursive } from "./domains";
 
-export { TreeListNodeBase } from "./simple-tree";
+export {
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	InternalEditableTreeTypes,
+} from "./class-tree";
+
+export {
+	TreeListNodeBase,
+	InsertableTreeField,
+	InsertableTreeFieldInner,
+	InsertableTreeNodeUnion,
+	InsertableTreeObjectNode,
+	InsertableTreeObjectNodeFields,
+	InsertableTypedNode,
+} from "./simple-tree";

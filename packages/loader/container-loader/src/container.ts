@@ -497,6 +497,7 @@ export class Container
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
 
@@ -814,6 +815,14 @@ export class Container
 			});
 		};
 
+		this._containerId = uuid();
+
+		this.client = Container.setupClient(
+			this._containerId,
+			this.options,
+			this.clientDetailsOverride,
+		);
+
 		// Create logger for data stores to use
 		const type = this.client.details.type;
 		const interactive = this.client.details.capabilities.interactive;
@@ -821,7 +830,6 @@ export class Container
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
 
-		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -1116,7 +1124,6 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
 		const pendingState = await this.getPendingLocalStateCore({
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
@@ -1996,10 +2003,15 @@ export class Container
 		return pkg as IFluidCodeDetails;
 	}
 
-	private get client(): IClient {
+	private static setupClient(
+		containerId: string,
+		options?: ILoaderOptions,
+		clientDetailsOverride?: IClientDetails,
+	): IClient {
+		const loaderOptionsClient = structuredClone(options?.client);
 		const client: IClient =
-			this.options?.client !== undefined
-				? (this.options.client as IClient)
+			loaderOptionsClient !== undefined
+				? (loaderOptionsClient as IClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
@@ -2010,21 +2022,22 @@ export class Container
 						user: { id: "" },
 				  };
 
-		if (this.clientDetailsOverride !== undefined) {
+		if (clientDetailsOverride !== undefined) {
 			client.details = {
 				...client.details,
-				...this.clientDetailsOverride,
+				...clientDetailsOverride,
 				capabilities: {
 					...client.details.capabilities,
-					...this.clientDetailsOverride.capabilities,
+					...clientDetailsOverride?.capabilities,
 				},
 			};
 		}
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
-			` containerId:${this._containerId}`,
+			` containerId:${containerId}`,
 		].join(";");
+
 		return client;
 	}
 

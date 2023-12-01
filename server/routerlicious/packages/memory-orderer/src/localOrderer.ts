@@ -398,6 +398,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			true,
 			this.details.value.isEphemeralContainer,
+			checkpointService.getLocalCheckpointEnabled(),
 		);
 	}
 

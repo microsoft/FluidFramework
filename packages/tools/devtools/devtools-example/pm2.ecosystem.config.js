@@ -13,22 +13,30 @@ module.exports = {
 	apps: [
 		{
 			name: "devtools-example",
-			script: "npm run start:client",
+			script: "npm",
+			args: "run start:client",
+			watch: ["."],
 			cwd: "./",
 		},
 		{
 			name: "devtools-core",
-			script: "npm run tsc:watch",
+			script: "npm",
+			args: "run tsc:watch",
+			watch: ["."],
 			cwd: "../devtools-core",
 		},
 		{
 			name: "devtools-view",
-			script: "npm run tsc:watch",
+			script: "npm",
+			args: "run tsc:watch",
+			watch: ["."],
 			cwd: "../devtools-view",
 		},
 		{
 			name: "devtools",
-			script: "npm run tsc:watch",
+			script: "npm",
+			args: "run tsc:watch",
+			watch: ["."],
 			cwd: "../devtools",
 		},
 		// Add more packages as needed

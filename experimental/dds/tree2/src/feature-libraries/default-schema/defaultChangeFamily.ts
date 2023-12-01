@@ -8,14 +8,14 @@ import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	ChangeRebaser,
-	Delta,
 	UpPath,
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
-	TaggedChange,
 	compareFieldUpPaths,
 	topDownPath,
+	Delta,
+	TaggedChange,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -24,6 +24,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	FieldEditDescription,
+	intoDelta as intoModularDelta,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -37,6 +38,8 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
+	public static readonly emptyChange: DefaultChangeset = ModularChangeFamily.emptyChange;
+
 	public constructor(codecOptions: ICodecOptions) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
 	}
@@ -49,13 +52,16 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
-		return this.modularFamily.intoDelta(change);
-	}
-
 	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
 		return new DefaultEditBuilder(this, changeReceiver);
 	}
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ */
+export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.Root {
+	return intoModularDelta(taggedChange, fieldKinds);
 }
 
 /**
@@ -137,10 +143,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
-				const id = this.modularBuilder.generateId();
-				const buildId = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, id, buildId),
+					valueFieldKind.changeHandler.editor.set(newContent, {
+						fill: this.modularBuilder.generateId(),
+						detach: this.modularBuilder.generateId(),
+					}),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -154,12 +161,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const optionalChange =
 					newContent === undefined
 						? optional.changeHandler.editor.clear(wasEmpty, id)
-						: optional.changeHandler.editor.set(
-								newContent,
-								wasEmpty,
-								id,
-								this.modularBuilder.generateId(),
-						  );
+						: optional.changeHandler.editor.set(newContent, wasEmpty, {
+								fill: this.modularBuilder.generateId(),
+								detach: this.modularBuilder.generateId(),
+						  });
 				const change: FieldChangeset = brand(optionalChange);
 				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},

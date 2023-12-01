@@ -159,15 +159,15 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     nextInterval(pos: number): TInterval | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
@@ -630,6 +630,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
+    // @deprecated
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
     // @deprecated

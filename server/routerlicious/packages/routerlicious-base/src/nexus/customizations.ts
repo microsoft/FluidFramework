@@ -9,6 +9,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IWebSocketTracker,
+	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
 
 /**
@@ -20,4 +21,5 @@ export interface INexusResourcesCustomizations {
 	tokenRevocationManager?: ITokenRevocationManager;
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
+	serviceMessageResourceManager?: IServiceMessageResourceManager;
 }
