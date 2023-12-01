@@ -10,7 +10,7 @@ import { TypedNode, Tree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
 import { treeViewWithContent } from "../utils";
-import { getRoot } from "./utils";
+import { getOldRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaBuilder({
@@ -73,13 +73,13 @@ describe("SharedTreeObject factories", () => {
 	};
 
 	it("correctly construct objects with content", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		root.child = childA.create({ content: 43 });
 		assert.equal(root.child.content, 43);
 	});
 
 	it("construct objects that work in polymorphic fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		root.poly = childA.create({ content: 43 });
 		assert.equal(root.poly.content, 43);
 		root.poly = childB.create({ content: 44 });
@@ -87,7 +87,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	it("can re-use content objects", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		// The `create` functions stamp the content with a `[typeNameSymbol]`.
 		// This test ensures that they shallow copy the content before doing the stamp.
 		const content = { content: 43 };
@@ -98,7 +98,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	it("don't require optional data to be included", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.optional, undefined);
 		root.optional = {};
 		assert.deepEqual(root.optional, {});
@@ -106,7 +106,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	it("support nesting inside of a factory", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		root.grand = childC.create({
 			child: childD.create({
 				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
@@ -122,7 +122,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	it("support nesting inside of a plain javascript object", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		root.grand = {
 			child: childD.create({
 				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
@@ -232,7 +232,7 @@ describe("SharedTreeObject factories", () => {
 	it("hydration is not attempted on objects which are not proxies", () => {
 		// This regression test ensures that non-proxy objects inserted into the tree are
 		// not mistakenly "hydrated" as a proxy would be, falsely linking them to the content of the tree.
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const newChild = { content: 43 };
 		// `newChild` is not a proxy, so it should be copied into the tree here but otherwise remain disconnected
 		root.child = newChild;
