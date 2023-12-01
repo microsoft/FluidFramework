@@ -19,6 +19,7 @@ const { ValueProperty } = require("./valueProperty");
  * object's value field. To do this we simply keep a pointer to the object and
  * it's associated data field that we are interested in. If no data field is
  * present this property will have an undefined value.
+ * @internal
  */
 export class ReferenceProperty extends ValueProperty {
 	/**

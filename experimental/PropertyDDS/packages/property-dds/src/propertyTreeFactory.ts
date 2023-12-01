@@ -13,6 +13,7 @@ import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree";
 
 /**
  * The factory that defines the map
+ * @internal
  */
 export class PropertyTreeFactory implements IChannelFactory {
 	public static readonly Type = "PropertyTree:01EP5J4Y6C284JR6ATVPPHRJ4E";
