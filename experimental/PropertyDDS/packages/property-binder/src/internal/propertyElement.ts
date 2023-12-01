@@ -37,6 +37,7 @@ let Options: IOptions = {
 /**
  * Currently not exposed to the world
  * @hidden
+ * @internal
  */
 export class PropertyElement {
 	_property: Property;

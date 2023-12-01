@@ -19,6 +19,7 @@ import { calculateHash } from "./hashCalculator";
  * @remarks Warning: This is a very straight forward implementation based on the hashCombine4xUint32 function.
  * It probably doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
  * efficient.
+ * @internal
  */
 export class DeterministicRandomGenerator {
 	_guid1: Uint32Array;

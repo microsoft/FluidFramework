@@ -7,6 +7,9 @@ import point2D from "./2DPoint-1.0.0";
 import coloredSquare from "./coloredSquare-1.0.0";
 import square from "./square-1.0.0";
 
+/**
+ * @internal
+ */
 export const schemas = {
 	board,
 	point2D,

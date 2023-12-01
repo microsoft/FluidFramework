@@ -42,18 +42,30 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { PropertyTreeFactory } from "./propertyTreeFactory";
 
+/**
+ * @internal
+ */
 export type SerializedChangeSet = any;
 
+/**
+ * @internal
+ */
 export type Metadata = any;
 
 type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
 type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
+/**
+ * @internal
+ */
 export const enum OpKind {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	ChangeSet = 0,
 }
 
+/**
+ * @internal
+ */
 export interface IPropertyTreeMessage {
 	op: OpKind;
 	changeSet: SerializedChangeSet;
@@ -66,6 +78,9 @@ export interface IPropertyTreeMessage {
 	useMH?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IRemotePropertyTreeMessage extends IPropertyTreeMessage {
 	sequenceNumber: number;
 }
@@ -75,6 +90,9 @@ interface ISnapshot {
 	useMH: boolean;
 	numChunks: number;
 }
+/**
+ * @internal
+ */
 export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
@@ -82,6 +100,9 @@ export interface ISnapshotSummary {
 	remoteHeadGuid: string;
 }
 
+/**
+ * @internal
+ */
 export interface SharedPropertyTreeOptions {
 	paths?: string[];
 	clientFiltering?: boolean;
@@ -89,6 +110,9 @@ export interface SharedPropertyTreeOptions {
 	disablePartialCheckout?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ISharedPropertyTreeEncDec {
 	messageEncoder: {
 		encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
@@ -97,6 +121,9 @@ export interface ISharedPropertyTreeEncDec {
 	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary };
 }
 
+/**
+ * @internal
+ */
 export interface IPropertyTreeConfig {
 	encDec: ISharedPropertyTreeEncDec;
 }
@@ -131,6 +158,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
  * consensus by simply applying the same number of rolls.  (A fun addition would be logging
  * who received which roll, which would need to change as clients learn how races are resolved
  * in the total order)
+ * @internal
  */
 export class SharedPropertyTree extends SharedObject {
 	tipView: SerializedChangeSet = {};
