@@ -61,8 +61,6 @@ export interface OdspMember extends IMember {
     email: string;
     // (undocumented)
     name: string;
-    // (undocumented)
-    oid: string;
 }
 
 // (No @packageDocumentation comment for this package)
