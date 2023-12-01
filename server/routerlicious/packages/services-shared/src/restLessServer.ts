@@ -8,6 +8,9 @@ import qs from "querystring";
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
 import { urlencoded } from "body-parser";
 
+/**
+ * @internal
+ */
 export const decodeHeader = (header: string): { name: string; value: string } => {
 	const [name, value] = header.split(/: (.+)/);
 	return { name, value };
@@ -33,6 +36,7 @@ const defaultRestLessServerOptions: IRestLessServerOptions = {
 /**
  * Server for communicating with a "RestLess" client.
  * Translates a "RestLess" HTTP request into a typical RESTful HTTP format
+ * @internal
  */
 export class RestLessServer {
 	private readonly options: IRestLessServerOptions;

@@ -27,6 +27,7 @@ export {
 	FlexTreeTyped,
 	onNextChange,
 	FlexTreeUnknownUnboxed,
+	isFlexTreeNode,
 } from "./flexTreeTypes";
 
 export {

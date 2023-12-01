@@ -70,7 +70,7 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
 	 */
-	schematize<TRoot extends TreeFieldSchema>(
+	schematizeOld<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TreeView<TreeField<TRoot>>;
 }

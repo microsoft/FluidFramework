@@ -73,6 +73,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Root application component.
  * Initializes the Fluid Container and displays app view once it is ready.
+ * @internal
  */
 export function App(): React.ReactElement {
 	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();

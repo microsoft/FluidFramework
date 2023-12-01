@@ -19,6 +19,7 @@ import { RemovalContext } from "./removalContext";
  * this class. Only one instance of ```D``` will be created.
  *
  * @extends DataBinding
+ * @internal
  */
 export class StatelessDataBinding extends DataBinding {
 	/**

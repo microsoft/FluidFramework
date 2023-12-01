@@ -13,6 +13,7 @@ import {
 	RevisionTag,
 	areEqualChangeAtomIds,
 	JsonableTree,
+	RevisionMetadataSource,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -25,7 +26,6 @@ import {
 	NodeChangeset,
 	FieldEditor,
 	CrossFieldManager,
-	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,

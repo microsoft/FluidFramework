@@ -22,7 +22,10 @@ export {
 } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
+	MongoTenantRepository,
+	IRiddlerResourcesCustomizations,
 	ITenantDocument,
+	ITenantRepository,
 	RiddlerResources,
 	RiddlerResourcesFactory,
 	RiddlerRunner,

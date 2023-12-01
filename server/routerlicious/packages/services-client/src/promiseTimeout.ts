@@ -6,6 +6,9 @@
 /*
  * Rejects if a promise is not fulfilled within <mSec> milliseconds.
  */
+/**
+ * @internal
+ */
 export async function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any> {
 	const timeout = new Promise((resolve, reject) => {
 		const id = setTimeout(() => {

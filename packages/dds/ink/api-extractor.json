@@ -6,14 +6,6 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			// TODO: Fix violations and remove this rule override
-			"ae-missing-release-tag": {
-				"logLevel": "none"
-			},
-			// TODO: Fix violations and remove this rule override
-			"ae-forgotten-export": {
-				"logLevel": "none"
-			},
 			// TODO: Add missing documentation and remove this rule override
 			"ae-undocumented": {
 				"logLevel": "none"

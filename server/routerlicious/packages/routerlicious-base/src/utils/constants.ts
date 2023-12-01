@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export const Constants = Object.freeze({
 	alfredRestThrottleIdSuffix: "AlfredRest",
 	createDocThrottleIdPrefix: "createDoc",
