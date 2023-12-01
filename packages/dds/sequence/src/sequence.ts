@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/dot-notation */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -712,12 +713,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+	 * @internal
 	 */
-	protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[] {
+	protected applyStashedOp(
+		content: any,
+	): IMapMessageLocalMetadata | SegmentGroup | SegmentGroup[] {
 		const intervalContent: IIntervalDeltaOp =
 			this.intervalCollections.tryGetStashedOpLocalMetadata(content) as IIntervalDeltaOp;
 		const collection = this.getIntervalCollection(content.key);
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
+		let metadata: IMapMessageLocalMetadata | SegmentGroup | SegmentGroup[];
 		switch (intervalContent.opName) {
 			case IntervalOpType.ADD:
 				assert(intervalContent.value.start !== undefined, "start is undefined");
@@ -727,11 +731,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					end: intervalContent.value.end,
 					props: intervalContent.value.properties,
 				});
-				metadata = this.client.peekPendingSegmentGroups();
+				metadata = { localSeq: collection["getNextLocalSeq"]() };
 				break;
 			case IntervalOpType.DELETE:
 				collection.removeIntervalById(intervalContent.value.properties?.intervalId);
-				metadata = this.client.peekPendingSegmentGroups();
+				metadata = { localSeq: collection["getNextLocalSeq"]() };
 				break;
 			case IntervalOpType.CHANGE:
 				assert(intervalContent.value.start !== undefined, "start is undefined");
@@ -741,27 +745,27 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					intervalContent.value.start,
 					intervalContent.value.end,
 				);
-				metadata = this.client.peekPendingSegmentGroups();
+				metadata = { localSeq: collection["getNextLocalSeq"]() };
 				break;
 			case IntervalOpType.PROPERTY_CHANGED:
 				assert(intervalContent.value.properties !== undefined, "properties are undefined");
 				// eslint-disable-next-line no-case-declarations
 				const { intervalId, ...props } = intervalContent.value.properties;
 				collection.changeProperties(intervalId, props);
-				metadata = this.client.peekPendingSegmentGroups();
+				metadata = { localSeq: collection["getNextLocalSeq"]() };
 				break;
 			case IntervalOpType.POSITION_REMOVE:
 				assert(typeof intervalContent.value.start === "number", "start is not a number");
 				assert(typeof intervalContent.value.end === "number", "start is not a number");
 				this.removeRange(intervalContent.value.start, intervalContent.value.end);
-				metadata = this.client.peekPendingSegmentGroups();
+				metadata = { localSeq: collection["getNextLocalSeq"]() };
 				break;
 			default:
 				// eslint-disable-next-line no-case-declarations
 				const parsedContent: IMergeTreeOp = parseHandles(content, this.serializer);
 				metadata = this.client.applyStashedOp(parsedContent);
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
+		assert(!!metadata, "Metadata is undefined");
 		return metadata;
 	}
 
