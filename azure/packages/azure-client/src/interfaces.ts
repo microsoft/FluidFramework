@@ -9,9 +9,6 @@ import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
-// Re-export so developers can build loggers without pulling in core-interfaces
-export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-
 /**
  * Props for initializing a new AzureClient instance
  * @internal

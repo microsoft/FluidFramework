@@ -37,11 +37,15 @@ export {
 	Sequence,
 } from "./feature-libraries";
 
+export { FactoryObjectNodeSchema, FactoryObjectNodeSchemaRecursive } from "./domains";
+
 export {
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-	testRecursiveDomain,
-} from "./domains";
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	InternalEditableTreeTypes,
+} from "./class-tree";
 
 export {
 	TreeListNodeBase,

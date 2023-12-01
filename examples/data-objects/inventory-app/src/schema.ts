@@ -3,33 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AllowedUpdateType,
-	buildTreeConfiguration,
-	TypedNode,
-	SchemaBuilder,
-} from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
+const builder = new SchemaFactory("com.contoso.app.inventory");
 
-export type Part = TypedNode<typeof Part>;
-export const Part = builder.object("Part", {
+export class Part extends builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
-});
-
-export type Inventory = TypedNode<typeof Inventory>;
-export const Inventory = builder.object("Inventory", {
+}) {}
+export class Inventory extends builder.object("Inventory", {
 	parts: builder.list(Part),
-});
+}) {}
 
-export const treeConfiguration = buildTreeConfiguration({
-	schema: builder.intoSchema(Inventory),
-	allowedSchemaModifications: AllowedUpdateType.None,
-	initialTree: {
-		parts: {
-			// TODO: FieldNodes should not require wrapper object
-			"": [
+export const treeConfiguration = new TreeConfiguration(
+	Inventory,
+	() =>
+		new Inventory({
+			parts: [
 				{
 					name: "nut",
 					quantity: 0,
@@ -39,6 +29,5 @@ export const treeConfiguration = buildTreeConfiguration({
 					quantity: 0,
 				},
 			],
-		},
-	},
-});
+		}),
+);

@@ -4,14 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import {
-	CrossFieldManager,
-	CrossFieldTarget,
-	getIntention,
+	ChangeAtomId,
+	makeAnonChange,
 	RevisionMetadataSource,
-} from "../modular-schema";
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+} from "../../core";
+import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
+import { CrossFieldManager, CrossFieldTarget, getIntention } from "../modular-schema";
 import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -52,7 +54,8 @@ import {
 	addRevision,
 	normalizeCellRename,
 	asAttachAndDetach,
-	isCellRename,
+	isImpactfulCellRename,
+	settleMark,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -123,22 +126,27 @@ function composeMarkLists<TNodeChange>(
 				0x4db /* Non-empty queue should not return two undefined marks */,
 			);
 			factory.push(baseMark);
-		} else if (baseMark === undefined) {
-			factory.push(composeMark(newMark, newRev, composeChild));
 		} else {
-			// Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
-			// start at the same location in the revision after the base changes.
-			// They therefore refer to the same range for that revision.
-			const composedMark = composeMarks(
-				baseMark,
-				newRev,
-				newMark,
-				composeChild,
-				genId,
-				moveEffects,
-				revisionMetadata,
-			);
-			factory.push(composedMark);
+			// We only compose changesets that will not be further rebased.
+			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
+			const settledNewMark = settleMark(newMark, newRev, revisionMetadata);
+			if (baseMark === undefined) {
+				factory.push(composeMark(settledNewMark, newRev, composeChild));
+			} else {
+				// Past this point, we are guaranteed that `settledNewMark` and `baseMark` have the same length and
+				// start at the same location in the revision after the base changes.
+				// They therefore refer to the same range for that revision.
+				const composedMark = composeMarks(
+					baseMark,
+					newRev,
+					settledNewMark,
+					composeChild,
+					genId,
+					moveEffects,
+					revisionMetadata,
+				);
+				factory.push(composedMark);
+			}
 		}
 	}
 
@@ -164,7 +172,7 @@ function composeMarks<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
-	if (isCellRename(newMark)) {
+	if (isImpactfulCellRename(newMark, newRev, revisionMetadata)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
@@ -199,7 +207,7 @@ function composeMarks<TNodeChange>(
 			);
 		}
 
-		if (isCellRename(baseMark)) {
+		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach, newRev, revisionMetadata);
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
@@ -231,7 +239,7 @@ function composeMarks<TNodeChange>(
 
 		return withRevision(normalizeCellRename(newAttachAndDetach, nodeChange), newRev);
 	}
-	if (isCellRename(baseMark)) {
+	if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
 			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
@@ -331,7 +339,10 @@ function composeMarks<TNodeChange>(
 
 		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
-			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
+			return withNodeChange(
+				{ count: baseMark.count, cellId: baseMark.cellId },
+				localNodeChange,
+			);
 		}
 		return normalizeCellRename(
 			{
@@ -683,7 +694,7 @@ function compareCellPositions(
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
 	}
 
-	const cmp = compareLineages(baseCellId.lineage, newCellId.lineage);
+	const cmp = compareLineages(baseCellId, newCellId, metadata);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
 	}

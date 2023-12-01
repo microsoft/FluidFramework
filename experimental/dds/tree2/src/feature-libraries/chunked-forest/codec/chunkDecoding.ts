@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { assertValidIndex } from "../../../util";
 import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core";
+import { DiscriminatedUnionDispatcher } from "../../../codec";
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
@@ -21,7 +22,6 @@ import {
 } from "./format";
 import {
 	ChunkDecoder,
-	DiscriminatedUnionDispatcher,
 	StreamCursor,
 	getChecked,
 	readStream,
