@@ -6,7 +6,6 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-
 			// TODO: Fix violations and remove this rule override
 			"ae-forgotten-export": {
 				"logLevel": "none"
