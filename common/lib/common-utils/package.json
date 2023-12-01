@@ -146,12 +146,12 @@
 			]
 		}
 	},
-	"typeValidation": {
-		"broken": {}
-	},
 	"pnpm": {
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
 		}
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }
