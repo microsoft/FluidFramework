@@ -4,7 +4,7 @@
 "@fluidframework/test-utils": major
 ---
 
-Remove `IFluidRouter` from DataObject interfaces and classes
+Removed `IFluidRouter` from DataObject interfaces and classes
 
 The `IFluidRouter` property has been removed from a number of DataObject related classes:
 
