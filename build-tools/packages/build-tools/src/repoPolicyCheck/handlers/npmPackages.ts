@@ -1419,6 +1419,73 @@ export const handlers: Handler[] = [
 			return result;
 		},
 	},
+	{
+		// Verify that non-private packages are configured with API-Extractor
+		name: "api-extractor-public-packages",
+		match,
+		handler: async (file) => {
+			let json: {
+				name: string;
+				private?: boolean;
+				devDependencies?: Record<string, string>;
+				scripts?: Record<string, string>;
+			};
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (json.private) {
+				// If the package is private, we have nothing to validate.
+				return;
+			}
+
+			const errors: string[] = [];
+
+			// Ensure the package has a dev dependency on `@microsoft/api-extractor`
+			const devDependencies = Object.keys(json.devDependencies ?? {});
+			if (!devDependencies.includes("@microsoft/api-extractor")) {
+				errors.push(
+					`Public package ${json.name} must have a dev dependency on @microsoft/api-extractor`,
+				);
+			}
+
+			const scripts = Object.keys(json.scripts ?? {});
+
+			// Ensure `build:docs` script exists
+			if (!scripts.includes("build:docs")) {
+				errors.push(
+					`Public package ${json.name} must have "build:docs" script to generate API metadata`,
+				);
+			}
+
+			// Ensure `check:release-tags` script exists
+			if (!scripts.includes("check:release-tags")) {
+				errors.push(
+					`Public package ${json.name} must have "check:release-tags" script to validate release tag compatibility with other packages`,
+				);
+			}
+
+			if (errors.length > 0) {
+				return `package.json API-Extractor violations: ${newline}${errors.join(newline)}`;
+			}
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const devDependencies = Object.keys(json.devDependencies ?? {});
+				// Add missing dep
+				// TODO
+				// Add missing `build:docs` script
+				// TODO
+				// Add missing `check:release-tags` script
+				// TODO
+			});
+
+			return result;
+		},
+	},
 ];
 
 function missingCleanDirectories(scripts: any) {
