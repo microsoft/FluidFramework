@@ -21,6 +21,7 @@ const defaultReconnectDelay = 5000;
 
 /**
  * Kafka consumer using the kafka-node library
+ * @internal
  */
 export class KafkaNodeConsumer implements IConsumer {
 	private client: kafka.KafkaClient;

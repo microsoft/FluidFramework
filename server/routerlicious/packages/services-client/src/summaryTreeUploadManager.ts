@@ -23,6 +23,7 @@ import { IWholeSummaryPayloadType } from "./storageContracts";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
+ * @internal
  */
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
 	constructor(

@@ -106,7 +106,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 /**
  * Status of the tree that a particular node belongs to.
- * @alpha
+ * @beta
  */
 export enum TreeStatus {
 	/**

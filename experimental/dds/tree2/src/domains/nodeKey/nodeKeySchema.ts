@@ -17,7 +17,6 @@ const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" 
 
 /**
  * Schema for a node which holds a {@link StableNodeKey}.
- * @alpha
  *
  * @privateRemarks
  * This being a leaf may cause issues with leaf unboxing plans.
@@ -32,7 +31,6 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched ide
  * This object can be expanded into a schema to add the field.
  *
  * Requires including {@link nodeKeySchema}.
- * @alpha
  */
 export const nodeKeyField = {
 	[nodeKeyFieldKey]: TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
@@ -41,6 +39,5 @@ export const nodeKeyField = {
 /**
  * The schema library for working with {@link StableNodeKey}s in a tree.
  * Required to use {@link nodeKeyField}.
- * @alpha
  */
 export const nodeKeySchema = builder.intoLibrary();

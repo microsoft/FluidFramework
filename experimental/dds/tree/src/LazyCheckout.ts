@@ -12,9 +12,8 @@ import { ValidEditingResult } from './TransactionInternal';
 /**
  * Checkout that only updates its view of the tree when explicitly requested.
  * This means that the {@link Checkout.currentView} field will never change unless {@link LazyCheckout.waitForPendingUpdates} is called.
- *
- * @public
  * @sealed
+ * @internal
  */
 export class LazyCheckout extends Checkout {
 	private latestView: RevisionView;

@@ -93,7 +93,7 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
  * @typeParam TName - Type of names used to identify each schema produced in this factory.
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export class SchemaFactory<TScope extends string, TName extends number | string = string> {
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
@@ -242,7 +242,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
@@ -274,7 +274,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	>;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *

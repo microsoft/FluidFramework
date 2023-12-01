@@ -19,6 +19,7 @@ import { SharedObjectSequence } from "./sharedObjectSequence";
 /**
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
  * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * @internal
  */
 export class SharedObjectSequenceFactory implements IChannelFactory {
 	/**
@@ -101,6 +102,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 /**
  * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
  * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * @internal
  */
 export class SharedNumberSequenceFactory implements IChannelFactory {
 	/**

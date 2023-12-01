@@ -5,6 +5,9 @@
 
 import { ITenantRepository } from "./mongoTenantRepository";
 
+/**
+ * @internal
+ */
 export interface IRiddlerResourcesCustomizations {
 	tenantRepository?: ITenantRepository;
 }
