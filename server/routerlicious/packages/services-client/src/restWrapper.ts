@@ -17,6 +17,9 @@ import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName } from "./constants";
 
+/**
+ * @internal
+ */
 export abstract class RestWrapper {
 	constructor(
 		protected readonly baseurl?: string,
@@ -137,6 +140,9 @@ export abstract class RestWrapper {
 	}
 }
 
+/**
+ * @internal
+ */
 export class BasicRestWrapper extends RestWrapper {
 	constructor(
 		baseurl?: string,

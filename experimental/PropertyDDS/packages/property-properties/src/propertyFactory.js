@@ -2454,6 +2454,9 @@ class PropertyFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 const PropertyFactorySingleton = new PropertyFactory();
 export { PropertyFactorySingleton as PropertyFactory };
 

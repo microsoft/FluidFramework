@@ -11,6 +11,7 @@ import {
 	IValueOperation,
 	IValueType,
 } from "./defaultMapInterfaces";
+import { IntervalOpType } from "./intervals";
 
 /**
  * A local value to be stored in a container type DDS.
@@ -88,7 +89,7 @@ export class ValueTypeLocalValue<T> implements ILocalValue<T> {
 	 * @param opName - The name of the operation that needs processing
 	 * @returns The object which can process the given op
 	 */
-	public getOpHandler(opName: string): IValueOperation<T> {
+	public getOpHandler(opName: IntervalOpType): IValueOperation<T> {
 		const handler = this.valueType.ops.get(opName);
 		if (!handler) {
 			throw new Error("Unknown type message");

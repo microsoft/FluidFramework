@@ -10,7 +10,6 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -18,6 +17,7 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -104,7 +104,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 	});
 
 	const sharedStringFromContainer = async (container: IContainer) => {
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 

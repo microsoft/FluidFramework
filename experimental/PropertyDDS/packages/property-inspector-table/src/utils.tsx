@@ -29,6 +29,7 @@ import { fillExpanded as defaultFillExpanded } from "./propertyInspectorUtils";
  * @param filteredExpanded - List of hashes of nodes, which have to be expanded to make matching elements visible
  * @param allMatches - List of @type{IInspectorSearchMatch} containing information about matching rows
  * @param resultIndex - Index of desired matching item, starting from 0
+ * @internal
  */
 export const showNextResult = (
 	data: IInspectorRow[],
@@ -148,6 +149,7 @@ const updateHandler = (
  * Users don't need to mind this.
  * @return An object that gives access to the search state and abort handler. While the state object needs to be passed
  * to future search calls, the abort handler is a function that can be used to abort the search process at any time.
+ * @internal
  */
 export const search = (
 	searchExpression: string,

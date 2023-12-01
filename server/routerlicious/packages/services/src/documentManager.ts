@@ -17,6 +17,7 @@ import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-serv
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
+ * @internal
  */
 export class DocumentManager implements IDocumentManager {
 	constructor(

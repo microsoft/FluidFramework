@@ -98,6 +98,8 @@ export interface IClientEvents {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ *
+ * @internal
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -161,6 +163,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @param consensusCallback - The callback called when consensus is reached
 	 * @returns The annotate op if valid, otherwise undefined
+	 *
+	 * @deprecated We no longer intend to support this functionality and it will
+	 * be removed in a future release. There is no replacement for this
+	 * functionality.
 	 */
 	public annotateMarkerNotifyConsensus(
 		marker: Marker,

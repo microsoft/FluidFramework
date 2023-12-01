@@ -8,7 +8,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -81,10 +80,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(testConfig);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			mainContainer,
-			"default",
-		);
+		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
 
 		// Create data store B and mark it referenced. This will be used to manage reference of another data store.

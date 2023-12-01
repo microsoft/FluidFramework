@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_CacheContentType():
     TypeOnly<old.CacheContentType>;
 declare function use_current_TypeAliasDeclaration_CacheContentType(
-    use: TypeOnly<current.CacheContentType>);
+    use: TypeOnly<current.CacheContentType>): void;
 use_current_TypeAliasDeclaration_CacheContentType(
     get_old_TypeAliasDeclaration_CacheContentType());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_CacheContentType(
 declare function get_current_TypeAliasDeclaration_CacheContentType():
     TypeOnly<current.CacheContentType>;
 declare function use_old_TypeAliasDeclaration_CacheContentType(
-    use: TypeOnly<old.CacheContentType>);
+    use: TypeOnly<old.CacheContentType>): void;
 use_old_TypeAliasDeclaration_CacheContentType(
     get_current_TypeAliasDeclaration_CacheContentType());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_CacheContentType(
 declare function get_old_InterfaceDeclaration_HostStoragePolicy():
     TypeOnly<old.HostStoragePolicy>;
 declare function use_current_InterfaceDeclaration_HostStoragePolicy(
-    use: TypeOnly<current.HostStoragePolicy>);
+    use: TypeOnly<current.HostStoragePolicy>): void;
 use_current_InterfaceDeclaration_HostStoragePolicy(
     get_old_InterfaceDeclaration_HostStoragePolicy());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_HostStoragePolicy(
 declare function get_current_InterfaceDeclaration_HostStoragePolicy():
     TypeOnly<current.HostStoragePolicy>;
 declare function use_old_InterfaceDeclaration_HostStoragePolicy(
-    use: TypeOnly<old.HostStoragePolicy>);
+    use: TypeOnly<old.HostStoragePolicy>): void;
 use_old_InterfaceDeclaration_HostStoragePolicy(
     get_current_InterfaceDeclaration_HostStoragePolicy());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_HostStoragePolicy(
 declare function get_old_InterfaceDeclaration_ICacheEntry():
     TypeOnly<old.ICacheEntry>;
 declare function use_current_InterfaceDeclaration_ICacheEntry(
-    use: TypeOnly<current.ICacheEntry>);
+    use: TypeOnly<current.ICacheEntry>): void;
 use_current_InterfaceDeclaration_ICacheEntry(
     get_old_InterfaceDeclaration_ICacheEntry());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ICacheEntry(
 declare function get_current_InterfaceDeclaration_ICacheEntry():
     TypeOnly<current.ICacheEntry>;
 declare function use_old_InterfaceDeclaration_ICacheEntry(
-    use: TypeOnly<old.ICacheEntry>);
+    use: TypeOnly<old.ICacheEntry>): void;
 use_old_InterfaceDeclaration_ICacheEntry(
     get_current_InterfaceDeclaration_ICacheEntry());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ICacheEntry(
 declare function get_old_InterfaceDeclaration_ICollabSessionOptions():
     TypeOnly<old.ICollabSessionOptions>;
 declare function use_current_InterfaceDeclaration_ICollabSessionOptions(
-    use: TypeOnly<current.ICollabSessionOptions>);
+    use: TypeOnly<current.ICollabSessionOptions>): void;
 use_current_InterfaceDeclaration_ICollabSessionOptions(
     get_old_InterfaceDeclaration_ICollabSessionOptions());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ICollabSessionOptions(
 declare function get_current_InterfaceDeclaration_ICollabSessionOptions():
     TypeOnly<current.ICollabSessionOptions>;
 declare function use_old_InterfaceDeclaration_ICollabSessionOptions(
-    use: TypeOnly<old.ICollabSessionOptions>);
+    use: TypeOnly<old.ICollabSessionOptions>): void;
 use_old_InterfaceDeclaration_ICollabSessionOptions(
     get_current_InterfaceDeclaration_ICollabSessionOptions());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ICollabSessionOptions(
 declare function get_old_InterfaceDeclaration_IEntry():
     TypeOnly<old.IEntry>;
 declare function use_current_InterfaceDeclaration_IEntry(
-    use: TypeOnly<current.IEntry>);
+    use: TypeOnly<current.IEntry>): void;
 use_current_InterfaceDeclaration_IEntry(
     get_old_InterfaceDeclaration_IEntry());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IEntry(
 declare function get_current_InterfaceDeclaration_IEntry():
     TypeOnly<current.IEntry>;
 declare function use_old_InterfaceDeclaration_IEntry(
-    use: TypeOnly<old.IEntry>);
+    use: TypeOnly<old.IEntry>): void;
 use_old_InterfaceDeclaration_IEntry(
     get_current_InterfaceDeclaration_IEntry());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IEntry(
 declare function get_old_InterfaceDeclaration_IFileEntry():
     TypeOnly<old.IFileEntry>;
 declare function use_current_InterfaceDeclaration_IFileEntry(
-    use: TypeOnly<current.IFileEntry>);
+    use: TypeOnly<current.IFileEntry>): void;
 use_current_InterfaceDeclaration_IFileEntry(
     get_old_InterfaceDeclaration_IFileEntry());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IFileEntry(
 declare function get_current_InterfaceDeclaration_IFileEntry():
     TypeOnly<current.IFileEntry>;
 declare function use_old_InterfaceDeclaration_IFileEntry(
-    use: TypeOnly<old.IFileEntry>);
+    use: TypeOnly<old.IFileEntry>): void;
 use_old_InterfaceDeclaration_IFileEntry(
     get_current_InterfaceDeclaration_IFileEntry());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IFileEntry(
 declare function get_old_InterfaceDeclaration_IOdspError():
     TypeOnly<old.IOdspError>;
 declare function use_current_InterfaceDeclaration_IOdspError(
-    use: TypeOnly<current.IOdspError>);
+    use: TypeOnly<current.IOdspError>): void;
 use_current_InterfaceDeclaration_IOdspError(
     get_old_InterfaceDeclaration_IOdspError());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IOdspError(
 declare function get_current_InterfaceDeclaration_IOdspError():
     TypeOnly<current.IOdspError>;
 declare function use_old_InterfaceDeclaration_IOdspError(
-    use: TypeOnly<old.IOdspError>);
+    use: TypeOnly<old.IOdspError>): void;
 use_old_InterfaceDeclaration_IOdspError(
     get_current_InterfaceDeclaration_IOdspError());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IOdspError(
 declare function get_old_InterfaceDeclaration_IOdspErrorAugmentations():
     TypeOnly<old.IOdspErrorAugmentations>;
 declare function use_current_InterfaceDeclaration_IOdspErrorAugmentations(
-    use: TypeOnly<current.IOdspErrorAugmentations>);
+    use: TypeOnly<current.IOdspErrorAugmentations>): void;
 use_current_InterfaceDeclaration_IOdspErrorAugmentations(
     get_old_InterfaceDeclaration_IOdspErrorAugmentations());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IOdspErrorAugmentations(
 declare function get_current_InterfaceDeclaration_IOdspErrorAugmentations():
     TypeOnly<current.IOdspErrorAugmentations>;
 declare function use_old_InterfaceDeclaration_IOdspErrorAugmentations(
-    use: TypeOnly<old.IOdspErrorAugmentations>);
+    use: TypeOnly<old.IOdspErrorAugmentations>): void;
 use_old_InterfaceDeclaration_IOdspErrorAugmentations(
     get_current_InterfaceDeclaration_IOdspErrorAugmentations());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IOdspErrorAugmentations(
 declare function get_old_InterfaceDeclaration_IOdspResolvedUrl():
     TypeOnly<old.IOdspResolvedUrl>;
 declare function use_current_InterfaceDeclaration_IOdspResolvedUrl(
-    use: TypeOnly<current.IOdspResolvedUrl>);
+    use: TypeOnly<current.IOdspResolvedUrl>): void;
 use_current_InterfaceDeclaration_IOdspResolvedUrl(
     get_old_InterfaceDeclaration_IOdspResolvedUrl());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IOdspResolvedUrl(
 declare function get_current_InterfaceDeclaration_IOdspResolvedUrl():
     TypeOnly<current.IOdspResolvedUrl>;
 declare function use_old_InterfaceDeclaration_IOdspResolvedUrl(
-    use: TypeOnly<old.IOdspResolvedUrl>);
+    use: TypeOnly<old.IOdspResolvedUrl>): void;
 use_old_InterfaceDeclaration_IOdspResolvedUrl(
     get_current_InterfaceDeclaration_IOdspResolvedUrl());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IOdspResolvedUrl(
 declare function get_old_InterfaceDeclaration_IOdspUrlParts():
     TypeOnly<old.IOdspUrlParts>;
 declare function use_current_InterfaceDeclaration_IOdspUrlParts(
-    use: TypeOnly<current.IOdspUrlParts>);
+    use: TypeOnly<current.IOdspUrlParts>): void;
 use_current_InterfaceDeclaration_IOdspUrlParts(
     get_old_InterfaceDeclaration_IOdspUrlParts());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IOdspUrlParts(
 declare function get_current_InterfaceDeclaration_IOdspUrlParts():
     TypeOnly<current.IOdspUrlParts>;
 declare function use_old_InterfaceDeclaration_IOdspUrlParts(
-    use: TypeOnly<old.IOdspUrlParts>);
+    use: TypeOnly<old.IOdspUrlParts>): void;
 use_old_InterfaceDeclaration_IOdspUrlParts(
     get_current_InterfaceDeclaration_IOdspUrlParts());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IOdspUrlParts(
 declare function get_old_InterfaceDeclaration_IOpsCachingPolicy():
     TypeOnly<old.IOpsCachingPolicy>;
 declare function use_current_InterfaceDeclaration_IOpsCachingPolicy(
-    use: TypeOnly<current.IOpsCachingPolicy>);
+    use: TypeOnly<current.IOpsCachingPolicy>): void;
 use_current_InterfaceDeclaration_IOpsCachingPolicy(
     get_old_InterfaceDeclaration_IOpsCachingPolicy());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IOpsCachingPolicy(
 declare function get_current_InterfaceDeclaration_IOpsCachingPolicy():
     TypeOnly<current.IOpsCachingPolicy>;
 declare function use_old_InterfaceDeclaration_IOpsCachingPolicy(
-    use: TypeOnly<old.IOpsCachingPolicy>);
+    use: TypeOnly<old.IOpsCachingPolicy>): void;
 use_old_InterfaceDeclaration_IOpsCachingPolicy(
     get_current_InterfaceDeclaration_IOpsCachingPolicy());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IOpsCachingPolicy(
 declare function get_old_InterfaceDeclaration_IPersistedCache():
     TypeOnly<old.IPersistedCache>;
 declare function use_current_InterfaceDeclaration_IPersistedCache(
-    use: TypeOnly<current.IPersistedCache>);
+    use: TypeOnly<current.IPersistedCache>): void;
 use_current_InterfaceDeclaration_IPersistedCache(
     get_old_InterfaceDeclaration_IPersistedCache());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_IPersistedCache(
 declare function get_current_InterfaceDeclaration_IPersistedCache():
     TypeOnly<current.IPersistedCache>;
 declare function use_old_InterfaceDeclaration_IPersistedCache(
-    use: TypeOnly<old.IPersistedCache>);
+    use: TypeOnly<old.IPersistedCache>): void;
 use_old_InterfaceDeclaration_IPersistedCache(
     get_current_InterfaceDeclaration_IPersistedCache());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_IPersistedCache(
 declare function get_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory():
     TypeOnly<old.IProvideSessionAwareDriverFactory>;
 declare function use_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
-    use: TypeOnly<current.IProvideSessionAwareDriverFactory>);
+    use: TypeOnly<current.IProvideSessionAwareDriverFactory>): void;
 use_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
     get_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
 declare function get_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory():
     TypeOnly<current.IProvideSessionAwareDriverFactory>;
 declare function use_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
-    use: TypeOnly<old.IProvideSessionAwareDriverFactory>);
+    use: TypeOnly<old.IProvideSessionAwareDriverFactory>): void;
 use_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
     get_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
 declare function get_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory():
     TypeOnly<old.IRelaySessionAwareDriverFactory>;
 declare function use_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
-    use: TypeOnly<current.IRelaySessionAwareDriverFactory>);
+    use: TypeOnly<current.IRelaySessionAwareDriverFactory>): void;
 use_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
     get_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
 declare function get_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory():
     TypeOnly<current.IRelaySessionAwareDriverFactory>;
 declare function use_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
-    use: TypeOnly<old.IRelaySessionAwareDriverFactory>);
+    use: TypeOnly<old.IRelaySessionAwareDriverFactory>): void;
 use_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
     get_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
 declare function get_old_InterfaceDeclaration_ISharingLink():
     TypeOnly<old.ISharingLink>;
 declare function use_current_InterfaceDeclaration_ISharingLink(
-    use: TypeOnly<current.ISharingLink>);
+    use: TypeOnly<current.ISharingLink>): void;
 use_current_InterfaceDeclaration_ISharingLink(
     get_old_InterfaceDeclaration_ISharingLink());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_ISharingLink(
 declare function get_current_InterfaceDeclaration_ISharingLink():
     TypeOnly<current.ISharingLink>;
 declare function use_old_InterfaceDeclaration_ISharingLink(
-    use: TypeOnly<old.ISharingLink>);
+    use: TypeOnly<old.ISharingLink>): void;
 use_old_InterfaceDeclaration_ISharingLink(
     get_current_InterfaceDeclaration_ISharingLink());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_ISharingLink(
 declare function get_old_InterfaceDeclaration_ISharingLinkKind():
     TypeOnly<old.ISharingLinkKind>;
 declare function use_current_InterfaceDeclaration_ISharingLinkKind(
-    use: TypeOnly<current.ISharingLinkKind>);
+    use: TypeOnly<current.ISharingLinkKind>): void;
 use_current_InterfaceDeclaration_ISharingLinkKind(
     get_old_InterfaceDeclaration_ISharingLinkKind());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_ISharingLinkKind(
 declare function get_current_InterfaceDeclaration_ISharingLinkKind():
     TypeOnly<current.ISharingLinkKind>;
 declare function use_old_InterfaceDeclaration_ISharingLinkKind(
-    use: TypeOnly<old.ISharingLinkKind>);
+    use: TypeOnly<old.ISharingLinkKind>): void;
 use_old_InterfaceDeclaration_ISharingLinkKind(
     get_current_InterfaceDeclaration_ISharingLinkKind());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_ISharingLinkKind(
 declare function get_old_InterfaceDeclaration_ISnapshotOptions():
     TypeOnly<old.ISnapshotOptions>;
 declare function use_current_InterfaceDeclaration_ISnapshotOptions(
-    use: TypeOnly<current.ISnapshotOptions>);
+    use: TypeOnly<current.ISnapshotOptions>): void;
 use_current_InterfaceDeclaration_ISnapshotOptions(
     get_old_InterfaceDeclaration_ISnapshotOptions());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_ISnapshotOptions(
 declare function get_current_InterfaceDeclaration_ISnapshotOptions():
     TypeOnly<current.ISnapshotOptions>;
 declare function use_old_InterfaceDeclaration_ISnapshotOptions(
-    use: TypeOnly<old.ISnapshotOptions>);
+    use: TypeOnly<old.ISnapshotOptions>): void;
 use_old_InterfaceDeclaration_ISnapshotOptions(
     get_current_InterfaceDeclaration_ISnapshotOptions());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_ISnapshotOptions(
 declare function get_old_InterfaceDeclaration_ISocketStorageDiscovery():
     TypeOnly<old.ISocketStorageDiscovery>;
 declare function use_current_InterfaceDeclaration_ISocketStorageDiscovery(
-    use: TypeOnly<current.ISocketStorageDiscovery>);
+    use: TypeOnly<current.ISocketStorageDiscovery>): void;
 use_current_InterfaceDeclaration_ISocketStorageDiscovery(
     get_old_InterfaceDeclaration_ISocketStorageDiscovery());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_ISocketStorageDiscovery(
 declare function get_current_InterfaceDeclaration_ISocketStorageDiscovery():
     TypeOnly<current.ISocketStorageDiscovery>;
 declare function use_old_InterfaceDeclaration_ISocketStorageDiscovery(
-    use: TypeOnly<old.ISocketStorageDiscovery>);
+    use: TypeOnly<old.ISocketStorageDiscovery>): void;
 use_old_InterfaceDeclaration_ISocketStorageDiscovery(
     get_current_InterfaceDeclaration_ISocketStorageDiscovery());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_ISocketStorageDiscovery(
 declare function get_old_TypeAliasDeclaration_IdentityType():
     TypeOnly<old.IdentityType>;
 declare function use_current_TypeAliasDeclaration_IdentityType(
-    use: TypeOnly<current.IdentityType>);
+    use: TypeOnly<current.IdentityType>): void;
 use_current_TypeAliasDeclaration_IdentityType(
     get_old_TypeAliasDeclaration_IdentityType());
 
@@ -473,7 +473,7 @@ use_current_TypeAliasDeclaration_IdentityType(
 declare function get_current_TypeAliasDeclaration_IdentityType():
     TypeOnly<current.IdentityType>;
 declare function use_old_TypeAliasDeclaration_IdentityType(
-    use: TypeOnly<old.IdentityType>);
+    use: TypeOnly<old.IdentityType>): void;
 use_old_TypeAliasDeclaration_IdentityType(
     get_current_TypeAliasDeclaration_IdentityType());
 
@@ -485,7 +485,7 @@ use_old_TypeAliasDeclaration_IdentityType(
 declare function get_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher():
     TypeOnly<old.InstrumentedStorageTokenFetcher>;
 declare function use_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    use: TypeOnly<current.InstrumentedStorageTokenFetcher>);
+    use: TypeOnly<current.InstrumentedStorageTokenFetcher>): void;
 use_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
     get_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher());
 
@@ -497,7 +497,7 @@ use_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
 declare function get_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher():
     TypeOnly<current.InstrumentedStorageTokenFetcher>;
 declare function use_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    use: TypeOnly<old.InstrumentedStorageTokenFetcher>);
+    use: TypeOnly<old.InstrumentedStorageTokenFetcher>): void;
 use_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
     get_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher());
 
@@ -509,7 +509,7 @@ use_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
 declare function get_old_TypeAliasDeclaration_OdspError():
     TypeOnly<old.OdspError>;
 declare function use_current_TypeAliasDeclaration_OdspError(
-    use: TypeOnly<current.OdspError>);
+    use: TypeOnly<current.OdspError>): void;
 use_current_TypeAliasDeclaration_OdspError(
     get_old_TypeAliasDeclaration_OdspError());
 
@@ -521,7 +521,7 @@ use_current_TypeAliasDeclaration_OdspError(
 declare function get_current_TypeAliasDeclaration_OdspError():
     TypeOnly<current.OdspError>;
 declare function use_old_TypeAliasDeclaration_OdspError(
-    use: TypeOnly<old.OdspError>);
+    use: TypeOnly<old.OdspError>): void;
 use_old_TypeAliasDeclaration_OdspError(
     get_current_TypeAliasDeclaration_OdspError());
 
@@ -533,7 +533,7 @@ use_old_TypeAliasDeclaration_OdspError(
 declare function get_old_EnumDeclaration_OdspErrorType():
     TypeOnly<old.OdspErrorType>;
 declare function use_current_EnumDeclaration_OdspErrorType(
-    use: TypeOnly<current.OdspErrorType>);
+    use: TypeOnly<current.OdspErrorType>): void;
 use_current_EnumDeclaration_OdspErrorType(
     get_old_EnumDeclaration_OdspErrorType());
 
@@ -545,7 +545,7 @@ use_current_EnumDeclaration_OdspErrorType(
 declare function get_current_EnumDeclaration_OdspErrorType():
     TypeOnly<current.OdspErrorType>;
 declare function use_old_EnumDeclaration_OdspErrorType(
-    use: TypeOnly<old.OdspErrorType>);
+    use: TypeOnly<old.OdspErrorType>): void;
 use_old_EnumDeclaration_OdspErrorType(
     get_current_EnumDeclaration_OdspErrorType());
 
@@ -557,7 +557,7 @@ use_old_EnumDeclaration_OdspErrorType(
 declare function get_old_VariableDeclaration_OdspErrorTypes():
     TypeOnly<typeof old.OdspErrorTypes>;
 declare function use_current_VariableDeclaration_OdspErrorTypes(
-    use: TypeOnly<typeof current.OdspErrorTypes>);
+    use: TypeOnly<typeof current.OdspErrorTypes>): void;
 use_current_VariableDeclaration_OdspErrorTypes(
     get_old_VariableDeclaration_OdspErrorTypes());
 
@@ -569,7 +569,7 @@ use_current_VariableDeclaration_OdspErrorTypes(
 declare function get_current_VariableDeclaration_OdspErrorTypes():
     TypeOnly<typeof current.OdspErrorTypes>;
 declare function use_old_VariableDeclaration_OdspErrorTypes(
-    use: TypeOnly<typeof old.OdspErrorTypes>);
+    use: TypeOnly<typeof old.OdspErrorTypes>): void;
 use_old_VariableDeclaration_OdspErrorTypes(
     get_current_VariableDeclaration_OdspErrorTypes());
 
@@ -581,7 +581,7 @@ use_old_VariableDeclaration_OdspErrorTypes(
 declare function get_old_TypeAliasDeclaration_OdspErrorTypes():
     TypeOnly<old.OdspErrorTypes>;
 declare function use_current_TypeAliasDeclaration_OdspErrorTypes(
-    use: TypeOnly<current.OdspErrorTypes>);
+    use: TypeOnly<current.OdspErrorTypes>): void;
 use_current_TypeAliasDeclaration_OdspErrorTypes(
     get_old_TypeAliasDeclaration_OdspErrorTypes());
 
@@ -593,7 +593,7 @@ use_current_TypeAliasDeclaration_OdspErrorTypes(
 declare function get_current_TypeAliasDeclaration_OdspErrorTypes():
     TypeOnly<current.OdspErrorTypes>;
 declare function use_old_TypeAliasDeclaration_OdspErrorTypes(
-    use: TypeOnly<old.OdspErrorTypes>);
+    use: TypeOnly<old.OdspErrorTypes>): void;
 use_old_TypeAliasDeclaration_OdspErrorTypes(
     get_current_TypeAliasDeclaration_OdspErrorTypes());
 
@@ -605,7 +605,7 @@ use_old_TypeAliasDeclaration_OdspErrorTypes(
 declare function get_old_InterfaceDeclaration_OdspResourceTokenFetchOptions():
     TypeOnly<old.OdspResourceTokenFetchOptions>;
 declare function use_current_InterfaceDeclaration_OdspResourceTokenFetchOptions(
-    use: TypeOnly<current.OdspResourceTokenFetchOptions>);
+    use: TypeOnly<current.OdspResourceTokenFetchOptions>): void;
 use_current_InterfaceDeclaration_OdspResourceTokenFetchOptions(
     get_old_InterfaceDeclaration_OdspResourceTokenFetchOptions());
 
@@ -617,7 +617,7 @@ use_current_InterfaceDeclaration_OdspResourceTokenFetchOptions(
 declare function get_current_InterfaceDeclaration_OdspResourceTokenFetchOptions():
     TypeOnly<current.OdspResourceTokenFetchOptions>;
 declare function use_old_InterfaceDeclaration_OdspResourceTokenFetchOptions(
-    use: TypeOnly<old.OdspResourceTokenFetchOptions>);
+    use: TypeOnly<old.OdspResourceTokenFetchOptions>): void;
 use_old_InterfaceDeclaration_OdspResourceTokenFetchOptions(
     get_current_InterfaceDeclaration_OdspResourceTokenFetchOptions());
 
@@ -629,7 +629,7 @@ use_old_InterfaceDeclaration_OdspResourceTokenFetchOptions(
 declare function get_old_InterfaceDeclaration_ShareLinkInfoType():
     TypeOnly<old.ShareLinkInfoType>;
 declare function use_current_InterfaceDeclaration_ShareLinkInfoType(
-    use: TypeOnly<current.ShareLinkInfoType>);
+    use: TypeOnly<current.ShareLinkInfoType>): void;
 use_current_InterfaceDeclaration_ShareLinkInfoType(
     get_old_InterfaceDeclaration_ShareLinkInfoType());
 
@@ -641,7 +641,7 @@ use_current_InterfaceDeclaration_ShareLinkInfoType(
 declare function get_current_InterfaceDeclaration_ShareLinkInfoType():
     TypeOnly<current.ShareLinkInfoType>;
 declare function use_old_InterfaceDeclaration_ShareLinkInfoType(
-    use: TypeOnly<old.ShareLinkInfoType>);
+    use: TypeOnly<old.ShareLinkInfoType>): void;
 use_old_InterfaceDeclaration_ShareLinkInfoType(
     get_current_InterfaceDeclaration_ShareLinkInfoType());
 
@@ -653,7 +653,7 @@ use_old_InterfaceDeclaration_ShareLinkInfoType(
 declare function get_old_EnumDeclaration_ShareLinkTypes():
     TypeOnly<old.ShareLinkTypes>;
 declare function use_current_EnumDeclaration_ShareLinkTypes(
-    use: TypeOnly<current.ShareLinkTypes>);
+    use: TypeOnly<current.ShareLinkTypes>): void;
 use_current_EnumDeclaration_ShareLinkTypes(
     get_old_EnumDeclaration_ShareLinkTypes());
 
@@ -665,7 +665,7 @@ use_current_EnumDeclaration_ShareLinkTypes(
 declare function get_current_EnumDeclaration_ShareLinkTypes():
     TypeOnly<current.ShareLinkTypes>;
 declare function use_old_EnumDeclaration_ShareLinkTypes(
-    use: TypeOnly<old.ShareLinkTypes>);
+    use: TypeOnly<old.ShareLinkTypes>): void;
 use_old_EnumDeclaration_ShareLinkTypes(
     get_current_EnumDeclaration_ShareLinkTypes());
 
@@ -677,7 +677,7 @@ use_old_EnumDeclaration_ShareLinkTypes(
 declare function get_old_EnumDeclaration_SharingLinkRole():
     TypeOnly<old.SharingLinkRole>;
 declare function use_current_EnumDeclaration_SharingLinkRole(
-    use: TypeOnly<current.SharingLinkRole>);
+    use: TypeOnly<current.SharingLinkRole>): void;
 use_current_EnumDeclaration_SharingLinkRole(
     get_old_EnumDeclaration_SharingLinkRole());
 
@@ -689,7 +689,7 @@ use_current_EnumDeclaration_SharingLinkRole(
 declare function get_current_EnumDeclaration_SharingLinkRole():
     TypeOnly<current.SharingLinkRole>;
 declare function use_old_EnumDeclaration_SharingLinkRole(
-    use: TypeOnly<old.SharingLinkRole>);
+    use: TypeOnly<old.SharingLinkRole>): void;
 use_old_EnumDeclaration_SharingLinkRole(
     get_current_EnumDeclaration_SharingLinkRole());
 
@@ -701,7 +701,7 @@ use_old_EnumDeclaration_SharingLinkRole(
 declare function get_old_EnumDeclaration_SharingLinkScope():
     TypeOnly<old.SharingLinkScope>;
 declare function use_current_EnumDeclaration_SharingLinkScope(
-    use: TypeOnly<current.SharingLinkScope>);
+    use: TypeOnly<current.SharingLinkScope>): void;
 use_current_EnumDeclaration_SharingLinkScope(
     get_old_EnumDeclaration_SharingLinkScope());
 
@@ -713,7 +713,7 @@ use_current_EnumDeclaration_SharingLinkScope(
 declare function get_current_EnumDeclaration_SharingLinkScope():
     TypeOnly<current.SharingLinkScope>;
 declare function use_old_EnumDeclaration_SharingLinkScope(
-    use: TypeOnly<old.SharingLinkScope>);
+    use: TypeOnly<old.SharingLinkScope>): void;
 use_old_EnumDeclaration_SharingLinkScope(
     get_current_EnumDeclaration_SharingLinkScope());
 
@@ -725,7 +725,7 @@ use_old_EnumDeclaration_SharingLinkScope(
 declare function get_old_InterfaceDeclaration_TokenFetchOptions():
     TypeOnly<old.TokenFetchOptions>;
 declare function use_current_InterfaceDeclaration_TokenFetchOptions(
-    use: TypeOnly<current.TokenFetchOptions>);
+    use: TypeOnly<current.TokenFetchOptions>): void;
 use_current_InterfaceDeclaration_TokenFetchOptions(
     get_old_InterfaceDeclaration_TokenFetchOptions());
 
@@ -737,7 +737,7 @@ use_current_InterfaceDeclaration_TokenFetchOptions(
 declare function get_current_InterfaceDeclaration_TokenFetchOptions():
     TypeOnly<current.TokenFetchOptions>;
 declare function use_old_InterfaceDeclaration_TokenFetchOptions(
-    use: TypeOnly<old.TokenFetchOptions>);
+    use: TypeOnly<old.TokenFetchOptions>): void;
 use_old_InterfaceDeclaration_TokenFetchOptions(
     get_current_InterfaceDeclaration_TokenFetchOptions());
 
@@ -749,7 +749,7 @@ use_old_InterfaceDeclaration_TokenFetchOptions(
 declare function get_old_TypeAliasDeclaration_TokenFetcher():
     TypeOnly<old.TokenFetcher<any>>;
 declare function use_current_TypeAliasDeclaration_TokenFetcher(
-    use: TypeOnly<current.TokenFetcher<any>>);
+    use: TypeOnly<current.TokenFetcher<any>>): void;
 use_current_TypeAliasDeclaration_TokenFetcher(
     get_old_TypeAliasDeclaration_TokenFetcher());
 
@@ -761,7 +761,7 @@ use_current_TypeAliasDeclaration_TokenFetcher(
 declare function get_current_TypeAliasDeclaration_TokenFetcher():
     TypeOnly<current.TokenFetcher<any>>;
 declare function use_old_TypeAliasDeclaration_TokenFetcher(
-    use: TypeOnly<old.TokenFetcher<any>>);
+    use: TypeOnly<old.TokenFetcher<any>>): void;
 use_old_TypeAliasDeclaration_TokenFetcher(
     get_current_TypeAliasDeclaration_TokenFetcher());
 
@@ -773,7 +773,7 @@ use_old_TypeAliasDeclaration_TokenFetcher(
 declare function get_old_InterfaceDeclaration_TokenResponse():
     TypeOnly<old.TokenResponse>;
 declare function use_current_InterfaceDeclaration_TokenResponse(
-    use: TypeOnly<current.TokenResponse>);
+    use: TypeOnly<current.TokenResponse>): void;
 use_current_InterfaceDeclaration_TokenResponse(
     get_old_InterfaceDeclaration_TokenResponse());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_TokenResponse(
 declare function get_current_InterfaceDeclaration_TokenResponse():
     TypeOnly<current.TokenResponse>;
 declare function use_old_InterfaceDeclaration_TokenResponse(
-    use: TypeOnly<old.TokenResponse>);
+    use: TypeOnly<old.TokenResponse>): void;
 use_old_InterfaceDeclaration_TokenResponse(
     get_current_InterfaceDeclaration_TokenResponse());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_TokenResponse(
 declare function get_old_FunctionDeclaration_getKeyForCacheEntry():
     TypeOnly<typeof old.getKeyForCacheEntry>;
 declare function use_current_FunctionDeclaration_getKeyForCacheEntry(
-    use: TypeOnly<typeof current.getKeyForCacheEntry>);
+    use: TypeOnly<typeof current.getKeyForCacheEntry>): void;
 use_current_FunctionDeclaration_getKeyForCacheEntry(
     get_old_FunctionDeclaration_getKeyForCacheEntry());
 
@@ -809,7 +809,7 @@ use_current_FunctionDeclaration_getKeyForCacheEntry(
 declare function get_current_FunctionDeclaration_getKeyForCacheEntry():
     TypeOnly<typeof current.getKeyForCacheEntry>;
 declare function use_old_FunctionDeclaration_getKeyForCacheEntry(
-    use: TypeOnly<typeof old.getKeyForCacheEntry>);
+    use: TypeOnly<typeof old.getKeyForCacheEntry>): void;
 use_old_FunctionDeclaration_getKeyForCacheEntry(
     get_current_FunctionDeclaration_getKeyForCacheEntry());
 
@@ -821,7 +821,7 @@ use_old_FunctionDeclaration_getKeyForCacheEntry(
 declare function get_old_VariableDeclaration_isTokenFromCache():
     TypeOnly<typeof old.isTokenFromCache>;
 declare function use_current_VariableDeclaration_isTokenFromCache(
-    use: TypeOnly<typeof current.isTokenFromCache>);
+    use: TypeOnly<typeof current.isTokenFromCache>): void;
 use_current_VariableDeclaration_isTokenFromCache(
     get_old_VariableDeclaration_isTokenFromCache());
 
@@ -833,7 +833,7 @@ use_current_VariableDeclaration_isTokenFromCache(
 declare function get_current_VariableDeclaration_isTokenFromCache():
     TypeOnly<typeof current.isTokenFromCache>;
 declare function use_old_VariableDeclaration_isTokenFromCache(
-    use: TypeOnly<typeof old.isTokenFromCache>);
+    use: TypeOnly<typeof old.isTokenFromCache>): void;
 use_old_VariableDeclaration_isTokenFromCache(
     get_current_VariableDeclaration_isTokenFromCache());
 
@@ -845,7 +845,7 @@ use_old_VariableDeclaration_isTokenFromCache(
 declare function get_old_VariableDeclaration_snapshotKey():
     TypeOnly<typeof old.snapshotKey>;
 declare function use_current_VariableDeclaration_snapshotKey(
-    use: TypeOnly<typeof current.snapshotKey>);
+    use: TypeOnly<typeof current.snapshotKey>): void;
 use_current_VariableDeclaration_snapshotKey(
     get_old_VariableDeclaration_snapshotKey());
 
@@ -857,7 +857,7 @@ use_current_VariableDeclaration_snapshotKey(
 declare function get_current_VariableDeclaration_snapshotKey():
     TypeOnly<typeof current.snapshotKey>;
 declare function use_old_VariableDeclaration_snapshotKey(
-    use: TypeOnly<typeof old.snapshotKey>);
+    use: TypeOnly<typeof old.snapshotKey>): void;
 use_old_VariableDeclaration_snapshotKey(
     get_current_VariableDeclaration_snapshotKey());
 
@@ -869,7 +869,7 @@ use_old_VariableDeclaration_snapshotKey(
 declare function get_old_VariableDeclaration_tokenFromResponse():
     TypeOnly<typeof old.tokenFromResponse>;
 declare function use_current_VariableDeclaration_tokenFromResponse(
-    use: TypeOnly<typeof current.tokenFromResponse>);
+    use: TypeOnly<typeof current.tokenFromResponse>): void;
 use_current_VariableDeclaration_tokenFromResponse(
     get_old_VariableDeclaration_tokenFromResponse());
 
@@ -881,6 +881,6 @@ use_current_VariableDeclaration_tokenFromResponse(
 declare function get_current_VariableDeclaration_tokenFromResponse():
     TypeOnly<typeof current.tokenFromResponse>;
 declare function use_old_VariableDeclaration_tokenFromResponse(
-    use: TypeOnly<typeof old.tokenFromResponse>);
+    use: TypeOnly<typeof old.tokenFromResponse>): void;
 use_old_VariableDeclaration_tokenFromResponse(
     get_current_VariableDeclaration_tokenFromResponse());

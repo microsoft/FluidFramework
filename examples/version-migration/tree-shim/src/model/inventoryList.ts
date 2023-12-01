@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
 import {
-	ForestType,
-	ISharedTree,
-	SharedTreeFactory,
-	typeboxValidator,
-} from "@fluid-experimental/tree2";
+	MigrationShim,
+	MigrationShimFactory,
+	SharedTree as LegacySharedTree,
+	SharedTreeShim,
+	SharedTreeShimFactory,
+} from "@fluid-experimental/tree";
+// eslint-disable-next-line import/no-internal-modules
+import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
+import { ForestType, ITree, TreeFactory, typeboxValidator } from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -18,21 +21,58 @@ import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListCont
 import { NewTreeInventoryListController } from "./newTreeInventoryListController";
 
 const isMigratedKey = "isMigrated";
-const legacySharedTreeKey = "legacySharedTree";
-const newSharedTreeKey = "newSharedTree";
+const treeKey = "tree";
 
 // Set to true to artificially slow down the migration.
 const DEBUG_migrateSlowly = false;
 
-const newTreeFactory = new SharedTreeFactory({
+const newTreeFactory = new TreeFactory({
 	jsonValidator: typeboxValidator,
 	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
 	forest: ForestType.Reference,
 });
 
+function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
+	// Revert local edits - otherwise we will be eventually inconsistent
+	const edits = legacyTree.edits as EditLog;
+	const localEdits = [...edits.getLocalEdits()].reverse();
+	for (const edit of localEdits) {
+		legacyTree.revert(edit.id);
+	}
+	// migrate data
+	const legacyTreeData = new LegacyTreeInventoryListController(legacyTree);
+	const items = legacyTreeData.getItems();
+
+	const initialTree = {
+		inventoryItemList: {
+			// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
+			"": items.map((item) => {
+				return {
+					id: item.id,
+					name: item.name,
+					quantity: item.quantity,
+				};
+			}),
+		},
+	};
+	NewTreeInventoryListController.initializeTree(newTree, initialTree);
+}
+
+const legacyTreeFactory = LegacySharedTree.getFactory();
+const migrationShimFactory = new MigrationShimFactory(legacyTreeFactory, newTreeFactory, migrate);
+const newTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
+
 export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {
 	private _model: IInventoryList | undefined;
 	private _writeOk: boolean | undefined;
+	private _shim: MigrationShim | SharedTreeShim | undefined;
+
+	private get shim() {
+		if (this._shim === undefined) {
+			throw new Error("Not initialized properly");
+		}
+		return this._shim;
+	}
 
 	private get model() {
 		if (this._model === undefined) {
@@ -49,11 +89,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	}
 
 	private readonly isMigrated = () => {
-		const isMigrated = this.root.get<boolean>(isMigratedKey);
-		if (isMigrated === undefined) {
-			throw new Error("Not initialized properly");
-		}
-		return isMigrated;
+		return this.shim.attributes.type === newTreeShimFactory.type;
 	};
 
 	public readonly addItem = (name: string, quantity: number) => {
@@ -69,24 +105,15 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 		// we can show the demo transitioning between using the legacy ST and new ST
 		this.root.set(isMigratedKey, false);
 
-		const legacySharedTree = this.runtime.createChannel(
+		const migrationShim = this.runtime.createChannel(
 			undefined,
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
+			migrationShimFactory.type,
+		) as MigrationShim;
+		const legacySharedTree = migrationShim.currentTree as LegacySharedTree;
 
-		const newSharedTree = this.runtime.createChannel(
-			undefined,
-			newTreeFactory.type,
-		) as ISharedTree;
-
-		// TODO: I call these initializeTree methods here because otherwise the trees may not be initialized before
-		// attaching (in particular the New SharedTree, which in this demo doesn't actually get used until the migration
-		// occurs.  After switching to the shim, these might be able to be simplified.
 		LegacyTreeInventoryListController.initializeTree(legacySharedTree);
-		NewTreeInventoryListController.initializeTree(newSharedTree);
 
-		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
-		this.root.set(newSharedTreeKey, newSharedTree.handle);
+		this.root.set(treeKey, migrationShim.handle);
 	}
 
 	/**
@@ -112,17 +139,25 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 		this._model?.off("itemAdded", this.onItemAdded);
 		this._model?.off("itemDeleted", this.onItemDeleted);
 
-		// TODO: This whole block becomes something like getting the shim.currentTree, checking which type it is, and
-		// instantiating the right model accordingly.
-		if (!this.isMigrated()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const tree = await this.root
-				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
-				.get();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._shim = await this.root
+			.get<IFluidHandle<MigrationShim | SharedTreeShim>>(treeKey)!
+			.get();
+		if (this.shim.attributes.type === legacyTreeFactory.type) {
+			const tree = this.shim.currentTree as LegacySharedTree;
 			this._model = new LegacyTreeInventoryListController(tree);
+			const migrationShim = this.shim as MigrationShim;
+			migrationShim.on("migrated", () => {
+				this.setModel()
+					.then(() => {
+						this.emit("backingDataChanged");
+						this._writeOk = true;
+						this.emit("writeOkChanged");
+					})
+					.catch(console.error);
+			});
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const tree = await this.root.get<IFluidHandle<ISharedTree>>(newSharedTreeKey)!.get();
+			const tree = this.shim.currentTree as ITree;
 			this._model = new NewTreeInventoryListController(tree);
 		}
 
@@ -146,13 +181,8 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 		}
 
-		// TODO: This flag set gets replaced with actually calling the migrate API on the shim.
-		this.root.set(isMigratedKey, true);
-		await this.setModel();
-		this.emit("backingDataChanged");
-
-		this._writeOk = true;
-		this.emit("writeOkChanged");
+		const migrationShim = this.shim as MigrationShim;
+		migrationShim.submitMigrateOp();
 	}
 
 	// For this demo we'll just expose the ability to trigger the migration through DEBUG, this method is sync
@@ -184,6 +214,6 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 export const InventoryListFactory = new DataObjectFactory<InventoryList>(
 	"inventory-list",
 	InventoryList,
-	[LegacySharedTree.getFactory(), newTreeFactory],
+	[migrationShimFactory, newTreeShimFactory],
 	{},
 );

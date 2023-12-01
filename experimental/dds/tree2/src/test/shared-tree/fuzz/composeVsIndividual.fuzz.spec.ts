@@ -16,7 +16,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { ITreeViewFork, ITreeView } from "../../../shared-tree";
+import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
@@ -36,7 +36,7 @@ import { Operation } from "./operationTypes";
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	main?: ITreeView<typeof fuzzSchema.rootFieldSchema>;
+	main?: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
 	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
 }
 
@@ -83,12 +83,19 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
  */
 describe("Fuzz - composed vs individual changes", () => {
 	const opsPerRun = 20;
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		delete: 2,
+		move: 2,
+		fieldSelection: {
+			optional: 1,
+			required: 1,
+			sequence: 2,
+			recurse: 1,
+		},
 		start: 0,
 		commit: 0,
 	};

@@ -8,6 +8,7 @@ import { IWebSocket } from "./http";
 /**
  * Interface of web socket tracker
  * it tracks the mapping of web socket and token used to establish the socket connection
+ * @internal
  */
 export interface IWebSocketTracker {
 	// Add a socket to internal map
@@ -21,6 +22,9 @@ export interface IWebSocketTracker {
 	removeSocket(socketId: string): boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ITokenRevocationResponse {
 	requestId?: string;
 }
@@ -30,6 +34,7 @@ export interface ITokenRevocationResponse {
  * No need to return requestId in error response.
  * x-correlation-id in response header should be used for tracking purpose
  * TODO: remove it once no usage from external users
+ * @internal
  */
 export class TokenRevocationError extends NetworkError {
 	constructor(
@@ -77,7 +82,6 @@ export class TokenRevocationError extends NetworkError {
 
 	/**
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
-	 * @public
 	 */
 	public toJSON(): INetworkErrorDetails & { code: number; requestId: string } {
 		return {
@@ -89,6 +93,7 @@ export class TokenRevocationError extends NetworkError {
 
 /**
  * Indicate that a connect is rejected/dropped because the token has been revoked.
+ * @internal
  */
 export class TokenRevokedError extends NetworkError {
 	public readonly errorType: string = "TokenRevoked";
@@ -132,7 +137,6 @@ export class TokenRevokedError extends NetworkError {
 
 	/**
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
-	 * @public
 	 */
 	public toJSON(): INetworkErrorDetails & { code: number; errorType: string } {
 		return {
@@ -142,10 +146,16 @@ export class TokenRevokedError extends NetworkError {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IRevokeTokenOptions {
 	correlationId: string;
 }
 
+/**
+ * @internal
+ */
 export interface IRevokedTokenChecker {
 	// Check if a given token id is revoked
 	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
@@ -154,6 +164,7 @@ export interface IRevokedTokenChecker {
 /**
  * Interface of Json Web Token(JWT) manager
  * It is mainly used to manage token revocation
+ * @internal
  */
 export interface ITokenRevocationManager {
 	initialize(): Promise<void>;
@@ -179,6 +190,9 @@ export interface ITokenRevocationManager {
 	isTokenRevoked?(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
 }
 
+/**
+ * @internal
+ */
 export function createCompositeTokenId(
 	tenantId: string,
 	documentId: string,

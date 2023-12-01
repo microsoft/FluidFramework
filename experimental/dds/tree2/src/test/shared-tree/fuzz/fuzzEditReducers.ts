@@ -8,14 +8,14 @@ import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-ut
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	DownPath,
-	TreeField,
-	TreeNode,
+	FlexTreeField,
+	FlexTreeNode,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
 } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTree, ITreeCheckout, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
 import {
 	FieldEdit,
@@ -80,7 +80,7 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
 export function applyFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	fieldEdit: FieldEdit,
 ): void {
 	switch (fieldEdit.change.type) {
@@ -99,7 +99,7 @@ export function applyFieldEdit(
 }
 
 function applySequenceFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzFieldChange,
 ): void {
 	switch (change.type) {
@@ -120,7 +120,7 @@ function applySequenceFieldEdit(
 				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
 				"Defined down-path should point to a valid parent",
 			);
-			field.removeRange(index, change.count);
+			field.removeRange(index, index + change.count);
 			break;
 		}
 		case "move": {
@@ -131,7 +131,7 @@ function applySequenceFieldEdit(
 				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
 				"Defined down-path should point to a valid parent",
 			);
-			field.moveRangeToIndex(change.dstIndex, index, change.count);
+			field.moveRangeToIndex(change.dstIndex, index, index + change.count);
 			break;
 		}
 		default:
@@ -140,7 +140,7 @@ function applySequenceFieldEdit(
 }
 
 function applyValueFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet,
 ): void {
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
@@ -155,17 +155,17 @@ function applyValueFieldEdit(
 }
 
 function navigateToNode(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	path: DownPath | undefined,
-): TreeNode | undefined {
+): FlexTreeNode | undefined {
 	const rootField = tree.editableTree;
 	if (path === undefined) {
 		return undefined;
 	}
 
 	const finalLocation = path.reduce<{
-		field: TreeField;
-		containedNode: TreeNode | undefined;
+		field: FlexTreeField;
+		containedNode: FlexTreeNode | undefined;
 	}>(
 		({ containedNode }, nextStep) => {
 			const childField = containedNode?.tryGetField(nextStep.field);
@@ -196,7 +196,7 @@ function navigateToNode(
 }
 
 function applyOptionalFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet | FuzzDelete,
 ): void {
 	switch (change.type) {

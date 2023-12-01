@@ -11,10 +11,8 @@ import {
 	SchemaBuilder,
 	FieldKind,
 	Any,
-	TreeNodeSchema,
+	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
-	brand,
-	Brand,
 	leaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
@@ -48,14 +46,15 @@ const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referen
  */
 export const nodePropertyField = "properties";
 
-type PropertyDDSContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
-
-const singleContext: PropertyDDSContext = brand("single");
-const arrayContext: PropertyDDSContext = brand("array");
-const mapContext: PropertyDDSContext = brand("map");
+enum PropertyDDSContext {
+	single = "single",
+	array = "array",
+	map = "map",
+	set = "set",
+}
 
 function isPropertyContext(context: string): context is PropertyDDSContext {
-	return context in { single: true, array: true, map: true, set: true };
+	return context in PropertyDDSContext;
 }
 
 function isIgnoreNestedProperties(typeid: string): boolean {
@@ -90,9 +89,17 @@ function buildTreeNodeSchema(
 	if (!isPropertyContext(context)) {
 		fail(`Unknown context "${context}" in typeid "${type}"`);
 	}
-	if (context === singleContext) {
-		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, isEnum);
-		const typeidAsMap = TypeIdHelper.createSerializationTypeId(typeid, mapContext, isEnum);
+	if (context === PropertyDDSContext.single) {
+		const typeidAsArray = TypeIdHelper.createSerializationTypeId(
+			typeid,
+			PropertyDDSContext.array,
+			isEnum,
+		);
+		const typeidAsMap = TypeIdHelper.createSerializationTypeId(
+			typeid,
+			PropertyDDSContext.map,
+			isEnum,
+		);
 		if (!nodeSchemaMap.has(typeidAsArray)) {
 			buildTreeNodeSchema(builder, nodeSchemaMap, allChildrenByType, typeidAsArray);
 		}
@@ -158,7 +165,8 @@ function buildTreeNodeSchema(
 		if (nodeSchema) {
 			return nodeSchema;
 		}
-		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
+		const fieldKind =
+			context === PropertyDDSContext.array ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { nodeSchema?: TreeNodeSchema } = {};
 		nodeSchemaMap.set(currentTypeid, () => cache.nodeSchema ?? fail("missing schema"));
 		const fieldSchema = buildFieldSchema(
@@ -169,11 +177,11 @@ function buildTreeNodeSchema(
 			isAnyType ? Any : isEnum ? `enum<${typeid}>` : typeid,
 		);
 		switch (context) {
-			case mapContext: {
+			case PropertyDDSContext.map: {
 				cache.nodeSchema = builder.map(currentTypeid, fieldSchema);
 				return cache.nodeSchema;
 			}
-			case arrayContext: {
+			case PropertyDDSContext.array: {
 				cache.nodeSchema = builder.fieldNode(currentTypeid, fieldSchema);
 				return cache.nodeSchema;
 			}
@@ -228,7 +236,7 @@ function buildLocalFields(
 					0x702 /* "BaseProperty" shall not be used in schemas. */,
 				);
 				const currentTypeid =
-					property.context && property.context !== singleContext
+					property.context && property.context !== PropertyDDSContext.single
 						? TypeIdHelper.createSerializationTypeId(
 								property.typeid ?? "",
 								property.context,
@@ -327,6 +335,7 @@ const builtinLibrary = builtinBuilder.intoLibrary();
  * @param extraTypes - The extra types which can't be found when traversing across
  * the PropertyDDS schema inheritances / dependencies starting from
  * the root schema or built-in node property schemas.
+ * @internal
  */
 export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = FieldKind>(
 	rootFieldKind: Kind,

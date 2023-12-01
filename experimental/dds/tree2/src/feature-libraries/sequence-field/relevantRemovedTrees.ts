@@ -6,9 +6,14 @@
 import { assert } from "@fluidframework/core-utils";
 import { Delta, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { Changeset, Mark } from "./format";
-import { isMoveMark } from "./moveEffectTable";
-import { isDetach, isInsert, isNewAttach, isReattachEffect, isTransientEffect } from "./utils";
+import { Changeset, Mark } from "./types";
+import {
+	isInsert,
+	isNewAttach,
+	isReattachEffect,
+	isDetachOfRemovedNodes,
+	isAttachAndDetachEffect,
+} from "./utils";
 
 export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
 
@@ -20,7 +25,7 @@ export function* relevantRemovedTrees<TChild>(
 		if (refersToRelevantRemovedTrees(mark)) {
 			assert(
 				mark.cellId !== undefined,
-				"marks referring to removed trees must have an assigned cell ID",
+				0x81d /* marks referring to removed trees must have an assigned cell ID */,
 			);
 			const nodeId = nodeIdFromChangeAtom(mark.cellId);
 			for (let i = 0; i < mark.count; i += 1) {
@@ -35,18 +40,13 @@ export function* relevantRemovedTrees<TChild>(
 
 function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 	if (mark.cellId !== undefined) {
-		const effect = isTransientEffect(mark) ? mark.attach : mark;
+		const effect = isAttachAndDetachEffect(mark) ? mark.attach : mark;
 		if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {
 			// This tree is being restored.
 			return true;
-		} else if (isDetach(mark)) {
-			if (isMoveMark(mark)) {
-				// This removed tree is being moved.
-				return true;
-			} else {
-				// This removed tree is being deleted.
-				// We currently don't reassign the ID for such a tree, so it isn't relevant.
-			}
+		} else if (isDetachOfRemovedNodes(mark)) {
+			// This removed tree is being restored as part of a detach.
+			return true;
 		}
 		if (!isNewAttach(mark) && mark.changes !== undefined) {
 			// This removed tree is being edited.

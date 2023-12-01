@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { Delta, TaggedChange, RevisionTag, RevisionMetadataSource } from "../../core";
 import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -86,16 +86,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		invertChild: NodeChangeInverter,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-	): TChangeset;
-
-	/**
-	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendInvert(
-		invertedChange: TChangeset,
-		originalRevision: RevisionTag | undefined,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -108,21 +99,14 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
+		revisionMetadata: RebaseRevisionMetadata,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**
-	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
+	 * @returns `change` with any empty child node changesets removed.
 	 */
-	amendRebase(
-		rebasedChange: TChangeset,
-		over: TaggedChange<TChangeset>,
-		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-	): TChangeset;
+	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 }
 
 /**
@@ -149,8 +133,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		amendCompose: () => fail("Not implemented"),
-		amendInvert: () => fail("Not implemented"),
-		amendRebase: (change) => change,
+		prune: (change) => change,
 	};
 }
 
@@ -200,32 +183,19 @@ export type NodeChangeRebaser = (
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
+ * @alpha
+ */
+export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
+
+/**
  * A function that returns the set of removed trees that should be in memory for a given node changeset to be applied.
  *
  * @alpha
  */
 export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.DetachedNodeId>;
 
-/**
- * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
- * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
- * compose or rebase operation.
- *
- * During composition, the index reflects the order of the changeset within the overall composed changeset that is
- * being produced.
- *
- * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @alpha
- */
-export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
-
-/**
- * @alpha
- */
-export interface RevisionMetadataSource {
-	readonly getRevisions: () => RevisionTag[];
-	readonly getIndex: RevisionIndexer;
-	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
+export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	readonly getBaseRevisions: () => RevisionTag[];
 }
 
 /**

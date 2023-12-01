@@ -11,6 +11,9 @@
 import _ from "lodash";
 import { Collection } from "./collection";
 
+/**
+ * @internal
+ */
 export class SortedCollection<T> extends Collection<T> {
 	private _sortedKeys: string[] = [];
 	private _comparisonFunction?: (x: string, y: string) => number = undefined;

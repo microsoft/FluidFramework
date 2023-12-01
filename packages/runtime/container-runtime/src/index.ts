@@ -40,6 +40,8 @@ export {
 	GCFeatureMatrix,
 	GCVersion,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 } from "./gc";
 export {

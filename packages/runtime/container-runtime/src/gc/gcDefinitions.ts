@@ -22,7 +22,7 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 
 /**
- * @public
+ * @internal
  */
 export type GCVersion = number;
 
@@ -62,8 +62,6 @@ export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-/** Config key to turn GC sweep log off. */
-export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 /** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
 /** Config key to override throwing an error when tombstone object is loaded (requested). */
@@ -94,7 +92,7 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /**
  * @see IGCMetadata.gcFeatureMatrix
- * @public
+ * @internal
  */
 export interface GCFeatureMatrix {
 	/**
@@ -112,7 +110,7 @@ export interface GCFeatureMatrix {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IGCMetadata {
 	/**
@@ -151,10 +149,10 @@ export interface IGCMetadata {
 }
 
 /**
- * The statistics of the system state after a garbage collection run.
- * @public
+ * The statistics of the system state after a garbage collection mark phase run.
+ * @internal
  */
-export interface IGCStats {
+export interface IMarkPhaseStats {
 	/** The number of nodes in the container. */
 	nodeCount: number;
 	/** The number of data stores in the container. */
@@ -176,8 +174,33 @@ export interface IGCStats {
 }
 
 /**
+ * The statistics of the system state after a garbage collection sweep phase run.
+ * @internal
+ */
+export interface ISweepPhaseStats {
+	/** The number of nodes in the lifetime of the container. */
+	lifetimeNodeCount: number;
+	/** The number of data stores in the lifetime of the container. */
+	lifetimeDataStoreCount: number;
+	/** The number of attachment blobs in the lifetime of the container. */
+	lifetimeAttachmentBlobCount: number;
+	/** The number of deleted nodes in the container. */
+	deletedNodeCount: number;
+	/** The number of deleted data stores in the container. */
+	deletedDataStoreCount: number;
+	/** The number of deleted attachment blobs in the container. */
+	deletedAttachmentBlobCount: number;
+}
+
+/**
+ * The statistics of the system state after a garbage collection run.
+ * @internal
+ */
+export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
+
+/**
  * The types of GC nodes in the GC reference graph.
- * @public
+ * @internal
  */
 export const GCNodeType = {
 	// Nodes that are for data stores.
@@ -191,7 +214,7 @@ export const GCNodeType = {
 };
 
 /**
- * @public
+ * @internal
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
@@ -297,7 +320,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IGCRuntimeOptions {
 	/**

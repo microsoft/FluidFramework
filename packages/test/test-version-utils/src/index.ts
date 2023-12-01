@@ -10,7 +10,12 @@ export {
 	ITestDataObject,
 	TestDataObjectType,
 } from "./compatUtils.js";
-export { describeInstallVersions } from "./describeWithVersions.js";
+export {
+	describeInstallVersions,
+	IRequestedFluidVersions,
+	DescribeWithVersions,
+	DescribeSuiteWithVersions,
+} from "./describeWithVersions.js";
 export {
 	DescribeCompat,
 	DescribeCompatSuite,
@@ -20,6 +25,7 @@ export {
 	ITestObjectProviderOptions,
 } from "./describeCompat.js";
 export {
+	DescribeE2EDocSuite,
 	describeE2EDocs,
 	DocumentType,
 	DocumentTypeInfo,
@@ -48,8 +54,14 @@ export {
 	getDataRuntimeApi,
 	getDriverApi,
 	getLoaderApi,
+	InstalledPackage,
+	DataRuntimeApi,
+	ContainerRuntimeApi,
+	LoaderApi,
 } from "./testApi.js";
 export {
 	itExpectsSkipsFailureOnSpecificDrivers,
 	itSkipsFailureOnSpecificDrivers,
+	SkippedTestWithDriverType,
+	SkippedErrorExpectingTestWithDriverType,
 } from "./itSkipsOnFailure.js";

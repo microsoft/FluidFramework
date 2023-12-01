@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_DebugReplayController():
     TypeOnly<old.DebugReplayController>;
 declare function use_current_ClassDeclaration_DebugReplayController(
-    use: TypeOnly<current.DebugReplayController>);
+    use: TypeOnly<current.DebugReplayController>): void;
 use_current_ClassDeclaration_DebugReplayController(
     get_old_ClassDeclaration_DebugReplayController());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_DebugReplayController(
 declare function get_current_ClassDeclaration_DebugReplayController():
     TypeOnly<current.DebugReplayController>;
 declare function use_old_ClassDeclaration_DebugReplayController(
-    use: TypeOnly<old.DebugReplayController>);
+    use: TypeOnly<old.DebugReplayController>): void;
 use_old_ClassDeclaration_DebugReplayController(
     get_current_ClassDeclaration_DebugReplayController());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_DebugReplayController(
 declare function get_old_ClassDeclaration_DebuggerUI():
     TypeOnly<old.DebuggerUI>;
 declare function use_current_ClassDeclaration_DebuggerUI(
-    use: TypeOnly<current.DebuggerUI>);
+    use: TypeOnly<current.DebuggerUI>): void;
 use_current_ClassDeclaration_DebuggerUI(
     get_old_ClassDeclaration_DebuggerUI());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_DebuggerUI(
 declare function get_current_ClassDeclaration_DebuggerUI():
     TypeOnly<current.DebuggerUI>;
 declare function use_old_ClassDeclaration_DebuggerUI(
-    use: TypeOnly<old.DebuggerUI>);
+    use: TypeOnly<old.DebuggerUI>): void;
 use_old_ClassDeclaration_DebuggerUI(
     get_current_ClassDeclaration_DebuggerUI());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_DebuggerUI(
 declare function get_old_FunctionDeclaration_FluidDebugger_createFromService():
     TypeOnly<typeof old.FluidDebugger.createFromService>;
 declare function use_current_FunctionDeclaration_FluidDebugger_createFromService(
-    use: TypeOnly<typeof current.FluidDebugger.createFromService>);
+    use: TypeOnly<typeof current.FluidDebugger.createFromService>): void;
 use_current_FunctionDeclaration_FluidDebugger_createFromService(
     get_old_FunctionDeclaration_FluidDebugger_createFromService());
 
@@ -89,7 +89,7 @@ use_current_FunctionDeclaration_FluidDebugger_createFromService(
 declare function get_current_FunctionDeclaration_FluidDebugger_createFromService():
     TypeOnly<typeof current.FluidDebugger.createFromService>;
 declare function use_old_FunctionDeclaration_FluidDebugger_createFromService(
-    use: TypeOnly<typeof old.FluidDebugger.createFromService>);
+    use: TypeOnly<typeof old.FluidDebugger.createFromService>): void;
 use_old_FunctionDeclaration_FluidDebugger_createFromService(
     get_current_FunctionDeclaration_FluidDebugger_createFromService());
 
@@ -101,7 +101,7 @@ use_old_FunctionDeclaration_FluidDebugger_createFromService(
 declare function get_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory():
     TypeOnly<typeof old.FluidDebugger.createFromServiceFactory>;
 declare function use_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
-    use: TypeOnly<typeof current.FluidDebugger.createFromServiceFactory>);
+    use: TypeOnly<typeof current.FluidDebugger.createFromServiceFactory>): void;
 use_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
     get_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory());
 
@@ -113,7 +113,7 @@ use_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
 declare function get_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory():
     TypeOnly<typeof current.FluidDebugger.createFromServiceFactory>;
 declare function use_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
-    use: TypeOnly<typeof old.FluidDebugger.createFromServiceFactory>);
+    use: TypeOnly<typeof old.FluidDebugger.createFromServiceFactory>): void;
 use_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
     get_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory());
 
@@ -125,7 +125,7 @@ use_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
 declare function get_old_InterfaceDeclaration_IDebuggerController():
     TypeOnly<old.IDebuggerController>;
 declare function use_current_InterfaceDeclaration_IDebuggerController(
-    use: TypeOnly<current.IDebuggerController>);
+    use: TypeOnly<current.IDebuggerController>): void;
 use_current_InterfaceDeclaration_IDebuggerController(
     get_old_InterfaceDeclaration_IDebuggerController());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IDebuggerController(
 declare function get_current_InterfaceDeclaration_IDebuggerController():
     TypeOnly<current.IDebuggerController>;
 declare function use_old_InterfaceDeclaration_IDebuggerController(
-    use: TypeOnly<old.IDebuggerController>);
+    use: TypeOnly<old.IDebuggerController>): void;
 use_old_InterfaceDeclaration_IDebuggerController(
     get_current_InterfaceDeclaration_IDebuggerController());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IDebuggerController(
 declare function get_old_InterfaceDeclaration_IDebuggerUI():
     TypeOnly<old.IDebuggerUI>;
 declare function use_current_InterfaceDeclaration_IDebuggerUI(
-    use: TypeOnly<current.IDebuggerUI>);
+    use: TypeOnly<current.IDebuggerUI>): void;
 use_current_InterfaceDeclaration_IDebuggerUI(
     get_old_InterfaceDeclaration_IDebuggerUI());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IDebuggerUI(
 declare function get_current_InterfaceDeclaration_IDebuggerUI():
     TypeOnly<current.IDebuggerUI>;
 declare function use_old_InterfaceDeclaration_IDebuggerUI(
-    use: TypeOnly<old.IDebuggerUI>);
+    use: TypeOnly<old.IDebuggerUI>): void;
 use_old_InterfaceDeclaration_IDebuggerUI(
     get_current_InterfaceDeclaration_IDebuggerUI());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IDebuggerUI(
 declare function get_old_TypeAliasDeclaration_debuggerUIFactory():
     TypeOnly<old.debuggerUIFactory>;
 declare function use_current_TypeAliasDeclaration_debuggerUIFactory(
-    use: TypeOnly<current.debuggerUIFactory>);
+    use: TypeOnly<current.debuggerUIFactory>): void;
 use_current_TypeAliasDeclaration_debuggerUIFactory(
     get_old_TypeAliasDeclaration_debuggerUIFactory());
 
@@ -185,6 +185,6 @@ use_current_TypeAliasDeclaration_debuggerUIFactory(
 declare function get_current_TypeAliasDeclaration_debuggerUIFactory():
     TypeOnly<current.debuggerUIFactory>;
 declare function use_old_TypeAliasDeclaration_debuggerUIFactory(
-    use: TypeOnly<old.debuggerUIFactory>);
+    use: TypeOnly<old.debuggerUIFactory>): void;
 use_old_TypeAliasDeclaration_debuggerUIFactory(
     get_current_TypeAliasDeclaration_debuggerUIFactory());

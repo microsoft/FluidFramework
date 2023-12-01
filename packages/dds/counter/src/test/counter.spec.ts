@@ -13,7 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { type ISharedCounter, SharedCounter } from "..";
+import { type ISharedCounter, SharedCounter } from "../index";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {

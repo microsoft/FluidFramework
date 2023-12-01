@@ -44,6 +44,7 @@ const urlResolver = new LocalResolver();
  * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
  * @param containerRuntimeFactory - The container factory to be loaded in the container
+ * @internal
  */
 export async function getSessionStorageContainer(
 	documentId: string,
@@ -92,6 +93,9 @@ export async function getSessionStorageContainer(
 	return { container, attach };
 }
 
+/**
+ * @internal
+ */
 export const containerConfig = {
 	name: "dice-roller-container",
 	initialObjects: {
@@ -114,6 +118,7 @@ async function initializeNewContainer(container: FluidContainer): Promise<void> 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
+ * @internal
  */
 export async function createContainerAndRenderInElement(
 	element: HTMLDivElement,
@@ -128,7 +133,7 @@ export async function createContainerAndRenderInElement(
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = (await container.request({ url: "/" })).value;
+	const fluidContainer = (await container.getEntryPoint()) as FluidContainer;
 	if (createNewFlag) {
 		await initializeNewContainer(fluidContainer);
 		await attach?.();
