@@ -139,13 +139,13 @@ summary: "An open-source client technology stack that enables real-time collabor
         img="/images/first-value-prop.png"
         imgAlt="better performance"
       >}}
-    {{<swimlane
+    <!-- {{<swimlane
         id="better-perf"
         title="Better Performance"
         subTitle="There is a significant difference in capacity depending on whether users are purely viewers vs. editors. Adding viewers scales far more than adding editors because each editor increases the volume of changes and viewers do not"
         img="/images/first-value-prop.png"
         imgAlt="better performance"
-      >}}
+      >}} -->
     
     <!-- {{<swimlane
         id="easy-to-use"
@@ -197,3 +197,8 @@ summary: "An open-source client technology stack that enables real-time collabor
     linkText="Examples"
   >}}
 {{< /cta_container  >}} -->
+<!-- {{ partial "carousel.html" (dict "context" . "items" "1" "height" "50" "unit" "%" "duration" "7000") }} -->
+<div class="value-props">
+    <h2><strong>What our customers are saying about Fluid Framework: </strong></h2>
+</div>
+{{< carousel items="1" height="500" unit="px" duration="7000" >}}
