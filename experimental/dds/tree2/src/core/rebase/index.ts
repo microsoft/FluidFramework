@@ -26,6 +26,8 @@ export {
 	tagChange,
 	tagRollbackInverse,
 	TaggedChange,
+	RevisionMetadataSource,
+	RevisionInfo,
 } from "./changeRebaser";
 export {
 	Exception,
@@ -41,4 +43,6 @@ export {
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	revisionMetadataSourceFromInfo,
 } from "./utils";
