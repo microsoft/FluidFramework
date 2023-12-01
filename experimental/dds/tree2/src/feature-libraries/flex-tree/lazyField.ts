@@ -47,6 +47,8 @@ import {
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
+	FlexTreeEntityKind,
+	flexTreeMarker,
 } from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
@@ -121,6 +123,9 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
+		return FlexTreeEntityKind.Field;
+	}
 	public readonly key: FieldKey;
 
 	public constructor(
