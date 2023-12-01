@@ -16,8 +16,8 @@ import {
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];

@@ -4,12 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	CachedConfigProvider,
-	ConfigTypes,
-	IConfigProviderBase,
-	inMemoryConfigProvider,
-} from "../config";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { CachedConfigProvider, inMemoryConfigProvider } from "../config";
 import { TelemetryDataTag } from "../logger";
 import { MockLogger } from "../mockLogger";
 
