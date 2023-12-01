@@ -17,7 +17,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -28,7 +28,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed
  * when an unreferenced node becomes referenced again.
  */
-describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
+describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;

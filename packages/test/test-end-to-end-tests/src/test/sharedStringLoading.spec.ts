@@ -23,11 +23,11 @@ import {
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
-describeNoCompat("SharedString", (getTestObjectProvider) => {
+describeCompat("SharedString", "NoCompat", (getTestObjectProvider) => {
 	itExpects(
 		"Failure to Load in Shared String",
 		[

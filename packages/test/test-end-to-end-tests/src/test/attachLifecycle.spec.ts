@@ -12,7 +12,7 @@ import {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
@@ -39,7 +39,7 @@ const testConfigs = generatePairwiseOptions({
 	ddsSaveAfterAttach: [true, false],
 });
 
-describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) => {
+describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
