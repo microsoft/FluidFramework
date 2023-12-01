@@ -77,6 +77,8 @@ export async function getContainerEntryPointBackCompat<T>(container: IContainer)
  * This function should ONLY be used for back compat purposes
  * Older supported versions of IDataStore do not have the "entryPoint" property, so we need to fallback to "request"
  * This function can be removed once back-compat support for IDataStore moves to 2.0.0-internal.7.0.0
+ *
+ * @internal
  */
 export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T> {
 	if (dataStore.entryPoint !== undefined) {

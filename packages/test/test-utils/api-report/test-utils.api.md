@@ -139,7 +139,7 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 // @internal
 export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
 
-// @public
+// @internal
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
 // @internal (undocumented)
