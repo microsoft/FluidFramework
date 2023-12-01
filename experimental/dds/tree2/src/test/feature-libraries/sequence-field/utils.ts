@@ -142,7 +142,7 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosForRebase(change, baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosForRebase(baseChanges);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(
@@ -157,12 +157,10 @@ export function rebaseOverChanges(
 	return currChange;
 }
 
-function defaultRevInfosForRebase(
-	change: TaggedChange<TestChangeset>,
-	baseChanges: TaggedChange<TestChangeset>[],
-): RevisionInfo[] {
+function defaultRevInfosForRebase(baseChanges: TaggedChange<TestChangeset>[]): RevisionInfo[] {
 	const revInfos: RevisionInfo[] = [];
-	const rollForwards: RevisionTag[] = [];
+	const revisions = new Set<RevisionTag>();
+	const rolledBackRevisions: RevisionTag[] = [];
 	for (const baseChange of baseChanges) {
 		if (baseChange.revision !== undefined) {
 			revInfos.push({
@@ -170,21 +168,24 @@ function defaultRevInfosForRebase(
 				rollbackOf: baseChange.rollbackOf,
 			});
 
+			revisions.add(baseChange.revision);
 			if (baseChange.rollbackOf !== undefined) {
-				rollForwards.push(baseChange.rollbackOf);
+				assert(
+					!revisions.has(baseChange.rollbackOf),
+					"A rollback should not come before the corresponding roll-forward",
+				);
+				rolledBackRevisions.push(baseChange.rollbackOf);
 			}
 		}
 	}
 
-	rollForwards.reverse();
-	for (const revision of rollForwards) {
-		revInfos.push({ revision });
+	rolledBackRevisions.reverse();
+	for (const revision of rolledBackRevisions) {
+		if (!revisions.has(revision)) {
+			revInfos.push({ revision });
+		}
 	}
 
-	if (change.revision !== undefined) {
-		assert(change.rollbackOf === undefined, "Should not rebase rollback changes");
-		revInfos.push({ revision: change.revision });
-	}
 	return revInfos;
 }
 
