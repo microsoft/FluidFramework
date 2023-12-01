@@ -142,7 +142,7 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosForRebase(baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(
@@ -155,38 +155,6 @@ export function rebaseOverChanges(
 	}
 
 	return currChange;
-}
-
-function defaultRevInfosForRebase(baseChanges: TaggedChange<TestChangeset>[]): RevisionInfo[] {
-	const revInfos: RevisionInfo[] = [];
-	const revisions = new Set<RevisionTag>();
-	const rolledBackRevisions: RevisionTag[] = [];
-	for (const baseChange of baseChanges) {
-		if (baseChange.revision !== undefined) {
-			revInfos.push({
-				revision: baseChange.revision,
-				rollbackOf: baseChange.rollbackOf,
-			});
-
-			revisions.add(baseChange.revision);
-			if (baseChange.rollbackOf !== undefined) {
-				assert(
-					!revisions.has(baseChange.rollbackOf),
-					"A rollback should not come before the corresponding roll-forward",
-				);
-				rolledBackRevisions.push(baseChange.rollbackOf);
-			}
-		}
-	}
-
-	rolledBackRevisions.reverse();
-	for (const revision of rolledBackRevisions) {
-		if (!revisions.has(revision)) {
-			revInfos.push({ revision });
-		}
-	}
-
-	return revInfos;
 }
 
 export function rebaseOverComposition(
