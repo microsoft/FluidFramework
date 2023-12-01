@@ -91,6 +91,7 @@ declare function get_current_ClassDeclaration_DataObject():
 declare function use_old_ClassDeclaration_DataObject(
     use: TypeOnly<old.DataObject>): void;
 use_old_ClassDeclaration_DataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataObject());
 
 /*
@@ -168,26 +169,14 @@ use_old_InterfaceDeclaration_IDataObjectProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<old.IRootDataObjectFactory>;
-declare function use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<current.IRootDataObjectFactory>): void;
-use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    get_old_InterfaceDeclaration_IRootDataObjectFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<current.IRootDataObjectFactory>;
-declare function use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<old.IRootDataObjectFactory>): void;
-use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    get_current_InterfaceDeclaration_IRootDataObjectFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -211,6 +200,7 @@ declare function get_current_ClassDeclaration_PureDataObject():
 declare function use_old_ClassDeclaration_PureDataObject(
     use: TypeOnly<old.PureDataObject>): void;
 use_old_ClassDeclaration_PureDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PureDataObject());
 
 /*
