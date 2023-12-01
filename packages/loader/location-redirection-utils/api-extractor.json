@@ -3,13 +3,5 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
 	"dtsRollup": {
 		"enabled": true
-	},
-	"messages": {
-		"extractorMessageReporting": {
-			"ae-missing-release-tag": {
-				// This package is scheduled for deletion, so no need to clean this up.
-				"logLevel": "none"
-			}
-		}
 	}
 }
