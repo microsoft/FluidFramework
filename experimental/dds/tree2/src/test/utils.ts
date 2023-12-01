@@ -57,9 +57,6 @@ import {
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	normalizeNewFieldContent,
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
 	cursorForJsonableTreeNode,
 	FlexTreeTypedField,
 	jsonableTreeFromForest,
@@ -96,6 +93,9 @@ import {
 	FieldKey,
 	Revertible,
 	RevertibleKind,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -942,6 +942,12 @@ export function testChangeReceiver<TChange>(
 export function defaultRevisionMetadataFromChanges(
 	changes: readonly TaggedChange<unknown>[],
 ): RevisionMetadataSource {
+	return revisionMetadataSourceFromInfo(defaultRevInfosFromChanges(changes));
+}
+
+export function defaultRevInfosFromChanges(
+	changes: readonly TaggedChange<unknown>[],
+): RevisionInfo[] {
 	const revInfos: RevisionInfo[] = [];
 	for (const change of changes) {
 		if (change.revision !== undefined) {
@@ -951,7 +957,7 @@ export function defaultRevisionMetadataFromChanges(
 			});
 		}
 	}
-	return revisionMetadataSourceFromInfo(revInfos);
+	return revInfos;
 }
 
 /**

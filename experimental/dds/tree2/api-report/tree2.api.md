@@ -243,7 +243,7 @@ infer Head,
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 // @alpha
-export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
+export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | number | string | boolean | null | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ContextuallyTypedNodeDataObject {
@@ -1576,9 +1576,6 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 // @alpha
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
-// @alpha @deprecated (undocumented)
-export type PrimitiveValue = string | boolean | number;
-
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
 
@@ -1927,7 +1924,7 @@ export interface TreeAdapter {
 
 // @beta
 export interface TreeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is TSchema extends TreeNodeSchema<string, NodeKind, unknown, infer T> ? T : never;
+    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: NodeBase): string | number;
     on<K extends keyof TreeNodeEvents>(node: NodeBase, eventName: K, listener: TreeNodeEvents[K]): () => void;
     parent(node: NodeBase): NodeBase | undefined;
