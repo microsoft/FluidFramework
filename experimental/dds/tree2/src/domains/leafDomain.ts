@@ -91,7 +91,7 @@ export const leaf = {
 	/**
 	 * {@link SchemaLibrary} of the {@link LeafNodeSchema}.
 	 *
-	 * @remarks
+	 * @privateRemarks
 	 * This is included by default in schema produced with {@link SchemaBuilder}.
 	 */
 	library,

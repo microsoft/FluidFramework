@@ -22,7 +22,7 @@ export interface IConfigProviderBase {
 	 * return values in a natural way from whatever source they retrieve them.
 	 *
 	 * For instance a value of 1 maybe be returned as a string or a number.
-	 * For array types a json string or and object are allowable.
+	 * For array types a json string or an object are allowable.
 	 *
 	 * It should return undefined if there is no value available for the config name.
 	 *
