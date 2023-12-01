@@ -68,7 +68,7 @@ export interface OdspContainerServices {
 }
 
 /**
- * Since ODSP provides user names, email and oid for all of its members, we extend the
+ * Since ODSP provides user names and oid for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * @alpha
  */
@@ -79,11 +79,6 @@ export interface OdspUser extends IUser {
 	name: string;
 
 	/**
-	 * The user's email
-	 */
-	email: string;
-
-	/**
 	 * The object ID or object Identifier. It is a unique identifier assigned to each user, group, or other entity within AAD or another Microsoft 365 service.
 	 * It is a GUID that uniquely identifies the object. When making Microsoft Graph API calls, you might need to reference or manipulate objects within the directory, and the `oid` is used to identify these objects.
 	 */
@@ -91,13 +86,19 @@ export interface OdspUser extends IUser {
 }
 
 /**
- * Since ODSP provides user names, email and oid for all of its members, we extend the
+ * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
  * @alpha
  */
 export interface OdspMember extends IMember {
+	/**
+	 * The user's name
+	 */
 	name: string;
+	/**
+	 * The user's email
+	 */
 	email: string;
 }
 
