@@ -96,6 +96,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LazyLoadedDataObject": {
+				"backCompat": false
+			}
+		}
 	}
 }
