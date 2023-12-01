@@ -24,8 +24,7 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const cellId = "sharedCellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {

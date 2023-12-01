@@ -5,6 +5,9 @@
 ```ts
 
 // @internal
+export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+
+// @internal
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @internal
@@ -29,6 +32,12 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @internal
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @internal
+export interface IConfigProviderBase {
+    // (undocumented)
+    getRawConfig(name: string): ConfigTypes;
+}
 
 // @internal
 export interface IDisposable {
