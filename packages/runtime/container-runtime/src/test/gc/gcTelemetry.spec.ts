@@ -116,6 +116,7 @@ describe("GC Telemetry Tracker", () => {
 					inactiveTimeoutMs,
 					Date.now(),
 					sweepTimeoutMs,
+					0 /* tombstoneSweepDelayMs */, //* Decide what value to use here
 				),
 			);
 		});
