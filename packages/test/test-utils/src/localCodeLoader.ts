@@ -13,14 +13,12 @@ import {
 	ICodeDetailsLoader,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IContainerRuntimeBase,
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 export type SupportedExportInterfaces = Partial<
 	IProvideRuntimeFactory &
@@ -64,12 +62,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 						"default",
 						maybeExport.IFluidDataStoreFactory,
 					);
-					const innerRequestHandler = async (
-						request: IRequest,
-						runtime: IContainerRuntimeBase,
-					) =>
-						// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
-						(runtime as ContainerRuntime).resolveHandle(request);
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
@@ -78,7 +70,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 								registryEntries: [
 									[defaultFactory.type, Promise.resolve(defaultFactory)],
 								],
-								requestHandlers: [innerRequestHandler],
 								runtimeOptions,
 							}),
 						},

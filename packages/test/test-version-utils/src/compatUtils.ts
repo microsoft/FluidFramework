@@ -4,9 +4,8 @@
  */
 
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
@@ -22,7 +21,6 @@ import {
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -121,9 +119,6 @@ export async function getVersionedTestObjectProviderFromApis(
 		driverConfig?.config,
 		apis.driver,
 	);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		// This cast is safe as ContainerRuntime.loadRuntime is used in ContainerRuntimeFactoryWithDefaultDataStore
-		(runtime as ContainerRuntime).resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -137,7 +132,6 @@ export async function getVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			[innerRequestHandler],
 		);
 	};
 
