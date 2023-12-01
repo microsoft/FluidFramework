@@ -199,13 +199,10 @@ export class CollaborationWindow {
     clientId: number;
     // (undocumented)
     collaborating: boolean;
-    // (undocumented)
     currentSeq: number;
     // (undocumented)
     loadFrom(a: CollaborationWindow): void;
-    // (undocumented)
     localSeq: number;
-    // (undocumented)
     minSeq: number;
 }
 
