@@ -15,6 +15,7 @@ import {
 	ModularChangeset,
 	FieldKindWithEditor,
 	NodeChangeInverter,
+	RemovedTreesFromChild,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -44,6 +45,7 @@ import {
 } from "../../utils";
 import {
 	ModularChangeFamily,
+	relevantDetachedTrees,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily";
@@ -638,6 +640,91 @@ describe("ModularChangeFamily", () => {
 
 			const actual = intoDelta(makeAnonChange(rootChange1a), family.fieldKinds);
 			assertDeltaEqual(actual, expectedDelta);
+		});
+	});
+
+	describe("relevantDetachedTrees", () => {
+		it("with content from different fields", () => {
+			const a1 = { major: "A", minor: 1 };
+			const a2 = { major: "A", minor: 2 };
+			const b1 = { major: "B", minor: 1 };
+			const c1 = { major: "C", minor: 1 };
+			const expected = [a1, a2, b1, c1];
+
+			const changeA = {};
+			const changeB = {};
+			const changeC = {};
+			const idA: FieldKindIdentifier = brand("FieldKindA");
+			const idB: FieldKindIdentifier = brand("FieldKindB");
+			const idC: FieldKindIdentifier = brand("FieldKindC");
+
+			const handlerA: FieldChangeHandler<any, any> = {
+				relevantRemovedTrees: (change: any) => {
+					assert.equal(change, changeA);
+					return [a1, a2];
+				},
+			} as unknown as FieldChangeHandler<any, any>;
+			const handlerB: FieldChangeHandler<any, any> = {
+				relevantRemovedTrees: (
+					change: any,
+					removedTreesFromChild: RemovedTreesFromChild,
+				) => {
+					assert.equal(change, changeB);
+					return [
+						b1,
+						...Array.from(
+							removedTreesFromChild({
+								fieldChanges: new Map([
+									[brand("fC"), { fieldKind: idC, change: brand(changeC) }],
+								]),
+							}),
+						),
+					];
+				},
+			} as unknown as FieldChangeHandler<any, any>;
+			const handlerC: FieldChangeHandler<any, any> = {
+				relevantRemovedTrees: (change: any) => {
+					assert.equal(change, changeC);
+					return [c1];
+				},
+			} as unknown as FieldChangeHandler<any, any>;
+			const kindA = new FieldKindWithEditor(
+				idA,
+				Multiplicity.Single,
+				handlerA,
+				() => false,
+				new Set(),
+			);
+			const kindB = new FieldKindWithEditor(
+				idB,
+				Multiplicity.Single,
+				handlerB,
+				() => false,
+				new Set(),
+			);
+			const kindC = new FieldKindWithEditor(
+				idC,
+				Multiplicity.Single,
+				handlerC,
+				() => false,
+				new Set(),
+			);
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: idA, change: brand(changeA) }],
+					[brand("fB"), { fieldKind: idB, change: brand(changeB) }],
+				]),
+			};
+
+			const mockFieldKinds = new Map([
+				[idA, kindA],
+				[idB, kindB],
+				[idC, kindC],
+			]);
+
+			const actual = relevantDetachedTrees(tagChange(input, undefined), mockFieldKinds);
+			const array = Array.from(actual);
+			assert.deepEqual(array, expected);
 		});
 	});
 

@@ -25,6 +25,7 @@ import {
 	ModularChangeset,
 	FieldEditDescription,
 	intoDelta as intoModularDelta,
+	relevantDetachedTrees as relevantModularDetachedTrees,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -62,6 +63,22 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  */
 export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.Root {
 	return intoModularDelta(taggedChange, fieldKinds);
+}
+
+/**
+ * Returns the set of detached trees that should be in memory for the given change to be applied.
+ * A detached tree is relevant if it is being restored or being edited (or both).
+ *
+ * May be conservative by returning more detached trees than strictly necessary.
+ *
+ * Will never return IDs for currently attached trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ */
+export function relevantDetachedTrees(
+	taggedChange: TaggedChange<ModularChangeset>,
+): Iterable<Delta.DetachedNodeId> {
+	return relevantModularDetachedTrees(taggedChange, fieldKinds);
 }
 
 /**

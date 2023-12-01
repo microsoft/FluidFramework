@@ -761,6 +761,45 @@ export class ModularChangeFamily
 }
 
 /**
+ * Returns the set of detached trees that should be in memory for the given change to be applied.
+ * A detached tree is relevant if it is being restored or being edited (or both).
+ *
+ * May be conservative by returning more detached trees than strictly necessary.
+ *
+ * Will never return IDs for currently attached trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ * @param fieldKinds - The field kinds to delegate to.
+ */
+export function* relevantDetachedTrees(
+	{ change, revision }: TaggedChange<ModularChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Iterable<Delta.DetachedNodeId> {
+	yield* relevantDetachedTreesFromFields(change.fieldChanges, revision, fieldKinds);
+}
+
+function* relevantDetachedTreesFromFields(
+	change: FieldChangeMap,
+	revision: RevisionTag | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Iterable<Delta.DetachedNodeId> {
+	for (const [_, fieldChange] of change) {
+		const fieldRevision = fieldChange.revision ?? revision;
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		const delegate = function* (node: NodeChangeset): Iterable<Delta.DetachedNodeId> {
+			if (node.fieldChanges !== undefined) {
+				yield* relevantDetachedTreesFromFields(
+					node.fieldChanges,
+					fieldRevision,
+					fieldKinds,
+				);
+			}
+		};
+		yield* handler.relevantRemovedTrees(fieldChange.change, delegate);
+	}
+}
+
+/**
  * @param change - The change to convert into a delta.
  * @param fieldKinds - The field kinds to delegate to.
  */

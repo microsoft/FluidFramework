@@ -220,6 +220,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	intoDelta,
+	relevantDetachedTrees,
 } from "./default-schema";
 
 export {
