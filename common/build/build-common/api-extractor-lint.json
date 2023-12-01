@@ -5,7 +5,7 @@
 */
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json",
+	"extends": "./api-extractor-base.json",
 	"apiReport": {
 		// Don't generate API report in lint pass
 		"enabled": false
