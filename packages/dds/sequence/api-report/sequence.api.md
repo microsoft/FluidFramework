@@ -168,9 +168,9 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     nextInterval(pos: number): TInterval | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
