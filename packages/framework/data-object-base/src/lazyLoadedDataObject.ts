@@ -26,7 +26,6 @@ export abstract class LazyLoadedDataObject<
 		TEvents extends IEvent = IEvent,
 	>
 	extends EventForwarder<TEvents>
-	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
 	private _handle?: IFluidHandle<this>;

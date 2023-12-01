@@ -166,6 +166,9 @@
 			},
 			"ClassDeclaration_PureDataObject": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataObjectProps": {
+				"backCompat": false
 			}
 		}
 	}

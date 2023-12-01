@@ -66,6 +66,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }

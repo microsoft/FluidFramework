@@ -113,13 +113,6 @@ export class FluidDataStoreRuntime
 	 */
 	public readonly entryPoint: IFluidHandle<FluidObject>;
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
 	}

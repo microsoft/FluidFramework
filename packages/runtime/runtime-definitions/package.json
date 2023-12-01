@@ -98,6 +98,9 @@
 			},
 			"InterfaceDeclaration_IDataStore": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"backCompat": false
 			}
 		}
 	}

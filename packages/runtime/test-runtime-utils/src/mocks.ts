@@ -605,13 +605,6 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
@@ -772,9 +765,6 @@ export class MockFluidDataStoreRuntime
 		return this.request(request);
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}

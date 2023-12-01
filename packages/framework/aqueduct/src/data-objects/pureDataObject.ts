@@ -29,7 +29,6 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**
