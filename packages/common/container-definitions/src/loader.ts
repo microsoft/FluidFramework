@@ -301,6 +301,14 @@ export type ConnectionState =
 	| ConnectionState.Connected;
 
 /**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @internal
+ */
+export interface LegacyIContainerWithRequest_Deprecated extends IContainer {
+	request(request: IRequest): Promise<IResponse>;
+}
+
+/**
  * The Host's view of a Container and its connection to storage
  * @internal
  */
