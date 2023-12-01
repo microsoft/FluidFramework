@@ -112,7 +112,7 @@ const entryPoint = await container.getEntryPoint();
 | `RuntimeRequestHandler` and `RuntimeRequestHandlerBuilder`                                   | 2.0.0-internal.7.0.0 |                      |
 | `request` and `IFluidRouter` on `IContainer` and `Container`                                 | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 | `request` on `IDataStore`                                                                    | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
-| `IFluidRouter` and `IProvideFluidRouter`                                                     | 2.0.0-internal.7.0.0 |                      |
+| `IFluidRouter` and `IProvideFluidRouter`                                                     | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 | `requestFluidObject`                                                                         | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 | `requestResolvedObjectFromContainer`                                                         | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
 | `getDefaultObjectFromContainer`, `getObjectWithIdFromContainer` and `getObjectFromContainer` | 2.0.0-internal.7.0.0 | 2.0.0-internal.8.0.0 |
