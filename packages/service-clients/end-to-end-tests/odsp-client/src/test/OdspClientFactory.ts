@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 
 import {
