@@ -300,7 +300,8 @@ export function assertNonNegativeSafeInteger(index: number) {
  * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
  * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
  * it will behave like `TInput` was used directly.
- * @beta
+ *
+ * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
@@ -444,7 +445,7 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @beta
+ * @alpha
  */
 export interface Named<TName> {
 	readonly name: TName;

@@ -20,7 +20,8 @@ import { FlexTreeNode } from "./flexTreeTypes";
 
 /**
  * An event raised on a {@link FlexTreeNode}.
- * @beta
+ *
+ * @alpha
  */
 export interface TreeEvent {
 	/**
@@ -39,7 +40,8 @@ export interface TreeEvent {
  * - Include sub-deltas in events.
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
- * @beta
+ *
+ * @alpha
  */
 export interface EditableTreeEvents {
 	/**

@@ -14,7 +14,7 @@ import { TreeNodeSchemaIdentifier } from "../../core";
  * However, they are otherwise preferential to use over {@link StableNodeKey}s as they are much smaller.
  * For example, they are more efficient than {@link StableNodeKey}s when used as keys in a map.
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
- * @beta
+ * @alpha
  */
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {}
 
@@ -22,7 +22,7 @@ export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Lo
  * A UUID which identifies a node in the tree.
  * This key is universally unique and stable forever; therefore it is safe to persist as data in a SharedTree or other DDS/database.
  * When not persisted or serialized, it is preferable to use a {@link LocalNodeKey} instead for better performance.
- * @beta
+ * @alpha
  */
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 

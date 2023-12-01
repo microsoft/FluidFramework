@@ -10,7 +10,7 @@ import { Brand, brand, brandedStringType } from "../../util";
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
- * @beta
+ * @alpha
  */
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
 	TName,
@@ -26,7 +26,7 @@ export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaId
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
  *
  * Stable identifier, used when persisting data.
- * @beta
+ * @alpha
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -47,11 +47,12 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
+ * @alpha
+ *
  * @privateRemarks
  * This is currently leaked into some persisted formats.
  * A full audit of persisted formats is needed,
  * and all types which are used in them should be moved to locations which indicated they are persisted, or duplicated into a persisted and non-persisted version with explicit encoding between them.
- * @beta
  */
 export enum ValueSchema {
 	Number,
@@ -89,7 +90,7 @@ export enum ValueSchema {
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
- * @beta
+ * @alpha
  */
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
 

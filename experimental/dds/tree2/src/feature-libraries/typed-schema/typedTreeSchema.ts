@@ -30,7 +30,7 @@ import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";
 
 /**
- * @beta
+ * @alpha
  */
 export interface Fields {
 	readonly [key: string]: TreeFieldSchema;
@@ -49,7 +49,7 @@ export type NormalizeObjectNodeFields<T extends Fields> = {
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
  * Therefore the type safety is the responsibility of the user of the API.
- * @beta
+ * @alpha
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
@@ -84,7 +84,7 @@ export abstract class TreeNodeSchemaBase<
 }
 
 /**
- * @beta
+ * @alpha
  */
 export class MapNodeSchema<
 	const out Name extends string = string,
@@ -111,7 +111,7 @@ export class MapNodeSchema<
 }
 
 /**
- * @beta
+ * @alpha
  */
 export class LeafNodeSchema<
 	const out Name extends string = string,
@@ -138,7 +138,7 @@ export class LeafNodeSchema<
 }
 
 /**
- * @beta
+ * @alpha
  */
 export class ObjectNodeSchema<
 	const out Name extends string = string,
@@ -190,7 +190,8 @@ export class ObjectNodeSchema<
 }
 
 /**
- * @beta
+ * @alpha
+ * TODO: replace (or subclass) this with more specific types, like "List".
  */
 export class FieldNodeSchema<
 	Name extends string = string,
@@ -269,7 +270,7 @@ function normalizeField<T extends TreeFieldSchema | undefined>(t: T): NormalizeF
 export const Any = "Any" as const;
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @beta
+ * @alpha
  */
 export type Any = typeof Any;
 
@@ -299,7 +300,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 /**
  * Subset of TreeFieldSchema thats legal in maps.
  * This requires empty to be a valid value for the map.
- * @beta
+ * @alpha
  */
 export type MapFieldSchema = TreeFieldSchema<
 	typeof FieldKinds.optional | typeof FieldKinds.sequence
@@ -318,7 +319,7 @@ export type MapFieldSchema = TreeFieldSchema<
  * @typeParam TTypes - The types allowed by the field.
  *
  * @sealed
- * @beta
+ * @alpha
  */
 export class TreeFieldSchema<
 	out TKind extends FieldKind = FieldKind,
@@ -460,7 +461,7 @@ export class TreeFieldSchema<
  * @remarks
  * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeNodeSchemaIdentifier}.
  * See {@link AllowedTypes} for a compile time optimized version.
- * @beta
+ * @alpha
  */
 export type AllowedTypeSet = Any | ReadonlySet<TreeNodeSchema>;
 

@@ -17,7 +17,7 @@ import { Covariant, isAny } from "./typeCheck";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
- * @beta
+ * @alpha
  */
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
@@ -40,7 +40,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * which is the common use-case for branding.
  *
  * @sealed
- * @beta
+ * @alpha
  */
 export abstract class BrandedType<out ValueType, Name extends string> {
 	protected _typeCheck?: Covariant<ValueType>;

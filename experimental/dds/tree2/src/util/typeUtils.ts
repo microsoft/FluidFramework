@@ -10,7 +10,7 @@
 /**
  * Return a type thats equivalent to the input, but with different IntelliSense.
  * This tends to convert unions and intersections into objects.
- * @beta
+ * @alpha
  */
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
 
@@ -81,7 +81,7 @@ export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @beta
+ * @alpha
  */
 export type _InlineTrick = 0;
 
