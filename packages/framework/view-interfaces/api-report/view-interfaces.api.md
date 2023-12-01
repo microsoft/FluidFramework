@@ -6,23 +6,23 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 
-// @public (undocumented)
+// @internal (undocumented)
 export const IFluidMountableView: keyof IProvideFluidMountableView;
 
-// @public
+// @internal
 export interface IFluidMountableView extends IProvideFluidMountableView {
     mount(container: HTMLElement): void;
     unmount(): void;
 }
 
-// @public
+// @internal
 export interface IFluidMountableViewClass {
     // (undocumented)
     new (view: FluidObject): IFluidMountableView;
     canMount(view: FluidObject): boolean;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProvideFluidMountableView {
     // (undocumented)
     readonly IFluidMountableView: IFluidMountableView;

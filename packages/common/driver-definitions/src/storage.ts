@@ -28,6 +28,9 @@ import {
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
+/**
+ * @internal
+ */
 export interface IDeltasFetchResult {
 	/**
 	 * Sequential set of messages starting from 'from' sequence number.
@@ -45,6 +48,7 @@ export interface IDeltasFetchResult {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @internal
  */
 export interface IDeltaStorageService {
 	/**
@@ -66,10 +70,14 @@ export interface IDeltaStorageService {
 	): Promise<IDeltasFetchResult>;
 }
 
+/**
+ * @internal
+ */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
+ * @internal
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -77,6 +85,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @internal
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -102,11 +111,15 @@ export interface IDocumentDeltaStorageService {
 // If a driver started using a larger value,
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
+/**
+ * @internal
+ */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
+ * @internal
  */
 export interface IDocumentStorageServicePolicies {
 	/**
@@ -127,6 +140,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
+ * @internal
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	repositoryUrl: string;
@@ -191,6 +205,9 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
@@ -202,6 +219,9 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "error", listener: (error: any) => void);
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
 		IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -280,6 +300,9 @@ export interface IDocumentDeltaConnection
 	submitSignal(content: any, targetClientId?: string): void;
 }
 
+/**
+ * @internal
+ */
 export enum LoaderCachingPolicy {
 	/**
 	 * The loader should not implement any prefetching or caching policy.
@@ -292,6 +315,9 @@ export enum LoaderCachingPolicy {
 	Prefetch,
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentServicePolicies {
 	/**
 	 * Do not connect to delta stream
@@ -304,6 +330,9 @@ export interface IDocumentServicePolicies {
 	readonly summarizeProtocolTree?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentService {
 	resolvedUrl: IResolvedUrl;
 
@@ -342,6 +371,9 @@ export interface IDocumentService {
 	dispose(error?: any): void;
 }
 
+/**
+ * @internal
+ */
 export interface IDocumentServiceFactory {
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
@@ -382,6 +414,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
+ * @internal
  */
 export interface ISummaryContext {
 	/**
@@ -397,6 +430,9 @@ export interface ISummaryContext {
 	readonly referenceSequenceNumber: number;
 }
 
+/**
+ * @internal
+ */
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",

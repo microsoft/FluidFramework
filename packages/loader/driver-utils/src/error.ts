@@ -9,7 +9,7 @@ import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
- * @public
+ * @internal
  */
 export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
 	// eslint-disable-next-line import/no-deprecated

@@ -21,18 +21,17 @@ const reservedIntervalIdKey = "intervalId";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
- * @public
+ * @internal
  */
 export class Interval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
 	public properties: PropertySet;
-	/** @internal */
+	/***/
 	public auxProps: PropertySet[] | undefined;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
 	constructor(
@@ -81,7 +80,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
-	 * @internal
 	 */
 	public serialize(): ISerializedInterval {
 		const serializedInterval: ISerializedInterval = {
@@ -152,7 +150,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @internal
 	 */
 	public union(b: Interval) {
 		return new Interval(
@@ -168,7 +165,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -190,7 +186,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @internal
 	 */
 	public modify(
 		label: string,
