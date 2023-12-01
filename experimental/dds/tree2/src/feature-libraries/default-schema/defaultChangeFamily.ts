@@ -25,7 +25,7 @@ import {
 	ModularChangeset,
 	FieldEditDescription,
 	intoDelta as intoModularDelta,
-	relevantDetachedTrees as relevantModularDetachedTrees,
+	relevantRemovedRoots as relevantModularDetachedTrees,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -75,7 +75,7 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.R
  *
  * @param change - The change to be applied.
  */
-export function relevantDetachedTrees(
+export function relevantRemovedRoots(
 	taggedChange: TaggedChange<ModularChangeset>,
 ): Iterable<Delta.DetachedNodeId> {
 	return relevantModularDetachedTrees(taggedChange, fieldKinds);

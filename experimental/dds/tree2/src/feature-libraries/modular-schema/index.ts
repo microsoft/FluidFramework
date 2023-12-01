@@ -55,5 +55,5 @@ export {
 	FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
-	relevantDetachedTrees,
+	relevantRemovedRoots,
 } from "./modularChangeFamily";

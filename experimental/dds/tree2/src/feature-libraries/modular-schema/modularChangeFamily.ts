@@ -761,24 +761,24 @@ export class ModularChangeFamily
 }
 
 /**
- * Returns the set of detached trees that should be in memory for the given change to be applied.
- * A detached tree is relevant if it is being restored or being edited (or both).
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if it is being restored or if its descendants are being edited (or both).
  *
- * May be conservative by returning more detached trees than strictly necessary.
+ * May be conservative by returning more removed roots than strictly necessary.
  *
- * Will never return IDs for currently attached trees, even if they are removed.
+ * Will never return IDs for non-root trees, even if they are removed.
  *
  * @param change - The change to be applied.
  * @param fieldKinds - The field kinds to delegate to.
  */
-export function* relevantDetachedTrees(
+export function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<Delta.DetachedNodeId> {
-	yield* relevantDetachedTreesFromFields(change.fieldChanges, revision, fieldKinds);
+	yield* relevantRemovedRootsFromFields(change.fieldChanges, revision, fieldKinds);
 }
 
-function* relevantDetachedTreesFromFields(
+function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	revision: RevisionTag | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
@@ -788,14 +788,10 @@ function* relevantDetachedTreesFromFields(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		const delegate = function* (node: NodeChangeset): Iterable<Delta.DetachedNodeId> {
 			if (node.fieldChanges !== undefined) {
-				yield* relevantDetachedTreesFromFields(
-					node.fieldChanges,
-					fieldRevision,
-					fieldKinds,
-				);
+				yield* relevantRemovedRootsFromFields(node.fieldChanges, fieldRevision, fieldKinds);
 			}
 		};
-		yield* handler.relevantRemovedTrees(fieldChange.change, delegate);
+		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
 

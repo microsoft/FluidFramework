@@ -22,7 +22,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	intoDelta,
-	relevantDetachedTrees,
+	relevantRemovedRoots,
 } from "./defaultChangeFamily";
 
 export { defaultSchemaPolicy } from "./defaultSchema";

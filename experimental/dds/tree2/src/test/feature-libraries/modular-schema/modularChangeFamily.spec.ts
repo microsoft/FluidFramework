@@ -15,7 +15,7 @@ import {
 	ModularChangeset,
 	FieldKindWithEditor,
 	NodeChangeInverter,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -45,7 +45,7 @@ import {
 } from "../../utils";
 import {
 	ModularChangeFamily,
-	relevantDetachedTrees as relevantDetachedTreesImplementation,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily";
@@ -651,15 +651,15 @@ describe("ModularChangeFamily", () => {
 			nested: HasRemovedRootsRefs[];
 		}
 		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
-			relevantRemovedTrees: (
+			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
-				removedTreesFromChild: RemovedTreesFromChild,
+				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 			) => {
 				return [
 					...change.shallow,
 					...change.nested.flatMap((c) =>
 						Array.from(
-							removedTreesFromChild({
+							relevantRemovedRootsFromChild({
 								fieldChanges: new Map([
 									[brand("nested"), { fieldKind, change: brand(c) }],
 								]),
@@ -678,7 +678,7 @@ describe("ModularChangeFamily", () => {
 		);
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
-		function relevantDetachedTrees(
+		function relevantRemovedRoots(
 			input: TaggedChange<ModularChangeset>,
 		): Delta.DetachedNodeId[] {
 			deepFreeze(input);
@@ -705,7 +705,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const actual = relevantDetachedTrees(makeAnonChange(input));
+			const actual = relevantRemovedRoots(makeAnonChange(input));
 			assert.deepEqual(actual, [a1, a2, b1]);
 		});
 
@@ -729,7 +729,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
 			};
 
-			const actual = relevantDetachedTrees(makeAnonChange(input));
+			const actual = relevantRemovedRoots(makeAnonChange(input));
 			assert.deepEqual(actual, [a1, c1]);
 		});
 
@@ -747,7 +747,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
 			};
 
-			const actual = relevantDetachedTrees(tagChange(input, major));
+			const actual = relevantRemovedRoots(tagChange(input, major));
 			assert.deepEqual(actual, [
 				{ major, minor: 1 },
 				{ major, minor: 2 },
