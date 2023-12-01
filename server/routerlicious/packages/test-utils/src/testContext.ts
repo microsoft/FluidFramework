@@ -20,6 +20,9 @@ interface IWaitOffset {
 	value: number;
 }
 
+/**
+ * @internal
+ */
 export class TestContext extends EventEmitter implements IContext {
 	public offset: number = -1;
 	private waits: IWaitOffset[] = [];
