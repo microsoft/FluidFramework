@@ -18,7 +18,6 @@ import {
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -29,14 +28,25 @@ import {
 	getGCTombstoneStateFromSummary,
 } from "./gcTestSummaryUtils.js";
 
-//* Update - Merge with the Tombstone one to cover both transitions
-
 /**
- * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
+ * Validates that an unreferenced datastore goes through all the GC phases without overlapping.
  */
-describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+//* ONLY
+describeNoCompat.only("GC unreference phases", (getTestObjectProvider) => {
+	//* TODO: Add asserts before each delay that the time hasn't already elapsed
+
 	const inactiveTimeoutMs = 100;
 	const sweepTimeoutMs = 200;
+	const tombstoneSweepDelayMs = 100; // So sweep at 300
 
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs };
@@ -86,14 +96,14 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
-	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to swept", async () => {
+	it("GC nodes follow the sequence [referenced, unreferenced, inactive, tombstoned, deleted]", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const { container, summarizer } = await loadSummarizer(mainContainer);
 
-		// create datastore and blob
+		// create datastore
 		const dataStore =
 			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataStoreHandle = dataStore.entryPoint;
@@ -101,24 +111,17 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 		const dataObject = (await dataStoreHandle.get()) as ITestDataObject;
 		const dataStoreId = dataObject._context.id;
 		const ddsHandle = dataObject._root.handle;
-		const blobContents = "Blob contents";
-		const blobHandle = await mainDataStore._runtime.uploadBlob(
-			stringToBuffer(blobContents, "utf-8"),
-		);
 
-		// store datastore and blob handles
+		// store datastore handles
 		mainDataStore._root.set("dataStore", dataStoreHandle);
-		mainDataStore._root.set("blob", blobHandle);
 
-		// unreference datastore and blob handles
+		// unreference datastore handles
 		mainDataStore._root.delete("dataStore");
-		mainDataStore._root.delete("blob");
 
-		// Summarize and verify datastore and blob are unreferenced and not tombstoned
+		// Summarize and verify datastore are unreferenced and not tombstoned
 		await provider.ensureSynchronized();
-		const summaryTree1 = (await summarizeNow(summarizer)).summaryTree;
-		// GC graph check
-		const gcState = getGCStateFromSummary(summaryTree1);
+		let summaryTree = (await summarizeNow(summarizer)).summaryTree;
+		const gcState = getGCStateFromSummary(summaryTree);
 		assert(gcState !== undefined, "Expected GC state to be generated");
 		assert(
 			gcState.gcNodes[dataStoreHandle.absolutePath] !== undefined,
@@ -128,83 +131,88 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 			gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !== undefined,
 			"Data Store should be unreferenced",
 		);
-		assert(
-			gcState.gcNodes[blobHandle.absolutePath] !== undefined,
-			"Blob should exist on gc graph",
-		);
-		assert(
-			gcState.gcNodes[blobHandle.absolutePath].unreferencedTimestampMs !== undefined,
-			"Blob should be unreferenced",
-		);
-		// GC Tombstone check
-		const tombstoneState1 = getGCTombstoneStateFromSummary(summaryTree1);
-		assert(tombstoneState1 === undefined, "Nothing should be tombstoned");
-		// GC Sweep check
-		const deletedState1 = getGCDeletedStateFromSummary(summaryTree1);
-		assert(deletedState1 === undefined, "Nothing should be swept");
+		let tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
+		assert(tombstoneState === undefined, "Nothing should be tombstoned");
+		let deletedState = getGCDeletedStateFromSummary(summaryTree);
+		assert(deletedState === undefined, "Nothing should be swept");
 		// Summary check
 		assert(
-			await isDataStoreInSummaryTree(summaryTree1, dataStoreId),
+			await isDataStoreInSummaryTree(summaryTree, dataStoreId),
 			"Data Store should be in the summary!",
 		);
 
+		//* TODO: Maybe use mockLogger to check for inactive logs?  Probably not
 		// Wait inactive timeout
 		await delay(inactiveTimeoutMs);
-		// Summarize and verify datastore and blob are unreferenced and not tombstoned
+		// Summarize and verify datastore is unreferenced and not tombstoned
 		// Functionally being inactive should have no effect on datastores
 		mainDataStore._root.set("send", "op");
 		await provider.ensureSynchronized();
-		const summaryTree2 = (await summarizeNow(summarizer)).summaryTree;
+		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 		// GC state is a handle meaning it is the same as before, meaning nothing is tombstoned.
-		assert(
-			summaryTree2.tree[gcTreeKey].type === SummaryType.Handle,
-			"GC tree should not have changed",
-		);
-		assert(
-			await isDataStoreInSummaryTree(summaryTree2, dataStoreId),
-			"Data Store should be in the summary!",
+		assert.equal(
+			summaryTree.tree[gcTreeKey].type,
+			SummaryType.Handle,
+			"GC tree should not have changed (indicated by incremental summary using the SummaryType.Handle)",
 		);
 
-		// Wait sweep timeout
-		await delay(sweepTimeoutMs);
+		// Wait the remainder of sweepTimeoutMs, trigger Tombstone
+		await delay(sweepTimeoutMs - inactiveTimeoutMs + 50);
 		mainDataStore._root.set("send", "op2");
 		await provider.ensureSynchronized();
-		const summary3 = await summarizeNow(summarizer);
-		const summaryTree3 = summary3.summaryTree;
+		summaryTree = (await summarizeNow(summarizer)).summaryTree;
+
+		const rootGCTree = summaryTree.tree[gcTreeKey];
+		assert.equal(rootGCTree?.type, SummaryType.Tree, `GC data should be a tree`);
+		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
+		// After sweepTimeoutMs the object should be tombstoned.
+		assert(tombstoneState !== undefined, "Should have tombstone state");
+		assert(
+			tombstoneState.includes(dataStoreHandle.absolutePath),
+			"Datastore should be tombstoned",
+		);
+
+		// Wait tombstoneSweepDelayMs to trigger Sweep
+		await delay(tombstoneSweepDelayMs);
+		mainDataStore._root.set("send", "op2");
+		await provider.ensureSynchronized();
+		const summaryWithObjectDeleted = await summarizeNow(summarizer);
+		summaryTree = summaryWithObjectDeleted.summaryTree;
 		// GC graph check
-		const gcState3 = getGCStateFromSummary(summaryTree3);
+		const gcState3 = getGCStateFromSummary(summaryTree);
 		assert(gcState3 !== undefined, "Expected GC state to be generated");
 		assert(
 			!(dataStoreHandle.absolutePath in gcState3.gcNodes),
 			"Data Store should not exist on gc graph",
 		);
 		// GC Tombstone check
-		const tombstoneState3 = getGCTombstoneStateFromSummary(summaryTree3);
-		assert(tombstoneState3 === undefined, "Nothing should be tombstoned");
+		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
+		assert(tombstoneState === undefined, "Nothing should be tombstoned");
 		// GC Sweep check
-		const deletedState3 = getGCDeletedStateFromSummary(summaryTree3);
-		assert(deletedState3 !== undefined, "Should have sweep state");
-		assert(deletedState3.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
-		assert(deletedState3.includes(ddsHandle.absolutePath), "DDS should be swept");
-		assert(deletedState3.length === 2, "Nothing else should have been swept");
+		deletedState = getGCDeletedStateFromSummary(summaryTree);
+		assert(deletedState !== undefined, "Should have sweep state");
+		assert(deletedState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
+		assert(deletedState.includes(ddsHandle.absolutePath), "DDS should be swept");
+		assert(deletedState.length === 2, "Nothing else should have been swept");
 		// Summary check
 		assert(
-			!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)),
+			!(await isDataStoreInSummaryTree(summaryTree, dataStoreId)),
 			"Data Store should not be in the summary!",
 		);
 
+		//* QUESTION: What about the return value IContainer of this load...?
 		await provider.loadTestContainer(testContainerConfig, {
-			[LoaderHeader.version]: summary3.summaryVersion,
+			[LoaderHeader.version]: summaryWithObjectDeleted.summaryVersion,
 		});
-		container.close();
+		container.close(); // The Summarizer Container
 
 		const { summarizer: remoteSummarizer } = await loadSummarizer(
 			mainContainer,
-			summary3.summaryVersion,
+			summaryWithObjectDeleted.summaryVersion,
 		);
-		const summaryTree4 = (await summarizeNow(remoteSummarizer)).summaryTree;
+		summaryTree = (await summarizeNow(remoteSummarizer)).summaryTree;
 		assert(
-			!(await isDataStoreInSummaryTree(summaryTree4, dataStoreId)),
+			!(await isDataStoreInSummaryTree(summaryTree, dataStoreId)),
 			"Data Store should not be in the summary!",
 		);
 	});
