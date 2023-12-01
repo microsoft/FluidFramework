@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
 import { UnreferencedState, UnreferencedStateTracker } from "../../gc";
 
+/** Schema for steps taken to test unreferenced state progression / tracking */
 type Steps = [
 	{
 		/** Start time (used as both local time and currentReferenceTimestampMs) */

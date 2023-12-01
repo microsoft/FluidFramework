@@ -30,8 +30,6 @@ import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
 import { configProvider } from "./gcUnitTestHelpers";
 
-//* Update SweepReady -> TombstoneReady and add new case for SweepReady (timeout = sweepTimeoutMs + tombstoneSweepDelayMs)
-
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
 	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
