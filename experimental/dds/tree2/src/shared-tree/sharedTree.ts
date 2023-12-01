@@ -178,7 +178,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const detachedTrees = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -187,7 +187,7 @@ export class SharedTree
 			options.summaryEncodeType,
 			options,
 		);
-		const detachedTreesSummarizer = new DetachedFieldIndexSummarizer(detachedTrees);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const defaultChangeFamily = new DefaultChangeFamily(options);
 		const changeFamily = makeMitigatedChangeFamily(
 			defaultChangeFamily,
@@ -212,7 +212,7 @@ export class SharedTree
 			},
 		);
 		super(
-			[schemaSummarizer, forestSummarizer, detachedTreesSummarizer],
+			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			id,
@@ -231,7 +231,7 @@ export class SharedTree
 			schema,
 			forest,
 			events: this._events,
-			detachedTrees,
+			removedRoots,
 		});
 	}
 

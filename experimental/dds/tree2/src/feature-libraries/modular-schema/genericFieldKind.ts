@@ -12,7 +12,7 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	RelevantDetachedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler";
 import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
@@ -102,7 +102,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return { local: markList };
 	},
-	relevantDetachedTrees,
+	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
@@ -212,11 +212,11 @@ export function newGenericChangeset(): GenericChangeset {
 	return [];
 }
 
-function* relevantDetachedTrees(
+function* relevantRemovedRoots(
 	change: GenericChangeset,
-	relevantDetachedTreesFromChild: RelevantDetachedTreesFromChild,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<Delta.DetachedNodeId> {
 	for (const { nodeChange } of change) {
-		yield* relevantDetachedTreesFromChild(nodeChange);
+		yield* relevantRemovedRootsFromChild(nodeChange);
 	}
 }

@@ -93,7 +93,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			],
 		};
 	},
-	relevantDetachedTrees: (change) => [],
+	relevantRemovedRoots: (change) => [],
 	isEmpty: (change: number) => change === 0,
 };
 

@@ -93,7 +93,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		return delta;
 	},
 
-	relevantDetachedTrees: (change) => [],
+	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
 };
 

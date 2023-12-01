@@ -28,20 +28,20 @@ export interface FieldChangeHandler<
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.FieldChanges;
 	/**
-	 * Returns the set of detached trees that should be in memory for the given change to be applied.
+	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A detached tree is relevant if it is being restored or being edited (or both).
 	 *
-	 * Implementations are allowed to be conservative by returning more detached trees than strictly necessary
+	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
 	 * (though they should, for the sake of performance, try to avoid doing so).
 	 *
-	 * Implementations are not allowed to return IDs for currently attached trees, even if they are removed.
+	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
 	 *
 	 * @param change - The change to be applied.
-	 * @param detachedTreesFromChild - Delegate for collecting relevant removed trees from child changes.
+	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
 	 */
-	readonly relevantDetachedTrees: (
+	readonly relevantRemovedRoots: (
 		change: TChangeset,
-		detachedTreesFromChild: RelevantDetachedTreesFromChild,
+		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 	) => Iterable<Delta.DetachedNodeId>;
 
 	/**
@@ -190,11 +190,11 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
- * A function that returns the set of detached trees that should be in memory for a given node changeset to be applied.
+ * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  *
  * @alpha
  */
-export type RelevantDetachedTreesFromChild = (
+export type RelevantRemovedRootsFromChild = (
 	child: NodeChangeset,
 ) => Iterable<Delta.DetachedNodeId>;
 
