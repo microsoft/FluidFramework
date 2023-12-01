@@ -38,6 +38,8 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
+// eslint-disable-next-line import/no-internal-modules
+import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
@@ -1089,16 +1091,17 @@ function extractContentIfProxy<T>(input: T): {
 		fromFactory = true;
 	}
 
+	const classKind = content instanceof NodeBase ? getNodeKind(content) : undefined;
 	// TODO: This checking could be made stronger by using `class-tree/Tree.schema(content).kind`
 	// to get the type when `content` is a proxy. At the moment, importing `Tree.schema` causes a cycle.
 	let type: "object" | "list" | "map" | "leaf";
 	if (isFluidHandle(content)) {
 		type = "leaf";
-	} else if (isReadonlyArray(content)) {
+	} else if (classKind === NodeKind.List || isReadonlyArray(content)) {
 		type = "list";
-	} else if (content instanceof Map) {
+	} else if (classKind === NodeKind.Map || content instanceof Map) {
 		type = "map";
-	} else if (content !== null && typeof content === "object") {
+	} else if (classKind === NodeKind.Object || (content !== null && typeof content === "object")) {
 		type = "object";
 	} else {
 		type = "leaf";
@@ -1157,4 +1160,9 @@ function modifyChildren<T extends FlexTreeNode>(
 	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
 	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
 	offNextChange();
+}
+
+// TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
+function getNodeKind(node: NodeBase): NodeKind | undefined {
+	return getClassSchema(getEditNode(node as TreeNode).schema)?.kind;
 }
