@@ -10,6 +10,9 @@ import {
 	SerializedIdCompressorWithOngoingSession,
 } from "./persisted-types";
 
+/**
+ * @internal
+ */
 export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
@@ -98,7 +101,7 @@ export interface IIdCompressorCore {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- *
+ * @internal
  */
 export interface IIdCompressor {
 	localSessionId: SessionId;

@@ -23,6 +23,7 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 
 /**
  * ! Note: This function is purely needed for back-compat as the constructor argument structure was changed
+ * @internal
  */
 export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	Base: typeof ContainerRuntimeFactoryWithDefaultDataStore = ContainerRuntimeFactoryWithDefaultDataStore,

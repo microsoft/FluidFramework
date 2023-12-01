@@ -37,20 +37,17 @@ const attributorTreeName = ".attributor";
 const opBlobName = "op";
 
 /**
- * @alpha
- * Feature Gate Key -
- * Whether or not a container runtime instantiated using `mixinAttributor`'s load should generate an attributor on
- * new files. See package README for more notes on integration.
+ * @internal
  */
 export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 
 /**
- * @alpha
+ * @internal
  */
 export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
 
 /**
- * @alpha
+ * @internal
  */
 export interface IProvideRuntimeAttributor {
 	readonly IRuntimeAttributor: IRuntimeAttributor;
@@ -61,7 +58,7 @@ export interface IProvideRuntimeAttributor {
  *
  * Attributors are only populated after the container runtime they are injected into has initialized.
  * @sealed
- * @alpha
+ * @internal
  */
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 	/**
@@ -84,7 +81,7 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 /**
  * @returns an IRuntimeAttributor for usage with `mixinAttributor`. The attributor will only be populated with data
  * once it's passed via scope to a container runtime load flow. See {@link mixinAttributor}.
- * @alpha
+ * @internal
  */
 export function createRuntimeAttributor(): IRuntimeAttributor {
 	return new RuntimeAttributor();
@@ -99,7 +96,7 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  * IRuntimeAttributor is passed via scope to load a document that never previously had attribution information,
  * that attributor's `has` method will always return `false`.
  * @param Base - base class, inherits from FluidAttributorRuntime
- * @alpha
+ * @internal
  */
 export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
 	class ContainerRuntimeWithAttributor extends Base {
