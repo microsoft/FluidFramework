@@ -169,9 +169,8 @@ function makeV0Codec<TNodeChange>(
 				decoded.revision = revision;
 			}
 			if (adjacentCells !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				decoded.adjacentCells = adjacentCells.map(([localId, count]) => ({
-					id: localId,
+				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
+					id,
 					count,
 				}));
 			}
