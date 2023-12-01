@@ -29,6 +29,7 @@ import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtil
  * - Rejects if failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event.
  * - Rejects after timeoutOptions.durationMs if timeoutOptions !== undefined and the container does not emit relevant
  * events, within that timeframe.
+ * @internal
  */
 export async function waitForContainerConnection(
 	container: IContainer,
@@ -53,6 +54,7 @@ export async function waitForContainerConnection(
  * This function should ONLY be used for back compat purposes
  * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
  * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
+ * @internal
  */
 export async function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T> {
 	if (container.getEntryPoint !== undefined) {

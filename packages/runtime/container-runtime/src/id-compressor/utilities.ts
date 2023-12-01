@@ -35,7 +35,7 @@ export function createSessionId(): SessionId {
 
 /**
  * Asserts that the given string is a stable ID.
- * @public
+ * @internal
  */
 export function assertIsStableId(stableId: string): StableId {
 	assert(isStableId(stableId), 0x4a3 /* Expected a StableId */);
@@ -52,7 +52,7 @@ export function assertIsSessionId(stableId: string): SessionId {
 
 /**
  * Generate a random stable ID
- * @public
+ * @internal
  */
 export function generateStableId(): StableId {
 	return assertIsStableId(v4());
@@ -61,7 +61,7 @@ export function generateStableId(): StableId {
 /**
  * Returns true iff the given string is a valid Version 4, variant 2 UUID
  * 'xxxxxxxx-xxxx-4xxx-vxxx-xxxxxxxxxxxx'
- * @public
+ * @internal
  */
 export function isStableId(str: string): str is StableId {
 	if (str.length !== 36) {
