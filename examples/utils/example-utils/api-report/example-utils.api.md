@@ -8,6 +8,7 @@ import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
 import { DataObjectTypes } from '@fluidframework/aqueduct';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
@@ -18,9 +19,9 @@ import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
+import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { ILoaderProps } from '@fluidframework/container-loader';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -36,10 +37,21 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 // @public
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
 
+// @public (undocumented)
+export function getDataStoreEntryPoint<T>(containerRuntime: IContainerRuntime, alias: string): Promise<T>;
+
 // @public
 export interface IDetachedModel<ModelType> {
     attach: () => Promise<string>;
     model: ModelType;
+}
+
+// @public (undocumented)
+export interface IFluidMountableViewEntryPoint {
+    // (undocumented)
+    getDefaultDataObject(): Promise<FluidObject>;
+    // (undocumented)
+    getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
 }
 
 // @public (undocumented)
@@ -94,6 +106,12 @@ export interface IMigratorEvents extends IEvent {
     (event: "migrated" | "migrating", listener: () => void): any;
     // (undocumented)
     (event: "migrationNotSupported", listener: (version: string) => void): any;
+}
+
+// @public (undocumented)
+export interface IModelContainerRuntimeEntryPoint<T> {
+    // (undocumented)
+    getModel(container: IContainer): Promise<T>;
 }
 
 // @public (undocumented)
@@ -154,9 +172,6 @@ export interface ISameContainerMigratorEvents extends IEvent {
 export interface IVersionedModel {
     readonly version: string;
 }
-
-// @public @deprecated
-export const makeModelRequestHandler: <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
@@ -229,9 +244,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     // (undocumented)
     supportsVersion(version: string): Promise<boolean>;
 }
-
-// @public
-export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
 
 // @public
 export type SameContainerMigrationState = "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "uploadingV2Summary" | "submittingV2Summary" | "migrated";

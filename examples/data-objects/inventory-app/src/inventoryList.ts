@@ -5,63 +5,48 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-	AllowedUpdateType,
 	ForestType,
-	ISharedTree,
-	ISharedTreeView,
-	SharedTreeFactory,
+	TreeFactory,
+	TreeViewOld,
 	typeboxValidator,
+	ITree,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Inventory, schema } from "./schema";
+import { Inventory, treeConfiguration } from "./schema";
 
 const treeKey = "tree";
 
-const factory = new SharedTreeFactory({
+const factory = new TreeFactory({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
 });
 
 export class InventoryList extends DataObject {
-	private _tree?: ISharedTree;
-	private _view?: ISharedTreeView;
+	#tree?: ITree;
+	#view?: TreeViewOld<Inventory>;
 
 	public get inventory(): Inventory {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._view!.root2(schema);
+		if (this.#view === undefined)
+			throw new Error("view should be initialized by hasInitialized");
+		return this.#view.root;
 	}
 
 	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(undefined, factory.type) as ISharedTree;
-		this.root.set(treeKey, this._tree.handle);
+		this.#tree = this.runtime.createChannel(undefined, factory.type) as ITree;
+		this.root.set(treeKey, this.#tree.handle);
 	}
 
 	protected async initializingFromExisting() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- map populated on creation by 'initializingFirstTime'.
-		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
+		const handle = this.root.get<IFluidHandle<ITree>>(treeKey);
+		if (handle === undefined)
+			throw new Error("map should be populated on creation by 'initializingFirstTime'");
+		this.#tree = await handle.get();
 	}
 
 	protected async hasInitialized() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- field initialized by initializing* methods.
-		this._view = this._tree!.schematizeView({
-			initialTree: {
-				// TODO: FieldNodes should not require wrapper object
-				parts: {
-					"": [
-						{
-							name: "nut",
-							quantity: 0,
-						},
-						{
-							name: "bolt",
-							quantity: 0,
-						},
-					],
-				},
-			},
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema,
-		});
+		if (this.#tree === undefined)
+			throw new Error("tree should be initialized by initializing* methods");
+		this.#view = this.#tree.schematize(treeConfiguration);
 	}
 }
 

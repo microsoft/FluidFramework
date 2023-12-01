@@ -32,7 +32,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.leaf.boolean",
                       "objectNodeFields": [],
@@ -83,7 +83,10 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [],
+                "content": {
+                  "version": 1,
+                  "data": []
+                },
                 "encoding": "utf-8"
               }
             }
@@ -98,8 +101,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": -1
+                  "maxId": -1
                 },
                 "encoding": "utf-8"
               }

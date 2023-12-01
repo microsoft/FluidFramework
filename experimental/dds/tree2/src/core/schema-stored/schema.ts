@@ -6,13 +6,16 @@
 import { Brand, brand, brandedStringType } from "../../util";
 
 /**
- * SchemaIdentifier for a TreeNode.
+ * Identifier for a TreeNode schema.
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
  * @alpha
  */
-export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentifier">;
+export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
+	TName,
+	"tree.TreeNodeSchemaIdentifier"
+>;
 
 /**
  * TypeBox Schema for encoding {@link TreeNodeSchemaIdentifiers} in persisted data.
@@ -58,14 +61,6 @@ export enum ValueSchema {
 	FluidHandle,
 	Null,
 }
-
-/**
- * {@link ValueSchema} for privative types.
- * @privateRemarks
- * TODO: remove when old editable tree API is removed.
- * @alpha
- */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
 /**
  * Set of allowed tree types.
@@ -129,15 +124,21 @@ export interface TreeFieldStoredSchema {
  * @remarks
  * This mainly show up in:
  * 1. The root default field for documents.
- * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
  * @alpha
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
@@ -209,5 +210,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

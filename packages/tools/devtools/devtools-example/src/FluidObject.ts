@@ -14,8 +14,6 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	valueSymbol,
-	typeNameSymbol,
 	leaf,
 } from "@fluid-experimental/tree2";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -238,7 +236,7 @@ export class AppData extends DataObject {
 
 		const schema = builder.intoSchema(rootNodeSchema);
 
-		sharedTree.schematize({
+		sharedTree.schematizeOld({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: {
@@ -246,19 +244,13 @@ export class AppData extends DataObject {
 					{
 						childField: "Hello world!",
 						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.string.name,
-								[valueSymbol]: "Hello world again!",
-							},
+							leafField: "Hello world again!",
 						},
 					},
 					{
 						childField: true,
 						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.boolean.name,
-								[valueSymbol]: false,
-							},
+							leafField: false,
 						},
 					},
 				],

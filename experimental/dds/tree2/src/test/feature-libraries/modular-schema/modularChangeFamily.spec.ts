@@ -13,8 +13,8 @@ import {
 	genericFieldKind,
 	FieldChange,
 	ModularChangeset,
-	RevisionInfo,
 	FieldKindWithEditor,
+	NodeChangeInverter,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -28,6 +28,9 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 	assertIsRevisionTag,
+	deltaForSet,
+	RevisionInfo,
+	revisionMetadataSourceFromInfo,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -39,8 +42,11 @@ import {
 	makeEncodingTestSuite,
 	testChangeReceiver,
 } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
+import {
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
 // Allows typechecking test data used in modulaChangeFamily's codecs.
 // eslint-disable-next-line import/no-internal-modules
@@ -49,11 +55,10 @@ import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change, 0),
+	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
-	amendInvert: () => fail("Not supported"),
-	amendRebase: (change, base, rebaseChild) => change,
+	prune: (change) => change,
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -67,7 +72,10 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild) => [deltaFromChild(change)],
+	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+		local: [{ count: 1, fields: deltaFromChild(change) }],
+	}),
+	relevantRemovedTrees: (change, removedTreesFromChild) => removedTreesFromChild(change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -91,7 +99,8 @@ const tag2: RevisionTag = mintRevisionTag();
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
 
-const detachId = { major: undefined, minor: 424242 };
+const detachId = { minor: 424242 };
+const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -318,6 +327,21 @@ describe("ModularChangeFamily", () => {
 				],
 			]),
 		};
+
+		it("prioritizes earlier build entries when faced with duplicates", () => {
+			const change1: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+			};
+			const change2: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+			};
+			assert.deepEqual(
+				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
+				change1,
+			);
+		});
 
 		it("compose specific ○ specific", () => {
 			const expectedCompose: ModularChangeset = {
@@ -556,69 +580,64 @@ describe("ModularChangeFamily", () => {
 
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1a)),
-				rootChange2,
+			const rebased = family.rebase(
+				rootChange1b,
+				makeAnonChange(rootChange1a),
+				revisionMetadataSourceFromInfo([]),
 			);
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase specific ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric)),
-				rootChange2,
+			const rebased = family.rebase(
+				rootChange1b,
+				makeAnonChange(rootChange1aGeneric),
+				revisionMetadataSourceFromInfo([]),
 			);
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ specific", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a)),
-				rootChange2,
+			const rebased = family.rebase(
+				rootChange1bGeneric,
+				makeAnonChange(rootChange1a),
+				revisionMetadataSourceFromInfo([]),
 			);
+			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ generic", () => {
-			assert.deepEqual(
-				family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
-				rootChange2Generic,
+			const rebased = family.rebase(
+				rootChange1bGeneric,
+				makeAnonChange(rootChange1aGeneric),
+				revisionMetadataSourceFromInfo([]),
 			);
+			assert.deepEqual(rebased, rootChange2Generic);
 		});
 	});
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const valueDelta1: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(1)],
-					oldContent: {
-						detachId,
+			const nodeDelta: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, deltaForSet(singleJsonCursor(1), buildId, detachId)],
+						]),
 					},
-				},
-			];
+				],
+			};
 
-			const valueDelta2: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(2)],
-					oldContent: {
-						detachId,
-					},
-				},
-			];
+			const expectedDelta: Delta.Root = {
+				fields: new Map([
+					[fieldA, nodeDelta],
+					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+				]),
+			};
 
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([[fieldA, valueDelta1]]),
-				},
-			];
-
-			const expectedDelta: Delta.Root = new Map([
-				[fieldA, nodeDelta],
-				[fieldB, valueDelta2],
-			]);
-
-			assertDeltaEqual(family.intoDelta(makeAnonChange(rootChange1a)), expectedDelta);
+			const actual = intoDelta(makeAnonChange(rootChange1a), family.fieldKinds);
+			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 
@@ -679,11 +698,15 @@ describe("ModularChangeFamily", () => {
 			composeChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev3, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -703,11 +726,15 @@ describe("ModularChangeFamily", () => {
 			rebaseChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -718,6 +745,28 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		let invertWasTested = false;
+		const invert: FieldChangeRebaser<RevisionTag[]>["invert"] = (
+			change: TaggedChange<RevisionTag[]>,
+			invertChild: NodeChangeInverter,
+			genId,
+			crossFieldManager,
+			{ getIndex, tryGetInfo },
+		): RevisionTag[] => {
+			const relevantRevisions = [rev3];
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
+			assert.deepEqual(revsIndices, [0]);
+			const expected: RevisionInfo[] = [{ revision: rev3, rollbackOf: rev0 }];
+			assert.deepEqual(revsInfos, expected);
+			invertWasTested = true;
+			return change.change;
+		};
+
 		const throwCodec = {
 			encode: () => fail("Should not be called"),
 			decode: () => fail("Should not be called"),
@@ -726,7 +775,8 @@ describe("ModularChangeFamily", () => {
 			rebaser: {
 				compose,
 				rebase,
-				amendRebase: (change: RevisionTag[]) => change,
+				invert,
+				prune: (change: RevisionTag[]) => change,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
@@ -790,9 +840,24 @@ describe("ModularChangeFamily", () => {
 		];
 		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
-		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
+		const rebased = dummyFamily.rebase(
+			changeC,
+			makeAnonChange(changeA),
+			revisionMetadataSourceFromInfo([
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, rollbackOf: rev2 },
+			]),
+		);
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
+		dummyFamily.invert(tagRollbackInverse(changeB, rev3, rev0), false);
+		assert(invertWasTested);
 	});
+
+	function ensureIndexDefined(index: number | undefined): number {
+		assert(index !== undefined, "Unexpected undefined index");
+		return index;
+	}
 });

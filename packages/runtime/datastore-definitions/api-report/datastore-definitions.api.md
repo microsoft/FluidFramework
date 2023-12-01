@@ -16,15 +16,12 @@ import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -115,19 +112,15 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly idCompressor?: IIdCompressor;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
-    // @deprecated (undocumented)
-    readonly IFluidRouter: IFluidRouter;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
-    // @deprecated (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }

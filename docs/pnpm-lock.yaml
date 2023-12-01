@@ -7,10 +7,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.9.0
+      '@fluid-tools/api-markdown-documenter': ^0.11.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
-      '@microsoft/api-extractor-model': ^7.27.3
       '@rushstack/node-core-library': ^3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -22,6 +21,7 @@ importers:
       glob: ^7.2.3
       http-server: ^14.1.1
       hugo-extended: ^0.113.0
+      js-yaml: ^4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1
       markdown-magic-package-json: ^2.0.2
@@ -38,7 +38,7 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.9.0
+      '@fluid-tools/api-markdown-documenter': 0.11.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
       '@microsoft/api-extractor-model': 7.27.6
@@ -53,6 +53,7 @@ importers:
       glob: 7.2.3
       http-server: 14.1.1
       hugo-extended: 0.113.0
+      js-yaml: 4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
       markdown-magic-package-json: 2.0.2
@@ -148,8 +149,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.9.0:
-    resolution: {integrity: sha512-u0CQq9x+Lq3g5ADwGLx/nOP1Rg2Wl6PQcqnYA+D1D3o8NjqrE8MR3kk/8XJ72cnOC5st3PglE5vIo9P00Iw9/Q==}
+  /@fluid-tools/api-markdown-documenter/0.11.1:
+    resolution: {integrity: sha512-eOHYkBqsMrWkDj+OLKyBCfRn/Yg99itzTLf9fSxI3SxZyAfix2+VBgHIhZs9D1AGmp3GSjBYHMABuWGIItBfGg==}
     dependencies:
       '@microsoft/api-documenter': 7.22.33
       '@microsoft/api-extractor-model': 7.27.6
@@ -238,14 +239,14 @@ packages:
       wrap-ansi-cjs: /wrap-ansi/7.0.0
     dev: false
 
-  /@microsoft/api-documenter/7.22.33:
-    resolution: {integrity: sha512-9UUe5Z/vbTlMQy3kbSqPaJN7e3CT4LsfNFyP8szfdQEHXiO6BV2ZwwYIUtbQObgaKt7foL4A/cqRMKqhRIi7VQ==}
+  /@microsoft/api-documenter/7.23.9:
+    resolution: {integrity: sha512-CvOy3JF0oCDm3GDqce3uFS9QGO72lfOEgVbvpje32O+ug/WoL8ITOg2jZszMtowuClasPbpEcEoVsHJJLePirg==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.27.6
+      '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.59.7
-      '@rushstack/ts-command-line': 4.15.2
+      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/ts-command-line': 4.16.1
       colors: 1.2.5
       js-yaml: 3.13.1
       resolve: 1.22.2
@@ -253,12 +254,12 @@ packages:
       - '@types/node'
     dev: false
 
-  /@microsoft/api-extractor-model/7.27.6:
-    resolution: {integrity: sha512-eiCnlayyum1f7fS2nA9pfIod5VCNR1G+Tq84V/ijDrKrOFVa598BLw145nCsGDMoFenV6ajNi2PR5WCwpAxW6Q==}
+  /@microsoft/api-extractor-model/7.28.2:
+    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.7
+      '@rushstack/node-core-library': 3.61.0
     transitivePeerDependencies:
       - '@types/node'
     dev: false
@@ -406,8 +407,8 @@ packages:
     resolution: {integrity: sha512-8KWZxzn6XKuy3iKRSAd2CHXSXneRlGCmH9h/qM7jYQDekp+U18oUzub5xqOqHS2PLUC+torOMYZxgAIO/fF86A==}
     dev: false
 
-  /@rushstack/ts-command-line/4.15.2:
-    resolution: {integrity: sha512-5+C2uoJY8b+odcZD6coEe2XNC4ZjGB4vCMESbqW/8DHRWC/qIHfANdmN9F1wz/lAgxz72i7xRoVtPY2j7e4gpQ==}
+  /@rushstack/ts-command-line/4.16.1:
+    resolution: {integrity: sha512-+OCsD553GYVLEmz12yiFjMOzuPeCiZ3f8wTiFHL30ZVXexTyPmgjwXEhg2K2P0a2lVf+8YBy7WtPoflB2Fp8/A==}
     dependencies:
       '@types/argparse': 1.0.38
       argparse: 1.0.10

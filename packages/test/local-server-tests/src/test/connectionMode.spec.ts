@@ -7,10 +7,8 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -24,7 +22,6 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";
@@ -69,12 +66,9 @@ describe("Logging Last Connection Mode ", () => {
 			"default",
 		);
 
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 		});
 
 		const urlResolver = new LocalResolver();
@@ -102,7 +96,7 @@ describe("Logging Last Connection Mode ", () => {
 
 		// Create the first container, component and DDSes.
 		container = await createContainer();
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

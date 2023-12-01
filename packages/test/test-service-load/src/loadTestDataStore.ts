@@ -4,18 +4,18 @@
  */
 
 import * as crypto from "crypto";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -129,7 +129,9 @@ export class LoadTestDataStoreModel {
 		// If we did not create the data store above, load it by getting its url.
 		if (gcDataStore === undefined) {
 			const gcDataStoreId = root.get(gcDataStoreIdKey);
-			const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+			const response = await (containerRuntime as ContainerRuntime).resolveHandle({
+				url: `/${gcDataStoreId}`,
+			});
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw new Error("GC data store not available");
 			}
@@ -746,9 +748,6 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
-
 export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
@@ -758,6 +757,5 @@ export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
 				Promise.resolve(LoadTestDataStoreInstantiationFactory),
 			],
 		]),
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});

@@ -258,7 +258,7 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
-	assert(endIndex > startIndex, 0x79c /* Range indices are malformed. */);
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
 }
@@ -303,7 +303,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  *
  * @alpha
  */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 /**
  * The counter used to generate deterministic stable ids for testing purposes.
@@ -455,11 +455,15 @@ export interface Named<TName> {
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
+ * @alpha
  */
-export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
+ * @privateRemarks
+ * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ * @alpha
  */
 export interface IDisposable {
 	/**

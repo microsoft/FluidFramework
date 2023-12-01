@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	prefixPath,
 	prefixFieldPath,
 	Any,
@@ -30,12 +30,12 @@ import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
 const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
 
-export const emptySchema = schemaBuilder.object("Empty Struct", {});
-const emptySchema2 = schemaBuilder.object("Empty Struct 2", {});
-const emptySchema3 = schemaBuilder.object("Empty Struct 3", {});
+export const emptySchema = schemaBuilder.object("Empty object", {});
+const emptySchema2 = schemaBuilder.object("Empty object 2", {});
+const emptySchema3 = schemaBuilder.object("Empty object 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.sequence(Any));
-// Struct with fixed shape
-export const structSchema = schemaBuilder.object("object", {
+// object with fixed shape
+export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
 
@@ -115,9 +115,9 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 		},
 	],
 	[
-		"fixed shape struct",
+		"fixed shape object",
 		{
-			type: structSchema.name,
+			type: objectSchema.name,
 			fields: {
 				child: [
 					{
@@ -129,14 +129,14 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 		},
 	],
 	[
-		"nested struct",
+		"nested object",
 		{
 			type: mapSchema.name,
 			fields: {
 				X: [
 					{ type: emptySchema2.name },
 					{
-						type: structSchema.name,
+						type: objectSchema.name,
 						fields: {
 							child: [
 								{
@@ -194,7 +194,7 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
 ): void {
 	function dataFromJsonableTree(data: JsonableTree): TData {
 		// Use text cursor to provide input data
-		return dataFromCursor(singleTextCursor(data));
+		return dataFromCursor(cursorForJsonableTreeNode(data));
 	}
 
 	testTreeCursor<TData, TCursor>({

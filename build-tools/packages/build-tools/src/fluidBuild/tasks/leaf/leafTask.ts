@@ -95,6 +95,8 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
+	// Gather all tasks that depending on this task, so we can use it compute the weight.
+	// Collecting  to make sure we don't double count the weight of the same task
 	private get parentLeafTasks(): Set<LeafTask> {
 		if (this._parentLeafTasks === null) {
 			// Circular dependency, start unrolling
@@ -117,7 +119,9 @@ export abstract class LeafTask extends Task {
 				if (e[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency: ${e.map((v) => v.nameColored).join("->")}`,
+						`Circular dependency in parent leaf tasks: ${e
+							.map((v) => v.nameColored)
+							.join("->")}`,
 					);
 				}
 			}
@@ -152,12 +156,12 @@ export abstract class LeafTask extends Task {
 		}
 		if (options.showExec) {
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
@@ -174,7 +178,12 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (ret.stderr) {
+		if (
+			ret.stderr &&
+			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
+			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
+			!ret.stderr.includes("Found 0 errors")
+		) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
@@ -273,12 +282,12 @@ export abstract class LeafTask extends Task {
 			}
 
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
 			const suffix = this.isIncremental ? "" : " (non-incremental)";
@@ -360,6 +369,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	protected getPackageFileFullPath(filePath: string): string {
+		if (path.isAbsolute(filePath)) {
+			return filePath;
+		}
 		return path.join(this.node.pkg.directory, filePath);
 	}
 

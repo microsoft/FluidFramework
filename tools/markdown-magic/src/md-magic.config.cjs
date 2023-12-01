@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs");
 const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
@@ -58,7 +59,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
-			`1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious).`,
+			`1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious).`,
 		);
 	}
 
@@ -137,6 +138,72 @@ const generateHelpSection = (includeHeading) => {
 };
 
 /**
+ * Generates simple Markdown contents indicating that the associated package is experimental.
+ */
+const generateExperimentalPackageNotice = () => {
+	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
+ * Generates simple Markdown contents indicating that the associated package is internal to the fluid-framework
+ * (published, but not intended for external consumption).
+ */
+const generateInternalPackageNotice = () => {
+	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
+ * Generates simple Markdown contents indicating that the associated package is private to the fluid-framework
+ * (unpublished - used only within the repo).
+ */
+const generatePrivatePackageNotice = () => {
+	const rawContents = readTemplate("Private-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
+ * Generates simple Markdown contents indicating implications of the specified kind of package scope.
+ *
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ */
+const generatePackageScopeNotice = (kind) => {
+	switch (kind) {
+		case "EXPERIMENTAL":
+			return generateExperimentalPackageNotice();
+		case "INTERNAL":
+			return generateInternalPackageNotice();
+		case "PRIVATE":
+			return generatePrivatePackageNotice();
+		default:
+			throw new Error(`Unrecognized package scope kind: ${kind}`);
+	}
+};
+
+/**
+ * Gets the appropriate scope kind for the provided package name.
+ *
+ * @param {string} packageName
+ * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ */
+const getScopeKindFromPackage = (packageName) => {
+	const packageScope = PackageName.getScope(packageName);
+	if (packageScope === `@fluid-experimental`) {
+		return "EXPERIMENTAL";
+	} else if (packageScope === `@fluid-internal`) {
+		return "INTERNAL";
+	} else if (packageScope === `@fluid-private`) {
+		return "PRIVATE";
+	} else {
+		return undefined;
+	}
+};
+
+/**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
  * to the path of the document being modified.
  *
@@ -210,6 +277,11 @@ function includeTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
@@ -237,9 +309,19 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	const sections = [generateDependencyGuidelines(true)];
+	const sections = [];
+
+	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
+	if (scopeKind !== undefined) {
+		sections.push(generatePackageScopeNotice(scopeKind));
+	}
+
 	if (options.installation !== "FALSE") {
-		sections.push(generateInstallationSection(packageName, options.devDependency, true));
+		sections.push(
+			generateDependencyGuidelines(true),
+			generateInstallationSection(packageName, options.devDependency, true),
+		);
 	}
 
 	if (options.apiDocs !== "FALSE") {
@@ -276,7 +358,7 @@ function libraryPackageReadmeTransform(content, options, config) {
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.gettingStarted - (optional) Whether or not to include developer getting started instructions section.
  * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious | Tinylicious}.
+ * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Only used if `gettingStarted` is specified.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
@@ -337,7 +419,7 @@ function examplePackageReadmeTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious | Tinylicious}.
+ * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
  * Default: `TRUE`.
@@ -383,6 +465,37 @@ function readmeInstallationSectionTransform(content, options, config) {
 	return formattedGeneratedContentBody(
 		generateInstallationSection(packageName, devDependency, includeHeading),
 	);
+}
+
+/**
+ * TODO
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} scopeKind - Scope kind to switch on.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmePackageScopeNoticeTransform(content, options, config) {
+	const { packageJsonPath, scopeKind } = options;
+
+	const packageMetadata = getPackageMetadataFromRelativePath(
+		config.originalPath,
+		packageJsonPath,
+	);
+	const packageName = packageMetadata.name;
+
+	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
+	if (scopeKindWithInheritance !== undefined) {
+		return generatePackageScopeNotice(scopeKindWithInheritance);
+	}
 }
 
 /**
@@ -495,6 +608,18 @@ module.exports = {
 		 * ```
 		 */
 		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
+
+		/**
+		 * See {@link readmePackageScopeNoticeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_PACKAGE_SCOPE_NOTICE: readmePackageScopeNoticeTransform,
 
 		/**
 		 * See {@link readmeApiDocsSectionTransform}.

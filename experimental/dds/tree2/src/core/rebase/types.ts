@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { Brand, brandedStringType, generateStableId } from "../../util";
+import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -48,6 +48,23 @@ export interface ChangeAtomId {
 	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 	 */
 	readonly localId: ChangesetLocalId;
+}
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
+
+/**
+ * @returns true iff `a` and `b` are the same.
+ */
+export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
+	return a.localId === b.localId && a.revision === b.revision;
 }
 
 /**

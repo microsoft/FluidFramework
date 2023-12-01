@@ -10,12 +10,19 @@ import {
 	IRandom,
 	createWeightedGenerator,
 	BaseFuzzTestState,
-} from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { brand, fail } from "../../../util";
-import { FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
-import { DownPath, TreeNode, toDownPath } from "../../../feature-libraries";
+	Weights,
+} from "@fluid-private/stochastic-test-utils";
+import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import {
+	ISharedTree,
+	ITreeCheckout,
+	FlexTreeView,
+	SharedTreeFactory,
+	TreeContent,
+} from "../../../shared-tree";
+import { brand, fail, getOrCreate } from "../../../util";
+import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -33,9 +40,27 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzViewFromTree, getEditableTree } from "./fuzzUtils";
+import { FuzzNode, fuzzNode, fuzzSchema, fuzzViewFromTree } from "./fuzzUtils";
 
-export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
+export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
+	// Schematized view of clients. Created lazily by viewFromState.
+	view2?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+}
+
+export function viewFromState(
+	state: FuzzTestState,
+	client: Client<SharedTreeFactory> = state.client,
+	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
+): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
+	state.view2 ??= new Map();
+	return getOrCreate(state.view2, client.channel, (tree) =>
+		tree.schematizeInternal({
+			initialTree,
+			schema: fuzzSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}),
+	);
+}
 
 /**
  * When performing an operation, a random field must be selected. Rather than enumerate all fields of the tree, this is
@@ -94,6 +119,7 @@ export interface EditGeneratorOpWeights {
 	abort: number;
 	undo: number;
 	redo: number;
+	move: number;
 	// This is explicitly all-or-nothing. If changing to be partially specifiable, the override logic to apply default values
 	// needs to be updated since this is a nested object.
 	fieldSelection: FieldSelectionWeights;
@@ -107,6 +133,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	abort: 0,
 	undo: 0,
 	redo: 0,
+	move: 0,
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
 };
@@ -148,9 +175,8 @@ export const makeEditGenerator = (
 	};
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			fuzzViewFromTree(tree),
+			viewFromState(state),
 			state.random,
 			weights.fieldSelection,
 			weights.fieldSelection.filter,
@@ -195,9 +221,8 @@ export const makeEditGenerator = (
 		(weights.fieldSelection.filter?.(fieldInfo) ?? true);
 
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			fuzzViewFromTree(tree),
+			viewFromState(state),
 			state.random,
 			weights.fieldSelection,
 			deletableFieldFilter,
@@ -233,11 +258,14 @@ export const makeEditGenerator = (
 				// It'd be reasonable to move this to config. The idea is that by avoiding large deletions,
 				// we're more likely to generate more interesting outcomes.
 				const count = state.random.integer(1, Math.min(3, field.length - start));
+				const node = field.at(start);
+				// We computed 'start' in a way that guarantees it's in-bounds, so at() shouldn't have returned undefined.
+				assert(node !== undefined, "Tried to access a node that doesn't exist");
 				return {
 					type: "sequence",
 					edit: {
 						type: "delete",
-						firstNode: downPathFromNode(field.at(start)),
+						firstNode: downPathFromNode(node),
 						count,
 					},
 				};
@@ -247,14 +275,52 @@ export const makeEditGenerator = (
 		}
 	};
 
-	const fieldEdit = createWeightedGenerator<FieldEditTypes, FuzzTestState>([
+	const move = (state: FuzzTestState): FieldEditTypes => {
+		const tree = state.client.channel;
+		const fieldInfo = selectTreeField(
+			viewFromState(state),
+			state.random,
+			weights.fieldSelection,
+			(f) => f.type === "sequence" && f.content.length > 0,
+		);
+		assert(fieldInfo.type === "sequence", "Move should only be performed on sequence fields");
+		const { content: field } = fieldInfo;
+		assert(field.length > 0, "Sequence must have at least one element to perform a move");
+
+		// This can be done in O(1) but it's more clear this way:
+		// Valid move indices are any index before or equal to the start of the sequence
+		// and after the end of the sequence.
+		const start = state.random.integer(0, field.length - 1);
+		const count = state.random.integer(1, field.length - start);
+		const validMoveIndices: number[] = [];
+		for (let i = 0; i < field.length; i++) {
+			if (i <= start || i > start + count) {
+				validMoveIndices.push(i);
+			}
+		}
+		const moveIndex = state.random.pick(validMoveIndices);
+		const node = field.at(start);
+		assert(node !== undefined, "Node should be defined at chosen index");
+
+		return {
+			type: "sequence",
+			edit: {
+				type: "move",
+				dstIndex: moveIndex,
+				count,
+				firstNode: downPathFromNode(node),
+			},
+		};
+	};
+
+	const fieldEdit = createWeightedGeneratorWithBailout<FieldEditTypes, FuzzTestState>([
 		[
 			insert,
 			weights.insert,
-			({ client, random }) =>
+			(state) =>
 				trySelectTreeField(
-					fuzzViewFromTree(client.channel),
-					random,
+					viewFromState(state),
+					state.random,
 					weights.fieldSelection,
 					weights.fieldSelection.filter,
 				) !== "no-valid-fields",
@@ -262,18 +328,37 @@ export const makeEditGenerator = (
 		[
 			deleteContent,
 			weights.delete,
-			({ client, random }) =>
+			(state) =>
 				trySelectTreeField(
-					fuzzViewFromTree(client.channel),
-					random,
+					viewFromState(state),
+					state.random,
 					weights.fieldSelection,
 					deletableFieldFilter,
+				) !== "no-valid-fields",
+		],
+		[
+			move,
+			weights.move,
+			(state) =>
+				trySelectTreeField(
+					viewFromState(state),
+					state.random,
+					weights.fieldSelection,
+					(f) => f.type === "sequence" && f.content.length > 0,
 				) !== "no-valid-fields",
 		],
 	]);
 
 	return (state) => {
 		const change = fieldEdit(state);
+		// This assert is typically hit when restricting the features a fuzz test executes such that it can reach a state
+		// where no edit is valid to generate. E.g. a fuzz test which can only create edits from within transactions but
+		// can never start a transaction, or a fuzz test which can only edit sequence fields but the tree is empty (and
+		// the root schema is an optional field).
+		assert(
+			change !== "no-valid-selections",
+			"Unable to generate a valid field edit. This typically indicates a problematic fuzz test generator setup.",
+		);
 		return change === done
 			? done
 			: {
@@ -400,7 +485,7 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
-function upPathFromNode(node: TreeNode): UpPath {
+function upPathFromNode(node: FlexTreeNode): UpPath {
 	const parentField = node.parentField.parent;
 
 	return {
@@ -410,11 +495,11 @@ function upPathFromNode(node: TreeNode): UpPath {
 	};
 }
 
-function downPathFromNode(node: TreeNode): DownPath {
+function downPathFromNode(node: FlexTreeNode): DownPath {
 	return toDownPath(upPathFromNode(node));
 }
 
-function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
+function maybeDownPathFromNode(node: FlexTreeNode | undefined): DownPath | undefined {
 	return node === undefined ? undefined : downPathFromNode(node);
 }
 
@@ -444,39 +529,14 @@ function selectField(
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
-): FuzzField | "no-valid-fields" {
-	const alreadyPickedOptions = new Set<string>();
-	const optional = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "optional", content: node.boxedOptionalChild } as const;
-		if (filter(field)) {
-			return field;
-		} else {
-			alreadyPickedOptions.add("optional");
-			return "no-valid-fields";
-		}
-	};
+): FuzzField | "no-valid-selections" {
+	const optional: FuzzField = { type: "optional", content: node.boxedOptionalChild } as const;
 
-	const value = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "required", content: node.boxedRequiredChild } as const;
-		if (filter(field)) {
-			return field;
-		} else {
-			alreadyPickedOptions.add("required");
-			return "no-valid-fields";
-		}
-	};
+	const value: FuzzField = { type: "required", content: node.boxedRequiredChild } as const;
 
-	const sequence = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "sequence", content: node.boxedSequenceChildren } as const;
-		if (filter(field)) {
-			return field;
-		} else {
-			alreadyPickedOptions.add("sequence");
-			return "no-valid-fields";
-		}
-	};
+	const sequence: FuzzField = { type: "sequence", content: node.boxedSequenceChildren } as const;
 
-	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-fields" => {
+	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
 		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 		// to the .is typeguard.
@@ -496,46 +556,32 @@ function selectField(
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
 			const childResult = selectField(child, random, weights, filter);
-			if (childResult !== "no-valid-fields") {
+			if (childResult !== "no-valid-selections") {
 				return childResult;
 			}
 		}
-		alreadyPickedOptions.add("child");
-		return "no-valid-fields";
+		return "no-valid-selections";
 	};
 
-	// If the test author passed any weights of 0, we don't want to rerun the below generator repeatedly when it will never
-	// produce other results.
-	const weightsArray = [weights.optional, weights.required, weights.sequence, weights.recurse];
-	const nonZeroWeights = weightsArray.filter((weight) => weight > 0);
-	const hasNotAlreadySelected = (name: string) => () => !alreadyPickedOptions.has(name);
-	const generator = createWeightedGenerator<FuzzField | "no-valid-fields", BaseFuzzTestState>([
-		[optional, weights.optional, hasNotAlreadySelected("optional")],
-		[value, weights.required, hasNotAlreadySelected("required")],
-		[sequence, weights.sequence, hasNotAlreadySelected("sequence")],
-		[recurse, weights.recurse, hasNotAlreadySelected("child")],
-		[
-			"no-valid-fields",
-			// Give this a reasonable chance of occurring. Ideally we'd have a little more control over the control flow here.
-			sumWeights(weightsArray) / 4,
-			() => alreadyPickedOptions.size === nonZeroWeights.length,
-		],
+	const generator = createWeightedGeneratorWithBailout<FuzzField, BaseFuzzTestState>([
+		[optional, weights.optional, () => filter(optional)],
+		[value, weights.required, () => filter(value)],
+		[sequence, weights.sequence, () => filter(sequence)],
+		[recurse, weights.recurse],
 	]);
-	let result: FuzzField | "no-valid-fields" | typeof done = "no-valid-fields";
-	do {
-		result = generator({ random });
-		assert(result !== done, "createWeightedGenerators should never return done");
-	} while (result === "no-valid-fields" && alreadyPickedOptions.size < 4);
+
+	const result = generator({ random });
+	assert(result !== done, "createWeightedGenerators should never return done");
 	return result;
 }
 
 function trySelectTreeField(
-	tree: ISharedTreeView,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	const editable = getEditableTree(tree);
+	const editable = tree.editableTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]
@@ -560,7 +606,7 @@ function trySelectTreeField(
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(fuzzNode)) {
 					const result = selectField(editable.content, random, weights, filter);
-					if (result !== "no-valid-fields") {
+					if (result !== "no-valid-selections") {
 						return result;
 					}
 				}
@@ -576,7 +622,7 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: ISharedTreeView,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
@@ -586,6 +632,67 @@ function selectTreeField(
 	return result;
 }
 
-function transactionsInProgress(tree: ISharedTreeView) {
+function transactionsInProgress(tree: ITreeCheckout) {
 	return tree.transaction.inProgress();
+}
+
+/**
+ * Like `createWeightedGenerator`, except it will only attempt to select each option once.
+ * If all options have been exhausted and no value other than 'no-valid-selections' is generated,
+ * it will return 'no-valid-selections'.
+ *
+ * This helps prevent infinite loops for bad fuzz config.
+ * Note: `T` cannot extend function, as otherwise `T | Generator<T>` cannot be distinguished.
+ */
+function createWeightedGeneratorWithBailout<T, TState extends BaseFuzzTestState>(
+	weights: Weights<T | "no-valid-selections", TState>,
+): Generator<T | "no-valid-selections", TState> {
+	const nonzeroWeights = weights.filter(([, weight]) => weight > 0);
+	const selectedIndices = new Set<number>();
+	const newWeights: Weights<T, TState> = nonzeroWeights.map(
+		([f, weight, acceptanceCondition], index) => [
+			(state) => {
+				selectedIndices.add(index);
+				if (typeof f === "function") {
+					const result = (f as Generator<T, TState>)(state);
+					assert(
+						typeof result !== "function",
+						"Generator should not return a function: this prevents correct type deduction.",
+					);
+					return result;
+				}
+				return f as T;
+			},
+			weight,
+			(state) => {
+				if (selectedIndices.has(index)) {
+					return false;
+				}
+				selectedIndices.add(index);
+				return acceptanceCondition?.(state) !== false;
+			},
+		],
+	);
+	const generator = createWeightedGenerator<T | "no-valid-selections", TState>([
+		...newWeights,
+		[
+			"no-valid-selections",
+			// The weight here is arbitrary: we select one that will be selected a reasonable portion of the time.
+			Math.max(
+				1,
+				sumWeights(nonzeroWeights.map(([, weight]) => weight)) / nonzeroWeights.length,
+			),
+			() => selectedIndices.size === nonzeroWeights.length,
+		],
+	]);
+
+	return (state: TState) => {
+		let result: T | "no-valid-selections" | typeof done = "no-valid-selections";
+		do {
+			result = generator(state);
+			assert(result !== done, "createWeightedGenerators should never return done");
+		} while (result === "no-valid-selections" && selectedIndices.size < nonzeroWeights.length);
+		selectedIndices.clear();
+		return result;
+	};
 }

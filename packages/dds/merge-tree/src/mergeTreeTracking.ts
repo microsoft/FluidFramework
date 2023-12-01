@@ -90,6 +90,9 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	}
 }
 
+/**
+ * A collection of {@link ITrackingGroup}.
+ */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;
 

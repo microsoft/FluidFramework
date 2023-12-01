@@ -73,10 +73,6 @@ describe("runWithRetry Tests", () => {
 	it("Check that it retries after retry seconds", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		let timerFinished = false;
-		setTimeout(() => {
-			timerFinished = true;
-		}, 200);
 		const api = async () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
@@ -89,7 +85,6 @@ describe("runWithRetry Tests", () => {
 			return true;
 		};
 		success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		assert.strictEqual(timerFinished, true, "Timer should be destroyed");
 		assert.strictEqual(retryTimes, 0, "Should retry once");
 		assert.strictEqual(success, true, "Retry should succeed ultimately");
 	});

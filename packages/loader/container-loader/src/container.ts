@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import merge from "lodash/merge";
-
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
@@ -14,9 +11,6 @@ import {
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	IRequest,
-	IResponse,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	FluidObject,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
@@ -40,6 +34,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -601,14 +596,6 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public get resolvedUrl(): IResolvedUrl | undefined {
 		/**
 		 * All attached containers will have a document service,
@@ -718,14 +705,14 @@ export class Container
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
-	public async getEntryPoint(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		if (this._disposed) {
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
 			return this._runtime.getEntryPoint?.();
 		}
-		return new Promise<FluidObject | undefined>((resolve, reject) => {
+		return new Promise<FluidObject>((resolve, reject) => {
 			const runtimeInstantiatedHandler = () => {
 				assert(
 					this._runtime !== undefined,
@@ -1112,12 +1099,16 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(): Promise<string> {
+	public async closeAndGetPendingLocalState(
+		stopBlobAttachingSignal?: AbortSignal,
+	): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
-		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
+		const pendingState = await this.getPendingLocalStateCore({
+			notifyImminentClosure: true,
+			stopBlobAttachingSignal,
+		});
 		this.close();
 		return pendingState;
 	}
@@ -1126,7 +1117,7 @@ export class Container
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
-	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
+	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -1341,18 +1332,6 @@ export class Container
 				}
 			},
 			{ start: true, end: true, cancel: "generic" },
-		);
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(path: IRequest): Promise<IResponse> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => this.runtime.request(path),
-			{ end: true, cancel: "error" },
 		);
 	}
 
@@ -1712,7 +1691,10 @@ export class Container
 		// replay saved ops
 		if (pendingLocalState) {
 			for (const message of pendingLocalState.savedOps) {
-				this.processRemoteMessage(message);
+				this.processRemoteMessage({
+					...message,
+					metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+				});
 
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
@@ -2005,7 +1987,14 @@ export class Container
 				  };
 
 		if (this.clientDetailsOverride !== undefined) {
-			merge(client.details, this.clientDetailsOverride);
+			client.details = {
+				...client.details,
+				...this.clientDetailsOverride,
+				capabilities: {
+					...client.details.capabilities,
+					...this.clientDetailsOverride.capabilities,
+				},
+			};
 		}
 		client.details.environment = [
 			client.details.environment,
@@ -2339,8 +2328,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(message: any) {
-		this._deltaManager.submitSignal(JSON.stringify(message));
+	private submitSignal(content: any, targetClientId?: string) {
+		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {
@@ -2434,7 +2423,7 @@ export class Container
 				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
-			(message) => this.submitSignal(message),
+			(content, targetClientId) => this.submitSignal(content, targetClientId),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
@@ -2517,7 +2506,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @experimental
+ * @alpha
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2525,7 +2514,7 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
@@ -2533,8 +2522,8 @@ export interface IContainerExperimental extends IContainer {
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @experimental
+	 * @alpha
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): Promise<string>;
+	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

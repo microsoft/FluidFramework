@@ -10,9 +10,10 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
+import { ISegmentLeaf } from "./mergeTree";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
+import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
@@ -104,6 +105,9 @@ export interface IRemovalInfo {
 	removedClientIds: number[];
 }
 
+/**
+ * @internal
+ */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
@@ -115,10 +119,88 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 }
 
 /**
+ * Tracks information about when and where this segment was moved to.
+ *
+ * Note that merge-tree does not currently support moving and only supports
+ * obliterate. The fields below include "move" in their names to avoid renaming
+ * in the future, when moves _are_ supported.
+ */
+export interface IMoveInfo {
+	/**
+	 * Local seq at which this segment was moved if the move is yet-to-be
+	 * acked.
+	 */
+	localMovedSeq?: number;
+
+	/**
+	 * The first seq at which this segment was moved.
+	 */
+	movedSeq: number;
+
+	/**
+	 * All seqs at which this segment was moved. In the case of overlapping,
+	 * concurrent moves this array will contain multiple seqs.
+	 *
+	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
+	 *
+	 * The first element corresponds to the seq of the first move
+	 */
+	movedSeqs: number[];
+
+	/**
+	 * A reference to the inserted destination segment corresponding to this
+	 * segment's move.
+	 *
+	 * If undefined, the move was an obliterate.
+	 *
+	 * Currently this field is unused, as we only support obliterate operations
+	 */
+	moveDst?: ReferencePosition;
+
+	/**
+	 * List of client IDs that have moved this segment.
+	 *
+	 * The client that actually moved the segment (i.e. whose move op was sequenced
+	 * first) is stored as the first client in this list. Other clients in the
+	 * list have all issued concurrent ops to move the segment.
+	 */
+	movedClientIds: number[];
+
+	/**
+	 * If this segment was inserted into a concurrently moved range and
+	 * the move op was sequenced before the insertion op. In this case,
+	 * the segment is visible only to the inserting client
+	 *
+	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
+	 * a segment inserted by a remote client is moved on insertion by a local
+	 * and unacked obliterate, we do not consider it as having been moved
+	 * on insert
+	 *
+	 * If a segment is moved on insertion, its length is only ever visible to
+	 * the client that inserted the segment. This is relevant in partial length
+	 * calculations
+	 */
+	wasMovedOnInsert: boolean;
+}
+
+export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
+	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
+		return maybe as IMoveInfo;
+	}
+	assert(
+		maybe?.movedClientIds === undefined &&
+			maybe?.movedSeq === undefined &&
+			maybe?.movedSeqs === undefined &&
+			maybe?.wasMovedOnInsert === undefined,
+		"movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set",
+	);
+}
+
+/**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
  */
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
@@ -191,13 +273,19 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
+
+	/**
+	 * Add properties to this segment via annotation.
+	 *
+	 * @remarks This function should not be called directly. Properties should
+	 * be added through the `annotateRange` functions.
+	 */
 	addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback?: PropertiesRollback,
-	): PropertySet | undefined;
+	): PropertySet;
 	clone(): ISegment;
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
@@ -214,13 +302,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * @throws - error if the segment state doesn't match segment group or op.
 	 * E.g. if the segment group is not first in the pending queue, or
 	 * an inserted segment does not have unassigned sequence number.
+	 *
+	 * @internal
 	 */
 	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-}
-
-export interface IMarkerModifiedAction {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(marker: Marker): void;
 }
 
 export interface ISegmentAction<TClientData> {
@@ -276,18 +361,9 @@ export interface NodeAction<TClientData> {
 
 /**
  * @internal
- * */
-export interface BlockUpdateActions {
-	child: (block: IMergeBlock, index: number) => void;
-}
-
-/**
- * @internal
  */
 export interface InsertContext {
 	candidateSegment?: ISegment;
-	prepareEvents?: boolean;
-	structureChange?: boolean;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
@@ -306,15 +382,10 @@ export interface SegmentActions<TClientData> {
 /**
  * @internal
  */
-export interface SearchResult {
-	text: string;
-	pos: number;
-}
-
 export interface SegmentGroup {
-	segments: ISegment[];
+	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
-	localSeq: number;
+	localSeq?: number;
 	refSeq: number;
 }
 
@@ -384,6 +455,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
 	public removedClientIds?: number[];
+	public movedSeq?: number;
+	public movedSeqs?: number[];
+	public movedClientIds?: number[];
+	public wasMovedOnInsert?: boolean | undefined;
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/**
@@ -396,12 +471,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public abstract readonly type: string;
 	public localSeq?: number;
 	public localRemovedSeq?: number;
+	public localMovedSeq?: number;
 
 	public addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
@@ -409,9 +484,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
-			op,
 			seq,
-			collabWindow?.collaborating,
+			collaborating,
 			rollback,
 		);
 	}
@@ -420,7 +494,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		return !!this.properties && this.properties[key] !== undefined;
 	}
 
-	public isLeaf() {
+	public isLeaf(): this is ISegment {
 		return true;
 	}
 
@@ -431,6 +505,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
 		b.removedSeq = this.removedSeq;
+		b.movedClientIds = this.movedClientIds?.slice();
+		b.movedSeq = this.movedSeq;
+		b.movedSeqs = this.movedSeqs;
+		b.wasMovedOnInsert = this.wasMovedOnInsert;
 		b.seq = this.seq;
 		b.attribution = this.attribution?.clone();
 	}
@@ -447,6 +525,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
+	/**
+	 * @internal
+	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -484,42 +565,68 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				}
 				return false;
 
+			case MergeTreeDeltaType.OBLITERATE:
+				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
+				assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
+				this.localMovedSeq = undefined;
+				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+				assert(seqIdx !== -1, "expected movedSeqs to contain unacked seq");
+				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+
+				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+					return true;
+				}
+
+				return false;
+
 			default:
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
 		}
 	}
 
 	public splitAt(pos: number): ISegment | undefined {
-		if (pos > 0) {
-			const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
-			if (leafSegment) {
-				this.copyPropertiesTo(leafSegment);
-				// eslint-disable-next-line @typescript-eslint/no-this-alias
-				const thisAsMergeSegment: IMergeLeaf = this;
-				leafSegment.parent = thisAsMergeSegment.parent;
-
-				// Give the leaf a temporary yet valid ordinal.
-				// when this segment is put in the tree, it will get its real ordinal,
-				// but this ordinal meets all the necessary invariants for now.
-				leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
-
-				leafSegment.removedClientIds = this.removedClientIds?.slice();
-				leafSegment.removedSeq = this.removedSeq;
-				leafSegment.localRemovedSeq = this.localRemovedSeq;
-				leafSegment.seq = this.seq;
-				leafSegment.localSeq = this.localSeq;
-				leafSegment.clientId = this.clientId;
-				this.segmentGroups.copyTo(leafSegment);
-				this.trackingCollection.copyTo(leafSegment);
-				if (this.localRefs) {
-					this.localRefs.split(pos, leafSegment);
-				}
-				if (this.attribution) {
-					leafSegment.attribution = this.attribution.splitAt(pos);
-				}
-			}
-			return leafSegment;
+		if (pos <= 0) {
+			return undefined;
 		}
+
+		const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
+
+		if (!leafSegment) {
+			return undefined;
+		}
+
+		this.copyPropertiesTo(leafSegment);
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const thisAsMergeSegment: IMergeLeaf = this;
+		leafSegment.parent = thisAsMergeSegment.parent;
+
+		// Give the leaf a temporary yet valid ordinal.
+		// when this segment is put in the tree, it will get its real ordinal,
+		// but this ordinal meets all the necessary invariants for now.
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+
+		leafSegment.removedClientIds = this.removedClientIds?.slice();
+		leafSegment.removedSeq = this.removedSeq;
+		leafSegment.localRemovedSeq = this.localRemovedSeq;
+		leafSegment.seq = this.seq;
+		leafSegment.localSeq = this.localSeq;
+		leafSegment.clientId = this.clientId;
+		leafSegment.movedClientIds = this.movedClientIds?.slice();
+		leafSegment.movedSeq = this.movedSeq;
+		leafSegment.movedSeqs = this.movedSeqs?.slice();
+		leafSegment.localMovedSeq = this.localMovedSeq;
+		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+		this.segmentGroups.copyTo(leafSegment);
+		this.trackingCollection.copyTo(leafSegment);
+		if (this.localRefs) {
+			this.localRefs.split(pos, leafSegment);
+		}
+		if (this.attribution) {
+			leafSegment.attribution = this.attribution.splitAt(pos);
+		}
+
+		return leafSegment;
 	}
 
 	private copyPropertiesTo(other: ISegment) {
@@ -561,6 +668,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
+/**
+ * The special-cased property key that tracks the id of a {@link Marker}.
+ *
+ * @remarks In general, marker ids should be accessed using the inherent method
+ * {@link Marker.getId}. Marker ids should not be updated after creation.
+ */
 export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
@@ -568,7 +681,16 @@ export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
-export class Marker extends BaseSegment implements ReferencePosition {
+/**
+ * Markers are a special kind of segment that do not hold any content.
+ *
+ * Markers with a reference type of {@link ReferenceType.Tile} support spatially
+ * accelerated queries for finding the next marker to the left or right of it in
+ * sub-linear time. This is useful, for example, in the case of jumping from the
+ * start of a paragraph to the end, assuming a paragraph is bound by markers at
+ * the start and end.
+ */
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
 	public static is(segment: ISegment): segment is Marker {
 		return segment.type === Marker.type;
@@ -615,10 +737,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
 		return 0;
 	}
 
-	hasSimpleType(simpleTypeName: string) {
-		return !!this.properties && this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
-	}
-
 	getProperties() {
 		return this.properties;
 	}
@@ -644,6 +762,9 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 }
 
+/**
+ * @internal
+ */
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
@@ -667,22 +788,12 @@ export const compareNumbers = (a: number, b: number) => a - b;
 
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
-export interface IConsensusInfo {
-	marker: Marker;
-	callback: (m: Marker) => void;
-}
-
-export interface SegmentAccumulator {
-	segments: ISegment[];
-}
 /**
- * @internal
+ * Get a human-readable string for a given {@link Marker}.
+ *
+ * @remarks This function is intended for debugging only. The exact format of
+ * this string should not be relied upon between versions.
  */
-export interface MinListener {
-	minRequired: number;
-	onMinGE(minSeq: number): void;
-}
-
 export function debugMarkerToString(marker: Marker): string {
 	let bbuf = "";
 	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {

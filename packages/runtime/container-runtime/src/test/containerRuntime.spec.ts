@@ -33,13 +33,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IErrorBase,
-	IRequest,
-	IResponse,
-	FluidObject,
-	IGenericError,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IResponse, FluidObject, IGenericError } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
@@ -441,12 +435,12 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 
 			it("By default, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.ok(
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -468,14 +462,15 @@ describe("Runtime", () => {
 			});
 
 			it("If option enabled, enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					runtimeOptions: {
 						enableOpReentryCheck: true,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() =>
@@ -495,16 +490,17 @@ describe("Runtime", () => {
 			});
 
 			it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
 						"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
 					}) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+					registryEntries: [],
+					runtimeOptions: {
 						enableOpReentryCheck: true,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				containerRuntime.ensureNoDataModelChanges(() =>
 					containerRuntime.submitDataStoreOp("id", "test"),
@@ -521,12 +517,12 @@ describe("Runtime", () => {
 
 			it("Report at most 5 reentrant ops", async () => {
 				const mockLogger = new MockLogger();
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({}, mockLogger) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, mockLogger) as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				mockLogger.clear();
 				containerRuntime.ensureNoDataModelChanges(() => {
@@ -545,14 +541,15 @@ describe("Runtime", () => {
 			});
 
 			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -562,12 +559,12 @@ describe("Runtime", () => {
 			});
 
 			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				const callback = () => {
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -1169,61 +1166,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Supports mixin classes", () => {
-			it("old load method works", async () => {
-				const makeMixin = <T>(
-					Base: typeof ContainerRuntime,
-					methodName: string,
-					methodReturn: T,
-				) =>
-					class MixinContainerRuntime extends Base {
-						public static async load(
-							context: IContainerContext,
-							registryEntries: NamedFluidDataStoreRegistryEntries,
-							requestHandler?:
-								| ((
-										request: IRequest,
-										runtime: IContainerRuntime,
-								  ) => Promise<IResponse>)
-								| undefined,
-							runtimeOptions?: IContainerRuntimeOptions,
-							containerScope?: FluidObject,
-							existing?: boolean | undefined,
-							containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
-						): Promise<ContainerRuntime> {
-							return Base.load(
-								context,
-								registryEntries,
-								requestHandler,
-								runtimeOptions,
-								containerScope,
-								existing,
-								containerRuntimeCtor,
-							);
-						}
-
-						public [methodName](): T {
-							return methodReturn;
-						}
-					} as typeof ContainerRuntime;
-
-				const runtime = await makeMixin(
-					makeMixin(ContainerRuntime, "method1", "mixed in return"),
-					"method2",
-					42,
-				).load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
-
-				assert.equal(
-					(runtime as unknown as { method1: () => any }).method1(),
-					"mixed in return",
-				);
-				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
-			});
-
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
 					Base: typeof ContainerRuntime,
@@ -1279,32 +1221,6 @@ describe("Runtime", () => {
 		});
 
 		describe("EntryPoint initialized correctly", () => {
-			it("when using old load method", async () => {
-				const myResponse: IResponse = {
-					mimeType: "fluid/object",
-					value: "hello!",
-					status: 200,
-				};
-				const containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[], // registryEntries
-					async (req, ctrRuntime) => myResponse,
-					{}, // runtimeOptions
-					undefined, // containerScope
-					false, // existing
-					undefined, // containerRuntimeCtor
-				);
-				const request: IRequest = { url: "myUrl" };
-
-				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request(request);
-				assert.deepEqual(
-					responseFromRequestMethod,
-					myResponse,
-					"request method in runtime did not return the expected object",
-				);
-			});
-
 			it("when using new loadRuntime method", async () => {
 				const myEntryPoint: FluidObject = {
 					myProp: "myValue",
@@ -1345,7 +1261,9 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				const responseFromRequestMethod = await (containerRuntime as any).request({
+					url: "/",
+				});
 				assert.deepEqual(
 					responseFromRequestMethod,
 					myResponse,

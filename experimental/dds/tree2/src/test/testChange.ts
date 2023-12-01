@@ -15,10 +15,11 @@ import {
 	FieldKey,
 	emptyDelta,
 	RevisionTag,
+	deltaForSet,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -56,7 +57,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -163,34 +164,28 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {
 			hasMajor.major = revision;
 		}
-		return {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{
-							type: Delta.MarkType.Insert,
-							oldContent: { detachId: { ...hasMajor, minor: 424242 } },
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: change.intentions.map(String).join("|"),
-								}),
-							],
-						},
-					],
-				],
-			]),
-		};
+		const buildId = { ...hasMajor, minor: 424243 };
+		return new Map([
+			[
+				brand("foo"),
+				deltaForSet(
+					cursorForJsonableTreeNode({
+						type: brand("test"),
+						value: change.intentions.map(String).join("|"),
+					}),
+					buildId,
+					{ ...hasMajor, minor: 424242 },
+				),
+			],
+		]);
 	}
-	return { type: Delta.MarkType.Modify };
+	return new Map();
 }
 
 export interface AnchorRebaseData {
@@ -281,12 +276,16 @@ const rootKey: FieldKey = brand("root");
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does note represent a concrete change to a document tree.
+ * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
 export function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
+	return intentions.length === 0
+		? emptyDelta
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(
@@ -299,7 +298,6 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
 }

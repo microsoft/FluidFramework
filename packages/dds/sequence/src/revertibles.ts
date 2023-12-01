@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-bitwise */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
@@ -19,7 +20,9 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
 	getSlideToSegoff,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
+import { InteriorSequencePlace, Side } from "./intervalCollection";
 import { IntervalOpType, SequenceInterval } from "./intervals";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
@@ -32,8 +35,6 @@ import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 const idMap = new Map<string, string>();
-
-type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
  * Data for undoing edits affecting Intervals.
@@ -393,13 +394,22 @@ function getSlidePosition(string: SharedString, lref: LocalReferencePosition, po
 		: pos;
 }
 
-function isValidRange(start: number, end: number, string: SharedString) {
+function isValidRange(
+	start: number,
+	startSlide: SlidingPreference | undefined,
+	end: number,
+	endSlide: SlidingPreference | undefined,
+	string: SharedString,
+) {
 	return (
 		start >= 0 &&
 		start < string.getLength() &&
 		end >= 0 &&
 		end < string.getLength() &&
-		start <= end
+		(start < end ||
+			(start === end &&
+				(startSlide === SlidingPreference.FORWARD ||
+					endSlide !== SlidingPreference.FORWARD)))
 	);
 }
 
@@ -410,6 +420,26 @@ function revertLocalAdd(
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
+}
+
+function createSequencePlace(
+	pos: number,
+	newSlidingPreference: SlidingPreference | undefined,
+	oldSlidingPreference: SlidingPreference | undefined = undefined,
+): number | InteriorSequencePlace {
+	return newSlidingPreference === SlidingPreference.BACKWARD ||
+		(newSlidingPreference === undefined && oldSlidingPreference === SlidingPreference.BACKWARD)
+		? {
+				pos,
+				side: Side.After,
+		  }
+		: newSlidingPreference === SlidingPreference.FORWARD &&
+		  oldSlidingPreference === SlidingPreference.BACKWARD
+		? {
+				pos,
+				side: Side.Before,
+		  }
+		: pos; // Avoid setting side if possible since stickiness may not be enabled
 }
 
 function revertLocalDelete(
@@ -424,10 +454,18 @@ function revertLocalDelete(
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
-	if (isValidRange(startSlidePos, endSlidePos, string)) {
+	if (
+		isValidRange(
+			startSlidePos,
+			revertible.start.slidingPreference,
+			endSlidePos,
+			revertible.end.slidingPreference,
+			string,
+		)
+	) {
 		const int = collection.add({
-			start: startSlidePos,
-			end: endSlidePos,
+			start: createSequencePlace(startSlidePos, revertible.start.slidingPreference),
+			end: createSequencePlace(endSlidePos, revertible.end.slidingPreference),
 			props,
 		});
 
@@ -454,8 +492,30 @@ function revertLocalChange(
 	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
-	if (isValidRange(startSlidePos, endSlidePos, string)) {
-		collection.change(id, startSlidePos, endSlidePos);
+	const interval = collection.getIntervalById(id);
+	if (
+		interval !== undefined &&
+		isValidRange(
+			startSlidePos,
+			revertible.start.slidingPreference ?? interval.start.slidingPreference,
+			endSlidePos,
+			revertible.end.slidingPreference ?? interval.end.slidingPreference,
+			string,
+		)
+	) {
+		collection.change(
+			id,
+			createSequencePlace(
+				startSlidePos,
+				revertible.start.slidingPreference,
+				interval.start.slidingPreference,
+			),
+			createSequencePlace(
+				endSlidePos,
+				revertible.end.slidingPreference,
+				interval.end.slidingPreference,
+			),
+		);
 	}
 
 	string.removeLocalReferencePosition(revertible.start);
@@ -543,8 +603,20 @@ function revertLocalSequenceRemove(
 			const end =
 				newEndpointPosition(intervalInfo.endOffset, restoredRanges, sharedString) ??
 				sharedString.localReferencePositionToPosition(interval.end);
-			if (start <= end) {
-				intervalCollection.change(intervalId, start, end);
+			if (
+				isValidRange(
+					start,
+					interval.start.slidingPreference,
+					end,
+					interval.end.slidingPreference,
+					sharedString,
+				)
+			) {
+				intervalCollection.change(
+					intervalId,
+					createSequencePlace(start, interval.start.slidingPreference),
+					createSequencePlace(end, interval.end.slidingPreference),
+				);
 			}
 		}
 	});
@@ -565,6 +637,7 @@ function revertLocalSequenceRemove(
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
 					{ revertible: revertibleRef.revertible },
+					revertibleRef.revertible.start.slidingPreference,
 				);
 				revertibleRef.revertible.start = newRef;
 			} else {
@@ -574,6 +647,7 @@ function revertLocalSequenceRemove(
 					pos.offset,
 					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 					{ revertible: revertibleRef.revertible },
+					revertibleRef.revertible.end.slidingPreference,
 				);
 				revertibleRef.revertible.end = newRef;
 			}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	annotateRange,
 	doOverRange,

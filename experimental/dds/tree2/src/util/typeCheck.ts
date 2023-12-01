@@ -72,14 +72,16 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Use this as the type of a protected field to cause a type to use nominal typing instead of structural.
  *
- * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- *
+ * @remarks
+ * Using nominal typing in this way prevents assignment of objects which are not instances of this class to values of this class's type.
+ * Classes which are used with "instanceof", or are supposed to be instantiated in particular ways (not just made with object literals)
+ * can use this to prevent undesired assignments.
  * @example
- *
  * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
- *
+ * @privateRemarks
+ * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  * @alpha
  */
 export interface MakeNominal {}
@@ -148,13 +150,12 @@ export type requireFalse<_X extends false> = true;
 /**
  * Returns a type parameter that is true iff Source is assignable to Destination.
  *
+ * @privateRemarks
+ * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
  * @alpha
  */
-export type isAssignableTo<Source, Destination> = isAny<Source> extends true
-	? true
-	: Source extends Destination
-	? true
-	: false;
+export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
@@ -189,10 +190,13 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 /**
  * Returns a type parameter that is true iff T is any.
  *
+ * @privateRemarks
+ * Only `never` is assignable to `never` (`any` isn't),
+ * but `any` distributes over the `extends` here while nothing else should.
+ * This can be used to detect `any`.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 /**
  * Compile time assert that A is assignable to (extends) B.

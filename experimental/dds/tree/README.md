@@ -1,5 +1,14 @@
 # @fluid-experimental/tree
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 
 -   Transactional editing and snapshot isolation

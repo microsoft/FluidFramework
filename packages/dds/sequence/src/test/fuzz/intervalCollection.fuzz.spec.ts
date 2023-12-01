@@ -9,8 +9,8 @@ import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
 	takeAsync as take,
-} from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/stochastic-test-utils";
+import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection, Side } from "../../intervalCollection";
@@ -38,6 +38,7 @@ export function makeOperationGenerator(
 	const {
 		startPosition,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -173,6 +174,7 @@ export function makeOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],

@@ -19,6 +19,9 @@ import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
+/**
+ * @public
+ */
 export const blobHeadersBlobName = ".metadata.blobHeaders";
 const metadataBlobName = ".metadata";
 
@@ -32,6 +35,7 @@ const metadataBlobName = ".metadata";
  * In case, the markup blob is present, it is expected that the first byte of the markup blob
  * will contain the info about the compression. If the first byte is not present, it is assumed
  * that the compression is not enabled and no first prefix byte is present in the blobs.
+ * @public
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
 	private _isCompressionEnabled: boolean = false;

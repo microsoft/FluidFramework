@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { List, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
-	private readonly segmentGroups: List<SegmentGroup>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
 	constructor(private readonly segment: ISegment) {
-		this.segmentGroups = new List<SegmentGroup>();
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
 	public get size() {
@@ -21,15 +21,24 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.empty;
 	}
 
+	/**
+	 * @internal
+	 */
 	public enqueue(segmentGroup: SegmentGroup) {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
+	/**
+	 * @internal
+	 */
 	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
+	/**
+	 * @internal
+	 */
 	public pop?(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}

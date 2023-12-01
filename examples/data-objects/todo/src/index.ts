@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BaseContainerRuntimeFactory,
-	// ContainerRuntimeFactoryWithDefaultDataStore,
-	// eslint-disable-next-line import/no-deprecated
-	mountableViewRequestHandler,
-} from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+import {
+	IFluidMountableViewEntryPoint,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 import { Todo, TodoFactory, TodoView } from "./Todo";
 import { TodoItem, TodoItemView } from "./TodoItem";
@@ -33,53 +31,26 @@ const getDirectLink = (itemId: string) => {
 	return `${urlToContainer}/${itemId}`;
 };
 
-// The todoRequestHandler provides a TodoView for an empty request, or a TodoItemView for a request with the item id.
-// Since we wrap it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the
-// requester includes the mountableView request header.
-const todoRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-	// This handler will provide a TodoView for requests of length 0, or a TodoItemView for requests of length 1.
-	// Otherwise return nothing.
-	if (request.pathParts.length > 1) {
-		return undefined;
-	}
-
-	const objectRequest = RequestParser.create({
-		url: ``,
-		headers: request.headers,
-	});
-	// eslint-disable-next-line import/no-deprecated
-	const todo = await requestFluidObject<Todo>(
-		await runtime.getRootDataStore(todoId),
-		objectRequest,
-	);
-
-	if (request.pathParts.length === 0) {
-		const viewResponse = React.createElement(TodoView, { todoModel: todo, getDirectLink });
-		return { status: 200, mimeType: "fluid/object", value: viewResponse };
+const getTodoView = async (todoObject: Todo, path?: string) => {
+	if (path === undefined || path.length === 0) {
+		return React.createElement(TodoView, { todoModel: todoObject, getDirectLink });
 	} else {
-		// To get a TodoItem, we first get the Todo and then retrieve the specific item.
-		// The downside of this approach is that we must realize the Todo to get at its TodoItems (rather than
-		// accessing them directly).  But the positive is that we can use encapsulated handles rather than making
-		// assumptions about the ids or making the TodoItems roots.
-		const todoItemId = request.pathParts[0];
-
 		// This retry logic really shouldn't be necessary -- we should be able to get the TodoItem straightaway.
 		// This is working around a bug (?) where we are starting before reaching connected state so we might not
 		// have seen the op setting the handle in the map yet.
 		let todoItem: TodoItem | undefined;
 		while (todoItem === undefined) {
 			const todoItemsChangedP = new Promise<void>((resolve) => {
-				todo.once("todoItemsChanged", () => {
+				todoObject.once("todoItemsChanged", () => {
 					resolve();
 				});
 			});
-			todoItem = await todo.getTodoItem(todoItemId);
+			todoItem = await todoObject.getTodoItem(path);
 			if (todoItem === undefined) {
 				await todoItemsChangedP;
 			}
 		}
-		const viewResponse = React.createElement(TodoItemView, { todoItemModel: todoItem });
-		return { status: 200, mimeType: "fluid/object", value: viewResponse };
+		return React.createElement(TodoItemView, { todoItemModel: todoItem });
 	}
 };
 
@@ -87,14 +58,25 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	constructor() {
 		super({
 			registryEntries: new Map([TodoFactory.registryEntry]),
-			// eslint-disable-next-line import/no-deprecated
-			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
-			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(todoId);
-				if (entryPoint === undefined) {
-					throw new Error("default dataStore must exist");
-				}
-				return entryPoint.get();
+			provideEntryPoint: async (
+				runtime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
+				const todoDataObject = await getDataStoreEntryPoint<Todo>(runtime, todoId);
+
+				const getDefaultView = async (path?: string): Promise<any> =>
+					getTodoView(todoDataObject, path);
+
+				return {
+					getDefaultDataObject: async () => todoDataObject as FluidObject,
+					getMountableDefaultView: async (path?: string) => {
+						const view = await getDefaultView(path);
+						if (MountableView.canMount(view)) {
+							return new MountableView(view);
+						}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						return view;
+					},
+				};
 			},
 		});
 	}

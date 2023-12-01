@@ -81,7 +81,12 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
-	isSkipMark,
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,
@@ -97,6 +102,7 @@ export {
 	DetachedFieldIndex,
 	ForestRootId,
 	getDetachedFieldContainingPath,
+	aboveRootPlaceholder,
 } from "./tree";
 
 export {
@@ -121,7 +127,6 @@ export {
 	TreeSchemaIdentifierSchema,
 	TreeFieldStoredSchema,
 	ValueSchema,
-	PrimitiveValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -131,11 +136,6 @@ export {
 	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	fieldSchema,
-	TreeSchemaBuilder,
-	emptyMap,
-	emptySet,
-	treeSchema,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
@@ -146,6 +146,7 @@ export {
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
+	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
@@ -156,6 +157,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -168,7 +170,12 @@ export {
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
+	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "./rebase";
 
 export {

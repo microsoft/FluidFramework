@@ -84,8 +84,8 @@ export class InMemoryStoredSchemaRepository
 		return this.data.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-		return this.data.treeSchema;
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+		return this.data.nodeSchema;
 	}
 
 	public update(newSchema: TreeStoredSchema): void {
@@ -93,9 +93,9 @@ export class InMemoryStoredSchemaRepository
 
 		this.data.rootFieldSchema = newSchema.rootFieldSchema;
 
-		this.data.treeSchema.clear();
-		for (const [name, schema] of newSchema.treeSchema) {
-			this.data.treeSchema.set(name, schema);
+		this.data.nodeSchema.clear();
+		for (const [name, schema] of newSchema.nodeSchema) {
+			this.data.nodeSchema.set(name, schema);
 		}
 		this.invalidateDependents();
 		this.events.emit("afterSchemaChange", newSchema);
@@ -104,21 +104,21 @@ export class InMemoryStoredSchemaRepository
 
 export interface MutableSchemaData extends TreeStoredSchema {
 	rootFieldSchema: TreeFieldStoredSchema;
-	treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
-	return data.treeSchema.size === 0;
+	return data.nodeSchema.size === 0;
 }
 
 export const defaultSchemaData: TreeStoredSchema = {
-	treeSchema: new Map(),
+	nodeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,
 };
 
 export function cloneSchemaData(data: TreeStoredSchema): MutableSchemaData {
 	return {
-		treeSchema: new Map(data?.treeSchema ?? []),
+		nodeSchema: new Map(data?.nodeSchema ?? []),
 		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
 	};
 }

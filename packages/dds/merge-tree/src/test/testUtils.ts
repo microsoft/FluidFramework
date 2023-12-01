@@ -12,6 +12,7 @@ import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { UnassignedSequenceNumber } from "../constants";
 import { LocalReferenceCollection } from "../localReference";
 import { loadText } from "./text";
 
@@ -180,22 +181,30 @@ function getPartialLengths(
 
 	const isInserted = (segment: ISegment) =>
 		segment.seq === undefined ||
-		(segment.seq !== -1 && segment.seq <= seq) ||
+		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
 		(localSeq !== undefined &&
-			segment.seq === -1 &&
+			segment.seq === UnassignedSequenceNumber &&
 			segment.localSeq !== undefined &&
 			segment.localSeq <= localSeq);
 
 	const isRemoved = (segment: ISegment) =>
 		segment.removedSeq !== undefined &&
 		((localSeq !== undefined &&
-			segment.removedSeq === -1 &&
+			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
 			segment.localRemovedSeq <= localSeq) ||
-			(segment.removedSeq !== -1 && segment.removedSeq <= seq));
+			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
+
+	const isMoved = (segment: ISegment) =>
+		segment.movedSeq !== undefined &&
+		((localSeq !== undefined &&
+			segment.movedSeq === UnassignedSequenceNumber &&
+			segment.localMovedSeq !== undefined &&
+			segment.localMovedSeq <= localSeq) ||
+			(segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq <= seq));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
-		if (isInserted(segment) && !isRemoved(segment)) {
+		if (isInserted(segment) && !isRemoved(segment) && !isMoved(segment)) {
 			actualLen += segment.cachedLength;
 		}
 		return true;

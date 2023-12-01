@@ -9,12 +9,8 @@ import {
 	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
-	IRequest,
-	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -112,8 +108,9 @@ export interface IFluidDataStoreRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Returns the current quorum.
@@ -135,15 +132,4 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }

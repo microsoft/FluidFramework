@@ -5,7 +5,6 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -13,7 +12,6 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 
 export { ITelemetryBaseEvent }
 
@@ -23,20 +21,14 @@ export { ITelemetryBaseLogger }
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @public
-export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
-    // @internal (undocumented)
-    protected createServiceMember(audienceMember: IClient): TinyliciousMember;
-}
-
-// @public
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
 }

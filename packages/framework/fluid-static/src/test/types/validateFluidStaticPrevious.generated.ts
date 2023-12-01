@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ContainerSchema():
     TypeOnly<old.ContainerSchema>;
 declare function use_current_InterfaceDeclaration_ContainerSchema(
-    use: TypeOnly<current.ContainerSchema>);
+    use: TypeOnly<current.ContainerSchema>): void;
 use_current_InterfaceDeclaration_ContainerSchema(
     get_old_InterfaceDeclaration_ContainerSchema());
 
@@ -41,33 +41,21 @@ use_current_InterfaceDeclaration_ContainerSchema(
 declare function get_current_InterfaceDeclaration_ContainerSchema():
     TypeOnly<current.ContainerSchema>;
 declare function use_old_InterfaceDeclaration_ContainerSchema(
-    use: TypeOnly<old.ContainerSchema>);
+    use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
     get_current_InterfaceDeclaration_ContainerSchema());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DOProviderContainerRuntimeFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DOProviderContainerRuntimeFactory():
-    TypeOnly<old.DOProviderContainerRuntimeFactory>;
-declare function use_current_ClassDeclaration_DOProviderContainerRuntimeFactory(
-    use: TypeOnly<current.DOProviderContainerRuntimeFactory>);
-use_current_ClassDeclaration_DOProviderContainerRuntimeFactory(
-    get_old_ClassDeclaration_DOProviderContainerRuntimeFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DOProviderContainerRuntimeFactory": {"backCompat": false}
+* "RemovedClassDeclaration_DOProviderContainerRuntimeFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DOProviderContainerRuntimeFactory():
-    TypeOnly<current.DOProviderContainerRuntimeFactory>;
-declare function use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
-    use: TypeOnly<old.DOProviderContainerRuntimeFactory>);
-use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
-    get_current_ClassDeclaration_DOProviderContainerRuntimeFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -77,7 +65,7 @@ use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
 declare function get_old_TypeAliasDeclaration_DataObjectClass():
     TypeOnly<old.DataObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<current.DataObjectClass<any>>);
+    use: TypeOnly<current.DataObjectClass<any>>): void;
 use_current_TypeAliasDeclaration_DataObjectClass(
     get_old_TypeAliasDeclaration_DataObjectClass());
 
@@ -89,33 +77,21 @@ use_current_TypeAliasDeclaration_DataObjectClass(
 declare function get_current_TypeAliasDeclaration_DataObjectClass():
     TypeOnly<current.DataObjectClass<any>>;
 declare function use_old_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<old.DataObjectClass<any>>);
+    use: TypeOnly<old.DataObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_DataObjectClass(
     get_current_TypeAliasDeclaration_DataObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_FluidContainer": {"forwardCompat": false}
+* "RemovedClassDeclaration_FluidContainer": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_FluidContainer():
-    TypeOnly<old.FluidContainer>;
-declare function use_current_ClassDeclaration_FluidContainer(
-    use: TypeOnly<current.FluidContainer>);
-use_current_ClassDeclaration_FluidContainer(
-    get_old_ClassDeclaration_FluidContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_FluidContainer": {"backCompat": false}
+* "RemovedClassDeclaration_FluidContainer": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_FluidContainer():
-    TypeOnly<current.FluidContainer>;
-declare function use_old_ClassDeclaration_FluidContainer(
-    use: TypeOnly<old.FluidContainer>);
-use_old_ClassDeclaration_FluidContainer(
-    get_current_ClassDeclaration_FluidContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -125,7 +101,7 @@ use_old_ClassDeclaration_FluidContainer(
 declare function get_old_InterfaceDeclaration_IConnection():
     TypeOnly<old.IConnection>;
 declare function use_current_InterfaceDeclaration_IConnection(
-    use: TypeOnly<current.IConnection>);
+    use: TypeOnly<current.IConnection>): void;
 use_current_InterfaceDeclaration_IConnection(
     get_old_InterfaceDeclaration_IConnection());
 
@@ -137,7 +113,7 @@ use_current_InterfaceDeclaration_IConnection(
 declare function get_current_InterfaceDeclaration_IConnection():
     TypeOnly<current.IConnection>;
 declare function use_old_InterfaceDeclaration_IConnection(
-    use: TypeOnly<old.IConnection>);
+    use: TypeOnly<old.IConnection>): void;
 use_old_InterfaceDeclaration_IConnection(
     get_current_InterfaceDeclaration_IConnection());
 
@@ -149,7 +125,7 @@ use_old_InterfaceDeclaration_IConnection(
 declare function get_old_InterfaceDeclaration_IFluidContainer():
     TypeOnly<old.IFluidContainer>;
 declare function use_current_InterfaceDeclaration_IFluidContainer(
-    use: TypeOnly<current.IFluidContainer>);
+    use: TypeOnly<current.IFluidContainer>): void;
 use_current_InterfaceDeclaration_IFluidContainer(
     get_old_InterfaceDeclaration_IFluidContainer());
 
@@ -161,7 +137,7 @@ use_current_InterfaceDeclaration_IFluidContainer(
 declare function get_current_InterfaceDeclaration_IFluidContainer():
     TypeOnly<current.IFluidContainer>;
 declare function use_old_InterfaceDeclaration_IFluidContainer(
-    use: TypeOnly<old.IFluidContainer>);
+    use: TypeOnly<old.IFluidContainer>): void;
 use_old_InterfaceDeclaration_IFluidContainer(
     get_current_InterfaceDeclaration_IFluidContainer());
 
@@ -173,7 +149,7 @@ use_old_InterfaceDeclaration_IFluidContainer(
 declare function get_old_InterfaceDeclaration_IFluidContainerEvents():
     TypeOnly<old.IFluidContainerEvents>;
 declare function use_current_InterfaceDeclaration_IFluidContainerEvents(
-    use: TypeOnly<current.IFluidContainerEvents>);
+    use: TypeOnly<current.IFluidContainerEvents>): void;
 use_current_InterfaceDeclaration_IFluidContainerEvents(
     get_old_InterfaceDeclaration_IFluidContainerEvents());
 
@@ -185,7 +161,7 @@ use_current_InterfaceDeclaration_IFluidContainerEvents(
 declare function get_current_InterfaceDeclaration_IFluidContainerEvents():
     TypeOnly<current.IFluidContainerEvents>;
 declare function use_old_InterfaceDeclaration_IFluidContainerEvents(
-    use: TypeOnly<old.IFluidContainerEvents>);
+    use: TypeOnly<old.IFluidContainerEvents>): void;
 use_old_InterfaceDeclaration_IFluidContainerEvents(
     get_current_InterfaceDeclaration_IFluidContainerEvents());
 
@@ -197,7 +173,7 @@ use_old_InterfaceDeclaration_IFluidContainerEvents(
 declare function get_old_InterfaceDeclaration_IMember():
     TypeOnly<old.IMember>;
 declare function use_current_InterfaceDeclaration_IMember(
-    use: TypeOnly<current.IMember>);
+    use: TypeOnly<current.IMember>): void;
 use_current_InterfaceDeclaration_IMember(
     get_old_InterfaceDeclaration_IMember());
 
@@ -209,7 +185,7 @@ use_current_InterfaceDeclaration_IMember(
 declare function get_current_InterfaceDeclaration_IMember():
     TypeOnly<current.IMember>;
 declare function use_old_InterfaceDeclaration_IMember(
-    use: TypeOnly<old.IMember>);
+    use: TypeOnly<old.IMember>): void;
 use_old_InterfaceDeclaration_IMember(
     get_current_InterfaceDeclaration_IMember());
 
@@ -221,8 +197,9 @@ use_old_InterfaceDeclaration_IMember(
 declare function get_old_InterfaceDeclaration_IRootDataObject():
     TypeOnly<old.IRootDataObject>;
 declare function use_current_InterfaceDeclaration_IRootDataObject(
-    use: TypeOnly<current.IRootDataObject>);
+    use: TypeOnly<current.IRootDataObject>): void;
 use_current_InterfaceDeclaration_IRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootDataObject());
 
 /*
@@ -233,7 +210,7 @@ use_current_InterfaceDeclaration_IRootDataObject(
 declare function get_current_InterfaceDeclaration_IRootDataObject():
     TypeOnly<current.IRootDataObject>;
 declare function use_old_InterfaceDeclaration_IRootDataObject(
-    use: TypeOnly<old.IRootDataObject>);
+    use: TypeOnly<old.IRootDataObject>): void;
 use_old_InterfaceDeclaration_IRootDataObject(
     get_current_InterfaceDeclaration_IRootDataObject());
 
@@ -245,7 +222,7 @@ use_old_InterfaceDeclaration_IRootDataObject(
 declare function get_old_InterfaceDeclaration_IServiceAudience():
     TypeOnly<old.IServiceAudience<any>>;
 declare function use_current_InterfaceDeclaration_IServiceAudience(
-    use: TypeOnly<current.IServiceAudience<any>>);
+    use: TypeOnly<current.IServiceAudience<any>>): void;
 use_current_InterfaceDeclaration_IServiceAudience(
     get_old_InterfaceDeclaration_IServiceAudience());
 
@@ -257,7 +234,7 @@ use_current_InterfaceDeclaration_IServiceAudience(
 declare function get_current_InterfaceDeclaration_IServiceAudience():
     TypeOnly<current.IServiceAudience<any>>;
 declare function use_old_InterfaceDeclaration_IServiceAudience(
-    use: TypeOnly<old.IServiceAudience<any>>);
+    use: TypeOnly<old.IServiceAudience<any>>): void;
 use_old_InterfaceDeclaration_IServiceAudience(
     get_current_InterfaceDeclaration_IServiceAudience());
 
@@ -269,7 +246,7 @@ use_old_InterfaceDeclaration_IServiceAudience(
 declare function get_old_InterfaceDeclaration_IServiceAudienceEvents():
     TypeOnly<old.IServiceAudienceEvents<any>>;
 declare function use_current_InterfaceDeclaration_IServiceAudienceEvents(
-    use: TypeOnly<current.IServiceAudienceEvents<any>>);
+    use: TypeOnly<current.IServiceAudienceEvents<any>>): void;
 use_current_InterfaceDeclaration_IServiceAudienceEvents(
     get_old_InterfaceDeclaration_IServiceAudienceEvents());
 
@@ -281,7 +258,7 @@ use_current_InterfaceDeclaration_IServiceAudienceEvents(
 declare function get_current_InterfaceDeclaration_IServiceAudienceEvents():
     TypeOnly<current.IServiceAudienceEvents<any>>;
 declare function use_old_InterfaceDeclaration_IServiceAudienceEvents(
-    use: TypeOnly<old.IServiceAudienceEvents<any>>);
+    use: TypeOnly<old.IServiceAudienceEvents<any>>): void;
 use_old_InterfaceDeclaration_IServiceAudienceEvents(
     get_current_InterfaceDeclaration_IServiceAudienceEvents());
 
@@ -293,7 +270,7 @@ use_old_InterfaceDeclaration_IServiceAudienceEvents(
 declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
     TypeOnly<old.LoadableObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<current.LoadableObjectClass<any>>);
+    use: TypeOnly<current.LoadableObjectClass<any>>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClass(
     get_old_TypeAliasDeclaration_LoadableObjectClass());
 
@@ -305,7 +282,7 @@ use_current_TypeAliasDeclaration_LoadableObjectClass(
 declare function get_current_TypeAliasDeclaration_LoadableObjectClass():
     TypeOnly<current.LoadableObjectClass<any>>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<old.LoadableObjectClass<any>>);
+    use: TypeOnly<old.LoadableObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_LoadableObjectClass(
     get_current_TypeAliasDeclaration_LoadableObjectClass());
 
@@ -317,7 +294,7 @@ use_old_TypeAliasDeclaration_LoadableObjectClass(
 declare function get_old_TypeAliasDeclaration_LoadableObjectClassRecord():
     TypeOnly<old.LoadableObjectClassRecord>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
-    use: TypeOnly<current.LoadableObjectClassRecord>);
+    use: TypeOnly<current.LoadableObjectClassRecord>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
     get_old_TypeAliasDeclaration_LoadableObjectClassRecord());
 
@@ -329,7 +306,7 @@ use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
 declare function get_current_TypeAliasDeclaration_LoadableObjectClassRecord():
     TypeOnly<current.LoadableObjectClassRecord>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
-    use: TypeOnly<old.LoadableObjectClassRecord>);
+    use: TypeOnly<old.LoadableObjectClassRecord>): void;
 use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
     get_current_TypeAliasDeclaration_LoadableObjectClassRecord());
 
@@ -341,7 +318,7 @@ use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
 declare function get_old_TypeAliasDeclaration_LoadableObjectCtor():
     TypeOnly<old.LoadableObjectCtor<any>>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<current.LoadableObjectCtor<any>>);
+    use: TypeOnly<current.LoadableObjectCtor<any>>): void;
 use_current_TypeAliasDeclaration_LoadableObjectCtor(
     get_old_TypeAliasDeclaration_LoadableObjectCtor());
 
@@ -353,7 +330,7 @@ use_current_TypeAliasDeclaration_LoadableObjectCtor(
 declare function get_current_TypeAliasDeclaration_LoadableObjectCtor():
     TypeOnly<current.LoadableObjectCtor<any>>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<old.LoadableObjectCtor<any>>);
+    use: TypeOnly<old.LoadableObjectCtor<any>>): void;
 use_old_TypeAliasDeclaration_LoadableObjectCtor(
     get_current_TypeAliasDeclaration_LoadableObjectCtor());
 
@@ -365,7 +342,7 @@ use_old_TypeAliasDeclaration_LoadableObjectCtor(
 declare function get_old_TypeAliasDeclaration_LoadableObjectRecord():
     TypeOnly<old.LoadableObjectRecord>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectRecord(
-    use: TypeOnly<current.LoadableObjectRecord>);
+    use: TypeOnly<current.LoadableObjectRecord>): void;
 use_current_TypeAliasDeclaration_LoadableObjectRecord(
     get_old_TypeAliasDeclaration_LoadableObjectRecord());
 
@@ -377,7 +354,7 @@ use_current_TypeAliasDeclaration_LoadableObjectRecord(
 declare function get_current_TypeAliasDeclaration_LoadableObjectRecord():
     TypeOnly<current.LoadableObjectRecord>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectRecord(
-    use: TypeOnly<old.LoadableObjectRecord>);
+    use: TypeOnly<old.LoadableObjectRecord>): void;
 use_old_TypeAliasDeclaration_LoadableObjectRecord(
     get_current_TypeAliasDeclaration_LoadableObjectRecord());
 
@@ -389,7 +366,7 @@ use_old_TypeAliasDeclaration_LoadableObjectRecord(
 declare function get_old_TypeAliasDeclaration_MemberChangedListener():
     TypeOnly<old.MemberChangedListener<any>>;
 declare function use_current_TypeAliasDeclaration_MemberChangedListener(
-    use: TypeOnly<current.MemberChangedListener<any>>);
+    use: TypeOnly<current.MemberChangedListener<any>>): void;
 use_current_TypeAliasDeclaration_MemberChangedListener(
     get_old_TypeAliasDeclaration_MemberChangedListener());
 
@@ -401,7 +378,7 @@ use_current_TypeAliasDeclaration_MemberChangedListener(
 declare function get_current_TypeAliasDeclaration_MemberChangedListener():
     TypeOnly<current.MemberChangedListener<any>>;
 declare function use_old_TypeAliasDeclaration_MemberChangedListener(
-    use: TypeOnly<old.MemberChangedListener<any>>);
+    use: TypeOnly<old.MemberChangedListener<any>>): void;
 use_old_TypeAliasDeclaration_MemberChangedListener(
     get_current_TypeAliasDeclaration_MemberChangedListener());
 
@@ -413,7 +390,7 @@ use_old_TypeAliasDeclaration_MemberChangedListener(
 declare function get_old_TypeAliasDeclaration_Myself():
     TypeOnly<old.Myself>;
 declare function use_current_TypeAliasDeclaration_Myself(
-    use: TypeOnly<current.Myself>);
+    use: TypeOnly<current.Myself>): void;
 use_current_TypeAliasDeclaration_Myself(
     get_old_TypeAliasDeclaration_Myself());
 
@@ -425,33 +402,21 @@ use_current_TypeAliasDeclaration_Myself(
 declare function get_current_TypeAliasDeclaration_Myself():
     TypeOnly<current.Myself>;
 declare function use_old_TypeAliasDeclaration_Myself(
-    use: TypeOnly<old.Myself>);
+    use: TypeOnly<old.Myself>): void;
 use_old_TypeAliasDeclaration_Myself(
     get_current_TypeAliasDeclaration_Myself());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ServiceAudience": {"forwardCompat": false}
+* "RemovedClassDeclaration_ServiceAudience": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ServiceAudience():
-    TypeOnly<old.ServiceAudience>;
-declare function use_current_ClassDeclaration_ServiceAudience(
-    use: TypeOnly<current.ServiceAudience>);
-use_current_ClassDeclaration_ServiceAudience(
-    get_old_ClassDeclaration_ServiceAudience());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ServiceAudience": {"backCompat": false}
+* "RemovedClassDeclaration_ServiceAudience": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ServiceAudience():
-    TypeOnly<current.ServiceAudience>;
-declare function use_old_ClassDeclaration_ServiceAudience(
-    use: TypeOnly<old.ServiceAudience>);
-use_old_ClassDeclaration_ServiceAudience(
-    get_current_ClassDeclaration_ServiceAudience());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -461,7 +426,7 @@ use_old_ClassDeclaration_ServiceAudience(
 declare function get_old_TypeAliasDeclaration_SharedObjectClass():
     TypeOnly<old.SharedObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<current.SharedObjectClass<any>>);
+    use: TypeOnly<current.SharedObjectClass<any>>): void;
 use_current_TypeAliasDeclaration_SharedObjectClass(
     get_old_TypeAliasDeclaration_SharedObjectClass());
 
@@ -473,6 +438,6 @@ use_current_TypeAliasDeclaration_SharedObjectClass(
 declare function get_current_TypeAliasDeclaration_SharedObjectClass():
     TypeOnly<current.SharedObjectClass<any>>;
 declare function use_old_TypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<old.SharedObjectClass<any>>);
+    use: TypeOnly<old.SharedObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_SharedObjectClass(
     get_current_TypeAliasDeclaration_SharedObjectClass());

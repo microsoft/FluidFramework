@@ -7,14 +7,12 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IContainerRuntimeBase,
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -22,7 +20,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import {
 	IChannelAttributes,
@@ -471,12 +469,9 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 
@@ -508,7 +503,7 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 
 	it("can create summary handles for blobs in DDSes that do not change", async () => {
 		const container = await createContainer();
-		const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const datastore = (await container.getEntryPoint()) as ITestFluidObject;
 		const dds = await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
 			TestIncrementalSummaryBlobDDS.getFactory().type,
 		);
@@ -553,7 +548,7 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 
 	it("can create summary handles for trees in DDSes that do not change", async () => {
 		const container = await createContainer();
-		const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const datastore = (await container.getEntryPoint()) as ITestFluidObject;
 		const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
 			TestIncrementalSummaryTreeDDS.getFactory().type,
 		);
@@ -624,7 +619,7 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 
 		// Test that we can load from multiple containers
 		const container2 = await loadContainer(summaryVersion);
-		const datastore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const datastore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const dds2 = await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
 			TestIncrementalSummaryTreeDDS.getFactory().type,
 		);

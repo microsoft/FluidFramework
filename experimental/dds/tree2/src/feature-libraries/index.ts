@@ -4,18 +4,6 @@
  */
 
 export {
-	EditableField,
-	EditableTree,
-	EditableTreeContext,
-	EditableTreeOrPrimitive,
-	getEditableTreeContext,
-	isEditableField,
-	isPrimitive,
-	isEditableTree,
-	proxyTargetSymbol,
-	UnwrappedEditableField,
-	UnwrappedEditableTree,
-	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -52,15 +40,12 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
-	setField,
-} from "./editable-tree";
-
+} from "./editableTreeBinder";
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -74,28 +59,37 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	FieldGenerator,
-	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
-	assertAllowedValue,
+	getPossibleTypes,
 } from "./contextuallyTyped";
 
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
+
 export { ForestSummarizer } from "./forestSummarizer";
-export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
+export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
-	singleStackTreeCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
 	CursorWithNode,
+	stackTreeFieldCursor,
 } from "./treeCursorUtils";
-export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
+export {
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+} from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -104,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -125,14 +119,11 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	RemovedTreesFromChild,
 } from "./modular-schema";
 
 export {
@@ -147,21 +138,25 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -177,7 +172,13 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -185,6 +186,10 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
+	decode,
+	uncompressedEncode,
+	schemaCompressedEncode,
+	EncodedChunk,
 } from "./chunked-forest";
 
 export {
@@ -203,7 +208,7 @@ export {
 	FieldKinds,
 	Required,
 	Optional,
-	Sequence as SequenceFieldKind,
+	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
 	DefaultChangeset,
@@ -214,71 +219,50 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
-
-export {
-	UntypedField,
-	UntypedTree,
-	UntypedTreeContext,
-	UntypedTreeCore,
-	UnwrappedUntypedField,
-	UnwrappedUntypedTree,
-	UntypedTreeOrPrimitive,
-	typeSymbol,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	treeStatus,
-} from "./untypedTree";
+	intoDelta,
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,
-	FieldNode,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	InternalEditableTreeTypes,
-	Leaf,
-	MapNode,
-	OptionalField,
-	RequiredField,
-	Sequence,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
 	Skip,
-	ObjectNode,
-	ObjectNodeTyped,
-	TreeContext,
-	TypedField,
-	TypedNode,
-	TypedNodeUnion,
-	Tree,
-	TreeField,
-	TreeNode,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	FlexTreeContext,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
+	FlexTreeEntity,
+	FlexTreeField,
+	FlexTreeNode,
 	getTreeContext,
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	getProxyForField,
-	ObjectFields,
-	ProxyField,
-	ProxyFieldInner,
-	ProxyNode,
-	ProxyNodeUnion,
-	SharedTreeList,
-	SharedTreeMap,
-	SharedTreeObject,
-	is,
-	ProxyRoot,
-	node,
-	SharedTreeNode,
-	Typed,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
-} from "./editable-tree-2";
+	FlexTreeTyped,
+	Context,
+	TreeEvent,
+	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
+	isFlexTreeNode,
+} from "./flex-tree";
+
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
+export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

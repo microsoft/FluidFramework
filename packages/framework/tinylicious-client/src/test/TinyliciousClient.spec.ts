@@ -12,7 +12,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
-import { TinyliciousClient } from "..";
+import { TinyliciousClient } from "../index";
 import { TestDataObject } from "./TestDataObject";
 
 const corruptedAliasOp = async (
@@ -165,8 +165,8 @@ describe("TinyliciousClient", () => {
 		});
 
 		const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
-		const map1Create = containerCreate.initialObjects.map1 as SharedMap;
-		const map1Get = containerGet.initialObjects.map1 as SharedMap;
+		const map1Create = containerCreate.initialObjects.map1;
+		const map1Get = containerGet.initialObjects.map1;
 		assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
 	});
 
@@ -186,7 +186,7 @@ describe("TinyliciousClient", () => {
 		});
 
 		const initialObjectsCreate = containerCreate.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1;
 		map1Create.set("new-key", "new-value");
 		const valueCreate = await map1Create.get("new-key");
 		// Make sure the op round tripped
@@ -206,7 +206,7 @@ describe("TinyliciousClient", () => {
 				resolve();
 			});
 		});
-		const map1Get = containerGet.initialObjects.map1 as SharedMap;
+		const map1Get = containerGet.initialObjects.map1;
 		const valueGet = await map1Get.get("new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
 	});
@@ -235,7 +235,7 @@ describe("TinyliciousClient", () => {
 			});
 		});
 
-		const map1 = container.initialObjects.map1 as SharedMap;
+		const map1 = container.initialObjects.map1;
 		const newPair = await container.create(SharedDirectory);
 		map1.set("newpair-id", newPair.handle);
 		const obj = await map1.get("newpair-id").get();
@@ -274,7 +274,7 @@ describe("TinyliciousClient", () => {
 		const newPair = await createFluidContainer.create(TestDataObject);
 		assert.ok(newPair?.handle);
 
-		const map1 = createFluidContainer.initialObjects.map1 as SharedMap;
+		const map1 = createFluidContainer.initialObjects.map1;
 		map1.set("newpair-id", newPair.handle);
 		const obj = await map1.get("newpair-id").get();
 		assert.ok(obj, "container added dynamic objects incorrectly");
@@ -373,5 +373,20 @@ describe("TinyliciousClient", () => {
 			"write",
 			"Getting a container with only write permission is not in write mode",
 		);
+	});
+
+	/**
+	 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
+	 * schema type is statically known.
+	 */
+	it("preserves types of 'initialObjects'", async () => {
+		const { container } = await tinyliciousClient.createContainer({
+			initialObjects: {
+				map1: SharedMap,
+			},
+		});
+
+		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
+		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);
 	});
 });

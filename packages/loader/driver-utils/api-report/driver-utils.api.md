@@ -90,7 +90,7 @@ export class BlobTreeEntry {
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
 // @public
-export function calculateMaxWaitTime(error: unknown): number;
+export function calculateMaxWaitTime(delayMs: number, error: unknown): number;
 
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
@@ -222,7 +222,7 @@ export interface IProgress {
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
 
-// @public (undocumented)
+// @public
 export function isOnline(): OnlineStatus;
 
 // @public
@@ -354,6 +354,14 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
+
+// @public (undocumented)
+export enum SummaryCompressionAlgorithm {
+    // (undocumented)
+    LZ4 = 1,
+    // (undocumented)
+    None = 0
+}
 
 // @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {

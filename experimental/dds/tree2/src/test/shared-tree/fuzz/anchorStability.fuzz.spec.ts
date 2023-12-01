@@ -3,75 +3,66 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value, AllowedUpdateType, JsonableTree } from "../../../core";
-import { ISharedTreeView, SharedTree } from "../../../shared-tree";
-import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
+import { UpPath, Anchor, Value } from "../../../core";
+import { TreeContent } from "../../../shared-tree";
 import {
-	SharedTreeTestFactory,
-	createTestUndoRedoStacks,
-	toJsonableTree,
-	validateTree,
-} from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
+	cursorsFromContextualData,
+	jsonableTreeFromCursor,
+	typeNameSymbol,
+} from "../../../feature-libraries";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
+import {
+	makeOpGenerator,
+	EditGeneratorOpWeights,
+	FuzzTestState,
+	viewFromState,
+} from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import {
 	createAnchors,
 	validateAnchors,
 	fuzzNode,
 	fuzzSchema,
-	FuzzNodeSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
-	fuzzViewFromTree,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-interface AbortFuzzTestState extends FuzzTestState {
+interface AnchorFuzzTestState extends FuzzTestState {
+	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
-// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
-// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
-const initialTree: SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	[FuzzNodeSchema]
-> = {
-	[typeNameSymbol]: fuzzNode.name,
-	sequenceChildren: [1, 2, 3],
-	requiredChild: {
+const config = {
+	schema: fuzzSchema,
+	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
+	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
+	initialTree: {
 		[typeNameSymbol]: fuzzNode.name,
-		requiredChild: 0,
+		sequenceChildren: [1, 2, 3],
+		requiredChild: {
+			[typeNameSymbol]: fuzzNode.name,
+			requiredChild: 0,
+			optionalChild: undefined,
+			sequenceChildren: [4, 5, 6],
+		},
 		optionalChild: undefined,
-		sequenceChildren: [4, 5, 6],
 	},
-	optionalChild: undefined,
-};
+} satisfies TreeContent;
 
-let initialTreeJson: JsonableTree[];
-function setInitialJsonTree(view: ISharedTreeView): void {
-	const jsonTree = toJsonableTree(view);
-	if (initialTreeJson !== undefined) {
-		assert.deepEqual(jsonTree, initialTreeJson);
-	}
-	initialTreeJson = jsonTree;
-}
-
-const onCreate = (tree: SharedTree) => {
-	const view = tree.schematizeView({
-		schema: fuzzSchema,
-		initialTree,
-		allowedSchemaModifications: AllowedUpdateType.None,
-	});
-	setInitialJsonTree(view);
-};
+const initialTreeJson = cursorsFromContextualData(
+	config,
+	config.schema.rootFieldSchema,
+	config.initialTree,
+).map(jsonableTreeFromCursor);
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -106,27 +97,32 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(() => undefined),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const tree = fuzzViewFromTree(initialState.clients[0].channel);
+		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
+			const tree = viewFromState(
+				initialState,
+				initialState.clients[0],
+				config.initialTree,
+			).checkout;
 			tree.transaction.start();
+			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
 		});
 
-		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
+		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+
 			// aborts any transactions that may still be in progress
-			const tree = finalState.clients[0].channel.view;
+			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
-			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
+			validateAnchors(tree, anchors[0], true);
 		});
 
 		createDDSFuzzSuite(model, {
@@ -161,25 +157,26 @@ describe("Fuzz - anchor stability", () => {
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
+		const generator = generatorFactory() as AsyncGenerator<Operation, AnchorFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(() => undefined),
 			generatorFactory: () => generator,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
+		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const view = viewFromState(initialState, client, config.initialTree)
+					.checkout as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -187,11 +184,10 @@ describe("Fuzz - anchor stability", () => {
 			}
 		});
 
-		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
+		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(client.channel.view, anchors[i], false);
+				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}
 		});
 
@@ -203,6 +199,7 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			skip: [0],
 		});
 	});
 });

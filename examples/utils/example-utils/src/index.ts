@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { ContainerViewRuntimeFactory, ViewCallback } from "./containerViewRuntimeFactory";
+export {
+	ContainerViewRuntimeFactory,
+	ViewCallback,
+	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+} from "./containerViewRuntimeFactory";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -33,11 +38,10 @@ export { Migrator, SameContainerMigrator } from "./migrator";
 export {
 	IDetachedModel,
 	IModelLoader,
-	makeModelRequestHandler,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
-	ModelMakerCallback,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
+	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader";

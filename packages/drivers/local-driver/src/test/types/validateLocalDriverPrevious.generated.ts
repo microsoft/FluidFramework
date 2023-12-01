@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_LocalDeltaStorageService():
     TypeOnly<old.LocalDeltaStorageService>;
 declare function use_current_ClassDeclaration_LocalDeltaStorageService(
-    use: TypeOnly<current.LocalDeltaStorageService>);
+    use: TypeOnly<current.LocalDeltaStorageService>): void;
 use_current_ClassDeclaration_LocalDeltaStorageService(
     get_old_ClassDeclaration_LocalDeltaStorageService());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_LocalDeltaStorageService(
 declare function get_current_ClassDeclaration_LocalDeltaStorageService():
     TypeOnly<current.LocalDeltaStorageService>;
 declare function use_old_ClassDeclaration_LocalDeltaStorageService(
-    use: TypeOnly<old.LocalDeltaStorageService>);
+    use: TypeOnly<old.LocalDeltaStorageService>): void;
 use_old_ClassDeclaration_LocalDeltaStorageService(
     get_current_ClassDeclaration_LocalDeltaStorageService());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_LocalDeltaStorageService(
 declare function get_old_ClassDeclaration_LocalDocumentDeltaConnection():
     TypeOnly<old.LocalDocumentDeltaConnection>;
 declare function use_current_ClassDeclaration_LocalDocumentDeltaConnection(
-    use: TypeOnly<current.LocalDocumentDeltaConnection>);
+    use: TypeOnly<current.LocalDocumentDeltaConnection>): void;
 use_current_ClassDeclaration_LocalDocumentDeltaConnection(
     get_old_ClassDeclaration_LocalDocumentDeltaConnection());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_LocalDocumentDeltaConnection(
 declare function get_current_ClassDeclaration_LocalDocumentDeltaConnection():
     TypeOnly<current.LocalDocumentDeltaConnection>;
 declare function use_old_ClassDeclaration_LocalDocumentDeltaConnection(
-    use: TypeOnly<old.LocalDocumentDeltaConnection>);
+    use: TypeOnly<old.LocalDocumentDeltaConnection>): void;
 use_old_ClassDeclaration_LocalDocumentDeltaConnection(
     get_current_ClassDeclaration_LocalDocumentDeltaConnection());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_LocalDocumentDeltaConnection(
 declare function get_old_ClassDeclaration_LocalDocumentService():
     TypeOnly<old.LocalDocumentService>;
 declare function use_current_ClassDeclaration_LocalDocumentService(
-    use: TypeOnly<current.LocalDocumentService>);
+    use: TypeOnly<current.LocalDocumentService>): void;
 use_current_ClassDeclaration_LocalDocumentService(
     get_old_ClassDeclaration_LocalDocumentService());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_LocalDocumentService(
 declare function get_current_ClassDeclaration_LocalDocumentService():
     TypeOnly<current.LocalDocumentService>;
 declare function use_old_ClassDeclaration_LocalDocumentService(
-    use: TypeOnly<old.LocalDocumentService>);
+    use: TypeOnly<old.LocalDocumentService>): void;
 use_old_ClassDeclaration_LocalDocumentService(
     get_current_ClassDeclaration_LocalDocumentService());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_LocalDocumentService(
 declare function get_old_ClassDeclaration_LocalDocumentServiceFactory():
     TypeOnly<old.LocalDocumentServiceFactory>;
 declare function use_current_ClassDeclaration_LocalDocumentServiceFactory(
-    use: TypeOnly<current.LocalDocumentServiceFactory>);
+    use: TypeOnly<current.LocalDocumentServiceFactory>): void;
 use_current_ClassDeclaration_LocalDocumentServiceFactory(
     get_old_ClassDeclaration_LocalDocumentServiceFactory());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_LocalDocumentServiceFactory(
 declare function get_current_ClassDeclaration_LocalDocumentServiceFactory():
     TypeOnly<current.LocalDocumentServiceFactory>;
 declare function use_old_ClassDeclaration_LocalDocumentServiceFactory(
-    use: TypeOnly<old.LocalDocumentServiceFactory>);
+    use: TypeOnly<old.LocalDocumentServiceFactory>): void;
 use_old_ClassDeclaration_LocalDocumentServiceFactory(
     get_current_ClassDeclaration_LocalDocumentServiceFactory());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_LocalDocumentServiceFactory(
 declare function get_old_ClassDeclaration_LocalDocumentStorageService():
     TypeOnly<old.LocalDocumentStorageService>;
 declare function use_current_ClassDeclaration_LocalDocumentStorageService(
-    use: TypeOnly<current.LocalDocumentStorageService>);
+    use: TypeOnly<current.LocalDocumentStorageService>): void;
 use_current_ClassDeclaration_LocalDocumentStorageService(
     get_old_ClassDeclaration_LocalDocumentStorageService());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_LocalDocumentStorageService(
 declare function get_current_ClassDeclaration_LocalDocumentStorageService():
     TypeOnly<current.LocalDocumentStorageService>;
 declare function use_old_ClassDeclaration_LocalDocumentStorageService(
-    use: TypeOnly<old.LocalDocumentStorageService>);
+    use: TypeOnly<old.LocalDocumentStorageService>): void;
 use_old_ClassDeclaration_LocalDocumentStorageService(
     get_current_ClassDeclaration_LocalDocumentStorageService());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_LocalDocumentStorageService(
 declare function get_old_ClassDeclaration_LocalResolver():
     TypeOnly<old.LocalResolver>;
 declare function use_current_ClassDeclaration_LocalResolver(
-    use: TypeOnly<current.LocalResolver>);
+    use: TypeOnly<current.LocalResolver>): void;
 use_current_ClassDeclaration_LocalResolver(
     get_old_ClassDeclaration_LocalResolver());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_LocalResolver(
 declare function get_current_ClassDeclaration_LocalResolver():
     TypeOnly<current.LocalResolver>;
 declare function use_old_ClassDeclaration_LocalResolver(
-    use: TypeOnly<old.LocalResolver>);
+    use: TypeOnly<old.LocalResolver>): void;
 use_old_ClassDeclaration_LocalResolver(
     get_current_ClassDeclaration_LocalResolver());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_LocalResolver(
 declare function get_old_ClassDeclaration_LocalSessionStorageDbFactory():
     TypeOnly<old.LocalSessionStorageDbFactory>;
 declare function use_current_ClassDeclaration_LocalSessionStorageDbFactory(
-    use: TypeOnly<current.LocalSessionStorageDbFactory>);
+    use: TypeOnly<current.LocalSessionStorageDbFactory>): void;
 use_current_ClassDeclaration_LocalSessionStorageDbFactory(
     get_old_ClassDeclaration_LocalSessionStorageDbFactory());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_LocalSessionStorageDbFactory(
 declare function get_current_ClassDeclaration_LocalSessionStorageDbFactory():
     TypeOnly<current.LocalSessionStorageDbFactory>;
 declare function use_old_ClassDeclaration_LocalSessionStorageDbFactory(
-    use: TypeOnly<old.LocalSessionStorageDbFactory>);
+    use: TypeOnly<old.LocalSessionStorageDbFactory>): void;
 use_old_ClassDeclaration_LocalSessionStorageDbFactory(
     get_current_ClassDeclaration_LocalSessionStorageDbFactory());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_LocalSessionStorageDbFactory(
 declare function get_old_FunctionDeclaration_createLocalDocumentService():
     TypeOnly<typeof old.createLocalDocumentService>;
 declare function use_current_FunctionDeclaration_createLocalDocumentService(
-    use: TypeOnly<typeof current.createLocalDocumentService>);
+    use: TypeOnly<typeof current.createLocalDocumentService>): void;
 use_current_FunctionDeclaration_createLocalDocumentService(
     get_old_FunctionDeclaration_createLocalDocumentService());
 
@@ -209,7 +209,7 @@ use_current_FunctionDeclaration_createLocalDocumentService(
 declare function get_current_FunctionDeclaration_createLocalDocumentService():
     TypeOnly<typeof current.createLocalDocumentService>;
 declare function use_old_FunctionDeclaration_createLocalDocumentService(
-    use: TypeOnly<typeof old.createLocalDocumentService>);
+    use: TypeOnly<typeof old.createLocalDocumentService>): void;
 use_old_FunctionDeclaration_createLocalDocumentService(
     get_current_FunctionDeclaration_createLocalDocumentService());
 
@@ -221,7 +221,7 @@ use_old_FunctionDeclaration_createLocalDocumentService(
 declare function get_old_FunctionDeclaration_createLocalResolverCreateNewRequest():
     TypeOnly<typeof old.createLocalResolverCreateNewRequest>;
 declare function use_current_FunctionDeclaration_createLocalResolverCreateNewRequest(
-    use: TypeOnly<typeof current.createLocalResolverCreateNewRequest>);
+    use: TypeOnly<typeof current.createLocalResolverCreateNewRequest>): void;
 use_current_FunctionDeclaration_createLocalResolverCreateNewRequest(
     get_old_FunctionDeclaration_createLocalResolverCreateNewRequest());
 
@@ -233,6 +233,6 @@ use_current_FunctionDeclaration_createLocalResolverCreateNewRequest(
 declare function get_current_FunctionDeclaration_createLocalResolverCreateNewRequest():
     TypeOnly<typeof current.createLocalResolverCreateNewRequest>;
 declare function use_old_FunctionDeclaration_createLocalResolverCreateNewRequest(
-    use: TypeOnly<typeof old.createLocalResolverCreateNewRequest>);
+    use: TypeOnly<typeof old.createLocalResolverCreateNewRequest>): void;
 use_old_FunctionDeclaration_createLocalResolverCreateNewRequest(
     get_current_FunctionDeclaration_createLocalResolverCreateNewRequest());

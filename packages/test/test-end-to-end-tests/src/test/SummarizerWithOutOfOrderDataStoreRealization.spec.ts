@@ -7,11 +7,10 @@ import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
@@ -19,8 +18,8 @@ import {
 	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { describeNoCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { pkgVersion } from "../packageVersion.js";
 
 interface ProvideSearchContent {
@@ -95,10 +94,8 @@ class TestDataObject1 extends DataObject implements SearchContent {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
 
-		const dsFactory2 = await requestFluidObject<TestDataObject2>(
-			await this._context.containerRuntime.createDataStore(TestDataObjectType2),
-			"",
-		);
+		const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+		const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
 		this.root.set("dsFactory2", dsFactory2.handle);
 	}
 
@@ -127,8 +124,6 @@ const dataStoreFactory2 = new DataObjectFactory(
 	[],
 	createDataStoreRuntime(),
 );
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
@@ -141,7 +136,6 @@ const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 	{
 		defaultFactory: dataStoreFactory1,
 		registryEntries: registryStoreEntries,
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	},
 );
@@ -210,7 +204,7 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 		mainContainer = await createContainer();
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.
-		mainDataStore = await requestFluidObject<TestDataObject1>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
 		mainDataStore._root.set("anytest", "anyvalue");
 		await waitForContainerConnection(mainContainer);
 	});

@@ -305,7 +305,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 // @public (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt);
+    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
     attachState: AttachState;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
@@ -441,8 +441,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
@@ -466,7 +464,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;

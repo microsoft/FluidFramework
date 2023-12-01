@@ -8,8 +8,6 @@ import {
 	type IChannelServices,
 	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { ShimDeltaConnection } from "./shimDeltaConnection";
-import { type IShimDeltaHandler } from "./types";
 
 /**
  * ShimChannelServices wraps an existing IChannelServices object and provides a new ShimDeltaConnection
@@ -21,16 +19,9 @@ import { type IShimDeltaHandler } from "./types";
  * we call attach, we need to swap out the deltaConnection object for the ShimDeltaConnection object. This makes
  * it consistent as we will always be passing this shim
  */
-export class ShimChannelServices implements IChannelServices {
-	public constructor(channelServices: IChannelServices, shimDeltaHandler: IShimDeltaHandler) {
-		this.deltaConnection = new ShimDeltaConnection(
-			channelServices.deltaConnection,
-			shimDeltaHandler,
-		);
-		this.objectStorage = channelServices.objectStorage;
-	}
-	public readonly deltaConnection: ShimDeltaConnection;
-	public readonly objectStorage: IChannelStorageService;
+export interface IShimChannelServices extends IChannelServices {
+	readonly objectStorage: IChannelStorageService;
+	readonly deltaConnection: IDeltaConnection;
 }
 
 /**

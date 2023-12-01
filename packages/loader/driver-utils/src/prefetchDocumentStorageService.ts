@@ -7,6 +7,9 @@ import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { canRetryOnError } from "./network";
 
+/**
+ * @public
+ */
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
 	// BlobId -> blob prefetchCache cache
 	private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();

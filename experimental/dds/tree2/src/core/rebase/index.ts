@@ -5,6 +5,7 @@
 
 export {
 	assertIsRevisionTag,
+	areEqualChangeAtomIds,
 	mintRevisionTag,
 	isRevisionTag,
 	mintCommit,
@@ -13,6 +14,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	SessionId,
 	SessionIdSchema,
 } from "./types";
@@ -24,6 +26,8 @@ export {
 	tagChange,
 	tagRollbackInverse,
 	TaggedChange,
+	RevisionMetadataSource,
+	RevisionInfo,
 } from "./changeRebaser";
 export {
 	Exception,
@@ -33,4 +37,12 @@ export {
 	verifyChangeRebaser,
 	Violation,
 } from "./verifyChangeRebaser";
-export { findAncestor, findCommonAncestor, rebaseBranch, rebaseChange } from "./utils";
+export {
+	findAncestor,
+	findCommonAncestor,
+	rebaseBranch,
+	BranchRebaseResult,
+	rebaseChange,
+	rebaseChangeOverChanges,
+	revisionMetadataSourceFromInfo,
+} from "./utils";

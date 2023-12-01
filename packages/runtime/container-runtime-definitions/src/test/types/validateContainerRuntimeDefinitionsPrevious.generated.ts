@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IContainerRuntime():
     TypeOnly<old.IContainerRuntime>;
 declare function use_current_InterfaceDeclaration_IContainerRuntime(
-    use: TypeOnly<current.IContainerRuntime>);
+    use: TypeOnly<current.IContainerRuntime>): void;
 use_current_InterfaceDeclaration_IContainerRuntime(
     get_old_InterfaceDeclaration_IContainerRuntime());
 
@@ -41,8 +41,9 @@ use_current_InterfaceDeclaration_IContainerRuntime(
 declare function get_current_InterfaceDeclaration_IContainerRuntime():
     TypeOnly<current.IContainerRuntime>;
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
-    use: TypeOnly<old.IContainerRuntime>);
+    use: TypeOnly<old.IContainerRuntime>): void;
 use_old_InterfaceDeclaration_IContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -53,7 +54,7 @@ use_old_InterfaceDeclaration_IContainerRuntime(
 declare function get_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents():
     TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>;
 declare function use_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
-    use: TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>);
+    use: TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>): void;
 use_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
     get_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents());
 
@@ -65,8 +66,9 @@ use_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
 declare function get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents():
     TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>;
 declare function use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
-    use: TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>);
+    use: TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>): void;
 use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents());
 
 /*
@@ -77,7 +79,7 @@ use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
 declare function get_old_InterfaceDeclaration_IContainerRuntimeEvents():
     TypeOnly<old.IContainerRuntimeEvents>;
 declare function use_current_InterfaceDeclaration_IContainerRuntimeEvents(
-    use: TypeOnly<current.IContainerRuntimeEvents>);
+    use: TypeOnly<current.IContainerRuntimeEvents>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeEvents(
     get_old_InterfaceDeclaration_IContainerRuntimeEvents());
 
@@ -89,7 +91,7 @@ use_current_InterfaceDeclaration_IContainerRuntimeEvents(
 declare function get_current_InterfaceDeclaration_IContainerRuntimeEvents():
     TypeOnly<current.IContainerRuntimeEvents>;
 declare function use_old_InterfaceDeclaration_IContainerRuntimeEvents(
-    use: TypeOnly<old.IContainerRuntimeEvents>);
+    use: TypeOnly<old.IContainerRuntimeEvents>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeEvents(
     get_current_InterfaceDeclaration_IContainerRuntimeEvents());
 
@@ -101,7 +103,7 @@ use_old_InterfaceDeclaration_IContainerRuntimeEvents(
 declare function get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated():
     TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>;
 declare function use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
-    use: TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>);
+    use: TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
     get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated());
 
@@ -113,6 +115,7 @@ use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
 declare function get_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated():
     TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>;
 declare function use_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
-    use: TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>);
+    use: TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated());

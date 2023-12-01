@@ -10,7 +10,6 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
 export { ObjectStoragePartition } from "./objectstoragepartition";

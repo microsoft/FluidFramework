@@ -15,8 +15,8 @@ import {
 	type SharedTree as LegacySharedTree,
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
-import { MigrationShim } from "./migrationShim";
-import { attributesMatch } from "./utils";
+import { MigrationShim } from "./migrationShim.js";
+import { attributesMatch } from "./utils.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.
@@ -71,7 +71,10 @@ export class MigrationShimFactory implements IChannelFactory {
 		attributes: IChannelAttributes,
 	): Promise<MigrationShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
-		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes do not match");
+		assert(
+			attributesMatch(attributes, this.oldFactory.attributes),
+			0x7ea /* Attributes do not match */,
+		);
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,

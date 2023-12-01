@@ -74,7 +74,6 @@ import { SequenceEvent } from '@fluidframework/sequence';
 import { SequenceInterval } from '@fluidframework/sequence';
 import { SequenceMaintenanceEvent } from '@fluidframework/sequence';
 import { SerializedIntervalDelta } from '@fluidframework/sequence';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 import { SharedDirectory } from '@fluidframework/map';
 import { SharedIntervalCollection } from '@fluidframework/sequence';
 import { SharedIntervalCollectionFactory } from '@fluidframework/sequence';
@@ -104,8 +103,6 @@ export { DirectoryFactory }
 export { DOProviderContainerRuntimeFactory }
 
 export { DriverErrorTypes }
-
-export { FluidContainer }
 
 export { getTextAndMarkers }
 
@@ -226,8 +223,6 @@ export { SequenceInterval }
 export { SequenceMaintenanceEvent }
 
 export { SerializedIntervalDelta }
-
-export { ServiceAudience }
 
 export { SharedDirectory }
 

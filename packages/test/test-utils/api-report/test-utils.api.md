@@ -135,6 +135,9 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 
+// @public
+export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
+
 // @public (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
@@ -278,13 +281,11 @@ export class TestFluidObject implements ITestFluidObject {
     get handle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     initialize(existing: boolean): Promise<void>;
     // (undocumented)
     get ITestFluidObject(): this;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     root: ISharedMap;

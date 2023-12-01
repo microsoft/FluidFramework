@@ -15,8 +15,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -126,13 +124,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
-    // @deprecated (undocumented)
-    readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    // @deprecated
-    request(request: IRequest): Promise<IResponse>;
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -153,15 +147,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 // @public
 export interface IDataStore {
     readonly entryPoint: IFluidHandle<FluidObject>;
-    // @deprecated (undocumented)
-    readonly IFluidRouter: IFluidRouter;
-    // @deprecated (undocumented)
-    request(request: {
-        url: "/";
-        headers?: undefined;
-    }): Promise<IResponse>;
-    // @deprecated
-    request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -171,15 +156,11 @@ export interface IdCreationRange {
     readonly ids?: {
         readonly firstGenCount: number;
         readonly count: number;
+        readonly requestedClusterSize: number;
     };
     // (undocumented)
     readonly sessionId: SessionId;
 }
-
-// @public (undocumented)
-export type IdCreationRangeWithStashedState = IdCreationRange & {
-    stashedState: SerializedIdCompressorWithOngoingSession;
-};
 
 // @public
 export interface IEnvelope {
@@ -206,8 +187,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
-    // @deprecated (undocumented)
-    readonly IFluidRouter: IFluidRouter;
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
@@ -266,7 +245,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -343,9 +322,6 @@ export interface IInboundSignalMessage extends ISignalMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
-
-// @public
-export const initialClusterCapacity = 512;
 
 // @public (undocumented)
 export interface IProvideFluidDataStoreFactory {
