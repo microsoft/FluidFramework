@@ -7,7 +7,7 @@ import {
 	TreeFieldSchema,
 	ImplicitFieldSchema,
 	TreeSchema,
-	SchemaAware,
+	InsertableFlexField,
 } from "../../feature-libraries";
 import { InsertableTreeRoot, TreeFieldInner } from "../../simple-tree";
 import { treeViewWithContent } from "../utils";
@@ -30,7 +30,7 @@ export function getRoot<TRoot extends TreeFieldSchema>(
 ): TreeFieldInner<TRoot["kind"], TRoot["allowedTypes"], "maybeEmpty"> {
 	const view = treeViewWithContent({
 		schema,
-		initialTree: initialTree as SchemaAware.TypedField<TRoot>,
+		initialTree: initialTree as InsertableFlexField<TRoot>,
 	});
 
 	return view.root;

@@ -111,7 +111,6 @@ type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? Lis
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @alpha
  */
 export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
 	? ConstantFlexListToNonLazyArray<List>

@@ -16,7 +16,6 @@ export {
 
 export {
 	FlexList,
-	FlexListToNonLazyArray,
 	ConstantFlexListToNonLazyArray,
 	LazyItem,
 	NormalizedFlexList,
