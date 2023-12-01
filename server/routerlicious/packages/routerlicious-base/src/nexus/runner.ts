@@ -191,13 +191,13 @@ export class NexusRunner implements IRunner {
 	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
 		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
 			origin: "upgrade",
-			connections: socket.server._connections,
+			mdmMetricValue: socket.server._connections,
 		});
 		metric.success("WebSockets: connection upgraded");
 		socket.on("close", (hadError: boolean) => {
 			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
 				origin: "close",
-				connections: socket.server._connections,
+				mdmMetricValue: socket.server._connections,
 				hadError: hadError.toString(),
 			});
 			closeMetric.success(
@@ -208,7 +208,7 @@ export class NexusRunner implements IRunner {
 		socket.on("error", (error) => {
 			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
 				origin: "error",
-				connections: socket.server._connections,
+				mdmMetricValue: socket.server._connections,
 				bytesRead: socket.bytesRead,
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),
