@@ -15,7 +15,7 @@ import { Path } from 'ot-json1';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedOT } from '@fluid-experimental/ot';
 
-// @public (undocumented)
+// @internal (undocumented)
 export class Json1Factory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -31,7 +31,7 @@ export class Json1Factory implements IChannelFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class SharedJson1 extends SharedOT<Doc, JSONOp> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)

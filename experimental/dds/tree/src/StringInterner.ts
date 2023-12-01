@@ -8,6 +8,7 @@ import type { InternedStringId } from './Identifiers';
 
 /**
  * Interns strings as integers.
+ * @internal
  */
 export interface StringInterner {
 	getInternedId(input: string): InternedStringId | undefined;

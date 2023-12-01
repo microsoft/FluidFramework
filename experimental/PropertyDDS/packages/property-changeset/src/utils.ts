@@ -30,10 +30,17 @@ type NextFn = (err?: Error | null | undefined | string, result?: unknown) => voi
  * Utils
  * @alias property-changeset.Utils
  * @class
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utils {
+	/**
+	 * @internal
+	 */
 	export type OperationType = "modify" | "insert" | "remove";
+	/**
+	 * @internal
+	 */
 	export type PropertyContainerType =
 		| "array"
 		| "map"
@@ -1049,6 +1056,7 @@ export namespace Utils {
 
 	/**
 	 * Provides traversal information when parsing ChangeSets via the traverseChangeSetRecursively function.
+	 * @internal
 	 */
 	export class TraversalContext {
 		public _fullPath: string;
@@ -1447,6 +1455,7 @@ export namespace Utils {
 	 * At least one of the pre- or post-order callbacks must be specified. Both may be specified as well.
 	 *
 	 * @param in_changeSet - The ChangeSet to process
+	 * @internal
 	 */
 	export function traverseChangeSetRecursively(
 		in_changeSet: SerializedChangeSet,
@@ -1484,7 +1493,7 @@ export namespace Utils {
 	 *
 	 * @param in_changeSet - The ChangeSet to process
 	 * @param in_finalizer - A callback when traversal is completed
-	 *
+	 * @internal
 	 */
 	export function traverseChangeSetRecursivelyAsync(
 		in_changeSet: SerializedChangeSet,
@@ -1527,6 +1536,7 @@ export namespace Utils {
 	 * @param in_changeSet - The ChangeSet to process
 	 *
 	 * @returns All typeids that appear in the ChangeSet
+	 * @internal
 	 */
 	export function extractTypeids(in_changeSet: SerializedChangeSet): string[] {
 		const result = {};
@@ -1553,6 +1563,7 @@ export namespace Utils {
 	 *
 	 * @returns All templates that appear in the ChangeSet.
 	 * The returned object has members key (string), corresponding to the type and value with the definition (object)
+	 * @internal
 	 */
 	export function enumerateSchemas(
 		in_changeSet: SerializedChangeSet,
@@ -1588,6 +1599,7 @@ export namespace Utils {
 	 * This is a private functions, it is only exported for the tests.
 	 *
 	 * @param io_changeSet - The ChangeSet to process
+	 * @internal
 	 */
 	export function _stripTypeids(io_changeSet: SerializedChangeSet) {
 		const result = {};
@@ -1658,6 +1670,7 @@ export namespace Utils {
 	 * @param in_changeSet - The ChangeSet to process
 	 * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
 	 * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
+	 * @internal
 	 */
 	export function getChangesByType(
 		in_typeid: string,
@@ -1715,6 +1728,7 @@ export namespace Utils {
 	 * {insert: Object|undefined, modify: Object|undefined, remove: boolean|undefined}
 	 * </pre>
 	 * ```
+	 * @internal
 	 */
 	export function getChangesByPath(
 		in_path: string,
@@ -1873,6 +1887,7 @@ export namespace Utils {
 	 * @param in_options.escapeLeadingDoubleUnderscore - If this is set to true, keys which start with '__' will be
 	 * escaped (by adding an additional '_') before the lookup into the paths map. This frees the keyspace with
 	 * duplicated underscores for the use by the calling application.
+	 * @internal
 	 */
 	export function getChangesToTokenizedPaths(
 		in_paths: Map<string, Map<string, any>> | { [key: string]: any },
@@ -2105,6 +2120,7 @@ export namespace Utils {
 	 *
 	 * @throws If a path given resolves into an array or set.
 	 * @returns The filtered ChangeSet
+	 * @internal
 	 */
 	export function getFilteredChangeSetByPaths(
 		in_changeSet: SerializedChangeSet,
@@ -2333,6 +2349,7 @@ export namespace Utils {
 	 * @param in_paths - An array with paths
 	 * @returns {Map} A tree structured representation of the tokenized paths that can be
 	 * passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
+	 * @internal
 	 */
 	export function convertPathArrayToTree(in_paths: string[]): PathTree {
 		in_paths = Array.isArray(in_paths) ? in_paths : [in_paths];
@@ -2411,6 +2428,7 @@ export namespace Utils {
 	 * including ones that encompasse other paths
 	 * @throws if a path given resolves into an array or set
 	 * @returns Filtered ChangeSet
+	 * @internal
 	 */
 	export function excludePathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,
@@ -2467,6 +2485,7 @@ export namespace Utils {
 	 * @param in_options.includeOperation - Flag to include the operation
 	 * @param in_options.includeTypeidInfo - Flag to include the typeid info
 	 * @returns Flat list of paths
+	 * @internal
 	 */
 	export function extractPathsFromChangeSet(
 		in_changeSet: SerializedChangeSet,

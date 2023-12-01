@@ -51,6 +51,20 @@ are generated (empty entries are current versions):
 | NewContainerRuntime | old    | old    |                   | old          |
 | NewDataRuntime      | old    | old    | old               |              |
 
+### Cross version combinations
+
+In addition to the layer version combinations seen above, this package also provides functions to generate variations
+intended to test all layers of one version against all layers of another version in tests that feature more than one client.
+The intention is to simulate scenarios where the client that created a document was using a different version than the client
+loading the document. These variations are applied in our cross version tests where we test the current version against the
+most recent **public** release.
+
+For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
+Therefore, we would test the following combinations:
+
+-   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
+-   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
+
 ### Mocha test setup with layer version combinations
 
 There are three compat `describe*` to generate different combinations, depending of the need of the tests
@@ -76,9 +90,10 @@ to enable compat testing easily in the future just by changing the `describe*`.
 
 ### Legacy version defaults and installation
 
-By default, N-1, N-2, and LTS (hard coded) test variants are generated. The versions can be specified using command
-line (see below) to run the test against any two versions. This package includes a `mocha` global hook that will
-install legacy packages at the beginning of the package based on the `compatVersion` settings.
+By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
+generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
+`compatVersion` settings.
 
 ## Command line options
 
