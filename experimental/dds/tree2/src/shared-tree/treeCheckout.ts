@@ -36,7 +36,7 @@ import { noopValidator } from "../codec";
 
 /**
  * Events for {@link ITreeCheckout}.
- * @alpha
+ * @beta
  */
 export interface CheckoutEvents {
 	/**
