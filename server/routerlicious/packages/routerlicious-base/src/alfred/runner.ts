@@ -36,6 +36,9 @@ import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
+/**
+ * @internal
+ */
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;

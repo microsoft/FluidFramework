@@ -22,8 +22,7 @@ type PathCallback = {
  * if the creation of a data binding is delayed by a {@link DataBinder.pushBindingActivationScope},
  * it can still be removed using destroy() before the final {@link DataBinder.popBindingActivationScope}
  * actually instantiates any bindings.
- *
- * @public
+ * @internal
  */
 export class DataBinderHandle {
 	_destroyCallback: DestroyCallbackType | undefined;

@@ -8,6 +8,7 @@
  *
  * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackageEnvironment}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IFluidPackageEnvironment {
 	/**
@@ -41,6 +42,7 @@ export interface IFluidPackageEnvironment {
  *
  * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackage}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IFluidPackage {
 	/**
@@ -72,6 +74,7 @@ export interface IFluidPackage {
  * to have code loading modules in same package.
  *
  * @param pkg - The package json data to check if it is a Fluid package.
+ * @internal
  */
 export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof pkg === "object" &&
@@ -83,6 +86,7 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsConfig}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
@@ -93,6 +97,7 @@ export interface IFluidCodeDetailsConfig {
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetails}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IFluidCodeDetails {
 	/**
@@ -111,6 +116,7 @@ export interface IFluidCodeDetails {
 /**
  * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidCodeDetails}
  * to have code loading modules in same package.
+ * @internal
  */
 export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
 	const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
@@ -125,6 +131,7 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
 /**
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
+ * @internal
  */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 	"IFluidCodeDetailsComparer";
@@ -132,6 +139,7 @@ export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 /**
  * @deprecated in favor of {@link @fluidframework/container-definitions#IProvideFluidCodeDetailsComparer}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IProvideFluidCodeDetailsComparer {
 	readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
@@ -142,6 +150,7 @@ export interface IProvideFluidCodeDetailsComparer {
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
+ * @internal
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**

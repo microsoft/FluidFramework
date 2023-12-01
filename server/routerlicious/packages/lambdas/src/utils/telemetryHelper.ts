@@ -18,6 +18,9 @@ import {
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export const createSessionMetric = (
 	tenantId: string,
 	documentId: string,
@@ -37,6 +40,9 @@ export const createSessionMetric = (
 	return sessionMetric;
 };
 
+/**
+ * @internal
+ */
 export const logCommonSessionEndMetrics = (
 	context: DocumentContext,
 	closeType: LambdaCloseType,

@@ -15,6 +15,7 @@ const { StringMapProperty } = require("./valueMapProperty");
 
 /**
  * A StringMapProperty which stores reference values
+ * @internal
  */
 export class ReferenceMapProperty extends StringMapProperty {
 	/**

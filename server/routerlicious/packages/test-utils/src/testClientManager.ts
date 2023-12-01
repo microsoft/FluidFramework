@@ -6,6 +6,9 @@
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 import { IClientManager, ISequencedSignalClient } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class TestClientManager implements IClientManager {
 	private readonly clients: Map<string, Map<string, Map<string, IClient>>> = new Map();
 
