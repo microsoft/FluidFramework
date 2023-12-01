@@ -19,7 +19,7 @@ describe("SimpleTree", () => {
 			forest: ForestType.Reference,
 			subtype: "test",
 		});
-		const view = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematize({
+		const view = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematizeOld({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: { item: 1 },
 			schema,

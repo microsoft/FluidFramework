@@ -40,6 +40,9 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export class DocumentStorage implements IDocumentStorage {
 	constructor(
 		private readonly documentRepository: IDocumentRepository,

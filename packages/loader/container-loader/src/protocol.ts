@@ -28,6 +28,7 @@ export enum SignalType {
 
 /**
  * Function to be used for creating a protocol handler.
+ * @internal
  */
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
@@ -35,6 +36,9 @@ export type ProtocolHandlerBuilder = (
 	sendProposal: (key: string, value: any) => number,
 ) => IProtocolHandler;
 
+/**
+ * @internal
+ */
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;
 	processSignal(message: ISignalMessage);

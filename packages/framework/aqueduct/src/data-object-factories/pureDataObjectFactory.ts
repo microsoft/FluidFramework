@@ -33,7 +33,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
 /**
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
- * @public
+ * @internal
  * @deprecated Will be removed in future major release. Please remove all usage of it.
  */
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
@@ -130,7 +130,7 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @public
+ * @internal
  */
 export class PureDataObjectFactory<
 		TObj extends PureDataObject<I>,

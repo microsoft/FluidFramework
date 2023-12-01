@@ -6,10 +6,16 @@
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { pkgVersion } from "./packageVersion";
 
+/**
+ * @internal
+ */
 export const RouterliciousDriverApi = {
 	version: pkgVersion,
 	modulePath: "",
 	RouterliciousDocumentServiceFactory,
 };
 
+/**
+ * @internal
+ */
 export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;

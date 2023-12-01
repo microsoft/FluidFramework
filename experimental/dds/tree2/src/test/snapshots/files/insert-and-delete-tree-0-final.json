@@ -23,9 +23,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
-                                "id": 1
+                                "effect": {
+                                  "delete": {
+                                    "id": 1
+                                  }
+                                }
                               }
                             ]
                           }

@@ -72,15 +72,17 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Use this as the type of a protected field to cause a type to use nominal typing instead of structural.
  *
- * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- *
+ * @remarks
+ * Using nominal typing in this way prevents assignment of objects which are not instances of this class to values of this class's type.
+ * Classes which are used with "instanceof", or are supposed to be instantiated in particular ways (not just made with object literals)
+ * can use this to prevent undesired assignments.
  * @example
- *
  * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
- *
- * @alpha
+ * @privateRemarks
+ * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
+ * @beta
  */
 export interface MakeNominal {}
 

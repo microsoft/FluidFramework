@@ -10,6 +10,9 @@ import {
 import { str } from "crc-32";
 
 // default hash/seed value.
+/**
+ * @internal
+ */
 export const defaultHash = "00000000";
 
 const clientIdProperty: keyof ISequencedDocumentSystemMessage = "clientId";
@@ -35,6 +38,9 @@ const fields: string[] = [
 	dataProperty,
 ];
 
+/**
+ * @internal
+ */
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string {
 	const messageWithData = message as ISequencedDocumentSystemMessage;
 	// Should we just use stringified JSON or come up with our own serialization of values?

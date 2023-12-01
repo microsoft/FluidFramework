@@ -10,12 +10,18 @@ import util from "util";
 import { lock } from "proper-lockfile";
 import { IOdspTokens } from "@fluidframework/odsp-doclib-utils";
 
+/**
+ * @internal
+ */
 export interface IAsyncCache<TKey, TValue> {
 	get(key: TKey): Promise<TValue | undefined>;
 	save(key: TKey, value: TValue): Promise<void>;
 	lock<T>(callback: () => Promise<T>): Promise<T>;
 }
 
+/**
+ * @internal
+ */
 export interface IResources {
 	tokens?: {
 		version?: number;
@@ -30,6 +36,9 @@ export interface IResources {
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");
 
+/**
+ * @internal
+ */
 export async function loadRC(): Promise<IResources> {
 	const readFile = util.promisify(fs.readFile);
 	const exists = util.promisify(fs.exists);
@@ -46,12 +55,18 @@ export async function loadRC(): Promise<IResources> {
 	return {};
 }
 
+/**
+ * @internal
+ */
 export async function saveRC(rc: IResources) {
 	const writeFile = util.promisify(fs.writeFile);
 	const content = JSON.stringify(rc, undefined, 2);
 	return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
 
+/**
+ * @internal
+ */
 export async function lockRC() {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return lock(getRCFileName(), {

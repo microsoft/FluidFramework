@@ -4,9 +4,9 @@
  */
 
 import { FieldChangeHandler } from "../modular-schema";
-import { Changeset } from "./format";
+import { Changeset } from "./types";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-import { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
+import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs";
 import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 import { isEmpty } from "./utils";

@@ -16,6 +16,9 @@ import {
 } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
+/**
+ * @internal
+ */
 export class GitManager implements IGitManager {
 	private readonly blobCache = new Map<string, resources.IBlob>();
 	private readonly commitCache = new Map<string, resources.ICommit>();

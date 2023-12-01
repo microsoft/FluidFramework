@@ -13,6 +13,7 @@ import { TypedEventEmitter } from "./typedEventEmitter";
  * but the primary source needs to stay intact.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export class EventForwarder<TEvent = IEvent>
 	extends TypedEventEmitter<TEvent>

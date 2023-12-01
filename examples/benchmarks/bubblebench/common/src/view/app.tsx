@@ -68,6 +68,10 @@ function collide(left: IBubble, right: IBubble): void {
 	right.vy = rvy + dy * impulse;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 	const [stats] = useState<Stats>(new Stats());
 	const [, setFrame] = useState<number>(0);

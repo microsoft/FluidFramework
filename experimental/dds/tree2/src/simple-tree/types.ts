@@ -20,8 +20,18 @@ import {
 	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
-import { InsertableTreeNodeUnion } from "./insertable";
-import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
+import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+
+/**
+ * Type alias to document which values are un-hydrated.
+ *
+ * Un-hydrated values are nodes produced from schema's create functions that haven't been inserted into a tree yet.
+ *
+ * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
+ * This no-op wrapper is used instead.
+ * @beta
+ */
+export type Unhydrated<T> = T;
 
 /**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
@@ -34,40 +44,11 @@ import { IterableTreeListContent, createIterableTreeListContent } from "./iterab
  * Using default parameters, this could be combined with TypedNode.
  * @alpha
  */
-export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
-	extends TreeListNodeBase<
-		TreeNodeUnion<TTypes>,
-		InsertableTreeNodeUnion<TTypes>,
-		TreeListNode
-	> {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export const TreeListNode = {
-	/**
-	 * Wrap an iterable of content to be inserted into a list.
-	 * @remarks
-	 * The object returned by this function can be inserted into a list as an element.
-	 * Its contents will be inserted sequentially in the corresponding location in the list.
-	 * @example
-	 * ```ts
-	 * list.insertAtEnd(list.inline(iterable))
-	 * ```
-	 */
-	inline: <T>(content: Iterable<T>) => createIterableTreeListContent(content),
-};
+export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 /**
  * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
- * @alpha
+ * @beta
  */
 export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
@@ -274,8 +255,18 @@ export type TreeObjectNodeFields<
  *
  * @alpha
  */
-export interface TreeMapNode<TSchema extends MapNodeSchema>
-	extends ReadonlyMap<string, TreeField<TSchema["info"], "notEmpty">> {
+export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
+	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
+
+/**
+ * A map of string keys to tree objects.
+ *
+ * @privateRemarks
+ * Add support for `clear` once we have established merge semantics for it.
+ *
+ * @beta
+ */
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
@@ -283,9 +274,9 @@ export interface TreeMapNode<TSchema extends MapNodeSchema>
 	 * @param value - The value of the element to add to the map.
 	 *
 	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeBase.delete} with that key.
 	 */
-	set(key: string, value: TreeField<TSchema["info"], "notEmpty"> | undefined): void;
+	set(key: string, value: TIn | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -358,7 +349,7 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 	: TSchema extends MapNodeSchema
 	? TreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? TreeListNode<TSchema["info"]["allowedTypes"]>
+	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema>
 	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>

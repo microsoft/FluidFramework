@@ -9,6 +9,7 @@ import { IWebSocket } from "./http";
 
 /**
  * Identifier for an ordering node in the system
+ * @internal
  */
 export interface INode {
 	// Unique identifier for the node
@@ -21,10 +22,16 @@ export interface INode {
 	expiration: number;
 }
 
+/**
+ * @internal
+ */
 export interface IOrdererSocket {
 	send(topic: string, op: string, id: string, data: any[]);
 }
 
+/**
+ * @internal
+ */
 export interface IOrdererConnection {
 	readonly clientId: string;
 
@@ -58,12 +65,18 @@ export interface IOrdererConnection {
 	disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface IOrderer {
 	connect(socket: IWebSocket, clientId: string, client: IClient): Promise<IOrdererConnection>;
 
 	close(): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface IOrdererManager {
 	getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
 }

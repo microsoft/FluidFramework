@@ -11,6 +11,9 @@ import {
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
 
+/**
+ * @internal
+ */
 export class LocalServerTestDriver implements ITestDriver {
 	private readonly _server = LocalDeltaConnectionServer.create();
 	public readonly endpointName = "local";
