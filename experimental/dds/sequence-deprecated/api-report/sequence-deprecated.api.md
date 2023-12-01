@@ -23,25 +23,25 @@ import { SubSequence } from '@fluidframework/sequence';
 
 export { IJSONRunSegment }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCellPosition: number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCol = 2097152;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCols: number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxRow = 4294967295;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxRows: number;
 
-// @public @deprecated
+// @internal @deprecated
 export class PaddingSegment extends BaseSegment {
     constructor(size: number);
     // (undocumented)
@@ -71,16 +71,16 @@ export class PaddingSegment extends BaseSegment {
     static readonly typeString = "PaddingSegment";
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function positionToRowCol(position: number): {
     row: number;
     col: number;
 };
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const rowColToPosition: (row: number, col: number) => number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     constructor(items: SparseMatrixItem[]);
     // (undocumented)
@@ -107,7 +107,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     static readonly typeString = "RunSegment";
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class SharedNumberSequence extends SharedSequence<number> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
@@ -121,7 +121,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
     id: string;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
@@ -137,7 +137,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
 
 export { SharedSequence }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
@@ -169,7 +169,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     setTag(row: number, col: number, tag: any): void;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SparseMatrixFactory implements IChannelFactory {
     // (undocumented)
     static Attributes: IChannelAttributes;
@@ -187,7 +187,7 @@ export class SparseMatrixFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type SparseMatrixItem = Serializable;
 
 export { SubSequence }

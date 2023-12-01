@@ -14,6 +14,9 @@ interface IApp {
 	clients: IArrayish<IClient>;
 }
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 	private maybeTree?: SharedTree = undefined;
@@ -74,6 +77,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

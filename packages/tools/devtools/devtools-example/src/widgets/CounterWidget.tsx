@@ -33,6 +33,7 @@ const useStyles = makeStyles({
 
 /**
  * {@link CounterWidget} input props.
+ * @internal
  */
 export interface CounterWidgetProps {
 	counter: SharedCounter;
@@ -42,6 +43,7 @@ export interface CounterWidgetProps {
  * Simple counter widget.
  * Backed by a {@link @fluidframework/counter#SharedCounter}.
  * Affords simple incrementing and decrementing via buttons.
+ * @internal
  */
 export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 	const { counter } = props;

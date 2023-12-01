@@ -6,6 +6,9 @@
 import * as resources from "@fluidframework/gitresources";
 import { default as Axios, RawAxiosRequestHeaders } from "axios";
 
+/**
+ * @internal
+ */
 export async function getOrCreateRepository(
 	endpoint: string,
 	owner: string,
@@ -36,5 +39,6 @@ export async function getOrCreateRepository(
 
 /**
  * getRandomInt is not and should not be used as part of any secure random number generation
+ * @internal
  */
 export const getRandomInt = (range: number) => Math.floor(Math.random() * range);

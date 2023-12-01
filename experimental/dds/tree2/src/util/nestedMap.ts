@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { MapGetSet } from "./utils";
+
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
  * As it is a nested map, size() will return the number of distinct key1s.
@@ -70,10 +72,12 @@ export function setInNestedMap<Key1, Key2, Value>(
  * Sets the value at `key` in map to value if not already present.
  * Returns the value at `key` after setting it.
  * This is equivalent to a get or default that adds the default to the map.
- *
- * @alpha
  */
-export function getOrAddInMap<Key, Value>(map: Map<Key, Value>, key: Key, value: Value): Value {
+export function getOrAddInMap<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
 	const currentValue = map.get(key);
 	if (currentValue !== undefined) {
 		return currentValue;

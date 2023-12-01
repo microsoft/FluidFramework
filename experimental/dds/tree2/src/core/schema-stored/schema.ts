@@ -6,7 +6,7 @@
 import { Brand, brand, brandedStringType } from "../../util";
 
 /**
- * SchemaIdentifier for a TreeNode.
+ * Identifier for a TreeNode schema.
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.

@@ -19,6 +19,9 @@ import {
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class LocalOrdererManager implements IOrdererManager {
 	/**
 	 * Map of "tenantId/documentId" to the orderer for that document.

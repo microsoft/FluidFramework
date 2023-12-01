@@ -14,11 +14,17 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
 import * as socketIo from "./socketIoServer";
 
+/**
+ * @internal
+ */
 export type RequestListener = (
 	request: http.IncomingMessage,
 	response: http.ServerResponse,
 ) => void;
 
+/**
+ * @internal
+ */
 export class HttpServer implements core.IHttpServer {
 	constructor(private readonly server: http.Server) {}
 
@@ -39,6 +45,9 @@ export class HttpServer implements core.IHttpServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class WebServer implements core.IWebServer {
 	constructor(
 		public httpServer: HttpServer,
@@ -54,6 +63,9 @@ export class WebServer implements core.IWebServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IHttpServerConfig {
 	/**
 	 * The number of milliseconds of inactivity before a socket is presumed to have timed out.
@@ -76,6 +88,9 @@ const createAndConfigureHttpServer = (
 	return server;
 };
 
+/**
+ * @internal
+ */
 export class SocketIoWebServerFactory implements core.IWebServerFactory {
 	constructor(
 		private readonly redisConfig: any,
@@ -100,6 +115,9 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class BasicWebServerFactory implements core.IWebServerFactory {
 	constructor(private readonly httpServerConfig?: IHttpServerConfig) {}
 
@@ -130,6 +148,9 @@ interface IWorkerHeartbeatMessage extends IWorkerMessage<undefined> {
 interface IWorkerShutdownMessage extends IWorkerMessage<undefined> {
 	type: "shutdown";
 }
+/**
+ * @internal
+ */
 export interface INodeClusterConfig {
 	workerHeartbeatIntervalMs: number;
 	workerTimeoutNumMissedHeartbeats: number;
@@ -170,6 +191,9 @@ class NullWebServer implements core.IWebServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	private readonly lastHeartbeatMap: Map<number, number> = new Map();
 	private readonly newForkTimeouts: Map<number, NodeJS.Timeout> = new Map();
@@ -343,6 +367,9 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory {
 	constructor(
 		private readonly redisConfig: any,

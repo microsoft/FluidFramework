@@ -13,6 +13,9 @@ import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/r
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
+/**
+ * @internal
+ */
 export const FileStorageDocumentName = "FileStorageDocId"; // Some unique document name
 
 // Tree ID use to communicate between getVersions() & getSnapshotTree() that IVersion is ours.
@@ -20,6 +23,7 @@ const FileStorageVersionTreeId = "FileStorageTreeId";
 
 /**
  * Document storage service for the file driver.
+ * @internal
  */
 export class FluidFetchReader
 	extends ReadDocumentStorageServiceBase
@@ -110,12 +114,21 @@ export class FluidFetchReader
 	}
 }
 
+/**
+ * @internal
+ */
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
 	onSnapshotHandler(snapshot: IFileSnapshot): void;
 	reset(): void;
 }
 
+/**
+ * @internal
+ */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
+/**
+ * @internal
+ */
 export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
 	class extends Base implements ISnapshotWriterStorage {
 		// Note: if variable name has same name as in base class, it overrides it!
@@ -228,4 +241,7 @@ function removeNullTreeIds(tree: api.ITree) {
 	);
 	delete tree.id;
 }
+/**
+ * @internal
+ */
 export const FluidFetchReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(FluidFetchReader);

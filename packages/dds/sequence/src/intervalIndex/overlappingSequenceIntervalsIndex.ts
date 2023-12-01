@@ -70,7 +70,7 @@ class OverlappingSequenceIntervalsIndex
 }
 
 /**
- * @public
+ * @internal
  */
 export function createOverlappingSequenceIntervalsIndex(
 	sharedString: SharedString,

@@ -13,6 +13,7 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  * The Replay document service dummies out the snapshot and the delta storage.
  * Delta connection simulates the socket by fetching the ops from delta storage
  * and emitting them with a pre determined delay
+ * @internal
  */
 // eslint-disable-next-line import/namespace
 export class ReplayDocumentService implements api.IDocumentService {

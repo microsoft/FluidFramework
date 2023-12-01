@@ -29,6 +29,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
+ * @internal
  */
 export interface IMergeNodeCommon {
 	/**
@@ -94,6 +95,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @internal
  */
 export interface IRemovalInfo {
 	/**
@@ -115,6 +117,7 @@ export interface IRemovalInfo {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
@@ -129,6 +132,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @internal
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
@@ -156,9 +160,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * `attribution === undefined` until ack.
 	 *
 	 * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-	 *
-	 * @alpha
-	 *
 	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
@@ -234,12 +235,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMarkerModifiedAction {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(marker: Marker): void;
 }
 
+/**
+ * @internal
+ */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -350,6 +355,7 @@ export interface SearchResult {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface SegmentGroup {
 	segments: ISegment[];
@@ -358,6 +364,9 @@ export interface SegmentGroup {
 	refSeq: number;
 }
 
+/**
+ * @internal
+ */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
@@ -419,6 +428,9 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
+/**
+ * @internal
+ */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
@@ -426,9 +438,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public removedClientIds?: number[];
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-	/**
-	 * @alpha
-	 */
+	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
@@ -604,13 +614,25 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
+/**
+ * @internal
+ */
 export const reservedMarkerIdKey = "markerId";
+/**
+ * @internal
+ */
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
+/**
+ * @internal
+ */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
+/**
+ * @internal
+ */
 export class Marker extends BaseSegment implements ReferencePosition {
 	public static readonly type = "Marker";
 	public static is(segment: ISegment): segment is Marker {
@@ -714,6 +736,7 @@ export class IncrementalMapState<TContext> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;
@@ -736,17 +759,20 @@ export class CollaborationWindow {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export const compareNumbers = (a: number, b: number) => a - b;
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @internal
  */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
@@ -760,6 +786,7 @@ export function internedSpaces(n: number) {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IConsensusInfo {
 	marker: Marker;
@@ -768,6 +795,7 @@ export interface IConsensusInfo {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface SegmentAccumulator {
 	segments: ISegment[];
@@ -780,6 +808,9 @@ export interface MinListener {
 	onMinGE(minSeq: number): void;
 }
 
+/**
+ * @internal
+ */
 export function debugMarkerToString(marker: Marker): string {
 	let bbuf = "";
 	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
