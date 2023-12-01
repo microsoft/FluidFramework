@@ -7,10 +7,10 @@
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
-// @public
+// @internal
 export type ConnectionMode = "write" | "read";
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum FileMode {
     // (undocumented)
     Directory = "040000",
@@ -22,42 +22,42 @@ export enum FileMode {
     Symlink = "120000"
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IActorClient {
     // (undocumented)
     sub: string;
 }
 
-// @public
+// @internal
 export type IApprovedProposal = {
     approvalSequenceNumber: number;
 } & ISequencedProposal;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IAttachment {
     // (undocumented)
     id: string;
 }
 
-// @public
+// @internal
 export interface IBlob {
     contents: string;
     encoding: "utf-8" | "base64";
 }
 
-// @public
+// @internal
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
     sequenceNumber: number;
 }
 
-// @public
+// @internal
 export interface ICapabilities {
     interactive: boolean;
 }
 
-// @public
+// @internal
 export interface IClient {
     details: IClientDetails;
     mode: ConnectionMode;
@@ -68,7 +68,7 @@ export interface IClient {
     user: IUser;
 }
 
-// @public
+// @internal
 export interface IClientConfiguration {
     blockSize: number;
     maxMessageSize: number;
@@ -76,7 +76,7 @@ export interface IClientConfiguration {
     noopTimeFrequency?: number;
 }
 
-// @public
+// @internal
 export interface IClientDetails {
     capabilities: ICapabilities;
     // (undocumented)
@@ -86,18 +86,18 @@ export interface IClientDetails {
     type?: string;
 }
 
-// @public
+// @internal
 export interface IClientJoin {
     clientId: string;
     detail: IClient;
 }
 
-// @public
+// @internal
 export type ICommittedProposal = {
     commitSequenceNumber: number;
 } & IApprovedProposal;
 
-// @public
+// @internal
 export interface IConnect {
     client: IClient;
     driverVersion?: string;
@@ -112,7 +112,7 @@ export interface IConnect {
     versions: string[];
 }
 
-// @public
+// @internal
 export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
@@ -133,19 +133,19 @@ export interface IConnected {
     version: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IDocumentAttributes {
     minimumSequenceNumber: number;
     sequenceNumber: number;
 }
 
-// @public
+// @internal
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
@@ -157,20 +157,20 @@ export interface IDocumentMessage {
     type: string;
 }
 
-// @public
+// @internal
 export interface IDocumentSystemMessage extends IDocumentMessage {
     // (undocumented)
     data: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface INack {
     content: INackContent;
     operation: IDocumentMessage | undefined;
     sequenceNumber: number;
 }
 
-// @public
+// @internal
 export interface INackContent {
     code: number;
     message: string;
@@ -178,19 +178,19 @@ export interface INackContent {
     type: NackErrorType;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProcessMessageResult {
     // (undocumented)
     immediateNoOp?: boolean;
 }
 
-// @public
+// @internal
 export interface IProposal {
     key: string;
     value: unknown;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProtocolState {
     // (undocumented)
     members: [string, ISequencedClient][];
@@ -204,11 +204,11 @@ export interface IProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @public
+// @internal
 export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
 }
 
-// @public
+// @internal
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
@@ -216,7 +216,7 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
     getMembers(): Map<string, ISequencedClient>;
 }
 
-// @public
+// @internal
 export interface IQuorumClientsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
@@ -224,10 +224,10 @@ export interface IQuorumClientsEvents extends IErrorEvent {
     (event: "removeMember", listener: (clientId: string) => void): any;
 }
 
-// @public
+// @internal
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
-// @public
+// @internal
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
     // (undocumented)
     get(key: string): unknown;
@@ -237,7 +237,7 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     propose(key: string, value: unknown): Promise<void>;
 }
 
-// @public
+// @internal
 export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
@@ -245,24 +245,24 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
 }
 
-// @public
+// @internal
 export interface ISentSignalMessage extends ISignalMessageBase {
     targetClientId?: string;
 }
 
-// @public
+// @internal
 export interface ISequencedClient {
     client: IClient;
     sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
     // (undocumented)
     additionalContent: string;
 }
 
-// @public
+// @internal
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -283,29 +283,29 @@ export interface ISequencedDocumentMessage {
     type: string;
 }
 
-// @alpha
+// @internal
 export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessage, "expHash1" | "compression"> & {
     expHash1?: string;
     compression?: string;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
     // (undocumented)
     data: string;
 }
 
-// @public
+// @internal
 export type ISequencedProposal = {
     sequenceNumber: number;
 } & IProposal;
 
-// @public
+// @internal
 export interface IServerError {
     errorMessage: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISignalClient {
     client: IClient;
     clientConnectionNumber?: number;
@@ -313,12 +313,12 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @public
+// @internal
 export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @public
+// @internal
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
@@ -326,7 +326,7 @@ export interface ISignalMessageBase {
     type?: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotTree {
     // (undocumented)
     blobs: {
@@ -341,7 +341,7 @@ export interface ISnapshotTree {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotTreeEx extends ISnapshotTree {
     // (undocumented)
     id: string;
@@ -351,16 +351,16 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
     };
 }
 
-// @public
+// @internal
 export type IsoDate = string;
 
-// @public
+// @internal
 export interface ISummaryAck {
     handle: string;
     summaryProposal: ISummaryProposal;
 }
 
-// @public
+// @internal
 export interface ISummaryAttachment {
     // (undocumented)
     id: string;
@@ -368,7 +368,7 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public
+// @internal
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
@@ -376,7 +376,7 @@ export interface ISummaryBlob {
     type: SummaryType.Blob;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISummaryContent {
     details?: IUploadedSummaryDetails;
     handle: string;
@@ -385,7 +385,7 @@ export interface ISummaryContent {
     parents: string[];
 }
 
-// @public
+// @internal
 export interface ISummaryHandle {
     handle: string;
     handleType: SummaryTypeNoHandle;
@@ -393,7 +393,7 @@ export interface ISummaryHandle {
     type: SummaryType.Handle;
 }
 
-// @public
+// @internal
 export interface ISummaryNack {
     code?: number;
     message?: string;
@@ -401,12 +401,12 @@ export interface ISummaryNack {
     summaryProposal: ISummaryProposal;
 }
 
-// @public
+// @internal
 export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISummaryTokenClaims {
     // (undocumented)
     act: IActorClient;
@@ -416,7 +416,7 @@ export interface ISummaryTokenClaims {
     sub: string;
 }
 
-// @public
+// @internal
 export interface ISummaryTree {
     // (undocumented)
     tree: {
@@ -427,7 +427,7 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public
+// @internal
 export interface ITokenClaims {
     documentId: string;
     exp: number;
@@ -439,25 +439,25 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface ITokenProvider {
     isValid(): boolean;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface ITokenService {
     // (undocumented)
     extractClaims(token: string): ITokenClaims;
 }
 
-// @public
+// @internal
 export interface ITrace {
     action: string;
     service: string;
     timestamp: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
@@ -465,7 +465,7 @@ export interface ITree {
     unreferenced?: true;
 }
 
-// @public
+// @internal
 export type ITreeEntry = {
     path: string;
     mode: FileMode;
@@ -480,24 +480,24 @@ export type ITreeEntry = {
     value: IAttachment;
 });
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IUploadedSummaryDetails {
     includesProtocolTree?: boolean;
 }
 
-// @public
+// @internal
 export interface IUser {
     id: string;
 }
 
-// @public
+// @internal
 export interface IVersion {
     date?: IsoDate;
     id: string;
     treeId: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum MessageType {
     Accept = "accept",
     ClientJoin = "join",
@@ -514,7 +514,7 @@ export enum MessageType {
     SummaryNack = "summaryNack"
 }
 
-// @public
+// @internal
 export enum NackErrorType {
     BadRequestError = "BadRequestError",
     InvalidScopeError = "InvalidScopeError",
@@ -522,26 +522,26 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public
+// @internal
 export enum ScopeType {
     DocRead = "doc:read",
     DocWrite = "doc:write",
     SummaryWrite = "summary:write"
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum SignalType {
     ClientJoin = "join",
     ClientLeave = "leave"
 }
 
-// @public
+// @internal
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @public
+// @internal
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
-// @public
+// @internal
 export namespace SummaryType {
     // (undocumented)
     export type Attachment = 4;
@@ -557,13 +557,13 @@ export namespace SummaryType {
     const Attachment: Attachment;
 }
 
-// @public
+// @internal
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
-// @public
+// @internal
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
-// @public
+// @internal
 export enum TreeEntry {
     // (undocumented)
     Attachment = "Attachment",

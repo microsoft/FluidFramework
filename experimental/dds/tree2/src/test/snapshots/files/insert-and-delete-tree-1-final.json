@@ -24,8 +24,11 @@
                             "change": [
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 1
+                                "effect": {
+                                  "delete": {
+                                    "id": 1
+                                  }
+                                }
                               }
                             ]
                           }

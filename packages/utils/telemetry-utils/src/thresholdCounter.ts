@@ -6,8 +6,9 @@
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
- * Utility counter which will send event only if the provided value
- * is above a configured threshold
+ * Utility counter which will send event only if the provided value is above a configured threshold.
+ *
+ * @internal
  */
 export class ThresholdCounter {
 	public constructor(

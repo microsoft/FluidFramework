@@ -33,6 +33,7 @@ const retry = async <T>(
  * @param maxTries - maximum number of attempts
  * @param backOffMs - back off between attempts in milliseconds
  * @returns the actual value from the callback when successful or the default value otherwise
+ * @internal
  */
 export const retryWithEventualValue = async <T>(
 	callback: () => Promise<T>,

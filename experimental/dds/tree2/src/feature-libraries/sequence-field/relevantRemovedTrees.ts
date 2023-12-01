@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { Delta, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { Changeset, Mark } from "./format";
+import { Changeset, Mark } from "./types";
 import {
 	isInsert,
 	isNewAttach,

@@ -11,16 +11,16 @@ import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
-// @public
+// @internal
 export const createTinyliciousCreateNewRequest: (documentId?: string) => IRequest;
 
-// @public
+// @internal
 export const defaultTinyliciousEndpoint = "http://localhost";
 
-// @public
+// @internal
 export const defaultTinyliciousPort = 7070;
 
-// @public
+// @internal
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
     constructor(
     scopes?: ScopeType[] | undefined);
@@ -30,7 +30,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @public
+// @internal
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     constructor(port?: number, endpoint?: string);
     // (undocumented)

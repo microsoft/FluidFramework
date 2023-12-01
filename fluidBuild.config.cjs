@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -71,6 +71,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:release-tags": ["tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],

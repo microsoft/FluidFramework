@@ -8,7 +8,6 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
-	emptyFieldChanges,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
@@ -28,10 +27,10 @@ import {
 	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
-	toDelta,
 	withNormalizedLineage,
 	withoutLineage,
 	rebase,
+	prune,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -274,8 +273,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 					tagRollbackInverse(inv, tag6, taggedChange.revision),
 				];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -291,8 +290,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 				tracker.apply(inv);
 				const changes = [inv, taggedChange];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -573,8 +572,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
+		assert.deepEqual(actual, []);
 	});
 
 	// See bug 4104

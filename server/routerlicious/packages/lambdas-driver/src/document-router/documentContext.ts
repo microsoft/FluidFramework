@@ -13,6 +13,9 @@ import {
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class DocumentContext extends EventEmitter implements IContext {
 	// We track two offsets - head and tail. Head represents the largest offset related to this document we
 	// have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed

@@ -19,16 +19,23 @@ function endsWith(value: string, endings: string[]): boolean {
 	return false;
 }
 
+/**
+ * @internal
+ */
 export interface ICredentials {
 	user: string;
 	password: string;
 }
 
+/**
+ * @internal
+ */
 export const getAuthorizationTokenFromCredentials = (credentials: ICredentials): string =>
 	`Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
 
 /**
  * Implementation of the IHistorian interface that calls out to a REST interface
+ * @internal
  */
 export class Historian implements IHistorian {
 	private readonly defaultQueryString: Record<string, unknown> = {};

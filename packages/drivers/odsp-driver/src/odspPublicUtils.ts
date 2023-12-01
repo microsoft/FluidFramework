@@ -7,7 +7,7 @@ import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 /**
- * @public
+ * @internal
  */
 export async function getHashedDocumentId(driveId: string, itemId: string): Promise<string> {
 	const buffer = IsoBuffer.from(`${driveId}_${itemId}`);
@@ -15,7 +15,7 @@ export async function getHashedDocumentId(driveId: string, itemId: string): Prom
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISnapshotContents {
 	snapshotTree: ISnapshotTree;

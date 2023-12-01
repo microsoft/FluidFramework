@@ -16,6 +16,9 @@ import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
 
+/**
+ * @internal
+ */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 interface IExportFileResponseSuccess {
@@ -33,6 +36,7 @@ const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
  * Execute code on Container based on ODSP snapshot and write result to file
+ * @internal
  */
 export async function exportFile(
 	fluidFileConverter: IFluidFileConverter,
@@ -90,6 +94,7 @@ export async function exportFile(
 /**
  * Create the container based on an ODSP snapshot and execute code on it
  * @returns result of execution
+ * @internal
  */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
