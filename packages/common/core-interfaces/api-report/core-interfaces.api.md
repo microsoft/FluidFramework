@@ -35,7 +35,6 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
 
 // @internal
 export interface IConfigProviderBase {
-    // (undocumented)
     getRawConfig(name: string): ConfigTypes;
 }
 
