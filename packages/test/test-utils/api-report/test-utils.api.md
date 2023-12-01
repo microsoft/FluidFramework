@@ -139,11 +139,10 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 // @internal
 export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
 
-<<<<<<< HEAD
 // @public
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @internal
@@ -153,13 +152,7 @@ export interface IDocumentIdStrategy {
     update(resolvedUrl?: IResolvedUrl): void;
 }
 
-// @public (undocumented)
-=======
 // @internal (undocumented)
-export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
-
-// @internal (undocumented)
->>>>>>> origin
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
