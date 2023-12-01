@@ -17,7 +17,7 @@ export interface IConfigProviderBase {
 	/**
 	 * For the specified config name this function gets the value.
 	 *
-	 * This type is meant be easy to implement by fluid framework consumers
+	 * This type is meant be easy to implement by Fluid Framework consumers
 	 * so the returned valued needs minimal type coercion, and allows consumers to
 	 * return values in a natural way from whatever source they retrieve them.
 	 *
