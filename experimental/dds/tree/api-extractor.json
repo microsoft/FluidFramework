@@ -10,9 +10,6 @@
 	// This package is effectively deprecated. No need to fix these.
 	"messages": {
 		"extractorMessageReporting": {
-			"ae-missing-release-tag": {
-				"logLevel": "none"
-			},
 			"ae-undocumented": {
 				"logLevel": "none"
 			}
