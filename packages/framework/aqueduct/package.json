@@ -156,6 +156,9 @@
 			"RemovedVariableDeclaration_mountableViewRequestHandler": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDataObjectProps": {
+				"backCompat": false
 			}
 		}
 	}
