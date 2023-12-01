@@ -18,7 +18,7 @@ import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
 
 /**
- * @public
+ * @internal
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -177,7 +177,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @public
+ * @internal
  */
 export function createOverlappingIntervalsIndex(
 	sharedString: SharedString,

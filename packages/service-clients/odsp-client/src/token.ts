@@ -8,8 +8,7 @@ import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 /**
  * Abstracts the token fetching mechanism for a hosting application.
  * The hosting application is responsible for providing an implementation.
- *
- * @alpha
+ * @internal
  */
 export interface IOdspTokenProvider {
 	/**

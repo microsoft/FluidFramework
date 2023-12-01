@@ -41,7 +41,11 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 		});
 	}
 
-	it("An unreferenced datastore when aliased becomes referenced.", async () => {
+	it("An unreferenced datastore when aliased becomes referenced.", async function () {
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);
 		const mainDataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);

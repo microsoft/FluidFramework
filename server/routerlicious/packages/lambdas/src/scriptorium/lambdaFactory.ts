@@ -13,6 +13,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { ScriptoriumLambda } from "./lambda";
 
+/**
+ * @internal
+ */
 export class ScriptoriumLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly mongoManager: MongoManager,

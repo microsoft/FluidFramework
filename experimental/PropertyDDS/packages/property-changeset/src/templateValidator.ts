@@ -1025,6 +1025,7 @@ const Utils = {
 /**
  * Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
  * function or inheritsFromAsync and hasSchemaAsync, but not both.
+ * @internal
  */
 export class TemplateValidator {
 	static Utils = Utils;

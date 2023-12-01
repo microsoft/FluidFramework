@@ -14,6 +14,7 @@ const { ValueArrayProperty } = require("./valueArrayProperty");
  * efficient and convenient. Additionally, we provide direct access
  * methods to the enums in the array, e.g. .getEnumString(3) directly
  * returns the enum string at position 3 of the array
+ * @internal
  */
 export class EnumArrayProperty extends ValueArrayProperty {
 	/**

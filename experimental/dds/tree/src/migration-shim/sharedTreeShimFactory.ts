@@ -11,7 +11,7 @@ import {
 	type IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 
-import { type SharedTreeFactory } from '@fluid-experimental/tree2';
+import { type TreeFactory } from '@fluid-experimental/tree2';
 import { SharedTreeShim } from './sharedTreeShim.js';
 import { attributesMatch } from './utils.js';
 
@@ -29,7 +29,7 @@ import { attributesMatch } from './utils.js';
  * @internal
  */
 export class SharedTreeShimFactory implements IChannelFactory {
-	public constructor(private readonly factory: SharedTreeFactory) {}
+	public constructor(private readonly factory: TreeFactory) {}
 
 	/**
 	 * Can only load the new SharedTree - this allows our snapshots to be simple. We do not have to consider any new

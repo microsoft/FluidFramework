@@ -5,11 +5,17 @@
 
 import * as Redis from "ioredis";
 
+/**
+ * @internal
+ */
 export interface IRedisParameters {
 	prefix?: string;
 	expireAfterSeconds?: number;
 }
 
+/**
+ * @internal
+ */
 export const executeRedisMultiWithHmsetExpire = async (
 	client: Redis.default,
 	key: string,
@@ -56,6 +62,9 @@ export const executeRedisMultiWithHmsetExpire = async (
 			});
 	});
 
+/**
+ * @internal
+ */
 export const executeRedisMultiWithHmsetExpireAndLpush = async (
 	client: Redis.default,
 	hKey: string,

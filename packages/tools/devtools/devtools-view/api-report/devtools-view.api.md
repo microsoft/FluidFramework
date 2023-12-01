@@ -12,10 +12,10 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { default as React_2 } from 'react';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 
-// @public
+// @internal
 export interface DevtoolsPanelProps {
     messageRelay: IMessageRelay;
     unloadCallback?: () => void;
