@@ -104,11 +104,4 @@ export interface IContainerRuntime
 	 * @param relativeUrl - A relative request within the container
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-	/**
-	 * Resolves handle URI
-	 * @param request - request to resolve
-	 * @deprecated Will be removed in future major release. Migrate all usage of resolveHandle to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	resolveHandle(request: IRequest): Promise<IResponse>;
 }
