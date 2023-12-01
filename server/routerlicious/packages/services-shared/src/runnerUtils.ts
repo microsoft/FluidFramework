@@ -9,6 +9,9 @@ import { Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import { Deferred } from "@fluidframework/common-utils";
 
+/**
+ * @internal
+ */
 export async function runnerHttpServerStop(
 	server: IWebServer,
 	runningDeferredPromise: Deferred<void>,

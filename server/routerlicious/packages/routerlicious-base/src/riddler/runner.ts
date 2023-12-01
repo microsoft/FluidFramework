@@ -18,6 +18,9 @@ import { Provider } from "nconf";
 import * as app from "./app";
 import { ITenantRepository } from "./mongoTenantRepository";
 
+/**
+ * @internal
+ */
 export class RiddlerRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;

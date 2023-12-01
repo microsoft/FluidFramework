@@ -32,6 +32,9 @@ enum ScriptoriumStatus {
 	CheckpointFailed = "CheckpointFailed",
 }
 
+/**
+ * @internal
+ */
 export class ScriptoriumLambda implements IPartitionLambda {
 	private pending = new Map<string, ISequencedOperationMessage[]>();
 	private pendingOffset: IQueuedMessage | undefined;

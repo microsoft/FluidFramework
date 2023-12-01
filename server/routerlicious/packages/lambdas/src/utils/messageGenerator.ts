@@ -11,6 +11,9 @@ import {
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * @internal
+ */
 export const createNackMessage = (
 	code: number,
 	type: NackErrorType,
@@ -27,6 +30,9 @@ export const createNackMessage = (
 	},
 });
 
+/**
+ * @internal
+ */
 export function createRoomJoinMessage(clientId: string, client: IClient): ISignalMessage {
 	const joinContent: ISignalClient = {
 		clientId,
@@ -41,6 +47,9 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
 	};
 }
 
+/**
+ * @internal
+ */
 export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 	clientId: null,
 	content: JSON.stringify({
@@ -53,6 +62,7 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
  * Mirrors ISignalEnvelope from runtime definitions, for signals that come from an external
  * caller (not sent by a client (so no 'clientSignalSequenceNumber') and are always addressed
  * to the Container (so no 'address').
+ * @internal
  */
 export interface IRuntimeSignalEnvelope {
 	contents: {

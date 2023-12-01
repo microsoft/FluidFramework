@@ -7,6 +7,7 @@ import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/protocol
 
 /**
  * Represents a client that has some sequence numbers attached
+ * @internal
  */
 export interface ISequencedSignalClient {
 	/**
@@ -33,6 +34,7 @@ export interface ISequencedSignalClient {
 
 /**
  * Manages the list of clients connected to the websocket.
+ * @internal
  */
 export interface IClientManager {
 	/**

@@ -32,6 +32,9 @@ const getDocumentServiceFactory = (documentId: string) => {
 	return new LocalDocumentServiceFactory(deltaConnection);
 };
 
+/**
+ * @internal
+ */
 export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelType> {
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,

@@ -26,6 +26,7 @@ import { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * Tenant details stored to the document database
+ * @internal
  */
 export interface ITenantDocument {
 	// Database ID for the tenant. Id is only marked optional because the database will provide it
@@ -75,6 +76,9 @@ enum StorageRequestMetric {
 	DatabaseError = "databaseError",
 }
 
+/**
+ * @internal
+ */
 export class TenantManager {
 	private readonly isCacheEnabled;
 	private readonly fetchTenantKeyApiCounter: IApiCounters = new InMemoryApiCounters(
