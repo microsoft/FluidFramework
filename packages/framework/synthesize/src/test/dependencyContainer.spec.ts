@@ -42,7 +42,7 @@ class MockLoadable implements IFluidLoadable {
 	}
 }
 
-export const ISomeObject: keyof IProvideSomeObject = "ISomeObject";
+const ISomeObject: keyof IProvideSomeObject = "ISomeObject";
 interface IProvideSomeObject {
 	readonly ISomeObject: ISomeObject;
 }
