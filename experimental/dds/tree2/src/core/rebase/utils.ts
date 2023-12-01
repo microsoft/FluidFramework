@@ -4,8 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { Mutable } from "../../util";
+import {
+	ChangeRebaser,
+	RevisionInfo,
+	RevisionMetadataSource,
+	TaggedChange,
+	tagRollbackInverse,
+} from "./changeRebaser";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -283,21 +290,72 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const changeRebasedToRef = sourcePath.reduceRight(
-		(newChange, branchCommit) =>
-			changeRebaser.rebase(newChange, inverseFromCommit(changeRebaser, branchCommit, true)),
-		change,
-	);
-
-	return targetPath.reduce((a, b) => changeRebaser.rebase(a, b), changeRebasedToRef);
+	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	inverses.reverse();
+	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
 
-function rebaseChangeOverChanges<TChange>(
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index >= 0 ? index : undefined;
+	};
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+	};
+
+	const hasRollback = (revision: RevisionTag): boolean => {
+		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+	};
+
+	return { getIndex, tryGetInfo, hasRollback };
+}
+
+export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
+	const revisionMetadata = revisionMetadataSourceFromInfo(
+		getRevInfoFromTaggedChanges(changesToRebaseOver),
+	);
+
+	return changesToRebaseOver.reduce(
+		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		changeToRebase,
+	);
+}
+
+// TODO: Deduplicate
+function getRevInfoFromTaggedChanges(changes: TaggedChange<unknown>[]): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return revInfos;
+}
+
+// TODO: Deduplicate
+function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }
 
 function inverseFromCommit<TChange>(
