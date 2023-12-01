@@ -8,8 +8,6 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
@@ -323,12 +321,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 export type CreateChildSummarizerNodeFn = (
