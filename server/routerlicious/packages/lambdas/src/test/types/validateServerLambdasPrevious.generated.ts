@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_BroadcasterLambda():
     TypeOnly<old.BroadcasterLambda>;
 declare function use_current_ClassDeclaration_BroadcasterLambda(
-    use: TypeOnly<current.BroadcasterLambda>): void;
+    use: TypeOnly<current.BroadcasterLambda>);
 use_current_ClassDeclaration_BroadcasterLambda(
     get_old_ClassDeclaration_BroadcasterLambda());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_BroadcasterLambda(
 declare function get_current_ClassDeclaration_BroadcasterLambda():
     TypeOnly<current.BroadcasterLambda>;
 declare function use_old_ClassDeclaration_BroadcasterLambda(
-    use: TypeOnly<old.BroadcasterLambda>): void;
+    use: TypeOnly<old.BroadcasterLambda>);
 use_old_ClassDeclaration_BroadcasterLambda(
     get_current_ClassDeclaration_BroadcasterLambda());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_BroadcasterLambda(
 declare function get_old_ClassDeclaration_BroadcasterLambdaFactory():
     TypeOnly<old.BroadcasterLambdaFactory>;
 declare function use_current_ClassDeclaration_BroadcasterLambdaFactory(
-    use: TypeOnly<current.BroadcasterLambdaFactory>): void;
+    use: TypeOnly<current.BroadcasterLambdaFactory>);
 use_current_ClassDeclaration_BroadcasterLambdaFactory(
     get_old_ClassDeclaration_BroadcasterLambdaFactory());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_BroadcasterLambdaFactory(
 declare function get_current_ClassDeclaration_BroadcasterLambdaFactory():
     TypeOnly<current.BroadcasterLambdaFactory>;
 declare function use_old_ClassDeclaration_BroadcasterLambdaFactory(
-    use: TypeOnly<old.BroadcasterLambdaFactory>): void;
+    use: TypeOnly<old.BroadcasterLambdaFactory>);
 use_old_ClassDeclaration_BroadcasterLambdaFactory(
     get_current_ClassDeclaration_BroadcasterLambdaFactory());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_BroadcasterLambdaFactory(
 declare function get_old_ClassDeclaration_CheckpointManager():
     TypeOnly<old.CheckpointManager>;
 declare function use_current_ClassDeclaration_CheckpointManager(
-    use: TypeOnly<current.CheckpointManager>): void;
+    use: TypeOnly<current.CheckpointManager>);
 use_current_ClassDeclaration_CheckpointManager(
     get_old_ClassDeclaration_CheckpointManager());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_CheckpointManager(
 declare function get_current_ClassDeclaration_CheckpointManager():
     TypeOnly<current.CheckpointManager>;
 declare function use_old_ClassDeclaration_CheckpointManager(
-    use: TypeOnly<old.CheckpointManager>): void;
+    use: TypeOnly<old.CheckpointManager>);
 use_old_ClassDeclaration_CheckpointManager(
     get_current_ClassDeclaration_CheckpointManager());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_CheckpointManager(
 declare function get_old_ClassDeclaration_CopierLambda():
     TypeOnly<old.CopierLambda>;
 declare function use_current_ClassDeclaration_CopierLambda(
-    use: TypeOnly<current.CopierLambda>): void;
+    use: TypeOnly<current.CopierLambda>);
 use_current_ClassDeclaration_CopierLambda(
     get_old_ClassDeclaration_CopierLambda());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_CopierLambda(
 declare function get_current_ClassDeclaration_CopierLambda():
     TypeOnly<current.CopierLambda>;
 declare function use_old_ClassDeclaration_CopierLambda(
-    use: TypeOnly<old.CopierLambda>): void;
+    use: TypeOnly<old.CopierLambda>);
 use_old_ClassDeclaration_CopierLambda(
     get_current_ClassDeclaration_CopierLambda());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_CopierLambda(
 declare function get_old_ClassDeclaration_CopierLambdaFactory():
     TypeOnly<old.CopierLambdaFactory>;
 declare function use_current_ClassDeclaration_CopierLambdaFactory(
-    use: TypeOnly<current.CopierLambdaFactory>): void;
+    use: TypeOnly<current.CopierLambdaFactory>);
 use_current_ClassDeclaration_CopierLambdaFactory(
     get_old_ClassDeclaration_CopierLambdaFactory());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_CopierLambdaFactory(
 declare function get_current_ClassDeclaration_CopierLambdaFactory():
     TypeOnly<current.CopierLambdaFactory>;
 declare function use_old_ClassDeclaration_CopierLambdaFactory(
-    use: TypeOnly<old.CopierLambdaFactory>): void;
+    use: TypeOnly<old.CopierLambdaFactory>);
 use_old_ClassDeclaration_CopierLambdaFactory(
     get_current_ClassDeclaration_CopierLambdaFactory());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_CopierLambdaFactory(
 declare function get_old_ClassDeclaration_DeliLambda():
     TypeOnly<old.DeliLambda>;
 declare function use_current_ClassDeclaration_DeliLambda(
-    use: TypeOnly<current.DeliLambda>): void;
+    use: TypeOnly<current.DeliLambda>);
 use_current_ClassDeclaration_DeliLambda(
     get_old_ClassDeclaration_DeliLambda());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_DeliLambda(
 declare function get_current_ClassDeclaration_DeliLambda():
     TypeOnly<current.DeliLambda>;
 declare function use_old_ClassDeclaration_DeliLambda(
-    use: TypeOnly<old.DeliLambda>): void;
+    use: TypeOnly<old.DeliLambda>);
 use_old_ClassDeclaration_DeliLambda(
     get_current_ClassDeclaration_DeliLambda());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_DeliLambda(
 declare function get_old_ClassDeclaration_DeliLambdaFactory():
     TypeOnly<old.DeliLambdaFactory>;
 declare function use_current_ClassDeclaration_DeliLambdaFactory(
-    use: TypeOnly<current.DeliLambdaFactory>): void;
+    use: TypeOnly<current.DeliLambdaFactory>);
 use_current_ClassDeclaration_DeliLambdaFactory(
     get_old_ClassDeclaration_DeliLambdaFactory());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_DeliLambdaFactory(
 declare function get_current_ClassDeclaration_DeliLambdaFactory():
     TypeOnly<current.DeliLambdaFactory>;
 declare function use_old_ClassDeclaration_DeliLambdaFactory(
-    use: TypeOnly<old.DeliLambdaFactory>): void;
+    use: TypeOnly<old.DeliLambdaFactory>);
 use_old_ClassDeclaration_DeliLambdaFactory(
     get_current_ClassDeclaration_DeliLambdaFactory());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_DeliLambdaFactory(
 declare function get_old_InterfaceDeclaration_IBroadcastSignalEventPayload():
     TypeOnly<old.IBroadcastSignalEventPayload>;
 declare function use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
-    use: TypeOnly<current.IBroadcastSignalEventPayload>): void;
+    use: TypeOnly<current.IBroadcastSignalEventPayload>);
 use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
     // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IBroadcastSignalEventPayload());
@@ -210,7 +210,7 @@ use_current_InterfaceDeclaration_IBroadcastSignalEventPayload(
 declare function get_current_InterfaceDeclaration_IBroadcastSignalEventPayload():
     TypeOnly<current.IBroadcastSignalEventPayload>;
 declare function use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
-    use: TypeOnly<old.IBroadcastSignalEventPayload>): void;
+    use: TypeOnly<old.IBroadcastSignalEventPayload>);
 use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
     // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBroadcastSignalEventPayload());
@@ -223,7 +223,7 @@ use_old_InterfaceDeclaration_IBroadcastSignalEventPayload(
 declare function get_old_InterfaceDeclaration_ICheckpointManager():
     TypeOnly<old.ICheckpointManager>;
 declare function use_current_InterfaceDeclaration_ICheckpointManager(
-    use: TypeOnly<current.ICheckpointManager>): void;
+    use: TypeOnly<current.ICheckpointManager>);
 use_current_InterfaceDeclaration_ICheckpointManager(
     get_old_InterfaceDeclaration_ICheckpointManager());
 
@@ -235,7 +235,7 @@ use_current_InterfaceDeclaration_ICheckpointManager(
 declare function get_current_InterfaceDeclaration_ICheckpointManager():
     TypeOnly<current.ICheckpointManager>;
 declare function use_old_InterfaceDeclaration_ICheckpointManager(
-    use: TypeOnly<old.ICheckpointManager>): void;
+    use: TypeOnly<old.ICheckpointManager>);
 use_old_InterfaceDeclaration_ICheckpointManager(
     get_current_InterfaceDeclaration_ICheckpointManager());
 
@@ -247,7 +247,7 @@ use_old_InterfaceDeclaration_ICheckpointManager(
 declare function get_old_InterfaceDeclaration_ICheckpointParams():
     TypeOnly<old.ICheckpointParams>;
 declare function use_current_InterfaceDeclaration_ICheckpointParams(
-    use: TypeOnly<current.ICheckpointParams>): void;
+    use: TypeOnly<current.ICheckpointParams>);
 use_current_InterfaceDeclaration_ICheckpointParams(
     get_old_InterfaceDeclaration_ICheckpointParams());
 
@@ -259,7 +259,7 @@ use_current_InterfaceDeclaration_ICheckpointParams(
 declare function get_current_InterfaceDeclaration_ICheckpointParams():
     TypeOnly<current.ICheckpointParams>;
 declare function use_old_InterfaceDeclaration_ICheckpointParams(
-    use: TypeOnly<old.ICheckpointParams>): void;
+    use: TypeOnly<old.ICheckpointParams>);
 use_old_InterfaceDeclaration_ICheckpointParams(
     get_current_InterfaceDeclaration_ICheckpointParams());
 
@@ -271,7 +271,7 @@ use_old_InterfaceDeclaration_ICheckpointParams(
 declare function get_old_InterfaceDeclaration_ICollaborationSessionEvents():
     TypeOnly<old.ICollaborationSessionEvents>;
 declare function use_current_InterfaceDeclaration_ICollaborationSessionEvents(
-    use: TypeOnly<current.ICollaborationSessionEvents>): void;
+    use: TypeOnly<current.ICollaborationSessionEvents>);
 use_current_InterfaceDeclaration_ICollaborationSessionEvents(
     get_old_InterfaceDeclaration_ICollaborationSessionEvents());
 
@@ -283,7 +283,7 @@ use_current_InterfaceDeclaration_ICollaborationSessionEvents(
 declare function get_current_InterfaceDeclaration_ICollaborationSessionEvents():
     TypeOnly<current.ICollaborationSessionEvents>;
 declare function use_old_InterfaceDeclaration_ICollaborationSessionEvents(
-    use: TypeOnly<old.ICollaborationSessionEvents>): void;
+    use: TypeOnly<old.ICollaborationSessionEvents>);
 use_old_InterfaceDeclaration_ICollaborationSessionEvents(
     get_current_InterfaceDeclaration_ICollaborationSessionEvents());
 
@@ -295,7 +295,7 @@ use_old_InterfaceDeclaration_ICollaborationSessionEvents(
 declare function get_old_InterfaceDeclaration_IDeliCheckpointManager():
     TypeOnly<old.IDeliCheckpointManager>;
 declare function use_current_InterfaceDeclaration_IDeliCheckpointManager(
-    use: TypeOnly<current.IDeliCheckpointManager>): void;
+    use: TypeOnly<current.IDeliCheckpointManager>);
 use_current_InterfaceDeclaration_IDeliCheckpointManager(
     get_old_InterfaceDeclaration_IDeliCheckpointManager());
 
@@ -307,7 +307,7 @@ use_current_InterfaceDeclaration_IDeliCheckpointManager(
 declare function get_current_InterfaceDeclaration_IDeliCheckpointManager():
     TypeOnly<current.IDeliCheckpointManager>;
 declare function use_old_InterfaceDeclaration_IDeliCheckpointManager(
-    use: TypeOnly<old.IDeliCheckpointManager>): void;
+    use: TypeOnly<old.IDeliCheckpointManager>);
 use_old_InterfaceDeclaration_IDeliCheckpointManager(
     get_current_InterfaceDeclaration_IDeliCheckpointManager());
 
@@ -319,7 +319,7 @@ use_old_InterfaceDeclaration_IDeliCheckpointManager(
 declare function get_old_InterfaceDeclaration_IDeliLambdaEvents():
     TypeOnly<old.IDeliLambdaEvents>;
 declare function use_current_InterfaceDeclaration_IDeliLambdaEvents(
-    use: TypeOnly<current.IDeliLambdaEvents>): void;
+    use: TypeOnly<current.IDeliLambdaEvents>);
 use_current_InterfaceDeclaration_IDeliLambdaEvents(
     get_old_InterfaceDeclaration_IDeliLambdaEvents());
 
@@ -331,7 +331,7 @@ use_current_InterfaceDeclaration_IDeliLambdaEvents(
 declare function get_current_InterfaceDeclaration_IDeliLambdaEvents():
     TypeOnly<current.IDeliLambdaEvents>;
 declare function use_old_InterfaceDeclaration_IDeliLambdaEvents(
-    use: TypeOnly<old.IDeliLambdaEvents>): void;
+    use: TypeOnly<old.IDeliLambdaEvents>);
 use_old_InterfaceDeclaration_IDeliLambdaEvents(
     get_current_InterfaceDeclaration_IDeliLambdaEvents());
 
@@ -343,7 +343,7 @@ use_old_InterfaceDeclaration_IDeliLambdaEvents(
 declare function get_old_InterfaceDeclaration_ILatestSummaryState():
     TypeOnly<old.ILatestSummaryState>;
 declare function use_current_InterfaceDeclaration_ILatestSummaryState(
-    use: TypeOnly<current.ILatestSummaryState>): void;
+    use: TypeOnly<current.ILatestSummaryState>);
 use_current_InterfaceDeclaration_ILatestSummaryState(
     get_old_InterfaceDeclaration_ILatestSummaryState());
 
@@ -355,7 +355,7 @@ use_current_InterfaceDeclaration_ILatestSummaryState(
 declare function get_current_InterfaceDeclaration_ILatestSummaryState():
     TypeOnly<current.ILatestSummaryState>;
 declare function use_old_InterfaceDeclaration_ILatestSummaryState(
-    use: TypeOnly<old.ILatestSummaryState>): void;
+    use: TypeOnly<old.ILatestSummaryState>);
 use_old_InterfaceDeclaration_ILatestSummaryState(
     get_current_InterfaceDeclaration_ILatestSummaryState());
 
@@ -367,7 +367,7 @@ use_old_InterfaceDeclaration_ILatestSummaryState(
 declare function get_old_InterfaceDeclaration_IPendingMessageReader():
     TypeOnly<old.IPendingMessageReader>;
 declare function use_current_InterfaceDeclaration_IPendingMessageReader(
-    use: TypeOnly<current.IPendingMessageReader>): void;
+    use: TypeOnly<current.IPendingMessageReader>);
 use_current_InterfaceDeclaration_IPendingMessageReader(
     get_old_InterfaceDeclaration_IPendingMessageReader());
 
@@ -379,7 +379,7 @@ use_current_InterfaceDeclaration_IPendingMessageReader(
 declare function get_current_InterfaceDeclaration_IPendingMessageReader():
     TypeOnly<current.IPendingMessageReader>;
 declare function use_old_InterfaceDeclaration_IPendingMessageReader(
-    use: TypeOnly<old.IPendingMessageReader>): void;
+    use: TypeOnly<old.IPendingMessageReader>);
 use_old_InterfaceDeclaration_IPendingMessageReader(
     get_current_InterfaceDeclaration_IPendingMessageReader());
 
@@ -391,7 +391,7 @@ use_old_InterfaceDeclaration_IPendingMessageReader(
 declare function get_old_InterfaceDeclaration_IRoom():
     TypeOnly<old.IRoom>;
 declare function use_current_InterfaceDeclaration_IRoom(
-    use: TypeOnly<current.IRoom>): void;
+    use: TypeOnly<current.IRoom>);
 use_current_InterfaceDeclaration_IRoom(
     get_old_InterfaceDeclaration_IRoom());
 
@@ -403,7 +403,7 @@ use_current_InterfaceDeclaration_IRoom(
 declare function get_current_InterfaceDeclaration_IRoom():
     TypeOnly<current.IRoom>;
 declare function use_old_InterfaceDeclaration_IRoom(
-    use: TypeOnly<old.IRoom>): void;
+    use: TypeOnly<old.IRoom>);
 use_old_InterfaceDeclaration_IRoom(
     get_current_InterfaceDeclaration_IRoom());
 
@@ -415,7 +415,7 @@ use_old_InterfaceDeclaration_IRoom(
 declare function get_old_InterfaceDeclaration_ISummaryReader():
     TypeOnly<old.ISummaryReader>;
 declare function use_current_InterfaceDeclaration_ISummaryReader(
-    use: TypeOnly<current.ISummaryReader>): void;
+    use: TypeOnly<current.ISummaryReader>);
 use_current_InterfaceDeclaration_ISummaryReader(
     get_old_InterfaceDeclaration_ISummaryReader());
 
@@ -427,7 +427,7 @@ use_current_InterfaceDeclaration_ISummaryReader(
 declare function get_current_InterfaceDeclaration_ISummaryReader():
     TypeOnly<current.ISummaryReader>;
 declare function use_old_InterfaceDeclaration_ISummaryReader(
-    use: TypeOnly<old.ISummaryReader>): void;
+    use: TypeOnly<old.ISummaryReader>);
 use_old_InterfaceDeclaration_ISummaryReader(
     get_current_InterfaceDeclaration_ISummaryReader());
 
@@ -439,7 +439,7 @@ use_old_InterfaceDeclaration_ISummaryReader(
 declare function get_old_InterfaceDeclaration_ISummaryWriteResponse():
     TypeOnly<old.ISummaryWriteResponse>;
 declare function use_current_InterfaceDeclaration_ISummaryWriteResponse(
-    use: TypeOnly<current.ISummaryWriteResponse>): void;
+    use: TypeOnly<current.ISummaryWriteResponse>);
 use_current_InterfaceDeclaration_ISummaryWriteResponse(
     get_old_InterfaceDeclaration_ISummaryWriteResponse());
 
@@ -451,7 +451,7 @@ use_current_InterfaceDeclaration_ISummaryWriteResponse(
 declare function get_current_InterfaceDeclaration_ISummaryWriteResponse():
     TypeOnly<current.ISummaryWriteResponse>;
 declare function use_old_InterfaceDeclaration_ISummaryWriteResponse(
-    use: TypeOnly<old.ISummaryWriteResponse>): void;
+    use: TypeOnly<old.ISummaryWriteResponse>);
 use_old_InterfaceDeclaration_ISummaryWriteResponse(
     get_current_InterfaceDeclaration_ISummaryWriteResponse());
 
@@ -463,7 +463,7 @@ use_old_InterfaceDeclaration_ISummaryWriteResponse(
 declare function get_old_InterfaceDeclaration_ISummaryWriter():
     TypeOnly<old.ISummaryWriter>;
 declare function use_current_InterfaceDeclaration_ISummaryWriter(
-    use: TypeOnly<current.ISummaryWriter>): void;
+    use: TypeOnly<current.ISummaryWriter>);
 use_current_InterfaceDeclaration_ISummaryWriter(
     get_old_InterfaceDeclaration_ISummaryWriter());
 
@@ -475,7 +475,7 @@ use_current_InterfaceDeclaration_ISummaryWriter(
 declare function get_current_InterfaceDeclaration_ISummaryWriter():
     TypeOnly<current.ISummaryWriter>;
 declare function use_old_InterfaceDeclaration_ISummaryWriter(
-    use: TypeOnly<old.ISummaryWriter>): void;
+    use: TypeOnly<old.ISummaryWriter>);
 use_old_InterfaceDeclaration_ISummaryWriter(
     get_current_InterfaceDeclaration_ISummaryWriter());
 
@@ -487,7 +487,7 @@ use_old_InterfaceDeclaration_ISummaryWriter(
 declare function get_old_ClassDeclaration_MoiraLambda():
     TypeOnly<old.MoiraLambda>;
 declare function use_current_ClassDeclaration_MoiraLambda(
-    use: TypeOnly<current.MoiraLambda>): void;
+    use: TypeOnly<current.MoiraLambda>);
 use_current_ClassDeclaration_MoiraLambda(
     get_old_ClassDeclaration_MoiraLambda());
 
@@ -499,7 +499,7 @@ use_current_ClassDeclaration_MoiraLambda(
 declare function get_current_ClassDeclaration_MoiraLambda():
     TypeOnly<current.MoiraLambda>;
 declare function use_old_ClassDeclaration_MoiraLambda(
-    use: TypeOnly<old.MoiraLambda>): void;
+    use: TypeOnly<old.MoiraLambda>);
 use_old_ClassDeclaration_MoiraLambda(
     get_current_ClassDeclaration_MoiraLambda());
 
@@ -511,7 +511,7 @@ use_old_ClassDeclaration_MoiraLambda(
 declare function get_old_ClassDeclaration_MoiraLambdaFactory():
     TypeOnly<old.MoiraLambdaFactory>;
 declare function use_current_ClassDeclaration_MoiraLambdaFactory(
-    use: TypeOnly<current.MoiraLambdaFactory>): void;
+    use: TypeOnly<current.MoiraLambdaFactory>);
 use_current_ClassDeclaration_MoiraLambdaFactory(
     get_old_ClassDeclaration_MoiraLambdaFactory());
 
@@ -523,7 +523,7 @@ use_current_ClassDeclaration_MoiraLambdaFactory(
 declare function get_current_ClassDeclaration_MoiraLambdaFactory():
     TypeOnly<current.MoiraLambdaFactory>;
 declare function use_old_ClassDeclaration_MoiraLambdaFactory(
-    use: TypeOnly<old.MoiraLambdaFactory>): void;
+    use: TypeOnly<old.MoiraLambdaFactory>);
 use_old_ClassDeclaration_MoiraLambdaFactory(
     get_current_ClassDeclaration_MoiraLambdaFactory());
 
@@ -535,7 +535,7 @@ use_old_ClassDeclaration_MoiraLambdaFactory(
 declare function get_old_ClassDeclaration_NoOpLambda():
     TypeOnly<old.NoOpLambda>;
 declare function use_current_ClassDeclaration_NoOpLambda(
-    use: TypeOnly<current.NoOpLambda>): void;
+    use: TypeOnly<current.NoOpLambda>);
 use_current_ClassDeclaration_NoOpLambda(
     get_old_ClassDeclaration_NoOpLambda());
 
@@ -547,7 +547,7 @@ use_current_ClassDeclaration_NoOpLambda(
 declare function get_current_ClassDeclaration_NoOpLambda():
     TypeOnly<current.NoOpLambda>;
 declare function use_old_ClassDeclaration_NoOpLambda(
-    use: TypeOnly<old.NoOpLambda>): void;
+    use: TypeOnly<old.NoOpLambda>);
 use_old_ClassDeclaration_NoOpLambda(
     get_current_ClassDeclaration_NoOpLambda());
 
@@ -559,7 +559,7 @@ use_old_ClassDeclaration_NoOpLambda(
 declare function get_old_EnumDeclaration_OpEventType():
     TypeOnly<old.OpEventType>;
 declare function use_current_EnumDeclaration_OpEventType(
-    use: TypeOnly<current.OpEventType>): void;
+    use: TypeOnly<current.OpEventType>);
 use_current_EnumDeclaration_OpEventType(
     get_old_EnumDeclaration_OpEventType());
 
@@ -571,7 +571,7 @@ use_current_EnumDeclaration_OpEventType(
 declare function get_current_EnumDeclaration_OpEventType():
     TypeOnly<current.OpEventType>;
 declare function use_old_EnumDeclaration_OpEventType(
-    use: TypeOnly<old.OpEventType>): void;
+    use: TypeOnly<old.OpEventType>);
 use_old_EnumDeclaration_OpEventType(
     get_current_EnumDeclaration_OpEventType());
 
@@ -583,7 +583,7 @@ use_old_EnumDeclaration_OpEventType(
 declare function get_old_ClassDeclaration_ScribeLambda():
     TypeOnly<old.ScribeLambda>;
 declare function use_current_ClassDeclaration_ScribeLambda(
-    use: TypeOnly<current.ScribeLambda>): void;
+    use: TypeOnly<current.ScribeLambda>);
 use_current_ClassDeclaration_ScribeLambda(
     get_old_ClassDeclaration_ScribeLambda());
 
@@ -595,7 +595,7 @@ use_current_ClassDeclaration_ScribeLambda(
 declare function get_current_ClassDeclaration_ScribeLambda():
     TypeOnly<current.ScribeLambda>;
 declare function use_old_ClassDeclaration_ScribeLambda(
-    use: TypeOnly<old.ScribeLambda>): void;
+    use: TypeOnly<old.ScribeLambda>);
 use_old_ClassDeclaration_ScribeLambda(
     get_current_ClassDeclaration_ScribeLambda());
 
@@ -607,7 +607,7 @@ use_old_ClassDeclaration_ScribeLambda(
 declare function get_old_ClassDeclaration_ScribeLambdaFactory():
     TypeOnly<old.ScribeLambdaFactory>;
 declare function use_current_ClassDeclaration_ScribeLambdaFactory(
-    use: TypeOnly<current.ScribeLambdaFactory>): void;
+    use: TypeOnly<current.ScribeLambdaFactory>);
 use_current_ClassDeclaration_ScribeLambdaFactory(
     get_old_ClassDeclaration_ScribeLambdaFactory());
 
@@ -619,7 +619,7 @@ use_current_ClassDeclaration_ScribeLambdaFactory(
 declare function get_current_ClassDeclaration_ScribeLambdaFactory():
     TypeOnly<current.ScribeLambdaFactory>;
 declare function use_old_ClassDeclaration_ScribeLambdaFactory(
-    use: TypeOnly<old.ScribeLambdaFactory>): void;
+    use: TypeOnly<old.ScribeLambdaFactory>);
 use_old_ClassDeclaration_ScribeLambdaFactory(
     get_current_ClassDeclaration_ScribeLambdaFactory());
 
@@ -631,7 +631,7 @@ use_old_ClassDeclaration_ScribeLambdaFactory(
 declare function get_old_ClassDeclaration_ScriptoriumLambda():
     TypeOnly<old.ScriptoriumLambda>;
 declare function use_current_ClassDeclaration_ScriptoriumLambda(
-    use: TypeOnly<current.ScriptoriumLambda>): void;
+    use: TypeOnly<current.ScriptoriumLambda>);
 use_current_ClassDeclaration_ScriptoriumLambda(
     get_old_ClassDeclaration_ScriptoriumLambda());
 
@@ -643,7 +643,7 @@ use_current_ClassDeclaration_ScriptoriumLambda(
 declare function get_current_ClassDeclaration_ScriptoriumLambda():
     TypeOnly<current.ScriptoriumLambda>;
 declare function use_old_ClassDeclaration_ScriptoriumLambda(
-    use: TypeOnly<old.ScriptoriumLambda>): void;
+    use: TypeOnly<old.ScriptoriumLambda>);
 use_old_ClassDeclaration_ScriptoriumLambda(
     get_current_ClassDeclaration_ScriptoriumLambda());
 
@@ -655,7 +655,7 @@ use_old_ClassDeclaration_ScriptoriumLambda(
 declare function get_old_ClassDeclaration_ScriptoriumLambdaFactory():
     TypeOnly<old.ScriptoriumLambdaFactory>;
 declare function use_current_ClassDeclaration_ScriptoriumLambdaFactory(
-    use: TypeOnly<current.ScriptoriumLambdaFactory>): void;
+    use: TypeOnly<current.ScriptoriumLambdaFactory>);
 use_current_ClassDeclaration_ScriptoriumLambdaFactory(
     get_old_ClassDeclaration_ScriptoriumLambdaFactory());
 
@@ -667,7 +667,7 @@ use_current_ClassDeclaration_ScriptoriumLambdaFactory(
 declare function get_current_ClassDeclaration_ScriptoriumLambdaFactory():
     TypeOnly<current.ScriptoriumLambdaFactory>;
 declare function use_old_ClassDeclaration_ScriptoriumLambdaFactory(
-    use: TypeOnly<old.ScriptoriumLambdaFactory>): void;
+    use: TypeOnly<old.ScriptoriumLambdaFactory>);
 use_old_ClassDeclaration_ScriptoriumLambdaFactory(
     get_current_ClassDeclaration_ScriptoriumLambdaFactory());
 
@@ -679,7 +679,7 @@ use_old_ClassDeclaration_ScriptoriumLambdaFactory(
 declare function get_old_ClassDeclaration_SummaryReader():
     TypeOnly<old.SummaryReader>;
 declare function use_current_ClassDeclaration_SummaryReader(
-    use: TypeOnly<current.SummaryReader>): void;
+    use: TypeOnly<current.SummaryReader>);
 use_current_ClassDeclaration_SummaryReader(
     get_old_ClassDeclaration_SummaryReader());
 
@@ -691,7 +691,7 @@ use_current_ClassDeclaration_SummaryReader(
 declare function get_current_ClassDeclaration_SummaryReader():
     TypeOnly<current.SummaryReader>;
 declare function use_old_ClassDeclaration_SummaryReader(
-    use: TypeOnly<old.SummaryReader>): void;
+    use: TypeOnly<old.SummaryReader>);
 use_old_ClassDeclaration_SummaryReader(
     get_current_ClassDeclaration_SummaryReader());
 
@@ -703,7 +703,7 @@ use_old_ClassDeclaration_SummaryReader(
 declare function get_old_ClassDeclaration_SummaryWriter():
     TypeOnly<old.SummaryWriter>;
 declare function use_current_ClassDeclaration_SummaryWriter(
-    use: TypeOnly<current.SummaryWriter>): void;
+    use: TypeOnly<current.SummaryWriter>);
 use_current_ClassDeclaration_SummaryWriter(
     get_old_ClassDeclaration_SummaryWriter());
 
@@ -715,7 +715,7 @@ use_current_ClassDeclaration_SummaryWriter(
 declare function get_current_ClassDeclaration_SummaryWriter():
     TypeOnly<current.SummaryWriter>;
 declare function use_old_ClassDeclaration_SummaryWriter(
-    use: TypeOnly<old.SummaryWriter>): void;
+    use: TypeOnly<old.SummaryWriter>);
 use_old_ClassDeclaration_SummaryWriter(
     get_current_ClassDeclaration_SummaryWriter());
 
@@ -727,7 +727,7 @@ use_old_ClassDeclaration_SummaryWriter(
 declare function get_old_FunctionDeclaration_configureWebSocketServices():
     TypeOnly<typeof old.configureWebSocketServices>;
 declare function use_current_FunctionDeclaration_configureWebSocketServices(
-    use: TypeOnly<typeof current.configureWebSocketServices>): void;
+    use: TypeOnly<typeof current.configureWebSocketServices>);
 use_current_FunctionDeclaration_configureWebSocketServices(
     get_old_FunctionDeclaration_configureWebSocketServices());
 
@@ -739,7 +739,7 @@ use_current_FunctionDeclaration_configureWebSocketServices(
 declare function get_current_FunctionDeclaration_configureWebSocketServices():
     TypeOnly<typeof current.configureWebSocketServices>;
 declare function use_old_FunctionDeclaration_configureWebSocketServices(
-    use: TypeOnly<typeof old.configureWebSocketServices>): void;
+    use: TypeOnly<typeof old.configureWebSocketServices>);
 use_old_FunctionDeclaration_configureWebSocketServices(
     get_current_FunctionDeclaration_configureWebSocketServices());
 
@@ -751,7 +751,7 @@ use_old_FunctionDeclaration_configureWebSocketServices(
 declare function get_old_FunctionDeclaration_createDeliCheckpointManagerFromCollection():
     TypeOnly<typeof old.createDeliCheckpointManagerFromCollection>;
 declare function use_current_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
-    use: TypeOnly<typeof current.createDeliCheckpointManagerFromCollection>): void;
+    use: TypeOnly<typeof current.createDeliCheckpointManagerFromCollection>);
 use_current_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
     get_old_FunctionDeclaration_createDeliCheckpointManagerFromCollection());
 
@@ -763,7 +763,7 @@ use_current_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
 declare function get_current_FunctionDeclaration_createDeliCheckpointManagerFromCollection():
     TypeOnly<typeof current.createDeliCheckpointManagerFromCollection>;
 declare function use_old_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
-    use: TypeOnly<typeof old.createDeliCheckpointManagerFromCollection>): void;
+    use: TypeOnly<typeof old.createDeliCheckpointManagerFromCollection>);
 use_old_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
     get_current_FunctionDeclaration_createDeliCheckpointManagerFromCollection());
 
@@ -775,7 +775,7 @@ use_old_FunctionDeclaration_createDeliCheckpointManagerFromCollection(
 declare function get_old_VariableDeclaration_createNackMessage():
     TypeOnly<typeof old.createNackMessage>;
 declare function use_current_VariableDeclaration_createNackMessage(
-    use: TypeOnly<typeof current.createNackMessage>): void;
+    use: TypeOnly<typeof current.createNackMessage>);
 use_current_VariableDeclaration_createNackMessage(
     get_old_VariableDeclaration_createNackMessage());
 
@@ -787,7 +787,7 @@ use_current_VariableDeclaration_createNackMessage(
 declare function get_current_VariableDeclaration_createNackMessage():
     TypeOnly<typeof current.createNackMessage>;
 declare function use_old_VariableDeclaration_createNackMessage(
-    use: TypeOnly<typeof old.createNackMessage>): void;
+    use: TypeOnly<typeof old.createNackMessage>);
 use_old_VariableDeclaration_createNackMessage(
     get_current_VariableDeclaration_createNackMessage());
 
@@ -799,7 +799,7 @@ use_old_VariableDeclaration_createNackMessage(
 declare function get_old_FunctionDeclaration_createRoomJoinMessage():
     TypeOnly<typeof old.createRoomJoinMessage>;
 declare function use_current_FunctionDeclaration_createRoomJoinMessage(
-    use: TypeOnly<typeof current.createRoomJoinMessage>): void;
+    use: TypeOnly<typeof current.createRoomJoinMessage>);
 use_current_FunctionDeclaration_createRoomJoinMessage(
     get_old_FunctionDeclaration_createRoomJoinMessage());
 
@@ -811,7 +811,7 @@ use_current_FunctionDeclaration_createRoomJoinMessage(
 declare function get_current_FunctionDeclaration_createRoomJoinMessage():
     TypeOnly<typeof current.createRoomJoinMessage>;
 declare function use_old_FunctionDeclaration_createRoomJoinMessage(
-    use: TypeOnly<typeof old.createRoomJoinMessage>): void;
+    use: TypeOnly<typeof old.createRoomJoinMessage>);
 use_old_FunctionDeclaration_createRoomJoinMessage(
     get_current_FunctionDeclaration_createRoomJoinMessage());
 
@@ -823,7 +823,7 @@ use_old_FunctionDeclaration_createRoomJoinMessage(
 declare function get_old_VariableDeclaration_createRoomLeaveMessage():
     TypeOnly<typeof old.createRoomLeaveMessage>;
 declare function use_current_VariableDeclaration_createRoomLeaveMessage(
-    use: TypeOnly<typeof current.createRoomLeaveMessage>): void;
+    use: TypeOnly<typeof current.createRoomLeaveMessage>);
 use_current_VariableDeclaration_createRoomLeaveMessage(
     get_old_VariableDeclaration_createRoomLeaveMessage());
 
@@ -835,7 +835,7 @@ use_current_VariableDeclaration_createRoomLeaveMessage(
 declare function get_current_VariableDeclaration_createRoomLeaveMessage():
     TypeOnly<typeof current.createRoomLeaveMessage>;
 declare function use_old_VariableDeclaration_createRoomLeaveMessage(
-    use: TypeOnly<typeof old.createRoomLeaveMessage>): void;
+    use: TypeOnly<typeof old.createRoomLeaveMessage>);
 use_old_VariableDeclaration_createRoomLeaveMessage(
     get_current_VariableDeclaration_createRoomLeaveMessage());
 
@@ -847,7 +847,7 @@ use_old_VariableDeclaration_createRoomLeaveMessage(
 declare function get_old_VariableDeclaration_createSessionMetric():
     TypeOnly<typeof old.createSessionMetric>;
 declare function use_current_VariableDeclaration_createSessionMetric(
-    use: TypeOnly<typeof current.createSessionMetric>): void;
+    use: TypeOnly<typeof current.createSessionMetric>);
 use_current_VariableDeclaration_createSessionMetric(
     get_old_VariableDeclaration_createSessionMetric());
 
@@ -859,7 +859,7 @@ use_current_VariableDeclaration_createSessionMetric(
 declare function get_current_VariableDeclaration_createSessionMetric():
     TypeOnly<typeof current.createSessionMetric>;
 declare function use_old_VariableDeclaration_createSessionMetric(
-    use: TypeOnly<typeof old.createSessionMetric>): void;
+    use: TypeOnly<typeof old.createSessionMetric>);
 use_old_VariableDeclaration_createSessionMetric(
     get_current_VariableDeclaration_createSessionMetric());
 
@@ -871,7 +871,7 @@ use_old_VariableDeclaration_createSessionMetric(
 declare function get_old_VariableDeclaration_generateClientId():
     TypeOnly<typeof old.generateClientId>;
 declare function use_current_VariableDeclaration_generateClientId(
-    use: TypeOnly<typeof current.generateClientId>): void;
+    use: TypeOnly<typeof current.generateClientId>);
 use_current_VariableDeclaration_generateClientId(
     get_old_VariableDeclaration_generateClientId());
 
@@ -883,7 +883,7 @@ use_current_VariableDeclaration_generateClientId(
 declare function get_current_VariableDeclaration_generateClientId():
     TypeOnly<typeof current.generateClientId>;
 declare function use_old_VariableDeclaration_generateClientId(
-    use: TypeOnly<typeof old.generateClientId>): void;
+    use: TypeOnly<typeof old.generateClientId>);
 use_old_VariableDeclaration_generateClientId(
     get_current_VariableDeclaration_generateClientId());
 
@@ -895,7 +895,7 @@ use_old_VariableDeclaration_generateClientId(
 declare function get_old_FunctionDeclaration_isDocumentSessionValid():
     TypeOnly<typeof old.isDocumentSessionValid>;
 declare function use_current_FunctionDeclaration_isDocumentSessionValid(
-    use: TypeOnly<typeof current.isDocumentSessionValid>): void;
+    use: TypeOnly<typeof current.isDocumentSessionValid>);
 use_current_FunctionDeclaration_isDocumentSessionValid(
     get_old_FunctionDeclaration_isDocumentSessionValid());
 
@@ -907,7 +907,7 @@ use_current_FunctionDeclaration_isDocumentSessionValid(
 declare function get_current_FunctionDeclaration_isDocumentSessionValid():
     TypeOnly<typeof current.isDocumentSessionValid>;
 declare function use_old_FunctionDeclaration_isDocumentSessionValid(
-    use: TypeOnly<typeof old.isDocumentSessionValid>): void;
+    use: TypeOnly<typeof old.isDocumentSessionValid>);
 use_old_FunctionDeclaration_isDocumentSessionValid(
     get_current_FunctionDeclaration_isDocumentSessionValid());
 
@@ -919,7 +919,7 @@ use_old_FunctionDeclaration_isDocumentSessionValid(
 declare function get_old_FunctionDeclaration_isDocumentValid():
     TypeOnly<typeof old.isDocumentValid>;
 declare function use_current_FunctionDeclaration_isDocumentValid(
-    use: TypeOnly<typeof current.isDocumentValid>): void;
+    use: TypeOnly<typeof current.isDocumentValid>);
 use_current_FunctionDeclaration_isDocumentValid(
     get_old_FunctionDeclaration_isDocumentValid());
 
@@ -931,7 +931,7 @@ use_current_FunctionDeclaration_isDocumentValid(
 declare function get_current_FunctionDeclaration_isDocumentValid():
     TypeOnly<typeof current.isDocumentValid>;
 declare function use_old_FunctionDeclaration_isDocumentValid(
-    use: TypeOnly<typeof old.isDocumentValid>): void;
+    use: TypeOnly<typeof old.isDocumentValid>);
 use_old_FunctionDeclaration_isDocumentValid(
     get_current_FunctionDeclaration_isDocumentValid());
 
@@ -943,7 +943,7 @@ use_old_FunctionDeclaration_isDocumentValid(
 declare function get_old_VariableDeclaration_logCommonSessionEndMetrics():
     TypeOnly<typeof old.logCommonSessionEndMetrics>;
 declare function use_current_VariableDeclaration_logCommonSessionEndMetrics(
-    use: TypeOnly<typeof current.logCommonSessionEndMetrics>): void;
+    use: TypeOnly<typeof current.logCommonSessionEndMetrics>);
 use_current_VariableDeclaration_logCommonSessionEndMetrics(
     get_old_VariableDeclaration_logCommonSessionEndMetrics());
 
@@ -955,6 +955,6 @@ use_current_VariableDeclaration_logCommonSessionEndMetrics(
 declare function get_current_VariableDeclaration_logCommonSessionEndMetrics():
     TypeOnly<typeof current.logCommonSessionEndMetrics>;
 declare function use_old_VariableDeclaration_logCommonSessionEndMetrics(
-    use: TypeOnly<typeof old.logCommonSessionEndMetrics>): void;
+    use: TypeOnly<typeof old.logCommonSessionEndMetrics>);
 use_old_VariableDeclaration_logCommonSessionEndMetrics(
     get_current_VariableDeclaration_logCommonSessionEndMetrics());

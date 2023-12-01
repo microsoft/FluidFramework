@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
     TypeOnly<old.IProtocolHandler>;
 declare function use_current_InterfaceDeclaration_IProtocolHandler(
-    use: TypeOnly<current.IProtocolHandler>): void;
+    use: TypeOnly<current.IProtocolHandler>);
 use_current_InterfaceDeclaration_IProtocolHandler(
     get_old_InterfaceDeclaration_IProtocolHandler());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IProtocolHandler(
 declare function get_current_InterfaceDeclaration_IProtocolHandler():
     TypeOnly<current.IProtocolHandler>;
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
-    use: TypeOnly<old.IProtocolHandler>): void;
+    use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
     get_current_InterfaceDeclaration_IProtocolHandler());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IProtocolHandler(
 declare function get_old_InterfaceDeclaration_IQuorumSnapshot():
     TypeOnly<old.IQuorumSnapshot>;
 declare function use_current_InterfaceDeclaration_IQuorumSnapshot(
-    use: TypeOnly<current.IQuorumSnapshot>): void;
+    use: TypeOnly<current.IQuorumSnapshot>);
 use_current_InterfaceDeclaration_IQuorumSnapshot(
     get_old_InterfaceDeclaration_IQuorumSnapshot());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IQuorumSnapshot(
 declare function get_current_InterfaceDeclaration_IQuorumSnapshot():
     TypeOnly<current.IQuorumSnapshot>;
 declare function use_old_InterfaceDeclaration_IQuorumSnapshot(
-    use: TypeOnly<old.IQuorumSnapshot>): void;
+    use: TypeOnly<old.IQuorumSnapshot>);
 use_old_InterfaceDeclaration_IQuorumSnapshot(
     get_current_InterfaceDeclaration_IQuorumSnapshot());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IQuorumSnapshot(
 declare function get_old_InterfaceDeclaration_IScribeProtocolState():
     TypeOnly<old.IScribeProtocolState>;
 declare function use_current_InterfaceDeclaration_IScribeProtocolState(
-    use: TypeOnly<current.IScribeProtocolState>): void;
+    use: TypeOnly<current.IScribeProtocolState>);
 use_current_InterfaceDeclaration_IScribeProtocolState(
     get_old_InterfaceDeclaration_IScribeProtocolState());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IScribeProtocolState(
 declare function get_current_InterfaceDeclaration_IScribeProtocolState():
     TypeOnly<current.IScribeProtocolState>;
 declare function use_old_InterfaceDeclaration_IScribeProtocolState(
-    use: TypeOnly<old.IScribeProtocolState>): void;
+    use: TypeOnly<old.IScribeProtocolState>);
 use_old_InterfaceDeclaration_IScribeProtocolState(
     get_current_InterfaceDeclaration_IScribeProtocolState());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IScribeProtocolState(
 declare function get_old_ClassDeclaration_ProtocolOpHandler():
     TypeOnly<old.ProtocolOpHandler>;
 declare function use_current_ClassDeclaration_ProtocolOpHandler(
-    use: TypeOnly<current.ProtocolOpHandler>): void;
+    use: TypeOnly<current.ProtocolOpHandler>);
 use_current_ClassDeclaration_ProtocolOpHandler(
     get_old_ClassDeclaration_ProtocolOpHandler());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_ProtocolOpHandler(
 declare function get_current_ClassDeclaration_ProtocolOpHandler():
     TypeOnly<current.ProtocolOpHandler>;
 declare function use_old_ClassDeclaration_ProtocolOpHandler(
-    use: TypeOnly<old.ProtocolOpHandler>): void;
+    use: TypeOnly<old.ProtocolOpHandler>);
 use_old_ClassDeclaration_ProtocolOpHandler(
     get_current_ClassDeclaration_ProtocolOpHandler());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_ProtocolOpHandler(
 declare function get_old_ClassDeclaration_Quorum():
     TypeOnly<old.Quorum>;
 declare function use_current_ClassDeclaration_Quorum(
-    use: TypeOnly<current.Quorum>): void;
+    use: TypeOnly<current.Quorum>);
 use_current_ClassDeclaration_Quorum(
     get_old_ClassDeclaration_Quorum());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_Quorum(
 declare function get_current_ClassDeclaration_Quorum():
     TypeOnly<current.Quorum>;
 declare function use_old_ClassDeclaration_Quorum(
-    use: TypeOnly<old.Quorum>): void;
+    use: TypeOnly<old.Quorum>);
 use_old_ClassDeclaration_Quorum(
     get_current_ClassDeclaration_Quorum());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_Quorum(
 declare function get_old_ClassDeclaration_QuorumClients():
     TypeOnly<old.QuorumClients>;
 declare function use_current_ClassDeclaration_QuorumClients(
-    use: TypeOnly<current.QuorumClients>): void;
+    use: TypeOnly<current.QuorumClients>);
 use_current_ClassDeclaration_QuorumClients(
     get_old_ClassDeclaration_QuorumClients());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_QuorumClients(
 declare function get_current_ClassDeclaration_QuorumClients():
     TypeOnly<current.QuorumClients>;
 declare function use_old_ClassDeclaration_QuorumClients(
-    use: TypeOnly<old.QuorumClients>): void;
+    use: TypeOnly<old.QuorumClients>);
 use_old_ClassDeclaration_QuorumClients(
     get_current_ClassDeclaration_QuorumClients());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_QuorumClients(
 declare function get_old_TypeAliasDeclaration_QuorumClientsSnapshot():
     TypeOnly<old.QuorumClientsSnapshot>;
 declare function use_current_TypeAliasDeclaration_QuorumClientsSnapshot(
-    use: TypeOnly<current.QuorumClientsSnapshot>): void;
+    use: TypeOnly<current.QuorumClientsSnapshot>);
 use_current_TypeAliasDeclaration_QuorumClientsSnapshot(
     get_old_TypeAliasDeclaration_QuorumClientsSnapshot());
 
@@ -185,7 +185,7 @@ use_current_TypeAliasDeclaration_QuorumClientsSnapshot(
 declare function get_current_TypeAliasDeclaration_QuorumClientsSnapshot():
     TypeOnly<current.QuorumClientsSnapshot>;
 declare function use_old_TypeAliasDeclaration_QuorumClientsSnapshot(
-    use: TypeOnly<old.QuorumClientsSnapshot>): void;
+    use: TypeOnly<old.QuorumClientsSnapshot>);
 use_old_TypeAliasDeclaration_QuorumClientsSnapshot(
     get_current_TypeAliasDeclaration_QuorumClientsSnapshot());
 
@@ -197,7 +197,7 @@ use_old_TypeAliasDeclaration_QuorumClientsSnapshot(
 declare function get_old_ClassDeclaration_QuorumProposals():
     TypeOnly<old.QuorumProposals>;
 declare function use_current_ClassDeclaration_QuorumProposals(
-    use: TypeOnly<current.QuorumProposals>): void;
+    use: TypeOnly<current.QuorumProposals>);
 use_current_ClassDeclaration_QuorumProposals(
     get_old_ClassDeclaration_QuorumProposals());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_QuorumProposals(
 declare function get_current_ClassDeclaration_QuorumProposals():
     TypeOnly<current.QuorumProposals>;
 declare function use_old_ClassDeclaration_QuorumProposals(
-    use: TypeOnly<old.QuorumProposals>): void;
+    use: TypeOnly<old.QuorumProposals>);
 use_old_ClassDeclaration_QuorumProposals(
     get_current_ClassDeclaration_QuorumProposals());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_QuorumProposals(
 declare function get_old_TypeAliasDeclaration_QuorumProposalsSnapshot():
     TypeOnly<old.QuorumProposalsSnapshot>;
 declare function use_current_TypeAliasDeclaration_QuorumProposalsSnapshot(
-    use: TypeOnly<current.QuorumProposalsSnapshot>): void;
+    use: TypeOnly<current.QuorumProposalsSnapshot>);
 use_current_TypeAliasDeclaration_QuorumProposalsSnapshot(
     get_old_TypeAliasDeclaration_QuorumProposalsSnapshot());
 
@@ -233,7 +233,7 @@ use_current_TypeAliasDeclaration_QuorumProposalsSnapshot(
 declare function get_current_TypeAliasDeclaration_QuorumProposalsSnapshot():
     TypeOnly<current.QuorumProposalsSnapshot>;
 declare function use_old_TypeAliasDeclaration_QuorumProposalsSnapshot(
-    use: TypeOnly<old.QuorumProposalsSnapshot>): void;
+    use: TypeOnly<old.QuorumProposalsSnapshot>);
 use_old_TypeAliasDeclaration_QuorumProposalsSnapshot(
     get_current_TypeAliasDeclaration_QuorumProposalsSnapshot());
 
@@ -245,7 +245,7 @@ use_old_TypeAliasDeclaration_QuorumProposalsSnapshot(
 declare function get_old_FunctionDeclaration_buildGitTreeHierarchy():
     TypeOnly<typeof old.buildGitTreeHierarchy>;
 declare function use_current_FunctionDeclaration_buildGitTreeHierarchy(
-    use: TypeOnly<typeof current.buildGitTreeHierarchy>): void;
+    use: TypeOnly<typeof current.buildGitTreeHierarchy>);
 use_current_FunctionDeclaration_buildGitTreeHierarchy(
     get_old_FunctionDeclaration_buildGitTreeHierarchy());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_buildGitTreeHierarchy(
 declare function get_current_FunctionDeclaration_buildGitTreeHierarchy():
     TypeOnly<typeof current.buildGitTreeHierarchy>;
 declare function use_old_FunctionDeclaration_buildGitTreeHierarchy(
-    use: TypeOnly<typeof old.buildGitTreeHierarchy>): void;
+    use: TypeOnly<typeof old.buildGitTreeHierarchy>);
 use_old_FunctionDeclaration_buildGitTreeHierarchy(
     get_current_FunctionDeclaration_buildGitTreeHierarchy());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_buildGitTreeHierarchy(
 declare function get_old_FunctionDeclaration_getGitMode():
     TypeOnly<typeof old.getGitMode>;
 declare function use_current_FunctionDeclaration_getGitMode(
-    use: TypeOnly<typeof current.getGitMode>): void;
+    use: TypeOnly<typeof current.getGitMode>);
 use_current_FunctionDeclaration_getGitMode(
     get_old_FunctionDeclaration_getGitMode());
 
@@ -281,7 +281,7 @@ use_current_FunctionDeclaration_getGitMode(
 declare function get_current_FunctionDeclaration_getGitMode():
     TypeOnly<typeof current.getGitMode>;
 declare function use_old_FunctionDeclaration_getGitMode(
-    use: TypeOnly<typeof old.getGitMode>): void;
+    use: TypeOnly<typeof old.getGitMode>);
 use_old_FunctionDeclaration_getGitMode(
     get_current_FunctionDeclaration_getGitMode());
 
@@ -293,7 +293,7 @@ use_old_FunctionDeclaration_getGitMode(
 declare function get_old_FunctionDeclaration_getGitType():
     TypeOnly<typeof old.getGitType>;
 declare function use_current_FunctionDeclaration_getGitType(
-    use: TypeOnly<typeof current.getGitType>): void;
+    use: TypeOnly<typeof current.getGitType>);
 use_current_FunctionDeclaration_getGitType(
     get_old_FunctionDeclaration_getGitType());
 
@@ -305,6 +305,6 @@ use_current_FunctionDeclaration_getGitType(
 declare function get_current_FunctionDeclaration_getGitType():
     TypeOnly<typeof current.getGitType>;
 declare function use_old_FunctionDeclaration_getGitType(
-    use: TypeOnly<typeof old.getGitType>): void;
+    use: TypeOnly<typeof old.getGitType>);
 use_old_FunctionDeclaration_getGitType(
     get_current_FunctionDeclaration_getGitType());

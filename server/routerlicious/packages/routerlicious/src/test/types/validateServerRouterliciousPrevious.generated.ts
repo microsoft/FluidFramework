@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_FunctionDeclaration_create():
     TypeOnly<typeof old.create>;
 declare function use_current_FunctionDeclaration_create(
-    use: TypeOnly<typeof current.create>): void;
+    use: TypeOnly<typeof current.create>);
 use_current_FunctionDeclaration_create(
     get_old_FunctionDeclaration_create());
 
@@ -41,6 +41,6 @@ use_current_FunctionDeclaration_create(
 declare function get_current_FunctionDeclaration_create():
     TypeOnly<typeof current.create>;
 declare function use_old_FunctionDeclaration_create(
-    use: TypeOnly<typeof old.create>): void;
+    use: TypeOnly<typeof old.create>);
 use_old_FunctionDeclaration_create(
     get_current_FunctionDeclaration_create());

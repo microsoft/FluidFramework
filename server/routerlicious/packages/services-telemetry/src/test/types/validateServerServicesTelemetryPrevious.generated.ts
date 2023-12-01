@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_BaseLumberjackSchemaValidator():
     TypeOnly<old.BaseLumberjackSchemaValidator>;
 declare function use_current_ClassDeclaration_BaseLumberjackSchemaValidator(
-    use: TypeOnly<current.BaseLumberjackSchemaValidator>): void;
+    use: TypeOnly<current.BaseLumberjackSchemaValidator>);
 use_current_ClassDeclaration_BaseLumberjackSchemaValidator(
     get_old_ClassDeclaration_BaseLumberjackSchemaValidator());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_BaseLumberjackSchemaValidator(
 declare function get_current_ClassDeclaration_BaseLumberjackSchemaValidator():
     TypeOnly<current.BaseLumberjackSchemaValidator>;
 declare function use_old_ClassDeclaration_BaseLumberjackSchemaValidator(
-    use: TypeOnly<old.BaseLumberjackSchemaValidator>): void;
+    use: TypeOnly<old.BaseLumberjackSchemaValidator>);
 use_old_ClassDeclaration_BaseLumberjackSchemaValidator(
     get_current_ClassDeclaration_BaseLumberjackSchemaValidator());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_BaseLumberjackSchemaValidator(
 declare function get_old_ClassDeclaration_BasePropertiesValidator():
     TypeOnly<old.BasePropertiesValidator>;
 declare function use_current_ClassDeclaration_BasePropertiesValidator(
-    use: TypeOnly<current.BasePropertiesValidator>): void;
+    use: TypeOnly<current.BasePropertiesValidator>);
 use_current_ClassDeclaration_BasePropertiesValidator(
     get_old_ClassDeclaration_BasePropertiesValidator());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_BasePropertiesValidator(
 declare function get_current_ClassDeclaration_BasePropertiesValidator():
     TypeOnly<current.BasePropertiesValidator>;
 declare function use_old_ClassDeclaration_BasePropertiesValidator(
-    use: TypeOnly<old.BasePropertiesValidator>): void;
+    use: TypeOnly<old.BasePropertiesValidator>);
 use_old_ClassDeclaration_BasePropertiesValidator(
     get_current_ClassDeclaration_BasePropertiesValidator());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_BasePropertiesValidator(
 declare function get_old_EnumDeclaration_BaseTelemetryProperties():
     TypeOnly<old.BaseTelemetryProperties>;
 declare function use_current_EnumDeclaration_BaseTelemetryProperties(
-    use: TypeOnly<current.BaseTelemetryProperties>): void;
+    use: TypeOnly<current.BaseTelemetryProperties>);
 use_current_EnumDeclaration_BaseTelemetryProperties(
     get_old_EnumDeclaration_BaseTelemetryProperties());
 
@@ -89,7 +89,7 @@ use_current_EnumDeclaration_BaseTelemetryProperties(
 declare function get_current_EnumDeclaration_BaseTelemetryProperties():
     TypeOnly<current.BaseTelemetryProperties>;
 declare function use_old_EnumDeclaration_BaseTelemetryProperties(
-    use: TypeOnly<old.BaseTelemetryProperties>): void;
+    use: TypeOnly<old.BaseTelemetryProperties>);
 use_old_EnumDeclaration_BaseTelemetryProperties(
     get_current_EnumDeclaration_BaseTelemetryProperties());
 
@@ -101,7 +101,7 @@ use_old_EnumDeclaration_BaseTelemetryProperties(
 declare function get_old_EnumDeclaration_CommonProperties():
     TypeOnly<old.CommonProperties>;
 declare function use_current_EnumDeclaration_CommonProperties(
-    use: TypeOnly<current.CommonProperties>): void;
+    use: TypeOnly<current.CommonProperties>);
 use_current_EnumDeclaration_CommonProperties(
     get_old_EnumDeclaration_CommonProperties());
 
@@ -113,7 +113,7 @@ use_current_EnumDeclaration_CommonProperties(
 declare function get_current_EnumDeclaration_CommonProperties():
     TypeOnly<current.CommonProperties>;
 declare function use_old_EnumDeclaration_CommonProperties(
-    use: TypeOnly<old.CommonProperties>): void;
+    use: TypeOnly<old.CommonProperties>);
 use_old_EnumDeclaration_CommonProperties(
     get_current_EnumDeclaration_CommonProperties());
 
@@ -125,7 +125,7 @@ use_old_EnumDeclaration_CommonProperties(
 declare function get_old_EnumDeclaration_HttpProperties():
     TypeOnly<old.HttpProperties>;
 declare function use_current_EnumDeclaration_HttpProperties(
-    use: TypeOnly<current.HttpProperties>): void;
+    use: TypeOnly<current.HttpProperties>);
 use_current_EnumDeclaration_HttpProperties(
     get_old_EnumDeclaration_HttpProperties());
 
@@ -137,7 +137,7 @@ use_current_EnumDeclaration_HttpProperties(
 declare function get_current_EnumDeclaration_HttpProperties():
     TypeOnly<current.HttpProperties>;
 declare function use_old_EnumDeclaration_HttpProperties(
-    use: TypeOnly<old.HttpProperties>): void;
+    use: TypeOnly<old.HttpProperties>);
 use_old_EnumDeclaration_HttpProperties(
     get_current_EnumDeclaration_HttpProperties());
 
@@ -149,7 +149,7 @@ use_old_EnumDeclaration_HttpProperties(
 declare function get_old_InterfaceDeclaration_ILumberjackEngine():
     TypeOnly<old.ILumberjackEngine>;
 declare function use_current_InterfaceDeclaration_ILumberjackEngine(
-    use: TypeOnly<current.ILumberjackEngine>): void;
+    use: TypeOnly<current.ILumberjackEngine>);
 use_current_InterfaceDeclaration_ILumberjackEngine(
     get_old_InterfaceDeclaration_ILumberjackEngine());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ILumberjackEngine(
 declare function get_current_InterfaceDeclaration_ILumberjackEngine():
     TypeOnly<current.ILumberjackEngine>;
 declare function use_old_InterfaceDeclaration_ILumberjackEngine(
-    use: TypeOnly<old.ILumberjackEngine>): void;
+    use: TypeOnly<old.ILumberjackEngine>);
 use_old_InterfaceDeclaration_ILumberjackEngine(
     get_current_InterfaceDeclaration_ILumberjackEngine());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ILumberjackEngine(
 declare function get_old_InterfaceDeclaration_ILumberjackOptions():
     TypeOnly<old.ILumberjackOptions>;
 declare function use_current_InterfaceDeclaration_ILumberjackOptions(
-    use: TypeOnly<current.ILumberjackOptions>): void;
+    use: TypeOnly<current.ILumberjackOptions>);
 use_current_InterfaceDeclaration_ILumberjackOptions(
     get_old_InterfaceDeclaration_ILumberjackOptions());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_ILumberjackOptions(
 declare function get_current_InterfaceDeclaration_ILumberjackOptions():
     TypeOnly<current.ILumberjackOptions>;
 declare function use_old_InterfaceDeclaration_ILumberjackOptions(
-    use: TypeOnly<old.ILumberjackOptions>): void;
+    use: TypeOnly<old.ILumberjackOptions>);
 use_old_InterfaceDeclaration_ILumberjackOptions(
     get_current_InterfaceDeclaration_ILumberjackOptions());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_ILumberjackOptions(
 declare function get_old_InterfaceDeclaration_ILumberjackSchemaValidationResult():
     TypeOnly<old.ILumberjackSchemaValidationResult>;
 declare function use_current_InterfaceDeclaration_ILumberjackSchemaValidationResult(
-    use: TypeOnly<current.ILumberjackSchemaValidationResult>): void;
+    use: TypeOnly<current.ILumberjackSchemaValidationResult>);
 use_current_InterfaceDeclaration_ILumberjackSchemaValidationResult(
     get_old_InterfaceDeclaration_ILumberjackSchemaValidationResult());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_ILumberjackSchemaValidationResult(
 declare function get_current_InterfaceDeclaration_ILumberjackSchemaValidationResult():
     TypeOnly<current.ILumberjackSchemaValidationResult>;
 declare function use_old_InterfaceDeclaration_ILumberjackSchemaValidationResult(
-    use: TypeOnly<old.ILumberjackSchemaValidationResult>): void;
+    use: TypeOnly<old.ILumberjackSchemaValidationResult>);
 use_old_InterfaceDeclaration_ILumberjackSchemaValidationResult(
     get_current_InterfaceDeclaration_ILumberjackSchemaValidationResult());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_ILumberjackSchemaValidationResult(
 declare function get_old_InterfaceDeclaration_ILumberjackSchemaValidator():
     TypeOnly<old.ILumberjackSchemaValidator>;
 declare function use_current_InterfaceDeclaration_ILumberjackSchemaValidator(
-    use: TypeOnly<current.ILumberjackSchemaValidator>): void;
+    use: TypeOnly<current.ILumberjackSchemaValidator>);
 use_current_InterfaceDeclaration_ILumberjackSchemaValidator(
     get_old_InterfaceDeclaration_ILumberjackSchemaValidator());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_ILumberjackSchemaValidator(
 declare function get_current_InterfaceDeclaration_ILumberjackSchemaValidator():
     TypeOnly<current.ILumberjackSchemaValidator>;
 declare function use_old_InterfaceDeclaration_ILumberjackSchemaValidator(
-    use: TypeOnly<old.ILumberjackSchemaValidator>): void;
+    use: TypeOnly<old.ILumberjackSchemaValidator>);
 use_old_InterfaceDeclaration_ILumberjackSchemaValidator(
     get_current_InterfaceDeclaration_ILumberjackSchemaValidator());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_ILumberjackSchemaValidator(
 declare function get_old_InterfaceDeclaration_ITelemetryContext():
     TypeOnly<old.ITelemetryContext>;
 declare function use_current_InterfaceDeclaration_ITelemetryContext(
-    use: TypeOnly<current.ITelemetryContext>): void;
+    use: TypeOnly<current.ITelemetryContext>);
 use_current_InterfaceDeclaration_ITelemetryContext(
     get_old_InterfaceDeclaration_ITelemetryContext());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_ITelemetryContext(
 declare function get_current_InterfaceDeclaration_ITelemetryContext():
     TypeOnly<current.ITelemetryContext>;
 declare function use_old_InterfaceDeclaration_ITelemetryContext(
-    use: TypeOnly<old.ITelemetryContext>): void;
+    use: TypeOnly<old.ITelemetryContext>);
 use_old_InterfaceDeclaration_ITelemetryContext(
     get_current_InterfaceDeclaration_ITelemetryContext());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_ITelemetryContext(
 declare function get_old_InterfaceDeclaration_ITelemetryContextProperties():
     TypeOnly<old.ITelemetryContextProperties>;
 declare function use_current_InterfaceDeclaration_ITelemetryContextProperties(
-    use: TypeOnly<current.ITelemetryContextProperties>): void;
+    use: TypeOnly<current.ITelemetryContextProperties>);
 use_current_InterfaceDeclaration_ITelemetryContextProperties(
     get_old_InterfaceDeclaration_ITelemetryContextProperties());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_ITelemetryContextProperties(
 declare function get_current_InterfaceDeclaration_ITelemetryContextProperties():
     TypeOnly<current.ITelemetryContextProperties>;
 declare function use_old_InterfaceDeclaration_ITelemetryContextProperties(
-    use: TypeOnly<old.ITelemetryContextProperties>): void;
+    use: TypeOnly<old.ITelemetryContextProperties>);
 use_old_InterfaceDeclaration_ITelemetryContextProperties(
     get_current_InterfaceDeclaration_ITelemetryContextProperties());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_ITelemetryContextProperties(
 declare function get_old_ClassDeclaration_LambdaSchemaValidator():
     TypeOnly<old.LambdaSchemaValidator>;
 declare function use_current_ClassDeclaration_LambdaSchemaValidator(
-    use: TypeOnly<current.LambdaSchemaValidator>): void;
+    use: TypeOnly<current.LambdaSchemaValidator>);
 use_current_ClassDeclaration_LambdaSchemaValidator(
     get_old_ClassDeclaration_LambdaSchemaValidator());
 
@@ -305,7 +305,7 @@ use_current_ClassDeclaration_LambdaSchemaValidator(
 declare function get_current_ClassDeclaration_LambdaSchemaValidator():
     TypeOnly<current.LambdaSchemaValidator>;
 declare function use_old_ClassDeclaration_LambdaSchemaValidator(
-    use: TypeOnly<old.LambdaSchemaValidator>): void;
+    use: TypeOnly<old.LambdaSchemaValidator>);
 use_old_ClassDeclaration_LambdaSchemaValidator(
     get_current_ClassDeclaration_LambdaSchemaValidator());
 
@@ -317,7 +317,7 @@ use_old_ClassDeclaration_LambdaSchemaValidator(
 declare function get_old_EnumDeclaration_LogLevel():
     TypeOnly<old.LogLevel>;
 declare function use_current_EnumDeclaration_LogLevel(
-    use: TypeOnly<current.LogLevel>): void;
+    use: TypeOnly<current.LogLevel>);
 use_current_EnumDeclaration_LogLevel(
     get_old_EnumDeclaration_LogLevel());
 
@@ -329,7 +329,7 @@ use_current_EnumDeclaration_LogLevel(
 declare function get_current_EnumDeclaration_LogLevel():
     TypeOnly<current.LogLevel>;
 declare function use_old_EnumDeclaration_LogLevel(
-    use: TypeOnly<old.LogLevel>): void;
+    use: TypeOnly<old.LogLevel>);
 use_old_EnumDeclaration_LogLevel(
     get_current_EnumDeclaration_LogLevel());
 
@@ -341,7 +341,7 @@ use_old_EnumDeclaration_LogLevel(
 declare function get_old_ClassDeclaration_Lumber():
     TypeOnly<old.Lumber>;
 declare function use_current_ClassDeclaration_Lumber(
-    use: TypeOnly<current.Lumber>): void;
+    use: TypeOnly<current.Lumber>);
 use_current_ClassDeclaration_Lumber(
     get_old_ClassDeclaration_Lumber());
 
@@ -353,7 +353,7 @@ use_current_ClassDeclaration_Lumber(
 declare function get_current_ClassDeclaration_Lumber():
     TypeOnly<current.Lumber>;
 declare function use_old_ClassDeclaration_Lumber(
-    use: TypeOnly<old.Lumber>): void;
+    use: TypeOnly<old.Lumber>);
 use_old_ClassDeclaration_Lumber(
     get_current_ClassDeclaration_Lumber());
 
@@ -365,7 +365,7 @@ use_old_ClassDeclaration_Lumber(
 declare function get_old_EnumDeclaration_LumberEventName():
     TypeOnly<old.LumberEventName>;
 declare function use_current_EnumDeclaration_LumberEventName(
-    use: TypeOnly<current.LumberEventName>): void;
+    use: TypeOnly<current.LumberEventName>);
 use_current_EnumDeclaration_LumberEventName(
     get_old_EnumDeclaration_LumberEventName());
 
@@ -377,7 +377,7 @@ use_current_EnumDeclaration_LumberEventName(
 declare function get_current_EnumDeclaration_LumberEventName():
     TypeOnly<current.LumberEventName>;
 declare function use_old_EnumDeclaration_LumberEventName(
-    use: TypeOnly<old.LumberEventName>): void;
+    use: TypeOnly<old.LumberEventName>);
 use_old_EnumDeclaration_LumberEventName(
     get_current_EnumDeclaration_LumberEventName());
 
@@ -389,7 +389,7 @@ use_old_EnumDeclaration_LumberEventName(
 declare function get_old_EnumDeclaration_LumberType():
     TypeOnly<old.LumberType>;
 declare function use_current_EnumDeclaration_LumberType(
-    use: TypeOnly<current.LumberType>): void;
+    use: TypeOnly<current.LumberType>);
 use_current_EnumDeclaration_LumberType(
     get_old_EnumDeclaration_LumberType());
 
@@ -401,7 +401,7 @@ use_current_EnumDeclaration_LumberType(
 declare function get_current_EnumDeclaration_LumberType():
     TypeOnly<current.LumberType>;
 declare function use_old_EnumDeclaration_LumberType(
-    use: TypeOnly<old.LumberType>): void;
+    use: TypeOnly<old.LumberType>);
 use_old_EnumDeclaration_LumberType(
     get_current_EnumDeclaration_LumberType());
 
@@ -413,7 +413,7 @@ use_old_EnumDeclaration_LumberType(
 declare function get_old_ClassDeclaration_Lumberjack():
     TypeOnly<old.Lumberjack>;
 declare function use_current_ClassDeclaration_Lumberjack(
-    use: TypeOnly<current.Lumberjack>): void;
+    use: TypeOnly<current.Lumberjack>);
 use_current_ClassDeclaration_Lumberjack(
     get_old_ClassDeclaration_Lumberjack());
 
@@ -425,7 +425,7 @@ use_current_ClassDeclaration_Lumberjack(
 declare function get_current_ClassDeclaration_Lumberjack():
     TypeOnly<current.Lumberjack>;
 declare function use_old_ClassDeclaration_Lumberjack(
-    use: TypeOnly<old.Lumberjack>): void;
+    use: TypeOnly<old.Lumberjack>);
 use_old_ClassDeclaration_Lumberjack(
     get_current_ClassDeclaration_Lumberjack());
 
@@ -437,7 +437,7 @@ use_old_ClassDeclaration_Lumberjack(
 declare function get_old_EnumDeclaration_QueuedMessageProperties():
     TypeOnly<old.QueuedMessageProperties>;
 declare function use_current_EnumDeclaration_QueuedMessageProperties(
-    use: TypeOnly<current.QueuedMessageProperties>): void;
+    use: TypeOnly<current.QueuedMessageProperties>);
 use_current_EnumDeclaration_QueuedMessageProperties(
     get_old_EnumDeclaration_QueuedMessageProperties());
 
@@ -449,7 +449,7 @@ use_current_EnumDeclaration_QueuedMessageProperties(
 declare function get_current_EnumDeclaration_QueuedMessageProperties():
     TypeOnly<current.QueuedMessageProperties>;
 declare function use_old_EnumDeclaration_QueuedMessageProperties(
-    use: TypeOnly<old.QueuedMessageProperties>): void;
+    use: TypeOnly<old.QueuedMessageProperties>);
 use_old_EnumDeclaration_QueuedMessageProperties(
     get_current_EnumDeclaration_QueuedMessageProperties());
 
@@ -461,7 +461,7 @@ use_old_EnumDeclaration_QueuedMessageProperties(
 declare function get_old_EnumDeclaration_SessionState():
     TypeOnly<old.SessionState>;
 declare function use_current_EnumDeclaration_SessionState(
-    use: TypeOnly<current.SessionState>): void;
+    use: TypeOnly<current.SessionState>);
 use_current_EnumDeclaration_SessionState(
     get_old_EnumDeclaration_SessionState());
 
@@ -473,7 +473,7 @@ use_current_EnumDeclaration_SessionState(
 declare function get_current_EnumDeclaration_SessionState():
     TypeOnly<current.SessionState>;
 declare function use_old_EnumDeclaration_SessionState(
-    use: TypeOnly<old.SessionState>): void;
+    use: TypeOnly<old.SessionState>);
 use_old_EnumDeclaration_SessionState(
     get_current_EnumDeclaration_SessionState());
 
@@ -485,7 +485,7 @@ use_old_EnumDeclaration_SessionState(
 declare function get_old_ClassDeclaration_TestEngine1():
     TypeOnly<old.TestEngine1>;
 declare function use_current_ClassDeclaration_TestEngine1(
-    use: TypeOnly<current.TestEngine1>): void;
+    use: TypeOnly<current.TestEngine1>);
 use_current_ClassDeclaration_TestEngine1(
     get_old_ClassDeclaration_TestEngine1());
 
@@ -497,7 +497,7 @@ use_current_ClassDeclaration_TestEngine1(
 declare function get_current_ClassDeclaration_TestEngine1():
     TypeOnly<current.TestEngine1>;
 declare function use_old_ClassDeclaration_TestEngine1(
-    use: TypeOnly<old.TestEngine1>): void;
+    use: TypeOnly<old.TestEngine1>);
 use_old_ClassDeclaration_TestEngine1(
     get_current_ClassDeclaration_TestEngine1());
 
@@ -509,7 +509,7 @@ use_old_ClassDeclaration_TestEngine1(
 declare function get_old_ClassDeclaration_TestEngine2():
     TypeOnly<old.TestEngine2>;
 declare function use_current_ClassDeclaration_TestEngine2(
-    use: TypeOnly<current.TestEngine2>): void;
+    use: TypeOnly<current.TestEngine2>);
 use_current_ClassDeclaration_TestEngine2(
     get_old_ClassDeclaration_TestEngine2());
 
@@ -521,7 +521,7 @@ use_current_ClassDeclaration_TestEngine2(
 declare function get_current_ClassDeclaration_TestEngine2():
     TypeOnly<current.TestEngine2>;
 declare function use_old_ClassDeclaration_TestEngine2(
-    use: TypeOnly<old.TestEngine2>): void;
+    use: TypeOnly<old.TestEngine2>);
 use_old_ClassDeclaration_TestEngine2(
     get_current_ClassDeclaration_TestEngine2());
 
@@ -533,7 +533,7 @@ use_old_ClassDeclaration_TestEngine2(
 declare function get_old_ClassDeclaration_TestLumberjack():
     TypeOnly<old.TestLumberjack>;
 declare function use_current_ClassDeclaration_TestLumberjack(
-    use: TypeOnly<current.TestLumberjack>): void;
+    use: TypeOnly<current.TestLumberjack>);
 use_current_ClassDeclaration_TestLumberjack(
     get_old_ClassDeclaration_TestLumberjack());
 
@@ -545,7 +545,7 @@ use_current_ClassDeclaration_TestLumberjack(
 declare function get_current_ClassDeclaration_TestLumberjack():
     TypeOnly<current.TestLumberjack>;
 declare function use_old_ClassDeclaration_TestLumberjack(
-    use: TypeOnly<old.TestLumberjack>): void;
+    use: TypeOnly<old.TestLumberjack>);
 use_old_ClassDeclaration_TestLumberjack(
     get_current_ClassDeclaration_TestLumberjack());
 
@@ -557,7 +557,7 @@ use_old_ClassDeclaration_TestLumberjack(
 declare function get_old_ClassDeclaration_TestSchemaValidator():
     TypeOnly<old.TestSchemaValidator>;
 declare function use_current_ClassDeclaration_TestSchemaValidator(
-    use: TypeOnly<current.TestSchemaValidator>): void;
+    use: TypeOnly<current.TestSchemaValidator>);
 use_current_ClassDeclaration_TestSchemaValidator(
     get_old_ClassDeclaration_TestSchemaValidator());
 
@@ -569,7 +569,7 @@ use_current_ClassDeclaration_TestSchemaValidator(
 declare function get_current_ClassDeclaration_TestSchemaValidator():
     TypeOnly<current.TestSchemaValidator>;
 declare function use_old_ClassDeclaration_TestSchemaValidator(
-    use: TypeOnly<old.TestSchemaValidator>): void;
+    use: TypeOnly<old.TestSchemaValidator>);
 use_old_ClassDeclaration_TestSchemaValidator(
     get_current_ClassDeclaration_TestSchemaValidator());
 
@@ -581,7 +581,7 @@ use_old_ClassDeclaration_TestSchemaValidator(
 declare function get_old_EnumDeclaration_ThrottlingTelemetryProperties():
     TypeOnly<old.ThrottlingTelemetryProperties>;
 declare function use_current_EnumDeclaration_ThrottlingTelemetryProperties(
-    use: TypeOnly<current.ThrottlingTelemetryProperties>): void;
+    use: TypeOnly<current.ThrottlingTelemetryProperties>);
 use_current_EnumDeclaration_ThrottlingTelemetryProperties(
     get_old_EnumDeclaration_ThrottlingTelemetryProperties());
 
@@ -593,7 +593,7 @@ use_current_EnumDeclaration_ThrottlingTelemetryProperties(
 declare function get_current_EnumDeclaration_ThrottlingTelemetryProperties():
     TypeOnly<current.ThrottlingTelemetryProperties>;
 declare function use_old_EnumDeclaration_ThrottlingTelemetryProperties(
-    use: TypeOnly<old.ThrottlingTelemetryProperties>): void;
+    use: TypeOnly<old.ThrottlingTelemetryProperties>);
 use_old_EnumDeclaration_ThrottlingTelemetryProperties(
     get_current_EnumDeclaration_ThrottlingTelemetryProperties());
 
@@ -605,7 +605,7 @@ use_old_EnumDeclaration_ThrottlingTelemetryProperties(
 declare function get_old_VariableDeclaration_getGlobalTelemetryContext():
     TypeOnly<typeof old.getGlobalTelemetryContext>;
 declare function use_current_VariableDeclaration_getGlobalTelemetryContext(
-    use: TypeOnly<typeof current.getGlobalTelemetryContext>): void;
+    use: TypeOnly<typeof current.getGlobalTelemetryContext>);
 use_current_VariableDeclaration_getGlobalTelemetryContext(
     get_old_VariableDeclaration_getGlobalTelemetryContext());
 
@@ -617,7 +617,7 @@ use_current_VariableDeclaration_getGlobalTelemetryContext(
 declare function get_current_VariableDeclaration_getGlobalTelemetryContext():
     TypeOnly<typeof current.getGlobalTelemetryContext>;
 declare function use_old_VariableDeclaration_getGlobalTelemetryContext(
-    use: TypeOnly<typeof old.getGlobalTelemetryContext>): void;
+    use: TypeOnly<typeof old.getGlobalTelemetryContext>);
 use_old_VariableDeclaration_getGlobalTelemetryContext(
     get_current_VariableDeclaration_getGlobalTelemetryContext());
 
@@ -629,7 +629,7 @@ use_old_VariableDeclaration_getGlobalTelemetryContext(
 declare function get_old_VariableDeclaration_getLumberBaseProperties():
     TypeOnly<typeof old.getLumberBaseProperties>;
 declare function use_current_VariableDeclaration_getLumberBaseProperties(
-    use: TypeOnly<typeof current.getLumberBaseProperties>): void;
+    use: TypeOnly<typeof current.getLumberBaseProperties>);
 use_current_VariableDeclaration_getLumberBaseProperties(
     get_old_VariableDeclaration_getLumberBaseProperties());
 
@@ -641,7 +641,7 @@ use_current_VariableDeclaration_getLumberBaseProperties(
 declare function get_current_VariableDeclaration_getLumberBaseProperties():
     TypeOnly<typeof current.getLumberBaseProperties>;
 declare function use_old_VariableDeclaration_getLumberBaseProperties(
-    use: TypeOnly<typeof old.getLumberBaseProperties>): void;
+    use: TypeOnly<typeof old.getLumberBaseProperties>);
 use_old_VariableDeclaration_getLumberBaseProperties(
     get_current_VariableDeclaration_getLumberBaseProperties());
 
@@ -653,7 +653,7 @@ use_old_VariableDeclaration_getLumberBaseProperties(
 declare function get_old_FunctionDeclaration_handleError():
     TypeOnly<typeof old.handleError>;
 declare function use_current_FunctionDeclaration_handleError(
-    use: TypeOnly<typeof current.handleError>): void;
+    use: TypeOnly<typeof current.handleError>);
 use_current_FunctionDeclaration_handleError(
     get_old_FunctionDeclaration_handleError());
 
@@ -665,7 +665,7 @@ use_current_FunctionDeclaration_handleError(
 declare function get_current_FunctionDeclaration_handleError():
     TypeOnly<typeof current.handleError>;
 declare function use_old_FunctionDeclaration_handleError(
-    use: TypeOnly<typeof old.handleError>): void;
+    use: TypeOnly<typeof old.handleError>);
 use_old_FunctionDeclaration_handleError(
     get_current_FunctionDeclaration_handleError());
 
@@ -677,7 +677,7 @@ use_old_FunctionDeclaration_handleError(
 declare function get_old_VariableDeclaration_setGlobalTelemetryContext():
     TypeOnly<typeof old.setGlobalTelemetryContext>;
 declare function use_current_VariableDeclaration_setGlobalTelemetryContext(
-    use: TypeOnly<typeof current.setGlobalTelemetryContext>): void;
+    use: TypeOnly<typeof current.setGlobalTelemetryContext>);
 use_current_VariableDeclaration_setGlobalTelemetryContext(
     get_old_VariableDeclaration_setGlobalTelemetryContext());
 
@@ -689,6 +689,6 @@ use_current_VariableDeclaration_setGlobalTelemetryContext(
 declare function get_current_VariableDeclaration_setGlobalTelemetryContext():
     TypeOnly<typeof current.setGlobalTelemetryContext>;
 declare function use_old_VariableDeclaration_setGlobalTelemetryContext(
-    use: TypeOnly<typeof old.setGlobalTelemetryContext>): void;
+    use: TypeOnly<typeof old.setGlobalTelemetryContext>);
 use_old_VariableDeclaration_setGlobalTelemetryContext(
     get_current_VariableDeclaration_setGlobalTelemetryContext());
