@@ -27,7 +27,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
@@ -175,7 +175,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -1675,7 +1675,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);

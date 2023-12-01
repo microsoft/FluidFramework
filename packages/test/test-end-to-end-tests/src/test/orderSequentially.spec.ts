@@ -13,7 +13,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
@@ -37,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
+describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

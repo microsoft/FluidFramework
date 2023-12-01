@@ -14,7 +14,7 @@ import {
 	ChannelFactoryRegistry,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { Serializable } from "@fluidframework/datastore-definitions";
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedCell", (getTestObjectProvider) => {
+describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -301,7 +301,7 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

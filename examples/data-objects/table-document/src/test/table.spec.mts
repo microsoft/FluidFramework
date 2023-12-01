@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { TableDocument } from "../document.js";
 import { TableSlice } from "../slice.js";
 import { TableDocumentItem } from "../table.js";
 
-describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
+describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 	let tableDocument: TableDocument;
 
 	function makeId(type: string) {

@@ -13,7 +13,7 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedCounter", (getTestObjectProvider) => {
+describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -163,7 +163,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

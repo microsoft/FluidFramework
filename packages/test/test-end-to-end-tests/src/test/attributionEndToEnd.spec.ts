@@ -19,10 +19,7 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeNoCompat,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -93,7 +90,7 @@ function assertAttributionMatches(
 
 // TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
 // unit tests.
-describeNoCompat("Attributor", (getTestObjectProvider) => {
+describeCompat("Attributor", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
