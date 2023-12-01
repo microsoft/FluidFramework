@@ -29,6 +29,8 @@ import {
 	getGCTombstoneStateFromSummary,
 } from "./gcTestSummaryUtils.js";
 
+//* Update - Merge with the Tombstone one to cover both transitions
+
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
  */

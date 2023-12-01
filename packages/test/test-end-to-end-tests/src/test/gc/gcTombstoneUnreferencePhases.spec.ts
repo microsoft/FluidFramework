@@ -24,6 +24,8 @@ import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
+//* Update - Merge with the Sweep one to cover both transitions
+
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC phases without overlapping.
  */
