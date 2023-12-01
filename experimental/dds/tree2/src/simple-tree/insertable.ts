@@ -22,14 +22,14 @@ import {
 
 /**
  * Data from which a {@link TreeObjectNode} can be built.
- * @alpha
+ * @beta
  */
 export type InsertableTreeObjectNode<TSchema extends ObjectNodeSchema> =
 	InsertableTreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
  * Helper for generating the properties of a InsertableTreeObjectNode.
- * @alpha
+ * @beta
  */
 export type InsertableTreeObjectNodeFields<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
@@ -45,14 +45,14 @@ export type InsertableTreeObjectNodeFields<
 
 /**
  * Data from which a {@link TreeField} can be built.
- * @alpha
+ * @beta
  */
 export type InsertableTreeField<TSchema extends TreeFieldSchema = TreeFieldSchema> =
 	InsertableTreeFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 /**
  * Helper for implementing InsertableTreeField.
- * @alpha
+ * @beta
  */
 export type InsertableTreeFieldInner<
 	Kind extends FieldKind,
@@ -69,7 +69,7 @@ export type InsertableTreeFieldInner<
  * Given multiple node schema types, return the corresponding object type union from which the node could be built.
  *
  * If the types are ambagious, use the schema's factory to construct a unhydrated node instance with the desired type.
- * @alpha
+ * @beta
  */
 export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
 	? unknown
@@ -88,7 +88,7 @@ export type InsertableTreeNodeUnion<TTypes extends AllowedTypes> = TTypes extend
 
 /**
  * Given a node's schema, return the corresponding object from which the node could be built.
- * @alpha
+ * @beta
  */
 export type InsertableTypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>

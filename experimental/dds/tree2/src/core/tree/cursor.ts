@@ -327,7 +327,7 @@ export const enum CursorLocationType {
 
 /**
  * {@link ITreeCursor} that is never pending.
- * @alpha
+ * @beta
  */
 export interface ITreeCursorSynchronous extends ITreeCursor {
 	readonly pending: false;
