@@ -4,9 +4,6 @@
 
 ```ts
 
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
-
 // @internal
 export type ConnectionMode = "write" | "read";
 
@@ -205,44 +202,74 @@ export interface IProtocolState {
 }
 
 // @internal
-export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
+export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off"> {
+    // (undocumented)
+    off: IQuorum["on"];
+    // (undocumented)
+    on: IQuorumClients["on"] & IQuorumProposals["on"];
+    // (undocumented)
+    once: IQuorum["on"];
 }
 
 // @internal
-export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
+export interface IQuorumClients {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
+    // (undocumented)
+    off: IQuorumClients["on"];
+    // (undocumented)
+    on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    on(event: "removeMember", listener: (clientId: string) => void): any;
+    // (undocumented)
+    on(event: "error", listener: (message: any) => void): any;
+    // (undocumented)
+    once: IQuorumClients["on"];
 }
 
-// @internal
-export interface IQuorumClientsEvents extends IErrorEvent {
+// @internal @deprecated (undocumented)
+export interface IQuorumClientsEvents {
     // (undocumented)
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
     // (undocumented)
     (event: "removeMember", listener: (clientId: string) => void): any;
+    // (undocumented)
+    (event: "error", listener: (message: any) => void): any;
 }
 
-// @internal
+// @internal @deprecated
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 // @internal
-export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
+export interface IQuorumProposals {
     // (undocumented)
     get(key: string): unknown;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
+    off: IQuorumProposals["on"];
+    // (undocumented)
+    on(event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
+    // (undocumented)
+    on(event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
+    // (undocumented)
+    on(event: "error", listener: (message: any) => void): void;
+    // (undocumented)
+    once: IQuorumProposals["on"];
+    // (undocumented)
     propose(key: string, value: unknown): Promise<void>;
 }
 
-// @internal
-export interface IQuorumProposalsEvents extends IErrorEvent {
+// @internal @deprecated
+export interface IQuorumProposalsEvents {
     // (undocumented)
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
     // (undocumented)
     (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
+    // (undocumented)
+    (event: "error", listener: (message: any) => void): void;
 }
 
 // @internal

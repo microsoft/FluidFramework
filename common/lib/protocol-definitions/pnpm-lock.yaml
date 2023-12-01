@@ -12,7 +12,6 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-definitions': ^1.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@2.0.0
       '@microsoft/api-extractor': ^7.38.3
@@ -24,8 +23,6 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
       typescript-formatter: 7.1.0
-    dependencies:
-      '@fluidframework/common-definitions': 1.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/build-common': 2.0.3
@@ -345,10 +342,6 @@ packages:
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: true
-
-  /@fluidframework/common-definitions/1.0.0:
-    resolution: {integrity: sha512-t0jm6u4RX77Fn3rnoxDmavzo26y/JBsNIz5iptnamBgUTOo37i7wXr9VPB8+AjCEd3kcXPyFEoNa8zIEvgOekQ==}
-    dev: false
 
   /@fluidframework/eslint-config-fluid/2.0.0_kufnqfq7tb5rpdawkdb6g5smma:
     resolution: {integrity: sha512-/az5CybW5XUZUOk9HMH0nUMtKx5AK+CRfHg35UyygTK+V2OmNRes/yCAbmxoQ1J1Vn2iow3Y/Sgw/oJygciugQ==}
