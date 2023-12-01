@@ -5,7 +5,13 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	ChangesetLocalId,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core";
 import {
 	brand,
 	fail,
@@ -27,7 +33,6 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
-	RevisionInfo,
 } from "./modularChangeTypes";
 import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";

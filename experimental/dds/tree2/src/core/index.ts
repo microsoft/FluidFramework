@@ -172,6 +172,10 @@ export {
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "./rebase";
 
 export {

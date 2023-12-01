@@ -146,7 +146,6 @@ export {
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	PrimitiveValue,
 	StableNodeKey,
 	LocalNodeKey,
 	compareLocalNodeKeys,
