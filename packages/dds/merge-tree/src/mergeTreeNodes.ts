@@ -175,7 +175,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	propertyManager?: PropertiesManager;
 	/**
 	 * Local seq at which this segment was inserted.
-	 * This is defined if an only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
+	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
 	 *
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
