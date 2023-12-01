@@ -795,8 +795,8 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
 }
 
-function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
-	const fields: Delta.Root = new Map([
+function makeDelta(mark: Delta.Mark, path: UpPath): Delta.FieldMap {
+	const fields: Delta.FieldMap = new Map([
 		[path.parentField, { local: [{ count: path.parentIndex }, mark] }],
 	]);
 	if (path.parent === undefined) {
@@ -806,8 +806,8 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	return makeDelta({ count: 1, fields }, path.parent);
 }
 
-function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.Root {
-	const fields: Delta.Root = new Map([[path.field, changes]]);
+function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.FieldMap {
+	const fields: Delta.FieldMap = new Map([[path.field, changes]]);
 	if (path.parent === undefined) {
 		return fields;
 	}

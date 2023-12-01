@@ -20,13 +20,12 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
-// @public
+// @internal @deprecated
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
-// @public
+// @internal
 export class AzureClient {
     constructor(properties: AzureClientProps);
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
@@ -44,7 +43,7 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
 }
 
-// @public
+// @internal
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
@@ -53,28 +52,28 @@ export interface AzureClientProps {
     readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
-// @public
+// @internal
 export interface AzureConnectionConfig {
     endpoint: string;
     tokenProvider: ITokenProvider;
     type: AzureConnectionConfigType;
 }
 
-// @public
+// @internal
 export type AzureConnectionConfigType = "local" | "remote";
 
-// @public
+// @internal
 export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @public
+// @internal
 export interface AzureContainerVersion {
     date?: string;
     id: string;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
@@ -83,35 +82,35 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @public
+// @internal
 export interface AzureGetVersionsOptions {
     maxCount: number;
 }
 
-// @public
+// @internal
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
     type: "local";
 }
 
-// @public
+// @internal
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
     userName: string;
 }
 
-// @public
+// @internal
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     tenantId: string;
     type: "remote";
 }
 
-// @public
+// @internal
 export interface AzureUser<T = any> extends IUser {
     additionalDetails?: T;
     name: string;
 }
 
-// @public
+// @internal
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { ITelemetryBaseEvent }

@@ -76,6 +76,9 @@ export class OrdererManager implements core.IOrdererManager {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
@@ -103,6 +106,7 @@ export class NexusResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 	) {
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -131,10 +135,16 @@ export class NexusResources implements core.IResources {
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
 			: Promise.resolve();
-		await Promise.all([mongoClosedP, tokenRevocationManagerP]);
+		const serviceMessageManagerP = this.serviceMessageResourceManager
+			? this.serviceMessageResourceManager.close()
+			: Promise.resolve();
+		await Promise.all([mongoClosedP, tokenRevocationManagerP, serviceMessageManagerP]);
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusResourcesFactory implements core.IResourcesFactory<NexusResources> {
 	public async create(
 		config: Provider,
@@ -472,6 +482,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
+		// Service Message setup
+		const serviceMessageResourceManager = customizations?.serviceMessageResourceManager;
+
 		// Set up token revocation if enabled
 		/**
 		 * Always have a revoked token checker,
@@ -521,10 +534,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEvents,
+			serviceMessageResourceManager,
 		);
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 	public async create(resources: NexusResources): Promise<core.IRunner> {
 		return new NexusRunner(

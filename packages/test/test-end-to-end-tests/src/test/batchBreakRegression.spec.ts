@@ -9,9 +9,8 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -114,7 +113,7 @@ async function runAndValidateBatch(
 			},
 		);
 		const container = await loader.resolve({ url: containerUrl });
-		const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+		const testObject = (await container.getEntryPoint()) as TestFluidObject;
 		// send batch
 		testObject.context.containerRuntime.orderSequentially(() => {
 			for (let i = 0; i < 10; i++) {
@@ -142,7 +141,7 @@ async function runAndValidateBatch(
 	}
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 

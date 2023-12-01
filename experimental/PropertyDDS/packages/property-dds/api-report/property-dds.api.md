@@ -17,7 +17,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { NodeProperty } from '@fluid-experimental/property-properties';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public (undocumented)
+// @internal (undocumented)
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
     // (undocumented)
     abstract get attributes(): any;
@@ -37,7 +37,7 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
     abstract get type(): any;
 }
 
-// @public
+// @internal
 export class DeflatedPropertyTree extends SharedPropertyTree {
     // (undocumented)
     static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string): DeflatedPropertyTree;
@@ -45,7 +45,7 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
     static getFactory(): IChannelFactory;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -67,13 +67,13 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IPropertyTreeConfig {
     // (undocumented)
     encDec: ISharedPropertyTreeEncDec;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IPropertyTreeMessage {
     // (undocumented)
     changeSet: SerializedChangeSet;
@@ -95,13 +95,13 @@ export interface IPropertyTreeMessage {
     useMH?: boolean;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRemotePropertyTreeMessage extends IPropertyTreeMessage {
     // (undocumented)
     sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISharedPropertyTreeEncDec {
     // (undocumented)
     messageEncoder: {
@@ -115,7 +115,7 @@ export interface ISharedPropertyTreeEncDec {
     };
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotSummary {
     // (undocumented)
     remoteChanges?: IPropertyTreeMessage[];
@@ -127,7 +127,7 @@ export interface ISnapshotSummary {
     unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LZ4PropertyTree extends SharedPropertyTree {
     // (undocumented)
     static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string): LZ4PropertyTree;
@@ -135,7 +135,7 @@ export class LZ4PropertyTree extends SharedPropertyTree {
     static getFactory(): IChannelFactory;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -157,16 +157,16 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type Metadata = any;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const enum OpKind {
     // (undocumented)
     ChangeSet = 0
 }
 
-// @public
+// @internal
 export class PropertyTreeFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -182,10 +182,10 @@ export class PropertyTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type SerializedChangeSet = any;
 
-// @public
+// @internal
 export class SharedPropertyTree extends SharedObject {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options: SharedPropertyTreeOptions, propertyTreeConfig?: IPropertyTreeConfig);
     // (undocumented)
@@ -223,7 +223,7 @@ export class SharedPropertyTree extends SharedObject {
     // (undocumented)
     propertyTreeConfig: IPropertyTreeConfig;
     // (undocumented)
-    static prune(minimumSequenceNumber: number, remoteChanges: IPropertyTreeMessage[], unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>): {
+    static prune(minimumSequenceNumber: number, remoteChanges: IPropertyTreeMessage[], unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>, remoteHeadGuid: string): {
         remoteChanges: IPropertyTreeMessage[];
         unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>;
         prunedCount: number;
@@ -259,7 +259,7 @@ export class SharedPropertyTree extends SharedObject {
     useMH: boolean;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface SharedPropertyTreeOptions {
     // (undocumented)
     clientFiltering?: boolean;

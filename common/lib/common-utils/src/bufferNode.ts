@@ -9,6 +9,7 @@
  * of the browser implementation, so any changes made in one should be made in both.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export declare class Buffer extends Uint8Array {
 	toString(encoding?: string): string;
@@ -23,11 +24,13 @@ export declare class Buffer extends Uint8Array {
 
 /**
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export const IsoBuffer = Buffer;
 
 /**
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export type IsoBuffer = Buffer;
 
@@ -40,6 +43,7 @@ export type IsoBuffer = Buffer;
  * @returns The converted string.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 	// Make this check because Buffer.from(arr) will always do a buffer copy
@@ -51,6 +55,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  * @param encoding - The input string's encoding.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike {
 	const iso = IsoBuffer.from(input, encoding);
@@ -70,6 +75,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @returns The blob in string format
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
 	IsoBuffer.from(blob).toString(encoding);

@@ -69,8 +69,21 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldMap<TTree>;
-
+export interface Root<TTree = ProtoNode> {
+	/**
+	 * Changes to apply to the root fields.
+	 */
+	readonly fields?: FieldMap<TTree>;
+	/**
+	 * New detached nodes to be constructed.
+	 * The ordering has no significance.
+	 *
+	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
+	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
+	 * then the build should be listed under ID A.
+	 */
+	readonly build?: readonly DetachedNodeBuild<TTree>[];
+}
 /**
  * The default representation for inserted content.
  *
@@ -202,6 +215,9 @@ export interface FieldChanges<TTree = ProtoNode> {
 	/**
 	 * New detached nodes to be constructed.
 	 * The ordering has no significance.
+	 *
+	 * @deprecated - Builds should be set at the root.
+	 * TODO:6308 migrate all reader/writers away from this and remove it.
 	 *
 	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
 	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,

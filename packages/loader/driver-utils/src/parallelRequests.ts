@@ -14,7 +14,8 @@ import { logNetworkFailure } from "./networkUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { calculateMaxWaitTime } from "./runWithRetry";
 
-const MissingFetchDelayInMs = 100;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const MissingFetchDelayInMs = 50;
 
 type WorkingState = "working" | "done" | "canceled";
 
@@ -29,7 +30,7 @@ type WorkingState = "working" | "done" | "canceled";
  * @param logger - logger to use
  * @param requestCallback - callback to request batches
  * @returns Queue that can be used to retrieve data
- * @public
+ * @internal
  */
 export class ParallelRequests<T> {
 	private latestRequested: number;
@@ -339,7 +340,7 @@ export class ParallelRequests<T> {
 /**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
- * @public
+ * @internal
  */
 export class Queue<T> implements IStream<T> {
 	private readonly queue: Promise<IStreamResult<T>>[] = [];
@@ -494,8 +495,6 @@ async function getSingleOpBatch(
 				// It's game over scenario.
 				throw error;
 			}
-
-			waitTime = Math.max(retryAfter ?? 0, waitTime);
 		}
 
 		if (telemetryEvent === undefined) {
@@ -505,13 +504,14 @@ async function getSingleOpBatch(
 			});
 		}
 
+		waitTime = calculateMaxWaitTime(waitTime, lastError);
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
 			setTimeout(resolve, waitTime);
 		});
 
-		waitTime = Math.min(waitTime * 2, calculateMaxWaitTime(lastError));
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
@@ -533,7 +533,7 @@ async function getSingleOpBatch(
  * @param signal - Cancelation signal
  * @param scenarioName - Reason for fetching ops
  * @returns Messages fetched
- * @public
+ * @internal
  */
 export function requestOps(
 	get: (
@@ -655,7 +655,7 @@ export function requestOps(
 }
 
 /**
- * @public
+ * @internal
  */
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 	read: async () => {
@@ -664,7 +664,7 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 };
 
 /**
- * @public
+ * @internal
  */
 export function streamFromMessages(
 	messagesArg: Promise<ISequencedDocumentMessage[]>,
@@ -683,7 +683,7 @@ export function streamFromMessages(
 }
 
 /**
- * @public
+ * @internal
  */
 export function streamObserver<T>(
 	stream: IStream<T>,

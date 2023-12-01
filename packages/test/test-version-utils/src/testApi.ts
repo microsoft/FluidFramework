@@ -60,11 +60,17 @@ const packageList = [
 	"@fluidframework/routerlicious-driver",
 ];
 
+/**
+ * @internal
+ */
 export interface InstalledPackage {
 	version: string;
 	modulePath: string;
 }
 
+/**
+ * @internal
+ */
 export const ensurePackageInstalled = async (
 	baseVersion: string,
 	version: number | string,
@@ -91,19 +97,29 @@ const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
 const driverCache = new Map<string, typeof DriverApi>();
 
-// Current versions of the APIs
-const LoaderApi = {
+// #region Current versions of the APIs.
+
+/**
+ * @internal
+ */
+export const LoaderApi = {
 	version: pkgVersion,
 	Loader,
 };
 
-const ContainerRuntimeApi = {
+/**
+ * @internal
+ */
+export const ContainerRuntimeApi = {
 	version: pkgVersion,
 	ContainerRuntime,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
-const DataRuntimeApi = {
+/**
+ * @internal
+ */
+export const DataRuntimeApi = {
 	version: pkgVersion,
 	DataObject,
 	DataObjectFactory,
@@ -121,6 +137,8 @@ const DataRuntimeApi = {
 		SparseMatrix,
 	},
 };
+
+// #endregion
 
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
@@ -282,8 +300,23 @@ function throwNotFound(layer: string, version: string): never {
 	throw new Error(`${layer}@${version} not found. Missing install step?`);
 }
 
-export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+/**
+ * Used to fetch a given version of the Loader API.
+ *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
+ * @internal
+ */
+export function getLoaderApi(
+	baseVersion: string,
+	requested?: number | string,
+	adjustMajorPublic: boolean = false,
+): typeof LoaderApi {
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -295,11 +328,23 @@ export function getLoaderApi(baseVersion: string, requested?: number | string): 
 	return loaderApi ?? throwNotFound("Loader", version);
 }
 
+/**
+ * Used to fetch a given version of the Container Runtime API.
+ *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
+ * @internal
+ */
 export function getContainerRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
+	adjustMajorPublic: boolean = false,
 ): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -307,11 +352,23 @@ export function getContainerRuntimeApi(
 	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
+/**
+ * Used to fetch a given version of the Data Runtime API.
+ *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
+ * @internal
+ */
 export function getDataRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
+	adjustMajorPublic: boolean = false,
 ): typeof DataRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -319,8 +376,23 @@ export function getDataRuntimeApi(
 	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
-export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+/**
+ * Used to fetch a given version of the Driver API.
+ *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
+ * @internal
+ */
+export function getDriverApi(
+	baseVersion: string,
+	requested?: number | string,
+	adjustMajorPublic: boolean = false,
+): typeof DriverApi {
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -331,10 +403,20 @@ export function getDriverApi(baseVersion: string, requested?: number | string): 
 	return driverCache.get(version) ?? throwNotFound("Driver", version);
 }
 
+/**
+ * @internal
+ */
 export interface CompatApis {
 	containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
 	dataRuntime: ReturnType<typeof getDataRuntimeApi>;
 	dds: ReturnType<typeof getDataRuntimeApi>["dds"];
 	driver: ReturnType<typeof getDriverApi>;
 	loader: ReturnType<typeof getLoaderApi>;
+
+	// Cross Version Compat APIs
+	containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
+	dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
+	ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];
+	driverForLoading?: ReturnType<typeof getDriverApi>;
+	loaderForLoading?: ReturnType<typeof getLoaderApi>;
 }

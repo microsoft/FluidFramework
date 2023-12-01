@@ -19,6 +19,7 @@ import { ensureTopics } from "./kafkaTopics";
 
 /**
  * Kafka producer using the kafka-node library
+ * @internal
  */
 export class KafkaNodeProducer implements IProducer {
 	private readonly messages = new Map<string, IPendingBoxcar[]>();

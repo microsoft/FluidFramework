@@ -57,7 +57,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -204,6 +204,7 @@ export const TestChange = {
 	rebase,
 	checkChangeList,
 	toDelta,
+	isEmpty,
 	codec,
 };
 deepFreeze(TestChange);
@@ -283,7 +284,9 @@ const rootKey: FieldKey = brand("root");
 export function asDelta(intentions: number[]): Delta.Root {
 	return intentions.length === 0
 		? emptyDelta
-		: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]);
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(
@@ -296,7 +299,10 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
+}
+
+export function isEmpty(change: TestChange): boolean {
+	return change.intentions.length === 0;
 }

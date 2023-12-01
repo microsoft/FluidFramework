@@ -24,20 +24,27 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "y"
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "y"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000002",
@@ -53,20 +60,27 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "x"
+                                "effect": {
+                                  "insert": {
+                                    "id": 1
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 1
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            1,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "x"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000003",
@@ -85,24 +99,34 @@
                                 "count": 2
                               },
                               {
-                                "type": "Insert",
                                 "count": 2,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "a"
-                                  },
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "c"
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "a"
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "c"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
@@ -121,20 +145,27 @@
                                 "count": 3
                               },
                               {
-                                "type": "Insert",
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "com.fluidframework.leaf.string",
-                                    "value": "b"
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 2
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            2,
+                            {
+                              "type": "com.fluidframework.leaf.string",
+                              "value": "b"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000005",
@@ -243,51 +274,54 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "x",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "y",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "a",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "b",
-                          [],
-                          "com.fluidframework.leaf.string",
-                          true,
-                          "c",
-                          []
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "x",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "y",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "a",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "b",
+                            [],
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "c",
+                            []
+                          ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }

@@ -24,7 +24,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRevertible {
     // (undocumented)
     discard(): any;
@@ -32,23 +32,18 @@ export interface IRevertible {
     revert(): any;
 }
 
-// @public
-export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
-    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
-}
-
-// @public (undocumented)
+// @internal (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
     pushToCurrentOperation(revertible: IRevertible): any;
 }
 
-// @public
+// @internal
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-// @public
-export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
+// @internal
+export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -104,13 +99,13 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     switchSetCellPolicy(): void;
     // (undocumented)
     toString(): string;
-    // @internal (undocumented)
+    // (undocumented)
     _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
-    // @internal (undocumented)
+    // (undocumented)
     _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
-// @public
+// @internal
 export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

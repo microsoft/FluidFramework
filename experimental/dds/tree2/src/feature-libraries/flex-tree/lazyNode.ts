@@ -36,7 +36,7 @@ import {
 	Any,
 	AllowedTypes,
 } from "../typed-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { LocalNodeKey } from "../node-key";
 import { EditableTreeEvents, TreeEvent } from "./treeEvents";
 import { Context } from "./context";
@@ -58,6 +58,8 @@ import {
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	onNextChange,
+	FlexTreeEntityKind,
+	flexTreeMarker,
 } from "./flexTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -126,6 +128,9 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	extends LazyEntity<TSchema, Anchor>
 	implements FlexTreeNode
 {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
+		return FlexTreeEntityKind.Node;
+	}
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
 	 */
@@ -333,7 +338,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	public [onNextChange](fn: (node: FlexTreeNode) => void): () => void {
 		assert(
 			this.#removeNextChangeCallback === undefined,
-			"Only one subscriber may listen to next tree node change at a time",
+			0x806 /* Only one subscriber may listen to next tree node change at a time */,
 		);
 		this.#removeNextChangeCallback = this.#anchorNode.on("childrenChanged", () => {
 			this.#removeNextChangeCallback?.();
@@ -443,7 +448,7 @@ export class LazyMap<TSchema extends MapNodeSchema>
 			const optionalField = field as FlexTreeOptionalField<AllowedTypes>;
 			optionalField.content = content;
 		} else {
-			assert(fieldSchema.kind === FieldKinds.sequence, "Unexpected map field kind");
+			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
 
 			// TODO: implement setting of sequence fields once we have defined clear merged semantics for doing so.
 			// For now, we will throw an error, since the public API does not currently expose a way to do this anyways.
