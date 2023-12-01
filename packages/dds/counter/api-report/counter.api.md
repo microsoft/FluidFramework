@@ -15,19 +15,19 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @internal
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     increment(incrementAmount: number): void;
     value: number;
 }
 
-// @public
+// @internal
 export interface ISharedCounterEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void): any;
 }
 
-// @public
+// @internal
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)

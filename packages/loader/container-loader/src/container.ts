@@ -237,6 +237,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @internal
  */
 export async function waitContainerToCatchUp(container: IContainer) {
 	// Make sure we stop waiting if container is closed.
@@ -2543,7 +2544,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @alpha
+ * @internal
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2551,16 +2552,12 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @alpha
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }
