@@ -10,7 +10,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
@@ -19,8 +19,9 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
  * retrieving a data store that was created locally works fine even if the outer data store has not finished
  * initializing.
  */
-describeFullCompat(
+describeCompat(
 	"data store retrieval during creation / initialization tests",
+	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		const {
 			dataRuntime: { DataObject, DataObjectFactory },

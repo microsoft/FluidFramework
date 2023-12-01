@@ -13,7 +13,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -32,7 +32,7 @@ import {
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
  */
-describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
+describeCompat("GC sweep unreference phases", "NoCompat", (getTestObjectProvider) => {
 	const inactiveTimeoutMs = 100;
 	const sweepTimeoutMs = 200;
 

@@ -17,7 +17,7 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
@@ -28,7 +28,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullCompat("SharedMap", (getTestObjectProvider) => {
+describeCompat("SharedMap", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -377,7 +377,7 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -539,7 +539,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("addChannel() tests for the SharedMap", (getTestObjectProvider) => {
+describeCompat("addChannel() tests for the SharedMap", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
