@@ -55,13 +55,13 @@ import { Loader } from '@fluidframework/container-loader';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
-// @public (undocumented)
+// @internal (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
-// @public
+// @internal
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
-// @public
+// @internal
 export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
     defaultFactory: IFluidDataStoreFactory;
     registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -71,25 +71,25 @@ export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof Co
     provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
 }) => ContainerRuntimeFactoryWithDefaultDataStore;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const createDocumentId: () => string;
 
-// @public
+// @internal
 export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, documentServiceFactory: IDocumentServiceFactory, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger, options?: ILoaderOptions): IHostLoader;
 
-// @public
+// @internal
 export function createSummarizer(provider: ITestObjectProvider, container: IContainer, config?: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
 
-// @public
+// @internal
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger, configProvider?: IConfigProviderBase): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
 
-// @public
+// @internal
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
     new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;
@@ -105,7 +105,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
     };
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
     Primed = 0,
@@ -113,10 +113,10 @@ export enum DataObjectFactoryType {
     Test = 1
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public
+// @internal
 export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
@@ -133,12 +133,13 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 
-// @public
+// @internal
 export function getContainerEntryPointBackCompat<T>(container: IContainer): Promise<T>;
 
+<<<<<<< HEAD
 // @public
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
@@ -153,6 +154,12 @@ export interface IDocumentIdStrategy {
 }
 
 // @public (undocumented)
+=======
+// @internal (undocumented)
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
+
+// @internal (undocumented)
+>>>>>>> origin
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -164,13 +171,13 @@ export interface IOpProcessingController {
     resumeProcessing(...containers: IContainer[]): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProvideTestFluidObject {
     // (undocumented)
     readonly ITestFluidObject: ITestFluidObject;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ITestContainerConfig {
     enableAttribution?: boolean;
     fluidDataObjectType?: DataObjectFactoryType;
@@ -179,7 +186,7 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
@@ -193,7 +200,7 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ITestObjectProvider {
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
@@ -216,7 +223,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
@@ -228,29 +235,29 @@ export class LoaderContainerTracker implements IOpProcessingController {
     resumeProcessing(...containers: IContainer[]): IContainer[];
 }
 
-// @public
+// @internal
 export class LocalCodeLoader implements ICodeDetailsLoader {
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, runtimeOptions?: IContainerRuntimeOptions);
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => IConfigProviderBase;
 
-// @public
+// @internal
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
-// @public
+// @internal
 export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
     summaryRefSeq: number;
 }>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
 
-// @public
+// @internal
 export const TestContainerRuntimeFactory: {
     new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;
@@ -266,7 +273,7 @@ export const TestContainerRuntimeFactory: {
     };
 };
 
-// @public
+// @internal
 export class TestFluidObject implements ITestFluidObject {
     constructor(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntriesMap: Map<string, IChannelFactory>);
     // (undocumented)
@@ -292,7 +299,7 @@ export class TestFluidObject implements ITestFluidObject {
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @public
+// @internal
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     constructor(factoryEntries: ChannelFactoryRegistry, type?: string);
     // (undocumented)
@@ -303,7 +310,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     readonly type: string;
 }
 
-// @public
+// @internal
 export class TestObjectProvider implements ITestObjectProvider {
     constructor(LoaderConstructor: typeof Loader,
     driver: ITestDriver,
@@ -353,13 +360,13 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get urlResolver(): IUrlResolver;
 }
 
-// @public
+// @internal
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
-// @public
+// @internal
 export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface TimeoutWithError {
     durationMs?: number;
     // (undocumented)
@@ -368,7 +375,7 @@ export interface TimeoutWithError {
     reject?: true;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface TimeoutWithValue<T = void> {
     durationMs?: number;
     // (undocumented)
@@ -377,16 +384,16 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
-// @public
+// @internal
 export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
-// @public
+// @internal
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;
 
-// @public
+// @internal
 export function wrapDocumentServiceFactory(innerDocServiceFactory: IDocumentServiceFactory, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentServiceFactory;
 
-// @public
+// @internal
 export function wrapDocumentStorageService(innerDocStorageService: IDocumentStorageService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentStorageService;
 
 // (No @packageDocumentation comment for this package)

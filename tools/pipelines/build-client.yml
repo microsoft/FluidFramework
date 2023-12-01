@@ -129,7 +129,7 @@ extends:
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: false
+    taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskBuildDocs: true
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public

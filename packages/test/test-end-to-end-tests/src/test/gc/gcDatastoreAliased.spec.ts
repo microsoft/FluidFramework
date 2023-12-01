@@ -57,7 +57,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 			await mainDataStore1._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
 		// Make dataStore2 visible but unreferenced by referencing/unreferencing it.
-		mainDataStore1._root.set("dataStore2", dataObject2);
+		mainDataStore1._root.set("dataStore2", dataStore2.entryPoint);
 		mainDataStore1._root.delete("dataStore2");
 		await provider.ensureSynchronized();
 

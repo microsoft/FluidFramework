@@ -29,7 +29,7 @@ import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
- * @alpha
+ * @beta
  */
 export type Unhydrated<T> = T;
 
@@ -48,7 +48,7 @@ export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | Tree
 
 /**
  * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
- * @alpha
+ * @beta
  */
 export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
@@ -264,7 +264,7 @@ export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @alpha
+ * @beta
  */
 export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
 	/**

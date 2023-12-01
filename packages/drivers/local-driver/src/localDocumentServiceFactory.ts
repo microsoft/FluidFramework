@@ -20,6 +20,7 @@ import { createDocument } from "./localCreateDocument";
 
 /**
  * Implementation of document service factory for local use.
+ * @internal
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.

@@ -17,6 +17,9 @@ import {
 import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 import { configureGlobalTelemetryContext } from "./globalContext";
 
+/**
+ * @internal
+ */
 export interface IWinstonConfig {
 	colorize: boolean;
 	json: boolean;
@@ -87,6 +90,7 @@ function configureLumberjackLogging(config: ILumberjackConfig) {
 
 /**
  * Configures the default behavior of the Winston logger and Lumberjack based on the provided config
+ * @internal
  */
 export function configureLogging(configOrPath: nconf.Provider | string) {
 	const config =

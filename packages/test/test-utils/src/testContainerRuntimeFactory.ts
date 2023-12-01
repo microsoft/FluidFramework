@@ -17,6 +17,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
  * Create a container runtime factory class that allows you to set runtime options
+ * @internal
  */
 export const createTestContainerRuntimeFactory = (
 	containerRuntimeCtor: typeof ContainerRuntime,
@@ -110,5 +111,6 @@ export const createTestContainerRuntimeFactory = (
 
 /**
  * A container runtime factory that allows you to set runtime options
+ * @internal
  */
 export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);

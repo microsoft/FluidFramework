@@ -13,6 +13,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { CopierLambda } from "./lambda";
 
+/**
+ * @internal
+ */
 export class CopierLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly mongoManager: MongoManager,

@@ -21,7 +21,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
 
-// @public
+// @internal
 export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     protected constructor(socket: Socket, documentId: string, logger: ITelemetryLoggerExt, enableLongPollingDowngrades?: boolean, connectionId?: string | undefined);
     // (undocumented)
@@ -86,7 +86,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get version(): string;
 }
 
-// @public
+// @internal
 export function getW3CData(url: string, initiatorType: string): {
     dnsLookupTime: number | undefined;
     w3cStartTime: number | undefined;
@@ -98,13 +98,13 @@ export function getW3CData(url: string, initiatorType: string): {
     reqStartToResponseEndTime: number | undefined;
 };
 
-// @public
+// @internal
 export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
     index: number;
     value: T;
 }>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number, logger: ITelemetryLoggerExt, strict?: boolean): void;
 
 // (No @packageDocumentation comment for this package)

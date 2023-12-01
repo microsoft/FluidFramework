@@ -39,6 +39,9 @@ const defaultCodeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
+/**
+ * @internal
+ */
 export interface IOpProcessingController {
 	processIncoming(...containers: IContainer[]): Promise<void>;
 	processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -46,6 +49,9 @@ export interface IOpProcessingController {
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
+/**
+ * @internal
+ */
 export interface ITestObjectProvider {
 	/**
 	 * Indicates which type of test object provider is being used.
@@ -175,11 +181,17 @@ export interface ITestObjectProvider {
 	reset(): void;
 }
 
+/**
+ * @internal
+ */
 export enum DataObjectFactoryType {
 	Primed, // default
 	Test,
 }
 
+/**
+ * @internal
+ */
 export interface ITestContainerConfig {
 	/** TestFluidDataObject instead of PrimedDataStore */
 	fluidDataObjectType?: DataObjectFactoryType;
@@ -197,6 +209,9 @@ export interface ITestContainerConfig {
 	loaderProps?: Partial<ILoaderProps>;
 }
 
+/**
+ * @internal
+ */
 export const createDocumentId = (): string => uuid();
 
 /**
@@ -253,6 +268,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * It also tracks all unexpected errors.
  * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
  * any expected events that have not occurred.
+ * @internal
  */
 export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 	/**
@@ -341,6 +357,7 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 
 /**
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
+ * @internal
  */
 export class TestObjectProvider implements ITestObjectProvider {
 	/**
@@ -941,6 +958,9 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	}
 }
 
+/**
+ * @internal
+ */
 export function getUnexpectedLogErrorException(
 	logger: EventAndErrorTrackingLogger | undefined,
 	prefix?: string,

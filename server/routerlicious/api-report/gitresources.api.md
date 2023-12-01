@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @internal
 export interface IAuthor {
     // (undocumented)
     date: string;
@@ -14,7 +14,7 @@ export interface IAuthor {
     name: string;
 }
 
-// @public
+// @internal
 export interface IBlob {
     // (undocumented)
     content: string;
@@ -28,7 +28,7 @@ export interface IBlob {
     url: string;
 }
 
-// @public
+// @internal
 export interface ICommit {
     // (undocumented)
     author: IAuthor;
@@ -46,7 +46,7 @@ export interface ICommit {
     url: string;
 }
 
-// @public
+// @internal
 export interface ICommitDetails {
     // (undocumented)
     commit: {
@@ -64,7 +64,7 @@ export interface ICommitDetails {
     url: string;
 }
 
-// @public
+// @internal
 export interface ICommitHash {
     // (undocumented)
     sha: string;
@@ -72,7 +72,7 @@ export interface ICommitHash {
     url: string;
 }
 
-// @public
+// @internal
 export interface ICommitter {
     // (undocumented)
     date: string;
@@ -82,7 +82,7 @@ export interface ICommitter {
     name: string;
 }
 
-// @public
+// @internal
 export interface ICreateBlobParams {
     // (undocumented)
     content: string;
@@ -90,7 +90,7 @@ export interface ICreateBlobParams {
     encoding: "utf-8" | "base64";
 }
 
-// @public
+// @internal
 export interface ICreateBlobResponse {
     // (undocumented)
     sha: string;
@@ -98,7 +98,7 @@ export interface ICreateBlobResponse {
     url: string;
 }
 
-// @public
+// @internal
 export interface ICreateCommitParams {
     // (undocumented)
     author: IAuthor;
@@ -110,7 +110,7 @@ export interface ICreateCommitParams {
     tree: string;
 }
 
-// @public
+// @internal
 export interface ICreateRefParams {
     // (undocumented)
     ref: string;
@@ -118,13 +118,13 @@ export interface ICreateRefParams {
     sha: string;
 }
 
-// @public
+// @internal
 export interface ICreateRepoParams {
     // (undocumented)
     name: string;
 }
 
-// @public
+// @internal
 export interface ICreateTagParams {
     // (undocumented)
     message: string;
@@ -138,7 +138,7 @@ export interface ICreateTagParams {
     type: string;
 }
 
-// @public
+// @internal
 export interface ICreateTreeEntry {
     // (undocumented)
     mode: string;
@@ -150,7 +150,7 @@ export interface ICreateTreeEntry {
     type: string;
 }
 
-// @public
+// @internal
 export interface ICreateTreeParams {
     // (undocumented)
     base_tree?: string;
@@ -158,7 +158,7 @@ export interface ICreateTreeParams {
     tree: ICreateTreeEntry[];
 }
 
-// @public
+// @internal
 export interface IHeader {
     // (undocumented)
     blobs: IBlob[];
@@ -166,7 +166,7 @@ export interface IHeader {
     tree: ITree;
 }
 
-// @public
+// @internal
 export interface IPatchRefParams {
     // (undocumented)
     force: boolean;
@@ -174,7 +174,7 @@ export interface IPatchRefParams {
     sha: string;
 }
 
-// @public
+// @internal
 export interface IRef {
     // (undocumented)
     object: {
@@ -188,7 +188,7 @@ export interface IRef {
     url: string;
 }
 
-// @public
+// @internal
 export interface ITag {
     // (undocumented)
     message: string;
@@ -208,7 +208,7 @@ export interface ITag {
     url: string;
 }
 
-// @public
+// @internal
 export interface ITagger {
     // (undocumented)
     date: string;
@@ -218,7 +218,7 @@ export interface ITagger {
     name: string;
 }
 
-// @public
+// @internal
 export interface ITree {
     // (undocumented)
     sha: string;
@@ -228,7 +228,7 @@ export interface ITree {
     url: string;
 }
 
-// @public
+// @internal
 export interface ITreeEntry {
     // (undocumented)
     mode: string;
