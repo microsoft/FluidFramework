@@ -48,6 +48,7 @@ export enum LumberEventName {
 	DisconnectDocumentRetry = "DisconnectDocumentRetry",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
+	SocketConnectionCount = "SocketConnectionCount",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
