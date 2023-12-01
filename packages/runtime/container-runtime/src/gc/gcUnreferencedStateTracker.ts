@@ -38,6 +38,8 @@ export class UnreferencedStateTracker {
 	private readonly inactiveTimer: TimerWithNoDefaultTimeout;
 	/** Timer to indicate when an unreferenced object is Tombstone-Ready */
 	private readonly tombstoneTimer: TimerWithNoDefaultTimeout;
+	/** Timer to indicate when an unreferenced object is Sweep-Ready */
+	private readonly sweepTimer: TimerWithNoDefaultTimeout;
 
 	constructor(
 		public readonly unreferencedTimestampMs: number,
@@ -50,15 +52,19 @@ export class UnreferencedStateTracker {
 		/** The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined) */
 		private readonly tombstoneSweepDelayMs: number,
 	) {
-		if (this.tombstoneTimeoutMs !== undefined) {
-			assert(
-				this.inactiveTimeoutMs <= this.tombstoneTimeoutMs,
-				0x3b0 /* inactiveTimeoutMs must not be greater than the tombstoneTimeoutMs */,
-			);
-		}
+		assert(
+			this.tombstoneTimeoutMs === undefined ||
+				this.tombstoneTimeoutMs >= this.inactiveTimeoutMs,
+			0x3b0 /* inactiveTimeoutMs must not be greater than the tombstoneTimeoutMs */,
+		);
 
-		//* Add another timer :(
-		console.log(this.tombstoneSweepDelayMs);
+		this.sweepTimer = new TimerWithNoDefaultTimeout(() => {
+			this._state = UnreferencedState.SweepReady;
+			assert(
+				!this.inactiveTimer.hasTimer && !this.tombstoneTimer.hasTimer,
+				0x3b1 /* inactiveTimer or tombstoneTimer still running after sweepTimer fired! */,
+			);
+		});
 
 		this.tombstoneTimer = new TimerWithNoDefaultTimeout(() => {
 			this._state = UnreferencedState.TombstoneReady;
@@ -66,6 +72,13 @@ export class UnreferencedStateTracker {
 				!this.inactiveTimer.hasTimer,
 				0x3b1 /* inactiveTimer still running after tombstoneTimer fired! */,
 			);
+
+			if (this.tombstoneSweepDelayMs > 0) {
+				// After the node becomes tombstone ready, start the sweep timer after which the node will be ready for sweep.
+				this.sweepTimer.restart(this.tombstoneSweepDelayMs);
+			} else {
+				this._state = UnreferencedState.SweepReady;
+			}
 		});
 
 		this.inactiveTimer = new TimerWithNoDefaultTimeout(() => {
@@ -76,6 +89,7 @@ export class UnreferencedStateTracker {
 				this.tombstoneTimer.restart(this.tombstoneTimeoutMs - this.inactiveTimeoutMs);
 			}
 		});
+
 		this.updateTracking(currentReferenceTimestampMs);
 	}
 
@@ -83,18 +97,34 @@ export class UnreferencedStateTracker {
 	public updateTracking(currentReferenceTimestampMs: number) {
 		const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
-		// If the node has been unreferenced for tombstoneTimeoutMs, update the state to TombstoneReady.
+		// Below we will set the appropriate timer (or none). Any running timers are superceded by the new currentReferenceTimestampMs
+		this.clearTimers();
+
+		// If the node has been unreferenced long enough, update the state to SweepReady.
+		if (
+			this.tombstoneTimeoutMs !== undefined &&
+			unreferencedDurationMs >= this.tombstoneTimeoutMs + this.tombstoneSweepDelayMs
+		) {
+			this._state = UnreferencedState.SweepReady; //* Try doing a bug here
+			return;
+		}
+
+		// If the node has been unreferenced long enough, update the state to TombstoneReady.
+		// Also, start a timer for the remainder of the sweep delay.
 		if (
 			this.tombstoneTimeoutMs !== undefined &&
 			unreferencedDurationMs >= this.tombstoneTimeoutMs
 		) {
 			this._state = UnreferencedState.TombstoneReady;
-			this.clearTimers();
+
+			this.sweepTimer.restart(
+				this.tombstoneTimeoutMs + this.tombstoneSweepDelayMs - unreferencedDurationMs,
+			);
 			return;
 		}
 
-		// If the node has been unreferenced for inactive timeoutMs amount of time, update the state to inactive.
-		// Also, start a timer for the tombstone timeout.
+		// If the node has been unreferenced for long enough, update the state to inactive.
+		// Also, start a timer for the remainder of the tombstone timeout.
 		if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
 			this._state = UnreferencedState.Inactive;
 			this.inactiveTimer.clear();
@@ -112,6 +142,7 @@ export class UnreferencedStateTracker {
 	private clearTimers() {
 		this.inactiveTimer.clear();
 		this.tombstoneTimer.clear();
+		this.sweepTimer.clear();
 	}
 
 	/** Stop tracking this node. Reset the unreferenced timers and state, if any. */

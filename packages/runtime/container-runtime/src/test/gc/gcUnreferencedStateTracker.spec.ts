@@ -78,7 +78,7 @@ describe("Garbage Collection Tests", () => {
 					tracker.updateTracking(updateWith);
 				}
 
-				assert.equal(tracker.state, expectedState, `Wrong state at step ${index}`);
+				assert.equal(tracker.state, expectedState, `Wrong state at step ${index + 1}`); // 0-indexed including start
 			});
 		}
 
@@ -130,9 +130,17 @@ describe("Garbage Collection Tests", () => {
 			{
 				name: "Skip to SweepReady - tombstoneSweepDelayMs 0 (no Tombstone phase)",
 				steps: [
-					{ time: 0, state: "Active" },
+					{ time: 0, state: "Active", tombstoneSweepDelayMs: 0 },
 					{ time: 5, state: "Active" },
 					{ time: 20, state: "SweepReady" },
+				],
+			},
+			{
+				name: "Skip to SweepReady (via updateTracking) - tombstoneSweepDelayMs 0 (no Tombstone phase)",
+				steps: [
+					{ time: 0, state: "Active", tombstoneSweepDelayMs: 0 },
+					{ time: 5, state: "Active" },
+					{ time: 20, updateWith: 20, state: "SweepReady" },
 				],
 			},
 			{
@@ -248,9 +256,8 @@ describe("Garbage Collection Tests", () => {
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)
 			tracker.updateTracking(15); // Simulate processing a more-recent Summary (reference time 15 at T16). Pulls in timer to 21 (5 to go)
-			assert.equal(
-				timerClearSpy.callCount,
-				1,
+			assert(
+				timerClearSpy.callCount > 0,
 				"Expected underlying Timer to clear and reset to support shorter timeout",
 			);
 			clock.tick(5);
