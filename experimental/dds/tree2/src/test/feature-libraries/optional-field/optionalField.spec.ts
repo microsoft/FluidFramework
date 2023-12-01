@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	CrossFieldManager,
 	NodeChangeset,
-	RemovedTreesFromChild,
+	RelevantDetachedTreesFromChild,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -518,7 +518,7 @@ describe("optionalField", () => {
 		});
 	});
 
-	describe("relevantRemovedTrees", () => {
+	describe("relevantDetachedTrees", () => {
 		const fill = tagChange(
 			optionalFieldEditor.set(testTreeCursor(""), true, { detach: brand(1), fill: brand(2) }),
 			mintRevisionTag(),
@@ -529,17 +529,17 @@ describe("optionalField", () => {
 			mintRevisionTag(),
 		);
 		const relevantNestedTree = { major: "Child revision", minor: 4242 };
-		const failingDelegate: RemovedTreesFromChild = (): never =>
+		const failingDelegate: RelevantDetachedTreesFromChild = (): never =>
 			assert.fail("Should not be called");
-		const noTreesDelegate: RemovedTreesFromChild = () => [];
-		const oneTreeDelegate: RemovedTreesFromChild = (child) => {
+		const noTreesDelegate: RelevantDetachedTreesFromChild = () => [];
+		const oneTreeDelegate: RelevantDetachedTreesFromChild = (child) => {
 			assert.deepEqual(child, nodeChange1);
 			return [relevantNestedTree];
 		};
 		describe("does not include", () => {
 			it("a tree being inserted", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(fill.change, noTreesDelegate),
+					optionalChangeHandler.relevantDetachedTrees(fill.change, noTreesDelegate),
 				);
 				assert.deepEqual(actual, []);
 			});
@@ -553,13 +553,13 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(fillAndChange, noTreesDelegate),
+					optionalChangeHandler.relevantDetachedTrees(fillAndChange, noTreesDelegate),
 				);
 				assert.deepEqual(actual, []);
 			});
 			it("a tree being removed", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(clear.change, noTreesDelegate),
+					optionalChangeHandler.relevantDetachedTrees(clear.change, noTreesDelegate),
 				);
 				assert.deepEqual(actual, []);
 			});
@@ -573,13 +573,13 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(changeAndClear, noTreesDelegate),
+					optionalChangeHandler.relevantDetachedTrees(changeAndClear, noTreesDelegate),
 				);
 				assert.deepEqual(actual, []);
 			});
 			it("a tree that remains untouched", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(
+					optionalChangeHandler.relevantDetachedTrees(
 						{ build: [], moves: [], childChanges: [] },
 						noTreesDelegate,
 					),
@@ -588,7 +588,7 @@ describe("optionalField", () => {
 			});
 			it("a tree that remains untouched aside from child changes", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(
+					optionalChangeHandler.relevantDetachedTrees(
 						hasChildChanges.change,
 						noTreesDelegate,
 					),
@@ -606,7 +606,7 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges([clear]),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(restore, failingDelegate),
+					optionalChangeHandler.relevantDetachedTrees(restore, failingDelegate),
 				);
 				const expected = [makeDetachedNodeId(clear.revision, 1)];
 				assert.deepEqual(actual, expected);
@@ -624,7 +624,7 @@ describe("optionalField", () => {
 					),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(
+					optionalChangeHandler.relevantDetachedTrees(
 						rebasedNestedChange,
 						noTreesDelegate,
 					),
@@ -642,7 +642,7 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(fillAndChange, oneTreeDelegate),
+					optionalChangeHandler.relevantDetachedTrees(fillAndChange, oneTreeDelegate),
 				);
 				assert.deepEqual(actual, [relevantNestedTree]);
 			});
@@ -656,7 +656,7 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(changeAndClear, oneTreeDelegate),
+					optionalChangeHandler.relevantDetachedTrees(changeAndClear, oneTreeDelegate),
 				);
 				assert.deepEqual(actual, [relevantNestedTree]);
 			});
@@ -680,7 +680,7 @@ describe("optionalField", () => {
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(restoreAndChange, oneTreeDelegate),
+					optionalChangeHandler.relevantDetachedTrees(restoreAndChange, oneTreeDelegate),
 				);
 				const expected = [makeDetachedNodeId(clear.revision, 1), relevantNestedTree];
 				assert.deepEqual(actual, expected);
@@ -698,7 +698,7 @@ describe("optionalField", () => {
 					),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(
+					optionalChangeHandler.relevantDetachedTrees(
 						rebasedNestedChange,
 						oneTreeDelegate,
 					),
@@ -708,7 +708,7 @@ describe("optionalField", () => {
 			});
 			it("relevant trees from nested changes under a tree that remains in-doc ", () => {
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedTrees(
+					optionalChangeHandler.relevantDetachedTrees(
 						hasChildChanges.change,
 						oneTreeDelegate,
 					),

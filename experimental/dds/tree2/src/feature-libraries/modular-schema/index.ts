@@ -32,7 +32,7 @@ export {
 	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	RebaseRevisionMetadata,
-	RemovedTreesFromChild,
+	RelevantDetachedTreesFromChild,
 	ToDelta,
 	NodeExistenceState,
 } from "./fieldChangeHandler";

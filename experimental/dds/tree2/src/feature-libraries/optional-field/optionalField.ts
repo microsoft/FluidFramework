@@ -29,7 +29,7 @@ import {
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
-	RemovedTreesFromChild,
+	RelevantDetachedTreesFromChild,
 	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
@@ -632,7 +632,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
-	relevantRemovedTrees,
+	relevantDetachedTrees,
 
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
@@ -646,9 +646,9 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-function* relevantRemovedTrees(
+function* relevantDetachedTrees(
 	change: OptionalChangeset,
-	removedTreesFromChild: RemovedTreesFromChild,
+	relevantDetachedTreesFromChild: RelevantDetachedTreesFromChild,
 ): Iterable<Delta.DetachedNodeId> {
 	const dstToSrc = new RegisterMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
@@ -672,6 +672,6 @@ function* relevantRemovedTrees(
 			alreadyYieldedOrNewlyBuilt.set(startingId, true);
 			yield nodeIdFromChangeAtom(startingId);
 		}
-		yield* removedTreesFromChild(childChange);
+		yield* relevantDetachedTreesFromChild(childChange);
 	}
 }

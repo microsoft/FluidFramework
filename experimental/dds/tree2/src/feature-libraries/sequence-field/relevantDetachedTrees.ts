@@ -17,9 +17,9 @@ import {
 
 export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
 
-export function* relevantRemovedTrees<TChild>(
+export function* relevantDetachedTrees<TChild>(
 	changeset: Changeset<TChild>,
-	removedTreesFromChild: RemovedTreesFromTChild<TChild>,
+	relevantDetachedTreesFromChild: RemovedTreesFromTChild<TChild>,
 ): Iterable<Delta.DetachedNodeId> {
 	for (const mark of changeset) {
 		if (refersToRelevantRemovedTrees(mark)) {
@@ -33,7 +33,7 @@ export function* relevantRemovedTrees<TChild>(
 			}
 		}
 		if (mark.changes !== undefined) {
-			yield* removedTreesFromChild(mark.changes);
+			yield* relevantDetachedTreesFromChild(mark.changes);
 		}
 	}
 }
