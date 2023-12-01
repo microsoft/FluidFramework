@@ -34,7 +34,6 @@ import { leaf } from "./leafDomain";
  * A {@link ObjectNodeSchema} that satisfies the {@link TreeObjectFactory} and therefore can create {@link TreeObjectNode}s.
  * @privateRemarks
  * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
- * @alpha
  */
 export type FactoryObjectNodeSchema<
 	TScope extends string,
@@ -51,7 +50,6 @@ export type FactoryObjectNodeSchema<
  * See {@link Unenforced} for details.
  *
  * TODO: Make this work with ImplicitFieldSchema.
- * @alpha
  */
 export type FactoryObjectNodeSchemaRecursive<
 	TScope extends string,
