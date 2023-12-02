@@ -3,9 +3,27 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { IUser, type IClient } from "@fluidframework/protocol-definitions";
 
-import { type OdspMember, OdspUser } from "./interfaces";
+import { type OdspMember } from "./interfaces";
+
+/**
+ * Since ODSP provides user names and oids for all of its members, we extend the
+ * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * @internal
+ */
+interface OdspUser extends IUser {
+	/**
+	 * The user's name
+	 */
+	name: string;
+
+	/**
+	 * The object ID or object Identifier. It is a unique identifier assigned to each user, group, or other entity within AAD or another Microsoft 365 service.
+	 * It is a GUID that uniquely identifies the object. When making Microsoft Graph API calls, you might need to reference or manipulate objects within the directory, and the `oid` is used to identify these objects.
+	 */
+	oid: string;
+}
 
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as OdspUser;

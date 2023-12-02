@@ -4,7 +4,6 @@
  */
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IOdspTokenProvider } from "./token";
 
@@ -63,24 +62,6 @@ export interface OdspContainerServices {
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
-}
-
-/**
- * Since ODSP provides user names and oid for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
- * @alpha
- */
-export interface OdspUser extends IUser {
-	/**
-	 * The user's name
-	 */
-	name: string;
-
-	/**
-	 * The object ID or object Identifier. It is a unique identifier assigned to each user, group, or other entity within AAD or another Microsoft 365 service.
-	 * It is a GUID that uniquely identifies the object. When making Microsoft Graph API calls, you might need to reference or manipulate objects within the directory, and the `oid` is used to identify these objects.
-	 */
-	oid: string;
 }
 
 /**
