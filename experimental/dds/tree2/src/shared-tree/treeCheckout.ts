@@ -20,7 +20,6 @@ import {
 	makeDetachedFieldIndex,
 	Revertible,
 	ChangeFamily,
-	ITreeCursor,
 	JsonableTree,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -152,7 +151,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 *
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
 	 */
-	getRemovedJsonableTrees(): [string | number | undefined, number, JsonableTree][];
+	getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
 }
 
 /**
@@ -381,22 +380,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.branch.dispose();
 	}
 
-	public getRemovedJsonableTrees(): [string | number | undefined, number, JsonableTree][] {
-		return this.getRemovedTrees(jsonableTreeFromCursor);
-	}
-
-	private getRemovedTrees<TTree>(
-		contentReader: (cursor: ITreeCursor) => TTree,
-	): [string | number | undefined, number, TTree][] {
-		const trees: [string | number | undefined, number, TTree][] = [];
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor();
-		for (const { id, root } of this.removedTrees.entries()) {
-			const parentField = this.removedTrees.toFieldKey(root);
+		for (const { id, root } of this.removedRoots.entries()) {
+			const parentField = this.removedRoots.toFieldKey(root);
 			this.forest.moveCursorToPath(
 				{ parent: undefined, parentField, parentIndex: 0 },
 				cursor,
 			);
-			const tree = contentReader(cursor);
+			const tree = jsonableTreeFromCursor(cursor);
 			if (tree !== undefined) {
 				trees.push([id.major, id.minor, tree]);
 			}

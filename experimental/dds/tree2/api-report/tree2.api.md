@@ -1130,6 +1130,7 @@ export interface ITreeCheckout extends AnchorLocator {
     readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ITreeCheckoutFork;
+    getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
     merge(view: ITreeCheckoutFork): void;
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
@@ -1737,6 +1738,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export interface SharedTreeContentSnapshot {
+    readonly removed: [string | number | undefined, number, JsonableTree][];
     readonly schema: TreeStoredSchema;
     readonly tree: JsonableTree[];
 }

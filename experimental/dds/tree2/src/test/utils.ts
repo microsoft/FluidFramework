@@ -534,9 +534,9 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 export function checkRemovedTreesAreSynchronized(trees: readonly ITreeCheckout[]) {
-	const baseline = trees[0].getRemovedJsonableTrees();
+	const baseline = trees[0].getRemovedRoots();
 	for (const tree of trees) {
-		const actual = tree.getRemovedJsonableTrees();
+		const actual = tree.getRemovedRoots();
 		assert.deepEqual(actual, baseline);
 	}
 }
@@ -588,12 +588,12 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeA),
 			schema: treeA.storedSchema,
-			removed: treeA.getRemovedJsonableTrees(),
+			removed: treeA.getRemovedRoots(),
 		},
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedJsonableTrees(),
+			removed: treeA.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);

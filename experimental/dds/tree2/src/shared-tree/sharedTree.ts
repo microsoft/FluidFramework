@@ -292,7 +292,7 @@ export class SharedTree
 			return {
 				schema: new InMemoryStoredSchemaRepository(this.storedSchema),
 				tree: jsonableTreeFromFieldCursor(cursor),
-				removed: this.view.getRemovedJsonableTrees(),
+				removed: this.view.getRemovedRoots(),
 			};
 		} finally {
 			cursor.free();
