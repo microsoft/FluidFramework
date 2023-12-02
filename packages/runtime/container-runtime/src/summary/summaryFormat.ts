@@ -86,7 +86,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
@@ -103,7 +103,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ICreateContainerMetadata {
 	/** Runtime version of the container when it was first created */
@@ -114,7 +114,7 @@ export interface ICreateContainerMetadata {
 
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
- * @internal
+ * @alpha
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
