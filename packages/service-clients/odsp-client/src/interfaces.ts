@@ -68,9 +68,15 @@ export interface OdspContainerServices {
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
+ *
  * @internal
  */
 export interface OdspMember extends IMember {
+	/**
+	 * The object ID or object Identifier (oid). It is a unique identifier assigned to each user, group, or other entity within AAD or another Microsoft 365 service.
+	 * Overrides the documentation from IMember.userId.
+	 */
+	userId: string;
 	/**
 	 * The user's name
 	 */
