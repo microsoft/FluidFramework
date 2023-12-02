@@ -532,6 +532,14 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
+export function checkRemovedTreesAreSynchronized(trees: readonly ITreeCheckout[]) {
+	const baseline = trees[0].getRemovedJsonableTrees();
+	for (const tree of trees) {
+		const actual = tree.getRemovedJsonableTrees();
+		assert.deepEqual(actual, baseline);
+	}
+}
+
 /**
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
  * This ONLY checks if the content of the forest of the main branch of the trees match.
