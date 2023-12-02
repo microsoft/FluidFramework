@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -17,7 +17,6 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 

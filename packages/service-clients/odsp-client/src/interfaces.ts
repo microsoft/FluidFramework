@@ -4,7 +4,7 @@
  */
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IOdspTokenProvider } from "./token";
 
 /**
