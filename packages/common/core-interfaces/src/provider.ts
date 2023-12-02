@@ -27,7 +27,7 @@
  *
  * This pattern enables discovery, and delegation in a standard way which is central
  * to FluidObject pattern.
- * @internal
+ * @alpha
  */
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
 	? never
@@ -70,7 +70,7 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
  *
  * You can inspect multiple types via a intersection. For example:
  * `FluidObject<IFoo & IBar>`
- * @internal
+ * @alpha
  */
 export type FluidObject<T = unknown> = {
 	[P in FluidObjectProviderKeys<T>]?: T[P];
