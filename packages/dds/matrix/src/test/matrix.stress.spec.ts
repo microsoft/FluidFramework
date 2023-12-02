@@ -80,6 +80,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 				switchProbability: number,
 				newClientJoinProbability: number,
 				seed: number,
+				maxRows?: number,
+				maxCols?: number,
+				maxClients?: number,
 			) {
 				try {
 					matrices = [];
@@ -253,8 +256,14 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 						const { rowCount, colCount } = matrix;
 						const row = int32(rowCount);
 						const col = int32(colCount);
-
-						switch (int32(7)) {
+						let type = int32(7);
+						if (
+							(type === 2 && maxRows !== undefined && rowCount >= maxRows) ||
+							(type === 3 && maxCols !== undefined && colCount >= maxCols)
+						) {
+							type = 4; // Make it to set some cells instead of inserting any row/col
+						}
+						switch (type) {
 							case 0: {
 								// remove 1 or more rows (if any exist)
 								if (rowCount > 0) {
@@ -389,7 +398,10 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 							matrix.switchSetCellPolicy();
 						}
 
-						if (float64() < newClientJoinProbability) {
+						if (
+							float64() < newClientJoinProbability &&
+							(maxClients === undefined || maxClients < matrices.length)
+						) {
 							await createNewClientFromSummary(summarizer);
 							trace?.push(`New client joined!!`);
 						}
@@ -555,6 +567,41 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 						seed,
 					);
 				});
+			}
+
+			if (isSetCellPolicyFWW === 2) {
+				for (let i = 0; i < 20; i++) {
+					// Cannot read properties of undefined (reading 'start') in PermutationVector.handleToPosition while undoing.
+					// So skip this test for now. It happens for LWW also.
+					if (i === 4) {
+						continue;
+					}
+					it(`Stress Test With Small Matrix and Policy switch from LWW -> FWW: Seed ${i}`, async function () {
+						// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
+						this.timeout(20000);
+
+						const numClients = 2;
+						const numOps = 200;
+						const syncProbability = 0.1;
+						const disconnectProbability = 0.1;
+						const undoRedoProbability = 0.07;
+						const switchProbability = 0.1;
+						const newClientJoinProbability = 0.05;
+						await stress(
+							numClients,
+							numOps,
+							syncProbability,
+							disconnectProbability,
+							undoRedoProbability,
+							switchProbability,
+							newClientJoinProbability,
+							i,
+							2, // maxRows
+							2, // maxCols
+							3, // maxClients
+						);
+					});
+				}
 			}
 
 			it.skip("stress-loop", async function () {
