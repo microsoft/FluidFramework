@@ -108,7 +108,8 @@ const alias = "alias";
 const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 await dataStore.trySetAlias(alias);
 
-const entryPoint: IFluidHandle<ITestDataObject> | undefined = await containerRuntime.getRootDataStore(alias);
+const entryPoint: IFluidHandle<ITestDataObject> | undefined =
+	await containerRuntime.getRootDataStore(alias);
 const retrievedDataStore = await entryPoint?.get();
 ```
 
