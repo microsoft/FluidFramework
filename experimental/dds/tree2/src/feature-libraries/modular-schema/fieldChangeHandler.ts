@@ -32,7 +32,7 @@ export interface FieldChangeHandler<
 	 * A removed root is relevant if any of the following is true:
 	 * - It is being inserted
 	 * - It is being restored
-	 * - It being edited
+	 * - It is being edited
 	 * - The ID it is associated with is being changed
 	 *
 	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
