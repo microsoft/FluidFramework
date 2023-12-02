@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -20,6 +19,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",

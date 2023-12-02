@@ -10,7 +10,12 @@ import {
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -26,7 +31,6 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,

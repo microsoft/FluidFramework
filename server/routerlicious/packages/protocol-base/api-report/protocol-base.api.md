@@ -45,7 +45,7 @@ export interface IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @internal
+// @alpha
 export interface IQuorumSnapshot {
     // (undocumented)
     members: QuorumClientsSnapshot;
@@ -130,7 +130,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClients["on"]> imple
     snapshot(): QuorumClientsSnapshot;
 }
 
-// @internal
+// @alpha
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 // @internal
@@ -152,7 +152,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposals["on"]> i
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
-// @internal
+// @alpha
 export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
