@@ -29,7 +29,11 @@ export interface FieldChangeHandler<
 	): Delta.FieldChanges;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
-	 * A removed root is relevant if it is being restored or if its descendants are being edited (or both).
+	 * A removed root is relevant if any of the following is true:
+	 * - It is being inserted
+	 * - It is being restored
+	 * - It is being edited
+	 * - The ID it is associated with is being changed
 	 *
 	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
 	 * (though they should, for the sake of performance, try to avoid doing so).
@@ -40,7 +44,7 @@ export interface FieldChangeHandler<
 	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
 	 */
 	readonly relevantRemovedRoots: (
-		change: TChangeset,
+		change: TaggedChange<TChangeset>,
 		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 	) => Iterable<Delta.DetachedNodeId>;
 
