@@ -18,16 +18,14 @@ import {
 	type NodeId,
 } from "@fluid-experimental/tree";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
+	type ITree,
 	type TreeView,
-	SchemaBuilder,
-	SharedTreeFactory,
-	type TypedNode,
+	TreeFactory,
 	disposeSymbol,
-	type TreeField,
+	SchemaFactory,
+	TreeConfiguration,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -61,30 +59,25 @@ class TestDataObject extends DataObject {
 }
 
 // New tree schema
-const builder = new SchemaBuilder({ scope: "test" });
-const rootType = builder.object("abc", {
+const builder = new SchemaFactory("test");
+class RootType extends builder.object("abc", {
 	quantity: builder.number,
-});
-const schema = builder.intoSchema(rootType);
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
+}) {}
+function getNewTreeView(tree: ITree): TreeView<RootType> {
+	return tree.schematize(
+		new TreeConfiguration(RootType, () => ({
 			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+		})),
+	);
 }
-const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
+const migrate = (legacyTree: LegacySharedTree, newTree: ITree): void => {
 	const quantity = getQuantity(legacyTree);
 	newTree
-		.schematizeOld({
-			initialTree: {
+		.schematize(
+			new TreeConfiguration(RootType, () => ({
 				quantity,
-			},
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema,
-		})
+			})),
+		)
 		[disposeSymbol]();
 };
 
@@ -111,7 +104,7 @@ function getQuantity(tree: LegacySharedTree): number {
 
 const testValue = 5;
 
-describeNoCompat("MigrationShim", (getTestObjectProvider) => {
+describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -124,7 +117,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacyTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const newSharedTreeFactory = new TreeFactory({});
 	const migrationShimFactory = new MigrationShimFactory(
 		legacyTreeFactory,
 		newSharedTreeFactory,
@@ -268,9 +261,9 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		await promise;
 
-		const newTree1 = shim1.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
-		const rootNode1: TypedNode<typeof rootType> = view1.root;
+		const rootNode1: RootType = view1.root;
 
 		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
@@ -288,9 +281,9 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = await testObj3.getShim();
-		const tree3 = shim3.currentTree as ISharedTree;
+		const tree3 = shim3.currentTree as ITree;
 		const view3 = getNewTreeView(tree3);
-		const rootNode3: TypedNode<typeof rootType> = view3.root;
+		const rootNode3: RootType = view3.root;
 
 		// Verify that the value loaded from the summary matches the one loaded from a different summary
 		await provider.ensureSynchronized();

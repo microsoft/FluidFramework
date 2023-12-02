@@ -13,7 +13,7 @@ import {
 
 /**
  * Basic implementation of a blob ITreeEntry
- * @public
+ * @internal
  */
 export class BlobTreeEntry {
 	public readonly mode = FileMode.File;
@@ -37,7 +37,7 @@ export class BlobTreeEntry {
 
 /**
  * Basic implementation of a tree ITreeEntry
- * @public
+ * @internal
  */
 export class TreeTreeEntry {
 	public readonly mode = FileMode.Directory;
@@ -56,7 +56,7 @@ export class TreeTreeEntry {
 
 /**
  * Basic implementation of an attachment ITreeEntry
- * @public
+ * @internal
  */
 export class AttachmentTreeEntry {
 	public readonly mode = FileMode.File;

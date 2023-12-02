@@ -14,7 +14,7 @@ import {
 } from "../../core";
 import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, getIntention } from "../modular-schema";
-import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./format";
+import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {

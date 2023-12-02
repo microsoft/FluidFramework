@@ -51,6 +51,7 @@ export interface RebaseChangeSetOptions extends ApplyChangeSetOptions {
 
 /**
  * The plain serialization data structure used to encode a ChangeSet.
+ * @internal
  */
 export type SerializedChangeSet = any; // @TODO Maybe we should add full type for the ChangeSet
 export type ChangeSetType = any;
@@ -71,6 +72,7 @@ export interface ConflictInfo {
  * The ChangeSet represents an operation to be done (or that was done) on the data. It encapsulate one or
  * many addition/insertion and deletion of properties. The ChangeSetObject also provides functionality
  * to merge and swap change sets.
+ * @internal
  */
 export class ChangeSet {
 	static ConflictType = ConflictType;

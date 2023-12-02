@@ -22,7 +22,7 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -37,7 +37,7 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
  */
-describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(

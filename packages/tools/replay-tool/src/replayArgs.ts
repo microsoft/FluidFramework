@@ -5,6 +5,7 @@
 
 /**
  * Base class for replay tool arguments
+ * @internal
  */
 export class ReplayArgs {
 	public inDirName?: string;

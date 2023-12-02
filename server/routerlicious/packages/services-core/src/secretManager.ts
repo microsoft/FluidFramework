@@ -5,6 +5,9 @@
 
 import { EncryptionKeyVersion } from "./tenant";
 
+/**
+ * @internal
+ */
 export interface ISecretManager {
 	/**
 	 * Gets incoming encryption key version.

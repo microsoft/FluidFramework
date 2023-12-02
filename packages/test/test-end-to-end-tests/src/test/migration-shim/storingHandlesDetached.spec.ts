@@ -7,15 +7,14 @@ import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
+	type ITree,
 	type TreeView,
-	SchemaBuilder,
-	SharedTreeFactory,
-	type TreeField,
+	TreeFactory,
+	SchemaFactory,
+	TreeConfiguration,
 } from "@fluid-experimental/tree2";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -29,22 +28,19 @@ import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
 
-const newSharedTreeFactory = new SharedTreeFactory();
-const builder = new SchemaBuilder({ scope: "test" });
+const newSharedTreeFactory = new TreeFactory({});
+const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
-const handleType = builder.object("handleObj", {
+class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
-});
-const schema = builder.intoSchema(handleType);
+}) {}
 
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
+function getNewTreeView(tree: ITree): TreeView<HandleType> {
+	return tree.schematize(
+		new TreeConfiguration(HandleType, () => ({
 			handle: undefined,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+		})),
+	);
 }
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
@@ -93,7 +89,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Storing handles detached", (getTestObjectProvider) => {
+describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

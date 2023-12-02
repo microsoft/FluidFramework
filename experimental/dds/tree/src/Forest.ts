@@ -12,8 +12,7 @@ import { NodeData, Payload } from './persisted-types';
 
 /**
  * A node that can be contained within a Forest
- *
- * @public
+ * @internal
  */
 export interface ForestNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
@@ -41,8 +40,7 @@ export function isParentedForestNode(node: ForestNode): node is ParentedForestNo
 
 /**
  * Information about a ForestNode's parent
- *
- * @public
+ * @internal
  */
 export interface ParentData {
 	readonly parentId: NodeId;
@@ -51,6 +49,7 @@ export interface ParentData {
 
 /**
  * Differences from one forest to another.
+ * @internal
  */
 export interface Delta<NodeId> {
 	/**
@@ -75,8 +74,7 @@ interface ForestState {
 /**
  * An immutable forest of ForestNode.
  * Enforces single parenting, and allows querying the parent.
- *
- * @public
+ * @internal
  */
 export class Forest {
 	/**

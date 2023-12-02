@@ -15,7 +15,7 @@ import { SharedMatrix } from "./matrix";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
- * @public
+ * @internal
  */
 export class SharedMatrixFactory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";

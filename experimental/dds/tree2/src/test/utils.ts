@@ -29,7 +29,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	ISharedTree,
 	ITreeCheckout,
@@ -96,6 +96,7 @@ import {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
+	RevisionTag,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -970,14 +971,29 @@ export function defaultRevInfosFromChanges(
 	changes: readonly TaggedChange<unknown>[],
 ): RevisionInfo[] {
 	const revInfos: RevisionInfo[] = [];
+	const revisions = new Set<RevisionTag>();
+	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
 				rollbackOf: change.rollbackOf,
 			});
+
+			revisions.add(change.revision);
+			if (change.rollbackOf !== undefined) {
+				rolledBackRevisions.push(change.rollbackOf);
+			}
 		}
 	}
+
+	rolledBackRevisions.reverse();
+	for (const revision of rolledBackRevisions) {
+		if (!revisions.has(revision)) {
+			revInfos.push({ revision });
+		}
+	}
+
 	return revInfos;
 }
 

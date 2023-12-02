@@ -18,7 +18,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
- * @alpha
+ * @beta
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
@@ -39,7 +39,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * }
  * ```
  *
- * @alpha
+ * @beta
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -83,7 +83,7 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * @alpha
+ * @beta
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**

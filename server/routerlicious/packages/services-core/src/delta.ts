@@ -5,6 +5,9 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+/**
+ * @internal
+ */
 export interface IDeltaService {
 	getDeltas(
 		collectionName: string,

@@ -39,7 +39,7 @@ import { noopValidator } from "../codec";
 
 /**
  * Events for {@link ITreeCheckout}.
- * @alpha
+ * @beta
  */
 export interface CheckoutEvents {
 	/**
@@ -170,7 +170,7 @@ export function createTreeCheckout(args?: {
 	events?: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
-	removedTrees?: DetachedFieldIndex;
+	removedRoots?: DetachedFieldIndex;
 }): TreeCheckout {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
@@ -196,7 +196,7 @@ export function createTreeCheckout(args?: {
 		schema,
 		forest,
 		events,
-		args?.removedTrees,
+		args?.removedRoots,
 	);
 }
 
@@ -284,7 +284,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
@@ -298,14 +298,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					[this.forest.acquireVisitor(), anchorVisitor],
 					[anchorVisitor],
 				);
-				visitDelta(delta, combinedVisitor, this.removedTrees);
+				visitDelta(delta, combinedVisitor, this.removedRoots);
 				combinedVisitor.free();
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
 				const transactionRevision = event.newCommits[0].revision;
 				for (const transactionStep of event.removedCommits) {
-					this.removedTrees.updateMajor(transactionStep.revision, transactionRevision);
+					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
 			}
 		});
@@ -345,7 +345,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
-			this.removedTrees.clone(),
+			this.removedRoots.clone(),
 		);
 	}
 

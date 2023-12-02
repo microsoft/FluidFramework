@@ -26,6 +26,9 @@ import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 
+/**
+ * @internal
+ */
 export class RiddlerResources implements IResources {
 	public webServerFactory: IWebServerFactory;
 
@@ -59,6 +62,9 @@ export class RiddlerResources implements IResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
 	public async create(
 		config: Provider,
@@ -177,6 +183,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
