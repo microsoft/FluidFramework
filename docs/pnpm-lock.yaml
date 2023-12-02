@@ -41,7 +41,6 @@ importers:
       '@fluid-tools/api-markdown-documenter': 0.11.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
-      '@microsoft/api-extractor-model': 7.27.6
       '@rushstack/node-core-library': 3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -152,8 +151,8 @@ packages:
   /@fluid-tools/api-markdown-documenter/0.11.1:
     resolution: {integrity: sha512-eOHYkBqsMrWkDj+OLKyBCfRn/Yg99itzTLf9fSxI3SxZyAfix2+VBgHIhZs9D1AGmp3GSjBYHMABuWGIItBfGg==}
     dependencies:
-      '@microsoft/api-documenter': 7.22.33
-      '@microsoft/api-extractor-model': 7.27.6
+      '@microsoft/api-documenter': 7.23.9
+      '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/node-core-library': 3.61.0
       chalk: 4.1.2
@@ -366,23 +365,6 @@ packages:
       jju: 1.4.0
       resolve: 1.22.2
       semver: 7.3.8
-      z-schema: 5.0.5
-    dev: false
-
-  /@rushstack/node-core-library/3.59.7:
-    resolution: {integrity: sha512-ln1Drq0h+Hwa1JVA65x5mlSgUrBa1uHL+V89FqVWQgXd1vVIMhrtqtWGQrhTnFHxru5ppX+FY39VWELF/FjQCw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.2
-      semver: 7.5.4
       z-schema: 5.0.5
     dev: false
 
@@ -6150,16 +6132,14 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0
+      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-      chalk: 2.4.2
+      chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2_bfrwj6ys6wock6p526xv5vf35u
       markdown-magic-template: 1.0.1_bfrwj6ys6wock6p526xv5vf35u
       yargs: 17.7.2
     transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
+      - '@types/node'
       - markdown-magic
       - supports-color
-      - typescript
     dev: false
