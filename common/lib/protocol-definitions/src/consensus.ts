@@ -12,7 +12,7 @@ import { ISequencedClient } from "./clients";
  * Consensus on the proposal is achieved if the MSN is \>= the sequence number
  * at which the proposal is made and no client within the collaboration window rejects
  * the proposal.
- * @internal
+ * @alpha
  */
 export interface IProposal {
 	/**
@@ -28,19 +28,19 @@ export interface IProposal {
 
 /**
  * Similar to {@link IProposal} except it also includes the sequence number when it was made.
- * @internal
+ * @alpha
  */
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
- * @internal
+ * @alpha
  */
 export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
- * @internal
+ * @alpha
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
@@ -86,7 +86,7 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
- * @internal
+ * @alpha
  */
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;
