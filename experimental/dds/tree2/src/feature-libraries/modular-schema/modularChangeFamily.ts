@@ -762,7 +762,11 @@ export class ModularChangeFamily
 
 /**
  * Returns the set of removed roots that should be in memory for the given change to be applied.
- * A removed root is relevant if it is being restored or if its descendants are being edited (or both).
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
  *
  * May be conservative by returning more removed roots than strictly necessary.
  *
