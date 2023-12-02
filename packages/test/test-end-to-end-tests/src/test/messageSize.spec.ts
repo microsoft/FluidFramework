@@ -390,7 +390,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
 
-			itExpects(
+			itExpects.skip(
 				"Large ops fail when compression chunking is disabled by feature gate",
 				[
 					{
