@@ -7,13 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { Delta, TaggedChange, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset, Mark } from "./types";
-import {
-	isInsert,
-	isNewAttach,
-	isReattachEffect,
-	isDetachOfRemovedNodes,
-	isAttachAndDetachEffect,
-} from "./utils";
+import { isInsert, isDetachOfRemovedNodes, isAttachAndDetachEffect } from "./utils";
 
 export type RelevantRemovedRootsFromTChild<TChild> = (
 	child: TChild,
