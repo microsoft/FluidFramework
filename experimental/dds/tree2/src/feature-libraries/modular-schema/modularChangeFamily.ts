@@ -795,7 +795,7 @@ function* relevantRemovedRootsFromFields(
 				yield* relevantRemovedRootsFromFields(node.fieldChanges, fieldRevision, fieldKinds);
 			}
 		};
-		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
+		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
 	}
 }
 

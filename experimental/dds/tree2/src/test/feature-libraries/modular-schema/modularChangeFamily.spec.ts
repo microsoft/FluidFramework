@@ -19,6 +19,7 @@ import {
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
+	makeDetachedNodeId,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
@@ -652,11 +653,13 @@ describe("ModularChangeFamily", () => {
 		}
 		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
 			relevantRemovedRoots: (
-				change: HasRemovedRootsRefs,
+				{ change, revision }: TaggedChange<HasRemovedRootsRefs>,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 			) => {
 				return [
-					...change.shallow,
+					...change.shallow.map((id) =>
+						makeDetachedNodeId(id.major ?? revision, id.minor),
+					),
 					...change.nested.flatMap((c) =>
 						Array.from(
 							relevantRemovedRootsFromChild({
@@ -751,6 +754,36 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(actual, [
 				{ major, minor: 1 },
 				{ major, minor: 2 },
+			]);
+		});
+
+		it("default revision from field", () => {
+			const majorAB = mintRevisionTag();
+			const majorC = mintRevisionTag();
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [{ minor: 2 }],
+				nested: [],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [changeB],
+			};
+			const changeC: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind, change: brand(changeA), revision: majorAB }],
+					[brand("fC"), { fieldKind, change: brand(changeC), revision: majorC }],
+				]),
+			};
+
+			const actual = relevantRemovedRoots(makeAnonChange(input));
+			assert.deepEqual(actual, [
+				{ major: majorAB, minor: 1 },
+				{ major: majorAB, minor: 2 },
+				{ major: majorC, minor: 1 },
 			]);
 		});
 	});
