@@ -647,20 +647,17 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 }
 
 function* relevantRemovedRoots(
-	change: OptionalChangeset,
+	{ change, revision }: TaggedChange<OptionalChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<Delta.DetachedNodeId> {
 	const dstToSrc = new RegisterMap<RegisterId>();
-	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
-	for (const { id } of change.build) {
-		alreadyYieldedOrNewlyBuilt.set(id, true);
-	}
+	const alreadyYielded = new RegisterMap<boolean>();
 
 	for (const [src, dst] of change.moves) {
 		dstToSrc.set(dst, src);
-		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
-			alreadyYieldedOrNewlyBuilt.set(src, true);
-			yield nodeIdFromChangeAtom(src);
+		if (src !== "self" && !alreadyYielded.has(src)) {
+			alreadyYielded.set(src, true);
+			yield nodeIdFromChangeAtom(src, revision);
 		}
 	}
 
@@ -668,9 +665,9 @@ function* relevantRemovedRoots(
 		// Child changes are relevant unless they apply to the tree which existed in the starting context of
 		// of this change.
 		const startingId = dstToSrc.get(id) ?? id;
-		if (startingId !== "self" && !alreadyYieldedOrNewlyBuilt.has(startingId)) {
-			alreadyYieldedOrNewlyBuilt.set(startingId, true);
-			yield nodeIdFromChangeAtom(startingId);
+		if (startingId !== "self" && !alreadyYielded.has(startingId)) {
+			alreadyYielded.set(startingId, true);
+			yield nodeIdFromChangeAtom(startingId, revision);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}

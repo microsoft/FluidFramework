@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, Delta, FieldKey, makeDetachedNodeId } from "../core";
+import { ChangeAtomId, Delta, FieldKey, RevisionTag, makeDetachedNodeId } from "../core";
 import { Mutable } from "../util";
 
-export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNodeId {
-	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
+export function nodeIdFromChangeAtom(
+	changeAtom: ChangeAtomId,
+	fallbackRevision?: RevisionTag,
+): Delta.DetachedNodeId {
+	return makeDetachedNodeId(changeAtom.revision ?? fallbackRevision, changeAtom.localId);
 }
 
 /**

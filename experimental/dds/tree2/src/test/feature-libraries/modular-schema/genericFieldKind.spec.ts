@@ -448,7 +448,7 @@ describe("Generic FieldKind", () => {
 
 	it("relevantRemovedRoots", () => {
 		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
-			[
+			makeAnonChange([
 				{
 					index: 0,
 					nodeChange: nodeChange0To1,
@@ -457,7 +457,7 @@ describe("Generic FieldKind", () => {
 					index: 2,
 					nodeChange: nodeChange1To2,
 				},
-			],
+			]),
 			(child) =>
 				child === nodeChange0To1
 					? [{ minor: 42 }]

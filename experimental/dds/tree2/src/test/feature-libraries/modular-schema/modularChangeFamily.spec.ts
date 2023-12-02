@@ -76,7 +76,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		relevantRemovedRootsFromChild(change),
+		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
