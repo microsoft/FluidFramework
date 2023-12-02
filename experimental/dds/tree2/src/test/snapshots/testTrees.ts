@@ -41,6 +41,7 @@ import {
 	rootFieldKey,
 } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
+// eslint-disable-next-line import/no-internal-modules
 import { TypedNode } from "../../feature-libraries/schema-aware";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
