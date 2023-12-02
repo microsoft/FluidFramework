@@ -157,6 +157,9 @@ export {
 	FlexListToUnion,
 	LazyItem,
 	isLazy,
+	NormalizeObjectNodeFields,
+	NormalizeField as NormalizeFieldSchema,
+	Fields,
 } from "./typed-schema";
 
 export {

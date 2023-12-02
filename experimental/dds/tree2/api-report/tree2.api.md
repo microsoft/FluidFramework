@@ -141,9 +141,6 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
 }[TMultiplicity];
 
 // @alpha
-type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"] ? false : true;
-
-// @alpha
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
     // (undocumented)
     [n: number]: TSet;
@@ -224,12 +221,6 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
 
 // @alpha
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
-
-// @alpha
-type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
-infer Head,
-...infer Tail
-] ? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>] : [];
 
 // @alpha
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
@@ -428,9 +419,6 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha (undocumented)
-type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
-
-// @alpha (undocumented)
 export function fail(message: string): never;
 
 // @alpha
@@ -525,7 +513,7 @@ export class FieldNodeSchema<Name extends string = string, Specification extends
 }
 
 // @alpha (undocumented)
-interface Fields {
+export interface Fields {
     // (undocumented)
     readonly [key: string]: TreeFieldSchema;
 }
@@ -943,22 +931,10 @@ declare namespace InternalClassTreeTypes {
 
 declare namespace InternalTypedSchemaTypes {
     export {
-        ObjectToMap,
-        WithDefault,
-        Unbrand,
-        UnbrandList,
         ArrayToUnion,
-        NormalizeObjectNodeFields,
-        NormalizeField_2 as NormalizeField,
-        Fields,
-        MapFieldSchema,
         FlexList,
-        ConstantFlexListToNonLazyArray,
         LazyItem,
-        NormalizedFlexList,
         ExtractItemType,
-        ArrayHasFixedLength,
-        ExtractListItemType,
         FlexListToUnion
     }
 }
@@ -1186,7 +1162,7 @@ interface MakeNominal {
 }
 
 // @alpha
-type MapFieldSchema = TreeFieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+export type MapFieldSchema = TreeFieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 // @alpha (undocumented)
 export class MapNodeSchema<const out Name extends string = string, const out Specification extends Unenforced<MapFieldSchema> = MapFieldSchema> extends TreeNodeSchemaBase<Name, Specification> {
@@ -1317,18 +1293,15 @@ export const noopValidator: JsonValidator;
 // @alpha
 export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchema extends FlexTreeNodeSchema ? readonly [TSchema] : TSchema extends Any ? readonly [Any] : TSchema;
 
-// @alpha (undocumented)
-type NormalizedFlexList<Item> = readonly Item[];
-
 // @alpha
 export type NormalizeField<TSchema extends FlexImplicitFieldSchema, TDefault extends FieldKind> = TSchema extends TreeFieldSchema ? TSchema : TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 // @alpha
-type NormalizeField_2<T extends TreeFieldSchema | undefined> = T extends TreeFieldSchema ? T : TreeFieldSchema<typeof FieldKinds.forbidden, []>;
+export type NormalizeFieldSchema<T extends TreeFieldSchema | undefined> = T extends TreeFieldSchema ? T : TreeFieldSchema<typeof FieldKinds.forbidden, []>;
 
 // @alpha (undocumented)
-type NormalizeObjectNodeFields<T extends Fields> = {
-    readonly [Property in keyof T]: NormalizeField_2<T[Property]>;
+export type NormalizeObjectNodeFields<T extends Fields> = {
+    readonly [Property in keyof T]: NormalizeFieldSchema<T[Property]>;
 };
 
 // @beta
@@ -1353,11 +1326,6 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
-
-// @alpha
-type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
-    get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
-};
 
 // @alpha
 export interface ObservingDependent extends Dependent {
@@ -2004,15 +1972,9 @@ TFields extends {
 export const typeNameSymbol: unique symbol;
 
 // @alpha
-type Unbrand<T, B> = T extends infer S & B ? S : T;
-
-// @alpha
 export type UnbrandedName<TName> = [
 TName extends TreeNodeSchemaIdentifier<infer S> ? S : string
 ][_InlineTrick];
-
-// @alpha
-type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];
 
 // @alpha
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
@@ -2057,9 +2019,6 @@ export enum ValueSchema {
 
 // @alpha
 export const valueSymbol: unique symbol;
-
-// @alpha
-type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
 
 // (No @packageDocumentation comment for this package)
 

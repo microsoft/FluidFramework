@@ -215,6 +215,10 @@ export {
 	InsertableFlexField,
 	AllowedTypesToFlexInsertableTree,
 	ApplyMultiplicity,
+	NormalizeObjectNodeFields,
+	NormalizeFieldSchema,
+	Fields,
+	MapFieldSchema,
 } from "./feature-libraries";
 
 export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
