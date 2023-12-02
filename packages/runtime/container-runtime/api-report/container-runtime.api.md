@@ -434,16 +434,7 @@ export interface IGCRuntimeOptions {
 }
 
 // @public
-export interface IGCStats {
-    attachmentBlobCount: number;
-    dataStoreCount: number;
-    nodeCount: number;
-    unrefAttachmentBlobCount: number;
-    unrefDataStoreCount: number;
-    unrefNodeCount: number;
-    updatedAttachmentBlobCount: number;
-    updatedDataStoreCount: number;
-    updatedNodeCount: number;
+export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 }
 
 // @public
@@ -464,6 +455,19 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly stage: "generate";
     readonly summaryStats: IGeneratedSummaryStats;
     readonly summaryTree: ISummaryTree;
+}
+
+// @public
+export interface IMarkPhaseStats {
+    attachmentBlobCount: number;
+    dataStoreCount: number;
+    nodeCount: number;
+    unrefAttachmentBlobCount: number;
+    unrefDataStoreCount: number;
+    unrefNodeCount: number;
+    updatedAttachmentBlobCount: number;
+    updatedDataStoreCount: number;
+    updatedNodeCount: number;
 }
 
 // @public (undocumented)
@@ -689,6 +693,16 @@ export interface ISummaryRuntimeOptions {
     // @deprecated
     initialSummarizerDelayMs?: number;
     summaryConfigOverrides?: ISummaryConfiguration;
+}
+
+// @public
+export interface ISweepPhaseStats {
+    deletedAttachmentBlobCount: number;
+    deletedDataStoreCount: number;
+    deletedNodeCount: number;
+    lifetimeAttachmentBlobCount: number;
+    lifetimeDataStoreCount: number;
+    lifetimeNodeCount: number;
 }
 
 // @public

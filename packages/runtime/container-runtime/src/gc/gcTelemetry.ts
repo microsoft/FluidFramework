@@ -14,7 +14,6 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 import { ICreateContainerMetadata } from "../summary";
 import {
-	disableSweepLogKey,
 	GCNodeType,
 	UnreferencedState,
 	IGarbageCollectorConfigs,
@@ -391,58 +390,6 @@ export class GCTelemetryTracker {
 			}
 		}
 		this.pendingEventsQueue = [];
-	}
-
-	/**
-	 * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-	 * this will give us a view into how much deleted content a container has.
-	 */
-	public logSweepEvents(
-		logger: ITelemetryLoggerExt,
-		currentReferenceTimestampMs: number,
-		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
-		completedGCRuns: number,
-		lastSummaryTime?: number,
-	) {
-		if (
-			this.mc.config.getBoolean(disableSweepLogKey) === true ||
-			this.configs.sweepTimeoutMs === undefined
-		) {
-			return;
-		}
-
-		const deletedNodeIds: string[] = [];
-		for (const [nodeId, nodeStateTracker] of unreferencedNodesState) {
-			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
-				return;
-			}
-
-			const nodeType = this.getNodeType(nodeId);
-			if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-				return;
-			}
-
-			// Log deleted event for each node only once to reduce noise in telemetry.
-			const uniqueEventId = `Deleted-${nodeId}`;
-			if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-				return;
-			}
-			this.loggedUnreferencedEvents.add(uniqueEventId);
-			deletedNodeIds.push(nodeId);
-		}
-
-		if (deletedNodeIds.length > 0) {
-			logger.sendTelemetryEvent({
-				eventName: "GC_SweepReadyObjects_Delete",
-				details: JSON.stringify({
-					timeout: this.configs.sweepTimeoutMs,
-					completedGCRuns,
-					lastSummaryTime,
-					...this.createContainerMetadata,
-				}),
-				...tagCodeArtifacts({ id: JSON.stringify(deletedNodeIds) }),
-			});
-		}
 	}
 }
 

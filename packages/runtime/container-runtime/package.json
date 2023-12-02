@@ -132,6 +132,9 @@
 			"RemovedFunctionDeclaration_TEST_requestSummarizer": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IGCStats": {
+				"forwardCompat": false
 			}
 		}
 	}
