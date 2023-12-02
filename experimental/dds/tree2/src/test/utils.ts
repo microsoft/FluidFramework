@@ -65,7 +65,6 @@ import {
 	mapRootChanges,
 } from "../feature-libraries";
 import {
-	Delta,
 	InvalidationToken,
 	SimpleObservingDependent,
 	moveToDetachedField,
@@ -97,6 +96,11 @@ import {
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
 	RevisionTag,
+	DeltaFieldChanges,
+	DeltaMark,
+	DeltaFieldMap,
+	DeltaRoot,
+	DeltaProtoNode,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -441,7 +445,7 @@ export function spyOnMethod(
 /**
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
+export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 	for (const mark of delta.local ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
@@ -460,7 +464,7 @@ export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldChanges): void {
+export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
 	const aTree = mapFieldChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -469,7 +473,7 @@ export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldCha
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.Mark[]): void {
+export function assertMarkListEqual(a: readonly DeltaMark[], b: readonly DeltaMark[]): void {
 	const aTree = mapMarkList(a, mapTreeFromCursor);
 	const bTree = mapMarkList(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -478,7 +482,7 @@ export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaFieldMapEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
+export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): void {
 	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -487,7 +491,7 @@ export function assertDeltaFieldMapEqual(a: Delta.FieldMap, b: Delta.FieldMap): 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.Root, b: Delta.Root): void {
+export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 	const aTree = mapRootChanges(a, mapTreeFromCursor);
 	const bTree = mapRootChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -526,7 +530,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	}
 }
 
-export function noRepair(): Delta.ProtoNode[] {
+export function noRepair(): DeltaProtoNode[] {
 	assert.fail("Unexpected request for repair data");
 }
 
@@ -828,7 +832,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export const mockIntoDelta = (delta: Delta.Root) => delta;
+export const mockIntoDelta = (delta: DeltaRoot) => delta;
 
 export interface EncodingTestData<TDecoded, TEncoded> {
 	/**
@@ -993,20 +997,20 @@ export const wrongSchema = new SchemaBuilder({
 }).intoSchema(SchemaBuilder.sequence(Any));
 
 export function applyTestDelta(
-	delta: Delta.FieldMap,
+	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	const rootDelta: Delta.Root = { fields: delta };
+	const rootDelta: DeltaRoot = { fields: delta };
 	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
 export function announceTestDelta(
-	delta: Delta.FieldMap,
+	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	const rootDelta: Delta.Root = { fields: delta };
+	const rootDelta: DeltaRoot = { fields: delta };
 	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 

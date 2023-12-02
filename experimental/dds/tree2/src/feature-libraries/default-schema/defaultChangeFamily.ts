@@ -14,8 +14,8 @@ import {
 	FieldUpPath,
 	compareFieldUpPaths,
 	topDownPath,
-	Delta,
 	TaggedChange,
+	DeltaRoot,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -60,7 +60,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 /**
  * @param change - The change to convert into a delta.
  */
-export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): Delta.Root {
+export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
 	return intoModularDelta(taggedChange, fieldKinds);
 }
 

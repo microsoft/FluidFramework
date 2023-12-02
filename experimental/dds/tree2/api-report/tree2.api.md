@@ -108,7 +108,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 export interface AnnouncedVisitor {
     // (undocumented)
     afterAttach(source: FieldKey, destination: Range_2): void;
-    afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
+    afterCreate(content: ProtoNodes, destination: FieldKey): void;
     // (undocumented)
     afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
     // (undocumented)
@@ -284,27 +284,82 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 // @alpha
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
-declare namespace Delta {
-    export {
-        Root,
-        ProtoNode,
-        ProtoNodes,
-        Mark,
-        DetachedNodeId,
-        FieldMap,
-        DetachedNodeChanges,
-        DetachedNodeBuild,
-        DetachedNodeDestruction,
-        DetachedNodeRename,
-        FieldChanges
-    }
+// @alpha
+export interface DeltaDetachedNodeBuild<TTree = DeltaProtoNode> {
+    // (undocumented)
+    readonly id: DeltaDetachedNodeId;
+    // (undocumented)
+    readonly trees: readonly TTree[];
 }
-export { Delta }
+
+// @alpha
+export interface DeltaDetachedNodeChanges<TTree = DeltaProtoNode> {
+    // (undocumented)
+    readonly fields: DeltaFieldMap<TTree>;
+    // (undocumented)
+    readonly id: DeltaDetachedNodeId;
+}
+
+// @alpha
+export interface DeltaDetachedNodeDestruction {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly id: DeltaDetachedNodeId;
+}
+
+// @alpha
+export interface DeltaDetachedNodeId {
+    // (undocumented)
+    readonly major?: string | number;
+    // (undocumented)
+    readonly minor: number;
+}
+
+// @alpha
+export interface DeltaDetachedNodeRename {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly newId: DeltaDetachedNodeId;
+    // (undocumented)
+    readonly oldId: DeltaDetachedNodeId;
+}
+
+// @alpha
+export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
+    // @deprecated
+    readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
+    readonly destroy?: readonly DeltaDetachedNodeDestruction[];
+    readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
+    readonly local?: readonly DeltaMark<TTree>[];
+    readonly rename?: readonly DeltaDetachedNodeRename[];
+}
+
+// @alpha (undocumented)
+export type DeltaFieldMap<TTree = DeltaProtoNode> = ReadonlyMap<FieldKey, DeltaFieldChanges<TTree>>;
+
+// @alpha
+export interface DeltaMark<TTree = DeltaProtoNode> {
+    readonly attach?: DeltaDetachedNodeId;
+    readonly count: number;
+    readonly detach?: DeltaDetachedNodeId;
+    readonly fields?: DeltaFieldMap<TTree>;
+}
+
+// @alpha
+export type DeltaProtoNode = ITreeCursorSynchronous;
+
+// @alpha
+export interface DeltaRoot<TTree = DeltaProtoNode> {
+    readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
+    readonly fields?: DeltaFieldMap<TTree>;
+}
 
 // @alpha
 export interface DeltaVisitor {
     attach(source: FieldKey, count: number, destination: PlaceIndex): void;
-    create(content: Delta.ProtoNodes, destination: FieldKey): void;
+    create(content: ProtoNodes, destination: FieldKey): void;
     destroy(detachedField: FieldKey, count: number): void;
     detach(source: Range_2, destination: FieldKey): void;
     enterField(key: FieldKey): void;
@@ -328,48 +383,6 @@ export interface Dependent extends NamedComputation {
 
 // @alpha
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
-}
-
-// @alpha
-interface DetachedNodeBuild<TTree = ProtoNode> {
-    // (undocumented)
-    readonly id: DetachedNodeId;
-    // (undocumented)
-    readonly trees: readonly TTree[];
-}
-
-// @alpha
-interface DetachedNodeChanges<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields: FieldMap<TTree>;
-    // (undocumented)
-    readonly id: DetachedNodeId;
-}
-
-// @alpha
-interface DetachedNodeDestruction {
-    // (undocumented)
-    readonly count: number;
-    // (undocumented)
-    readonly id: DetachedNodeId;
-}
-
-// @alpha
-interface DetachedNodeId {
-    // (undocumented)
-    readonly major?: string | number;
-    // (undocumented)
-    readonly minor: number;
-}
-
-// @alpha
-interface DetachedNodeRename {
-    // (undocumented)
-    readonly count: number;
-    // (undocumented)
-    readonly newId: DetachedNodeId;
-    // (undocumented)
-    readonly oldId: DetachedNodeId;
 }
 
 // @alpha
@@ -429,16 +442,6 @@ export interface FieldAnchor {
 }
 
 // @alpha
-interface FieldChanges<TTree = ProtoNode> {
-    // @deprecated
-    readonly build?: readonly DetachedNodeBuild<TTree>[];
-    readonly destroy?: readonly DetachedNodeDestruction[];
-    readonly global?: readonly DetachedNodeChanges<TTree>[];
-    readonly local?: readonly Mark<TTree>[];
-    readonly rename?: readonly DetachedNodeRename[];
-}
-
-// @alpha
 export type FieldGenerator = () => MapTree[];
 
 // @alpha
@@ -486,9 +489,6 @@ export interface FieldLocation {
     // (undocumented)
     readonly parent: ForestLocation;
 }
-
-// @alpha (undocumented)
-type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
 
 // @alpha
 export interface FieldMapObject<TChild> {
@@ -1187,14 +1187,6 @@ export interface MapTree extends NodeData {
 }
 
 // @alpha
-interface Mark<TTree = ProtoNode> {
-    readonly attach?: DetachedNodeId;
-    readonly count: number;
-    readonly detach?: DetachedNodeId;
-    readonly fields?: FieldMap<TTree>;
-}
-
-// @alpha
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
     // (undocumented)
     readonly [arrayLikeMarkerSymbol]: true;
@@ -1376,7 +1368,7 @@ export interface PathVisitor {
     // @deprecated
     onDelete(path: UpPath, count: number): void;
     // @deprecated (undocumented)
-    onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+    onInsert(path: UpPath, content: ProtoNodes): void;
 }
 
 // @alpha
@@ -1394,10 +1386,7 @@ export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldU
 export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | undefined): UpPath | undefined;
 
 // @alpha
-type ProtoNode = ITreeCursorSynchronous;
-
-// @alpha
-type ProtoNodes = readonly ProtoNode[];
+export type ProtoNodes = readonly DeltaProtoNode[];
 
 // @alpha
 interface Range_2 {
@@ -1462,12 +1451,6 @@ export enum RevertibleKind {
 export enum RevertResult {
     Failure = 1,
     Success = 0
-}
-
-// @alpha
-interface Root<TTree = ProtoNode> {
-    readonly build?: readonly DetachedNodeBuild<TTree>[];
-    readonly fields?: FieldMap<TTree>;
 }
 
 // @alpha

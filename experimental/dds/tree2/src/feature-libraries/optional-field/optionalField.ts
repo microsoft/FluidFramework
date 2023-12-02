@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	Delta,
 	ITreeCursor,
 	TaggedChange,
 	tagChange,
@@ -14,6 +13,12 @@ import {
 	areEqualChangeAtomIds,
 	JsonableTree,
 	RevisionMetadataSource,
+	DeltaFieldChanges,
+	DeltaDetachedNodeRename,
+	DeltaMark,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeId,
+	DeltaDetachedNodeChanges,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -554,11 +559,11 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	deltaFromChild: ToDelta,
-): Delta.FieldChanges {
-	const delta: Mutable<Delta.FieldChanges> = {};
+): DeltaFieldChanges {
+	const delta: Mutable<DeltaFieldChanges> = {};
 
 	if (change.build.length > 0) {
-		const builds: Delta.DetachedNodeBuild[] = [];
+		const builds: DeltaDetachedNodeBuild[] = [];
 		for (const build of change.build) {
 			builds.push({
 				id: { major: build.id.revision ?? revision, minor: build.id.localId },
@@ -571,10 +576,10 @@ export function optionalFieldIntoDelta(
 	const dstToSrc = new RegisterMap<RegisterId>();
 
 	let markIsANoop = true;
-	const mark: Mutable<Delta.Mark> = { count: 1 };
+	const mark: Mutable<DeltaMark> = { count: 1 };
 
 	if (change.moves.length > 0) {
-		const renames: Delta.DetachedNodeRename[] = [];
+		const renames: DeltaDetachedNodeRename[] = [];
 		for (const [src, dst] of change.moves) {
 			dstToSrc.set(dst, src);
 			if (src === "self" && dst !== "self") {
@@ -598,7 +603,7 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.childChanges.length > 0) {
-		const globals: Delta.DetachedNodeChanges[] = [];
+		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const srcId = dstToSrc.get(id) ?? id;
 			const childDelta = deltaFromChild(childChange);
@@ -649,7 +654,7 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 function* relevantRemovedRoots(
 	change: OptionalChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	const dstToSrc = new RegisterMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
 	for (const { id } of change.build) {
