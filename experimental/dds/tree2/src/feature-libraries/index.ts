@@ -253,6 +253,9 @@ export {
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
+	FlexTreeUnboxField,
+	flexTreeMarker,
+	FlexTreeEntityKind,
 	onNextChange,
 	isFlexTreeNode,
 

@@ -71,13 +71,13 @@ export interface IDeltaStorageService {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
- * @internal
+ * @alpha
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -85,7 +85,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
- * @internal
+ * @alpha
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -112,14 +112,14 @@ export interface IDocumentDeltaStorageService {
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
 /**
- * @internal
+ * @alpha
  */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
- * @internal
+ * @alpha
  */
 export interface IDocumentStorageServicePolicies {
 	/**
@@ -140,7 +140,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
- * @internal
+ * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	repositoryUrl: string;
@@ -206,7 +206,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
@@ -220,7 +220,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
@@ -301,7 +301,7 @@ export interface IDocumentDeltaConnection
 }
 
 /**
- * @internal
+ * @alpha
  */
 export enum LoaderCachingPolicy {
 	/**
@@ -316,7 +316,7 @@ export enum LoaderCachingPolicy {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentServicePolicies {
 	/**
@@ -331,7 +331,7 @@ export interface IDocumentServicePolicies {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentService {
 	resolvedUrl: IResolvedUrl;
@@ -372,7 +372,7 @@ export interface IDocumentService {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentServiceFactory {
 	/**
@@ -414,7 +414,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
- * @internal
+ * @alpha
  */
 export interface ISummaryContext {
 	/**
@@ -431,7 +431,7 @@ export interface ISummaryContext {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export enum FetchSource {
 	default = "default",
