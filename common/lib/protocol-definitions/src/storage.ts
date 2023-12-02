@@ -6,7 +6,7 @@
 import { IsoDate } from "./date";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentAttributes {
 	/**
@@ -54,7 +54,7 @@ export interface IAttachment {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -119,7 +119,7 @@ export interface ITree {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -142,7 +142,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
- * @internal
+ * @alpha
  */
 export interface IVersion {
 	/**
