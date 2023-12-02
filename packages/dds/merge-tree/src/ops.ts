@@ -5,7 +5,7 @@
 
 /**
  * Flags enum that dictates behavior of a ReferencePosition
- * @internal
+ * @alpha
  */
 export enum ReferenceType {
 	Simple = 0x0,

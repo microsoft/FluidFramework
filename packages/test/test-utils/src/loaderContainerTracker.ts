@@ -42,7 +42,7 @@ interface ContainerRecord {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class LoaderContainerTracker implements IOpProcessingController {
 	private readonly containers = new Map<IContainer, ContainerRecord>();

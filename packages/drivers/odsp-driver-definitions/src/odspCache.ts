@@ -21,7 +21,7 @@ export type CacheContentType = "snapshot" | "ops";
  * to implement storage / identify files.
  */
 /**
- * @internal
+ * @alpha
  */
 export interface IFileEntry {
 	/**
@@ -63,7 +63,7 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @internal
+ * @alpha
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -78,7 +78,7 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
- * @internal
+ * @alpha
  */
 export interface IPersistedCache {
 	/**

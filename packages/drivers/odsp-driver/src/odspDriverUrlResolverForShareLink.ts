@@ -47,7 +47,7 @@ export interface ShareLinkFetcherProps {
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
- * @internal
+ * @alpha
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	private readonly logger: ITelemetryLoggerExt;

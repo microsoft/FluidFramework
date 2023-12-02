@@ -282,7 +282,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 // @internal (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
-// @internal
+// @alpha
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
     handle: IFluidHandle;
@@ -355,7 +355,7 @@ export interface IProvideFluidHandleContext {
     readonly IFluidHandleContext: IFluidHandleContext;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
     readonly IFluidLoadable: IFluidLoadable;
@@ -505,7 +505,7 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @internal
+// @alpha
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
 // @internal @deprecated

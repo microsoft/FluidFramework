@@ -307,7 +307,7 @@ export async function requestResolvedObjectFromContainer(
 
 /**
  * Manages Fluid resource loading
- * @internal
+ * @alpha
  */
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;

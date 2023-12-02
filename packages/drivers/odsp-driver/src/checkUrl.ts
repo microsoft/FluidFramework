@@ -11,7 +11,7 @@ import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
  * Note that returning information here is NOT a full guarantee that resolve will ultimately be successful.
  * Instead, this should be used as a lightweight check that can filter out easily detectable unsupported URLs
  * before the entire Fluid loading process needs to be kicked off.
- * @internal
+ * @alpha
  */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
 	const locator = getLocatorFromOdspUrl(documentUrl);

@@ -28,7 +28,7 @@ export interface DataObjectTypes {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 	readonly runtime: IFluidDataStoreRuntime;

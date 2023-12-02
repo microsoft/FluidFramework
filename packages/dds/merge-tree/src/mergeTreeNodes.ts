@@ -615,7 +615,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
 /**

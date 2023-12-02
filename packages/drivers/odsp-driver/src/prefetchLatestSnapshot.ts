@@ -52,7 +52,7 @@ import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
- * @internal
+ * @alpha
  */
 export async function prefetchLatestSnapshot(
 	resolvedUrl: IResolvedUrl,

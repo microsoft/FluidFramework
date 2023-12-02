@@ -6,7 +6,7 @@
 import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
 /**
- * @internal
+ * @alpha
  */
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 	dataStorePath: string;

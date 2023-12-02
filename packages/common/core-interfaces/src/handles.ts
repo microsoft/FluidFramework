@@ -49,12 +49,12 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidHandle {
 	readonly IFluidHandle: IFluidHandle;
@@ -62,7 +62,7 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @internal
+ * @alpha
  */
 export interface IFluidHandle<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?

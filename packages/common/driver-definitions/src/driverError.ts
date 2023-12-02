@@ -13,7 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
- * @internal
+ * @alpha
  */
 export const DriverErrorTypes = {
 	// Inherit base error types

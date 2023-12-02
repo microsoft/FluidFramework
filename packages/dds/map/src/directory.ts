@@ -447,7 +447,7 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>

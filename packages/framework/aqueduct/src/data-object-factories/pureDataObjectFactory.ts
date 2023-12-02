@@ -130,13 +130,12 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @internal
+ * @alpha
  */
 export class PureDataObjectFactory<
-		TObj extends PureDataObject<I>,
-		I extends DataObjectTypes = DataObjectTypes,
-	>
-	implements
+	TObj extends PureDataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
+> implements
 		IFluidDataStoreFactory,
 		Partial<IProvideFluidDataStoreRegistry>,
 		IRootDataObjectFactory

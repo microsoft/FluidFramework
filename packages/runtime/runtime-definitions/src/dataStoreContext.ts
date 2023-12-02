@@ -197,7 +197,7 @@ export interface IDataStore {
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
- * @internal
+ * @alpha
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
@@ -405,7 +405,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
- * @internal
+ * @alpha
  */
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,

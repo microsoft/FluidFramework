@@ -16,10 +16,10 @@ import { DataObjectTypes } from "./types";
  * will automatically be registered.
  *
  * @typeParam I - The optional input types used to strongly type the data object
- * @internal
+ * @alpha
  */
+I extends DataObjectTypes = DataObjectTypes,
 export abstract class DataObject<
-	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	private internalRoot: ISharedDirectory | undefined;
 	private readonly rootDirectoryId = "root";

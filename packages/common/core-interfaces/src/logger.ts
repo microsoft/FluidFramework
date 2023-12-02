@@ -17,7 +17,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
- * @internal
+ * @alpha
  */
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 

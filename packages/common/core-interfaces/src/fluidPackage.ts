@@ -97,7 +97,7 @@ export interface IFluidCodeDetailsConfig {
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetails}
  * to have code loading modules in same package.
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetails {
 	/**

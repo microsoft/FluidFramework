@@ -6,7 +6,7 @@
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspUrlParts {
 	siteUrl: string;
@@ -108,7 +108,7 @@ export interface ShareLinkInfoType {
 	sharingLinkToRedeem?: string;
 }
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	type: "fluid";

@@ -54,7 +54,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
- * @internal
+ * @alpha
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
