@@ -15,8 +15,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime, IChannel } from "@fluidframework/datastore-definitions";
 import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 

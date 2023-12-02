@@ -11,9 +11,7 @@ import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
-import { DOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
 import { DriverErrorTypes } from '@fluidframework/driver-definitions';
-import { FluidContainer } from '@fluidframework/fluid-static';
 import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -99,8 +97,6 @@ export { DataObjectClass }
 export { DeserializeCallback }
 
 export { DirectoryFactory }
-
-export { DOProviderContainerRuntimeFactory }
 
 export { DriverErrorTypes }
 

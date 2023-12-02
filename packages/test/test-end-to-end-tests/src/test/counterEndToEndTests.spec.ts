@@ -13,11 +13,7 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeFullCompat,
-	describeNoCompat,
-	itExpects,
-} from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
