@@ -27,7 +27,7 @@ import {
 	insert,
 	expectJsonTree,
 	createTestUndoRedoStacks,
-	checkRemovedTreesAreSynchronized,
+	checkRemovedRootsAreSynchronized,
 } from "../utils";
 import { ITreeCheckout } from "../../shared-tree";
 import { cursorForJsonableTreeNode } from "../../feature-libraries";
@@ -58,7 +58,7 @@ describe("Editing", () => {
 
 			const expected = ["x", "y", "a", "b", "c"];
 			expectJsonTree([tree1, tree2], expected);
-			checkRemovedTreesAreSynchronized([tree1, tree2]);
+			checkRemovedRootsAreSynchronized([tree1, tree2]);
 		});
 
 		it("can rebase delete over move", () => {
@@ -249,7 +249,6 @@ describe("Editing", () => {
 				const expected = [...startingState];
 				expected.splice(index, 1);
 				expectJsonTree([tree, tree1, tree2, tree3], expected);
-				checkRemovedTreesAreSynchronized([tree, tree1, tree2, tree3]);
 			}
 		});
 
@@ -1941,7 +1940,6 @@ describe("Editing", () => {
 				tree3.rebaseOnto(tree2);
 
 				expectJsonTree([tree1, tree2, tree3], [{ foo: "3" }]);
-				checkRemovedTreesAreSynchronized([tree1, tree2, tree3]);
 			});
 
 			it("from an empty state", () => {
@@ -1962,7 +1960,6 @@ describe("Editing", () => {
 				tree1.merge(tree3, false);
 
 				expectJsonTree([tree1, tree2, tree3], [{ foo: "3" }]);
-				checkRemovedTreesAreSynchronized([tree1, tree2, tree3]);
 			});
 		});
 

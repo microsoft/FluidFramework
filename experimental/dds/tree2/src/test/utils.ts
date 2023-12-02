@@ -533,11 +533,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-export function checkRemovedTreesAreSynchronized(trees: readonly ITreeCheckout[]) {
-	const baseline = trees[0].getRemovedRoots();
-	for (const tree of trees) {
-		const actual = tree.getRemovedRoots();
-		assert.deepEqual(actual, baseline);
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
+	if (trees.length > 1) {
+		const baseline = trees[0].getRemovedRoots();
+		for (const tree of trees.slice(1)) {
+			const actual = tree.getRemovedRoots();
+			assert.deepEqual(actual, baseline);
+		}
 	}
 }
 
@@ -796,11 +798,15 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 export function expectJsonTree(
 	actual: ITreeCheckout | ITreeCheckout[],
 	expected: JsonCompatible[],
+	expectRemovedRootsAreSynchronized = true,
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
 		const roots = toJsonTree(tree);
 		assert.deepEqual(roots, expected);
+	}
+	if (expectRemovedRootsAreSynchronized) {
+		checkRemovedRootsAreSynchronized(trees);
 	}
 }
 
