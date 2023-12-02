@@ -8,6 +8,7 @@
 
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
+import { IConfigProviderBase as IConfigProviderBase_2 } from '@fluidframework/core-interfaces';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -29,7 +30,7 @@ import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces'
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal
+// @internal @deprecated
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @internal (undocumented)
@@ -126,7 +127,7 @@ export const hasErrorInstanceId: (x: unknown) => x is {
 };
 
 // @internal
-export interface IConfigProvider extends IConfigProviderBase {
+export interface IConfigProvider extends IConfigProviderBase_2 {
     // (undocumented)
     getBoolean(name: string): boolean | undefined;
     // (undocumented)
@@ -141,7 +142,7 @@ export interface IConfigProvider extends IConfigProviderBase {
     getStringArray(name: string): string[] | undefined;
 }
 
-// @internal
+// @internal @deprecated
 export interface IConfigProviderBase {
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
@@ -281,7 +282,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @internal
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase_2 | undefined)[]): MonitoringContext<L>;
 
 // @internal
 export class MockLogger implements ITelemetryBaseLogger {
@@ -367,7 +368,7 @@ export class SampledTelemetryHelper implements IDisposable {
 }
 
 // @internal
-export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
+export const sessionStorageConfigProvider: Lazy<IConfigProviderBase_2>;
 
 // @internal
 export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {

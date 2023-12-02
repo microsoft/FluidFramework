@@ -24,8 +24,7 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+import { type IConfigProviderBase, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";

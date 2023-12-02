@@ -16,9 +16,9 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";
