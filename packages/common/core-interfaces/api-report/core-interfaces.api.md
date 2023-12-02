@@ -7,7 +7,7 @@
 // @internal
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @internal
+// @alpha
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @internal
@@ -22,7 +22,7 @@ export const FluidErrorTypes: {
 // @internal (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
-// @internal
+// @alpha
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
@@ -30,7 +30,7 @@ export type FluidObject<T = unknown> = {
 // @internal
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
-// @internal
+// @alpha
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @internal
@@ -38,13 +38,13 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
-// @internal
+// @alpha
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
 }
 
-// @internal
+// @alpha
 export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
     getTelemetryProperties?(): ITelemetryBaseProperties;
@@ -53,31 +53,31 @@ export interface IErrorBase extends Partial<Error> {
     readonly stack?: string;
 }
 
-// @internal
+// @alpha
 export interface IErrorEvent extends IEvent {
     // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IEvent {
     // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @internal
+// @alpha
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @internal
+// @alpha
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -305,10 +305,10 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @internal @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export const IFluidRouter: keyof IProvideFluidRouter;
 
-// @internal @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IFluidRouter extends IProvideFluidRouter {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -361,7 +361,7 @@ export interface IProvideFluidLoadable {
     readonly IFluidLoadable: IFluidLoadable;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IProvideFluidRouter {
     // (undocumented)
     readonly IFluidRouter: IFluidRouter;
@@ -373,7 +373,7 @@ export interface IProvideFluidRunnable {
     readonly IFluidRunnable: IFluidRunnable;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IRequest {
     // (undocumented)
     headers?: IRequestHeader;
@@ -381,13 +381,13 @@ export interface IRequest {
     url: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IRequestHeader {
     // (undocumented)
     [index: string]: any;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IResponse {
     // (undocumented)
     headers?: {
@@ -417,7 +417,7 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
 }
 
-// @internal
+// @alpha
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -425,7 +425,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @internal
+// @alpha
 export interface ITelemetryBaseLogger {
     // (undocumented)
     minLogLevel?: LogLevel;
@@ -433,7 +433,7 @@ export interface ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
-// @internal
+// @alpha
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
 // @internal @deprecated
@@ -464,7 +464,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
@@ -482,22 +482,22 @@ export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
-// @internal
+// @alpha
 export const LogLevel: {
     readonly verbose: 10;
     readonly default: 20;
     readonly error: 30;
 };
 
-// @internal
+// @alpha
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
-// @internal
+// @alpha
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
 
-// @internal
+// @alpha
 export interface Tagged<V, T extends string = string> {
     // (undocumented)
     tag: T;
@@ -511,10 +511,10 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 // @internal @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @internal @deprecated
+// @alpha @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// @internal
+// @alpha
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // (No @packageDocumentation comment for this package)
