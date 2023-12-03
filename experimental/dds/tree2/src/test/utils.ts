@@ -98,7 +98,7 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../core";
-import { JsonCompatible, brand } from "../util";
+import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
@@ -535,9 +535,9 @@ const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
 	if (trees.length > 1) {
-		const baseline = trees[0].getRemovedRoots();
+		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
 		for (const tree of trees.slice(1)) {
-			const actual = tree.getRemovedRoots();
+			const actual = nestedMapFromFlatList(tree.getRemovedRoots());
 			assert.deepEqual(actual, baseline);
 		}
 	}
