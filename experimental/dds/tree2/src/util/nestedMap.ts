@@ -204,6 +204,21 @@ export function forEachInNestedMap<Key1, Key2, Value>(
 	});
 }
 
+export function mapNestedMap<Key1, Key2, ValueIn, ValueOut>(
+	map: NestedMap<Key1, Key2, ValueIn>,
+	delegate: (value: ValueIn, key1: Key1, key2: Key2) => ValueOut,
+): NestedMap<Key1, Key2, ValueOut> {
+	const newMap = new Map<Key1, Map<Key2, ValueOut>>();
+	map.forEach((innerMap, keyFirst) => {
+		const newInnerMap = new Map<Key2, ValueOut>();
+		innerMap.forEach((val, keySecond) => {
+			newInnerMap.set(keySecond, delegate(val, keyFirst, keySecond));
+		});
+		newMap.set(keyFirst, newInnerMap);
+	});
+	return newMap;
+}
+
 /**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.

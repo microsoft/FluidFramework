@@ -184,6 +184,8 @@ function makeV0Codec(
 
 	return {
 		encode: (change) => {
+			// Destroys only exist in rollback changesets, which are never sent.
+			assert(change.destroys === undefined, "Unexpected changeset with destroys");
 			return {
 				maxId: change.maxId,
 				revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,

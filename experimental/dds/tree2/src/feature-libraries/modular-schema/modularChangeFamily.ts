@@ -32,6 +32,7 @@ import {
 } from "../../core";
 import {
 	brand,
+	deleteFromNestedMap,
 	forEachInNestedMap,
 	getOrAddEmptyToMap,
 	getOrAddInMap,
@@ -40,6 +41,7 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	isReadonlyArray,
+	mapNestedMap,
 	Mutable,
 } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -145,13 +147,14 @@ export class ModularChangeFamily
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		if (changes.length === 1) {
-			const { fieldChanges, builds, constraintViolationCount } = changes[0].change;
+			const { fieldChanges, builds, destroys, constraintViolationCount } = changes[0].change;
 			return makeModularChangeset(
 				fieldChanges,
 				maxId,
 				revInfos,
 				constraintViolationCount,
 				builds,
+				destroys,
 			);
 		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
@@ -196,6 +199,7 @@ export class ModularChangeFamily
 			0x59b /* Should not need more than one amend pass. */,
 		);
 		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const allDestroys: ChangeAtomIdMap<undefined> = new Map();
 		for (const { revision, change } of changes) {
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
@@ -203,10 +207,7 @@ export class ModularChangeFamily
 					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
 					for (const [id, tree] of innerMap) {
 						// Check for duplicate builds and prefer earlier ones.
-						// There are two scenarios where we might get duplicate builds:
-						// - In compositions of rebase sandwiches:
-						// In that case, the trees are identical and it doesn't matter which one we pick.
-						// - In compositions of commits that needed to include repair data refreshers (e.g., undos):
+						// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
 						// In that case, it's possible for the refreshers to contain different trees because the latter
 						// refresher may already reflect the changes made by the commit that includes the earlier
 						// refresher. This composition includes the changes made by the commit that includes the
@@ -217,8 +218,32 @@ export class ModularChangeFamily
 						// composition all the changes already reflected on the tree, but that is not something we
 						// care to support at this time.
 						if (!innerDstMap.has(id)) {
+							// Check for earlier destroys that this build might cancel-out with.
+							const didCancelOut = deleteFromNestedMap(
+								allDestroys,
+								setRevisionKey,
+								id,
+							);
+							if (!didCancelOut) {
+								innerDstMap.set(id, tree);
+							}
+						}
+					}
+				}
+			}
+			if (change.destroys) {
+				for (const [revisionKey, innerMap] of change.destroys) {
+					const setRevisionKey = revisionKey ?? revision;
+					const innerDstMap = getOrAddInMap(allDestroys, setRevisionKey, new Map());
+					for (const [id, tree] of innerMap) {
+						// Check for earlier builds that this destroy might cancel-out with.
+						const didCancelOut = deleteFromNestedMap(allBuilds, setRevisionKey, id);
+						if (!didCancelOut) {
 							innerDstMap.set(id, tree);
 						}
+					}
+					if (innerDstMap.size === 0) {
+						allDestroys.delete(setRevisionKey);
 					}
 				}
 			}
@@ -394,6 +419,18 @@ export class ModularChangeFamily
 			// running a third pass would produce the same results.
 		}
 
+		// Rollback changesets destroy the nodes created by the change being rolled back.
+		let destroys: ChangeAtomIdMap<undefined> | undefined;
+		if (isRollback) {
+			const builds = change.change.builds;
+			if (builds !== undefined) {
+				destroys = mapNestedMap(builds, () => undefined);
+			}
+		}
+
+		// Destroys only occur in rollback changesets, which are never inverted.
+		assert(change.change.destroys === undefined, "Unexpected destroys in change to invert");
+
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
@@ -405,6 +442,8 @@ export class ModularChangeFamily
 						: Array.from(revInfo)
 				  ).reverse(),
 			change.change.constraintViolationCount,
+			undefined,
+			destroys,
 		);
 	}
 
@@ -541,6 +580,7 @@ export class ModularChangeFamily
 			change.revisions,
 			constraintState.violationCount,
 			change.builds,
+			change.destroys,
 		);
 	}
 
@@ -790,6 +830,16 @@ export function intoDelta(
 			});
 		});
 		rootDelta.build = builds;
+	}
+	if (change.destroys && change.destroys.size > 0) {
+		const destroys: Delta.DetachedNodeDestruction[] = [];
+		forEachInNestedMap(change.destroys, (_, major, minor) => {
+			destroys.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				count: 1,
+			});
+		});
+		rootDelta.destroys = destroys;
 	}
 	return rootDelta;
 }
@@ -1049,6 +1099,7 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<JsonableTree>,
+	destroys?: ChangeAtomIdMap<undefined>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1062,6 +1113,9 @@ function makeModularChangeset(
 	}
 	if (builds !== undefined && builds.size > 0) {
 		changeset.builds = builds;
+	}
+	if (destroys !== undefined && destroys.size > 0) {
+		changeset.destroys = destroys;
 	}
 	return changeset;
 }

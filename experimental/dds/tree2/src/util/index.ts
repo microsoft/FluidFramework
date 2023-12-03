@@ -30,6 +30,7 @@ export {
 	tryGetFromNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
+	mapNestedMap,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
