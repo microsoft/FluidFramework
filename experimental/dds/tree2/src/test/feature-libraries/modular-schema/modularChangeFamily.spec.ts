@@ -843,7 +843,7 @@ describe("ModularChangeFamily", () => {
 			);
 
 			const expectedDelta: Delta.Root = {
-				destroys: [
+				destroy: [
 					{ id: { major: tag1, minor: 1 }, count: 1 },
 					{ id: { major: tag2, minor: 2 }, count: 1 },
 				],
