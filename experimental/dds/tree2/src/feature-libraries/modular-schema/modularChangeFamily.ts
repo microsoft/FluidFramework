@@ -41,7 +41,6 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	isReadonlyArray,
-	mapNestedMap,
 	Mutable,
 } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
