@@ -146,6 +146,9 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
  * @param object - The object to freeze.
  */
 export function deepFreeze<T>(object: T): void {
+	if (object === undefined || object === null) {
+		return;
+	}
 	if (object instanceof Map) {
 		for (const [key, value] of object.entries()) {
 			deepFreeze(key);

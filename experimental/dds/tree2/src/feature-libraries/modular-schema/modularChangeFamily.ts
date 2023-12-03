@@ -850,7 +850,7 @@ export function intoDelta(
 				count: 1,
 			});
 		});
-		rootDelta.destroys = destroys;
+		//  rootDelta.destroys = destroys;
 	}
 	return rootDelta;
 }
