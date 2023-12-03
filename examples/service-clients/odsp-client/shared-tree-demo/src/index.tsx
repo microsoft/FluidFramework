@@ -19,10 +19,10 @@ async function main() {
 	// Get the root container id from the URL
 	// If there is no container id, then the app will make
 	// a new container.
-	let containerId = location.hash.substring(1);
+	let itemId = location.hash.substring(1);
 
 	// Initialize Fluid Container
-	const { container } = await loadFluidData(containerId, containerSchema);
+	const { container } = await loadFluidData(itemId, containerSchema);
 
 	// Initialize the SharedTree Data Structure
 	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
@@ -45,7 +45,7 @@ async function main() {
 	);
 
 	// If this is a new container, fill it with data
-	if (containerId.length === 0) {
+	if (itemId.length === 0) {
 		const used: { x: number; y: number }[] = [];
 		let id = 0;
 		"HELLOWORLD"
@@ -76,13 +76,13 @@ async function main() {
 			});
 	}
 
-	// If the app is in a `createNew` state - no containerId, and the container is detached, we attach the container.
+	// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 	// This uploads the container to the service and connects to the collaboration session.
-	if (containerId.length === 0) {
-		containerId = await container.attach();
+	if (itemId.length === 0) {
+		itemId = await container.attach();
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
-		location.hash = containerId;
+		location.hash = itemId;
 	}
 }
 

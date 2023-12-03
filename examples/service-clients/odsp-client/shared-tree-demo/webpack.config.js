@@ -7,7 +7,6 @@ const path = require("path");
 const { merge } = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
-// const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
@@ -34,18 +33,26 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/tree-comparison",
+				devtoolNamespace: "fluid-example/shared-tree-demo",
 				libraryTarget: "umd",
 			},
 			plugins: [
 				new webpack.ProvidePlugin({
 					process: "process/browser",
 				}),
+				// No need to write a index.html
 				new HtmlWebpackPlugin({
-					template: "./src/index.html",
+					title: "Hello Demo",
+					favicon: "",
 				}),
 				// new CleanWebpackPlugin(),
 			],
+			devServer: {
+				// keep port in sync with VS Code launch.json
+				port: 3000,
+				// Hot-reloading, the sole reason to use webpack here <3
+				hot: true,
+			},
 		},
 		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
 	);
