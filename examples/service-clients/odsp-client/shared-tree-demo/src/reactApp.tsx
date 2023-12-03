@@ -1,10 +1,12 @@
+/* eslint-disable prefer-template */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import React, { ReactNode, useEffect, useState } from "react";
+import { TreeView, Tree } from "@fluid-experimental/tree2";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { Tree, TreeView } from "@fluid-experimental/tree2";
 import { App, Letter } from "./schema";
 
 export function Explanation(): JSX.Element {
@@ -89,8 +91,8 @@ function Canvas(props: {
 	canvasSize: { x: number; y: number };
 }): JSX.Element {
 	const style: React.CSSProperties = {
-		width: `${(props.cellSize.x * props.canvasSize.x).toString()}px`,
-		height: `${(props.cellSize.y * props.canvasSize.y).toString()}px`,
+		width: (props.cellSize.x * props.canvasSize.x).toString() + `px`,
+		height: (props.cellSize.y * props.canvasSize.y).toString() + `px`,
 	};
 
 	return (

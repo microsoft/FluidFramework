@@ -4,8 +4,7 @@
 		"module": "esnext",
 		"outDir": "lib",
 		"jsx": "react",
-		"esModuleInterop": true,
 		"types": ["react", "react-dom"],
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "tests/**/*"],
 }

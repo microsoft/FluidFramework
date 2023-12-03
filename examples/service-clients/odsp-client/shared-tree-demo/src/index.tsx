@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable react/jsx-key */
 import React from "react";
 import ReactDOM from "react-dom";
 import { ITree } from "@fluid-experimental/tree2";
-import { loadFluidData, schema } from "./fluid";
-import { appSchemaConfig, letter } from "./schema";
+import { loadFluidData, containerSchema } from "./fluid";
+import { treeConfiguration, Letter } from "./schema";
 import { ReactApp } from "./reactApp";
 
 async function main() {
@@ -23,10 +22,10 @@ async function main() {
 	let containerId = location.hash.substring(1);
 
 	// Initialize Fluid Container
-	const { container } = await loadFluidData(containerId, schema);
+	const { container } = await loadFluidData(containerId, containerSchema);
 
 	// Initialize the SharedTree Data Structure
-	const appData = (container.initialObjects.appData as ITree).schematize(appSchemaConfig);
+	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
 
 	const cellSize = { x: 32, y: 32 };
 	const canvasSize = { x: 10, y: 10 }; // characters across and down
@@ -34,6 +33,7 @@ async function main() {
 	// Render the app - note we attach new containers after render so
 	// the app renders instantly on create new flow. The app will be
 	// interactive immediately.
+	// eslint-disable-next-line react/no-deprecated
 	ReactDOM.render(
 		<ReactApp
 			data={appData}
@@ -65,13 +65,11 @@ async function main() {
 					used.push(pos);
 					appData.root.letters.insertAtEnd(
 						// TODO: error when not adding wrapping [] is inscrutable
-						[
-							letter.create({
-								position: pos,
-								character,
-								id: id.toString(),
-							}),
-						],
+						new Letter({
+							position: pos,
+							character,
+							id: id.toString(),
+						}),
 					);
 					id++;
 				}
@@ -88,4 +86,4 @@ async function main() {
 	}
 }
 
-export default main();
+export { main };

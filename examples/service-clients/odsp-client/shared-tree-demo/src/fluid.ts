@@ -7,8 +7,10 @@ import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedTreeFactory } from "@fluid-experimental/tree2";
 import { clientProps } from "./clientProps";
 
-export class MySharedTree {
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SharedTree {
 	public static getFactory(): SharedTreeFactory {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return new SharedTreeFactory();
 	}
 }
@@ -23,7 +25,7 @@ const client = new OdspClient(clientProps);
  */
 export const loadFluidData = async (
 	containerId: string,
-	containerSchema: ContainerSchema,
+	schema: ContainerSchema,
 ): Promise<{
 	services: OdspContainerServices;
 	container: IFluidContainer;
@@ -35,17 +37,17 @@ export const loadFluidData = async (
 	if (containerId.length === 0) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema));
+		({ container, services } = await client.createContainer(schema));
 	} else {
 		// Use the unique container ID to fetch the container created earlier. It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(containerId, containerSchema));
+		({ container, services } = await client.getContainer(containerId, schema));
 	}
 	return { services, container };
 };
 
-export const schema: ContainerSchema = {
+export const containerSchema: ContainerSchema = {
 	initialObjects: {
-		appData: MySharedTree,
+		appData: SharedTree,
 	},
 };
