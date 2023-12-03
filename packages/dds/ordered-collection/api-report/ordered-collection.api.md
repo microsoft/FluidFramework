@@ -16,13 +16,13 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @internal
 export function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined>;
 
-// @public
+// @internal
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @public
+// @internal
 export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
@@ -50,14 +50,14 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @public
+// @internal
 export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusQueue<T>;
     static getFactory(): IChannelFactory;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum ConsensusResult {
     // (undocumented)
     Complete = 1,
@@ -65,14 +65,14 @@ export enum ConsensusResult {
     Release = 0
 }
 
-// @public
+// @internal
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @public
+// @internal
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
     (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
     (event: "acquire", listener: (value: T, clientId?: string) => void): this;
@@ -80,7 +80,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
     (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 }
 
-// @public
+// @internal
 export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
@@ -88,14 +88,14 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 }
 
-// @public
+// @internal
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     add(value: T): any;
     remove(): T;
     size(): number;
 }
 
-// @public
+// @internal
 export interface ISnapshotable<T> {
     // (undocumented)
     asArray(): T[];
@@ -103,7 +103,7 @@ export interface ISnapshotable<T> {
     loadFrom(values: T[]): void;
 }
 
-// @public
+// @internal
 export function waitAcquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T>;
 
 // (No @packageDocumentation comment for this package)

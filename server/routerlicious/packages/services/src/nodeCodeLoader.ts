@@ -16,6 +16,9 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
+/**
+ * @internal
+ */
 export class NodeAllowList {
 	constructor() {}
 
@@ -24,6 +27,9 @@ export class NodeAllowList {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NodeCodeLoader {
 	constructor(
 		private readonly packageDirectory: string,

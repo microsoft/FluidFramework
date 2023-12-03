@@ -10,6 +10,7 @@ import { debug } from "./debug";
 /**
  * Helper class to manage access to database
  * \@TODO: Rename the file name as it behaves now as a generic DB Manager
+ * @internal
  */
 export class MongoManager {
 	private databaseP: Promise<IDb>;

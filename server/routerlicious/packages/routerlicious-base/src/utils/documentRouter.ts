@@ -12,6 +12,7 @@ import nconf from "nconf";
 
 /**
  * Lambda plugin definition
+ * @internal
  */
 export interface IPlugin {
 	/**
@@ -24,6 +25,9 @@ export interface IPlugin {
 	): Promise<IPartitionLambdaFactory>;
 }
 
+/**
+ * @internal
+ */
 export async function createDocumentRouter(
 	config: nconf.Provider,
 	customizations?: Record<string, any>,

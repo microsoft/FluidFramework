@@ -8,6 +8,7 @@ import safeStringify from "json-stringify-safe";
 /**
  * Standard throttler config that maps to the params for Throttler and ThrottlerHelper
  * from `@fluidframework/server-services` package.
+ * @internal
  */
 export interface IThrottleConfig {
 	maxPerMs: number;
@@ -27,6 +28,7 @@ export interface IThrottleConfig {
  * Most often, we compute ThrottleConfig based on how many events we can support in a given timeframe.
  * The resulting config is almost always the same maths, with some variation in maxInMemoryCacheSize
  * and maxInMemoryCacheAgeInMs depending on the need.
+ * @internal
  */
 export interface ISimpleThrottleConfig extends Partial<IThrottleConfig> {
 	maxPerInterval: number;
@@ -71,6 +73,7 @@ export const disabledThrottleConfig: IThrottleConfig = {
 };
 /**
  * Get a valid IThrottleConfig from a config file value.
+ * @internal
  */
 export const getThrottleConfig = (
 	configValue: ISimpleThrottleConfig | Partial<IThrottleConfig> | "disabled" | undefined,

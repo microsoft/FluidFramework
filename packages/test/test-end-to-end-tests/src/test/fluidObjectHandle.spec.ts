@@ -10,16 +10,17 @@ import {
 	TestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach(function () {
 		provider = getTestObjectProvider();
 	});
 
@@ -34,7 +35,7 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 			await getContainerEntryPointBackCompat<ITestDataObject>(firstContainer);
 		const containerRuntime1 = firstContainerObject1._context.containerRuntime;
 		const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
-		firstContainerObject2 = (await dataStore.entryPoint.get()) as ITestDataObject;
+		firstContainerObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
 
 		// Load the Container that was created by the first client.
 		const secondContainer = await provider.loadTestContainer();

@@ -11,32 +11,31 @@ import {
 
 /**
  * Types of test drivers.
- * @public
+ * @internal
  */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
  * Types of Routerlicious endpoints.
- * @public
+ * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
  * Types of Odsp endpoints.
- * @public
+ * @internal
  */
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 /**
  * Types of Driver endpoints.
- * @public
+ * @internal
  */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
 /**
  * Base interface for test drivers.
- *
- * @public
+ * @internal
  */
 export interface ITestDriver {
 	/**
@@ -113,8 +112,7 @@ export interface ITestDriver {
 /**
  * Extension of ITelemetryBaseLogger with support for flushing
  * all buffered logs that have not yet been fully processed (e.g. uploaded)
- *
- * @public
+ * @internal
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 	/**

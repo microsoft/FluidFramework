@@ -11,13 +11,20 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
  * * stopping - a proposal to migrate has been made, but not accepted yet.  The client must stop sending data.
  * * migrating - a proposal to migrate has been accepted.  The data is currently being migrated.
  * * migrated - migration has completed and the new container is available.
+ * @internal
  */
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
+/**
+ * @internal
+ */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
 }
 
+/**
+ * @internal
+ */
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
 	/**
 	 * The current state of migration.

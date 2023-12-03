@@ -6,12 +6,18 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import safeStringify from "json-stringify-safe";
 
+/**
+ * @internal
+ */
 export const catch404: () => RequestHandler = () => (req, res, next) => {
 	const err = new Error("Not Found");
 	(err as any).status = 404;
 	next(err);
 };
 
+/**
+ * @internal
+ */
 export const handleError: (showStackTrace?: boolean) => ErrorRequestHandler =
 	(showStackTrace = true) =>
 	(err, req, res, next) => {

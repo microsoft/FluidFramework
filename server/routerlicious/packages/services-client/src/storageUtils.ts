@@ -30,6 +30,7 @@ import {
  * If a node is empty (blank) it will be removed.
  * If a node's name begins and/or ends with a "/", it will be removed.
  * @param nodeNames - node names in path
+ * @internal
  */
 export const buildTreePath = (...nodeNames: string[]): string =>
 	nodeNames
@@ -42,6 +43,7 @@ export const buildTreePath = (...nodeNames: string[]): string =>
  * @param parentHandle - Handle of the last uploaded summary or detach new summary.
  * @param tree - Summary Tree which will be converted to whole summary tree to be uploaded.
  * @param path - Current path of node which is getting evaluated.
+ * @internal
  */
 export function convertSummaryTreeToWholeSummaryTree(
 	parentHandle: string | undefined,
@@ -195,6 +197,7 @@ function buildSummaryTreeHierarchy(
  * @param flatSummary - flat summary
  * @param treePrefixToRemove - tree prefix to strip. By default we are stripping ".app" prefix
  * @returns snapshot tree, blob array, and sequence number
+ * @internal
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 	flatSummary: IWholeFlatSummary,
@@ -248,6 +251,7 @@ function isWholeSummaryTree(obj: any): obj is IWholeSummaryTree {
  * Converts existing IWholeSummaryTree to ISummaryTree for the first summary (without Handle entries)
  * @param wholeSummaryTree - wholeSummaryTree used on the payload for creating and uploading a document.
  * @returns Summary tree to be used when creating a new document.
+ * @internal
  */
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 	wholeSummaryTree: IWholeSummaryTree,

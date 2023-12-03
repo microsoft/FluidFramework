@@ -20,7 +20,7 @@ import {
 	ChannelFactoryRegistry,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -41,7 +41,7 @@ const groupedBatchingContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();
@@ -293,23 +293,27 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
 generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 
-describeNoCompat("ConsensusRegisterCollection grouped batching", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
+describeCompat(
+	"ConsensusRegisterCollection grouped batching",
+	"NoCompat",
+	(getTestObjectProvider) => {
+		let provider: ITestObjectProvider;
+		beforeEach(() => {
+			provider = getTestObjectProvider();
+		});
 
-	it("grouped batching doesn't hit 0x071", async () => {
-		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		it("grouped batching doesn't hit 0x071", async () => {
+			const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
-		const collection = ConsensusRegisterCollection.create(dataObject.runtime);
+			const collection = ConsensusRegisterCollection.create(dataObject.runtime);
 
-		sharedMap.set("collection", collection.handle);
-		const write1P = collection.write("key1", "value1");
-		const write2P = collection.write("key1", "value2");
-		await Promise.all([write1P, write2P]);
-		await provider.ensureSynchronized();
-	});
-});
+			sharedMap.set("collection", collection.handle);
+			const write1P = collection.write("key1", "value1");
+			const write2P = collection.write("key1", "value2");
+			await Promise.all([write1P, write2P]);
+			await provider.ensureSynchronized();
+		});
+	},
+);
