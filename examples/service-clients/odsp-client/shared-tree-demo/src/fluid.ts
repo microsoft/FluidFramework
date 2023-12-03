@@ -8,9 +8,8 @@ import { SharedTreeFactory } from "@fluid-experimental/tree2";
 import { clientProps } from "./clientProps";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class SharedTree {
+class SharedTree {
 	public static getFactory(): SharedTreeFactory {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return new SharedTreeFactory();
 	}
 }
@@ -18,8 +17,8 @@ export class SharedTree {
 const client = new OdspClient(clientProps);
 
 /**
- * This function will create a container if no container ID is passed on the hash portion of the URL.
- * If a container ID is provided, it will load the container.
+ * This function will create a container if no item Id is passed on the hash portion of the URL.
+ * If a item Id is provided, it will load the container.
  *
  * @returns The loaded container and container services.
  */
@@ -39,7 +38,7 @@ export const loadFluidData = async (
 		// A detached container will enable the app to modify the container before attaching it to the client
 		({ container, services } = await client.createContainer(schema));
 	} else {
-		// Use the unique container ID to fetch the container created earlier. It will already be connected to the
+		// Use the unique item Id to fetch the container created earlier. It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(itemId, schema));
 	}

@@ -16,8 +16,8 @@ async function main() {
 	app.id = "app";
 	document.body.appendChild(app);
 
-	// Get the root container id from the URL
-	// If there is no container id, then the app will make
+	// Get the root item Id from the URL
+	// If there is no item Id, then the app will make
 	// a new container.
 	let itemId = location.hash.substring(1);
 
@@ -33,7 +33,6 @@ async function main() {
 	// Render the app - note we attach new containers after render so
 	// the app renders instantly on create new flow. The app will be
 	// interactive immediately.
-	// eslint-disable-next-line react/no-deprecated
 	ReactDOM.render(
 		<ReactApp
 			data={appData}
