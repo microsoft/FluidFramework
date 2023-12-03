@@ -44,14 +44,27 @@ export interface CompatApis {
     // (undocumented)
     containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
     // (undocumented)
+    containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
+    // (undocumented)
     dataRuntime: ReturnType<typeof getDataRuntimeApi>;
+    // (undocumented)
+    dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
     // (undocumented)
     dds: ReturnType<typeof getDataRuntimeApi>["dds"];
     // (undocumented)
+    ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];
+    // (undocumented)
     driver: ReturnType<typeof getDriverApi>;
     // (undocumented)
+    driverForLoading?: ReturnType<typeof getDriverApi>;
+    // (undocumented)
     loader: ReturnType<typeof getLoaderApi>;
+    // (undocumented)
+    loaderForLoading?: ReturnType<typeof getLoaderApi>;
 }
+
+// @internal (undocumented)
+export type CompatVersionKind = "FullCompat" | "NoCompat" | "LoaderCompat";
 
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
@@ -83,8 +96,11 @@ export const DataRuntimeApi: {
 // @internal (undocumented)
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
+// @internal
+export const describeCompat: DescribeCompat;
+
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export type DescribeCompatSuite = (name: string, compatVersionKind: CompatVersionKind, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {
@@ -114,17 +130,8 @@ export const describeE2EDocsRuntime: DescribeE2EDocSuite;
 // @internal (undocumented)
 export type DescribeE2EDocSuite = (title: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, documentType: () => DescribeE2EDocInfo) => void, docTypes?: DescribeE2EDocInfo[], testType?: string) => Mocha.Suite | void;
 
-// @internal (undocumented)
-export const describeFullCompat: DescribeCompat;
-
 // @internal
 export function describeInstallVersions(requestedVersions?: IRequestedFluidVersions, timeoutMs?: number): DescribeWithVersions;
-
-// @internal (undocumented)
-export const describeLoaderCompat: DescribeCompat;
-
-// @internal (undocumented)
-export const describeNoCompat: DescribeCompat;
 
 // @internal (undocumented)
 export type DescribeSuiteWithVersions = (name: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider) => void) => Mocha.Suite | void;
@@ -200,23 +207,23 @@ export type ExpectedEvents = ITelemetryGenericEvent[] | Partial<Record<TestDrive
 // @internal (undocumented)
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;
 
-// @internal (undocumented)
-export function getContainerRuntimeApi(baseVersion: string, requested?: number | string): typeof ContainerRuntimeApi;
+// @internal
+export function getContainerRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof ContainerRuntimeApi;
 
 // @internal (undocumented)
 export const getCurrentBenchmarkType: (currentType: DescribeE2EDocSuite) => BenchmarkType;
 
-// @internal (undocumented)
-export function getDataRuntimeApi(baseVersion: string, requested?: number | string): typeof DataRuntimeApi;
+// @internal
+export function getDataRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DataRuntimeApi;
 
 // @internal (undocumented)
 export const getDataStoreFactory: (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory;
 
-// @internal (undocumented)
-export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi;
+// @internal
+export function getDriverApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DriverApi;
 
-// @internal (undocumented)
-export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi;
+// @internal
+export function getLoaderApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof LoaderApi;
 
 // @internal (undocumented)
 export function getVersionedTestObjectProvider(baseVersion: string, loaderVersion?: number | string, driverConfig?: {

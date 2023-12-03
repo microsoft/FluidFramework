@@ -7,6 +7,9 @@ import { EventEmitter } from "events";
 import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 
+/**
+ * @internal
+ */
 export class TestCollection implements ICollection<any> {
 	constructor(public collection: any[]) {}
 
@@ -185,6 +188,9 @@ export class TestCollection implements ICollection<any> {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestDb implements IDb {
 	private readonly emitter = new EventEmitter();
 
@@ -216,10 +222,16 @@ export class TestDb implements IDb {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface ITestDbFactory extends IDbFactory {
 	readonly testDatabase: IDb;
 }
 
+/**
+ * @internal
+ */
 export class TestDbFactory implements ITestDbFactory {
 	public readonly testDatabase: IDb;
 	constructor(collections: { [key: string]: any[] }) {

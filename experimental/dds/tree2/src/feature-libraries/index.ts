@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -120,15 +119,11 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
 
 export {
@@ -257,6 +252,9 @@ export {
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
+	FlexTreeUnboxField,
+	flexTreeMarker,
+	FlexTreeEntityKind,
 	onNextChange,
 	isFlexTreeNode,
 } from "./flex-tree";

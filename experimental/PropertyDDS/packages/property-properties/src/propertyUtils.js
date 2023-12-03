@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export class PropertyUtils {
 	/**
 	 * Gather all properties that pass an arbitrary predicate function

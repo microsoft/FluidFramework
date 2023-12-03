@@ -15,7 +15,6 @@ import { TypedNode, TreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * @alpha
  * @privateRemarks
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
@@ -68,7 +67,6 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @alpha
  */
 export const nodeApi: TreeApi = {
 	schema: (node: TreeNode) => {

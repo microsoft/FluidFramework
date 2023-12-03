@@ -455,7 +455,7 @@ export interface Named<TName> {
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
- * @alpha
+ * @beta
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -463,7 +463,7 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
  * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @alpha
+ * @beta
  */
 export interface IDisposable {
 	/**

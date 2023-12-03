@@ -34,6 +34,7 @@ interface ITriangleViewProps {
 /**
  * TriangleView is a React component that renders a triangle using the given ICoordinates as the vertices.
  * For now, it only renders out the triangle, but we could enhance it to allow manipulating the coordinates.
+ * @internal
  */
 export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
 	const canvasRef = React.createRef<HTMLCanvasElement>();

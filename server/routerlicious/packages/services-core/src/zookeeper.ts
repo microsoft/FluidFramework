@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export type ZookeeperClientConstructor = new (url: string) => IZookeeperClient;
 
 /**
  * Interface for a Zookeeper Client
+ * @internal
  */
 export interface IZookeeperClient {
 	/**

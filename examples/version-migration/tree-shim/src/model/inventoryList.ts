@@ -3,24 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
-import {
-	ForestType,
-	ISharedTree,
-	SharedTreeFactory,
-	typeboxValidator,
-} from "@fluid-experimental/tree2";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-
 import {
 	MigrationShim,
 	MigrationShimFactory,
+	SharedTree as LegacySharedTree,
 	SharedTreeShim,
 	SharedTreeShimFactory,
-} from "@fluid-experimental/migration-shim";
+} from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
+import { ForestType, ITree, TreeFactory, typeboxValidator } from "@fluid-experimental/tree2";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController";
 import { NewTreeInventoryListController } from "./newTreeInventoryListController";
@@ -31,13 +26,13 @@ const treeKey = "tree";
 // Set to true to artificially slow down the migration.
 const DEBUG_migrateSlowly = false;
 
-const newTreeFactory = new SharedTreeFactory({
+const newTreeFactory = new TreeFactory({
 	jsonValidator: typeboxValidator,
 	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
 	forest: ForestType.Reference,
 });
 
-function migrate(legacyTree: LegacySharedTree, newTree: ISharedTree) {
+function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 	// Revert local edits - otherwise we will be eventually inconsistent
 	const edits = legacyTree.edits as EditLog;
 	const localEdits = [...edits.getLocalEdits()].reverse();
@@ -162,7 +157,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 					.catch(console.error);
 			});
 		} else {
-			const tree = this.shim.currentTree as ISharedTree;
+			const tree = this.shim.currentTree as ITree;
 			this._model = new NewTreeInventoryListController(tree);
 		}
 
