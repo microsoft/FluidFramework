@@ -229,6 +229,9 @@ export class ModularChangeFamily
 							}
 						}
 					}
+					if (innerDstMap.size === 0) {
+						allBuilds.delete(setRevisionKey);
+					}
 				}
 			}
 			if (change.destroys) {
@@ -424,7 +427,15 @@ export class ModularChangeFamily
 		if (isRollback) {
 			const builds = change.change.builds;
 			if (builds !== undefined) {
-				destroys = mapNestedMap(builds, () => undefined);
+				destroys = new Map();
+				for (const [revision, innerBuildMap] of builds) {
+					const initializedRevision = revision ?? change.revision;
+					const innerDestroyMap: Map<ChangesetLocalId, undefined> = new Map();
+					for (const id of innerBuildMap.keys()) {
+						innerDestroyMap.set(id, undefined);
+					}
+					destroys.set(initializedRevision, innerDestroyMap);
+				}
 			}
 		}
 
