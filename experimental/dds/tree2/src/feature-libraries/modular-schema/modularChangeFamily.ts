@@ -200,7 +200,7 @@ export class ModularChangeFamily
 		);
 		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
 		const allDestroys: ChangeAtomIdMap<undefined> = new Map();
-		for (const { revision, change } of changes) {
+		for (const { revision, change } of changesWithoutConstraintViolations) {
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
@@ -257,6 +257,7 @@ export class ModularChangeFamily
 			revInfos,
 			undefined,
 			allBuilds,
+			allDestroys,
 		);
 	}
 
