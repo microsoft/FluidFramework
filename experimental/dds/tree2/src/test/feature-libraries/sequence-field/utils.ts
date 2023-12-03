@@ -44,6 +44,16 @@ export function compose(
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
 
+export function prune(
+	change: TestChangeset,
+	childPruner?: (child: TestChange) => TestChange | undefined,
+): TestChangeset {
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
+	);
+}
+
 export function shallowCompose<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	revInfos?: RevisionInfo[],
