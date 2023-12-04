@@ -35,6 +35,7 @@ import {
 import { IChannel } from ".";
 
 /**
+ * Events emitted by {@link IFluidDataStoreRuntime}.
  * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
