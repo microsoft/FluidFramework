@@ -18,24 +18,28 @@ import {
 	UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
+	ChangesetLocalId,
 } from "../../../core";
 import { leaf, jsonObject, SchemaBuilder } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	FieldKinds,
+	ModularChangeset,
 	TreeFieldSchema,
 	TreeSchema,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
+	schemaCompressedEncode,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
+import { testTrees } from "../../testTrees";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const family = defaultChangeFamily;
@@ -315,139 +319,97 @@ describe("DefaultEditBuilder", () => {
 	});
 
 	describe("Sequence Field Edits", () => {
-		describe("Can insert a root node", () => {
-			it("with uncompressed encoding", () => {
-				const { builder, forest } = initializeEditableForest();
-				builder
-					.sequenceField({ parent: undefined, field: rootKey })
-					.insert(0, cursorForJsonableTreeNode(nodeX));
-				expectForest(forest, nodeX);
-			});
-
-			it("with schema based encoding", () => {
-				const { builder, forest } = initializeEditableForest();
-				builder
-					.sequenceField(
-						{ parent: undefined, field: rootKey },
-						{
-							schema: buildSchema(
-								TreeFieldSchema.create(FieldKinds.required, [leaf.string]),
-							),
-							policy: defaultSchemaPolicy,
-						},
-					)
-					.insert(0, cursorForJsonableTreeNode(nodeX));
-				expectForest(forest, nodeX);
-			});
+		it("Can insert a root node", () => {
+			const { builder, forest } = initializeEditableForest();
+			builder
+				.sequenceField({ parent: undefined, field: rootKey })
+				.insert(0, cursorForJsonableTreeNode(nodeX));
+			expectForest(forest, nodeX);
 		});
 
-		describe("Can insert a child node", () => {
-			it("with uncompressed encoding", () => {
-				const { builder, forest } = initializeEditableForest({
-					type: jsonObject.name,
-					fields: {
-						foo: [
-							{ type: leaf.number.name, value: 0 },
-							{ type: leaf.number.name, value: 1 },
-							{
-								type: jsonObject.name,
-								fields: {
-									foo: [
-										{ type: leaf.number.name, value: 0 },
-										{ type: leaf.number.name, value: 1 },
-										{ type: leaf.number.name, value: 2 },
-										{ type: leaf.number.name, value: 3 },
-										{ type: leaf.number.name, value: 4 },
-									],
-								},
-							},
-						],
-					},
-				});
-				builder
-					.sequenceField({ parent: root_foo2, field: fooKey })
-					.insert(5, cursorForJsonableTreeNode(nodeX));
-				const expected = {
-					type: jsonObject.name,
-					fields: {
-						foo: [
-							{ type: leaf.number.name, value: 0 },
-							{ type: leaf.number.name, value: 1 },
-							{
-								type: jsonObject.name,
-								fields: {
-									foo: [
-										{ type: leaf.number.name, value: 0 },
-										{ type: leaf.number.name, value: 1 },
-										{ type: leaf.number.name, value: 2 },
-										{ type: leaf.number.name, value: 3 },
-										{ type: leaf.number.name, value: 4 },
-										nodeX,
-									],
-								},
-							},
-						],
-					},
-				};
-				expectForest(forest, expected);
-			});
-
-			it("with schema based encoding", () => {
-				const { builder, forest } = initializeEditableForest({
-					type: jsonObject.name,
-					fields: {
-						foo: [
-							{ type: leaf.number.name, value: 0 },
-							{ type: leaf.number.name, value: 1 },
-							{
-								type: jsonObject.name,
-								fields: {
-									foo: [
-										{ type: leaf.number.name, value: 0 },
-										{ type: leaf.number.name, value: 1 },
-										{ type: leaf.number.name, value: 2 },
-										{ type: leaf.number.name, value: 3 },
-										{ type: leaf.number.name, value: 4 },
-									],
-								},
-							},
-						],
-					},
-				});
-
-				builder
-					.sequenceField(
-						{ parent: root_foo2, field: fooKey },
+		it("Can insert a child node", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
 						{
-							schema: buildSchema(SchemaBuilder.sequence(leaf.number)),
-							policy: defaultSchemaPolicy,
-						},
-					)
-					.insert(5, cursorForJsonableTreeNode(nodeX));
-				const expected = {
-					type: jsonObject.name,
-					fields: {
-						foo: [
-							{ type: leaf.number.name, value: 0 },
-							{ type: leaf.number.name, value: 1 },
-							{
-								type: jsonObject.name,
-								fields: {
-									foo: [
-										{ type: leaf.number.name, value: 0 },
-										{ type: leaf.number.name, value: 1 },
-										{ type: leaf.number.name, value: 2 },
-										{ type: leaf.number.name, value: 3 },
-										{ type: leaf.number.name, value: 4 },
-										nodeX,
-									],
-								},
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
+								],
 							},
-						],
-					},
-				};
-				expectForest(forest, expected);
+						},
+					],
+				},
 			});
+			builder
+				.sequenceField({ parent: root_foo2, field: fooKey })
+				.insert(5, cursorForJsonableTreeNode(nodeX));
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+									{ type: leaf.number.name, value: 4 },
+									nodeX,
+								],
+							},
+						},
+					],
+				},
+			};
+			expectForest(forest, expected);
+		});
+
+		describe("encodes insert ops using schema based encoding", () => {
+			// testFields were omitted, as we currently do not encode ops with fieldCursors.
+			const skipIndices = [0, 5];
+			for (const { name, treeFactory, schemaData } of testTrees.filter(
+				(_, index) => !skipIndices.includes(index),
+			)) {
+				it(name, () => {
+					const tree = treeFactory();
+					const changes: ModularChangeset[] = [];
+					const changeReceiver = (change: ModularChangeset) => changes.push(change);
+					const builder = new DefaultEditBuilder(defaultChangeFamily, changeReceiver);
+					builder
+						.sequenceField(
+							{ parent: undefined, field: rootKey },
+							{
+								schema: schemaData,
+								policy: defaultSchemaPolicy,
+							},
+						)
+						.insert(
+							0,
+							tree.map((node) => cursorForJsonableTreeNode(node)),
+						);
+					const changesetId: ChangesetLocalId = brand(0);
+					const encodedOp = changes[0].builds?.get(undefined)?.get(changesetId);
+					const expectedOp = schemaCompressedEncode(
+						schemaData,
+						defaultSchemaPolicy,
+						cursorForJsonableTreeField(tree),
+					);
+					assert.deepEqual(encodedOp, expectedOp);
+				});
+			}
 		});
 
 		it("Can delete a root node", () => {
