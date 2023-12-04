@@ -20,14 +20,12 @@ import {
 	makeDetachedFieldIndex,
 	ChangesetLocalId,
 } from "../../../core";
-import { leaf, jsonObject, SchemaBuilder } from "../../../domains";
+import { leaf, jsonObject } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	ModularChangeset,
-	TreeFieldSchema,
-	TreeSchema,
 	buildForest,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
@@ -145,16 +143,6 @@ function expectForest(actual: IForestSubscription, expected: JsonableTree | Json
 	reader.free();
 	const expectedArray = Array.isArray(expected) ? expected : [expected];
 	assert.deepEqual(copy, expectedArray);
-}
-
-function buildSchema(fieldSchema: TreeFieldSchema): TreeSchema {
-	const schemaBuilder = new SchemaBuilder({ scope: "test" });
-	const schemaLibrary = schemaBuilder.intoLibrary();
-	return new SchemaBuilder({
-		scope: "test",
-		lint: { rejectForbidden: false, rejectEmpty: false },
-		libraries: [schemaLibrary],
-	}).intoSchema(fieldSchema);
 }
 
 describe("DefaultEditBuilder", () => {
