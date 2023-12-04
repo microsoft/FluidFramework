@@ -19,7 +19,6 @@ import {
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
-	ICombiningOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -37,6 +36,8 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	IMergeTreeObliterateMsg,
+	createObliterateRangeOp,
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -102,15 +103,15 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
 		listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "sequenceDelta",
 		listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**
@@ -145,7 +146,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			switch (event.deltaOperation) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
-					const props = {};
+					const props: PropertySet = {};
 					for (const key of Object.keys(r.propertyDeltas)) {
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
@@ -161,7 +162,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								r.position,
 								r.position + r.segment.cachedLength,
 								props,
-								undefined,
 							),
 						);
 					}
@@ -183,6 +183,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					} else {
 						ops.push(
 							createRemoveRangeOp(r.position, r.position + r.segment.cachedLength),
+						);
+					}
+					break;
+				}
+
+				case MergeTreeDeltaType.OBLITERATE: {
+					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
+					if (lastRem?.pos1 === r.position) {
+						assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
+						lastRem.pos2 += r.segment.cachedLength;
+					} else {
+						ops.push(
+							createObliterateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
 						);
 					}
 					break;
@@ -270,6 +286,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 *
+	 * @alpha
+	 */
+	public obliterateRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
+	}
+
+	/**
 	 * @deprecated The ability to create group ops will be removed in an upcoming
 	 * release, as group ops are redundant with the native batching capabilities
 	 * of the runtime
@@ -312,16 +341,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 *
 	 */
-	public annotateRange(
-		start: number,
-		end: number,
-		props: PropertySet,
-		combiningOp?: ICombiningOp,
-	): void {
-		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
+	public annotateRange(start: number, end: number, props: PropertySet): void {
+		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
 	public getPropertiesAtPosition(pos: number) {

@@ -145,10 +145,10 @@ The typical usage for testing a Fluid object is as follows:
 
     > We used the same `IFluidCodeDetails` that was used to create the `Loader` in step 3.
 
-6. Get the `Fluid object (TestFluidObject)` by using `requestFluidObject` API in `@fluidframework/runtime-utils`. Then get the `DDS` to test:
+6. Get the `Fluid object (TestFluidObject)` by using `getEntryPoint()` API on `IContainer`. Then get the `DDS` to test:
 
     ```typescript
-    const fluidObject = await requestFluidObject<ITestFluidObject>(container, "default"); // "default" represent the default Fluid object.
+    const fluidObject = await container.getEntryPoint();
     const sharedString = await fluidObject.getSharedObject<SharedString>("sharedString");
     ```
 
@@ -163,7 +163,7 @@ The typical usage for testing a Fluid object is as follows:
     	urlResolver,
     );
     const container2 = await loader2.resolver({ url: documentUrl });
-    const fluidObject = await requestFluidObject<ITestFluidObject>(container2, "default");
+    const fluidObject = await container2.getEntryPoint();
     const sharedString2 = await fluidObject2.getSharedObject<SharedString>("sharedString");
     ```
     > It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `documentId` to load the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.

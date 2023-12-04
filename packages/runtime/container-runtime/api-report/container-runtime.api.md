@@ -26,12 +26,10 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
-import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -158,19 +156,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown>;
     // (undocumented)
     getQuorum(): IQuorumClients;
-    // @deprecated
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     get isDirty(): boolean;
-    // @deprecated (undocumented)
-    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -194,8 +186,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
-    // @deprecated
-    request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get scope(): FluidObject;
@@ -444,16 +434,7 @@ export interface IGCRuntimeOptions {
 }
 
 // @public
-export interface IGCStats {
-    attachmentBlobCount: number;
-    dataStoreCount: number;
-    nodeCount: number;
-    unrefAttachmentBlobCount: number;
-    unrefDataStoreCount: number;
-    unrefNodeCount: number;
-    updatedAttachmentBlobCount: number;
-    updatedDataStoreCount: number;
-    updatedNodeCount: number;
+export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 }
 
 // @public
@@ -474,6 +455,19 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly stage: "generate";
     readonly summaryStats: IGeneratedSummaryStats;
     readonly summaryTree: ISummaryTree;
+}
+
+// @public
+export interface IMarkPhaseStats {
+    attachmentBlobCount: number;
+    dataStoreCount: number;
+    nodeCount: number;
+    unrefAttachmentBlobCount: number;
+    unrefDataStoreCount: number;
+    unrefNodeCount: number;
+    updatedAttachmentBlobCount: number;
+    updatedDataStoreCount: number;
+    updatedNodeCount: number;
 }
 
 // @public (undocumented)
@@ -702,6 +696,16 @@ export interface ISummaryRuntimeOptions {
 }
 
 // @public
+export interface ISweepPhaseStats {
+    deletedAttachmentBlobCount: number;
+    deletedDataStoreCount: number;
+    deletedNodeCount: number;
+    lifetimeAttachmentBlobCount: number;
+    lifetimeDataStoreCount: number;
+    lifetimeNodeCount: number;
+}
+
+// @public
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
     readonly handle: string;
     // (undocumented)
@@ -763,8 +767,6 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
-    // @deprecated
-    static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -846,9 +848,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 // @public
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
-
-// @internal
-export function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer>;
 
 // @public
 export const TombstoneResponseHeaderKey = "isTombstoned";

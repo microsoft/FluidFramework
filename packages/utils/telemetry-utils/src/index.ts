@@ -56,6 +56,7 @@ export {
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
+	MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,

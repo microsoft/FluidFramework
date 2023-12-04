@@ -75,6 +75,7 @@ export {
 	rootFieldKey,
 	NodeData,
 	rootField,
+	aboveRootPlaceholder,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export {
@@ -98,6 +99,7 @@ export {
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 } from "./deltaUtil";
 

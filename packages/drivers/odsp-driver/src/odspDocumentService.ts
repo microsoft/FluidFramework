@@ -262,7 +262,7 @@ export class OdspDocumentService implements IDocumentService {
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream"
+			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
 			.then((m) => {
 				this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });

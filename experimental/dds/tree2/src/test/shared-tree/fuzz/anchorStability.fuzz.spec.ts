@@ -3,23 +3,28 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value, AllowedUpdateType } from "../../../core";
-import { ISharedTreeView, InitializeAndSchematizeConfiguration } from "../../../shared-tree";
+import { UpPath, Anchor, Value } from "../../../core";
+import { TreeContent } from "../../../shared-tree";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
+import {
+	makeOpGenerator,
+	EditGeneratorOpWeights,
+	FuzzTestState,
+	viewFromState,
+} from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import {
 	createAnchors,
@@ -34,8 +39,6 @@ import { Operation } from "./operationTypes";
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
-	// Parallel array to `clients`: set in testStart
-	views?: ISharedTreeView[];
 }
 
 const config = {
@@ -53,8 +56,7 @@ const config = {
 		},
 		optionalChild: undefined,
 	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-} satisfies InitializeAndSchematizeConfiguration;
+} satisfies TreeContent;
 
 const initialTreeJson = cursorsFromContextualData(
 	config,
@@ -71,17 +73,15 @@ const initialTreeJson = cursorsFromContextualData(
  */
 describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// TODO: Add deletes once anchors are stable across removal and reinsertion
-		// TODO: Add moves once we have a generator for them
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
-			// When adding deletes/moves, also consider turning on optional/value fields
-			// (as of now, they're off as "set" can delete nodes which causes the same problems as above)
+			delete: 2,
+			move: 2,
 			fieldSelection: {
-				optional: 0,
-				required: 0,
+				optional: 1,
+				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
@@ -103,19 +103,21 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = initialState.clients[0].channel.schematize(config).branch;
+			const tree = viewFromState(
+				initialState,
+				initialState.clients[0],
+				config.initialTree,
+			).checkout;
 			tree.transaction.start();
 			// These tests are hard coded to a single client, so this is fine.
-			initialState.views = [tree];
 			initialState.anchors = [createAnchors(tree)];
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
-			const views = finalState.views ?? assert.fail("views should be defined");
 
 			// aborts any transactions that may still be in progress
-			const tree = views[0];
+			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
 			validateAnchors(tree, anchors[0], true);
@@ -135,18 +137,16 @@ describe("Fuzz - anchor stability", () => {
 		});
 	});
 	describe("Anchors are stable", () => {
-		// TODO: Add deletes once anchors are stable across removal
-		// TODO: Add moves once we have a generator for them
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 2,
+			delete: 2,
+			move: 2,
 			undo: 1,
 			redo: 1,
 			synchronizeTrees: 1,
-			// When adding deletes/moves, also consider turning on optional/value fields
-			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
 			fieldSelection: {
-				optional: 0,
-				required: 0,
+				optional: 1,
+				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
@@ -169,23 +169,21 @@ describe("Fuzz - anchor stability", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			initialState.anchors = [];
-			initialState.views = [];
 			for (const client of initialState.clients) {
-				const view = client.channel.schematize(config).branch as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const view = viewFromState(initialState, client, config.initialTree)
+					.checkout as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
 				initialState.anchors.push(createAnchors(view));
-				initialState.views.push(view);
 			}
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
-			const views = finalState.views ?? assert.fail("views should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(views[i], anchors[i], false);
+				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}
 		});
 

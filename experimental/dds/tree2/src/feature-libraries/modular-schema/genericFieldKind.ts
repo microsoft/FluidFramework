@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
+import { Delta, makeAnonChange, RevisionMetadataSource, tagChange, TaggedChange } from "../../core";
 import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -12,7 +12,8 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	RevisionMetadataSource,
+	RemovedTreesFromChild,
+	NodeChangePruner,
 } from "./fieldChangeHandler";
 import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
@@ -71,13 +72,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange, index),
+					nodeChange: invertChild(nodeChange),
 				}),
 			);
 		},
-		amendInvert: () => fail("Not implemented"),
 		rebase: rebaseGenericChange,
-		amendRebase: rebaseGenericChange,
+		prune: pruneGenericChange,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -102,6 +102,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return { local: markList };
 	},
+	relevantRemovedTrees,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
@@ -147,6 +148,20 @@ function rebaseGenericChange(
 	}
 
 	return rebased;
+}
+
+function pruneGenericChange(
+	changeset: GenericChangeset,
+	pruneChild: NodeChangePruner,
+): GenericChangeset {
+	const pruned: GenericChangeset = [];
+	for (const change of changeset) {
+		const prunedNode = pruneChild(change.nodeChange);
+		if (prunedNode !== undefined) {
+			pruned.push({ ...change, nodeChange: prunedNode });
+		}
+	}
+	return pruned;
 }
 
 /**
@@ -195,4 +210,13 @@ const invalidCrossFieldManager: CrossFieldManager = {
 
 export function newGenericChangeset(): GenericChangeset {
 	return [];
+}
+
+function* relevantRemovedTrees(
+	change: GenericChangeset,
+	removedTreesFromChild: RemovedTreesFromChild,
+): Iterable<Delta.DetachedNodeId> {
+	for (const { nodeChange } of change) {
+		yield* removedTreesFromChild(nodeChange);
+	}
 }

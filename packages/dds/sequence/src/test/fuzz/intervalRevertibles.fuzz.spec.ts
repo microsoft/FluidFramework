@@ -8,13 +8,13 @@ import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
 	takeAsync as take,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzHarnessEvents,
 	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
@@ -141,6 +141,7 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
@@ -167,6 +168,7 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,

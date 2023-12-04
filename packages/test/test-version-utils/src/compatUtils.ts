@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-internal/test-drivers";
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
@@ -31,8 +30,14 @@ import {
 	CompatApis,
 } from "./testApi.js";
 
+/**
+ * @internal
+ */
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
+/**
+ * @internal
+ */
 export interface ITestDataObject extends IFluidLoadable {
 	_context: IFluidDataStoreContext;
 	_runtime: IFluidDataStoreRuntime;
@@ -94,8 +99,14 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 }
 
 // Only support current version, not baseVersion support
+/**
+ * @internal
+ */
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
 
+/**
+ * @internal
+ */
 export async function getVersionedTestObjectProviderFromApis(
 	apis: Omit<CompatApis, "dds">,
 	driverConfig?: {
@@ -108,8 +119,6 @@ export async function getVersionedTestObjectProviderFromApis(
 		driverConfig?.config,
 		apis.driver,
 	);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -123,13 +132,15 @@ export async function getVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			[innerRequestHandler],
 		);
 	};
 
 	return new TestObjectProvider(apis.loader.Loader, driver, containerFactoryFn);
 }
 
+/**
+ * @internal
+ */
 export async function getVersionedTestObjectProvider(
 	baseVersion: string,
 	loaderVersion?: number | string,

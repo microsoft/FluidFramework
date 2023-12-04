@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ISequencedDocumentMessage,
@@ -256,12 +256,7 @@ export class TestClient extends Client {
 		longClientId: string,
 	) {
 		this.applyMsg(
-			this.makeOpMessage(
-				createAnnotateRangeOp(start, end, props, undefined),
-				seq,
-				refSeq,
-				longClientId,
-			),
+			this.makeOpMessage(createAnnotateRangeOp(start, end, props), seq, refSeq, longClientId),
 		);
 	}
 
@@ -424,7 +419,10 @@ export class TestClient extends Client {
 			removedSeq !== undefined &&
 			(removedSeq !== UnassignedSequenceNumber ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-
+		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegment) =>
+			movedSeq !== undefined &&
+			(movedSeq !== UnassignedSequenceNumber ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -441,7 +439,7 @@ export class TestClient extends Client {
 			//
 			// Note that all ACKed / remote ops are applied and we only need concern ourself with
 			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 
@@ -568,7 +566,7 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			this.submitOpCallback?.(op);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
-			const op = client.annotateRangeLocal(start, end, props, undefined);
+			const op = client.annotateRangeLocal(start, end, props);
 			this.submitOpCallback?.(op);
 		},
 		insertFromSpec(pos: number, spec: IJSONSegment) {

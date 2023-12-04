@@ -120,7 +120,7 @@ export interface IAttributionCollection<T> {
 	 * @param channel - Updated collection for that channel.
 	 * @internal
 	 */
-	update(name: string | undefined, channel: IAttributionCollection<T>);
+	update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }
 
 // note: treats null and undefined as equivalent
@@ -264,9 +264,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	}
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const root: IAttributionCollectionSpec<AttributionKey>["root"] = new Array(
-			this.keys.length,
-		);
+		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
+		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
+			new Array(this.keys.length);
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -288,7 +288,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		copy.keys = this.keys.slice();
 		copy.offsets = this.offsets.slice();
 		if (this.channels !== undefined) {
-			const channelsCopy = {};
+			const channelsCopy: Record<string, AttributionCollection> = {};
 			for (const [key, collection] of this.channelEntries) {
 				channelsCopy[key] = collection.clone();
 			}

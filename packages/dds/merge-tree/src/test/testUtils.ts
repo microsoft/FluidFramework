@@ -195,8 +195,16 @@ function getPartialLengths(
 			segment.localRemovedSeq <= localSeq) ||
 			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
+	const isMoved = (segment: ISegment) =>
+		segment.movedSeq !== undefined &&
+		((localSeq !== undefined &&
+			segment.movedSeq === UnassignedSequenceNumber &&
+			segment.localMovedSeq !== undefined &&
+			segment.localMovedSeq <= localSeq) ||
+			(segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq <= seq));
+
 	walkAllChildSegments(mergeBlock, (segment) => {
-		if (isInserted(segment) && !isRemoved(segment)) {
+		if (isInserted(segment) && !isRemoved(segment) && !isMoved(segment)) {
 			actualLen += segment.cachedLength;
 		}
 		return true;

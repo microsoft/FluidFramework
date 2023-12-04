@@ -26,10 +26,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default: []
 
 trigger:
   branches:
@@ -42,6 +38,7 @@ trigger:
     - release/v2int/4.0
   paths:
     include:
+    - .prettierignore
     - azure
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -75,6 +72,7 @@ pr:
     - release/v2int/4.0
   paths:
     include:
+    - .prettierignore
     - azure
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -102,7 +100,6 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm

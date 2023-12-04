@@ -4,11 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { compareFieldUpPaths, compareUpPaths, FieldUpPath, UpPath } from "../../core";
-// Allow importing from this specific file which is being tested:
-// eslint-disable-next-line import/no-internal-modules
-import { PrefixedPath, prefixFieldPath, prefixPath } from "../../feature-libraries/treeCursorUtils";
+import {
+	compareFieldUpPaths,
+	compareUpPaths,
+	CursorLocationType,
+	DetachedField,
+	FieldUpPath,
+	TreeNodeSchemaIdentifier,
+	UpPath,
+} from "../../core";
+
+import {
+	PrefixedPath,
+	prefixFieldPath,
+	prefixPath,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+	// Allow importing from this specific file which is being tested:
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/treeCursorUtils";
 import { brand } from "../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { adapter } from "../../feature-libraries/treeTextCursor";
+import { leaf } from "../../domains";
+import { expectEqualFieldPaths, expectEqualPaths } from "../utils";
 
 describe("treeCursorUtils", () => {
 	const root: UpPath = {
@@ -260,5 +279,61 @@ describe("treeCursorUtils", () => {
 				},
 			),
 		);
+	});
+
+	// These tests could ust some custom test adapter implementation, but for simplicity use existing ones.
+	// Note that these existing cursors also run through the cursor test suite, which provides general coverage.
+	// These are just some rally targeted small units tests.
+	describe("stackTreeNodeCursor", () => {
+		it("construction and paths", () => {
+			const cursor = stackTreeNodeCursor(adapter, {
+				type: brand<TreeNodeSchemaIdentifier>("foo"),
+				fields: { bar: [{ type: leaf.number.name, value: 5 }] },
+			});
+			assert.equal(cursor.mode, CursorLocationType.Nodes);
+			assert.equal(cursor.getPath(), undefined);
+			cursor.enterField(brand("bar"));
+			expectEqualFieldPaths(cursor.getFieldPath(), {
+				parent: undefined,
+				field: brand("bar"),
+			});
+		});
+	});
+
+	describe("stackTreeFieldCursor", () => {
+		it("construction and paths", () => {
+			const empty = stackTreeFieldCursor(
+				adapter,
+				{ type: brand<TreeNodeSchemaIdentifier>("dummy") },
+				brand("key"),
+			);
+			assert.equal(empty.mode, CursorLocationType.Fields);
+			const path1 = empty.getFieldPath();
+			// Confirm path is whats expected:
+			// dummy parent node shows up as "undefined", and detached sequence shows up as the key:
+			expectEqualFieldPaths(path1, { parent: undefined, field: brand("key") });
+			assert.equal(empty.firstNode(), false);
+
+			const twoItems = stackTreeFieldCursor(
+				adapter,
+				{
+					type: brand<TreeNodeSchemaIdentifier>("dummy"),
+					fields: {
+						key: [
+							{ type: leaf.number.name, value: 5 },
+							{ type: leaf.number.name, value: 6 },
+						],
+					},
+				},
+				brand<DetachedField>("key"),
+			);
+			assert.equal(twoItems.getFieldLength(), 2);
+			twoItems.enterNode(0);
+			expectEqualPaths(twoItems.getPath(), {
+				parent: undefined,
+				parentField: brand("key"),
+				parentIndex: 0,
+			});
+		});
 	});
 });

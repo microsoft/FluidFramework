@@ -6,13 +6,16 @@
 import { Brand, brand, brandedStringType } from "../../util";
 
 /**
- * SchemaIdentifier for a TreeNode.
+ * Identifier for a TreeNode schema.
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
  * @alpha
  */
-export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentifier">;
+export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
+	TName,
+	"tree.TreeNodeSchemaIdentifier"
+>;
 
 /**
  * TypeBox Schema for encoding {@link TreeNodeSchemaIdentifiers} in persisted data.
@@ -58,14 +61,6 @@ export enum ValueSchema {
 	FluidHandle,
 	Null,
 }
-
-/**
- * {@link ValueSchema} for privative types.
- * @privateRemarks
- * TODO: remove when old editable tree API is removed.
- * @alpha
- */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
 
 /**
  * Set of allowed tree types.

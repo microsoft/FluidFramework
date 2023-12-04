@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, DoublyLinkedList, ListNode } from "./collections";
+import { DoublyLinkedList, ListNode } from "./collections";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -30,6 +30,7 @@ import {
 	IMergeBlock,
 	IMergeLeaf,
 	IMergeNode,
+	IMoveInfo,
 	InsertContext,
 	IRemovalInfo,
 	ISegment,
@@ -38,9 +39,10 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	MinListener,
 	reservedMarkerIdKey,
+	SegmentActions,
 	SegmentGroup,
+	toMoveInfo,
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
@@ -52,13 +54,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
-import {
-	ICombiningOp,
-	IMergeTreeDeltaOp,
-	IRelativePosition,
-	MergeTreeDeltaType,
-	ReferenceType,
-} from "./ops";
+import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
 import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
 import {
@@ -87,15 +83,25 @@ import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
  */
 export type ISegmentLeaf = ISegment & IMergeLeaf;
 
-const minListenerComparer: Comparer<MinListener> = {
-	min: {
-		minRequired: Number.MIN_VALUE,
-		onMinGE: () => {
-			assert(false, 0x048 /* "onMinGE()" */);
-		},
-	},
-	compare: (a, b) => a.minRequired - b.minRequired,
-};
+function wasRemovedAfter(seg: ISegment, seq: number): boolean {
+	return (
+		seg.removedSeq !== UnassignedSequenceNumber &&
+		(seg.removedSeq === undefined || seg.removedSeq > seq)
+	);
+}
+
+function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
+	seg.moveDst = moveInfo.moveDst;
+	seg.movedClientIds = moveInfo.movedClientIds.slice();
+	seg.movedSeqs = [moveInfo.movedSeq];
+	seg.movedSeq = moveInfo.movedSeq;
+	seg.localMovedSeq = moveInfo.localMovedSeq;
+	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
+}
+
+function isMoved(segment: ISegment): boolean {
+	return toMoveInfo(segment) !== undefined;
+}
 
 function isRemoved(segment: ISegment): boolean {
 	return toRemovalInfo(segment) !== undefined;
@@ -106,6 +112,15 @@ function isRemovedAndAcked(segment: ISegment): segment is ISegment & IRemovalInf
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
+function isMovedAndAcked(segment: ISegment): boolean {
+	const moveInfo = toMoveInfo(segment);
+	return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
+}
+
+function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
+	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
+}
+
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
 	if (!node.isLeaf()) {
 		return node.cachedLength;
@@ -113,12 +128,65 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undef
 	return mergeTree.localNetLength(node);
 }
 
-const LRUSegmentComparer: Comparer<LRUSegment> = {
+const LRUSegmentComparer: IComparer<LRUSegment> = {
 	min: { maxSeq: -2 },
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-function addTile(tile: ReferencePosition, tiles: object) {
+interface IReferenceSearchInfo {
+	mergeTree: MergeTree;
+	tileLabel: string;
+	tilePrecedesPos?: boolean;
+	tile?: ReferencePosition;
+}
+
+function recordTileStart(
+	segment: ISegment,
+	segpos: number,
+	refSeq: number,
+	clientId: number,
+	start: number,
+	end: number,
+	searchInfo: IReferenceSearchInfo,
+) {
+	if (Marker.is(segment)) {
+		if (refHasTileLabel(segment, searchInfo.tileLabel)) {
+			searchInfo.tile = segment;
+		}
+	}
+	return false;
+}
+
+function tileShift(
+	node: IMergeNode,
+	segpos: number,
+	refSeq: number,
+	clientId: number,
+	offset: number | undefined,
+	end: number | undefined,
+	searchInfo: IReferenceSearchInfo,
+) {
+	if (node.isLeaf()) {
+		const seg = node;
+		if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
+			if (refHasTileLabel(seg, searchInfo.tileLabel)) {
+				searchInfo.tile = seg;
+			}
+		}
+	} else {
+		const block = node as IHierBlock;
+		const marker = searchInfo.tilePrecedesPos
+			? block.rightmostTiles[searchInfo.tileLabel]
+			: block.leftmostTiles[searchInfo.tileLabel];
+		if (marker !== undefined) {
+			assert(marker.isLeaf() && Marker.is(marker), "Object returned is not a valid marker");
+			searchInfo.tile = marker;
+		}
+	}
+	return true;
+}
+
+function addTile(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
 	if (tileLabels) {
 		for (const tileLabel of tileLabels) {
@@ -127,7 +195,7 @@ function addTile(tile: ReferencePosition, tiles: object) {
 	}
 }
 
-function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
+function addTileIfNotPresent(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
 	if (tileLabels) {
 		for (const tileLabel of tileLabels) {
@@ -135,33 +203,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 				tiles[tileLabel] = tile;
 			}
 		}
-	}
-}
-
-function addNodeReferences(
-	mergeTree: MergeTree,
-	node: IMergeNode,
-	rightmostTiles: MapLike<ReferencePosition>,
-	leftmostTiles: MapLike<ReferencePosition>,
-) {
-	if (node.isLeaf()) {
-		const segment = node;
-		if ((mergeTree.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
-			const markerId = segment.getId();
-			// Also in insertMarker but need for reload segs case
-			// can add option for this only from reload segs
-			if (markerId) {
-				mergeTree.mapIdToSegment(markerId, segment);
-			}
-			if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
-				addTile(segment, rightmostTiles);
-				addTileIfNotPresent(segment, leftmostTiles);
-			}
-		}
-	} else {
-		const block = node as IHierBlock;
-		extend(rightmostTiles, block.rightmostTiles);
-		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
 }
 
@@ -216,6 +257,16 @@ export interface IMergeTreeOptions {
 	 * Options related to attribution
 	 */
 	attribution?: IMergeTreeAttributionOptions;
+
+	/**
+	 * Enables support for the obliterate operation -- a stronger form of remove
+	 * which deletes concurrently inserted segments
+	 *
+	 * Obliterate is currently experimental and may not work in all scenarios.
+	 *
+	 * Default value: false
+	 */
+	mergeTreeEnableObliterate?: boolean;
 }
 
 export interface IMergeTreeAttributionOptions {
@@ -317,7 +368,11 @@ function getSlideToSegment(
 	cache?: Map<ISegment, { seg?: ISegment }>,
 	useNewSlidingBehavior: boolean = false,
 ): [ISegment | undefined, "start" | "end" | undefined] {
-	if (!segment || !isRemovedAndAcked(segment) || segment.endpointType !== undefined) {
+	if (
+		!segment ||
+		!isRemovedAndAckedOrMovedAndAcked(segment) ||
+		segment.endpointType !== undefined
+	) {
 		return [segment, undefined];
 	}
 
@@ -327,12 +382,15 @@ function getSlideToSegment(
 	}
 	const result: { seg?: ISegment } = {};
 	cache?.set(segment, result);
-	const goFurtherToFindSlideToSegment = (seg) => {
-		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
+	const goFurtherToFindSlideToSegment = (seg: ISegment) => {
+		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAckedOrMovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
 		}
-		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+		if (
+			cache !== undefined &&
+			(seg.removedSeq === segment.removedSeq || seg.movedSeq === segment.movedSeq)
+		) {
 			cache.set(seg, result);
 		}
 		return true;
@@ -422,7 +480,7 @@ export class MergeTree {
 
 	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 
-	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
+	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -432,13 +490,43 @@ export class MergeTree {
 	 * This field enables tracking whether partials need to be recomputed using localSeq information.
 	 */
 	private localPartialsComputed = false;
-	// TODO: add remove on segment remove
 	// for now assume only markers have ids and so point directly at the Segment
 	// if we need to have pointers to non-markers, we can change to point at local refs
-	private readonly idToSegment = new Map<string, ISegment>();
-	private minSeqListeners: Heap<MinListener> | undefined;
+	private readonly idToMarker = new Map<string, Marker>();
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
+
+	/**
+	 * Array containing the sequence number of all move operations within the
+	 * collab window
+	 *
+	 * When a segment is inserted, we must traverse to the left and right of it
+	 * to determine whether the segment was inserted into an obliterated range.
+	 * By keeping track of all move seqs, we can significantly reduce the search
+	 * space we must traverse.
+	 *
+	 * Sequence numbers in `moveSeqs` are sorted to accelerate bookkeeping.
+	 *
+	 * See https://github.com/microsoft/FluidFramework/blob/main/packages/dds/merge-tree/docs/Obliterate.md#remote-perspective
+	 * for additional context
+	 */
+	private moveSeqs: number[] = [];
+
+	/**
+	 * Similar to moveSeqs, but tracks local moves. These are not the move
+	 * operations within the collab window, but rather local moves that have
+	 * not been acked.
+	 */
+	private readonly localMoveSeqs: Set<number> = new Set();
+
+	/**
+	 * Groups of segments moved by local moves/obliterates
+	 *
+	 * When a local obliterate is acked, we must also ack segments that were
+	 * concurrently obliterated on insert. We check this segment group to find
+	 * such segments
+	 */
+	private readonly locallyMovedSegments: Map<number, SegmentGroup> = new Map();
 
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
@@ -462,29 +550,6 @@ export class MergeTree {
 		return block;
 	}
 
-	public clone() {
-		const b = new MergeTree(this.options);
-		// For now assume that b will not collaborate
-		b.root = b.blockClone(this.root);
-	}
-
-	public blockClone(block: IMergeBlock, segments?: ISegment[]) {
-		const bBlock = this.makeBlock(block.childCount);
-		for (let i = 0; i < block.childCount; i++) {
-			const child = block.children[i];
-			if (child.isLeaf()) {
-				const segment = child.clone();
-				bBlock.assignChild(segment, i);
-				segments?.push(segment);
-			} else {
-				bBlock.assignChild(this.blockClone(child, segments), i);
-			}
-		}
-		this.nodeUpdateLengthNewStructure(bBlock);
-		this.nodeUpdateOrdinals(bBlock);
-		return bBlock;
-	}
-
 	/**
 	 * Compute the net length of this segment from a local perspective.
 	 * @param segment - Segment whose length to find
@@ -498,9 +563,13 @@ export class MergeTree {
 		localSeq?: number,
 	): number | undefined {
 		const removalInfo = toRemovalInfo(segment);
+		const moveInfo = toMoveInfo(segment);
 		if (localSeq === undefined) {
-			if (removalInfo !== undefined) {
-				if (!seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
+			if (removalInfo !== undefined || moveInfo !== undefined) {
+				if (
+					(!!removalInfo && !seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) ||
+					(!!moveInfo && !seqLTE(moveInfo.movedSeq, this.collabWindow.minSeq))
+				) {
 					return 0;
 				}
 				// this segment removed and outside the collab window which means it is zamboni eligible
@@ -514,7 +583,7 @@ export class MergeTree {
 
 		assert(refSeq !== undefined, 0x398 /* localSeq provided for local length without refSeq */);
 		assert(segment.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
-		const { seq, removedSeq, localRemovedSeq } = segment;
+		const { seq, removedSeq, localRemovedSeq, movedSeq, localMovedSeq } = segment;
 		if (seq !== UnassignedSequenceNumber) {
 			// inserted remotely
 			if (
@@ -522,7 +591,11 @@ export class MergeTree {
 				(removedSeq !== undefined &&
 					removedSeq !== UnassignedSequenceNumber &&
 					removedSeq <= refSeq) ||
-				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq)
+				(movedSeq !== undefined &&
+					movedSeq !== UnassignedSequenceNumber &&
+					movedSeq <= refSeq) ||
+				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
 			) {
 				return 0;
 			}
@@ -535,7 +608,8 @@ export class MergeTree {
 			// inserted locally, still un-acked
 			if (
 				segment.localSeq > localSeq ||
-				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq)
+				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
 			) {
 				return 0;
 			}
@@ -543,9 +617,11 @@ export class MergeTree {
 		}
 	}
 
-	// TODO: remove id when segment removed
-	public mapIdToSegment(id: string, segment: ISegment) {
-		this.idToSegment.set(id, segment);
+	public unlinkMarker(marker: Marker) {
+		const id = marker.getId();
+		if (id) {
+			this.idToMarker.delete(id);
+		}
 	}
 
 	private addNode(block: IMergeBlock, node: IMergeNode) {
@@ -564,7 +640,7 @@ export class MergeTree {
 		const maxChildren = MaxNodesInBlock - 1;
 
 		// Starting with the leaf segments, recursively builds the B-Tree layer by layer from the bottom up.
-		const buildMergeBlock = (nodes: IMergeNode[]) => {
+		const buildMergeBlock = (nodes: IMergeNode[]): IRootMergeBlock => {
 			const blockCount = Math.ceil(nodes.length / maxChildren); // Compute # blocks require for this level of B-Tree
 			const blocks: IMergeBlock[] = new Array(blockCount); // Pre-alloc array to collect nodes
 
@@ -593,7 +669,6 @@ export class MergeTree {
 				this.blockUpdate(block);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return blocks.length === 1 // If there is only one block at this layer...
 				? blocks[0] // ...then we're done.  Return the root.
 				: buildMergeBlock(blocks); // ...otherwise recursively build the next layer above blocks.
@@ -625,10 +700,6 @@ export class MergeTree {
 			leaf.parent!.needsScour = true;
 			this.segmentsToScour.add({ segment: leaf, maxSeq: seq });
 		}
-	}
-
-	public getCollabWindow() {
-		return this.collabWindow;
 	}
 
 	public getLength(refSeq: number, clientId: number): number {
@@ -850,7 +921,7 @@ export class MergeTree {
 		const backwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
 		for (const segment of segments) {
 			assert(
-				isRemovedAndAcked(segment),
+				isRemovedAndAckedOrMovedAndAcked(segment),
 				0x2f1 /* slideReferences from a segment which has not been removed and acked */,
 			);
 			if (segment.localRefs === undefined || segment.localRefs.empty) {
@@ -979,6 +1050,8 @@ export class MergeTree {
 			} else {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
+				const moveInfo = toMoveInfo(segment);
+
 				if (removalInfo !== undefined) {
 					if (seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
 						return undefined;
@@ -991,26 +1064,21 @@ export class MergeTree {
 					}
 				}
 
+				if (moveInfo !== undefined) {
+					if (seqLTE(moveInfo.movedSeq, this.collabWindow.minSeq)) {
+						return undefined;
+					}
+					if (
+						seqLTE(moveInfo.movedSeq, refSeq) ||
+						moveInfo.movedClientIds.includes(clientId)
+					) {
+						return 0;
+					}
+				}
+
 				return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
 					? segment.cachedLength
 					: 0;
-			}
-		}
-	}
-
-	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		this.minSeqListeners ??= new Heap<MinListener>([], minListenerComparer);
-		this.minSeqListeners.add({ minRequired, onMinGE });
-	}
-
-	private notifyMinSeqListeners() {
-		if (this.minSeqListeners) {
-			while (
-				this.minSeqListeners.count() > 0 &&
-				this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq
-			) {
-				const minListener = this.minSeqListeners.get()!;
-				minListener.onMinGE(this.collabWindow.minSeq);
 			}
 		}
 	}
@@ -1029,10 +1097,11 @@ export class MergeTree {
 
 		if (minSeq > this.collabWindow.minSeq) {
 			this.collabWindow.minSeq = minSeq;
+			const firstMoveSeqIdx = this.moveSeqs.findIndex((seq) => seq >= minSeq);
+			this.moveSeqs = firstMoveSeqIdx === -1 ? [] : this.moveSeqs.slice(firstMoveSeqIdx);
 			if (MergeTree.options.zamboniSegments) {
 				zamboniSegments(this);
 			}
-			this.notifyMinSeqListeners();
 		}
 	}
 
@@ -1049,10 +1118,64 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const offset = isRemoved(seg) ? 0 : refPos.getOffset();
+			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
 			return offset + this.getPosition(seg, refSeq, clientId);
 		}
 		return DetachedReferencePosition;
+	}
+
+	// TODO: filter function
+	/**
+	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
+	 * @deprecated Use searchForMarker instead.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param clientId - clientId dictating the perspective to search from
+	 * @param tileLabel - Label of the tile to search for
+	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
+	 */
+	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
+		const searchInfo: IReferenceSearchInfo = {
+			mergeTree: this,
+			tilePrecedesPos,
+			tileLabel,
+		};
+
+		if (tilePrecedesPos) {
+			this.search(
+				startPos,
+				UniversalSequenceNumber,
+				clientId,
+				{ leaf: recordTileStart, shift: tileShift },
+				searchInfo,
+			);
+		} else {
+			this.backwardSearch(
+				startPos,
+				UniversalSequenceNumber,
+				clientId,
+				{ leaf: recordTileStart, shift: tileShift },
+				searchInfo,
+			);
+		}
+
+		if (searchInfo.tile) {
+			let pos: number;
+			if (searchInfo.tile.isLeaf()) {
+				const marker = searchInfo.tile as Marker;
+				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
+			} else {
+				const localRef = searchInfo.tile;
+				pos = this.referencePositionToLocalPosition(
+					localRef,
+					UniversalSequenceNumber,
+					clientId,
+				);
+			}
+			return { tile: searchInfo.tile, pos };
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -1112,6 +1235,121 @@ export class MergeTree {
 		return foundMarker;
 	}
 
+	private search<TClientData>(
+		pos: number,
+		refSeq: number,
+		clientId: number,
+		actions: SegmentActions<TClientData> | undefined,
+		clientData: TClientData,
+	): ISegment | undefined {
+		return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions, clientData);
+	}
+
+	private searchBlock<TClientData>(
+		block: IMergeBlock,
+		pos: number,
+		segpos: number,
+		refSeq: number,
+		clientId: number,
+		actions: SegmentActions<TClientData> | undefined,
+		clientData: TClientData,
+		localSeq?: number,
+	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
+		let _pos = pos;
+		let _segpos = segpos;
+		const children = block.children;
+		pre?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
+		for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
+			const child = children[childIndex];
+			const len = this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
+			if (
+				(!contains && _pos < len) ||
+				contains?.(child, _pos, refSeq, clientId, undefined, undefined, clientData)
+			) {
+				// Found entry containing pos
+				if (!child.isLeaf()) {
+					return this.searchBlock(
+						child,
+						_pos,
+						_segpos,
+						refSeq,
+						clientId,
+						actions,
+						clientData,
+						localSeq,
+					);
+				} else {
+					leaf?.(child, _segpos, refSeq, clientId, _pos, -1, clientData);
+					return child;
+				}
+			} else {
+				shift?.(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
+				_pos -= len;
+				_segpos += len;
+			}
+		}
+		post?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
+	}
+
+	private backwardSearch<TClientData>(
+		pos: number,
+		refSeq: number,
+		clientId: number,
+		actions: SegmentActions<TClientData> | undefined,
+		clientData: TClientData,
+	): ISegment | undefined {
+		const len = this.getLength(refSeq, clientId);
+		if (pos > len) {
+			return undefined;
+		}
+		return this.backwardSearchBlock(this.root, pos, len, refSeq, clientId, actions, clientData);
+	}
+
+	private backwardSearchBlock<TClientData>(
+		block: IMergeBlock,
+		pos: number,
+		segEnd: number,
+		refSeq: number,
+		clientId: number,
+		actions: SegmentActions<TClientData> | undefined,
+		clientData: TClientData,
+	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
+		let _segEnd = segEnd;
+		const children = block.children;
+		pre?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
+		for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
+			const child = children[childIndex];
+			const len = this.nodeLength(child, refSeq, clientId) ?? 0;
+			const segpos = _segEnd - len;
+			if (
+				(!contains && pos >= segpos) ||
+				contains?.(child, pos, refSeq, clientId, undefined, undefined, clientData)
+			) {
+				// Found entry containing pos
+				if (!child.isLeaf()) {
+					return this.backwardSearchBlock(
+						child,
+						pos,
+						_segEnd,
+						refSeq,
+						clientId,
+						actions,
+						clientData,
+					);
+				} else {
+					leaf?.(child, segpos, refSeq, clientId, pos, -1, clientData);
+					return child;
+				}
+			} else {
+				shift?.(child, segpos, refSeq, clientId, pos, undefined, clientData);
+				_segEnd = segpos;
+			}
+		}
+		post?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
+	}
+
 	private updateRoot(splitNode: IMergeBlock | undefined) {
 		if (splitNode !== undefined) {
 			const newRoot = this.makeBlock(2);
@@ -1136,8 +1374,43 @@ export class MergeTree {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
+				const localMovedSeq = pendingSegment.localMovedSeq;
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+
+				if (
+					opArgs.op.type === MergeTreeDeltaType.OBLITERATE &&
+					localMovedSeq !== undefined
+				) {
+					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
+
+					if (locallyMovedSegments) {
+						for (const segment of locallyMovedSegments.segments) {
+							segment.localMovedSeq = undefined;
+
+							if (!nodesToUpdate.includes(segment.parent!)) {
+								nodesToUpdate.push(segment.parent!);
+							}
+
+							if (segment.movedSeq === UnassignedSequenceNumber) {
+								segment.movedSeq = seq;
+							}
+						}
+
+						this.locallyMovedSegments.delete(localMovedSeq);
+					}
+				}
+
 				overwrite = overlappingRemove || overwrite;
+
+				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+					if (seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
+						this.moveSeqs.push(seq);
+					}
+					if (localMovedSeq !== undefined) {
+						this.localMoveSeqs.delete(localMovedSeq);
+					}
+				}
+
 				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
 					this.addToLRUSet(pendingSegment, seq);
@@ -1152,7 +1425,10 @@ export class MergeTree {
 
 			// Perform slides after all segments have been acked, so that
 			// positions after slide are final
-			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+			if (
+				opArgs.op.type === MergeTreeDeltaType.REMOVE ||
+				opArgs.op.type === MergeTreeDeltaType.OBLITERATE
+			) {
 				this.slideAckedRemovedSegmentReferences(pendingSegmentGroup.segments);
 			}
 
@@ -1207,8 +1483,8 @@ export class MergeTree {
 	}
 
 	// TODO: error checking
-	public getMarkerFromId(id: string): ISegment | undefined {
-		return this.idToSegment.get(id);
+	public getMarkerFromId(id: string): Marker | undefined {
+		return this.idToMarker.get(id);
 	}
 
 	/**
@@ -1226,7 +1502,7 @@ export class MergeTree {
 		let pos = -1;
 		let marker: Marker | undefined;
 		if (relativePos.id) {
-			marker = this.getMarkerFromId(relativePos.id) as Marker;
+			marker = this.getMarkerFromId(relativePos.id);
 		}
 		if (marker) {
 			pos = this.getPosition(marker, refseq, clientId);
@@ -1377,7 +1653,7 @@ export class MergeTree {
 				if (Marker.is(newSegment)) {
 					const markerId = newSegment.getId();
 					if (markerId) {
-						this.mapIdToSegment(markerId, newSegment);
+						this.idToMarker.set(markerId, newSegment);
 					}
 				}
 
@@ -1402,6 +1678,129 @@ export class MergeTree {
 				saveIfLocal(newSegment);
 
 				insertPos += newSegment.cachedLength;
+
+				if (!this.options?.mergeTreeEnableObliterate) {
+					continue;
+				}
+
+				let moveUpperBound = Number.POSITIVE_INFINITY;
+				const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
+
+				if (smallestSeqMoveOp === undefined) {
+					continue;
+				}
+
+				const leftAckedSegments: Record<number, ISegment> = {};
+				const leftLocalSegments: Record<number, ISegment> = {};
+
+				let _localMovedSeq: number | undefined;
+				let _movedSeq: number | undefined;
+				let movedClientIds: number[] | undefined;
+
+				const findLeftMovedSegment = (seg: ISegment) => {
+					const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
+					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
+					for (const movedSeq of movedSeqs) {
+						leftAckedSegments[movedSeq] = seg;
+					}
+
+					for (const localMovedSeq of localMovedSeqs) {
+						leftLocalSegments[localMovedSeq] = seg;
+					}
+
+					if ((seg.movedSeqs?.length ?? 0) > 0 || localMovedSeqs.length > 0) {
+						return true;
+					}
+
+					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+						moveUpperBound = Math.min(
+							moveUpperBound,
+							seg.seq ?? Number.POSITIVE_INFINITY,
+						);
+					}
+					// If we've reached a segment that existed before any of our in-collab-window move ops
+					// happened, no need to continue.
+					return moveUpperBound >= smallestSeqMoveOp;
+				};
+
+				const findRightMovedSegment = (seg: ISegment) => {
+					const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
+					const localMovedSeqs = seg.localMovedSeq ? [seg.localMovedSeq] : [];
+
+					for (const movedSeq of movedSeqs) {
+						const left = leftAckedSegments[movedSeq];
+						if (left) {
+							_movedSeq = movedSeq;
+							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
+							const movedClientId = left.movedClientIds?.[clientIdIdx];
+							assert(movedClientId !== undefined, "expected client id to exist");
+							movedClientIds = [movedClientId];
+							return false;
+						}
+					}
+
+					for (const localMovedSeq of localMovedSeqs) {
+						const left = leftLocalSegments[localMovedSeq];
+						if (left) {
+							_localMovedSeq = localMovedSeq;
+							const clientIdIdx =
+								left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
+							const movedClientId = left.movedClientIds?.[clientIdIdx];
+							assert(movedClientId !== undefined, "expected client id to exist");
+							movedClientIds = [movedClientId];
+							return false;
+						}
+					}
+
+					if ((seg.movedSeqs?.length ?? 0) || localMovedSeqs.length > 0) {
+						return true;
+					}
+
+					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+						moveUpperBound = Math.min(
+							moveUpperBound,
+							seg.seq ?? Number.POSITIVE_INFINITY,
+						);
+					}
+					// If we've reached a segment that existed before any of our in-collab-window move ops
+					// happened, no need to continue.
+					return moveUpperBound >= smallestSeqMoveOp;
+				};
+
+				backwardExcursion(newSegment, findLeftMovedSegment);
+				moveUpperBound = Number.POSITIVE_INFINITY;
+				forwardExcursion(newSegment, findRightMovedSegment);
+
+				if (_localMovedSeq !== undefined || _movedSeq !== undefined) {
+					assert(
+						movedClientIds !== undefined,
+						"movedClientIds should be set if local/moved seq is set",
+					);
+					const moveInfo = {
+						movedClientIds,
+						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
+						movedSeqs:
+							_movedSeq === undefined ? [UnassignedSequenceNumber] : [_movedSeq],
+						localMovedSeq: _localMovedSeq,
+						wasMovedOnInsert: (_movedSeq ?? -1) !== UnassignedSequenceNumber,
+					};
+
+					markSegmentMoved(newSegment, moveInfo);
+
+					if (moveInfo.localMovedSeq !== undefined) {
+						const movedSegmentGroup = this.locallyMovedSegments.get(
+							moveInfo.localMovedSeq,
+						);
+
+						assert(movedSegmentGroup !== undefined, "expected segment group to exist");
+
+						this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
+					}
+
+					if (newSegment.parent) {
+						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+					}
+				}
 			}
 		}
 	}
@@ -1453,10 +1852,23 @@ export class MergeTree {
 			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
 			const segSeq =
 				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
-			return newSeq > segSeq;
+
+			return (
+				newSeq > segSeq ||
+				(node.movedSeq !== undefined &&
+					node.movedSeq !== UnassignedSequenceNumber &&
+					node.movedSeq > seq) ||
+				(node.removedSeq !== undefined &&
+					node.removedSeq !== UnassignedSequenceNumber &&
+					node.removedSeq > seq)
+			);
 		} else {
 			return true;
 		}
+	}
+
+	private getSmallestSeqMoveOp(): number | undefined {
+		return this.moveSeqs[0] ?? (this.localMoveSeqs.size > 0 ? -1 : undefined);
 	}
 
 	private insertingWalk(
@@ -1609,7 +2021,6 @@ export class MergeTree {
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 * @param refSeq - The reference sequence number to use to apply the annotate
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
@@ -1620,7 +2031,6 @@ export class MergeTree {
 		start: number,
 		end: number,
 		props: PropertySet,
-		combiningOp: ICombiningOp | undefined,
 		refSeq: number,
 		clientId: number,
 		seq: number,
@@ -1642,7 +2052,6 @@ export class MergeTree {
 			);
 			const propertyDeltas = segment.addProperties(
 				props,
-				combiningOp,
 				seq,
 				this.collabWindow.collaborating,
 				rollback,
@@ -1654,7 +2063,7 @@ export class MergeTree {
 						segment,
 						segmentGroup,
 						localSeq,
-						propertyDeltas ?? {},
+						propertyDeltas,
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {
@@ -1693,9 +2102,126 @@ export class MergeTree {
 		overwrite: boolean = false,
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
-		throw new UsageError(
-			"Attempted to use obliterate. Obliterate is not currently implemented.",
+		if (!this.options?.mergeTreeEnableObliterate) {
+			throw new UsageError("Attempted to send obliterate op without enabling feature flag.");
+		}
+
+		this.ensureIntervalBoundary(start, refSeq, clientId);
+		this.ensureIntervalBoundary(end, refSeq, clientId);
+
+		let _overwrite = overwrite;
+		const localOverlapWithRefs: ISegment[] = [];
+		const movedSegments: IMergeTreeSegmentDelta[] = [];
+		const localSeq =
+			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+		if (seq !== UnassignedSequenceNumber && seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
+			this.moveSeqs.push(seq);
+		} else if (seq === UnassignedSequenceNumber && localSeq !== undefined) {
+			this.localMoveSeqs.add(localSeq);
+		}
+		let segmentGroup: SegmentGroup;
+		const markMoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
+			const existingMoveInfo = toMoveInfo(segment);
+
+			if (
+				clientId !== segment.clientId &&
+				segment.seq !== undefined &&
+				seq !== UnassignedSequenceNumber &&
+				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
+			) {
+				segment.wasMovedOnInsert = true;
+			}
+
+			if (existingMoveInfo !== undefined) {
+				_overwrite = true;
+				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+					// we moved this locally, but someone else moved it first
+					// so put them at the head of the list
+					// The list isn't ordered, but we keep the first move at the head
+					// for partialLengths bookkeeping purposes
+					existingMoveInfo.movedClientIds.unshift(clientId);
+
+					existingMoveInfo.movedSeq = seq;
+					existingMoveInfo.movedSeqs.unshift(seq);
+					if (segment.localRefs?.empty === false) {
+						localOverlapWithRefs.push(segment);
+					}
+				} else {
+					// Do not replace earlier sequence number for move
+					existingMoveInfo.movedClientIds.push(clientId);
+					existingMoveInfo.movedSeqs.push(seq);
+				}
+			} else {
+				segment.movedClientIds = [clientId];
+				segment.movedSeq = seq;
+				segment.localMovedSeq = localSeq;
+				segment.movedSeqs = [seq];
+
+				movedSegments.push({ segment });
+			}
+
+			// Save segment so can assign moved sequence number when acked by server
+			if (this.collabWindow.collaborating) {
+				if (
+					segment.movedSeq === UnassignedSequenceNumber &&
+					clientId === this.collabWindow.clientId
+				) {
+					segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
+				} else {
+					if (MergeTree.options.zamboniSegments) {
+						this.addToLRUSet(segment, seq);
+					}
+				}
+			}
+			return true;
+		};
+
+		const afterMarkMoved = (node: IMergeBlock, pos: number, _start: number, _end: number) => {
+			if (_overwrite) {
+				this.nodeUpdateLengthNewStructure(node);
+			} else {
+				this.blockUpdateLength(node, seq, clientId);
+			}
+			return true;
+		};
+
+		this.nodeMap(
+			refSeq,
+			clientId,
+			markMoved,
+			undefined,
+			afterMarkMoved,
+			start,
+			end,
+			undefined,
+			seq !== UnassignedSequenceNumber ? seq : undefined,
 		);
+
+		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
+		// opArgs == undefined => test code
+		if (movedSegments.length > 0) {
+			this.mergeTreeDeltaCallback?.(opArgs, {
+				operation: MergeTreeDeltaType.OBLITERATE,
+				deltaSegments: movedSegments,
+			});
+		}
+
+		if (segmentGroup! && localSeq !== undefined) {
+			this.locallyMovedSegments.set(localSeq, segmentGroup);
+		}
+
+		// these events are newly removed
+		// so we slide after eventing in case the consumer wants to make reference
+		// changes at remove time, like add a ref to track undo redo.
+		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
+			this.slideAckedRemovedSegmentReferences(movedSegments.map(({ segment }) => segment));
+		}
+
+		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
+			if (MergeTree.options.zamboniSegments) {
+				zamboniSegments(this);
+			}
+		}
 	}
 
 	public markRangeRemoved(
@@ -1717,6 +2243,7 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
 			const existingRemovalInfo = toRemovalInfo(segment);
+
 			if (existingRemovalInfo !== undefined) {
 				_overwrite = true;
 				if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
@@ -1873,26 +2400,20 @@ export class MergeTree {
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
-					const rollbackType =
-						op.combiningOp?.name === "rewrite"
-							? PropertiesRollback.Rewrite
-							: PropertiesRollback.Rollback;
 					const annotateOp = createAnnotateRangeOp(
 						start,
 						start + segment.cachedLength,
 						props,
-						undefined,
 					);
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,
 						props,
-						undefined,
 						UniversalSequenceNumber,
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
-						rollbackType,
+						PropertiesRollback.Rollback,
 					);
 					i++;
 				}
@@ -1953,12 +2474,12 @@ export class MergeTree {
 		if (
 			_segment !== "start" &&
 			_segment !== "end" &&
-			isRemovedAndAcked(_segment) &&
+			isRemovedAndAckedOrMovedAndAcked(_segment) &&
 			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient) &&
 			_segment.endpointType === undefined
 		) {
 			throw new UsageError(
-				"Can only create SlideOnRemove or Transient local reference position on a removed segment",
+				"Can only create SlideOnRemove or Transient local reference position on a removed or obliterated segment",
 			);
 		}
 
@@ -2143,6 +2664,32 @@ export class MergeTree {
 		normalize();
 	}
 
+	private addNodeReferences(
+		node: IMergeNode,
+		rightmostTiles: MapLike<ReferencePosition>,
+		leftmostTiles: MapLike<ReferencePosition>,
+	) {
+		if (node.isLeaf()) {
+			const segment = node;
+			if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
+				const markerId = segment.getId();
+				// Also in insertMarker but need for reload segs case
+				// can add option for this only from reload segs
+				if (markerId) {
+					this.idToMarker.set(markerId, segment);
+				}
+				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
+					addTile(segment, rightmostTiles);
+					addTileIfNotPresent(segment, leftmostTiles);
+				}
+			}
+		} else {
+			const block = node as IHierBlock;
+			extend(rightmostTiles, block.rightmostTiles);
+			extendIfUndefined(leftmostTiles, block.leftmostTiles);
+		}
+	}
+
 	private blockUpdate(block: IMergeBlock) {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
@@ -2158,7 +2705,7 @@ export class MergeTree {
 				len += nodeLength;
 			}
 			if (hierBlock) {
-				addNodeReferences(this, child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
+				this.addNodeReferences(child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
 			}
 		}
 
@@ -2204,6 +2751,13 @@ export class MergeTree {
 		}
 	}
 
+	/**
+	 * Map over all visible segments in a given range
+	 *
+	 * A segment is visible if its length is greater than 0
+	 *
+	 * See `this.nodeMap` for additional documentation
+	 */
 	public mapRange<TClientData>(
 		handler: ISegmentAction<TClientData>,
 		refSeq: number,
@@ -2212,6 +2766,7 @@ export class MergeTree {
 		start?: number,
 		end?: number,
 		splitRange: boolean = false,
+		visibilitySeq: number = refSeq,
 	) {
 		if (splitRange) {
 			if (start) {
@@ -2221,9 +2776,42 @@ export class MergeTree {
 				this.ensureIntervalBoundary(end, refSeq, clientId);
 			}
 		}
-		this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end);
+		this.nodeMap(
+			refSeq,
+			clientId,
+			handler,
+			accum,
+			undefined,
+			start,
+			end,
+			undefined,
+			visibilitySeq,
+		);
 	}
 
+	/**
+	 * Map over all visible segments in a given range
+	 *
+	 * A segment is visible if its length is greater than 0
+	 *
+	 * @param refSeq - The sequence number used to determine the range (start
+	 * and end positions) of segments to iterate over.
+	 *
+	 * @param visibilitySeq - An additional sequence number to further configure
+	 * segment visibility during traversal. This is the same as refSeq, except
+	 * in the case of obliterate.
+	 *
+	 * In the case where `refSeq == visibilitySeq`, mapping is done on all
+	 * visible segments from `start` to `end`.
+	 *
+	 * If a segment is invisible at both `visibilitySeq` and `refSeq`, then it
+	 * will not be traversed and mapped. Otherwise, if the segment is visible at
+	 * either seq, it will be mapped.
+	 *
+	 * If a segment is only visible at `visibilitySeq`, it will still be mapped,
+	 * but it will not count as a segment within the range. That is, it will be
+	 * ignored for the purposes of tracking when traversal should end.
+	 */
 	private nodeMap<TClientData>(
 		refSeq: number,
 		clientId: number,
@@ -2233,6 +2821,7 @@ export class MergeTree {
 		start: number = 0,
 		end?: number,
 		localSeq?: number,
+		visibilitySeq: number = refSeq,
 	): void {
 		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
 		if (endPos === start) {
@@ -2248,12 +2837,25 @@ export class MergeTree {
 				if (endPos <= pos) {
 					return NodeAction.Exit;
 				}
-				const len = this.nodeLength(node, refSeq, clientId, localSeq);
-				if (len === undefined || len === 0) {
+
+				const len = this.nodeLength(node, visibilitySeq, clientId, localSeq);
+				const lenAtRefSeq =
+					(visibilitySeq === refSeq
+						? len
+						: this.nodeLength(node, refSeq, clientId, localSeq)) ?? 0;
+
+				const isUnackedAndInObliterate =
+					visibilitySeq !== refSeq &&
+					(!node.isLeaf() || node.seq === UnassignedSequenceNumber);
+
+				if (
+					(len === undefined && lenAtRefSeq === 0) ||
+					(len === 0 && !isUnackedAndInObliterate && lenAtRefSeq === 0)
+				) {
 					return NodeAction.Skip;
 				}
 
-				const nextPos = pos + len;
+				const nextPos = pos + lenAtRefSeq;
 				// start is beyond the current node, so we can skip it
 				if (start >= nextPos) {
 					pos = nextPos;

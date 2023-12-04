@@ -137,17 +137,38 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "repair-1",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "repair-1",
                       {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "42"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.string",
+                            true,
+                            "42",
+                            []
+                          ]
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
@@ -162,6 +183,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-000000000004",
@@ -169,7 +191,7 @@
                       1
                     ]
                   ],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

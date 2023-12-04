@@ -17,12 +17,10 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -124,7 +122,7 @@ export interface IConnectionDetails {
 }
 
 // @public
-export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
+export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest, attachProps?: {
         deltaConnection?: "none" | "delayed";
     }): Promise<void>;
@@ -142,22 +140,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getEntryPoint(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
-    // @deprecated (undocumented)
-    readonly IFluidRouter: IFluidRouter;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
-    // @deprecated (undocumented)
-    request(request: {
-        url: "/";
-        headers?: undefined;
-    }): Promise<IResponse>;
-    // @deprecated
-    request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     serialize(): string;
 }
@@ -403,10 +392,6 @@ export interface IHostLoader extends ILoader {
 
 // @public
 export interface ILoader extends Partial<IProvideLoader> {
-    // @deprecated (undocumented)
-    readonly IFluidRouter: IFluidRouter;
-    // @deprecated (undocumented)
-    request(request: IRequest): Promise<IResponse>;
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
@@ -461,14 +446,12 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    getEntryPoint(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject>;
     // @alpha
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
-    // @deprecated
-    request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
 }

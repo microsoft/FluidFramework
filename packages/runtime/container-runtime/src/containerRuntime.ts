@@ -8,8 +8,6 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
@@ -694,7 +692,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		const response = await resolvedContainer.request({ url: `/${summarizerRequestUrl}` });
+		const response = await (resolvedContainer as any).request({
+			url: `/${summarizerRequestUrl}`,
+		});
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
@@ -705,14 +705,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		throw new UsageError("Fluid object does not implement ISummarizer");
 	}
 	return fluidObject.ISummarizer;
-}
-
-/**
- * This function is not supported publicly and exists for e2e testing
- * @internal
- */
-export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
-	return createSummarizer(loader, url);
 }
 
 /**
@@ -729,53 +721,6 @@ export class ContainerRuntime
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
-
-	/**
-	 * @deprecated use loadRuntime instead.
-	 * Load the stores from a snapshot and returns the runtime.
-	 * @param context - Context of the container.
-	 * @param registryEntries - Mapping to the stores.
-	 * @param requestHandler - Request handlers for the container runtime
-	 * @param runtimeOptions - Additional options to be passed to the runtime
-	 * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
-	 * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
-	 * allows mixin classes to leverage this method to define their own async initializer.
-	 */
-	public static async load(
-		context: IContainerContext,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions: IContainerRuntimeOptions = {},
-		containerScope: FluidObject = context.scope,
-		existing?: boolean,
-		containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-	): Promise<ContainerRuntime> {
-		let existingFlag = true;
-		if (!existing) {
-			existingFlag = false;
-		}
-		return this.loadRuntime({
-			context,
-			registryEntries,
-			existing: existingFlag,
-			runtimeOptions,
-			containerScope,
-			containerRuntimeCtor,
-			requestHandler,
-			provideEntryPoint: () => {
-				throw new UsageError(
-					"ContainerRuntime.load is deprecated and should no longer be used",
-				);
-			},
-		});
-	}
-
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
@@ -798,7 +743,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
-		/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
@@ -963,6 +908,7 @@ export class ContainerRuntime
 	}
 
 	public readonly options: ILoaderOptions;
+	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1356,7 +1302,17 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
 
-		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+		const opGroupingManager = new OpGroupingManager(
+			{
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+				opCountThreshold:
+					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
+				reentrantBatchGroupingEnabled:
+					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
+					true,
+			},
+			this.mc.logger,
+		);
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1566,7 +1522,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1769,9 +1724,10 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. This method needs to stay private until LTS version of Loader moves to "2.0.0-internal.7.0.0".
 	 */
-	public async request(request: IRequest): Promise<IResponse> {
+	// @ts-expect-error expected to be used by LTS Loaders and Containers
+	private async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
@@ -2431,28 +2387,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns the runtime of the data store.
-	 * @param id - Id supplied during creating the data store.
-	 * @param wait - True if you want to wait for it.
-	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-		return this.getRootDataStoreChannel(id, wait);
-	}
-
-	private async getRootDataStoreChannel(
-		id: string,
-		wait = true,
-	): Promise<IFluidDataStoreChannel> {
-		await this.dataStores.waitIfPendingAlias(id);
-		const internalId = this.internalId(id);
-		const context = await this.dataStores.getDataStore(internalId, { wait });
-		assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
-		return context.realize();
-	}
-
-	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
 	 */
@@ -2594,7 +2528,9 @@ export class ContainerRuntime
 	private canSendOps() {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
+		return (
+			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+		);
 	}
 
 	/**
@@ -3952,7 +3888,11 @@ export class ContainerRuntime
 			},
 			async (event) => {
 				this.verifyNotClosed();
-				const waitBlobsToAttach = props?.notifyImminentClosure;
+				// in case imminentClosure is set to true by future code, we don't
+				// try to change its value
+				if (!this.imminentClosure) {
+					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
+				}
 				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
@@ -3961,7 +3901,7 @@ export class ContainerRuntime
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
-				const pendingAttachmentBlobs = waitBlobsToAttach
+				const pendingAttachmentBlobs = this.imminentClosure
 					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();

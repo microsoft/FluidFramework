@@ -6,6 +6,7 @@
 		"esModuleInterop": true,
 		"incremental": true,
 		"inlineSources": true,
+		"jsx": "react",
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
 		"noImplicitAny": false,
 		"noUnusedLocals": true,

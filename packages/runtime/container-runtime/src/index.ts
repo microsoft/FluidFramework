@@ -23,7 +23,6 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-	TEST_requestSummarizer,
 } from "./containerRuntime";
 export {
 	ContainerMessageType,
@@ -40,6 +39,8 @@ export {
 	GCFeatureMatrix,
 	GCVersion,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 } from "./gc";
 export {

@@ -6,18 +6,20 @@
 import { assert } from "@fluidframework/core-utils";
 import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
+import { MergeTree } from "./mergeTree";
 import {
 	CollaborationWindow,
 	compareNumbers,
 	IMergeBlock,
 	IMergeNode,
+	IMoveInfo,
 	IRemovalInfo,
 	ISegment,
+	toMoveInfo,
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
-import { MergeTree } from "./mergeTree";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
 	protected getKey(item: PartialSequenceLength): number {
@@ -47,6 +49,12 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 
 		super.addOrUpdate(newItem, (currentPartial, partialLength) => {
 			currentPartial.seglen += partialLength.seglen;
+
+			if (partialLength.remoteObliteratedLen) {
+				currentPartial.remoteObliteratedLen ??= 0;
+				currentPartial.remoteObliteratedLen += partialLength.remoteObliteratedLen;
+			}
+
 			currentPartial.len += partialLength.seglen;
 			combineOverlapClients(currentPartial, partialLength);
 		});
@@ -124,6 +132,11 @@ export interface PartialSequenceLength {
 	 */
 	clientId?: number;
 	/**
+	 * If this partial length obliterated remote segments, this is the length of
+	 * those segments
+	 */
+	remoteObliteratedLen?: number;
+	/**
 	 * This field maps each client to the size of the intersection between segments deleted at this seq
 	 * and segments concurrently deleted by that client.
 	 *
@@ -144,12 +157,17 @@ export interface PartialSequenceLength {
 	 * corresponds to an op submitted by client 0 which:
 	 * - reduces the length of this block by 10 (it may have deleted a single segment of length 10,
 	 *     several segments totalling length 10, or even delete and add content for a total reduction of 10 length)
-	 * - was concurrent to an op submitted by client 1 that also removed some of the same segments,
+	 * - was concurrent to one or more ops submitted by client 1 that also removed some of the same segments,
 	 *     whose length totalled 5
-	 * - was concurrent to an op submitted by client 3 that removed some of the same segments,
+	 * - was concurrent to one or more ops submitted by client 3 that removed some of the same segments,
 	 *     whose length totalled 10
 	 */
 	overlapRemoveClients?: RedBlackTree<number, IOverlapClient>;
+	/**
+	 * This field is the same as `overlapRemoveClients`, except that it tracks
+	 * overlapping obliterates rather than removes.
+	 */
+	overlapObliterateClients?: RedBlackTree<number, IOverlapClient>;
 }
 
 interface UnsequencedPartialLengthInfo {
@@ -373,16 +391,20 @@ export class PartialSequenceLengths {
 					PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
 				}
 				const removalInfo = toRemovalInfo(segment);
+				const moveInfo = toMoveInfo(segment);
 				if (
-					removalInfo?.removedSeq !== undefined &&
-					seqLTE(removalInfo.removedSeq, collabWindow.minSeq)
+					(removalInfo?.removedSeq !== undefined &&
+						seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) ||
+					(moveInfo?.movedSeq !== undefined &&
+						seqLTE(moveInfo.movedSeq, collabWindow.minSeq))
 				) {
 					combinedPartialLengths.minLength -= segment.cachedLength;
-				} else if (removalInfo !== undefined) {
+				} else if (removalInfo !== undefined || moveInfo !== undefined) {
 					PartialSequenceLengths.insertSegment(
 						combinedPartialLengths,
 						segment,
 						removalInfo,
+						moveInfo,
 					);
 				}
 			}
@@ -441,38 +463,238 @@ export class PartialSequenceLengths {
 		}
 	}
 
+	private static accumulateMoveClientOverlap(
+		partialLength: PartialSequenceLength,
+		overlapMoveClientIds: number[],
+		seglen: number,
+	) {
+		if (partialLength.overlapObliterateClients) {
+			for (const clientId of overlapMoveClientIds) {
+				const overlapClientNode = partialLength.overlapObliterateClients.get(clientId);
+				if (!overlapClientNode) {
+					partialLength.overlapObliterateClients.put(clientId, { clientId, seglen });
+				} else {
+					overlapClientNode.data.seglen += seglen;
+				}
+			}
+		} else {
+			partialLength.overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
+				overlapMoveClientIds,
+				seglen,
+			);
+		}
+	}
+
 	/**
-	 * Inserts length information about the insertion of `segment` into `combinedPartialLengths.partialLengths`.
+	 * Coalesce overlapping move lengths for a partial length entry that already
+	 * exists
+	 *
+	 * @param segmentLen - Length of segment with overlapping moves
+	 * @param segment - Segment with overlapping moves
+	 * @param firstGte - Existing partial length entry
+	 * @param clientIds - Ids of clients that concurrently obliterated this segment
+	 */
+	static accumulateMoveOverlapForExisting(
+		segmentLen: number,
+		segment: ISegment,
+		firstGte: PartialSequenceLength,
+		clientIds: number[],
+	) {
+		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
+
+		PartialSequenceLengths.accumulateMoveClientOverlap(
+			firstGte,
+			nonInsertingClientIds,
+			segmentLen,
+		);
+
+		// if this segment was obliterated by the client that inserted it,
+		// and if it overlaps with the obliterate of another client, we need to
+		// take into account whether it was obliterated on insert by the other
+		// client
+		if (clientIds.length !== nonInsertingClientIds.length) {
+			PartialSequenceLengths.accumulateMoveClientOverlap(
+				firstGte,
+				[segment.clientId],
+				segment.wasMovedOnInsert ? -segment.cachedLength : segmentLen,
+			);
+		}
+	}
+
+	/**
+	 * @param obliterateOverlapLen - Length of segment with overlap
+	 * @param clientIds - Ids of clients that have concurrently obliterated this
+	 * segment
+	 */
+	private static getMoveOverlapForExisting(
+		segment: ISegment,
+		obliterateOverlapLen: number,
+		clientIds: number[],
+	): RedBlackTree<number, IOverlapClient> {
+		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
+		const overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
+			nonInsertingClientIds,
+			obliterateOverlapLen,
+		);
+
+		if (clientIds.length !== nonInsertingClientIds.length) {
+			overlapObliterateClients.put(segment.clientId, {
+				clientId: segment.clientId,
+				seglen: segment.wasMovedOnInsert ? -segment.cachedLength : obliterateOverlapLen,
+			});
+		}
+
+		return overlapObliterateClients;
+	}
+
+	private static updatePartialsAfterInsertion(
+		segment: ISegment,
+		segmentLen: number,
+		remoteObliteratedLen: number | undefined,
+		obliterateOverlapLen: number = segmentLen,
+		partials: PartialSequenceLengthsSet,
+		seq: number,
+		clientId: number,
+		removeClientOverlap: number[] | undefined,
+		moveClientOverlap: number[] | undefined,
+	) {
+		const firstGte = partials.firstGte(seq);
+
+		let partialLengthEntry: PartialSequenceLength;
+		if (firstGte?.seq === seq) {
+			partialLengthEntry = firstGte;
+			// Existing entry at this seq--this occurs for ops that insert/delete
+			// more than one segment.
+			partialLengthEntry.seglen += segmentLen;
+			if (remoteObliteratedLen) {
+				partialLengthEntry.remoteObliteratedLen ??= 0;
+				partialLengthEntry.remoteObliteratedLen += remoteObliteratedLen;
+			}
+			if (removeClientOverlap) {
+				PartialSequenceLengths.accumulateRemoveClientOverlap(
+					firstGte,
+					removeClientOverlap,
+					obliterateOverlapLen,
+				);
+			}
+
+			if (moveClientOverlap) {
+				PartialSequenceLengths.accumulateMoveOverlapForExisting(
+					obliterateOverlapLen,
+					segment,
+					firstGte,
+					moveClientOverlap,
+				);
+			}
+		} else {
+			const overlapObliterateClients = moveClientOverlap
+				? PartialSequenceLengths.getMoveOverlapForExisting(
+						segment,
+						obliterateOverlapLen,
+						moveClientOverlap,
+				  )
+				: undefined;
+
+			partialLengthEntry = {
+				seq,
+				clientId,
+				len: 0,
+				seglen: segmentLen,
+				remoteObliteratedLen,
+				overlapRemoveClients: removeClientOverlap
+					? PartialSequenceLengths.getOverlapClients(
+							removeClientOverlap,
+							obliterateOverlapLen,
+					  )
+					: undefined,
+				overlapObliterateClients,
+			};
+
+			partials.addOrUpdate(partialLengthEntry);
+		}
+	}
+
+	/**
+	 * Inserts length information about the insertion of `segment` into
+	 * `combinedPartialLengths.partialLengths`.
+	 *
 	 * Does not update the clientSeqNumbers field to account for this segment.
-	 * If `removalInfo` is defined, this operation updates the bookkeeping to account for the removal of this
-	 * segment at the removedSeq instead.
-	 * When the insertion or removal of the segment is un-acked and `combinedPartialLengths` is meant to compute
-	 * such records, this does the analogous addition to the bookkeeping for the local segment in
+	 *
+	 * If `removalInfo` or `moveInfo` are defined, this operation updates the
+	 * bookkeeping to account for the (re)moval of this segment at the (re)movedSeq
+	 * instead.
+	 *
+	 * When the insertion or (re)moval of the segment is un-acked and
+	 * `combinedPartialLengths` is meant to compute such records, this does the
+	 * analogous addition to the bookkeeping for the local segment in
 	 * `combinedPartialLengths.unsequencedRecords`.
 	 */
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegment,
 		removalInfo?: IRemovalInfo,
+		moveInfo?: IMoveInfo,
 	) {
+		const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
-			(removalInfo === undefined && segment.seq === UnassignedSequenceNumber) ||
-			(removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber);
+			segment.seq === UnassignedSequenceNumber ||
+			(!!removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
+			(!!moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
 		let segmentLen = segment.cachedLength;
 		let clientId = segment.clientId;
 		let removeClientOverlap: number[] | undefined;
+		let moveClientOverlap: number[] | undefined;
+		let remoteObliteratedLen: number | undefined;
 
-		if (removalInfo) {
+		// it's not possible to have an overlapping obliterate and remove that are both local
+		assert(
+			(!moveIsLocal && !removalIsLocal) || moveIsLocal !== removalIsLocal,
+			"overlapping local obliterate and remove",
+		);
+
+		const removeHappenedFirst =
+			removalInfo &&
+			(!moveInfo ||
+				moveIsLocal ||
+				(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
+
+		if (removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			seqOrLocalSeq = isLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
+			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
 			segmentLen = -segmentLen;
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
 			clientId = removalInfo.removedClientIds[0];
 			const hasOverlap = removalInfo.removedClientIds.length > 1;
 			removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
+		} else if (moveInfo) {
+			// The client who performed the move is always stored
+			// in the first position of moveInfo.
+			clientId = moveInfo.movedClientIds[0];
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
+
+			if (segment.wasMovedOnInsert) {
+				assert(
+					moveInfo.movedSeq !== -1,
+					"wasMovedOnInsert should only be set on acked obliterates",
+				);
+				segmentLen = 0;
+			} else {
+				segmentLen = -segmentLen;
+			}
+
+			const hasOverlap = moveInfo.movedClientIds.length > 1;
+			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
+		} else if (segment.wasMovedOnInsert) {
+			// if this segment was obliterated on insert, its length is only
+			// visible to the client that inserted it
+			segmentLen = 0;
+			remoteObliteratedLen = segment.cachedLength;
 		}
 
 		const partials = isLocal
@@ -483,34 +705,63 @@ export class PartialSequenceLengths {
 			return;
 		}
 
-		const firstGte = partials.firstGte(seqOrLocalSeq);
+		// overlapping move and remove, remove happened first
+		if (moveInfo && removalInfo && removeHappenedFirst && !moveIsLocal) {
+			// The client who performed the remove is always stored
+			// in the first position of removalInfo.
+			const moveClientId = moveInfo.movedClientIds[0];
+			const hasOverlap = moveInfo.movedClientIds.length > 1;
 
-		let partialLengthEntry: PartialSequenceLength;
-		if (firstGte?.seq === seqOrLocalSeq) {
-			partialLengthEntry = firstGte;
-			// Existing entry at this seq--this occurs for ops that insert/delete more than one segment.
-			partialLengthEntry.seglen += segmentLen;
-			if (removeClientOverlap) {
-				PartialSequenceLengths.accumulateRemoveClientOverlap(
-					firstGte,
-					removeClientOverlap,
-					segmentLen,
-				);
-			}
-		} else {
-			partialLengthEntry = {
-				seq: seqOrLocalSeq,
-				clientId,
-				len: 0,
-				seglen: segmentLen,
-				overlapRemoveClients: removeClientOverlap
-					? PartialSequenceLengths.getOverlapClients(removeClientOverlap, segmentLen)
-					: undefined,
-			};
-
-			partials.addOrUpdate(partialLengthEntry);
+			PartialSequenceLengths.updatePartialsAfterInsertion(
+				segment,
+				0,
+				-segment.cachedLength,
+				segmentLen,
+				partials,
+				moveInfo.movedSeq,
+				moveClientId,
+				undefined,
+				hasOverlap ? moveInfo.movedClientIds : undefined,
+			);
 		}
 
+		if (removalInfo && !removeHappenedFirst && !removalIsLocal) {
+			const removeSeqOrLocalSeq = removalIsLocal
+				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  removalInfo.localRemovedSeq!
+				: removalInfo.removedSeq;
+			// The client who performed the remove is always stored
+			// in the first position of removalInfo.
+			const removeClientId = removalInfo.removedClientIds[0];
+			const hasOverlap = removalInfo.removedClientIds.length > 1;
+
+			PartialSequenceLengths.updatePartialsAfterInsertion(
+				segment,
+				0,
+				-segment.cachedLength,
+				segmentLen,
+				partials,
+				removeSeqOrLocalSeq,
+				removeClientId,
+				hasOverlap ? removalInfo.removedClientIds : undefined,
+				undefined,
+			);
+		}
+
+		PartialSequenceLengths.updatePartialsAfterInsertion(
+			segment,
+			segmentLen,
+			remoteObliteratedLen,
+			undefined,
+			partials,
+			seqOrLocalSeq,
+			clientId,
+			removeClientOverlap,
+			moveClientOverlap,
+		);
+
+		// todo: the below block needs to be changed to handle obliterate, which
+		// doesn't have great support for reconnect at the moment. see ADO #3714
 		const { unsequencedRecords } = combinedPartialLengths;
 		if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
 			const localSeq = segment.localRemovedSeq;
@@ -553,6 +804,7 @@ export class PartialSequenceLengths {
 		partialLengths: PartialSequenceLengthsSet,
 		seq: number,
 		seqSeglen: number,
+		remoteObliteratedLen?: number,
 		clientId?: number,
 	) {
 		let seqPartialLen: PartialSequenceLength | undefined;
@@ -576,9 +828,11 @@ export class PartialSequenceLengths {
 				len,
 				seglen: seqSeglen,
 				seq,
+				remoteObliteratedLen,
 			};
 			partialLengths.addOrUpdate(seqPartialLen);
 		} else {
+			seqPartialLen.remoteObliteratedLen = remoteObliteratedLen;
 			seqPartialLen.seglen = seqSeglen;
 			seqPartialLen.len = len;
 			// Assert client id matches
@@ -649,6 +903,7 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	) {
 		let seqSeglen = 0;
+		let remoteObliteratedLen = 0;
 		let segCount = 0;
 		// Compute length for seq across children
 		for (let i = 0; i < node.childCount; i++) {
@@ -659,22 +914,64 @@ export class PartialSequenceLengths {
 				const branchPartialLengths = childBlock.partialLengths!;
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
-				if (leqPartial) {
-					if (leqPartial.seq === seq) {
-						seqSeglen += leqPartial.seglen;
-					}
+				if (leqPartial && leqPartial.seq === seq) {
+					seqSeglen += leqPartial.seglen;
+					remoteObliteratedLen += leqPartial.remoteObliteratedLen ?? 0;
 				}
 				segCount += branchPartialLengths.segmentCount;
 			} else {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
+				const moveInfo = toMoveInfo(segment);
 
-				if (segment.seq === seq) {
-					if (removalInfo?.removedSeq !== seq) {
+				const removalIsLocal =
+					!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+				const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
+
+				const removeHappenedFirst =
+					removalInfo &&
+					(!moveInfo ||
+						moveIsLocal ||
+						(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
+
+				if (seq === segment.seq) {
+					// if this segment was moved on insert, its length should
+					// only be visible to the inserting client
+					if (
+						segment.wasMovedOnInsert &&
+						segment.seq !== undefined &&
+						moveInfo &&
+						moveInfo.movedSeq < segment.seq
+					) {
+						remoteObliteratedLen += segment.cachedLength;
+					} else {
 						seqSeglen += segment.cachedLength;
 					}
-				} else {
-					if (removalInfo?.removedSeq === seq) {
+				}
+
+				if (seq === removalInfo?.removedSeq) {
+					// if the remove op happened before an overlapping obliterate,
+					// all clients can see the remove at this seq. otherwise, only
+					// the removing client is aware of the remove
+					if (removeHappenedFirst) {
+						seqSeglen -= segment.cachedLength;
+					} else {
+						remoteObliteratedLen -= segment.cachedLength;
+					}
+				}
+
+				if (seq === moveInfo?.movedSeq) {
+					if (removeHappenedFirst) {
+						remoteObliteratedLen -= segment.cachedLength;
+					} else if (
+						segment.wasMovedOnInsert &&
+						segment.seq !== UnassignedSequenceNumber &&
+						segment.seq !== undefined &&
+						moveInfo.movedSeq > segment.seq
+					) {
+						remoteObliteratedLen += segment.cachedLength;
+						seqSeglen -= segment.cachedLength;
+					} else if (segment.seq !== UnassignedSequenceNumber) {
 						seqSeglen -= segment.cachedLength;
 					}
 				}
@@ -684,9 +981,21 @@ export class PartialSequenceLengths {
 		this.segmentCount = segCount;
 		this.unsequencedRecords = undefined;
 
-		PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
+		PartialSequenceLengths.addSeq(
+			this.partialLengths,
+			seq,
+			seqSeglen,
+			remoteObliteratedLen,
+			clientId,
+		);
 		this.clientSeqNumbers[clientId] ??= new PartialSequenceLengthsSet();
-		PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen);
+		PartialSequenceLengths.addSeq(
+			this.clientSeqNumbers[clientId],
+			seq,
+			seqSeglen + remoteObliteratedLen,
+			undefined,
+			clientId,
+		);
 		if (PartialSequenceLengths.options.zamboni) {
 			this.zamboni(collabWindow);
 		}
@@ -835,10 +1144,20 @@ export class PartialSequenceLengths {
 
 	// Assumes sequence number already coalesced and that this is called in increasing `seq` order.
 	private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
+		const seglen = partialLength.seglen + (partialLength.remoteObliteratedLen ?? 0);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, partialLength.seglen);
+		this.addClientSeqNumber(partialLength.clientId!, partialLength.seq, seglen);
 		if (partialLength.overlapRemoveClients) {
 			partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
+				// Original client entry was handled above
+				if (partialLength.clientId !== oc.data.clientId) {
+					this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
+				}
+				return true;
+			});
+		}
+		if (partialLength.overlapObliterateClients) {
+			partialLength.overlapObliterateClients.map((oc: Property<number, IOverlapClient>) => {
 				// Original client entry was handled above
 				if (partialLength.clientId !== oc.data.clientId) {
 					this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
@@ -923,6 +1242,15 @@ function verifyPartialLengths(
 			// Each overlap client counts as one, but the first remove to sequence was already counted.
 			// (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
 			count += partialLength.overlapRemoveClients.size() - 1;
+		}
+
+		if (partialLength.overlapObliterateClients) {
+			// Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
+			assert(!clientPartials, "Both overlapObliterateClients and clientPartials are set!");
+
+			// Each overlap client counts as one, but the first move to sequence was already counted.
+			// (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
+			count += partialLength.overlapObliterateClients.size() - 1;
 		}
 	}
 	return count;
@@ -1010,27 +1338,45 @@ function cloneOverlapRemoveClients(
 }
 
 /**
- * Combines the `overlapRemoveClients` field of two `PartialSequenceLength` objects,
- * modifying the first PartialSequenceLength's bookkeeping in-place.
+ * Combines the `overlapRemoveClients` and `overlapObliterateClients` fields of
+ * two `PartialSequenceLength` objects, modifying the first PartialSequenceLength's
+ * bookkeeping in-place.
  *
  * Combination is performed additively on `seglen` on a per-client basis.
  */
 export function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
-	const overlapRemoveClientsA = a.overlapRemoveClients;
-	if (overlapRemoveClientsA) {
-		if (b.overlapRemoveClients) {
-			b.overlapRemoveClients.map((bProp: Property<number, IOverlapClient>) => {
-				const aProp = overlapRemoveClientsA.get(bProp.key);
-				if (aProp) {
-					aProp.data.seglen += bProp.data.seglen;
-				} else {
-					overlapRemoveClientsA.put(bProp.data.clientId, { ...bProp.data });
-				}
-				return true;
-			});
+	function combine(
+		treeA: RedBlackTree<number, IOverlapClient> | undefined,
+		treeB: RedBlackTree<number, IOverlapClient> | undefined,
+	): RedBlackTree<number, IOverlapClient> | undefined {
+		if (treeA) {
+			if (treeB) {
+				treeB.map((bProp: Property<number, IOverlapClient>) => {
+					const aProp = treeA.get(bProp.key);
+					if (aProp) {
+						aProp.data.seglen += bProp.data.seglen;
+					} else {
+						treeA.put(bProp.data.clientId, { ...bProp.data });
+					}
+					return true;
+				});
+			}
+		} else {
+			return cloneOverlapRemoveClients(treeB);
 		}
-	} else {
-		a.overlapRemoveClients = cloneOverlapRemoveClients(b.overlapRemoveClients);
+	}
+
+	const overlapRemoveClients = combine(a.overlapRemoveClients, b.overlapRemoveClients);
+	if (overlapRemoveClients) {
+		a.overlapRemoveClients = overlapRemoveClients;
+	}
+
+	const overlapObliterateClients = combine(
+		a.overlapObliterateClients,
+		b.overlapObliterateClients,
+	);
+	if (overlapObliterateClients) {
+		a.overlapObliterateClients = overlapObliterateClients;
 	}
 }
 
@@ -1056,6 +1402,9 @@ function mergePartialLengths(
 		mergedLengths.addOrUpdate({
 			...partialLength,
 			overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
+			overlapObliterateClients: cloneOverlapRemoveClients(
+				partialLength.overlapObliterateClients,
+			),
 		});
 	}
 	return mergedLengths;

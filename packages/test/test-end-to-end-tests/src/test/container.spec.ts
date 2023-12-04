@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
+import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
@@ -37,15 +37,13 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
 	ITestDataObject,
 	TestDataObjectType,
 	describeNoCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+} from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	DataCorruptionError,
@@ -294,12 +292,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -308,7 +302,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		const container = await localTestObjectProvider.makeTestContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 		let runCount = 0;
 
@@ -384,12 +378,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -408,7 +398,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"container is not connected after connected event fires",
 		);
 
-		const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
+		const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
 		const directory1 = dataObject._root;
 		directory1.set("key", "value");
 		let value1 = await directory1.get("key");
@@ -419,7 +409,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			durationMs: timeoutMs,
 			errorMsg: "container2 initial connect timeout",
 		});
-		const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
+		const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
 		const directory2 = dataObjectTest._root;
 		await localTestObjectProvider.ensureSynchronized();
 		let value2 = await directory2.get("key");
@@ -680,7 +670,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" }],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;
@@ -733,7 +723,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;

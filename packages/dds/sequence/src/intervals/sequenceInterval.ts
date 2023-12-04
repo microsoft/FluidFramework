@@ -8,7 +8,6 @@
 
 import {
 	Client,
-	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
 	PropertiesManager,
@@ -338,9 +337,8 @@ export class SequenceInterval implements ISerializableInterval {
 		newProps: PropertySet,
 		collab: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
 	}
 
 	/**

@@ -14,14 +14,14 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 import { ICreateContainerMetadata } from "../summary";
 import {
-	disableSweepLogKey,
 	GCNodeType,
 	UnreferencedState,
 	IGarbageCollectorConfigs,
 	disableTombstoneKey,
 	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadKey,
+	throwOnTombstoneLoadOverrideKey,
 	runSweepKey,
+	GCFeatureMatrix,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
@@ -46,6 +46,10 @@ interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps
 	type: GCNodeType;
 	unrefTime: number;
 	age: number;
+	// Expanding GC feature matrix. Without doing this, the configs cannot be logged in telemetry directly.
+	gcConfigs: Omit<IGarbageCollectorConfigs, "persistedGcFeatureMatrix"> & {
+		[K in keyof GCFeatureMatrix]: GCFeatureMatrix[K];
+	};
 	timeout?: number;
 	fromId?: {
 		value: string;
@@ -79,14 +83,7 @@ export class GCTelemetryTracker {
 
 	constructor(
 		private readonly mc: MonitoringContext,
-		private readonly configs: Pick<
-			IGarbageCollectorConfigs,
-			| "inactiveTimeoutMs"
-			| "sweepTimeoutMs"
-			| "tombstoneEnforcementAllowed"
-			| "throwOnTombstoneLoad"
-			| "throwOnTombstoneUsage"
-		>,
+		private readonly configs: IGarbageCollectorConfigs,
 		private readonly isSummarizerClient: boolean,
 		private readonly createContainerMetadata: ICreateContainerMetadata,
 		private readonly getNodeType: (nodeId: string) => GCNodeType,
@@ -153,6 +150,7 @@ export class GCTelemetryTracker {
 			fromId: untaggedFromId,
 			...propsToLog
 		} = nodeUsageProps;
+		const { persistedGcFeatureMatrix, ...configs } = this.configs;
 		const unrefEventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
 			type: nodeType,
 			unrefTime: nodeStateTracker?.unreferencedTimestampMs ?? -1,
@@ -168,6 +166,7 @@ export class GCTelemetryTracker {
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
+			gcConfigs: { ...configs, ...persistedGcFeatureMatrix },
 		};
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
@@ -217,7 +216,7 @@ export class GCTelemetryTracker {
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded
 			if (nodeUsageProps.usageType === "Loaded") {
-				const { id, fromId, headers, ...detailedProps } = unrefEventProps;
+				const { id, fromId, headers, gcConfigs, ...detailedProps } = unrefEventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
 					...tagCodeArtifacts({ pkg: nodeUsageProps.packagePath?.join("/") }),
@@ -226,6 +225,7 @@ export class GCTelemetryTracker {
 					fromId,
 					headers: { ...headers },
 					details: detailedProps,
+					gcConfigs,
 				};
 
 				// Do not log the inactive object x events as error events as they are not the best signal for
@@ -252,7 +252,7 @@ export class GCTelemetryTracker {
 		// GC_Tombstone_DataStore_Requested, GC_Tombstone_DataStore_Changed, GC_Tombstone_DataStore_Revived
 		// GC_Tombstone_SubDataStore_Requested, GC_Tombstone_SubDataStore_Changed, GC_Tombstone_SubDataStore_Revived
 		// GC_Tombstone_Blob_Requested, GC_Tombstone_Blob_Changed, GC_Tombstone_Blob_Revived
-		const { id, fromId, headers, ...detailedProps } = unrefEventProps;
+		const { id, fromId, headers, gcConfigs, ...detailedProps } = unrefEventProps;
 		const eventUsageName = usageType === "Loaded" ? "Requested" : usageType;
 		const event = {
 			eventName: `GC_Tombstone_${nodeType}_${eventUsageName}`,
@@ -262,7 +262,15 @@ export class GCTelemetryTracker {
 			fromId,
 			headers: { ...headers },
 			details: detailedProps,
-			gcTombstoneEnforcementAllowed: this.configs.tombstoneEnforcementAllowed,
+			gcConfigs,
+			tombstoneFlags: {
+				DisableTombstone: this.mc.config.getBoolean(disableTombstoneKey),
+				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
+				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
+			},
+			sweepFlags: {
+				EnableSweepFlag: this.mc.config.getBoolean(runSweepKey),
+			},
 		};
 
 		if (
@@ -343,7 +351,9 @@ export class GCTelemetryTracker {
 		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
 		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
 		for (const eventProps of this.pendingEventsQueue) {
-			const { usageType, state, id, fromId, ...propsToLog } = eventProps;
+			// const { usageType, state, id, fromId, ...propsToLog } = eventProps;
+			const { usageType, state, id, fromId, headers, gcConfigs, ...detailedProps } =
+				eventProps;
 			/**
 			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
 			 * from another unreferenced node and this scenario is not interesting to log.
@@ -361,11 +371,11 @@ export class GCTelemetryTracker {
 					: undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
-					details: JSON.stringify({
-						...propsToLog,
-					}),
 					id,
 					fromId,
+					headers: { ...headers },
+					details: detailedProps,
+					gcConfigs,
 					...tagCodeArtifacts({
 						pkg: pkg?.join("/"),
 						fromPkg: fromPkg?.join("/"),
@@ -380,58 +390,6 @@ export class GCTelemetryTracker {
 			}
 		}
 		this.pendingEventsQueue = [];
-	}
-
-	/**
-	 * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-	 * this will give us a view into how much deleted content a container has.
-	 */
-	public logSweepEvents(
-		logger: ITelemetryLoggerExt,
-		currentReferenceTimestampMs: number,
-		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
-		completedGCRuns: number,
-		lastSummaryTime?: number,
-	) {
-		if (
-			this.mc.config.getBoolean(disableSweepLogKey) === true ||
-			this.configs.sweepTimeoutMs === undefined
-		) {
-			return;
-		}
-
-		const deletedNodeIds: string[] = [];
-		for (const [nodeId, nodeStateTracker] of unreferencedNodesState) {
-			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
-				return;
-			}
-
-			const nodeType = this.getNodeType(nodeId);
-			if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-				return;
-			}
-
-			// Log deleted event for each node only once to reduce noise in telemetry.
-			const uniqueEventId = `Deleted-${nodeId}`;
-			if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-				return;
-			}
-			this.loggedUnreferencedEvents.add(uniqueEventId);
-			deletedNodeIds.push(nodeId);
-		}
-
-		if (deletedNodeIds.length > 0) {
-			logger.sendTelemetryEvent({
-				eventName: "GC_SweepReadyObjects_Delete",
-				details: JSON.stringify({
-					timeout: this.configs.sweepTimeoutMs,
-					completedGCRuns,
-					lastSummaryTime,
-					...this.createContainerMetadata,
-				}),
-				...tagCodeArtifacts({ id: JSON.stringify(deletedNodeIds) }),
-			});
-		}
 	}
 }
 
@@ -452,7 +410,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.tombstoneFlags = JSON.stringify({
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
+		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 	});
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),

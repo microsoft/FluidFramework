@@ -13,7 +13,6 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
-	requestResolvedObjectFromContainer,
 } from "./loader";
 export {
 	isLocationRedirectionError,

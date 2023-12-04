@@ -45,6 +45,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
+    addChannel(channel: IChannel): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
@@ -87,12 +88,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get idCompressor(): IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
-    // @deprecated (undocumented)
-    static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;

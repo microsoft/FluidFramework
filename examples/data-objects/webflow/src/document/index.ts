@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -15,16 +13,7 @@ import {
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
 	IMergeTreeRemoveMsg,
-	ISegment,
-	LocalReferencePosition,
-	Marker,
-	MergeTreeDeltaType,
-	PropertySet,
-	ReferencePosition,
-	ReferenceType,
 	refGetTileLabels,
-	reservedTileLabelsKey,
-	TextSegment,
 } from "@fluidframework/merge-tree";
 import {
 	IFluidDataStoreContext,
@@ -35,6 +24,15 @@ import {
 	SharedStringSegment,
 	SequenceMaintenanceEvent,
 	SequenceDeltaEvent,
+	ISegment,
+	LocalReferencePosition,
+	Marker,
+	MergeTreeDeltaType,
+	PropertySet,
+	ReferencePosition,
+	ReferenceType,
+	reservedTileLabelsKey,
+	TextSegment,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { clamp, TagName, TokenList } from "../util/index.js";
@@ -416,20 +414,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
-		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
+	public findTile(
+		position: number,
+		tileType: DocTile,
+		preceding: boolean,
+	): { tile: ReferencePosition; pos: number } {
+		return this.sharedString.findTile(position, tileType as unknown as string, preceding);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
-		const start = maybeStart
-			? this.sharedString.localReferencePositionToPosition(maybeStart)
-			: 0;
+		const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
+		const start = maybeStart ? maybeStart.pos : 0;
 
-		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
-		const end = maybeEnd
-			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
-			: this.length;
+		const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
+		const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
 
 		return { start, end };
 	}

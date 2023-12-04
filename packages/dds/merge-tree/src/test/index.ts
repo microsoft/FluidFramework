@@ -59,7 +59,6 @@ export {
 	debugMarkerToString,
 	DetachedReferencePosition,
 	discardMergeTreeDeltaRevertible,
-	ICombiningOp,
 	IJSONMarkerSegment,
 	IJSONSegment,
 	IMarkerDef,

@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	createDDSFuzzSuite,
 	DDSFuzzTestState,
 	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
@@ -36,11 +36,14 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
+		delete: 1,
+		move: 1,
+		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -74,12 +77,7 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skipMinimization: true,
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [6, 10, 12, 14, 15, 17, 18, 19],
+			skip: [26],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -108,11 +106,7 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [2, 3, 6, 12, 14, 15, 16],
+			skip: [42],
 		};
 		createDDSFuzzSuite(model, options);
 	});

@@ -8,10 +8,10 @@ export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
-	disableSweepLogKey,
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	gcThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
@@ -23,6 +23,8 @@ export {
 	IGCMetadata,
 	IGCResult,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
 	runGCKey,
@@ -32,6 +34,7 @@ export {
 	disableAttachmentBlobSweepKey,
 	disableDatastoreSweepKey,
 	UnreferencedState,
+	throwOnTombstoneLoadOverrideKey,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

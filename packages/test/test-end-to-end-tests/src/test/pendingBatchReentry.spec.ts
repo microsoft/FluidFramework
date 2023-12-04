@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -14,7 +13,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -56,7 +55,7 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 			runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedMap = await dataObject.getSharedObject<SharedMap>("map");
 		sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 		sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");

@@ -1977,6 +1977,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
+					localCheckpointEnabled: this.checkpointService?.getLocalCheckpointEnabled(),
+					globalCheckpointOnly: this.globalCheckpointOnly,
+					localCheckpoint:
+						this.checkpointService?.getLocalCheckpointEnabled() &&
+						!this.globalCheckpointOnly,
 				};
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				lumberjackProperties.checkpointReason = checkpointReason;

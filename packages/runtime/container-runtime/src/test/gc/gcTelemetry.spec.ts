@@ -21,9 +21,10 @@ import {
 	GCTelemetryTracker,
 	defaultSessionExpiryDurationMs,
 	oneDayMs,
-	disableSweepLogKey,
 	UnreferencedStateTracker,
 	cloneGCData,
+	IGarbageCollectorConfigs,
+	stableGCVersion,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
@@ -69,15 +70,28 @@ describe("GC Telemetry Tracker", () => {
 			}
 			return GCNodeType.Other;
 		};
+		const configs: IGarbageCollectorConfigs = {
+			gcEnabled: true,
+			sweepEnabled: false,
+			shouldRunGC: true,
+			shouldRunSweep: false,
+			runFullGC: false,
+			testMode: false,
+			tombstoneMode: false,
+			inactiveTimeoutMs,
+			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+			sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+			tombstoneEnforcementAllowed: false,
+			throwOnTombstoneLoad: false,
+			throwOnTombstoneUsage: false,
+			throwOnInactiveLoad: false,
+			persistedGcFeatureMatrix: undefined,
+			gcVersionInBaseSnapshot: stableGCVersion,
+			gcVersionInEffect: stableGCVersion,
+		};
 		const tracker = new GCTelemetryTracker(
 			mc,
-			{
-				inactiveTimeoutMs,
-				sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
-				tombstoneEnforcementAllowed: false,
-				throwOnTombstoneLoad: false,
-				throwOnTombstoneUsage: false,
-			},
+			configs,
 			isSummarizerClient,
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
@@ -149,7 +163,6 @@ describe("GC Telemetry Tracker", () => {
 		if (!isSummarizerClient) {
 			return;
 		}
-		telemetryTracker.logSweepEvents(mc.logger, Date.now(), unreferencedNodesState, 0);
 		await telemetryTracker.logPendingEvents(mc.logger);
 	}
 
@@ -300,10 +313,7 @@ describe("GC Telemetry Tracker", () => {
 			revivedEventName: string,
 			changedEventName: string,
 			loadedEventName: string,
-			expectDeleteLogs?: boolean,
 		) => {
-			const deleteEventName = "GarbageCollector:GC_SweepReadyObjects_Delete";
-
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
 				mockLogger.assertMatchNone(
@@ -311,7 +321,6 @@ describe("GC Telemetry Tracker", () => {
 						{ eventName: revivedEventName },
 						{ eventName: changedEventName },
 						{ eventName: loadedEventName },
-						{ eventName: deleteEventName },
 					],
 					"unexpected events logged",
 				);
@@ -357,18 +366,6 @@ describe("GC Telemetry Tracker", () => {
 				mockNodeChanges(nodes);
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push({
-						eventName: deleteEventName,
-						timeout,
-						...tagCodeArtifacts({ id: JSON.stringify([nodes[1], nodes[2]]) }),
-					});
-				} else {
-					assert(
-						!mockLogger.events.some((event) => event.eventName === deleteEventName),
-						"Should not have any delete events logged",
-					);
-				}
 				expectedEvents.push(
 					{
 						eventName: loadedEventName,
@@ -432,18 +429,6 @@ describe("GC Telemetry Tracker", () => {
 				mockNodeChanges(nodes);
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push({
-						eventName: deleteEventName,
-						timeout,
-						...tagCodeArtifacts({ id: JSON.stringify([nodes[2]]) }),
-					});
-				} else {
-					assert(
-						!mockLogger.events.some((event) => event.eventName === deleteEventName),
-						"Should not have any delete events logged",
-					);
-				}
 				expectedEvents.push(
 					{
 						eventName: loadedEventName,
@@ -526,32 +511,14 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		describe("SweepReady events", () => {
-			beforeEach(() => {
-				injectedSettings[disableSweepLogKey] = true;
-			});
-
 			inactiveOrSweepEventTests(
 				sweepTimeoutMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
 				"GarbageCollector:SweepReadyObject_Loaded",
-				false, // expectDeleteLogs
 			);
 		});
-
-		if (isSummarizerClient) {
-			describe("SweepReady events - with delete log", () => {
-				inactiveOrSweepEventTests(
-					sweepTimeoutMs,
-					"sweep",
-					"GarbageCollector:SweepReadyObject_Revived",
-					"GarbageCollector:SweepReadyObject_Changed",
-					"GarbageCollector:SweepReadyObject_Loaded",
-					true, // expectDeleteLogs
-				);
-			});
-		}
 	};
 
 	describe("Summarizer client", () => {

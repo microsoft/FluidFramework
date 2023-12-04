@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	IDisposable,
-	FluidObject,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -59,12 +53,6 @@ export enum AttachState {
  * @public
  */
 export interface IRuntime extends IDisposable {
-	/**
-	 * Executes a request against the runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 */
@@ -116,7 +104,7 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 */
-	getEntryPoint(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject>;
 }
 
 /**
