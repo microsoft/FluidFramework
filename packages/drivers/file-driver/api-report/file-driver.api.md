@@ -30,7 +30,7 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(path: string);
     // (undocumented)
@@ -40,7 +40,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     get ops(): readonly Readonly<api.ISequencedDocumentMessage>[];
 }
 
-// @public
+// @internal
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: IDocumentDeltaConnection);
     // (undocumented)
@@ -48,7 +48,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
@@ -70,10 +70,10 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
     };
 } & TBase;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FileStorageDocumentName = "FileStorageDocId";
 
-// @public
+// @internal
 export class FluidFetchReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     constructor(path: string, versionName?: string | undefined);
     // (undocumented)
@@ -84,7 +84,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     readBlob(sha: string): Promise<ArrayBufferLike>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FluidFetchReaderFileSnapshotWriter: {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
@@ -106,7 +106,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
     };
 } & typeof FluidFetchReader;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
     // (undocumented)
     onSnapshotHandler(snapshot: IFileSnapshot): void;
@@ -114,10 +114,10 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
     reset(): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 
-// @public
+// @internal
 export class Replayer {
     constructor(deltaConnection: ReplayFileDeltaConnection, documentStorageService: FileDeltaStorageService);
     // (undocumented)
@@ -128,7 +128,7 @@ export class Replayer {
     replay(replayTo: number): number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     constructor(details: IConnected, documentDeltaStorageService: FileDeltaStorageService);
     // (undocumented)

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IRouterliciousDriverPolicies {
 	/**
 	 * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.

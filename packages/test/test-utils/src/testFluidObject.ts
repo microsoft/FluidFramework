@@ -25,6 +25,7 @@ import { ITestFluidObject } from "./interfaces";
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
+ * @internal
  */
 export class TestFluidObject implements ITestFluidObject {
 	public get ITestFluidObject() {
@@ -122,6 +123,9 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 }
 
+/**
+ * @internal
+ */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
@@ -153,6 +157,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * `describeCompat` aims to provide:
  * `SharedMap`s always reference the current version of SharedMap.
  * AB#4670 tracks improving this situation.
+ * @internal
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory() {

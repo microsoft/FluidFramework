@@ -10,12 +10,13 @@ import {
 	ChangeRebaser,
 	TaggedChange,
 	AnchorSet,
-	Delta,
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
 	RevisionTag,
 	deltaForSet,
+	DeltaFieldMap,
+	DeltaRoot,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
@@ -164,7 +165,7 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
+function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {
@@ -204,6 +205,7 @@ export const TestChange = {
 	rebase,
 	checkChangeList,
 	toDelta,
+	isEmpty,
 	codec,
 };
 deepFreeze(TestChange);
@@ -275,12 +277,12 @@ export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
 const rootKey: FieldKey = brand("root");
 
 /**
- * This is a hack to encode arbitrary information (the intentions) into a Delta.
+ * This is a hack to encode arbitrary information (the intentions) into a Delta
  * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
-export function asDelta(intentions: number[]): Delta.Root {
+export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
 		: {
@@ -300,4 +302,8 @@ export function testChangeFamilyFactory(
 		}),
 	};
 	return family;
+}
+
+export function isEmpty(change: TestChange): boolean {
+	return change.intentions.length === 0;
 }

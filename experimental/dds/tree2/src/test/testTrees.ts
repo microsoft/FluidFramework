@@ -13,7 +13,6 @@ import {
 	TreeFieldSchema,
 	FullSchemaPolicy,
 	Multiplicity,
-	SchemaAware,
 	SchemaLibrary,
 	TreeNodeSchema,
 	TreeSchema,
@@ -23,6 +22,8 @@ import {
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
 } from "../feature-libraries";
 import { TreeContent } from "../shared-tree";
 import { leaf, SchemaBuilder } from "../domains";
@@ -38,7 +39,7 @@ function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
-	data: SchemaAware.AllowedTypesToTypedTrees<[T]>,
+	data: AllowedTypesToFlexInsertableTree<[T]>,
 ): TestTree {
 	const fieldSchema = TreeFieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
@@ -48,7 +49,7 @@ function testField<T extends TreeFieldSchema>(
 	name: string,
 	schemaLibrary: SchemaLibrary,
 	rootField: T,
-	data: SchemaAware.TypedField<T>,
+	data: InsertableFlexField<T>,
 ): TestTree {
 	const schema = new SchemaBuilder({
 		scope: name,
@@ -120,7 +121,7 @@ export const anyFields = builder.object("anyFields", {
 
 export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
 
-type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<[typeof numericMap]>;
+type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
 export const anyMap = builder.map("anyMap", builder.sequence(Any));
 

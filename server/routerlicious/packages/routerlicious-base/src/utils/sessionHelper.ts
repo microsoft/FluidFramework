@@ -256,6 +256,7 @@ function convertSessionToFreshSession(session: ISession, lumberjackProperties): 
 
 /**
  * Return to the caller with the status of the session.
+ * @internal
  */
 export async function getSession(
 	ordererUrl: string,

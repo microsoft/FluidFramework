@@ -14,7 +14,7 @@ import { IDataStoreAliasMessage } from "./dataStore";
 import { IChunkedOp } from "./opLifecycle";
 
 /**
- * @public
+ * @internal
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -71,7 +71,8 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents>
+	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */

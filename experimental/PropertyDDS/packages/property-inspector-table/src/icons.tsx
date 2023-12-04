@@ -29,6 +29,9 @@ const typeIdToColor = {
 	set: "#4679B9",
 };
 
+/**
+ * @internal
+ */
 export const typeidToIconMap = {
 	Array: <SvgIcon svgId={"array-24"} height={iconHeight} width={iconWidth} />,
 	Bool: <SvgIcon svgId={"boolean-24"} height={iconHeight} width={iconWidth} />,
@@ -61,6 +64,7 @@ export const typeidToIconMap = {
  * returns the icon corresponding to a typeid
  * @param inTypeid - the property typeid
  * @return the Svg Icon corresponding to the typeid in the map
+ * @internal
  */
 export const getIconFromTypeId = (inTypeid): React.ReactNode => {
 	if (inTypeid.includes("enum<")) {
@@ -76,6 +80,7 @@ export const getIconFromTypeId = (inTypeid): React.ReactNode => {
 /**
  * Returns the default inspector table icon based on the row data.
  * @param rowData - The row data.
+ * @internal
  */
 export const getDefaultInspectorTableIcons = (rowData: IInspectorRow): React.ReactNode => {
 	let icon;

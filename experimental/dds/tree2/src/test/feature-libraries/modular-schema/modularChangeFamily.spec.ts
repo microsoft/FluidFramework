@@ -22,7 +22,6 @@ import {
 	tagChange,
 	TaggedChange,
 	FieldKindIdentifier,
-	Delta,
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
@@ -31,6 +30,8 @@ import {
 	deltaForSet,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
+	DeltaFieldChanges,
+	DeltaRoot,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -72,10 +73,11 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+	intoDelta: ({ change }, deltaFromChild): DeltaFieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
-	relevantRemovedTrees: (change, removedTreesFromChild) => removedTreesFromChild(change),
+	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
+		relevantRemovedRootsFromChild(change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -618,7 +620,7 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: Delta.FieldChanges = {
+			const nodeDelta: DeltaFieldChanges = {
 				local: [
 					{
 						count: 1,
@@ -629,7 +631,7 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = {
+			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
 					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],

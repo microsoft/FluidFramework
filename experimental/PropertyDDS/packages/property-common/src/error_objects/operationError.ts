@@ -12,6 +12,9 @@
 import _ from "lodash";
 import { FlaggedError } from "./flaggedError";
 
+/**
+ * @internal
+ */
 export class OperationError extends Error {
 	static FLAGS = FlaggedError.FLAGS;
 	public stack: string | undefined;

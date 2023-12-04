@@ -7,10 +7,16 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+/**
+ * @internal
+ */
 export const tableModelType = "@fluid-example/table-view";
 
 const matrixKey = "matrixKey";
 
+/**
+ * @internal
+ */
 export class TableModel extends DataObject {
 	public static getFactory() {
 		return factory;
