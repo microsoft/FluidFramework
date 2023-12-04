@@ -101,7 +101,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummarySequenceNumber: number,
+		shouldValidatePreSummaryState: boolean,
+	) {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -111,10 +116,33 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
+		const nodeLatestSummarySequenceNumber = this._latestSummary?.referenceSequenceNumber ?? 0;
+		if (latestSummarySequenceNumber !== nodeLatestSummarySequenceNumber) {
+			const error = new LoggingError("LatestSummarySequenceNumberMismatch", {
+				latestSummarySequenceNumber,
+				nodeLatestSummarySequenceNumber,
+			});
+			this.logger.sendErrorEvent(
+				{
+					eventName: "LatestSummarySequenceNumberMismatch",
+				},
+				error,
+			);
+
+			if (shouldValidatePreSummaryState) {
+				throw error;
+			}
+		}
+
 		this.wipSummaryLogger = summaryLogger;
 
 		for (const child of this.children.values()) {
-			child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
+			child.startSummary(
+				referenceSequenceNumber,
+				this.wipSummaryLogger,
+				latestSummarySequenceNumber,
+				shouldValidatePreSummaryState,
+			);
 		}
 		this.wipReferenceSequenceNumber = referenceSequenceNumber;
 	}
