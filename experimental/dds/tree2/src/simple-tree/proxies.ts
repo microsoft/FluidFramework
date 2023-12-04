@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { brand, fail, isReadonlyArray } from "../util";
 import {
@@ -907,30 +907,47 @@ export function extractFactoryContent(
 	input: InsertableContent,
 	insertedAtIndex = 0,
 ): ExtractedFactoryContent {
-	const { content, type, fromFactory } = extractContentIfProxy(input);
-	let extractedContent: ExtractedFactoryContent;
-	switch (type) {
-		case NodeKind.Object:
-			extractedContent = extractContentObject(content as object);
-			break;
-		case NodeKind.List:
-			extractedContent = extractContentArray(
-				content as readonly FactoryContent[],
-				insertedAtIndex,
-			);
-			break;
-		case NodeKind.Map:
-			extractedContent = extractContentMap(content as ReadonlyMap<string, FactoryContent>);
-			break;
-		case NodeKind.Leaf:
-			extractedContent = {
-				content,
-				hydrateProxies: noopHydrator,
-			};
-			break;
-		default:
-			unreachableCase(type);
+	let content: FactoryContent;
+	let fromFactory = false;
+	const rawEditNode = tryGetFlexNode(input);
+	if (rawEditNode !== undefined) {
+		const factoryContent = extractRawNodeContent(rawEditNode);
+		if (factoryContent === undefined) {
+			// We were passed a proxy, but that proxy doesn't have any raw content.
+			throw new Error("Cannot insert a node that is already in the tree");
+		}
+		content = factoryContent;
+		fromFactory = true;
+	} else {
+		content = input as FactoryContent;
 	}
+
+	assert(!(content instanceof NodeBase), "Unhydrated insertion content should have FlexNode");
+
+	let type: NodeKind;
+	let extractedContent: ExtractedFactoryContent;
+	if (isReadonlyArray(content)) {
+		type = NodeKind.List;
+		extractedContent = extractContentArray(
+			content as readonly FactoryContent[],
+			insertedAtIndex,
+		);
+	} else if (content instanceof Map) {
+		type = NodeKind.Map;
+		extractedContent = extractContentMap(content as ReadonlyMap<string, FactoryContent>);
+	} else if (typeof content === "object" && content !== null && !isFluidHandle(content)) {
+		type = NodeKind.Object;
+		extractedContent = extractContentObject(content as object);
+	} else {
+		extractedContent = { content, hydrateProxies: noopHydrator };
+		type = NodeKind.Leaf;
+	}
+
+	if (input instanceof NodeBase) {
+		const kindFromSchema = getNodeKind(input);
+		assert(kindFromSchema === type, "kind of data should match kind of schema");
+	}
+
 	if (fromFactory) {
 		return {
 			content: extractedContent.content,
@@ -1051,6 +1068,11 @@ function extractContentObject(input: {
 	};
 }
 
+/**
+ * Content which can be used to build a node.
+ * @remarks
+ * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
+ */
 export type FactoryContent =
 	| IFluidHandle
 	| string
@@ -1064,52 +1086,10 @@ export type FactoryContent =
 			readonly [P in string]?: InsertableContent;
 	  };
 
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
-
 /**
- * If `input` is a factory-created proxy, this will return the content stored in that proxy and forward the `typeNameSymbol` on the proxy to `object`.
- * Otherwise, it will just return `input`.
+ * Content which can be inserted into a tree.
  */
-function extractContentIfProxy(input: InsertableContent): {
-	content: FactoryContent;
-	type: NodeKind;
-	fromFactory: boolean;
-} {
-	let content: FactoryContent;
-	let fromFactory = false;
-	const rawEditNode = tryGetFlexNode(input);
-	if (rawEditNode !== undefined) {
-		const factoryContent = extractRawNodeContent(rawEditNode);
-		if (factoryContent === undefined) {
-			// We were passed a proxy, but that proxy doesn't have any raw content.
-			throw new Error("Cannot insert a node that is already in the tree");
-		}
-		content = factoryContent;
-		fromFactory = true;
-	} else {
-		content = input as FactoryContent;
-	}
-
-	assert(!(content instanceof NodeBase), "Unhydrated insertion content should have FlexNode");
-
-	let type: NodeKind;
-	if (isReadonlyArray(content)) {
-		type = NodeKind.List;
-	} else if (content instanceof Map) {
-		type = NodeKind.Map;
-	} else if (typeof content === "object" && content !== null) {
-		type = isFluidHandle(content) ? NodeKind.Leaf : NodeKind.Object;
-	} else {
-		type = NodeKind.Leaf;
-	}
-
-	if (input instanceof NodeBase) {
-		const kindFromSchema = getNodeKind(input);
-		assert(kindFromSchema === type, "kind of data should match kind of schema");
-	}
-
-	return { content, type, fromFactory };
-}
+export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
 function getListChildNode(
 	listNode: FlexTreeFieldNode<FieldNodeSchema>,
