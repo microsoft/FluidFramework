@@ -10,13 +10,13 @@
  * @public
  */
 export interface IRevertible {
-	revert();
-	discard();
+	revert(): void;
+	discard(): void;
 }
 
 /**
  * @public
  */
 export interface IUndoConsumer {
-	pushToCurrentOperation(revertible: IRevertible);
+	pushToCurrentOperation(revertible: IRevertible): void;
 }

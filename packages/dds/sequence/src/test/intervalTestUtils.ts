@@ -32,8 +32,8 @@ export function assertConsistent(clients: Client[]): void {
 }
 
 export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
-	assert.equal(a.getLength(), b.getLength());
 	assert.equal(a.getText(), b.getText(), `Non-equal text between strings ${a.id} and ${b.id}.`);
+	assert.equal(a.getLength(), b.getLength());
 	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();
 	const otherLabels = Array.from(b.getIntervalCollectionLabels()).sort();
 	assert.deepEqual(

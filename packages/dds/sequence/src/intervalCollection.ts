@@ -690,7 +690,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			op: ISequencedDocumentMessage | undefined,
 			slide: boolean,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval is added or removed from the collection.
 	 * `local` reflects whether the change originated locally.
@@ -703,7 +703,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval's properties have changed.
 	 * `interval` reflects the state of the updated properties.
@@ -721,7 +721,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
 }
 
 // solely for type checking in the implementation of add - will be removed once
@@ -869,7 +869,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
 	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
 	 */
-	changeProperties(id: string, props: PropertySet);
+	changeProperties(id: string, props: PropertySet): void;
 	/**
 	 * Changes the endpoints of an existing interval.
 	 * @param id - Id of the interval to change

@@ -14,7 +14,6 @@ import {
 import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
-	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -88,8 +87,6 @@ export async function createSummarizerFromFactory(
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
 		{
@@ -97,7 +94,6 @@ export async function createSummarizerFromFactory(
 			registryEntries: registryEntries ?? [
 				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
 			],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions: { summaryOptions: defaultSummaryOptions },
 		},
 	);

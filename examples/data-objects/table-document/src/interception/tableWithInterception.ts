@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITable, TableDocumentItem } from "../table";
 import { TableDocument } from "../document";

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -121,6 +121,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedSegmentSequenceRevertible": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

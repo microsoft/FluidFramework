@@ -3,13 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export {
-	createFluidObjectResponse,
-	handleFromLegacyUri,
-	rootDataStoreRequestHandler,
-	RuntimeRequestHandler,
-} from "./requestHandlers";
-export {
-	buildRuntimeRequestHandler,
-	RuntimeRequestHandlerBuilder,
-} from "./runtimeRequestHandlerBuilder";
+export { RuntimeRequestHandler } from "./requestHandlers";
+export { buildRuntimeRequestHandler } from "./runtimeRequestHandlerBuilder";

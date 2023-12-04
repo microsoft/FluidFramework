@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -37,6 +36,7 @@ export abstract class SequenceEvent<
 
 	constructor(
 		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
 	) {
 		assert(
@@ -119,6 +119,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);
@@ -138,6 +139,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);

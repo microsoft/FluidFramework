@@ -11,9 +11,7 @@ import { ContainerSchema } from '@fluidframework/fluid-static';
 import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
-import { DOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
 import { DriverErrorType } from '@fluidframework/driver-definitions';
-import { FluidContainer } from '@fluidframework/fluid-static';
 import { getTextAndMarkers } from '@fluidframework/sequence';
 import { IConnection } from '@fluidframework/fluid-static';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -74,7 +72,6 @@ import { SequenceEvent } from '@fluidframework/sequence';
 import { SequenceInterval } from '@fluidframework/sequence';
 import { SequenceMaintenanceEvent } from '@fluidframework/sequence';
 import { SerializedIntervalDelta } from '@fluidframework/sequence';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 import { SharedDirectory } from '@fluidframework/map';
 import { SharedIntervalCollection } from '@fluidframework/sequence';
 import { SharedIntervalCollectionFactory } from '@fluidframework/sequence';
@@ -101,11 +98,7 @@ export { DeserializeCallback }
 
 export { DirectoryFactory }
 
-export { DOProviderContainerRuntimeFactory }
-
 export { DriverErrorType }
-
-export { FluidContainer }
 
 export { getTextAndMarkers }
 
@@ -226,8 +219,6 @@ export { SequenceInterval }
 export { SequenceMaintenanceEvent }
 
 export { SerializedIntervalDelta }
-
-export { ServiceAudience }
 
 export { SharedDirectory }
 

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { SortedSegmentSet } from "./sortedSegmentSet";
@@ -92,6 +90,9 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	}
 }
 
+/**
+ * A collection of {@link ITrackingGroup}.
+ */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;
 

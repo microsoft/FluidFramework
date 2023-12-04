@@ -5,7 +5,6 @@
 /* eslint-disable import/no-deprecated */
 
 import {
-	ICombiningOp,
 	PropertiesManager,
 	PropertySet,
 	createMap,
@@ -27,22 +26,22 @@ export class Interval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/** @internal */
 	public auxProps: PropertySet[] | undefined;
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 * @internal
 	 */
-	public propertyManager: PropertiesManager;
+	public readonly propertyManager: PropertiesManager = new PropertiesManager();
+
 	constructor(
 		public start: number,
 		public end: number,
 		props?: PropertySet,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -174,14 +173,11 @@ export class Interval implements ISerializableInterval {
 		newProps: PropertySet,
 		collaborating: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
 		if (newProps) {
-			this.initializeProperties();
 			return this.propertyManager.addProperties(
 				this.properties,
 				newProps,
-				op,
 				seq,
 				collaborating,
 			);
@@ -213,7 +209,6 @@ export class Interval implements ISerializableInterval {
 		}
 		const newInterval = new Interval(startPos, endPos);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -221,15 +216,6 @@ export class Interval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 

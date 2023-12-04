@@ -38,10 +38,8 @@ export { Migrator, SameContainerMigrator } from "./migrator";
 export {
 	IDetachedModel,
 	IModelLoader,
-	makeModelRequestHandler,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
-	ModelMakerCallback,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,

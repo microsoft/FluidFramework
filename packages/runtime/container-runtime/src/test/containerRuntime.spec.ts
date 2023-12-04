@@ -1300,7 +1300,9 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				const responseFromRequestMethod = await (containerRuntime as any).request({
+					url: "/",
+				});
 				assert.deepEqual(
 					responseFromRequestMethod,
 					myResponse,

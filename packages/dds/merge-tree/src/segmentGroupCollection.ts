@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
-import { List, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
-	private readonly segmentGroups: List<SegmentGroup>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
 	constructor(private readonly segment: ISegment) {
-		this.segmentGroups = new List<SegmentGroup>();
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
 	public get size() {
@@ -24,7 +22,7 @@ export class SegmentGroupCollection {
 	}
 
 	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @internal
 	 */
 	public enqueue(segmentGroup: SegmentGroup) {
 		this.segmentGroups.push(segmentGroup);
@@ -32,14 +30,14 @@ export class SegmentGroupCollection {
 	}
 
 	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @internal
 	 */
 	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
 	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @internal
 	 */
 	public pop?(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;

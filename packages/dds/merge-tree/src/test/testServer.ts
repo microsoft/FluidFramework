@@ -4,19 +4,22 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IIntegerRange } from "../base";
-import { Heap, RedBlackTree, Stack } from "../collections";
-import {
-	compareNumbers,
-	IncrementalExecOp,
-	IncrementalMapState,
-	ISegment,
-} from "../mergeTreeNodes";
-import { ClientSeq, clientSeqComparer } from "../mergeTree";
+import { Heap, IComparer } from "@fluidframework/core-utils";
+import { RedBlackTree } from "../collections";
+import { compareNumbers } from "../mergeTreeNodes";
 import { PropertySet } from "../properties";
-import { TextSegment } from "../textSegment";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
+
+interface ClientSeq {
+	refSeq: number;
+	clientId: string;
+}
+
+const clientSeqComparer: IComparer<ClientSeq> = {
+	min: { refSeq: -1, clientId: "" },
+	compare: (a, b) => a.refSeq - b.refSeq,
+};
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -25,24 +28,14 @@ import { TestClient } from "./testClient";
 export class TestServer extends TestClient {
 	seq = 1;
 	clients: TestClient[] = [];
-	private messageListeners: TestClient[] = []; // Listeners do not generate edits
-	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>([], clientSeqComparer);
+	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>(clientSeqComparer);
 	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
 	constructor(options?: PropertySet) {
 		super(options);
 	}
-	addUpstreamClients(upstreamClients: TestClient[]) {
-		// Assumes addClients already called
-		this.upstreamMap = new RedBlackTree<number, number>(compareNumbers);
-		for (const upstreamClient of upstreamClients) {
-			this.clientSeqNumbers.add({
-				refSeq: upstreamClient.getCurrentSeq(),
-				clientId: upstreamClient.longClientId ?? "",
-			});
-		}
-	}
+
 	addClients(clients: TestClient[]) {
-		this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
+		this.clientSeqNumbers = new Heap<ClientSeq>(clientSeqComparer);
 		this.clients = clients;
 		for (const client of clients) {
 			this.clientSeqNumbers.add({
@@ -51,19 +44,17 @@ export class TestServer extends TestClient {
 			});
 		}
 	}
-	addListeners(listeners: TestClient[]) {
-		this.messageListeners = listeners;
-	}
+
 	applyMsg(msg: ISequencedDocumentMessage) {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			const clid = this.getShortClientId(msg.clientId as string);
 			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
 		} else {
 			return false;
 		}
 	}
+
 	// TODO: remove mappings when no longer needed using min seq
 	// in upstream message
 	transformUpstreamMessage(msg: ISequencedDocumentMessage) {
@@ -79,8 +70,8 @@ export class TestServer extends TestClient {
 		this.upstreamMap.put(msg.sequenceNumber, this.seq);
 		msg.sequenceNumber = -1;
 	}
+
 	copyMsg(msg: ISequencedDocumentMessage) {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		return {
 			clientId: msg.clientId,
 			clientSequenceNumber: msg.clientSequenceNumber,
@@ -89,7 +80,7 @@ export class TestServer extends TestClient {
 			referenceSequenceNumber: msg.referenceSequenceNumber,
 			sequenceNumber: msg.sequenceNumber,
 			type: msg.type,
-		} as ISequencedDocumentMessage;
+		} as any as ISequencedDocumentMessage;
 	}
 
 	private minSeq = 0;
@@ -108,29 +99,25 @@ export class TestServer extends TestClient {
 					return true;
 				}
 				if (this.clients) {
-					let minCli = this.clientSeqNumbers.peek();
+					let minCli = this.clientSeqNumbers.peek()?.value;
 					if (
 						minCli &&
 						minCli.clientId === msg.clientId &&
 						minCli.refSeq < msg.referenceSequenceNumber
 					) {
-						const cliSeq = this.clientSeqNumbers.get();
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const cliSeq = this.clientSeqNumbers.get()!;
 						const oldSeq = cliSeq.refSeq;
 						cliSeq.refSeq = msg.referenceSequenceNumber;
 						this.clientSeqNumbers.add(cliSeq);
-						minCli = this.clientSeqNumbers.peek();
-						if (minCli.refSeq > oldSeq) {
+						minCli = this.clientSeqNumbers.peek()?.value;
+						if (minCli && minCli.refSeq > oldSeq) {
 							msg.minimumSequenceNumber = minCli.refSeq;
 							this.minSeq = minCli.refSeq;
 						}
 					}
 					for (const client of this.clients) {
 						client.enqueueMsg(msg);
-					}
-					if (this.messageListeners) {
-						for (const listener of this.messageListeners) {
-							listener.enqueueMsg(this.copyMsg(msg));
-						}
 					}
 				}
 			} else {
@@ -140,48 +127,6 @@ export class TestServer extends TestClient {
 		}
 		return false;
 	}
-	public incrementalGetText(start?: number, end?: number) {
-		const range: Partial<IIntegerRange> = { start, end };
-		if (range.start === undefined) {
-			range.start = 0;
-		}
-		if (range.end === undefined) {
-			range.end = this.getLength();
-		}
-		const context = new TextSegment("");
-		const stack = new Stack<IncrementalMapState<TextSegment>>();
-		const initialState = new IncrementalMapState(
-			this.mergeTree.root,
-			{ leaf: incrementalGatherText },
-			0,
-			this.getCurrentSeq(),
-			this.getClientId(),
-			context,
-			range.start,
-			range.end,
-			0,
-		);
-		stack.push(initialState);
-
-		while (!stack.empty()) {
-			this.mergeTree.incrementalBlockMap(stack);
-		}
-		return context.text;
-	}
-}
-
-function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-	if (TextSegment.is(segment)) {
-		if (state.start <= 0 && state.end >= segment.text.length) {
-			state.context.text += segment.text;
-		} else {
-			state.context.text +=
-				state.end >= segment.text.length
-					? segment.text.substring(state.start)
-					: segment.text.substring(state.start, state.end);
-		}
-	}
-	state.op = IncrementalExecOp.Go;
 }
 
 /**
@@ -199,8 +144,6 @@ export function checkTextMatchRelative(
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);
 		console.log(msg);
-		//        console.log(serverText);
-		//        console.log(cliText);
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(server.mergeTree.toString());
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
