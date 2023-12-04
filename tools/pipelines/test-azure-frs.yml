@@ -174,7 +174,6 @@ stages:
 
     - job: parse_version_params
       displayName: 'Parse document version parameters'
-      pool: Large
       steps:
         - task: Bash@3
           displayName: read yaml data
@@ -190,9 +189,7 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      dependsOn: 
-        - upload_json
-        - parse_version_params
+      dependsOn: ['upload_json', 'parse_version_params']
       pool: Large
       variables:
         documentVersions: $[ dependencies.parse_version_params.outputs['setYamlDataStep.documentVersions'] ] 
