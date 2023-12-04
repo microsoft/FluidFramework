@@ -97,7 +97,7 @@ const change1: TaggedChange<OptionalChangeset> = tagChange(
 	{
 		build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
 		moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
-		childChanges: [["self", nodeChange1]],
+		childChanges: [[{ localId: brand(41) }, nodeChange1]],
 		reservedDetachId: { localId: brand(1) },
 	},
 	tag,
@@ -185,7 +185,7 @@ describe("optionalField", () => {
 					],
 					[{ localId: brand(42), revision: change2.revision }, "self", "nodeTargeting"],
 				],
-				childChanges: [[{ localId: brand(2), revision: change2.revision }, nodeChange1]],
+				childChanges: [[{ localId: brand(41), revision: change1.revision }, nodeChange1]],
 				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
@@ -203,7 +203,9 @@ describe("optionalField", () => {
 				moves: [
 					[{ localId: brand(41), revision: change1.revision }, "self", "nodeTargeting"],
 				],
-				childChanges: [["self", arbitraryChildChange]],
+				childChanges: [
+					[{ localId: brand(41), revision: change1.revision }, arbitraryChildChange],
+				],
 				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
@@ -236,7 +238,7 @@ describe("optionalField", () => {
 				moves: [
 					["self", { localId: brand(41), revision: change1.revision }, "cellTargeting"],
 				],
-				childChanges: [[{ localId: brand(41), revision: change1.revision }, nodeChange2]],
+				childChanges: [["self", nodeChange2]],
 			};
 
 			assert.deepEqual(
@@ -367,7 +369,7 @@ describe("optionalField", () => {
 				const baseChange: OptionalChangeset = {
 					build: [],
 					moves: [["self", { localId: brand(0) }, "cellTargeting"]],
-					childChanges: [[{ localId: brand(0) }, nodeChange1]],
+					childChanges: [["self", nodeChange1]],
 				};
 				const taggedBaseChange = tagChange(baseChange, mintRevisionTag());
 
@@ -381,7 +383,7 @@ describe("optionalField", () => {
 						[{ localId: brand(41) }, "self", "nodeTargeting"],
 						["self", { localId: brand(1) }, "cellTargeting"],
 					],
-					childChanges: [[{ localId: brand(1) }, nodeChange2]],
+					childChanges: [["self", nodeChange2]],
 				};
 
 				const childRebaser = (
@@ -397,15 +399,13 @@ describe("optionalField", () => {
 					build: [
 						{ id: { localId: brand(41) }, set: { type: brand("value"), value: "X" } },
 					],
-					// TODO:AB#6298: This test case demonstrates a problem with rebasing transactions:
-					// we don't realize that { localId: brand(1) } no longer refers to the right node
-					// because we rebased over a change that detaches that node. We either need to augment
-					// this with a move from { localId: brand(0), revision: taggedBaseChange.revision } => { localId: brand(1) }
-					// OR update the child change here to refer to { localId: brand(0), revision: taggedBaseChange.revision }!
-					// Right now we do things inconsistently with 'self' due to how renamedDsts works in optional field, which causes this bug.
 					moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
-					childChanges: [[{ localId: brand(1) }, arbitraryChildChange]],
-					// See comment above: this may need to change as well.
+					childChanges: [
+						[
+							{ localId: brand(0), revision: taggedBaseChange.revision },
+							arbitraryChildChange,
+						],
+					],
 					reservedDetachId: { localId: brand(1) },
 				};
 
