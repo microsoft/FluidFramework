@@ -301,7 +301,7 @@ export type TreeField<
 > = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
- * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
+ * Helper for implementing {@link TreeField}.
  */
 export type TreeFieldInner<
 	Kind extends FieldKind,

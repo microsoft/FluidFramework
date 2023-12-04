@@ -42,7 +42,6 @@ export {
 	GenericTreeNode,
 	JsonableTree,
 	EncodedJsonableTree,
-	Delta,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -103,6 +102,16 @@ export {
 	ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
+	DeltaRoot,
+	DeltaProtoNode,
+	DeltaMark,
+	DeltaDetachedNodeId,
+	DeltaFieldMap,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
 } from "./tree";
 
 export {
