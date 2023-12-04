@@ -172,6 +172,21 @@ stages:
                 STORAGE_KEY: $(STORAGE_KEY)
                 uploadAsLatest: ${{ variables.isMain }}
 
+    - job: parse_version_params
+      displayName: 'Parse document version parameters'
+      pool: Large
+      steps:
+        - task: Bash@3
+          displayName: read yaml data
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Read YAML data
+              yamlData=$(cat docs/data/docVersions.yaml)
+              # Set pipeline variable
+              echo "##vso[task.setvariable variable=documentVersions]$yamlData"
+
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
@@ -180,21 +195,14 @@ stages:
         - checkout: self
           submodules: false
           clean: true
-        - template: templates/test-params.yml
-          parameters:
-              currentVersion: ${{ parameters.currentVersion }}
-              previousVersions: ${{ parameters.previousVersions }}
 
         - task: Bash@3
-          displayName: print doc version params
+          displayName: check variables
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
             script: |
-              echo "param version: "
-              echo "${{parameters.previousVersions}}"
-              echo "${{parameters.currentVersion}}"
-
+              echo "checking variable: ${{variables.documentVersions}}"
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
