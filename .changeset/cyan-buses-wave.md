@@ -4,7 +4,7 @@
 "@fluid-experimental/tree2": minor
 ---
 
-`FluidSerializer`` more strictly validates `IFluidHandles``.
+`FluidSerializer` more strictly validates `IFluidHandles`.
 
 `FluidSerializer` now asserts on more objects that have an "IFluidHandle" member and are not `IFluidHandle`.
 One example of this is if an object implements `IProvideFluidHandle`, but is not a `IFluidHandle`, it will now assert instead of silently trying to use the "IFluidHandle" member as an `IFluidHandle`.
