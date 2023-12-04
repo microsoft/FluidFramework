@@ -47,6 +47,7 @@ import {
 	GCVersion,
 	runSessionExpiryKey,
 } from "../../gc";
+import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
@@ -144,6 +145,7 @@ describe("Garbage Collection configurations", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
+			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 		});
 	}
 

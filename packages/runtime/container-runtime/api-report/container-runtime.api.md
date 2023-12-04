@@ -90,6 +90,8 @@ export enum ContainerMessageType {
     ChunkedOp = "chunkedOp",
     // (undocumented)
     FluidDataStoreOp = "component",
+    // (undocumented)
+    GC = "garbageCollection",
     IdAllocation = "idAllocation",
     // (undocumented)
     Rejoin = "rejoin"

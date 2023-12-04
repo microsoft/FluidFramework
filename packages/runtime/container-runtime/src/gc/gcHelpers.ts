@@ -151,19 +151,12 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
- * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
- * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(
-	gcData: IGarbageCollectionData,
-	filter?: (id: string) => boolean,
-): IGarbageCollectionData {
+export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		if (filter?.(id) !== true) {
-			clonedGCNodes[id] = Array.from(outboundRoutes);
-		}
+		clonedGCNodes[id] = Array.from(outboundRoutes);
 	}
 	return {
 		gcNodes: clonedGCNodes,

@@ -36,6 +36,7 @@ export {
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
+	IGarbageCollectionMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

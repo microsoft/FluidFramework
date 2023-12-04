@@ -5,7 +5,7 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -20,6 +20,7 @@ import {
 	IRefreshSummaryResult,
 } from "../summary";
 import { RuntimeHeaderData } from "../containerRuntime";
+import { ContainerRuntimeGCMessage } from "../messageTypes";
 
 /**
  * @alpha
@@ -220,6 +221,45 @@ export const GCNodeType = {
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
+ * The contents of a garbage collection sweep message.
+ * @internal
+ */
+export interface ISweepMessageContents {
+	// The ids of nodes that are deleted.
+	deletedNodeIds: string[];
+}
+
+/**
+ * The content type of a garbage collection message content.
+ * @internal
+ */
+export type GarbageCollectionMessageContents = ISweepMessageContents;
+
+/**
+ * The const types of a garbage collection message.
+ * @internal
+ */
+export const GarbageCollectionMessageType = {
+	// Message that is sent after sweep runs.
+	Sweep: "Sweep",
+};
+/**
+ * The types of a garbage collection message.
+ * @internal
+ */
+export type GarbageCollectionMessageType =
+	(typeof GarbageCollectionMessageType)[keyof typeof GarbageCollectionMessageType];
+
+/**
+ * Interface for a message to be used for sending / received garbage collection messages.
+ * @internal
+ */
+export interface IGarbageCollectionMessage {
+	type: GarbageCollectionMessageType;
+	contents: GarbageCollectionMessageContents;
+}
+
+/**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
@@ -298,6 +338,8 @@ export interface IGarbageCollector {
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	/** Called to process a garbage collection message. */
+	processMessage(message: ISequencedDocumentMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
@@ -318,6 +360,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly activeConnection: () => boolean;
+	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 }
 
 /**
@@ -454,4 +497,15 @@ export interface IGCResult {
 	referencedNodeIds: string[];
 	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
 	deletedNodeIds: string[];
+}
+
+/**
+ * The list of nodes that are ready to swept. It is returned as a result of GC mark phase.
+ * @internal
+ */
+export interface ISweepReadyNodes {
+	dataStoreIds: string[];
+	subDataStoreIds: string[];
+	blobIds: string[];
+	otherIds: string[];
 }

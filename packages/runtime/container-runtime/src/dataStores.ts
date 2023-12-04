@@ -765,23 +765,23 @@ export class DataStores implements IDisposable {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
-			// TODO: GC:Validation - Skip any routes already deleted
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
 			if (pathParts.length > 2) {
 				continue;
 			}
 
-			if (!this.contexts.has(dataStoreId)) {
+			const dataStoreContext = this.contexts.get(dataStoreId);
+			if (dataStoreContext === undefined) {
+				// This should eventually be converted to an assert once we validate that this never happen.
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedDataStoreNotFound",
 					dataStoreId,
 				});
+				continue;
 			}
 
-			const dataStore = this.contexts.get(dataStoreId);
-			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
-			dataStore.delete();
+			dataStoreContext.delete();
 
 			// Delete the contexts of sweep ready data stores.
 			this.contexts.delete(dataStoreId);

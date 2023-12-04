@@ -194,6 +194,7 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
+	ContainerRuntimeGCMessage,
 } from "./messageTypes";
 
 /**
@@ -1447,6 +1448,7 @@ export class ContainerRuntime
 			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
 			// delta manager would always return false for summarizer client.
 			activeConnection: () => this.innerDeltaManager.active,
+			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -2082,6 +2084,9 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never have stashed ops.
+				throw new Error("GC op not expected to be stashed in summarizer");
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -2334,6 +2339,9 @@ export class ContainerRuntime
 				) {
 					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				}
+				break;
+			case ContainerMessageType.GC:
+				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
@@ -3751,6 +3759,10 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
+				break;
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never reconnect.
+				throw new Error("GC op not expected to be resubmitted in summarizer");
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
