@@ -8,6 +8,7 @@ name: $(Build.BuildId)
 
 extends:
   template: templates/include-doc-versions.yml
+  
 parameters:
   - name: deployOverride
     displayName: Deployment Override (default = based on branch)
@@ -36,12 +37,6 @@ parameters:
     displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
-  - name: testBranchNames
-    type: object
-    default:
-      - john
-      - bob
-      - jane
 
 variables:
   - group: doc-versions
