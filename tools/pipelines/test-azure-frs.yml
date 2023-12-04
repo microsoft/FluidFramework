@@ -193,19 +193,14 @@ stages:
       dependsOn: ['upload_json', 'parse_version_params']
       pool: Large
       variables:
-        documentVersions: $[ dependencies.parse_version_params.outputs['setYamlDataStep.documentVersions'] ] 
+        docBranchVersions: $[ dependencies.parse_version_params.outputs['setYamlDataStep.documentVersions'] ] 
       steps:
         - checkout: self
           submodules: false
           clean: true
 
-        - task: Bash@3
-          displayName: check variables
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              echo "checking variable: ${{variables.documentVersions}}"
+        - script: echo $(docBranchVersions)
+          name: echovar
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
