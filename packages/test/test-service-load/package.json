@@ -110,7 +110,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
