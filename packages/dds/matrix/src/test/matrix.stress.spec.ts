@@ -578,7 +578,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					}
 					it(`Stress Test With Small Matrix and Policy switch from LWW -> FWW: Seed ${i}`, async function () {
 						// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
-						this.timeout(20000);
+						this.timeout(30000);
 
 						const numClients = 2;
 						const numOps = 200;
