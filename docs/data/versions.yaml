@@ -1,7 +1,0 @@
-variables:
-  my_nested_map_variable:
-    key1: value1
-    key2:
-      nested_key1: nested_value1
-      nested_key2: nested_value2
-    key3: value3

@@ -80,8 +80,6 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
-  # branch list
-  - template: ../../docs/data/versions.yaml
 
 # no PR triggers
 trigger:
@@ -182,6 +180,26 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+
+        - task: Bash@3
+          displayName: Read API Doc branch versions
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Read YAML data
+              yamlData=$(cat ../../docs/data/docVersions.yaml)
+              # Set pipeline variable
+              echo "##vso[task.setvariable variable=docVersions]$yamlData"
+
+        - ${{ each version in $(docVersions).params }}:
+          - task: Bash@3
+            displayName: print name
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Build.SourcesDirectory)
+              script: |
+                echo "${{version}}"
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
