@@ -895,7 +895,7 @@ interface ExtractedFactoryContent<out T = FactoryContent> {
  *     c: [baz.create({ d: 5 })]
  *   })
  * });
- * const y = extractFactoryContent(y);
+ * const y = extractFactoryContent(x);
  * y === {
  *   [typeNameSymbol]: "foo", a: 3, b: {
  *     [typeNameSymbol]: "bar", c: [{ [typeNameSymbol]: "baz", d: 5 }]
