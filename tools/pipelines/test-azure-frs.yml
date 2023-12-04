@@ -6,6 +6,8 @@
 
 name: $(Build.BuildId)
 
+extends:
+  template: templates/include-doc-versions.yml
 parameters:
   - name: deployOverride
     displayName: Deployment Override (default = based on branch)
@@ -197,7 +199,7 @@ stages:
               # Set pipeline variable
               echo "##vso[task.setvariable variable=docVersions]$yamlData"
 
-        - ${{ each version in parameters.testBranchNames }}:
+        - ${{ each version in variables.branchVersions.previous }}:
           - task: Bash@3
             displayName: print name
             inputs:

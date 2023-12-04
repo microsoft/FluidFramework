@@ -1,0 +1,7 @@
+variables:
+  branchVersions:
+    latest:
+      - main
+    previous:
+      - lts
+      - test/michaelzhen-lts
