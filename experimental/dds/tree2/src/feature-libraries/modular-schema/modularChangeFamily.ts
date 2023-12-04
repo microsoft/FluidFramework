@@ -197,59 +197,9 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
-		const allDestroys: ChangeAtomIdMap<undefined> = new Map();
-		for (const { revision, change } of changesWithoutConstraintViolations) {
-			if (change.builds) {
-				for (const [revisionKey, innerMap] of change.builds) {
-					const setRevisionKey = revisionKey ?? revision;
-					const innerDstMap = getOrAddInMap(allBuilds, setRevisionKey, new Map());
-					for (const [id, tree] of innerMap) {
-						// Check for duplicate builds and prefer earlier ones.
-						// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
-						// In that case, it's possible for the refreshers to contain different trees because the latter
-						// refresher may already reflect the changes made by the commit that includes the earlier
-						// refresher. This composition includes the changes made by the commit that includes the
-						// earlier refresher, so we need to include the build for the earlier refresher, otherwise
-						// the produced changeset will build a tree one which those changes have already been applied
-						// and also try to apply the changes again, effectively applying them twice.
-						// Note that it would in principle be possible to adopt the later build and exclude from the
-						// composition all the changes already reflected on the tree, but that is not something we
-						// care to support at this time.
-						if (!innerDstMap.has(id)) {
-							// Check for earlier destroys that this build might cancel-out with.
-							const didCancelOut = deleteFromNestedMap(
-								allDestroys,
-								setRevisionKey,
-								id,
-							);
-							if (!didCancelOut) {
-								innerDstMap.set(id, tree);
-							}
-						}
-					}
-					if (innerDstMap.size === 0) {
-						allBuilds.delete(setRevisionKey);
-					}
-				}
-			}
-			if (change.destroys) {
-				for (const [revisionKey, innerMap] of change.destroys) {
-					const setRevisionKey = revisionKey ?? revision;
-					const innerDstMap = getOrAddInMap(allDestroys, setRevisionKey, new Map());
-					for (const [id, tree] of innerMap) {
-						// Check for earlier builds that this destroy might cancel-out with.
-						const didCancelOut = deleteFromNestedMap(allBuilds, setRevisionKey, id);
-						if (!didCancelOut) {
-							innerDstMap.set(id, tree);
-						}
-					}
-					if (innerDstMap.size === 0) {
-						allDestroys.delete(setRevisionKey);
-					}
-				}
-			}
-		}
+		const { allBuilds, allDestroys } = composeBuildsAndDestroys(
+			changesWithoutConstraintViolations,
+		);
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields),
 			idState.maxId,
@@ -423,21 +373,9 @@ export class ModularChangeFamily
 		}
 
 		// Rollback changesets destroy the nodes created by the change being rolled back.
-		let destroys: ChangeAtomIdMap<undefined> | undefined;
-		if (isRollback) {
-			const builds = change.change.builds;
-			if (builds !== undefined) {
-				destroys = new Map();
-				for (const [revision, innerBuildMap] of builds) {
-					const initializedRevision = revision ?? change.revision;
-					const innerDestroyMap: Map<ChangesetLocalId, undefined> = new Map();
-					for (const id of innerBuildMap.keys()) {
-						innerDestroyMap.set(id, undefined);
-					}
-					destroys.set(initializedRevision, innerDestroyMap);
-				}
-			}
-		}
+		const destroys = isRollback
+			? invertBuilds(change.change.builds, change.revision)
+			: undefined;
 
 		// Destroys only occur in rollback changesets, which are never inverted.
 		assert(change.change.destroys === undefined, "Unexpected destroys in change to invert");
@@ -811,6 +749,86 @@ export class ModularChangeFamily
 	}
 }
 
+function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
+	const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
+	const allDestroys: ChangeAtomIdMap<undefined> = new Map();
+	for (const { revision, change } of changes) {
+		if (change.builds) {
+			for (const [revisionKey, innerMap] of change.builds) {
+				const setRevisionKey = revisionKey ?? revision;
+				const innerDstMap = getOrAddInMap(
+					allBuilds,
+					setRevisionKey,
+					new Map<ChangesetLocalId, JsonableTree>(),
+				);
+				for (const [id, tree] of innerMap) {
+					// Check for duplicate builds and prefer earlier ones.
+					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
+					// In that case, it's possible for the refreshers to contain different trees because the latter
+					// refresher may already reflect the changes made by the commit that includes the earlier
+					// refresher. This composition includes the changes made by the commit that includes the
+					// earlier refresher, so we need to include the build for the earlier refresher, otherwise
+					// the produced changeset will build a tree one which those changes have already been applied
+					// and also try to apply the changes again, effectively applying them twice.
+					// Note that it would in principle be possible to adopt the later build and exclude from the
+					// composition all the changes already reflected on the tree, but that is not something we
+					// care to support at this time.
+					if (!innerDstMap.has(id)) {
+						// Check for earlier destroys that this build might cancel-out with.
+						const didCancelOut = deleteFromNestedMap(allDestroys, setRevisionKey, id);
+						if (!didCancelOut) {
+							innerDstMap.set(id, tree);
+						}
+					}
+				}
+				if (innerDstMap.size === 0) {
+					allBuilds.delete(setRevisionKey);
+				}
+			}
+		}
+		if (change.destroys) {
+			for (const [revisionKey, innerMap] of change.destroys) {
+				const setRevisionKey = revisionKey ?? revision;
+				const innerDstMap = getOrAddInMap(
+					allDestroys,
+					setRevisionKey,
+					new Map<ChangesetLocalId, undefined>(),
+				);
+				for (const id of innerMap.keys()) {
+					// Check for earlier builds that this destroy might cancel-out with.
+					const didCancelOut = deleteFromNestedMap(allBuilds, setRevisionKey, id);
+					if (!didCancelOut) {
+						innerDstMap.set(id, undefined);
+					}
+				}
+				if (innerDstMap.size === 0) {
+					allDestroys.delete(setRevisionKey);
+				}
+			}
+		}
+	}
+	return { allBuilds, allDestroys };
+}
+
+function invertBuilds(
+	builds: ChangeAtomIdMap<JsonableTree> | undefined,
+	fallbackRevision: RevisionTag | undefined,
+): ChangeAtomIdMap<undefined> | undefined {
+	if (builds !== undefined) {
+		const destroys: ChangeAtomIdMap<undefined> = new Map();
+		for (const [revision, innerBuildMap] of builds) {
+			const initializedRevision = revision ?? fallbackRevision;
+			const innerDestroyMap: Map<ChangesetLocalId, undefined> = new Map();
+			for (const id of innerBuildMap.keys()) {
+				innerDestroyMap.set(id, undefined);
+			}
+			destroys.set(initializedRevision, innerDestroyMap);
+		}
+		return destroys;
+	}
+	return undefined;
+}
+
 /**
  * @param change - The change to convert into a delta.
  * @param fieldKinds - The field kinds to delegate to.
@@ -850,7 +868,7 @@ export function intoDelta(
 				count: 1,
 			});
 		});
-		//  rootDelta.destroys = destroys;
+		rootDelta.destroy = destroys;
 	}
 	return rootDelta;
 }
