@@ -73,6 +73,7 @@
 		"axios": "^0.26.0"
 	},
 	"devDependencies": {
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.2.0",

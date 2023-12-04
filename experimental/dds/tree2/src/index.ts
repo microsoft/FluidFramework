@@ -252,7 +252,7 @@ export {
 	TreeNodeEvents,
 	NodeFromSchema,
 } from "./class-tree";
-export { TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
