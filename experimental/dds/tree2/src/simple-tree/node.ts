@@ -10,7 +10,7 @@ import {
 	TreeStatus,
 } from "../feature-libraries";
 import { getOrCreateNodeProxy } from "./proxies";
-import { getEditNode, tryGetEditNode } from "./editNode";
+import { getEditNode, tryGetFlexNode } from "./editNode";
 import { TypedNode, TreeNode } from "./types";
 
 /**
@@ -76,7 +76,7 @@ export const nodeApi: TreeApi = {
 		value: unknown,
 		schema: TSchema,
 	): value is TypedNode<TSchema> => {
-		return tryGetEditNode(value)?.is(schema) ?? false;
+		return tryGetFlexNode(value)?.is(schema) ?? false;
 	},
 	parent: (node: TreeNode) => {
 		const editNode = getEditNode(node).parentField.parent.parent;

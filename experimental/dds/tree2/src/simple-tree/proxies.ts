@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
@@ -16,10 +17,8 @@ import {
 	schemaIsObjectNode,
 	MapNodeSchema,
 	FieldNodeSchema,
-	MapFieldSchema,
 	FieldKinds,
 	FlexTreeFieldNode,
-	FlexibleFieldContent,
 	FlexTreeMapNode,
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
@@ -29,7 +28,6 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
-	ContextuallyTypedNodeData,
 	typeNameSymbol,
 	isFluidHandle,
 } from "../feature-libraries";
@@ -42,7 +40,7 @@ import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
-import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
+import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetFlexNode } from "./editNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
@@ -197,7 +195,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, key, proxy);
 		},
-		set(target, key, value: InsertableTreeNodeUnion<AllowedTypes>) {
+		set(target, key, value: InsertableContent) {
 			const editNode = getEditNode(proxy);
 			const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
@@ -279,15 +277,12 @@ export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNode
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
 	insertedAtIndex: number,
-	content: (
-		| InsertableTreeNodeUnion<AllowedTypes>
-		| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
-	)[],
-): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
+	content: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[],
+): ExtractedFactoryContent {
 	return extractFactoryContent(
-		content.flatMap((c) =>
-			c instanceof IterableTreeListContent ? Array.from(c) : c,
-		) as ContextuallyTypedNodeData[],
+		content.flatMap((c): InsertableContent[] =>
+			c instanceof IterableTreeListContent ? Array.from(c) : [c],
+		),
 		insertedAtIndex,
 	);
 }
@@ -322,10 +317,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 		value(
 			this: TreeListNodeOld,
 			index: number,
-			...value: (
-				| InsertableTreeNodeUnion<AllowedTypes>
-				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
-			)[]
+			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -346,10 +338,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	insertAtStart: {
 		value(
 			this: TreeListNodeOld,
-			...value: (
-				| InsertableTreeNodeUnion<AllowedTypes>
-				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
-			)[]
+			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -370,10 +359,7 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 	insertAtEnd: {
 		value(
 			this: TreeListNodeOld,
-			...value: (
-				| InsertableTreeNodeUnion<AllowedTypes>
-				| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
-			)[]
+			...value: readonly (InsertableContent | IterableTreeListContent<InsertableContent>)[]
 		): void {
 			const sequenceField = getSequenceField(this);
 
@@ -729,9 +715,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 		): TreeMapNode {
 			const node = getEditNode(this);
 
-			const { content, hydrateProxies } = extractFactoryContent(
-				value as FlexibleFieldContent<MapFieldSchema>,
-			);
+			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
 			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
 			modifyChildren(
 				node,
@@ -882,16 +866,16 @@ type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
-interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>> {
+interface ExtractedFactoryContent<out T = FactoryContent> {
 	/** The content with the factory subtrees replaced. */
-	content: T;
+	readonly content: T;
 	/**
 	 * A function which walks all factory-created object that underwent replacement/extraction.
 	 * Before hydration, those objects are unusable (see {@link createRawObjectProxy}).
 	 * However, after the content is fully inserted into the tree the `hydrateProxies` function may be invoked in order to update the contents of these objects such that they become a mirror of the content in the tree.
 	 * This must be done before any calls to {@link getOrCreateNodeProxy} so that the "edit node to proxy" mapping is correctly updated (see {@link setEditNode}).
 	 */
-	hydrateProxies: ProxyHydrator;
+	readonly hydrateProxies: ProxyHydrator;
 }
 
 /**
@@ -919,25 +903,24 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
  * }
  * ```
  */
-export function extractFactoryContent<
-	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
->(input: T, insertedAtIndex = 0): ExtractedFactoryContent<T> {
+export function extractFactoryContent(
+	input: InsertableContent,
+	insertedAtIndex = 0,
+): ExtractedFactoryContent {
 	const { content, type, fromFactory } = extractContentIfProxy(input);
-	let extractedContent: ExtractedFactoryContent<unknown>;
+	let extractedContent: ExtractedFactoryContent;
 	switch (type) {
 		case NodeKind.Object:
 			extractedContent = extractContentObject(content as object);
 			break;
 		case NodeKind.List:
 			extractedContent = extractContentArray(
-				content as readonly unknown[],
+				content as readonly FactoryContent[],
 				insertedAtIndex,
-			) as ExtractedFactoryContent<T>;
+			);
 			break;
 		case NodeKind.Map:
-			extractedContent = extractContentMap(
-				content as ReadonlyMap<string, unknown>,
-			) as ExtractedFactoryContent<T>;
+			extractedContent = extractContentMap(content as ReadonlyMap<string, FactoryContent>);
 			break;
 		case NodeKind.Leaf:
 			extractedContent = {
@@ -950,7 +933,7 @@ export function extractFactoryContent<
 	}
 	if (fromFactory) {
 		return {
-			content: extractedContent.content as T,
+			content: extractedContent.content,
 			hydrateProxies: (editNode) => {
 				// This makes the input proxy usable and updates the proxy cache
 				setEditNode(input as TreeNode, editNode ?? fail("Expected edit node"));
@@ -959,17 +942,17 @@ export function extractFactoryContent<
 		};
 	}
 
-	return extractedContent as ExtractedFactoryContent<T>;
+	return extractedContent;
 }
 
 /**
  * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
  */
-function extractContentArray<T extends InsertableTypedNode<TreeNodeSchema>>(
-	input: readonly T[],
+function extractContentArray(
+	input: readonly FactoryContent[],
 	insertedAtIndex: number,
-): ExtractedFactoryContent<T[]> {
-	const output: T[] = [];
+): ExtractedFactoryContent {
+	const output: FactoryContent[] = [];
 	if (typeNameSymbol in input) {
 		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
 	}
@@ -1005,9 +988,7 @@ function extractContentArray<T extends InsertableTypedNode<TreeNodeSchema>>(
 	};
 }
 
-function extractContentMap<T extends InsertableTypedNode<MapNodeSchema>>(
-	input: T,
-): ExtractedFactoryContent<T> {
+function extractContentMap(input: ReadonlyMap<string, FactoryContent>): ExtractedFactoryContent {
 	const output = new Map();
 	if (typeNameSymbol in input) {
 		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
@@ -1022,7 +1003,7 @@ function extractContentMap<T extends InsertableTypedNode<MapNodeSchema>>(
 		}
 	}
 	return {
-		content: output as unknown as T,
+		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(
 				editNode !== undefined,
@@ -1036,20 +1017,24 @@ function extractContentMap<T extends InsertableTypedNode<MapNodeSchema>>(
 	};
 }
 
-function extractContentObject<T extends object>(input: T): ExtractedFactoryContent<T> {
-	const output: Record<string, unknown> = {};
+function extractContentObject(input: {
+	readonly [P in string]?: FactoryContent;
+}): ExtractedFactoryContent {
+	const output: Record<string, FactoryContent> = {};
 	if (typeNameSymbol in input) {
 		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
 	}
 	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
 	for (const [key, value] of Object.entries(input)) {
-		const { content: childContent, hydrateProxies } = extractFactoryContent(value);
-		output[key] = childContent;
-		hydrators.push([key, hydrateProxies]);
+		if (value !== undefined) {
+			const { content: childContent, hydrateProxies } = extractFactoryContent(value);
+			output[key] = childContent;
+			hydrators.push([key, hydrateProxies]);
+		}
 	}
 
 	return {
-		content: output as T,
+		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(
 				editNode !== undefined,
@@ -1066,50 +1051,64 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 	};
 }
 
+export type FactoryContent =
+	| IFluidHandle
+	| string
+	| number
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| ReadonlyMap<string, InsertableContent>
+	| readonly InsertableContent[]
+	| {
+			readonly [P in string]?: InsertableContent;
+	  };
+
+export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
+
 /**
  * If `input` is a factory-created proxy, this will return the content stored in that proxy and forward the `typeNameSymbol` on the proxy to `object`.
  * Otherwise, it will just return `input`.
  */
-function extractContentIfProxy<
-	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
->(
-	input: T,
-): {
-	content: T;
+function extractContentIfProxy(input: InsertableContent): {
+	content: FactoryContent;
 	type: NodeKind;
 	fromFactory: boolean;
 } {
-	let content = input;
+	let content: FactoryContent;
 	let fromFactory = false;
-	const rawEditNode = tryGetEditNode(input);
+	const rawEditNode = tryGetFlexNode(input);
 	if (rawEditNode !== undefined) {
 		const factoryContent = extractRawNodeContent(rawEditNode);
 		if (factoryContent === undefined) {
 			// We were passed a proxy, but that proxy doesn't have any raw content.
 			throw new Error("Cannot insert a node that is already in the tree");
 		}
-		content = factoryContent as T;
+		content = factoryContent;
 		fromFactory = true;
+	} else {
+		content = input as FactoryContent;
 	}
 
-	if (content instanceof NodeBase) {
-		const type = getNodeKind(content);
-		return { content, type, fromFactory };
+	assert(!(content instanceof NodeBase), "Unhydrated insertion content should have FlexNode");
+
+	let type: NodeKind;
+	if (isReadonlyArray(content)) {
+		type = NodeKind.List;
+	} else if (content instanceof Map) {
+		type = NodeKind.Map;
+	} else if (typeof content === "object" && content !== null) {
+		type = isFluidHandle(content) ? NodeKind.Leaf : NodeKind.Object;
 	} else {
-		let type: NodeKind;
-		if (isFluidHandle(content)) {
-			type = NodeKind.Leaf;
-		} else if (isReadonlyArray(content)) {
-			type = NodeKind.List;
-		} else if (content instanceof Map) {
-			type = NodeKind.Map;
-		} else if (typeof content === "object" && content !== null) {
-			type = NodeKind.Object;
-		} else {
-			type = NodeKind.Leaf;
-		}
-		return { content, type, fromFactory };
+		type = NodeKind.Leaf;
 	}
+
+	if (input instanceof NodeBase) {
+		const kindFromSchema = getNodeKind(input);
+		assert(kindFromSchema === type, "kind of data should match kind of schema");
+	}
+
+	return { content, type, fromFactory };
 }
 
 function getListChildNode(

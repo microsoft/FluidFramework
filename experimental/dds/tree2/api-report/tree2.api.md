@@ -940,7 +940,7 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string
 type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes_2 ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @beta
-type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode<FlexListToUnion<TSchema>> : unknown;
+type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
 
 // @beta
 type InsertableTypedNode<T extends TreeNodeSchema> = NodeBuilderData<T> | Unhydrated<NodeFromSchema<T>>;
