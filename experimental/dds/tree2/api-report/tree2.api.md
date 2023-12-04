@@ -9,10 +9,14 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
@@ -909,7 +913,7 @@ type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string
 type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes_2 ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @beta
-type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode<FlexListToUnion<TSchema>> : unknown;
+type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes_2 = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes_2 ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
 
 // @beta
 type InsertableTypedNode<T extends TreeNodeSchema> = NodeBuilderData<T> | Unhydrated<NodeFromSchema<T>>;
@@ -1590,6 +1594,32 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
+}
+
+// @internal
+export class SharedTree implements ITree {
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    connect(services: IChannelServices): void;
+    // (undocumented)
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    // (undocumented)
+    static getFactory(): TreeFactory;
+    // (undocumented)
+    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
+    // (undocumented)
+    get handle(): IFluidHandle;
+    // (undocumented)
+    get id(): string;
+    // (undocumented)
+    get IFluidLoadable(): IFluidLoadable;
+    // (undocumented)
+    isAttached(): boolean;
+    // (undocumented)
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    // (undocumented)
+    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @alpha
