@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -150,20 +151,24 @@ export interface ITreeCheckout extends AnchorLocator {
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
  * and functionality required to implement {@link ITreeCheckout}.
  */
-export function createTreeCheckout(args?: {
-	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
-	schema?: StoredSchemaRepository;
-	forest?: IEditableForest;
-	events?: ISubscribable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
-	removedRoots?: DetachedFieldIndex;
-}): TreeCheckout {
+export function createTreeCheckout(
+	idCompressor: IIdCompressor,
+	args?: {
+		branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+		changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
+		schema?: StoredSchemaRepository;
+		forest?: IEditableForest;
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+		removedRoots?: DetachedFieldIndex;
+	},
+): TreeCheckout {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
-		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
+		args?.changeFamily ??
+		new DefaultChangeFamily(idCompressor, { jsonValidator: noopValidator });
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(

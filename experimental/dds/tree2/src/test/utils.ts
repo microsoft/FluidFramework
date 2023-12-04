@@ -29,6 +29,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { IdCompressor } from "@fluidframework/container-runtime/dist/id-compressor";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	ISharedTree,
@@ -626,7 +628,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout({
+	const view = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
@@ -679,7 +681,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout({
+	const branch = createTreeCheckout(testIdCompressor, {
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
@@ -1034,3 +1036,5 @@ export function createTestUndoRedoStacks(
 
 	return { undoStack, redoStack, unsubscribe };
 }
+
+export const testIdCompressor = IdCompressor.create();

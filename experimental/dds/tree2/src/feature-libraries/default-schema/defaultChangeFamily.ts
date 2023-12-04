@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
@@ -40,8 +41,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 
 	public static readonly emptyChange: DefaultChangeset = ModularChangeFamily.emptyChange;
 
-	public constructor(codecOptions: ICodecOptions) {
-		this.modularFamily = new ModularChangeFamily(fieldKinds, codecOptions);
+	public constructor(idCompressor: IIdCompressor, codecOptions: ICodecOptions) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, idCompressor, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {

@@ -43,7 +43,12 @@ import {
 	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
+	IIdCompressor,
 	ISummaryTreeWithStats,
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -635,6 +640,7 @@ export class MockFluidDataStoreRuntime
 	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
+	public idCompressor = new MockIdCompressor();
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
@@ -914,6 +920,40 @@ export class MockSharedObjectServices implements IChannelServices {
 
 	public constructor(contents: { [key: string]: string }) {
 		this.objectStorage = new MockObjectStorageService(contents);
+	}
+}
+
+/**
+ * Mock implementation of IIdCompressor
+ * @internal
+ */
+export class MockIdCompressor implements IIdCompressor {
+	public readonly localSessionId: SessionId;
+
+	public constructor() {
+		this.localSessionId = uuid() as SessionId;
+	}
+
+	public generateCompressedId(): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public decompress(id: SessionSpaceCompressedId): StableId {
+		throw new Error("Method not implemented.");
+	}
+	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
+		throw new Error("Method not implemented.");
 	}
 }
 

@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { OpSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
 
 /**
@@ -22,6 +22,8 @@ export const SessionIdSchema = brandedStringType<SessionId>();
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
 export const RevisionTagSchema = brandedStringType<StableId>();
+
+export type EncodedRevisionTag = OpSpaceCompressedId;
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

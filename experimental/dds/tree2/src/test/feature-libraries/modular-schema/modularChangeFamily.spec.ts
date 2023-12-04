@@ -42,6 +42,7 @@ import {
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
+	testIdCompressor,
 } from "../../utils";
 import {
 	ModularChangeFamily,
@@ -93,7 +94,9 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
+const family = new ModularChangeFamily(fieldKinds, testIdCompressor, {
+	jsonValidator: typeboxValidator,
+});
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -790,9 +793,13 @@ describe("ModularChangeFamily", () => {
 			(a, b) => false,
 			new Set(),
 		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
-			jsonValidator: noopValidator,
-		});
+		const dummyFamily = new ModularChangeFamily(
+			new Map([[field.identifier, field]]),
+			testIdCompressor,
+			{
+				jsonValidator: noopValidator,
+			},
+		);
 
 		const changeA: ModularChangeset = {
 			fieldChanges: new Map([

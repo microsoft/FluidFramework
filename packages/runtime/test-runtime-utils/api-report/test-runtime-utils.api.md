@@ -54,8 +54,12 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
+import { OpSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
+import { SessionId } from '@fluidframework/runtime-definitions';
+import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
+import { StableId } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
@@ -440,6 +444,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    idCompressor: MockIdCompressor;
+    // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // @deprecated (undocumented)
     get IFluidRouter(): this;
@@ -521,6 +527,25 @@ export class MockHandle<T> implements IFluidHandle {
     readonly path: string;
     // (undocumented)
     protected readonly value: T;
+}
+
+// @internal
+export class MockIdCompressor implements IIdCompressor {
+    constructor();
+    // (undocumented)
+    decompress(id: SessionSpaceCompressedId): StableId;
+    // (undocumented)
+    generateCompressedId(): SessionSpaceCompressedId;
+    // (undocumented)
+    readonly localSessionId: SessionId;
+    // (undocumented)
+    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    // (undocumented)
+    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    // (undocumented)
+    recompress(uncompressed: StableId): SessionSpaceCompressedId;
+    // (undocumented)
+    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
 // @internal

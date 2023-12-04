@@ -30,10 +30,12 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { assertDeltaEqual } from "../../utils";
+import { assertDeltaEqual, testIdCompressor } from "../../utils";
 import { noopValidator } from "../../../codec";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, {
+	jsonValidator: noopValidator,
+});
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;

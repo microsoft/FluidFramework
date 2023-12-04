@@ -172,6 +172,11 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
+		assert(
+			runtime.idCompressor !== undefined,
+			"IdCompressor must be enabled to use SharedTree",
+		);
+
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository();
 		const forest =
@@ -188,7 +193,7 @@ export class SharedTree
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
-		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const defaultChangeFamily = new DefaultChangeFamily(runtime.idCompressor, options);
 		const changeFamily = makeMitigatedChangeFamily(
 			defaultChangeFamily,
 			DefaultChangeFamily.emptyChange,
@@ -222,7 +227,7 @@ export class SharedTree
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
 		this._events = createEmitter<CheckoutEvents>();
-		this.view = createTreeCheckout({
+		this.view = createTreeCheckout(runtime.idCompressor, {
 			branch: this.getLocalBranch(),
 			changeFamily,
 			// TODO:

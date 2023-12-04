@@ -123,7 +123,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec();
+		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		this.summarizables = [
 			new EditManagerSummarizer(this.editManager, revisionTagCodec, options),
 			...summarizables,
@@ -135,7 +135,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs.resolve(formatVersion).json,
-			new RevisionTagCodec(),
+			new RevisionTagCodec(runtime.idCompressor),
 			options,
 		);
 	}
