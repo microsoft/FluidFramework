@@ -636,7 +636,7 @@ function* relevantRemovedRoots(
 		alreadyYieldedOrNewlyBuilt.set(id, true);
 	}
 
-	for (const [src, dst] of change.moves) {
+	for (const [src] of change.moves) {
 		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
 			alreadyYieldedOrNewlyBuilt.set(src, true);
 			yield nodeIdFromChangeAtom(src);
