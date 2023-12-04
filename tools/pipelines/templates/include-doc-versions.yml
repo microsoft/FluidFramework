@@ -1,10 +1,6 @@
-parameters:
-- name: branchVersiosn
-  type: object
-  default:
-    versions: 
-      previous:
-        - lts
-        - test/michaelzhen-lts
-      current:
-        - main
+variables:
+  - name: currentVersion
+    value: main
+  - name: previousVersions
+    value: lts,test/michaelzhen-lts
+  
