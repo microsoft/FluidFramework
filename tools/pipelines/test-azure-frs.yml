@@ -192,7 +192,7 @@ stages:
               # Set pipeline variable
               echo "##vso[task.setvariable variable=docVersions]$yamlData"
 
-        - ${{ each version in $(docVersions).params }}:
+        - ${{ each version in docVersions.params }}:
           - task: Bash@3
             displayName: print name
             inputs:
