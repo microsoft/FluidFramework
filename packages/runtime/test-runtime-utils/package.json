@@ -11,8 +11,8 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "commonjs",
 	"main": "dist/index.js",
-	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -45,12 +45,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"dist/test/**/*.cjs"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.ts",
-			"dist/**/*.js"
+			"dist/**/*.cjs"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
