@@ -9313,6 +9313,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
@@ -9327,6 +9328,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9352,6 +9354,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_p4gemz6xo2owxftfuvjusnappy_@types+node@16.18.65
+      '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 16.18.65
       '@types/uuid': 9.0.7
@@ -9365,6 +9368,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/datastore-definitions:
@@ -9472,6 +9476,7 @@ importers:
       rimraf: ^4.4.0
       sinon: ^7.4.2
       ts-node: ^10.9.1
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -9506,6 +9511,7 @@ importers:
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-node: 10.9.1_jnhzrdmjzh6qsf7xvhnyy55kui
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
