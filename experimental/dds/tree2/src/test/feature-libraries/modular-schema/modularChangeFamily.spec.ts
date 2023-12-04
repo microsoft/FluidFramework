@@ -35,6 +35,7 @@ import {
 	deltaForSet,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
+	ITreeCursorSynchronous,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";

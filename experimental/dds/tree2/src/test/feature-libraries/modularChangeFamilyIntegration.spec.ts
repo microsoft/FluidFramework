@@ -25,7 +25,7 @@ import {
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
-import { defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
+import { assertDeltaEqual, defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
 import {
 	intoDelta,
 	ModularChangeFamily,

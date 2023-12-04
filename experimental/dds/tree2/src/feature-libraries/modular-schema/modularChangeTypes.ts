@@ -8,7 +8,6 @@ import {
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
-	JsonableTree,
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
