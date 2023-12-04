@@ -256,9 +256,9 @@ describe("domains - SchemaBuilder", () => {
 		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
 		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
 
-		checkCreated(inner, { number: 5, recursive: undefined });
+		checkCreated(inner, { number: 5 });
 		checkCreated(testOptional, { number: 5 });
-		checkCreated(outer1, { number: 1, recursive: { number: 5, recursive: undefined } });
+		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
 		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
 	});
 
