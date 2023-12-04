@@ -48,20 +48,21 @@ jobs:
                 command: login
                 containerRegistry: ${{ parameters.containerRegistry }}
 
-            - task: Docker@0
+            - task: Docker@1
               displayName: Pull image
               inputs:
                 action: 'Run a Docker command'
                 customCommand: 'pull ${{ parameters.containerTag }}'
 
             #Remove this line - added to test if the below line is making ES1 complain
-            - task: Docker@0
+            # Also convert all the Docker@1 back to Docker@0
+            - task: Docker@1
               displayName: Tag image
               inputs:
                 action: 'Run a Docker command'
                 customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
-            - task: Docker@0
+            - task: Docker@1
               displayName: Tag image
               inputs:
                 action: 'Run a Docker command'
