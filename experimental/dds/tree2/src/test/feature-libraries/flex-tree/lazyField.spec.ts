@@ -215,7 +215,7 @@ describe("LazyOptionalField", () => {
 		});
 
 		it("boxedAt", () => {
-			const boxedResult = field.boxedAt(0);
+			const boxedResult = field.boxedAt(0) ?? assert.fail();
 			assert.equal(boxedResult.type, leafDomain.number.name);
 			assert.equal(boxedResult.value, 42);
 		});
@@ -307,7 +307,7 @@ describe("LazyValueField", () => {
 	});
 
 	it("boxedAt", () => {
-		const boxedResult = field.boxedAt(0);
+		const boxedResult = field.boxedAt(0) ?? assert.fail();
 		assert.equal(boxedResult.type, leafDomain.string.name);
 		assert.equal(boxedResult.value, initialTree);
 	});
@@ -388,20 +388,20 @@ describe("LazySequence", () => {
 
 	it("boxedAt", () => {
 		const sequence = testSequence([37, 42]);
-		const boxedResult0 = sequence.boxedAt(0);
+		const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
 		assert.equal(boxedResult0.type, leafDomain.number.name);
 		assert.equal(boxedResult0.value, 37);
 
-		const boxedResult1 = sequence.boxedAt(1);
+		const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
 		assert.equal(boxedResult1.type, leafDomain.number.name);
 		assert.equal(boxedResult1.value, 42);
 
-		const boxedResultNeg1 = sequence.boxedAt(-1);
+		const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
 		assert.equal(boxedResultNeg1.type, leafDomain.number.name);
 		assert.equal(boxedResultNeg1.value, 42);
 
 		assert.equal(sequence.boxedAt(2), undefined);
-		assert.equal(sequence.boxedAt(-2).value, 37);
+		assert.equal((sequence.boxedAt(-2) ?? assert.fail()).value, 37);
 	});
 
 	it("length", () => {
