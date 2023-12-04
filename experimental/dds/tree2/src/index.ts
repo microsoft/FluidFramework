@@ -37,7 +37,17 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
-	Delta,
+	ProtoNodes,
+	DeltaRoot,
+	DeltaProtoNode,
+	DeltaMark,
+	DeltaDetachedNodeId,
+	DeltaFieldMap,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -91,7 +101,6 @@ export {
 	Opaque,
 	extractFromOpaque,
 	brand,
-	brandOpaque,
 	ValueFromBranded,
 	NameFromBranded,
 	JsonCompatibleReadOnly,
@@ -151,7 +160,6 @@ export {
 	CursorWithNode,
 	EditableTreeEvents,
 	InternalTypedSchemaTypes,
-	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -175,7 +183,6 @@ export {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeOptionalField,
@@ -207,13 +214,21 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	FlexTreeTyped,
 	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 	stackTreeFieldCursor,
+	FlexTreeUnknownUnboxed,
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+	NormalizeObjectNodeFields,
+	NormalizeFieldSchema,
+	Fields,
+	MapFieldSchema,
 } from "./feature-libraries";
 
 export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
@@ -251,6 +266,10 @@ export {
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
 	NodeFromSchema,
+
+	// test recursive schema for checking that d.ts files handles schema correctly
+	test_RecursiveObject,
+	test_RecursiveObject_base,
 } from "./class-tree";
 export { TreeFactory, TreeOptions } from "./treeFactory";
 
@@ -261,3 +280,51 @@ export { typeboxValidator } from "./external-utilities";
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";
 export { InternalTypes };
+
+// These would be in InternalTypes above but are `@alpha` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+export {
+	Invariant,
+	Contravariant,
+	Covariant,
+	BrandedType,
+	ExtractFromOpaque,
+	Assume,
+	AllowOptional,
+	RequiredFields,
+	OptionalFields,
+	_InlineTrick,
+	_RecursiveTrick,
+	FlattenKeys,
+	AllowOptionalNotFlattened,
+	isAny,
+	BrandedKeyContent,
+} from "./util";
+
+export {
+	NormalizeField,
+	NormalizeAllowedTypes,
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+
+	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
+	// These names also are collision prone.
+	Required,
+	Optional,
+	NodeKeyFieldKind,
+	Forbidden,
+	Sequence,
+} from "./feature-libraries";
