@@ -20,6 +20,7 @@ import {
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	TreeNodeSchema,
+	InsertableFlexNode,
 } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
@@ -41,8 +42,6 @@ import {
 	rootFieldKey,
 } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedNode } from "../../feature-libraries/schema-aware";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -241,7 +240,7 @@ export function generateTestTrees() {
 				// Enables below editing code to be slightly less verbose
 				const makeCursor = <T extends TreeNodeSchema>(
 					schema: T,
-					data: TypedNode<T>,
+					data: InsertableFlexNode<T>,
 				): ITreeCursorSynchronous =>
 					cursorForTypedTreeData({ schema: docSchema }, schema, data);
 
