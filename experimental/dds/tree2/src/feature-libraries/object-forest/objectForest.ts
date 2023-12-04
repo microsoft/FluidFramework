@@ -15,7 +15,6 @@ import {
 	FieldKey,
 	DetachedField,
 	AnchorSet,
-	Delta,
 	UpPath,
 	Anchor,
 	ITreeCursor,
@@ -33,6 +32,7 @@ import {
 	Value,
 	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
+	ProtoNodes,
 } from "../../core";
 import {
 	brand,
@@ -136,7 +136,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.invalidateDependents();
 				this.forest.delete(detachedField);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
 				this.forest.add(content, destination);
 			},
