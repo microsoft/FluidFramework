@@ -6,9 +6,6 @@
 
 name: $(Build.BuildId)
 
-extends:
-  template: templates/include-doc-versions.yml
-  
 parameters:
   - name: deployOverride
     displayName: Deployment Override (default = based on branch)
@@ -83,6 +80,7 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
+  - template: templates/include-doc-versions.yml
 
 # no PR triggers
 trigger:
