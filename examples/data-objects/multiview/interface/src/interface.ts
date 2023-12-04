@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 
 /**
  * ICoordinate describes the public API surface for our 2d coordinate component.
+ * @internal
  */
 export interface ICoordinate extends EventEmitter {
 	x: number;
@@ -20,6 +21,7 @@ export interface ICoordinate extends EventEmitter {
 
 /**
  * IConstellation describes the public API surface for our Constellation component.
+ * @internal
  */
 export interface IConstellation extends EventEmitter {
 	stars: ICoordinate[];

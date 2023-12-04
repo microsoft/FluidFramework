@@ -20,6 +20,7 @@ import { Partition } from "./partition";
 /**
  * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
  * It will route incoming messages to the appropriate partition for the messages.
+ * @internal
  */
 export class PartitionManager extends EventEmitter {
 	private readonly partitions = new Map<number, Partition>();

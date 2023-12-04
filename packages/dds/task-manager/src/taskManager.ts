@@ -63,7 +63,7 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @public
+ * @internal
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**
@@ -583,7 +583,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	 * Create a summary for the task manager
 	 *
 	 * @returns the summary of the current state of the task manager
-	 * @internal
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		if (this.runtime.clientId !== undefined) {
@@ -610,7 +609,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
@@ -620,14 +618,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 		this.scrubClientsNotInQuorum();
 	}
 
-	/**
-	 * @internal
-	 */
+	/***/
 	protected initializeLocalCore() {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect() {
 		this.connectionWatcher.emit("disconnect");
@@ -635,7 +630,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-	 * @internal
 	 */
 	protected onConnect() {
 		this.connectionWatcher.emit("connect");
@@ -645,7 +639,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	/**
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
-	 * @internal
 	 */
 	protected reSubmitCore() {}
 
@@ -656,7 +649,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	 * @param local - whether the message was sent by the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,

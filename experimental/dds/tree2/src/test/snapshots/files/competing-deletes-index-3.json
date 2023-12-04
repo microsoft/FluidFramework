@@ -26,9 +26,12 @@
                                 "count": 3
                               },
                               {
-                                "type": "Delete",
                                 "count": 1,
-                                "id": 0
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                }
                               }
                             ]
                           }
@@ -50,17 +53,20 @@
                               },
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-00000000002b",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-00000000002b"
                                 }
                               }
                             ]
@@ -83,17 +89,20 @@
                               },
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-00000000002c",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-00000000002c"
                                 }
                               }
                             ]
@@ -123,8 +132,11 @@
                                     },
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }
@@ -153,8 +165,11 @@
                                     },
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }

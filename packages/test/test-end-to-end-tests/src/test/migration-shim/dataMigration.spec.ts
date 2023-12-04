@@ -17,15 +17,14 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
-	SchemaBuilder,
-	SharedTreeFactory,
+	type ITree,
+	TreeFactory,
 	disposeSymbol,
 	type TreeView,
-	type TreeField,
+	TreeConfiguration,
+	SchemaFactory,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -98,27 +97,21 @@ class TestDataObject extends DataObject {
 	}
 }
 
-const builder = new SchemaBuilder({ scope: "test" });
+const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
-const inventorySchema = builder.object("abcInventory", {
+class InventorySchema extends builder.object("abcInventory", {
 	quantity: builder.number,
-});
+}) {}
 
-// This is some schema to be updated later
-const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
-const schema = builder.intoSchema(inventoryFieldSchema);
-
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof inventoryFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
+function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
+	return tree.schematize(
+		new TreeConfiguration(InventorySchema, () => ({
 			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+		})),
+	);
 }
 
-describeNoCompat("HotSwap", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -146,12 +139,12 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
-	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const legacyTreeFactory = LegacySharedTree.getFactory();
+	const newTreeFactory = new TreeFactory({});
 
 	const migrationShimFactory = new MigrationShimFactory(
-		legacySharedTreeFactory,
-		newSharedTreeFactory,
+		legacyTreeFactory,
+		newTreeFactory,
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
@@ -161,23 +154,21 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
 			newTree
-				.schematizeInternal({
-					initialTree: {
+				.schematize(
+					new TreeConfiguration(InventorySchema, () => ({
 						quantity,
-					},
-					allowedSchemaModifications: AllowedUpdateType.None,
-					schema,
-				})
+					})),
+				)
 				[disposeSymbol]();
 		},
 	);
 
-	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
+	const sharedTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
 	const dataObjectFactory2 = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
+		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacyTreeFactory
 		{},
 	);
 
@@ -222,11 +213,11 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		assert(
-			shim1.currentTree.attributes.type === legacySharedTreeFactory.type,
+			shim1.currentTree.attributes.type === legacyTreeFactory.type,
 			"shim1.currentTree is not legacy tree",
 		);
 		assert(
-			shim2.currentTree.attributes.type === legacySharedTreeFactory.type,
+			shim2.currentTree.attributes.type === legacyTreeFactory.type,
 			"shim2.currentTree is not legacy tree",
 		);
 
@@ -257,18 +248,12 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		);
 
 		// Verify that the trees have been swapped by checking the attributes type
-		assert(
-			shim1.currentTree.attributes.type === newSharedTreeFactory.type,
-			"should have migrated",
-		);
-		assert(
-			shim2.currentTree.attributes.type === newSharedTreeFactory.type,
-			"should have migrated",
-		);
+		assert(shim1.currentTree.attributes.type === newTreeFactory.type, "should have migrated");
+		assert(shim2.currentTree.attributes.type === newTreeFactory.type, "should have migrated");
 
 		// Get the migrated values from the new tree
-		const tree1 = shim1.currentTree as ISharedTree;
-		const tree2 = shim2.currentTree as ISharedTree;
+		const tree1 = shim1.currentTree as ITree;
+		const tree2 = shim2.currentTree as ITree;
 
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
@@ -322,12 +307,12 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		// Validate that we loaded a shared tree immediately
 		assert(
-			shim2.currentTree.attributes.type === newSharedTreeFactory.type,
+			shim2.currentTree.attributes.type === newTreeFactory.type,
 			"should have loaded migrated shim",
 		);
 
 		// Get the migrated values from the new tree
-		const tree1 = shim1.currentTree as ISharedTree;
+		const tree1 = shim1.currentTree as ITree;
 		const view1 = getNewTreeView(tree1);
 		const treeNode1 = view1.root;
 

@@ -10,6 +10,9 @@
 
 import murmurHash3 from "murmurhash3js";
 
+/**
+ * @internal
+ */
 export function calculateHash(key, seed = 0) {
 	const str = murmurHash3.x86.hash128(key, seed);
 	return `${str.substr(0, 8)}-${str.substr(8, 4)}-${str.substr(12, 4)}-${str.substr(

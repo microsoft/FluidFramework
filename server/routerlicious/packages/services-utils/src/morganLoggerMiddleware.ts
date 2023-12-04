@@ -27,10 +27,16 @@ const stream = split().on("data", (message) => {
 	}
 });
 
+/**
+ * @internal
+ */
 export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 	return morgan(loggerFormat, { stream });
 }
 
+/**
+ * @internal
+ */
 export function jsonMorganLoggerMiddleware(
 	serviceName: string,
 	computeAdditionalProperties?: (

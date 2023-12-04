@@ -10,7 +10,7 @@ import { SharedCell } from '@fluidframework/cell';
 import { SharedString } from '@fluidframework/sequence';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export class CollaborativeCheckbox extends React_2.Component<ICollaborativeCheckboxProps, ICollaborativeCheckboxState> {
     constructor(props: ICollaborativeCheckboxProps);
     // (undocumented)
@@ -19,7 +19,7 @@ export class CollaborativeCheckbox extends React_2.Component<ICollaborativeCheck
     render(): React_2.JSX.Element;
 }
 
-// @public
+// @internal
 export class CollaborativeInput extends React_2.Component<ICollaborativeInputProps, ICollaborativeInputState> {
     constructor(props: ICollaborativeInputProps);
     // (undocumented)
@@ -30,10 +30,10 @@ export class CollaborativeInput extends React_2.Component<ICollaborativeInputPro
     render(): React_2.JSX.Element;
 }
 
-// @public
+// @internal
 export const CollaborativeTextArea: React_2.FC<ICollaborativeTextAreaProps>;
 
-// @public
+// @internal
 export interface ICollaborativeCheckboxProps {
     // (undocumented)
     className?: string;
@@ -44,13 +44,13 @@ export interface ICollaborativeCheckboxProps {
     style?: React_2.CSSProperties;
 }
 
-// @public
+// @internal
 export interface ICollaborativeCheckboxState {
     // (undocumented)
     checked: boolean;
 }
 
-// @public
+// @internal
 export interface ICollaborativeInputProps {
     // (undocumented)
     className?: string;
@@ -65,7 +65,7 @@ export interface ICollaborativeInputProps {
     style?: React_2.CSSProperties;
 }
 
-// @public
+// @internal
 export interface ICollaborativeInputState {
     // (undocumented)
     selectionEnd: number;
@@ -73,7 +73,7 @@ export interface ICollaborativeInputState {
     selectionStart: number;
 }
 
-// @public
+// @internal
 export interface ICollaborativeTextAreaProps {
     // (undocumented)
     className?: string;
@@ -84,19 +84,19 @@ export interface ICollaborativeTextAreaProps {
     style?: React_2.CSSProperties;
 }
 
-// @public
+// @internal
 export interface ISharedStringHelperEvents extends IEvent {
     // (undocumented)
     (event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void): any;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISharedStringHelperTextChangedEventArgs {
     isLocal: boolean;
     transformPosition: (oldPosition: number) => number;
 }
 
-// @public
+// @internal
 export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEvents> {
     constructor(sharedString: SharedString);
     // (undocumented)

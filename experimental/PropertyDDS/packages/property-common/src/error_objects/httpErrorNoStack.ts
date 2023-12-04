@@ -7,6 +7,7 @@ import { FlaggedError } from "./flaggedError";
 
 /**
  * Class extending HTTPError without storing the stack
+ * @internal
  */
 export class HTTPErrorNoStack extends HTTPError {
 	static FLAGS = FlaggedError.FLAGS;

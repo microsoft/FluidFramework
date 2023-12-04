@@ -16,6 +16,7 @@
  * @param in_separator - The path separator
  *
  * @returns The joined path
+ * @internal
  */
 export function joinPaths(
 	in_string1: string = "",

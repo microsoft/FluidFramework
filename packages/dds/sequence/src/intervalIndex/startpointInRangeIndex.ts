@@ -20,7 +20,7 @@ import { HasComparisonOverride, compareOverrideables, forceCompare } from "./int
  * Collection of intervals.
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
- * @public
+ * @internal
  */
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -104,7 +104,7 @@ export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	}
 }
 /**
- * @public
+ * @internal
  */
 export function createStartpointInRangeIndex(
 	sharedString: SharedString,

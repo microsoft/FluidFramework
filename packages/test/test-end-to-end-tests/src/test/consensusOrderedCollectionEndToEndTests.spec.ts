@@ -22,7 +22,7 @@ import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -44,7 +44,7 @@ function generate(
 	input: any[],
 	output: any[],
 ) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeCompat(name, "FullCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();

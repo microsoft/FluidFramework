@@ -23,15 +23,15 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
-// @public
+// @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
-// @public
+// @internal
 export type FluidSerializableReadOnly = IFluidHandle | string | number | boolean | null | readonly FluidSerializableReadOnly[] | {
     readonly [P in string]?: FluidSerializableReadOnly;
 };
 
-// @public
+// @internal
 export class FluidSerializer implements IFluidSerializer {
     constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
     decode(input: any): any;
@@ -49,7 +49,7 @@ export class FluidSerializer implements IFluidSerializer {
     stringify(input: unknown, bind: IFluidHandle): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IFluidSerializer {
     decode(input: any): any;
     encode(value: any, bind: IFluidHandle): any;
@@ -57,7 +57,7 @@ export interface IFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
-// @public
+// @internal
 export interface ISerializedHandle {
     // (undocumented)
     type: "__fluid_handle__";
@@ -65,16 +65,16 @@ export interface ISerializedHandle {
     url: string;
 }
 
-// @public
+// @internal
 export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle;
 
-// @public
+// @internal
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
-// @public
+// @internal
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -82,19 +82,19 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
-// @public
+// @internal
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
-// @public
+// @internal
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
-// @public
+// @internal
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
-// @public
+// @internal
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
     // (undocumented)
@@ -108,7 +108,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
-// @public
+// @internal
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: any): unknown;
@@ -120,7 +120,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    // @internal
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -151,7 +150,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @public
+// @internal
 export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
@@ -162,7 +161,7 @@ export class SummarySerializer extends FluidSerializer {
     };
 }
 
-// @public
+// @internal
 export enum ValueType {
     Plain = 1,
     // @deprecated

@@ -11,11 +11,17 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export interface ISummaryWriteResponse {
 	message: ISummaryAck | ISummaryNack;
 	status: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ILatestSummaryState {
 	protocolHead: number;
 	scribe: string;
@@ -25,6 +31,7 @@ export interface ILatestSummaryState {
 
 /**
  * Interface to abstract out the storage specific details of summary retrieval
+ * @internal
  */
 export interface ISummaryReader {
 	readLastSummary(): Promise<ILatestSummaryState>;
@@ -32,6 +39,7 @@ export interface ISummaryReader {
 
 /**
  * Interface to abstract out the storage specific details of summary creation
+ * @internal
  */
 export interface ISummaryWriter {
 	writeClientSummary(
@@ -55,6 +63,7 @@ export interface ISummaryWriter {
 
 /**
  * Interface to abstract out the storage specific details of pending message retrieval
+ * @internal
  */
 export interface IPendingMessageReader {
 	/**
@@ -67,6 +76,7 @@ export interface IPendingMessageReader {
 
 /**
  * Interface to abstract out the storage specific details of scribe checkpointing
+ * @internal
  */
 export interface ICheckpointManager {
 	write(

@@ -17,7 +17,7 @@ import {
  * @param documentServiceFactory - The document service factory to apply compression to.
  * @param config - The compression configuration.
  * @returns The document service factory possibly with compression applied.
- * @public
+ * @internal
  */
 export function applyStorageCompression(
 	documentServiceFactory: IDocumentServiceFactory,

@@ -20,12 +20,12 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @internal
 export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // @internal (undocumented)
+    // (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap;
@@ -38,70 +38,70 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // @internal (undocumented)
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @internal (undocumented)
+    // (undocumented)
     protected onDisconnect(): void;
-    // @internal (undocumented)
+    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
+    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // @internal (undocumented)
+    // (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: unknown): this;
     get size(): number;
-    // @internal (undocumented)
+    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
-// @public
+// @internal
 export interface ILocalValue {
     makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey | number): ISerializedValue;
     readonly type: string;
     readonly value: any;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export interface ISerializableValue {
     attribution?: AttributionKey | number;
     type: string;
     value: any;
 }
 
-// @public
+// @internal
 export interface ISerializedValue {
     attribution?: string;
     type: string;
     value: string | undefined;
 }
 
-// @public
+// @internal
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @public
+// @internal
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @public
+// @internal
 export interface IValueChanged {
     key: string;
     previousValue: any;
 }
 
-// @public
+// @internal
 export class LocalValueMaker {
     constructor(serializer: IFluidSerializer);
     fromInMemory(value: unknown): ILocalValue;
     fromSerializable(serializable: ISerializableValue): ILocalValue;
 }
 
-// @public @sealed
+// @internal @sealed
 export class MapFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
