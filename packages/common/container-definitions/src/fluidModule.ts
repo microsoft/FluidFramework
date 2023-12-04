@@ -8,7 +8,7 @@ import { IProvideFluidCodeDetailsComparer } from "./fluidPackage";
 import { IRuntimeFactory } from "./runtime";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IFluidModule {
 	fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { FieldKinds, TreeFieldSchema, SchemaAware, typeNameSymbol } from "../feature-libraries";
+import {
+	FieldKinds,
+	InsertableFlexField,
+	InsertableFlexNode,
+	TreeFieldSchema,
+	typeNameSymbol,
+} from "../feature-libraries";
 import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
 import { FlexTreeView, TreeContent } from "../shared-tree";
@@ -52,8 +58,8 @@ export interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema>;
-type JSDeepTreeRoot2 = SchemaAware.TypedField<typeof deepSchema.rootFieldSchema>;
+type JSDeepTree2 = InsertableFlexNode<typeof linkedListSchema>;
+type JSDeepTreeRoot2 = InsertableFlexField<typeof deepSchema.rootFieldSchema>;
 
 {
 	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
@@ -68,7 +74,7 @@ export interface JSWideTree {
 	foo: number[];
 }
 
-type JSWideTreeRoot2 = SchemaAware.TypedField<typeof wideSchema.rootFieldSchema>;
+type JSWideTreeRoot2 = InsertableFlexField<typeof wideSchema.rootFieldSchema>;
 
 {
 	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;

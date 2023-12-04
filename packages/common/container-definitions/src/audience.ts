@@ -10,7 +10,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Manages the state and the members for {@link IAudience}
- * @internal
+ * @alpha
  */
 export interface IAudienceOwner extends IAudience {
 	/**
@@ -30,7 +30,7 @@ export interface IAudienceOwner extends IAudience {
  *
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
  * class.
- * @internal
+ * @alpha
  */
 export interface IAudience extends EventEmitter {
 	/**
