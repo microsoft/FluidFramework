@@ -28,6 +28,7 @@ package for more information including tools to convert between version schemes.
     -   [Fluid Loader](#fluid-loader)
     -   [Expectations from host implementers](#expectations-from-host-implementers)
     -   [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
+    -   [Container Load sequence, Performance considerations](#Container-Load-sequence,-Performance-considerations)
     -   [Container Lifetime](#container-lifetime)
         -   [Loading](#loading)
         -   [Connectivity](#connectivity)
@@ -79,6 +80,49 @@ Please see specific sections for more details on these states and events - this 
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
 5. Notify Container about presence or lack of unsaved changed through IContainerContext.updateDirtyContainerState callback. This is required for [Dirty events](#Dirty-events) to correctly represent state of user edits to host.
+
+## Container Load sequence, Performance considerations
+This section assumes that reader has background knowledge in the following topics:
+- [Summaries, Summarizer & Snapshots](../../docs/content/docs/concepts/summarizer.md)
+- [Ops Lifetime](../../docs/content/docs/concepts/architecture/OpsLifetime.md)
+
+While there are various knobs that control when certain operations happen, the <u>container load sequence consists of the following building blocks</u>:
+1. A snapshot is loaded. This is usually the latest snapshot, based on latest summary that was posted for a given container
+2. A request to storage is made to load all trailing ops. **Trailing ops** are any sequence ops that have sequence number above sequence number of a snapshots, i.e. ops that were not included in snapshot. Client does not know how many ops are trailing, this request might return empty.
+3. Client connects to ordering service (usually implemented as websocket connection). Once connected, it learns about latest sequence number. If there is a gap in ops (i.e. client does not have all the ops up until latest known sequence number), it will attempt to fill in the gap by asking storage for missing ops.
+
+Key observations about this sequence - **defaults**:
+- Step #3 hapenns in parallel with steps #1-#2.
+- Container.load() returns when snapshot is loaded. State of container represents point in container lifetime when last summary was generated (without trailing ops). Application can leverage container to do initial rendering.
+- Ops are coming in (as result in #2 & #3) and applied to cotnainer state as they become available.
+- Depending on implementation and service used, snapshot used is the latest in storage (and loading it involves network request). That said, driver for specific service (like ODSP driver) could implement caching strategies, caching prreviously loaded snapshots, and leveraging them in next session. This will substatntially speed up boot (as it will not require network call) at the expense of presenting more stale version of the file.
+
+**Note**: I use "<u>rendering on screen</u>" as one possible usage of Fluid Framework - build experiences that presenting such experience to the user in the form of interactive application. This is done for demostration purposes, and Fluid does not limit what kind of experiences could be built using Fluid Framework. They could be data-only (no visuals). Any references to rendering should be interpretted as container being ready to be operated on.
+
+Observations about overall system & system transitions:
+- Local changes (ops) could be made to container state at any moment in time (once Container object is returned to user, usually after loading snapshots).
+- Client can send ops only once fully connected, i.e. with connection to ordering service and up-to-date on ops. Up until that moment, closing container will result in data loss, as local edits had no chance to be persistent in storage.
+
+Here are key **knobs** available to developers to **change default behavior**:
+- **Fastest snapshot rendering**: By default, Container is returned after loading initial snapshots (and can be rendered on screeen), step #2 & #3 are happen in background, however they are taking resources (CPU, network). If application wants to prioritize rendering of initial snapshot at all costs (and Ok to push fetching trailing ops / connection to ordering service), then it's advised to use the following settings:
+    ```ts
+    IContainerLoadMode.deltaConnection = "none";
+    IContainerLoadMode.opsBeforeReturn = "cached";
+    ```
+   This sequence assumes that as some point (when application finished the most critical boot sequence), it will call `Cotainer.resume()` in order to fetch trailing ops and establish ordering service connection, such that latest changes can reflect in container and local edits (if any) can be pushed into storage.
+   Container state is not changed until `Container.resume()`` is called as none of the ops are applied. You can change setting to the following if you want to allow latest state (trailing ops) to be fetched and applied in parallel to rendering container on screen - this might result in latest state showing up faster on screen, at the expense of data model that keep changing (due to incoming ops):
+    ```ts
+    IContainerLoadMode.deltaConnection = "delayed";
+    IContainerLoadMode.opsBeforeReturn = "cached";
+    ```
+   `opsBeforeReturn = "cached"` is used to account for any cached ops that driver might posses - they are applied right away, without any network requests. Cached ops are coming in two flavors:
+   - If snapshot was loaded from storage, it quite often contain some number of trailing ops. Such ops would be applied before container is returned.
+   - Applicable only for ODSP: if prior session cached snapshots / ops, such cached content will be used .
+- **Return up-to-date container**: If application wants to render up-to-date container only (i.e. will all ops applied and thus with established connection to ordering service), then the following config should be used.
+    ```ts
+    IContainerLoadMode.opsBeforeReturn = "all";
+    ```
+   This will be the slowest option, but ensures that no stale state is rendered. This might be the option to go with in scenarios where ephemeral containers are used (ocntainers that are created for signle session and are deleted after that) and where initial snapshot is empty. Using this option will ensure that Container's telemetry accuratly tracks loading latest state, as opposed to tracking time to load initial (empty) snapshot.
 
 ## Container Lifetime
 

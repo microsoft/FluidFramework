@@ -640,10 +640,10 @@ export enum LoaderHeader {
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
-	 * No trailing ops are applied before container is returned.
-	 * Default value.
-	 */
-	| undefined
+		* No trailing ops are applied before container is returned.
+		* Default value.
+		*/
+		| undefined
 		/*
 		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
 		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
@@ -652,8 +652,8 @@ export interface IContainerLoadMode {
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
-		 * If driver does not implement any kind of local caching strategy, this is same as above.
-		 * Driver may cache a lot of ops, so care needs to be exercised (see below).
+		 * Snapshots that we load from also may include trailing ops, and such ops are treated same way
+		 * as cached ops (i.e. they will be applied with this option).
 		 */
 		| "cached"
 		/*
@@ -665,21 +665,20 @@ export interface IContainerLoadMode {
 		| "all";
 
 	deltaConnection?: /*
-	 * Connection to delta stream is made only when Container.connect() call is made. Op processing
-	 * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
-	 */
-	| "none"
+		* Connection to delta stream is made only when Container.connect() call is made. Op processing
+		* is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
+		*/
+		| "none"
 		/*
-		 * Connection to delta stream is made only when Container.connect() call is made.
-		 * Op fetching from storage is performed and ops are applied as they come in.
-		 * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
-		 * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
+		 * This option is equivalent to above. It has different behavior if opsBeforeReturn !== "all", and allows
+		 * incoming ops (fetched lazily from the storage after container is loaded and returned) to be applied to
+		 * container as ops are coming in.
 		 */
 		| "delayed"
 		/*
-		 * Connection to delta stream is made right away.
-		 * Ops processing is enabled and ops are flowing through the system.
 		 * Default value.
+		 * Connection to delta stream is established in parallel to loading snapshots.
+		 * Incoming ops are applied as they become available.
 		 */
 		| undefined;
 
