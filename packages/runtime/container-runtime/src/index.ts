@@ -43,9 +43,6 @@ export {
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,
-
-  // TEMP
-  IGarbageCollectionState,
 } from "./gc";
 export {
 	IAckedSummary,

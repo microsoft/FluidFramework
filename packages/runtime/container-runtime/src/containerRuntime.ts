@@ -909,8 +909,7 @@ export class ContainerRuntime
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
-			// eslint-disable-next-line import/no-internal-modules
-			const { IdCompressor, createSessionId } = await import("./id-compressor/index.js");
+			const { IdCompressor, createSessionId } = await import("./id-compressor");
 
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
