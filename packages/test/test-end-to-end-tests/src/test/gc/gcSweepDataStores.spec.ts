@@ -382,6 +382,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				});
 				const dataObject = response.value as ITestDataObject;
 
+				// Pause incoming messages on the container that will send the op for deleted data stores.
+				// Not doing this will cause the submit to fail since it will delete the data store on receiving GC op.
 				await provider.opProcessingController.processIncoming(sendingContainer);
 
 				// The datastore should be swept now
@@ -397,9 +399,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				// Send an op to the swept data store
 				dataObject._root.set("send", "op");
 
+				// After sending the op, resume processing so it processes the GC and above op.
 				provider.opProcessingController.resumeProcessing(sendingContainer);
-				await provider.ensureSynchronized();
 
+				// Wait for the GC and the above op to be processed which will close all the containers.
+				await provider.ensureSynchronized();
 				await closePromise;
 
 				// The containers should close
@@ -468,6 +472,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				});
 				const dataObject = response.value as ITestDataObject;
 
+				// Pause incoming messages on the container that will send the op for deleted data stores.
+				// Not doing this will cause the submit to fail since it will delete the data store on receiving GC op.
+				// Also pause the inbound signals queue so that it is not processed before the GC op.
 				await provider.opProcessingController.pauseProcessing(sendingContainer);
 				await sendingContainer.deltaManager.inboundSignal.pause();
 
@@ -481,13 +488,17 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					receivingContainer,
 				]);
 
-				// Send an op to the swept data store
+				// Send a signal to the swept data store
 				dataObject._runtime.submitSignal("a", "signal");
 
+				// Resume incoming message processing so that the delete op is processed by the sending container.
 				provider.opProcessingController.resumeProcessing(sendingContainer);
 				await provider.ensureSynchronized();
+
+				// Once the GC op has been processed, resume the inbound signal queue so that the signal is processed.
 				sendingContainer.deltaManager.inboundSignal.resume();
 
+				// All the containers should have closed now.
 				await closePromise;
 
 				// The containers should close

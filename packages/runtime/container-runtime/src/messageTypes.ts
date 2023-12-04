@@ -43,7 +43,7 @@ export enum ContainerMessageType {
 	 */
 	IdAllocation = "idAllocation",
 
-	// Garbage collection specific op.
+	/** Garbage collection specific op. */
 	GC = "garbageCollection",
 }
 
