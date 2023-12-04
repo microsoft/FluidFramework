@@ -54,6 +54,7 @@ jobs:
                 action: 'Run a Docker command'
                 customCommand: 'pull ${{ parameters.containerTag }}'
 
+            #Remove this line - added to test if the below line is making ES1 complain
             - task: Docker@0
               displayName: Tag image
               inputs:
