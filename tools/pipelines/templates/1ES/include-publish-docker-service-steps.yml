@@ -39,45 +39,44 @@ jobs:
     containerTagSuffix: $(version)
   strategy:
     runOnce:
-        deploy:
-            steps:
-            - download: none
-            - task: Docker@2
-              displayName: Login to ACR
-              inputs:
-                command: login
-                containerRegistry: ${{ parameters.containerRegistry }}
+      deploy:
+        steps:
+        - download: none
+        - task: Docker@2
+          displayName: Login to ACR
+          inputs:
+            command: login
+            containerRegistry: ${{ parameters.containerRegistry }}
 
-            - task: Docker@1
-              displayName: Pull image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'pull ${{ parameters.containerTag }}'
+        - task: Docker@0
+          displayName: Pull image
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'pull ${{ parameters.containerTag }}'
 
-            #Remove this line - added to test if the below line is making ES1 complain
-            # Also convert all the Docker@1 back to Docker@0
-            - task: Docker@1
-              displayName: Tag image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
-            - task: Docker@1
-              displayName: Tag image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
+        - task: Docker@0
+          displayName: Tag image
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
-            - task: Docker@2
-              displayName: Docker Push
-              inputs:
-                containerRegistry: ${{ parameters.containerRegistry }}
-                repository: ${{ parameters.containerName }}
-                command: push
-                tags: |
-                  $(containerTagSuffix)
-                  latest
+        - task: Docker@0
+          displayName: Tag image
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
 
-            - template: include-git-tag-steps.yml
-              parameters:
-                tagName: ${{ parameters.tagName }}
+        - task: Docker@2
+          displayName: Docker Push
+          inputs:
+            containerRegistry: ${{ parameters.containerRegistry }}
+            repository: ${{ parameters.containerName }}
+            command: push
+            tags: |
+              $(containerTagSuffix)
+              latest
+
+        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
