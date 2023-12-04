@@ -920,32 +920,26 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
  * ```
  */
 export function extractFactoryContent<
-	T extends InsertableTypedNode<FieldNodeSchema> | Unhydrated<FieldNodeSchema>,
->(input: T, insertedAtIndex: number): ExtractedFactoryContent<T>;
-export function extractFactoryContent<
-	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
->(input: T): ExtractedFactoryContent<T>;
-export function extractFactoryContent<
 	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
 >(input: T, insertedAtIndex = 0): ExtractedFactoryContent<T> {
 	const { content, type, fromFactory } = extractContentIfProxy(input);
 	let extractedContent: ExtractedFactoryContent<unknown>;
 	switch (type) {
-		case "object":
+		case NodeKind.Object:
 			extractedContent = extractContentObject(content as object);
 			break;
-		case "list":
+		case NodeKind.List:
 			extractedContent = extractContentArray(
 				content as readonly unknown[],
 				insertedAtIndex,
 			) as ExtractedFactoryContent<T>;
 			break;
-		case "map":
+		case NodeKind.Map:
 			extractedContent = extractContentMap(
 				content as ReadonlyMap<string, unknown>,
 			) as ExtractedFactoryContent<T>;
 			break;
-		case "leaf":
+		case NodeKind.Leaf:
 			extractedContent = {
 				content,
 				hydrateProxies: noopHydrator,
@@ -1076,9 +1070,13 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
  * If `input` is a factory-created proxy, this will return the content stored in that proxy and forward the `typeNameSymbol` on the proxy to `object`.
  * Otherwise, it will just return `input`.
  */
-function extractContentIfProxy<T>(input: T): {
+function extractContentIfProxy<
+	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
+>(
+	input: T,
+): {
 	content: T;
-	type: "object" | "list" | "map" | "leaf";
+	type: NodeKind;
 	fromFactory: boolean;
 } {
 	let content = input;
@@ -1094,21 +1092,24 @@ function extractContentIfProxy<T>(input: T): {
 		fromFactory = true;
 	}
 
-	const classKind = content instanceof NodeBase ? getNodeKind(content) : undefined;
-	let type: "object" | "list" | "map" | "leaf";
-	if (isFluidHandle(content)) {
-		type = "leaf";
-	} else if (classKind === NodeKind.List || isReadonlyArray(content)) {
-		type = "list";
-	} else if (classKind === NodeKind.Map || content instanceof Map) {
-		type = "map";
-	} else if (classKind === NodeKind.Object || (content !== null && typeof content === "object")) {
-		type = "object";
+	if (content instanceof NodeBase) {
+		const type = getNodeKind(content);
+		return { content, type, fromFactory };
 	} else {
-		type = "leaf";
+		let type: NodeKind;
+		if (isFluidHandle(content)) {
+			type = NodeKind.Leaf;
+		} else if (isReadonlyArray(content)) {
+			type = NodeKind.List;
+		} else if (content instanceof Map) {
+			type = NodeKind.Map;
+		} else if (typeof content === "object" && content !== null) {
+			type = NodeKind.Object;
+		} else {
+			type = NodeKind.Leaf;
+		}
+		return { content, type, fromFactory };
 	}
-
-	return { content, type, fromFactory };
 }
 
 function getListChildNode(
@@ -1164,6 +1165,9 @@ function modifyChildren<T extends FlexTreeNode>(
 }
 
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
-function getNodeKind(node: NodeBase): NodeKind | undefined {
-	return getClassSchema(getEditNode(node as TreeNode).schema)?.kind;
+function getNodeKind(node: NodeBase): NodeKind {
+	return (
+		getClassSchema(getEditNode(node as TreeNode).schema)?.kind ??
+		fail("NodeBase should always have class schema")
+	);
 }
