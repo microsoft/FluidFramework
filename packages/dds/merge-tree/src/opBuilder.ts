@@ -24,6 +24,7 @@ import { PropertySet } from "./properties";
  * @returns The annotate op
  *
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function createAnnotateMarkerOp(
 	marker: Marker,
@@ -53,6 +54,7 @@ export function createAnnotateMarkerOp(
  * @returns The annotate op
  *
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function createAnnotateRangeOp(
 	start: number,
@@ -76,6 +78,7 @@ export function createAnnotateRangeOp(
  * @param end - The exclusive end of the range to remove
  *
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
 	return {
@@ -91,6 +94,7 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  * @param segment - The segment to insert
  *
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
 	return createInsertOp(pos, segment.toJSONObject());
@@ -98,6 +102,7 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
 	return {
@@ -112,6 +117,7 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
  * @param ops - The ops to group
  *
  * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
+ * @internal
  */
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {

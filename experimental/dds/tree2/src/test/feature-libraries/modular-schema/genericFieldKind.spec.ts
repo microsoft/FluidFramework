@@ -9,7 +9,6 @@ import {
 	GenericChangeset,
 	genericFieldKind,
 	CrossFieldManager,
-	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import {
@@ -28,6 +27,8 @@ import {
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
 
 const valueFieldKey: FieldKey = brand("Value");
@@ -67,10 +68,11 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
-const revisionMetadata: RevisionMetadataSource = {
-	getRevisions: () => assert.fail("Unexpected revision index query"),
+const revisionMetadata: RebaseRevisionMetadata = {
+	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
+	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -444,8 +446,8 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
 	});
 
-	it("relevantRemovedTrees", () => {
-		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+	it("relevantRemovedRoots", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
 			[
 				{
 					index: 0,

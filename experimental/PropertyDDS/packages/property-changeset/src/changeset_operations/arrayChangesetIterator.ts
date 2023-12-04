@@ -77,7 +77,7 @@ export type GenericOperation = NoneNOPOperation | NOPOperation;
  * Iterator class which iterates over an array ChangeSet. It will successively return the operations ordered by their
  * position within the array. Additionally, it will keep track of the modifications to the array indices caused
  * by the previous operations.
- *
+ * @internal
  */
 export class ArrayChangeSetIterator {
 	static types = ArrayIteratorOperationTypes; // @TODO Not sure if this is still required if we export it separately.

@@ -27,21 +27,24 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IRequest,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
+import {
+	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
@@ -172,7 +175,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -837,8 +840,12 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 
 		// get new datastore from first container
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container1, id);
-		const map2 = await requestFluidObject<SharedMap>(dataStore2.runtime, newMapId);
+		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+
+		// TODO: Remove usage of "resolveHandle" AB#6340
+		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+		const map2 = response.value as SharedMap;
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -887,7 +894,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// get new DDS from first container
 		await provider.ensureSynchronized();
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map2 = await requestFluidObject<SharedMap>(dataStore1.runtime, newMapId);
+		const containerRuntime = dataStore1.context.containerRuntime as ContainerRuntime;
+
+		// TODO: Remove usage of "resolveHandle" AB#6340
+		const response = await containerRuntime.resolveHandle({ url: `/default/${newMapId}` });
+		const map2 = response.value as SharedMap;
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1418,20 +1429,30 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		// load offline; new datastore should be accessible
 		const container2 = await loadOffline(provider, { url }, pendingOps);
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2.container, id);
-		const map2 = await requestFluidObject<SharedMap>(dataStore2.runtime, newMapId);
-		assert.strictEqual(map2.get(testKey), testValue);
-		map2.set(testKey2, testValue);
+		{
+			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
+			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			// TODO: Remove usage of "resolveHandle" AB#6340
+			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+			const map2 = response.value as SharedMap;
+			assert.strictEqual(map2.get(testKey), testValue);
+			map2.set(testKey2, testValue);
+		}
 
 		container2.connect();
 		await waitForContainerConnection(container2.container);
 
 		// get new datastore from first container
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(container1, id);
-		const map3 = await requestFluidObject<SharedMap>(dataStore3.runtime, newMapId);
-		await provider.ensureSynchronized();
-		assert.strictEqual(map3.get(testKey), testValue);
-		assert.strictEqual(map3.get(testKey2), testValue);
+		{
+			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			// TODO: Remove usage of "resolveHandle" AB#6340
+			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+			const map3 = response.value as SharedMap;
+			await provider.ensureSynchronized();
+			assert.strictEqual(map3.get(testKey), testValue);
+			assert.strictEqual(map3.get(testKey2), testValue);
+		}
 	});
 
 	it("works for detached container", async function () {
@@ -1654,7 +1675,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);

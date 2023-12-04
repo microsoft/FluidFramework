@@ -75,6 +75,7 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
  *
  * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
+ * @internal
  */
 export function createMessageReceiver(
 	rabbitmqConfig: any,

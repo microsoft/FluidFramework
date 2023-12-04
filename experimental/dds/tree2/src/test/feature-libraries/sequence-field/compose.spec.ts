@@ -13,8 +13,9 @@ import {
 	tagRollbackInverse,
 	ChangesetLocalId,
 	ChangeAtomId,
+	RevisionInfo,
 } from "../../../core";
-import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -693,6 +694,22 @@ describe("SequenceField - Compose", () => {
 			Mark.moveIn(1, brand(0)),
 		];
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(modify)]);
+		assert.deepEqual(actual, expected);
+	});
+
+	it("move ○ modify and return", () => {
+		const move = [Mark.moveIn(1, brand(0)), { count: 1 }, Mark.moveOut(1, brand(0))];
+		const changes = TestChange.mint([], 42);
+		const moveBack = [
+			Mark.moveOut(1, brand(0), { changes }),
+			{ count: 1 },
+			Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+		];
+		const expected = [{ count: 1 }, Mark.modify(changes)];
+		const actual = shallowCompose([
+			tagChange(move, tag1),
+			tagRollbackInverse(moveBack, tag3, tag1),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 

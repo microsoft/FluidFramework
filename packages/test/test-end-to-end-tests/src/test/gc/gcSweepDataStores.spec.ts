@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -23,7 +22,7 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -38,7 +37,7 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
  */
-describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(
@@ -155,10 +154,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			summaryVersion,
 		);
 
-		const summarizerDataObject = await requestFluidObject<ITestDataObject>(
-			summarizingContainer2,
-			testDataObject.handle.absolutePath,
-		);
+		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+		const response = await containerRuntime.resolveHandle({
+			url: testDataObject.handle.absolutePath,
+		});
+		const summarizerDataObject = response.value as ITestDataObject;
 		await sendOpToUpdateSummaryTimestampToNow(summarizer2);
 
 		return {

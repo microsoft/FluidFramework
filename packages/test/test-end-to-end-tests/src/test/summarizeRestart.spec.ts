@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ITestContainerConfig,
@@ -17,7 +17,7 @@ import {
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 
-describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvider) => {
+describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestObjectProvider) => {
 	const settings = {};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

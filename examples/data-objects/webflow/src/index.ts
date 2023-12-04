@@ -14,6 +14,9 @@ export { htmlFormatter } from "./html/formatters.js";
 const webFlowViewCallback = (webFlow: WebFlow) =>
 	React.createElement(WebflowView, { docP: webFlow.getFlowDocument() });
 
+/**
+ * @internal
+ */
 export const fluidExport = new ContainerViewRuntimeFactory(
 	WebFlow.getFactory(),
 	webFlowViewCallback,

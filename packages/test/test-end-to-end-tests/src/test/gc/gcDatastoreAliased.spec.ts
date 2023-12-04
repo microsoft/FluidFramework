@@ -15,8 +15,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -26,7 +25,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 /**
  * Validates this scenario: When a datastore is aliased it is always referenced.
  */
-describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) => {
+describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach(async () => {
@@ -41,7 +40,11 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 		});
 	}
 
-	it("An unreferenced datastore when aliased becomes referenced.", async () => {
+	it("An unreferenced datastore when aliased becomes referenced.", async function () {
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);
 		const mainDataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
@@ -53,7 +56,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 			await mainDataStore1._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
 		// Make dataStore2 visible but unreferenced by referencing/unreferencing it.
-		mainDataStore1._root.set("dataStore2", dataObject2);
+		mainDataStore1._root.set("dataStore2", dataStore2.entryPoint);
 		mainDataStore1._root.delete("dataStore2");
 		await provider.ensureSynchronized();
 
@@ -92,7 +95,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 	});
 });
 
-describeNoCompat("GC Data Store Aliased No Compat", (getTestObjectProvider) => {
+describeCompat("GC Data Store Aliased No Compat", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach(async () => {

@@ -52,6 +52,9 @@ const getDefaultCheckpoint = (): IDeliState => {
 	};
 };
 
+/**
+ * @internal
+ */
 export class DeliLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>

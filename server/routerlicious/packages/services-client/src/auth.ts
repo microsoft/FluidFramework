@@ -13,6 +13,7 @@ import { NetworkError } from "./error";
  * Validates a JWT token to authorize routerlicious.
  * Throws NetworkError if claims are invalid.
  * @returns The decoded claims.
+ * @internal
  */
 export function validateTokenClaims(
 	token: string,
@@ -43,6 +44,7 @@ export function validateTokenClaims(
  * Validates token claims' iat and exp properties to ensure valid token expiration.
  * Throws NetworkError if expiry is invalid.
  * @returns token lifetime in milliseconds.
+ * @internal
  */
 export function validateTokenClaimsExpiration(
 	claims: ITokenClaims,
@@ -61,6 +63,7 @@ export function validateTokenClaimsExpiration(
 /**
  * Generates a JWT token to authorize routerlicious. This function uses a browser friendly auth library (jsrsasign)
  * and should only be used in client context.
+ * @internal
  */
 // TODO: We should use this library in all client code rather than using jsrsasign directly.
 export function generateToken(
@@ -100,6 +103,9 @@ export function generateToken(
 	);
 }
 
+/**
+ * @internal
+ */
 export function generateUser(): IUser {
 	const randomUser = {
 		id: uuid(),

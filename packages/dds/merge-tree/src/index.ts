@@ -12,7 +12,7 @@ export {
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
 export { IIntegerRange } from "./base";
-export { Client } from "./client";
+export { Client, IClientEvents } from "./client";
 export {
 	ConflictAction,
 	Dictionary,

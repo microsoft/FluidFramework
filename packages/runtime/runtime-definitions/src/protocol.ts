@@ -7,6 +7,7 @@ import { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
 
 /**
  * An envelope wraps the contents with the intended target
+ * @internal
  */
 export interface IEnvelope {
 	/**
@@ -20,6 +21,9 @@ export interface IEnvelope {
 	contents: any;
 }
 
+/**
+ * @internal
+ */
 export interface ISignalEnvelope {
 	/**
 	 * The target for the envelope, undefined for the container
@@ -42,6 +46,7 @@ export interface ISignalEnvelope {
 
 /**
  * Represents ISignalMessage with its type.
+ * @internal
  */
 export interface IInboundSignalMessage extends ISignalMessage {
 	type: string;
@@ -50,6 +55,7 @@ export interface IInboundSignalMessage extends ISignalMessage {
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
+ * @internal
  */
 export interface IAttachMessage {
 	/**
@@ -73,6 +79,7 @@ export interface IAttachMessage {
  * but it should not be used when creating a new attach op.
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
+ * @internal
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	snapshot: IAttachMessage["snapshot"] | null;

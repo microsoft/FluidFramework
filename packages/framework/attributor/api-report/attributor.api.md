@@ -12,7 +12,7 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @alpha
+// @internal
 export class Attributor implements IAttributor {
     constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
     // (undocumented)
@@ -24,13 +24,13 @@ export class Attributor implements IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function createRuntimeAttributor(): IRuntimeAttributor;
 
-// @alpha
+// @internal (undocumented)
 export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 
-// @alpha
+// @internal
 export interface IAttributor {
     // (undocumented)
     entries(): IterableIterator<[number, AttributionInfo]>;
@@ -39,16 +39,16 @@ export interface IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export interface IProvideRuntimeAttributor {
     // (undocumented)
     readonly IRuntimeAttributor: IRuntimeAttributor;
 }
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export const IRuntimeAttributor: keyof IProvideRuntimeAttributor;
 
-// @alpha @sealed
+// @internal @sealed
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     // (undocumented)
     get(key: AttributionKey): AttributionInfo;
@@ -58,10 +58,10 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     readonly isEnabled: boolean;
 }
 
-// @alpha
+// @internal
 export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
 
-// @alpha
+// @internal
 export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
 }

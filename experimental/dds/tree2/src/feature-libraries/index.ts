@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -120,15 +119,11 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
 
 export {
@@ -159,6 +154,9 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
 } from "./typed-schema";
 
 export {
@@ -221,6 +219,7 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
 } from "./default-schema";
 
 export {
@@ -253,7 +252,11 @@ export {
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
+	FlexTreeUnboxField,
+	flexTreeMarker,
+	FlexTreeEntityKind,
 	onNextChange,
+	isFlexTreeNode,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
@@ -265,3 +268,4 @@ import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";
