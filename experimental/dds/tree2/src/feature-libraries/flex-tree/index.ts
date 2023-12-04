@@ -49,14 +49,11 @@ export {
 	FlexTreeTypedFieldInner,
 	FlexTreeUnboxFieldInner,
 	FlexTreeObjectNodeFields,
-	FlexTreeUnboxField,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
 	FlexTreeNodeKeyField,
 	IsArrayOfOne,
 	FlexibleNodeSubSequence,
-	flexTreeMarker,
-	FlexTreeEntityKind,
 } from "./flexTreeTypes";
 
 export { NodeKeys } from "./nodeKeys";
