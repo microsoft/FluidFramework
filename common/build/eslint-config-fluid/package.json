@@ -12,7 +12,8 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config && npm run prettier",
+		"build": "npm run print-config && npm run build:readme && npm run prettier",
+		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
@@ -48,6 +49,7 @@
 		"ts-morph": "^20.0.0"
 	},
 	"devDependencies": {
+		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
