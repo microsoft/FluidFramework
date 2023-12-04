@@ -23,3 +23,4 @@ export { makeEditManagerCodec } from "./editManagerCodecs";
 export { EditManagerSummarizer } from "./editManagerSummarizer";
 export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
 export { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
+export { RevisionTagCodec } from "./revisionTagCodecs";

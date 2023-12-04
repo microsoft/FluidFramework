@@ -9,6 +9,8 @@ import { typeboxValidator } from "../../external-utilities";
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes";
+// eslint-disable-next-line import/no-internal-modules
+import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
 import { useDeterministicStableId } from "../../util";
 import { TestChange } from "../testChange";
 import { EncodingTestData, makeEncodingTestSuite } from "../utils";
@@ -98,7 +100,7 @@ const testCases = useDeterministicStableId(() => {
 });
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, {
+	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(), {
 		jsonValidator: typeboxValidator,
 	});
 

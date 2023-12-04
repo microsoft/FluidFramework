@@ -8,7 +8,7 @@ import { typeboxValidator } from "../../external-utilities";
 import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
+import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
 import { EncodingTestData, makeEncodingTestSuite } from "../utils";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
@@ -145,9 +145,13 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 };
 
 describe("EditManager codec", () => {
-	const codec = makeEditManagerCodec(withDefaultBinaryEncoding(TestChange.codec), {
-		jsonValidator: typeboxValidator,
-	});
+	const codec = makeEditManagerCodec(
+		withDefaultBinaryEncoding(TestChange.codec),
+		new RevisionTagCodec(),
+		{
+			jsonValidator: typeboxValidator,
+		},
+	);
 
 	makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases);
 

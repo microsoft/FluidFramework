@@ -6,11 +6,13 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util";
 import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec";
+import { RevisionTag } from "../core";
 import { DecodedMessage } from "./messageTypes";
 import { Message } from "./messageFormat";
 
 export function makeMessageCodec<TChangeset>(
 	changesetCodec: IJsonCodec<TChangeset>,
+	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
 	options: ICodecOptions,
 ): IJsonCodec<DecodedMessage<TChangeset>> {
 	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
@@ -18,7 +20,7 @@ export function makeMessageCodec<TChangeset>(
 		{
 			encode: ({ commit, sessionId }: DecodedMessage<TChangeset>) => {
 				const message: Message = {
-					revision: commit.revision,
+					revision: revisionTagCodec.encode(commit.revision),
 					originatorId: sessionId,
 					changeset: changesetCodec.encode(commit.change),
 				};

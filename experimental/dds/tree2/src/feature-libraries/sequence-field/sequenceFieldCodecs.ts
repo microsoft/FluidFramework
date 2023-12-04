@@ -7,6 +7,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec";
+import { RevisionTag } from "../../core";
 import {
 	Attach,
 	AttachAndDetach,
@@ -24,11 +25,13 @@ import {
 import { Changeset as ChangesetSchema, Encoded } from "./format";
 import { isNoopMark } from "./utils";
 
-export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
-	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
-
+export const sequenceFieldChangeCodecFactory = <TNodeChange>(
+	childCodec: IJsonCodec<TNodeChange>,
+	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+) => makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec, revisionTagCodec)]]);
 function makeV0Codec<TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,
+	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
 ): IJsonCodec<Changeset<TNodeChange>> {
 	const markEffectCodec: IJsonCodec<MarkEffect, Encoded.MarkEffect> = {
 		encode(effect: MarkEffect): Encoded.MarkEffect {
@@ -149,12 +152,12 @@ function makeV0Codec<TNodeChange>(
 				adjacentCells: adjacentCells?.map(({ id, count }) => [id, count]),
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				lineage: lineage?.map(({ revision, id, count, offset }) => [
-					revision,
+					revisionTagCodec.encode(revision),
 					id,
 					count,
 					offset,
 				]),
-				revision,
+				revision: revision === undefined ? revision : revisionTagCodec.encode(revision),
 			};
 			return encoded;
 		},
@@ -166,7 +169,7 @@ function makeV0Codec<TNodeChange>(
 				localId,
 			};
 			if (revision !== undefined) {
-				decoded.revision = revision;
+				decoded.revision = revisionTagCodec.decode(revision);
 			}
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
@@ -177,7 +180,7 @@ function makeV0Codec<TNodeChange>(
 			if (lineage !== undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				decoded.lineage = lineage.map(([revision, id, count, offset]) => ({
-					revision,
+					revision: revisionTagCodec.decode(revision),
 					id,
 					count,
 					offset,

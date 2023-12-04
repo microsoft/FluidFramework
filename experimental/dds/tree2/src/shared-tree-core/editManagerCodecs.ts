@@ -5,12 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
+import { RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
 import { Commit, EncodedEditManager } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
+	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
 	const format = validator.compile(
@@ -19,11 +21,13 @@ export function makeEditManagerCodec<TChangeset>(
 
 	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
 		...commit,
+		revision: revisionTagCodec.encode(commit.revision),
 		change: changeCodec.json.encode(commit.change),
 	});
 
 	const decodeCommit = <T extends Commit<JsonCompatibleReadOnly>>(commit: T) => ({
 		...commit,
+		revision: revisionTagCodec.decode(commit.revision),
 		change: changeCodec.json.decode(commit.change),
 	});
 

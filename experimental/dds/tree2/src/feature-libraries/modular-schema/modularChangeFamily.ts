@@ -44,6 +44,7 @@ import {
 } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -86,7 +87,11 @@ export class ModularChangeFamily
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		codecOptions: ICodecOptions,
 	) {
-		this.codecs = makeModularChangeCodecFamily(this.fieldKinds, codecOptions);
+		this.codecs = makeModularChangeCodecFamily(
+			this.fieldKinds,
+			new RevisionTagCodec(),
+			codecOptions,
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {

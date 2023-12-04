@@ -20,7 +20,10 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
-	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly codecsFactory: (
+		childCodec: IJsonCodec<NodeChangeset>,
+		revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,
