@@ -128,7 +128,6 @@ stages:
       steps:
         - checkout: none
         - script: |
-            echo $(branch_list)
             echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
             echo BASE_URL: $(BASE_URL)
             echo RELEASE_VERSION: $(RELEASE_VERSION)
@@ -188,11 +187,11 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               # Read YAML data
-              yamlData=$(cat ../../docs/data/docVersions.yaml)
+              yamlData=$(cat docs/data/docVersions.yaml)
               # Set pipeline variable
               echo "##vso[task.setvariable variable=docVersions]$yamlData"
 
-        - ${{ each version in variables['startTest'] }}:
+        - ${{ each version in variables['docVersions'] }}:
           - task: Bash@3
             displayName: print name
             inputs:
