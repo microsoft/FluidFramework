@@ -34,6 +34,7 @@ parameters:
     displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
+  - template: templates/include-doc-versions.yml
 
 variables:
   - group: doc-versions
@@ -80,7 +81,6 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
-  - template: templates/include-doc-versions.yml
 
 # no PR triggers
 trigger:
@@ -192,7 +192,7 @@ stages:
               # Set pipeline variable
               echo "##vso[task.setvariable variable=docVersions]$yamlData"
 
-        - ${{ each version in variables.branchVersions.previous }}:
+        - ${{ each version in parameters.branchVersions.previous }}:
           - task: Bash@3
             displayName: print name
             inputs:
