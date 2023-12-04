@@ -180,6 +180,21 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+        - template: templates/test-params.yml
+          parameters:
+              currentVersion: ${{ parameters.currentVersion }}
+              previousVersions: ${{ parameters.previousVersions }}
+
+        - task: Bash@3
+          displayName: print doc version params
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              echo "param version: "
+              echo "${{parameters.previousVersions}}"
+              echo "${{parameters.currentVersion}}"
+
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
