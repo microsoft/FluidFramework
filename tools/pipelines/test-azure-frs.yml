@@ -181,16 +181,12 @@ stages:
           submodules: false
           clean: true
 
-        - task: Bash@3
-          displayName: Read API Doc branch versions
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy api-extractor JSON to staging folder'
           inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              # Read YAML data
-              yamlData=$(cat docs/data/docVersions.yaml)
-              # Set pipeline variable
-              echo "##vso[task.setvariable variable=docVersions]$yamlData"
+            source: current
+            artifact: api-extractor-combined
+            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - ${{ each version in split(variables.previousVersions, ',') }}:
           - task: Bash@3
@@ -202,39 +198,32 @@ stages:
                 echo "version: "
                 echo "${{version}}"
 
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy api-extractor JSON to staging folder'
-          inputs:
-            source: current
-            artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
+          - task: Bash@3
+            displayName: Create ${{version}} api-extractor-temp directory
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Build.SourcesDirectory)
+              script: |
+                echo "creating api-extractor-temp folder"
+                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models
 
-        - task: Bash@3
-          displayName: Create api-extractor-temp directory
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              echo "creating api-extractor-temp folder"
-              mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models
+          - task: AzureCLI@2
+            displayName: 'Download ${{version}} api-extractor JSON blob'
+            continueOnError: true
+            inputs:
+              azureSubscription: 'fluid-docs'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az storage blob download -f '$(Build.SourcesDirectory)/latest-${{version}}.tar.gz' -c 'api-extractor-json' -n latest-${{version}}.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
 
-        - task: AzureCLI@2
-          displayName: 'Download LTS api-extractor JSON blob'
-          continueOnError: true
-          inputs:
-            azureSubscription: 'fluid-docs'
-            scriptType: bash
-            scriptLocation: inlineScript
-            inlineScript: |
-              az storage blob download -f '$(Build.SourcesDirectory)/latest-lts.tar.gz' -c 'api-extractor-json' -n latest-lts.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-
-        - task: ExtractFiles@1
-          displayName: 'Extract LTS blob content'
-          inputs:
-            destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-lts/doc-models'
-            archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
-            cleanDestinationFolder: false
-            overwriteExistingFiles: false
+          - task: ExtractFiles@1
+            displayName: 'Extract ${{version}} blob content'
+            inputs:
+              destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models'
+              archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
+              cleanDestinationFolder: false
+              overwriteExistingFiles: false
 
         - template: templates/include-use-node-version.yml
 
