@@ -12,6 +12,9 @@ import {
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export interface IThrottleMiddlewareOptions {
 	/**
 	 * Relative weight of request amongst other requests with same suffix.
@@ -58,6 +61,7 @@ function noopMiddleware(req: Request, res: Response, next: NextFunction) {
 
 /**
  * Express middleware for API throttling.
+ * @internal
  */
 export function throttle(
 	throttler: IThrottler,

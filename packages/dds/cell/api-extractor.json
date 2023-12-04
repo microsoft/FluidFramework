@@ -3,10 +3,6 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
 	"messages": {
 		"extractorMessageReporting": {
-			// TODO: Fix violations and remove these rule overrides
-			"ae-forgotten-export": {
-				"logLevel": "none"
-			},
 			// TODO: Add missing documentation and remove this rule override
 			"ae-undocumented": {
 				"logLevel": "none"

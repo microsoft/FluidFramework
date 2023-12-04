@@ -19,15 +19,14 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
-	SchemaBuilder,
-	SharedTreeFactory,
+	type ITree,
+	TreeFactory,
 	type TreeView,
 	disposeSymbol,
-	type TreeField,
+	SchemaFactory,
+	TreeConfiguration,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -115,24 +114,17 @@ class TestDataObject extends DataObject {
 	}
 }
 
-const builder = new SchemaBuilder({ scope: "test" });
+const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
-const quantityType = builder.object("quantityObj", {
+class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
-});
-const schema = builder.intoSchema(quantityType);
+}) {}
 
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
-			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+function getNewTreeView(tree: ITree): TreeView<QuantityType> {
+	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -161,7 +153,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const newSharedTreeFactory = new TreeFactory({});
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -177,13 +169,11 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const quantity = getQuantity(legacyTree);
 			newTree
-				.schematizeOld({
-					initialTree: {
+				.schematize(
+					new TreeConfiguration(QuantityType, () => ({
 						quantity,
-					},
-					allowedSchemaModifications: AllowedUpdateType.None,
-					schema,
-				})
+					})),
+				)
 				[disposeSymbol]();
 		},
 	);
@@ -255,8 +245,8 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		await promise2;
 		await provider.ensureSynchronized();
 
-		const newTree1 = shim1.currentTree as ISharedTree;
-		const newTree2 = shim2.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
+		const newTree2 = shim2.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
@@ -320,7 +310,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			"Should have loaded a SharedTreeShim",
 		);
 
-		const newTree1 = shim1.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);

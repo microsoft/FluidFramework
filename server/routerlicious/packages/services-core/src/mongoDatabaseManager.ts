@@ -11,6 +11,7 @@ import { INode } from "./orderer";
 
 /**
  * MongoDB implementation of IDatabaseManager
+ * @internal
  */
 export class MongoDatabaseManager implements IDatabaseManager {
 	constructor(

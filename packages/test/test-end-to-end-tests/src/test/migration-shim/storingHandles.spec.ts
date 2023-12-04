@@ -19,16 +19,15 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
+	type ITree,
 	type TreeView,
-	SchemaBuilder,
-	SharedTreeFactory,
 	disposeSymbol,
-	type TreeField,
+	SchemaFactory,
+	TreeConfiguration,
+	TreeFactory,
 } from "@fluid-experimental/tree2";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -135,24 +134,21 @@ class TestDataObject extends DataObject {
 	}
 }
 
-const builder = new SchemaBuilder({ scope: "test" });
+const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
-const handleType = builder.object("handleObj", {
+class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
-});
-const schema = builder.intoSchema(handleType);
+}) {}
 
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
+function getNewTreeView(tree: ITree): TreeView<HandleType> {
+	return tree.schematize(
+		new TreeConfiguration(HandleType, () => ({
 			handle: undefined,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+		})),
+	);
 }
 
-describeNoCompat("Storing handles", (getTestObjectProvider) => {
+describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -181,7 +177,7 @@ describeNoCompat("Storing handles", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const newSharedTreeFactory = new TreeFactory({});
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -197,13 +193,11 @@ describeNoCompat("Storing handles", (getTestObjectProvider) => {
 			// migrate data
 			const handle = getHandle(legacyTree);
 			newTree
-				.schematizeOld({
-					initialTree: {
+				.schematize(
+					new TreeConfiguration(HandleType, () => ({
 						handle,
-					},
-					allowedSchemaModifications: AllowedUpdateType.None,
-					schema,
-				})
+					})),
+				)
 				[disposeSymbol]();
 		},
 	);
@@ -277,8 +271,8 @@ describeNoCompat("Storing handles", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		await promise1;
 
-		const newTree1 = shim1.currentTree as ISharedTree;
-		const newTree2 = shim2.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
+		const newTree2 = shim2.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
@@ -315,7 +309,7 @@ describeNoCompat("Storing handles", (getTestObjectProvider) => {
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 
-		const newTree1 = shim1.currentTree as ISharedTree;
+		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);

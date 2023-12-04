@@ -7,15 +7,13 @@ import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import {
-	AllowedUpdateType,
-	type ISharedTree,
-	SchemaBuilder,
-	SharedTreeFactory,
+	type ITree,
+	TreeFactory,
 	type TreeView,
-	type TypedNode,
-	type TreeField,
+	SchemaFactory,
+	TreeConfiguration,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -49,25 +47,18 @@ class TestDataObject extends DataObject {
 }
 
 // New tree schema
-const builder = new SchemaBuilder({ scope: "test" });
-const rootType = builder.object("abc", {
+const builder = new SchemaFactory("test");
+class RootType extends builder.object("abc", {
 	quantity: builder.number,
-});
-const schema = builder.intoSchema(rootType);
+}) {}
 
-function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
-	return tree.schematizeOld({
-		initialTree: {
-			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+function getNewTreeView(tree: ITree): TreeView<RootType> {
+	return tree.schematize(new TreeConfiguration(RootType, () => ({ quantity: 0 })));
 }
 
 const testValue = 5;
 
-describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
+describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -79,7 +70,7 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const newSharedTreeFactory = new TreeFactory({});
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
 	const dataObjectFactory = new DataObjectFactory(
@@ -127,8 +118,8 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// This does some typing and gives us the root node.
-		const rootNode1: TypedNode<typeof rootType> = view1.root;
-		const rootNode2: TypedNode<typeof rootType> = view2.root;
+		const rootNode1: RootType = view1.root;
+		const rootNode2: RootType = view2.root;
 
 		// Test that we can modify/send ops with the new Shared Tree
 		rootNode1.quantity = testValue;
@@ -154,7 +145,7 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
 		const view3 = getNewTreeView(tree3);
-		const rootNode3: TypedNode<typeof rootType> = view3.root;
+		const rootNode3: RootType = view3.root;
 
 		// Verify that it matches the previous node
 		await provider.ensureSynchronized();

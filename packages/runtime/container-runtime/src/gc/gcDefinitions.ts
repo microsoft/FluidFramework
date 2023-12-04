@@ -22,7 +22,7 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 
 /**
- * @public
+ * @alpha
  */
 export type GCVersion = number;
 
@@ -92,7 +92,7 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /**
  * @see IGCMetadata.gcFeatureMatrix
- * @public
+ * @alpha
  */
 export interface GCFeatureMatrix {
 	/**
@@ -110,7 +110,7 @@ export interface GCFeatureMatrix {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IGCMetadata {
 	/**
@@ -150,7 +150,7 @@ export interface IGCMetadata {
 
 /**
  * The statistics of the system state after a garbage collection mark phase run.
- * @public
+ * @alpha
  */
 export interface IMarkPhaseStats {
 	/** The number of nodes in the container. */
@@ -175,7 +175,7 @@ export interface IMarkPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection sweep phase run.
- * @public
+ * @alpha
  */
 export interface ISweepPhaseStats {
 	/** The number of nodes in the lifetime of the container. */
@@ -194,13 +194,13 @@ export interface ISweepPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection run.
- * @public
+ * @alpha
  */
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
 /**
  * The types of GC nodes in the GC reference graph.
- * @public
+ * @alpha
  */
 export const GCNodeType = {
 	// Nodes that are for data stores.
@@ -214,7 +214,7 @@ export const GCNodeType = {
 };
 
 /**
- * @public
+ * @alpha
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
@@ -320,7 +320,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IGCRuntimeOptions {
 	/**

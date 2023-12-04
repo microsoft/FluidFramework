@@ -99,7 +99,7 @@ export interface SharedTreeContentSnapshot {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
+export interface ISharedTree extends ISharedObject, ITree {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -110,7 +110,7 @@ export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITreeOld.schematizeOld}, but returns a more powerful type exposing more package internal information.
+	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
 	 * @privateRemarks
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
@@ -147,7 +147,7 @@ export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
  */
 export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
-	implements ISharedTree
+	implements ISharedTree, OldSimpleTree
 {
 	private readonly _events: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
@@ -178,7 +178,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -187,7 +187,7 @@ export class SharedTree
 			options.summaryEncodeType,
 			options,
 		);
-		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const defaultChangeFamily = new DefaultChangeFamily(options);
 		const changeFamily = makeMitigatedChangeFamily(
 			defaultChangeFamily,
@@ -212,7 +212,7 @@ export class SharedTree
 			},
 		);
 		super(
-			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
+			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			id,
@@ -231,7 +231,7 @@ export class SharedTree
 			schema,
 			forest,
 			events: this._events,
-			removedTrees,
+			removedRoots,
 		});
 	}
 

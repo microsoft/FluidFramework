@@ -18,7 +18,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 const defaultStoreId = "" as const;
 
 /**
- * @public
+ * @internal
  */
 export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly registry: NamedFluidDataStoreRegistryEntries;

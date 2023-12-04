@@ -5,6 +5,9 @@
 
 import { ITree } from "@fluidframework/protocol-definitions";
 
+/**
+ * @internal
+ */
 export function getNormalizedObjectStoragePathParts(path: string) {
 	let normalizePath = path;
 	if (normalizePath.startsWith("/")) {
@@ -19,6 +22,9 @@ export function getNormalizedObjectStoragePathParts(path: string) {
 	return [];
 }
 
+/**
+ * @internal
+ */
 export async function listBlobsAtTreePath(
 	inputTree: ITree | undefined,
 	path: string,

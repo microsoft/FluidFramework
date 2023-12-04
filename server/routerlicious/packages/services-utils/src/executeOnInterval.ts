@@ -5,6 +5,9 @@
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export function executeOnInterval(
 	api: () => Promise<any>,
 	intervalInMs: number,
@@ -47,6 +50,9 @@ export function executeOnInterval(
 	return execute();
 }
 
+/**
+ * @internal
+ */
 export class ScheduledJob {
 	private _jobRunning: boolean;
 
