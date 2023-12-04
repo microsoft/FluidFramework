@@ -15,9 +15,10 @@ import {
 	makeAnonChange,
 	tagChange,
 	TaggedChange,
-	Delta,
 	FieldKey,
 	deltaForSet,
+	DeltaFieldMap,
+	DeltaFieldChanges,
 } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
 import {
@@ -131,13 +132,13 @@ const childRebaser = (
 const detachId = { minor: 42 };
 const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.FieldMap => {
+const childToDelta = (nodeChange: NodeChangeset): DeltaFieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
 	return deltaForValueChange(valueChange.new);
 };
 
-function deltaForValueChange(newValue: number): Delta.FieldMap {
+function deltaForValueChange(newValue: number): DeltaFieldMap {
 	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
 }
 
@@ -380,7 +381,7 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const expected: Delta.FieldChanges = {
+		const expected: DeltaFieldChanges = {
 			local: [
 				{ count: 1, fields: deltaForValueChange(1) },
 				{ count: 1 },
@@ -449,8 +450,8 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
 	});
 
-	it("relevantRemovedTrees", () => {
-		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+	it("relevantRemovedRoots", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
 			[
 				{
 					index: 0,

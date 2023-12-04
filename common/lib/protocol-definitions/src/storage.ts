@@ -6,7 +6,7 @@
 import { IsoDate } from "./date";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocumentAttributes {
 	/**
@@ -21,7 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export enum FileMode {
 	File = "100644",
@@ -32,7 +32,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
- * @internal
+ * @alpha
  */
 export interface IBlob {
 	/**
@@ -47,14 +47,14 @@ export interface IBlob {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttachment {
 	id: string;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -62,7 +62,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
- * @internal
+ * @alpha
  */
 export type ITreeEntry = {
 	/**
@@ -92,7 +92,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- * @internal
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -101,7 +101,7 @@ export enum TreeEntry {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITree {
 	entries: ITreeEntry[];
@@ -119,7 +119,7 @@ export interface ITree {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -142,7 +142,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
- * @internal
+ * @alpha
  */
 export interface IVersion {
 	/**
