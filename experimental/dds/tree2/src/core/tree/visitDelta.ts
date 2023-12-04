@@ -91,6 +91,7 @@ export function visitDelta(
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
+	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
 		for (let i = 0; i < count; i += 1) {
 			const offsetId = offsetDetachId(id, i);
@@ -356,9 +357,7 @@ function visitNode(
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
 	processBuilds(delta.build, config, visitor);
-	if (delta.destroy !== undefined) {
-		config.rootDestructions.push(...delta.destroy);
-	}
+	collectDestroys(delta.destroy, config);
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getEntry(id);
@@ -417,6 +416,15 @@ function processBuilds(
 				}
 			}
 		}
+	}
+}
+
+function collectDestroys(
+	destroys: readonly Delta.DetachedNodeDestruction[] | undefined,
+	config: PassConfig,
+) {
+	if (destroys !== undefined) {
+		config.rootDestructions.push(...destroys);
 	}
 }
 

@@ -330,6 +330,7 @@ export interface DeltaDetachedNodeRename {
 export interface DeltaFieldChanges<TTree = DeltaProtoNode> {
     // @deprecated
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
+    // @deprecated
     readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly global?: readonly DeltaDetachedNodeChanges<TTree>[];
     readonly local?: readonly DeltaMark<TTree>[];
@@ -353,6 +354,7 @@ export type DeltaProtoNode = ITreeCursorSynchronous;
 // @alpha
 export interface DeltaRoot<TTree = DeltaProtoNode> {
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
+    readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly fields?: DeltaFieldMap<TTree>;
 }
 
