@@ -1436,6 +1436,860 @@ index efd6b045915cc46c85ee3ed3e4b8a2f7104c67f9..cac9435a286e26eb79d62d473d561485
 \ No newline at end of file
 +{"version":3,"file":"DtsEmitHelpers.js","sourceRoot":"","sources":["../../src/generators/DtsEmitHelpers.ts"],"names":[],"mappings":"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","sourcesContent":["// Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.\r\n// See LICENSE in the project root for license information.\r\n\r\nimport * as ts from 'typescript';\r\n\r\nimport { InternalError } from '@rushstack/node-core-library';\r\nimport type { CollectorEntity } from '../collector/CollectorEntity';\r\nimport { AstImport, AstImportKind } from '../analyzer/AstImport';\r\nimport { AstDeclaration } from '../analyzer/AstDeclaration';\r\nimport type { Collector } from '../collector/Collector';\r\nimport type { Span } from '../analyzer/Span';\r\nimport type { IndentedWriter } from './IndentedWriter';\r\nimport { SourceFileLocationFormatter } from '../analyzer/SourceFileLocationFormatter';\r\n\r\n/**\r\n * Some common code shared between DtsRollupGenerator and ApiReportGenerator.\r\n */\r\nexport class DtsEmitHelpers {\r\n  public static emitImport(\r\n    writer: IndentedWriter,\r\n    collectorEntity: CollectorEntity,\r\n    astImport: AstImport\r\n  ): void {\r\n    const importPrefix: string = astImport.isTypeOnlyEverywhere ? 'import type' : 'import';\r\n\r\n    switch (astImport.importKind) {\r\n      case AstImportKind.DefaultImport:\r\n        if (collectorEntity.nameForEmit !== astImport.exportName) {\r\n          writer.write(`${importPrefix} { default as ${collectorEntity.nameForEmit} }`);\r\n        } else {\r\n          writer.write(`${importPrefix} ${astImport.exportName}`);\r\n        }\r\n        writer.writeLine(` from '${astImport.modulePath}';`);\r\n        break;\r\n      case AstImportKind.NamedImport:\r\n        if (collectorEntity.nameForEmit === astImport.exportName) {\r\n          writer.write(`${importPrefix} { ${astImport.exportName} }`);\r\n        } else {\r\n          writer.write(`${importPrefix} { ${astImport.exportName} as ${collectorEntity.nameForEmit} }`);\r\n        }\r\n        writer.writeLine(` from '${astImport.modulePath}';`);\r\n        break;\r\n      case AstImportKind.StarImport:\r\n        writer.writeLine(\r\n          `${importPrefix} * as ${collectorEntity.nameForEmit} from '${astImport.modulePath}';`\r\n        );\r\n        break;\r\n      case AstImportKind.EqualsImport:\r\n        writer.writeLine(\r\n          `${importPrefix} ${collectorEntity.nameForEmit} = require('${astImport.modulePath}');`\r\n        );\r\n        break;\r\n      case AstImportKind.ImportType:\r\n        if (!astImport.exportName) {\r\n          writer.writeLine(\r\n            `${importPrefix} * as ${collectorEntity.nameForEmit} from '${astImport.modulePath}';`\r\n          );\r\n        } else {\r\n          const topExportName: string = astImport.exportName.split('.')[0];\r\n          if (collectorEntity.nameForEmit === topExportName) {\r\n            writer.write(`${importPrefix} { ${topExportName} }`);\r\n          } else {\r\n            writer.write(`${importPrefix} { ${topExportName} as ${collectorEntity.nameForEmit} }`);\r\n          }\r\n          writer.writeLine(` from '${astImport.modulePath}';`);\r\n        }\r\n        break;\r\n      default:\r\n        throw new InternalError('Unimplemented AstImportKind');\r\n    }\r\n  }\r\n\r\n  public static emitNamedExport(\r\n    writer: IndentedWriter,\r\n    exportName: string,\r\n    collectorEntity: CollectorEntity\r\n  ): void {\r\n    if (exportName === ts.InternalSymbolName.Default) {\r\n      writer.writeLine(`export default ${collectorEntity.nameForEmit};`);\r\n    } else if (collectorEntity.nameForEmit !== exportName) {\r\n      writer.writeLine(`export { ${collectorEntity.nameForEmit} as ${exportName} }`);\r\n    } else {\r\n      writer.writeLine(`export { ${exportName} }`);\r\n    }\r\n  }\r\n\r\n  public static emitStarExports(writer: IndentedWriter, collector: Collector): void {\r\n    if (collector.starExportedExternalModulePaths.length > 0) {\r\n      writer.writeLine();\r\n      for (const starExportedExternalModulePath of collector.starExportedExternalModulePaths) {\r\n        writer.writeLine(`export * from \"${starExportedExternalModulePath}\";`);\r\n      }\r\n    }\r\n  }\r\n\r\n  public static modifyImportTypeSpan(\r\n    collector: Collector,\r\n    span: Span,\r\n    astDeclaration: AstDeclaration,\r\n    modifyNestedSpan: (childSpan: Span, childAstDeclaration: AstDeclaration) => void\r\n  ): void {\r\n    const node: ts.ImportTypeNode = span.node as ts.ImportTypeNode;\r\n    const referencedEntity: CollectorEntity | undefined = collector.tryGetEntityForNode(node);\r\n\r\n    if (referencedEntity) {\r\n      if (!referencedEntity.nameForEmit) {\r\n        // This should never happen\r\n\r\n        throw new InternalError('referencedEntry.nameForEmit is undefined');\r\n      }\r\n\r\n      let typeArgumentsText: string = '';\r\n\r\n      if (node.typeArguments && node.typeArguments.length > 0) {\r\n        // Type arguments have to be processed and written to the document\r\n        const lessThanTokenPos: number = span.children.findIndex(\r\n          (childSpan) => childSpan.node.kind === ts.SyntaxKind.LessThanToken\r\n        );\r\n        const greaterThanTokenPos: number = span.children.findIndex(\r\n          (childSpan) => childSpan.node.kind === ts.SyntaxKind.GreaterThanToken\r\n        );\r\n\r\n        if (lessThanTokenPos < 0 || greaterThanTokenPos <= lessThanTokenPos) {\r\n          throw new InternalError(\r\n            `Invalid type arguments: ${node.getText()}\\n` +\r\n              SourceFileLocationFormatter.formatDeclaration(node)\r\n          );\r\n        }\r\n\r\n        const typeArgumentsSpans: Span[] = span.children.slice(lessThanTokenPos + 1, greaterThanTokenPos);\r\n\r\n        // Apply modifications to Span elements of typeArguments\r\n        typeArgumentsSpans.forEach((childSpan) => {\r\n          const childAstDeclaration: AstDeclaration = AstDeclaration.isSupportedSyntaxKind(childSpan.kind)\r\n            ? collector.astSymbolTable.getChildAstDeclarationByNode(childSpan.node, astDeclaration)\r\n            : astDeclaration;\r\n\r\n          modifyNestedSpan(childSpan, childAstDeclaration);\r\n        });\r\n\r\n        const typeArgumentsStrings: string[] = typeArgumentsSpans.map((childSpan) =>\r\n          childSpan.getModifiedText()\r\n        );\r\n        typeArgumentsText = `<${typeArgumentsStrings.join(', ')}>`;\r\n      }\r\n\r\n      const separatorAfter: string = /(\\s*)$/.exec(span.getText())?.[1] ?? '';\r\n\r\n      if (\r\n        referencedEntity.astEntity instanceof AstImport &&\r\n        referencedEntity.astEntity.importKind === AstImportKind.ImportType &&\r\n        referencedEntity.astEntity.exportName\r\n      ) {\r\n        // For an ImportType with a namespace chain, only the top namespace is imported.\r\n        // Must add the original nested qualifiers to the rolled up import.\r\n        const qualifiersText: string = node.qualifier?.getText() ?? '';\r\n        const nestedQualifiersStart: number = qualifiersText.indexOf('.');\r\n        // Including the leading \".\"\r\n        const nestedQualifiersText: string =\r\n          nestedQualifiersStart >= 0 ? qualifiersText.substring(nestedQualifiersStart) : '';\r\n\r\n        const replacement: string = `${referencedEntity.nameForEmit}${nestedQualifiersText}${typeArgumentsText}${separatorAfter}`;\r\n\r\n        span.modification.skipAll();\r\n        span.modification.prefix = replacement;\r\n      } else {\r\n        // Replace with internal symbol or AstImport\r\n        span.modification.skipAll();\r\n        span.modification.prefix = `${referencedEntity.nameForEmit}${typeArgumentsText}${separatorAfter}`;\r\n      }\r\n    }\r\n  }\r\n}\r\n"]}
 \ No newline at end of file
+diff --git a/lib/generators/DtsRollupGenerator.js b/lib/generators/DtsRollupGenerator.js
+index 5a6490760417c2cbefc8ff277f9183a7c870e797..b794fdbe5f2daede77c74d018f8e6f5e3eeeed93 100644
+--- a/lib/generators/DtsRollupGenerator.js
++++ b/lib/generators/DtsRollupGenerator.js
+@@ -1,29 +1,50 @@
+ "use strict";
+ // Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
+ // See LICENSE in the project root for license information.
+-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    var desc = Object.getOwnPropertyDescriptor(m, k);
+-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+-      desc = { enumerable: true, get: function() { return m[k]; } };
+-    }
+-    Object.defineProperty(o, k2, desc);
+-}) : (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    o[k2] = m[k];
+-}));
+-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+-    Object.defineProperty(o, "default", { enumerable: true, value: v });
+-}) : function(o, v) {
+-    o["default"] = v;
+-});
+-var __importStar = (this && this.__importStar) || function (mod) {
++var __createBinding =
++  (this && this.__createBinding) ||
++  (Object.create
++    ? function (o, m, k, k2) {
++        if (k2 === undefined) k2 = k;
++        var desc = Object.getOwnPropertyDescriptor(m, k);
++        if (
++          !desc ||
++          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
++        ) {
++          desc = {
++            enumerable: true,
++            get: function () {
++              return m[k];
++            },
++          };
++        }
++        Object.defineProperty(o, k2, desc);
++      }
++    : function (o, m, k, k2) {
++        if (k2 === undefined) k2 = k;
++        o[k2] = m[k];
++      });
++var __setModuleDefault =
++  (this && this.__setModuleDefault) ||
++  (Object.create
++    ? function (o, v) {
++        Object.defineProperty(o, "default", { enumerable: true, value: v });
++      }
++    : function (o, v) {
++        o["default"] = v;
++      });
++var __importStar =
++  (this && this.__importStar) ||
++  function (mod) {
+     if (mod && mod.__esModule) return mod;
+     var result = {};
+-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
++    if (mod != null)
++      for (var k in mod)
++        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
++          __createBinding(result, mod, k);
+     __setModuleDefault(result, mod);
+     return result;
+-};
++  };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.DtsRollupGenerator = exports.DtsRollupKind = void 0;
+ /* eslint-disable no-bitwise */
+@@ -44,364 +65,438 @@ const SourceFileLocationFormatter_1 = require("../analyzer/SourceFileLocationFor
+  */
+ var DtsRollupKind;
+ (function (DtsRollupKind) {
+-    /**
+-     * Generate a *.d.ts file for an internal release, or for the trimming=false mode.
+-     * This output file will contain all definitions that are reachable from the entry point.
+-     */
+-    DtsRollupKind[DtsRollupKind["InternalRelease"] = 0] = "InternalRelease";
+-    /**
+-     * Generate a *.d.ts file for a preview release.
+-     * This output file will contain all definitions that are reachable from the entry point,
+-     * except definitions marked as \@internal.
+-     */
+-    DtsRollupKind[DtsRollupKind["AlphaRelease"] = 1] = "AlphaRelease";
+-    /**
+-     * Generate a *.d.ts file for a preview release.
+-     * This output file will contain all definitions that are reachable from the entry point,
+-     * except definitions marked as \@alpha or \@internal.
+-     */
+-    DtsRollupKind[DtsRollupKind["BetaRelease"] = 2] = "BetaRelease";
+-    /**
+-     * Generate a *.d.ts file for a public release.
+-     * This output file will contain all definitions that are reachable from the entry point,
+-     * except definitions marked as \@beta, \@alpha, or \@internal.
+-     */
+-    DtsRollupKind[DtsRollupKind["PublicRelease"] = 3] = "PublicRelease";
+-})(DtsRollupKind = exports.DtsRollupKind || (exports.DtsRollupKind = {}));
++  /**
++   * Generate a *.d.ts file for an internal release, or for the trimming=false mode.
++   * This output file will contain all definitions that are reachable from the entry point.
++   */
++  DtsRollupKind[(DtsRollupKind["InternalRelease"] = 0)] = "InternalRelease";
++  /**
++   * Generate a *.d.ts file for a preview release.
++   * This output file will contain all definitions that are reachable from the entry point,
++   * except definitions marked as \@internal.
++   */
++  DtsRollupKind[(DtsRollupKind["AlphaRelease"] = 1)] = "AlphaRelease";
++  /**
++   * Generate a *.d.ts file for a preview release.
++   * This output file will contain all definitions that are reachable from the entry point,
++   * except definitions marked as \@alpha or \@internal.
++   */
++  DtsRollupKind[(DtsRollupKind["BetaRelease"] = 2)] = "BetaRelease";
++  /**
++   * Generate a *.d.ts file for a public release.
++   * This output file will contain all definitions that are reachable from the entry point,
++   * except definitions marked as \@beta, \@alpha, or \@internal.
++   */
++  DtsRollupKind[(DtsRollupKind["PublicRelease"] = 3)] = "PublicRelease";
++})((DtsRollupKind = exports.DtsRollupKind || (exports.DtsRollupKind = {})));
+ class DtsRollupGenerator {
+-    /**
+-     * Generates the typings file and writes it to disk.
+-     *
+-     * @param dtsFilename    - The *.d.ts output filename
+-     */
+-    static writeTypingsFile(collector, dtsFilename, dtsKind, newlineKind) {
+-        const writer = new IndentedWriter_1.IndentedWriter();
+-        writer.trimLeadingSpaces = true;
+-        DtsRollupGenerator._generateTypingsFileContent(collector, writer, dtsKind);
+-        node_core_library_1.FileSystem.writeFile(dtsFilename, writer.toString(), {
+-            convertLineEndings: newlineKind,
+-            ensureFolderExists: true
+-        });
++  /**
++   * Generates the typings file and writes it to disk.
++   *
++   * @param dtsFilename    - The *.d.ts output filename
++   */
++  static writeTypingsFile(collector, dtsFilename, dtsKind, newlineKind) {
++    const writer = new IndentedWriter_1.IndentedWriter();
++    writer.trimLeadingSpaces = true;
++    DtsRollupGenerator._generateTypingsFileContent(collector, writer, dtsKind);
++    node_core_library_1.FileSystem.writeFile(dtsFilename, writer.toString(), {
++      convertLineEndings: newlineKind,
++      ensureFolderExists: true,
++    });
++  }
++  static _generateTypingsFileContent(collector, writer, dtsKind) {
++    // Emit the @packageDocumentation comment at the top of the file
++    if (collector.workingPackage.tsdocParserContext) {
++      writer.trimLeadingSpaces = false;
++      writer.writeLine(
++        collector.workingPackage.tsdocParserContext.sourceRange.toString()
++      );
++      writer.trimLeadingSpaces = true;
++      writer.ensureSkippedLine();
++    }
++    // Emit the triple slash directives
++    for (const typeDirectiveReference of collector.dtsTypeReferenceDirectives) {
++      // https://github.com/microsoft/TypeScript/blob/611ebc7aadd7a44a4c0447698bfda9222a78cb66/src/compiler/declarationEmitter.ts#L162
++      writer.writeLine(`/// <reference types="${typeDirectiveReference}" />`);
++    }
++    for (const libDirectiveReference of collector.dtsLibReferenceDirectives) {
++      writer.writeLine(`/// <reference lib="${libDirectiveReference}" />`);
+     }
+-    static _generateTypingsFileContent(collector, writer, dtsKind) {
+-        // Emit the @packageDocumentation comment at the top of the file
+-        if (collector.workingPackage.tsdocParserContext) {
+-            writer.trimLeadingSpaces = false;
+-            writer.writeLine(collector.workingPackage.tsdocParserContext.sourceRange.toString());
+-            writer.trimLeadingSpaces = true;
++    writer.ensureSkippedLine();
++    // Emit the imports
++    for (const entity of collector.entities) {
++      if (entity.astEntity instanceof AstImport_1.AstImport) {
++        const astImport = entity.astEntity;
++        DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, astImport);
++      }
++    }
++    writer.ensureSkippedLine();
++    // Emit the regular declarations
++    for (const entity of collector.entities) {
++      const astEntity = entity.astEntity;
++      const symbolMetadata = collector.tryFetchMetadataForAstEntity(astEntity);
++      const maxEffectiveReleaseTag = symbolMetadata
++        ? symbolMetadata.maxEffectiveReleaseTag
++        : api_extractor_model_1.ReleaseTag.None;
++      if (!this._shouldIncludeReleaseTag(maxEffectiveReleaseTag, dtsKind)) {
++        if (!collector.extractorConfig.omitTrimmingComments) {
++          writer.ensureSkippedLine();
++          writer.writeLine(
++            `/* Excluded from this release type: ${entity.nameForEmit} */`
++          );
++        }
++        continue;
++      }
++      if (astEntity instanceof AstSymbol_1.AstSymbol) {
++        // Emit all the declarations for this entry
++        for (const astDeclaration of astEntity.astDeclarations || []) {
++          const apiItemMetadata =
++            collector.fetchApiItemMetadata(astDeclaration);
++          if (
++            !this._shouldIncludeReleaseTag(
++              apiItemMetadata.effectiveReleaseTag,
++              dtsKind
++            )
++          ) {
++            if (!collector.extractorConfig.omitTrimmingComments) {
++              writer.ensureSkippedLine();
++              writer.writeLine(
++                `/* Excluded declaration from this release type: ${entity.nameForEmit} */`
++              );
++            }
++            continue;
++          } else {
++            const span = new Span_1.Span(astDeclaration.declaration);
++            DtsRollupGenerator._modifySpan(
++              collector,
++              span,
++              entity,
++              astDeclaration,
++              dtsKind
++            );
+             writer.ensureSkippedLine();
++            span.writeModifiedText(writer);
++            writer.ensureNewLine();
++          }
+         }
+-        // Emit the triple slash directives
+-        for (const typeDirectiveReference of collector.dtsTypeReferenceDirectives) {
+-            // https://github.com/microsoft/TypeScript/blob/611ebc7aadd7a44a4c0447698bfda9222a78cb66/src/compiler/declarationEmitter.ts#L162
+-            writer.writeLine(`/// <reference types="${typeDirectiveReference}" />`);
++      }
++      if (astEntity instanceof AstNamespaceImport_1.AstNamespaceImport) {
++        const astModuleExportInfo =
++          astEntity.fetchAstModuleExportInfo(collector);
++        if (entity.nameForEmit === undefined) {
++          // This should never happen
++          throw new node_core_library_1.InternalError(
++            "referencedEntry.nameForEmit is undefined"
++          );
+         }
+-        for (const libDirectiveReference of collector.dtsLibReferenceDirectives) {
+-            writer.writeLine(`/// <reference lib="${libDirectiveReference}" />`);
++        if (astModuleExportInfo.starExportedExternalModules.size > 0) {
++          // We could support this, but we would need to find a way to safely represent it.
++          throw new Error(
++            `The ${entity.nameForEmit} namespace import includes a start export, which is not supported:\n` +
++              SourceFileLocationFormatter_1.SourceFileLocationFormatter.formatDeclaration(
++                astEntity.declaration
++              )
++          );
+         }
++        // Emit a synthetic declaration for the namespace.  It will look like this:
++        //
++        //    declare namespace example {
++        //      export {
++        //        f1,
++        //        f2
++        //      }
++        //    }
++        //
++        // Note that we do not try to relocate f1()/f2() to be inside the namespace because other type
++        // signatures may reference them directly (without using the namespace qualifier).
+         writer.ensureSkippedLine();
+-        // Emit the imports
+-        for (const entity of collector.entities) {
+-            if (entity.astEntity instanceof AstImport_1.AstImport) {
+-                const astImport = entity.astEntity;
+-                // For example, if the imported API comes from an external package that supports AEDoc,
+-                // and it was marked as `@internal`, then don't emit it.
+-                const symbolMetadata = collector.tryFetchMetadataForAstEntity(astImport);
+-                const maxEffectiveReleaseTag = symbolMetadata
+-                    ? symbolMetadata.maxEffectiveReleaseTag
+-                    : api_extractor_model_1.ReleaseTag.None;
+-                if (this._shouldIncludeReleaseTag(maxEffectiveReleaseTag, dtsKind)) {
+-                    DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, astImport);
+-                }
++        if (entity.shouldInlineExport) {
++          writer.write("export ");
++        }
++        writer.writeLine(`declare namespace ${entity.nameForEmit} {`);
++        // all local exports of local imported module are just references to top-level declarations
++        writer.increaseIndent();
++        writer.writeLine("export {");
++        writer.increaseIndent();
++        const exportClauses = [];
++        for (const [
++          exportedName,
++          exportedEntity,
++        ] of astModuleExportInfo.exportedLocalEntities) {
++          const collectorEntity =
++            collector.tryGetCollectorEntity(exportedEntity);
++          if (collectorEntity === undefined) {
++            // This should never happen
++            // top-level exports of local imported module should be added as collector entities before
++            throw new node_core_library_1.InternalError(
++              `Cannot find collector entity for ${entity.nameForEmit}.${exportedEntity.localName}`
++            );
++          }
++          if (collectorEntity.nameForEmit === exportedName) {
++            exportClauses.push(collectorEntity.nameForEmit);
++          } else {
++            exportClauses.push(
++              `${collectorEntity.nameForEmit} as ${exportedName}`
++            );
++          }
++        }
++        writer.writeLine(exportClauses.join(",\n"));
++        writer.decreaseIndent();
++        writer.writeLine("}"); // end of "export { ... }"
++        writer.decreaseIndent();
++        writer.writeLine("}"); // end of "declare namespace { ... }"
++      }
++      if (!entity.shouldInlineExport) {
++        for (const exportName of entity.exportNames) {
++          DtsEmitHelpers_1.DtsEmitHelpers.emitNamedExport(
++            writer,
++            exportName,
++            entity
++          );
++        }
++      }
++      writer.ensureSkippedLine();
++    }
++    DtsEmitHelpers_1.DtsEmitHelpers.emitStarExports(writer, collector);
++    // Emit "export { }" which is a special directive that prevents consumers from importing declarations
++    // that don't have an explicit "export" modifier.
++    writer.ensureSkippedLine();
++    writer.writeLine("export { }");
++  }
++  /**
++   * Before writing out a declaration, _modifySpan() applies various fixups to make it nice.
++   */
++  static _modifySpan(collector, span, entity, astDeclaration, dtsKind) {
++    const previousSpan = span.previousSibling;
++    let recurseChildren = true;
++    switch (span.kind) {
++      case ts.SyntaxKind.JSDocComment:
++        // If the @packageDocumentation comment seems to be attached to one of the regular API items,
++        // omit it.  It gets explictly emitted at the top of the file.
++        if (
++          span.node.getText().match(/(?:\s|\*)@packageDocumentation(?:\s|\*)/gi)
++        ) {
++          span.modification.skipAll();
++        }
++        // For now, we don't transform JSDoc comment nodes at all
++        recurseChildren = false;
++        break;
++      case ts.SyntaxKind.ExportKeyword:
++      case ts.SyntaxKind.DefaultKeyword:
++      case ts.SyntaxKind.DeclareKeyword:
++        // Delete any explicit "export" or "declare" keywords -- we will re-add them below
++        span.modification.skipAll();
++        break;
++      case ts.SyntaxKind.InterfaceKeyword:
++      case ts.SyntaxKind.ClassKeyword:
++      case ts.SyntaxKind.EnumKeyword:
++      case ts.SyntaxKind.NamespaceKeyword:
++      case ts.SyntaxKind.ModuleKeyword:
++      case ts.SyntaxKind.TypeKeyword:
++      case ts.SyntaxKind.FunctionKeyword:
++        // Replace the stuff we possibly deleted above
++        let replacedModifiers = "";
++        // Add a declare statement for root declarations (but not for nested declarations)
++        if (!astDeclaration.parent) {
++          replacedModifiers += "declare ";
++        }
++        if (entity.shouldInlineExport) {
++          replacedModifiers = "export " + replacedModifiers;
++        }
++        if (previousSpan && previousSpan.kind === ts.SyntaxKind.SyntaxList) {
++          // If there is a previous span of type SyntaxList, then apply it before any other modifiers
++          // (e.g. "abstract") that appear there.
++          previousSpan.modification.prefix =
++            replacedModifiers + previousSpan.modification.prefix;
++        } else {
++          // Otherwise just stick it in front of this span
++          span.modification.prefix =
++            replacedModifiers + span.modification.prefix;
++        }
++        break;
++      case ts.SyntaxKind.VariableDeclaration:
++        // Is this a top-level variable declaration?
++        // (The logic below does not apply to variable declarations that are part of an explicit "namespace" block,
++        // since the compiler prefers not to emit "declare" or "export" keywords for those declarations.)
++        if (!span.parent) {
++          // The VariableDeclaration node is part of a VariableDeclarationList, however
++          // the Entry.followedSymbol points to the VariableDeclaration part because
++          // multiple definitions might share the same VariableDeclarationList.
++          //
++          // Since we are emitting a separate declaration for each one, we need to look upwards
++          // in the ts.Node tree and write a copy of the enclosing VariableDeclarationList
++          // content (e.g. "var" from "var x=1, y=2").
++          const list = TypeScriptHelpers_1.TypeScriptHelpers.matchAncestor(
++            span.node,
++            [
++              ts.SyntaxKind.VariableDeclarationList,
++              ts.SyntaxKind.VariableDeclaration,
++            ]
++          );
++          if (!list) {
++            // This should not happen unless the compiler API changes somehow
++            throw new node_core_library_1.InternalError(
++              "Unsupported variable declaration"
++            );
++          }
++          const listPrefix = list
++            .getSourceFile()
++            .text.substring(list.getStart(), list.declarations[0].getStart());
++          span.modification.prefix =
++            "declare " + listPrefix + span.modification.prefix;
++          span.modification.suffix = ";";
++          if (entity.shouldInlineExport) {
++            span.modification.prefix = "export " + span.modification.prefix;
++          }
++          const declarationMetadata =
++            collector.fetchDeclarationMetadata(astDeclaration);
++          if (declarationMetadata.tsdocParserContext) {
++            // Typically the comment for a variable declaration is attached to the outer variable statement
++            // (which may possibly contain multiple variable declarations), so it's not part of the Span.
++            // Instead we need to manually inject it.
++            let originalComment =
++              declarationMetadata.tsdocParserContext.sourceRange.toString();
++            if (!/\r?\n\s*$/.test(originalComment)) {
++              originalComment += "\n";
+             }
++            span.modification.indentDocComment =
++              Span_1.IndentDocCommentScope.PrefixOnly;
++            span.modification.prefix =
++              originalComment + span.modification.prefix;
++          }
+         }
+-        writer.ensureSkippedLine();
+-        // Emit the regular declarations
+-        for (const entity of collector.entities) {
+-            const astEntity = entity.astEntity;
+-            const symbolMetadata = collector.tryFetchMetadataForAstEntity(astEntity);
+-            const maxEffectiveReleaseTag = symbolMetadata
+-                ? symbolMetadata.maxEffectiveReleaseTag
+-                : api_extractor_model_1.ReleaseTag.None;
+-            if (!this._shouldIncludeReleaseTag(maxEffectiveReleaseTag, dtsKind)) {
+-                if (!collector.extractorConfig.omitTrimmingComments) {
+-                    writer.ensureSkippedLine();
+-                    writer.writeLine(`/* Excluded from this release type: ${entity.nameForEmit} */`);
+-                }
+-                continue;
++        break;
++      case ts.SyntaxKind.Identifier:
++        {
++          const referencedEntity = collector.tryGetEntityForNode(span.node);
++          if (referencedEntity) {
++            if (!referencedEntity.nameForEmit) {
++              // This should never happen
++              throw new node_core_library_1.InternalError(
++                "referencedEntry.nameForEmit is undefined"
++              );
+             }
+-            if (astEntity instanceof AstSymbol_1.AstSymbol) {
+-                // Emit all the declarations for this entry
+-                for (const astDeclaration of astEntity.astDeclarations || []) {
+-                    const apiItemMetadata = collector.fetchApiItemMetadata(astDeclaration);
+-                    if (!this._shouldIncludeReleaseTag(apiItemMetadata.effectiveReleaseTag, dtsKind)) {
+-                        if (!collector.extractorConfig.omitTrimmingComments) {
+-                            writer.ensureSkippedLine();
+-                            writer.writeLine(`/* Excluded declaration from this release type: ${entity.nameForEmit} */`);
+-                        }
+-                        continue;
+-                    }
+-                    else {
+-                        const span = new Span_1.Span(astDeclaration.declaration);
+-                        DtsRollupGenerator._modifySpan(collector, span, entity, astDeclaration, dtsKind);
+-                        writer.ensureSkippedLine();
+-                        span.writeModifiedText(writer);
+-                        writer.ensureNewLine();
+-                    }
+-                }
++            span.modification.prefix = referencedEntity.nameForEmit;
++            // For debugging:
++            // span.modification.prefix += '/*R=FIX*/';
++          } else {
++            // For debugging:
++            // span.modification.prefix += '/*R=KEEP*/';
++          }
++        }
++        break;
++      case ts.SyntaxKind.ImportType:
++        DtsEmitHelpers_1.DtsEmitHelpers.modifyImportTypeSpan(
++          collector,
++          span,
++          astDeclaration,
++          (childSpan, childAstDeclaration) => {
++            DtsRollupGenerator._modifySpan(
++              collector,
++              childSpan,
++              entity,
++              childAstDeclaration,
++              dtsKind
++            );
++          }
++        );
++        break;
++    }
++    if (recurseChildren) {
++      for (const child of span.children) {
++        let childAstDeclaration = astDeclaration;
++        // Should we trim this node?
++        let trimmed = false;
++        if (AstDeclaration_1.AstDeclaration.isSupportedSyntaxKind(child.kind)) {
++          childAstDeclaration =
++            collector.astSymbolTable.getChildAstDeclarationByNode(
++              child.node,
++              astDeclaration
++            );
++          const releaseTag =
++            collector.fetchApiItemMetadata(
++              childAstDeclaration
++            ).effectiveReleaseTag;
++          if (!this._shouldIncludeReleaseTag(releaseTag, dtsKind)) {
++            let nodeToTrim = child;
++            // If we are trimming a variable statement, then we need to trim the outer VariableDeclarationList
++            // as well.
++            if (child.kind === ts.SyntaxKind.VariableDeclaration) {
++              const variableStatement = child.findFirstParent(
++                ts.SyntaxKind.VariableStatement
++              );
++              if (variableStatement !== undefined) {
++                nodeToTrim = variableStatement;
++              }
+             }
+-            if (astEntity instanceof AstNamespaceImport_1.AstNamespaceImport) {
+-                const astModuleExportInfo = astEntity.fetchAstModuleExportInfo(collector);
+-                if (entity.nameForEmit === undefined) {
+-                    // This should never happen
+-                    throw new node_core_library_1.InternalError('referencedEntry.nameForEmit is undefined');
+-                }
+-                if (astModuleExportInfo.starExportedExternalModules.size > 0) {
+-                    // We could support this, but we would need to find a way to safely represent it.
+-                    throw new Error(`The ${entity.nameForEmit} namespace import includes a start export, which is not supported:\n` +
+-                        SourceFileLocationFormatter_1.SourceFileLocationFormatter.formatDeclaration(astEntity.declaration));
+-                }
+-                // Emit a synthetic declaration for the namespace.  It will look like this:
+-                //
+-                //    declare namespace example {
+-                //      export {
+-                //        f1,
+-                //        f2
+-                //      }
+-                //    }
+-                //
+-                // Note that we do not try to relocate f1()/f2() to be inside the namespace because other type
+-                // signatures may reference them directly (without using the namespace qualifier).
+-                writer.ensureSkippedLine();
+-                if (entity.shouldInlineExport) {
+-                    writer.write('export ');
+-                }
+-                writer.writeLine(`declare namespace ${entity.nameForEmit} {`);
+-                // all local exports of local imported module are just references to top-level declarations
+-                writer.increaseIndent();
+-                writer.writeLine('export {');
+-                writer.increaseIndent();
+-                const exportClauses = [];
+-                for (const [exportedName, exportedEntity] of astModuleExportInfo.exportedLocalEntities) {
+-                    const collectorEntity = collector.tryGetCollectorEntity(exportedEntity);
+-                    if (collectorEntity === undefined) {
+-                        // This should never happen
+-                        // top-level exports of local imported module should be added as collector entities before
+-                        throw new node_core_library_1.InternalError(`Cannot find collector entity for ${entity.nameForEmit}.${exportedEntity.localName}`);
+-                    }
+-                    if (collectorEntity.nameForEmit === exportedName) {
+-                        exportClauses.push(collectorEntity.nameForEmit);
+-                    }
+-                    else {
+-                        exportClauses.push(`${collectorEntity.nameForEmit} as ${exportedName}`);
+-                    }
+-                }
+-                writer.writeLine(exportClauses.join(',\n'));
+-                writer.decreaseIndent();
+-                writer.writeLine('}'); // end of "export { ... }"
+-                writer.decreaseIndent();
+-                writer.writeLine('}'); // end of "declare namespace { ... }"
++            const modification = nodeToTrim.modification;
++            // Yes, trim it and stop here
++            const name = childAstDeclaration.astSymbol.localName;
++            modification.omitChildren = true;
++            if (!collector.extractorConfig.omitTrimmingComments) {
++              modification.prefix = `/* Excluded from this release type: ${name} */`;
++            } else {
++              modification.prefix = "";
+             }
+-            if (!entity.shouldInlineExport) {
+-                for (const exportName of entity.exportNames) {
+-                    DtsEmitHelpers_1.DtsEmitHelpers.emitNamedExport(writer, exportName, entity);
+-                }
++            modification.suffix = "";
++            if (nodeToTrim.children.length > 0) {
++              // If there are grandchildren, then keep the last grandchild's separator,
++              // since it often has useful whitespace
++              modification.suffix =
++                nodeToTrim.children[nodeToTrim.children.length - 1].separator;
+             }
+-            writer.ensureSkippedLine();
+-        }
+-        DtsEmitHelpers_1.DtsEmitHelpers.emitStarExports(writer, collector);
+-        // Emit "export { }" which is a special directive that prevents consumers from importing declarations
+-        // that don't have an explicit "export" modifier.
+-        writer.ensureSkippedLine();
+-        writer.writeLine('export { }');
+-    }
+-    /**
+-     * Before writing out a declaration, _modifySpan() applies various fixups to make it nice.
+-     */
+-    static _modifySpan(collector, span, entity, astDeclaration, dtsKind) {
+-        const previousSpan = span.previousSibling;
+-        let recurseChildren = true;
+-        switch (span.kind) {
+-            case ts.SyntaxKind.JSDocComment:
+-                // If the @packageDocumentation comment seems to be attached to one of the regular API items,
+-                // omit it.  It gets explictly emitted at the top of the file.
+-                if (span.node.getText().match(/(?:\s|\*)@packageDocumentation(?:\s|\*)/gi)) {
+-                    span.modification.skipAll();
+-                }
+-                // For now, we don't transform JSDoc comment nodes at all
+-                recurseChildren = false;
+-                break;
+-            case ts.SyntaxKind.ExportKeyword:
+-            case ts.SyntaxKind.DefaultKeyword:
+-            case ts.SyntaxKind.DeclareKeyword:
+-                // Delete any explicit "export" or "declare" keywords -- we will re-add them below
+-                span.modification.skipAll();
+-                break;
+-            case ts.SyntaxKind.InterfaceKeyword:
+-            case ts.SyntaxKind.ClassKeyword:
+-            case ts.SyntaxKind.EnumKeyword:
+-            case ts.SyntaxKind.NamespaceKeyword:
+-            case ts.SyntaxKind.ModuleKeyword:
+-            case ts.SyntaxKind.TypeKeyword:
+-            case ts.SyntaxKind.FunctionKeyword:
+-                // Replace the stuff we possibly deleted above
+-                let replacedModifiers = '';
+-                // Add a declare statement for root declarations (but not for nested declarations)
+-                if (!astDeclaration.parent) {
+-                    replacedModifiers += 'declare ';
+-                }
+-                if (entity.shouldInlineExport) {
+-                    replacedModifiers = 'export ' + replacedModifiers;
+-                }
+-                if (previousSpan && previousSpan.kind === ts.SyntaxKind.SyntaxList) {
+-                    // If there is a previous span of type SyntaxList, then apply it before any other modifiers
+-                    // (e.g. "abstract") that appear there.
+-                    previousSpan.modification.prefix = replacedModifiers + previousSpan.modification.prefix;
+-                }
+-                else {
+-                    // Otherwise just stick it in front of this span
+-                    span.modification.prefix = replacedModifiers + span.modification.prefix;
+-                }
+-                break;
+-            case ts.SyntaxKind.VariableDeclaration:
+-                // Is this a top-level variable declaration?
+-                // (The logic below does not apply to variable declarations that are part of an explicit "namespace" block,
+-                // since the compiler prefers not to emit "declare" or "export" keywords for those declarations.)
+-                if (!span.parent) {
+-                    // The VariableDeclaration node is part of a VariableDeclarationList, however
+-                    // the Entry.followedSymbol points to the VariableDeclaration part because
+-                    // multiple definitions might share the same VariableDeclarationList.
+-                    //
+-                    // Since we are emitting a separate declaration for each one, we need to look upwards
+-                    // in the ts.Node tree and write a copy of the enclosing VariableDeclarationList
+-                    // content (e.g. "var" from "var x=1, y=2").
+-                    const list = TypeScriptHelpers_1.TypeScriptHelpers.matchAncestor(span.node, [
+-                        ts.SyntaxKind.VariableDeclarationList,
+-                        ts.SyntaxKind.VariableDeclaration
+-                    ]);
+-                    if (!list) {
+-                        // This should not happen unless the compiler API changes somehow
+-                        throw new node_core_library_1.InternalError('Unsupported variable declaration');
+-                    }
+-                    const listPrefix = list
+-                        .getSourceFile()
+-                        .text.substring(list.getStart(), list.declarations[0].getStart());
+-                    span.modification.prefix = 'declare ' + listPrefix + span.modification.prefix;
+-                    span.modification.suffix = ';';
+-                    if (entity.shouldInlineExport) {
+-                        span.modification.prefix = 'export ' + span.modification.prefix;
+-                    }
+-                    const declarationMetadata = collector.fetchDeclarationMetadata(astDeclaration);
+-                    if (declarationMetadata.tsdocParserContext) {
+-                        // Typically the comment for a variable declaration is attached to the outer variable statement
+-                        // (which may possibly contain multiple variable declarations), so it's not part of the Span.
+-                        // Instead we need to manually inject it.
+-                        let originalComment = declarationMetadata.tsdocParserContext.sourceRange.toString();
+-                        if (!/\r?\n\s*$/.test(originalComment)) {
+-                            originalComment += '\n';
+-                        }
+-                        span.modification.indentDocComment = Span_1.IndentDocCommentScope.PrefixOnly;
+-                        span.modification.prefix = originalComment + span.modification.prefix;
+-                    }
+-                }
+-                break;
+-            case ts.SyntaxKind.Identifier:
+-                {
+-                    const referencedEntity = collector.tryGetEntityForNode(span.node);
+-                    if (referencedEntity) {
+-                        if (!referencedEntity.nameForEmit) {
+-                            // This should never happen
+-                            throw new node_core_library_1.InternalError('referencedEntry.nameForEmit is undefined');
+-                        }
+-                        span.modification.prefix = referencedEntity.nameForEmit;
+-                        // For debugging:
+-                        // span.modification.prefix += '/*R=FIX*/';
+-                    }
+-                    else {
+-                        // For debugging:
+-                        // span.modification.prefix += '/*R=KEEP*/';
+-                    }
+-                }
+-                break;
+-            case ts.SyntaxKind.ImportType:
+-                DtsEmitHelpers_1.DtsEmitHelpers.modifyImportTypeSpan(collector, span, astDeclaration, (childSpan, childAstDeclaration) => {
+-                    DtsRollupGenerator._modifySpan(collector, childSpan, entity, childAstDeclaration, dtsKind);
+-                });
+-                break;
+-        }
+-        if (recurseChildren) {
+-            for (const child of span.children) {
+-                let childAstDeclaration = astDeclaration;
+-                // Should we trim this node?
+-                let trimmed = false;
+-                if (AstDeclaration_1.AstDeclaration.isSupportedSyntaxKind(child.kind)) {
+-                    childAstDeclaration = collector.astSymbolTable.getChildAstDeclarationByNode(child.node, astDeclaration);
+-                    const releaseTag = collector.fetchApiItemMetadata(childAstDeclaration).effectiveReleaseTag;
+-                    if (!this._shouldIncludeReleaseTag(releaseTag, dtsKind)) {
+-                        let nodeToTrim = child;
+-                        // If we are trimming a variable statement, then we need to trim the outer VariableDeclarationList
+-                        // as well.
+-                        if (child.kind === ts.SyntaxKind.VariableDeclaration) {
+-                            const variableStatement = child.findFirstParent(ts.SyntaxKind.VariableStatement);
+-                            if (variableStatement !== undefined) {
+-                                nodeToTrim = variableStatement;
+-                            }
+-                        }
+-                        const modification = nodeToTrim.modification;
+-                        // Yes, trim it and stop here
+-                        const name = childAstDeclaration.astSymbol.localName;
+-                        modification.omitChildren = true;
+-                        if (!collector.extractorConfig.omitTrimmingComments) {
+-                            modification.prefix = `/* Excluded from this release type: ${name} */`;
+-                        }
+-                        else {
+-                            modification.prefix = '';
+-                        }
+-                        modification.suffix = '';
+-                        if (nodeToTrim.children.length > 0) {
+-                            // If there are grandchildren, then keep the last grandchild's separator,
+-                            // since it often has useful whitespace
+-                            modification.suffix = nodeToTrim.children[nodeToTrim.children.length - 1].separator;
+-                        }
+-                        if (nodeToTrim.nextSibling) {
+-                            // If the thing we are trimming is followed by a comma, then trim the comma also.
+-                            // An example would be an enum member.
+-                            if (nodeToTrim.nextSibling.kind === ts.SyntaxKind.CommaToken) {
+-                                // Keep its separator since it often has useful whitespace
+-                                modification.suffix += nodeToTrim.nextSibling.separator;
+-                                nodeToTrim.nextSibling.modification.skipAll();
+-                            }
+-                        }
+-                        trimmed = true;
+-                    }
+-                }
+-                if (!trimmed) {
+-                    DtsRollupGenerator._modifySpan(collector, child, entity, childAstDeclaration, dtsKind);
+-                }
++            if (nodeToTrim.nextSibling) {
++              // If the thing we are trimming is followed by a comma, then trim the comma also.
++              // An example would be an enum member.
++              if (nodeToTrim.nextSibling.kind === ts.SyntaxKind.CommaToken) {
++                // Keep its separator since it often has useful whitespace
++                modification.suffix += nodeToTrim.nextSibling.separator;
++                nodeToTrim.nextSibling.modification.skipAll();
++              }
+             }
++            trimmed = true;
++          }
+         }
+-    }
+-    static _shouldIncludeReleaseTag(releaseTag, dtsKind) {
+-        switch (dtsKind) {
+-            case DtsRollupKind.InternalRelease:
+-                return true;
+-            case DtsRollupKind.AlphaRelease:
+-                return (releaseTag === api_extractor_model_1.ReleaseTag.Alpha ||
+-                    releaseTag === api_extractor_model_1.ReleaseTag.Beta ||
+-                    releaseTag === api_extractor_model_1.ReleaseTag.Public ||
+-                    // NOTE: If the release tag is "None", then we don't have enough information to trim it
+-                    releaseTag === api_extractor_model_1.ReleaseTag.None);
+-            case DtsRollupKind.BetaRelease:
+-                return (releaseTag === api_extractor_model_1.ReleaseTag.Beta ||
+-                    releaseTag === api_extractor_model_1.ReleaseTag.Public ||
+-                    // NOTE: If the release tag is "None", then we don't have enough information to trim it
+-                    releaseTag === api_extractor_model_1.ReleaseTag.None);
+-            case DtsRollupKind.PublicRelease:
+-                return releaseTag === api_extractor_model_1.ReleaseTag.Public || releaseTag === api_extractor_model_1.ReleaseTag.None;
+-            default:
+-                throw new Error(`${DtsRollupKind[dtsKind]} is not implemented`);
++        if (!trimmed) {
++          DtsRollupGenerator._modifySpan(
++            collector,
++            child,
++            entity,
++            childAstDeclaration,
++            dtsKind
++          );
+         }
++      }
++    }
++  }
++  static _shouldIncludeReleaseTag(releaseTag, dtsKind) {
++    switch (dtsKind) {
++      case DtsRollupKind.InternalRelease:
++        return true;
++      case DtsRollupKind.AlphaRelease:
++        return (
++          releaseTag === api_extractor_model_1.ReleaseTag.Alpha ||
++          releaseTag === api_extractor_model_1.ReleaseTag.Beta ||
++          releaseTag === api_extractor_model_1.ReleaseTag.Public ||
++          // NOTE: If the release tag is "None", then we don't have enough information to trim it
++          releaseTag === api_extractor_model_1.ReleaseTag.None
++        );
++      case DtsRollupKind.BetaRelease:
++        return (
++          releaseTag === api_extractor_model_1.ReleaseTag.Beta ||
++          releaseTag === api_extractor_model_1.ReleaseTag.Public ||
++          // NOTE: If the release tag is "None", then we don't have enough information to trim it
++          releaseTag === api_extractor_model_1.ReleaseTag.None
++        );
++      case DtsRollupKind.PublicRelease:
++        return (
++          releaseTag === api_extractor_model_1.ReleaseTag.Public ||
++          releaseTag === api_extractor_model_1.ReleaseTag.None
++        );
++      default:
++        throw new Error(`${DtsRollupKind[dtsKind]} is not implemented`);
+     }
++  }
+ }
+ exports.DtsRollupGenerator = DtsRollupGenerator;
+ //# sourceMappingURL=DtsRollupGenerator.js.map
 diff --git a/lib/generators/DtsRollupGenerator.js.map b/lib/generators/DtsRollupGenerator.js.map
 index bcb4b71caacf419c54f8103b1930b0dff1f22725..1dff397e49262656e9c49e28ae57deca18d0ef87 100644
 --- a/lib/generators/DtsRollupGenerator.js.map
@@ -1621,7 +2475,7 @@ index 2d64af8b313994b392279ef7ed78108c1c2da7ad..a5f502ce2bdb0a671c5b5c92447391d1
        "items": {
          "type": "string"
 diff --git a/lib/start.js.map b/lib/start.js.map
-index f1d0b0fb67905cdbf261165cc0fac19ab509669d..a65247818015c97216c8a9b8b41979864940c6b2 100644
+index f1d0b0fb67905cdbf261165cc0fac19ab509669d..f856173b0df3dc56292ca0c196beeedd27a4c477 100644
 --- a/lib/start.js.map
 +++ b/lib/start.js.map
 @@ -1 +1 @@
