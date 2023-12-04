@@ -198,6 +198,7 @@ stages:
               targetType: 'inline'
               workingDirectory: $(Build.SourcesDirectory)
               script: |
+                echo "version: "
                 echo "${{version}}"
 
         - task: DownloadPipelineArtifact@2
