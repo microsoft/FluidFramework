@@ -23,8 +23,6 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
-    // @deprecated (undocumented)
-    enableShareLinkWithCreate?: boolean;
     enableSingleRequestForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
@@ -259,18 +257,11 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ISharingLinkKind;
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
-}
-
-// @alpha @deprecated (undocumented)
-export enum ShareLinkTypes {
-    // (undocumented)
-    csl = "csl"
 }
 
 // @alpha
