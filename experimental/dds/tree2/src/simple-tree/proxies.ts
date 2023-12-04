@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { FluidSerializableReadOnly, isFluidHandle } from "@fluidframework/shared-object-base";
 import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
@@ -1095,7 +1096,7 @@ function extractContentIfProxy<T>(input: T): {
 
 	const classKind = content instanceof NodeBase ? getNodeKind(content) : undefined;
 	let type: "object" | "list" | "map" | "leaf";
-	if (isFluidHandle(content)) {
+	if (isFluidHandle(content as FluidSerializableReadOnly)) {
 		type = "leaf";
 	} else if (classKind === NodeKind.List || isReadonlyArray(content)) {
 		type = "list";

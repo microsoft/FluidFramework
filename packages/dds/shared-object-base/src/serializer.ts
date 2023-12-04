@@ -163,6 +163,7 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
  * updating the types to use FluidSerializableReadOnly will be a breaking change:
  * updating these APIs, (and the IFluidSerializer), as well as possible removing this type from the package exports
  * will need to be done as a breaking change on next.
+ * @internal
  */
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
