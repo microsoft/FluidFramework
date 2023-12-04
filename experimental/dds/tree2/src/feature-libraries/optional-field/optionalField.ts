@@ -13,6 +13,7 @@ import {
 	RevisionTag,
 	areEqualChangeAtomIds,
 	JsonableTree,
+	RevisionMetadataSource,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -25,11 +26,10 @@ import {
 	NodeChangeset,
 	FieldEditor,
 	CrossFieldManager,
-	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
@@ -632,7 +632,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
-	relevantRemovedTrees,
+	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
@@ -646,9 +646,9 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-function* relevantRemovedTrees(
+function* relevantRemovedRoots(
 	change: OptionalChangeset,
-	removedTreesFromChild: RemovedTreesFromChild,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<Delta.DetachedNodeId> {
 	const dstToSrc = new RegisterMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
@@ -672,6 +672,6 @@ function* relevantRemovedTrees(
 			alreadyYieldedOrNewlyBuilt.set(startingId, true);
 			yield nodeIdFromChangeAtom(startingId);
 		}
-		yield* removedTreesFromChild(childChange);
+		yield* relevantRemovedRootsFromChild(childChange);
 	}
 }

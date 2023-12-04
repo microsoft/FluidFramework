@@ -13,7 +13,6 @@ import {
 	genericFieldKind,
 	FieldChange,
 	ModularChangeset,
-	RevisionInfo,
 	FieldKindWithEditor,
 	NodeChangeInverter,
 	chunkTree,
@@ -34,7 +33,8 @@ import {
 	tagRollbackInverse,
 	assertIsRevisionTag,
 	deltaForSet,
-	ITreeCursorSynchronous,
+	RevisionInfo,
+	revisionMetadataSourceFromInfo,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -79,7 +79,8 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
-	relevantRemovedTrees: (change, removedTreesFromChild) => removedTreesFromChild(change),
+	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
+		relevantRemovedRootsFromChild(change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -588,22 +589,38 @@ describe("ModularChangeFamily", () => {
 
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
-			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1a));
+			const rebased = family.rebase(
+				rootChange1b,
+				makeAnonChange(rootChange1a),
+				revisionMetadataSourceFromInfo([]),
+			);
 			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase specific ↷ generic", () => {
-			const rebased = family.rebase(rootChange1b, makeAnonChange(rootChange1aGeneric));
+			const rebased = family.rebase(
+				rootChange1b,
+				makeAnonChange(rootChange1aGeneric),
+				revisionMetadataSourceFromInfo([]),
+			);
 			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ specific", () => {
-			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1a));
+			const rebased = family.rebase(
+				rootChange1bGeneric,
+				makeAnonChange(rootChange1a),
+				revisionMetadataSourceFromInfo([]),
+			);
 			assert.deepEqual(rebased, rootChange2);
 		});
 
 		it("rebase generic ↷ generic", () => {
-			const rebased = family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric));
+			const rebased = family.rebase(
+				rootChange1bGeneric,
+				makeAnonChange(rootChange1aGeneric),
+				revisionMetadataSourceFromInfo([]),
+			);
 			assert.deepEqual(rebased, rootChange2Generic);
 		});
 	});
@@ -832,7 +849,15 @@ describe("ModularChangeFamily", () => {
 		];
 		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
-		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
+		const rebased = dummyFamily.rebase(
+			changeC,
+			makeAnonChange(changeA),
+			revisionMetadataSourceFromInfo([
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, rollbackOf: rev2 },
+			]),
+		);
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);

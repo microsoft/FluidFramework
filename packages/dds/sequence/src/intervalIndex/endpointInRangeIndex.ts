@@ -20,7 +20,7 @@ import { HasComparisonOverride, compareOverrideables, forceCompare } from "./int
  * Collection of intervals.
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
- * @public
+ * @internal
  */
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -106,7 +106,7 @@ export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @public
+ * @internal
  */
 export function createEndpointInRangeIndex(
 	sharedString: SharedString,

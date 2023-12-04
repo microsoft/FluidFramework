@@ -5,6 +5,9 @@
 
 import { AxiosRequestConfig } from "axios";
 
+/**
+ * @internal
+ */
 export enum RestLessFieldNames {
 	Method = "method",
 	Header = "header",
@@ -26,6 +29,7 @@ const encodeHeader = (headerKey: string, headerValue: string): string => {
  * Content-Type: application/x-www-form-urlencoded
  *
  * <url-encoded-headers-body-and-method>
+ * @internal
  */
 export class RestLessClient {
 	/**

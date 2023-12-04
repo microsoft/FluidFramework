@@ -14,6 +14,7 @@ import { Provider } from "nconf";
 
 /**
  * A generic kafka resources factory that picks rdkafka / kafka-node based on the config
+ * @internal
  */
 export class OrderingResourcesFactory implements IResourcesFactory<KafkaResources> {
 	constructor(

@@ -8,22 +8,12 @@ import {
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
+	JsonableTree,
+	RevisionInfo,
 	RevisionTag,
 } from "../../core";
 import { Brand } from "../../util";
 import { EncodedChunk } from "../chunked-forest";
-
-/**
- * @alpha
- */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
-	/**
-	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
-	 * The value corresponds to the `revision` of the original changeset being rolled back.
-	 */
-	readonly rollbackOf?: RevisionTag;
-}
 
 /**
  * @alpha

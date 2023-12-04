@@ -46,9 +46,8 @@ describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
-			const tree2 = tree1.fork();
 			insert(tree1, 0, "y");
-			tree2.rebaseOnto(tree1);
+			const tree2 = tree1.fork();
 
 			insert(tree1, 0, "x");
 			insert(tree2, 1, "a", "c");
@@ -439,9 +438,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		// This test fails due to the sequence rebaser failing to line up the removal of A with the insert of A.
-		// See BUG 5351
-		it.skip("can rebase insert and delete over insert in the same gap", () => {
+		it("can rebase insert and delete over insert in the same gap", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
@@ -453,6 +450,27 @@ describe("Editing", () => {
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 			expectJsonTree([tree1, tree2], ["B"]);
+		});
+
+		it("concurrent insert with nested change", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 0, "a");
+			expectJsonTree(tree1, ["a"]);
+
+			tree2.editor
+				.sequenceField(rootField)
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			tree2.editor
+				.sequenceField({ parent: rootNode, field: brand("foo") })
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			expectJsonTree(tree2, [{ foo: {} }]);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [{ foo: {} }, "a"]);
 		});
 
 		it("can rebase intra-field move over insert", () => {
@@ -1867,7 +1885,7 @@ describe("Editing", () => {
 						// except for which peer does which set of actions.
 						// It also helps simulate different peers learning of the same edit at different times.
 						for (let downhillPeer = iPeer + 1; downhillPeer < nbPeers; downhillPeer++) {
-							peers[downhillPeer].rebaseOnto(peer);
+							peers[downhillPeer].rebaseOnto(tree);
 							present[downhillPeer][affectedNode] = presence;
 						}
 						present[iPeer][affectedNode] = presence;

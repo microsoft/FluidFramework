@@ -20,7 +20,6 @@ import { CheckoutEvents } from "./treeCheckout";
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
- * @alpha
  */
 export interface TypedTreeOptions extends SharedTreeOptions {
 	/**
@@ -34,7 +33,6 @@ export interface TypedTreeOptions extends SharedTreeOptions {
 
 /**
  * Channel for a Tree DDS.
- * @alpha
  */
 export interface ITree extends IChannel {
 	/**
@@ -70,7 +68,7 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
 	 */
-	schematize<TRoot extends TreeFieldSchema>(
+	schematizeOld<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TreeView<TreeField<TRoot>>;
 }
@@ -81,7 +79,6 @@ export interface ITree extends IChannel {
  * This is a wrapper around ITreeView that adjusted it for the public package API.
  * TODO:
  * Establish a naming conversion between these internal and wrapper types.
- * @alpha
  */
 export interface TreeView<in out TRoot> extends IDisposable {
 	/**
@@ -99,7 +96,6 @@ export interface TreeView<in out TRoot> extends IDisposable {
 
 /**
  * A channel factory that creates an {@link ITree}.
- * @alpha
  */
 export class TypedTreeFactory implements IChannelFactory {
 	public readonly type: string;

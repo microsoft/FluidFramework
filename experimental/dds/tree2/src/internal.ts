@@ -38,17 +38,11 @@ export {
 } from "./feature-libraries";
 
 export {
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-	testRecursiveDomain,
-} from "./domains";
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	InternalEditableTreeTypes,
+} from "./class-tree";
 
-export {
-	TreeListNodeBase,
-	InsertableTreeField,
-	InsertableTreeFieldInner,
-	InsertableTreeNodeUnion,
-	InsertableTreeObjectNode,
-	InsertableTreeObjectNodeFields,
-	InsertableTypedNode,
-} from "./simple-tree";
+export { TreeListNodeBase } from "./simple-tree";

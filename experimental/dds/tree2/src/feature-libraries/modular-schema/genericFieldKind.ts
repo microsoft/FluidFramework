@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
+import { Delta, makeAnonChange, RevisionMetadataSource, tagChange, TaggedChange } from "../../core";
 import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -12,8 +12,7 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	RevisionMetadataSource,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler";
 import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
@@ -103,7 +102,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return { local: markList };
 	},
-	relevantRemovedTrees,
+	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
@@ -213,11 +212,11 @@ export function newGenericChangeset(): GenericChangeset {
 	return [];
 }
 
-function* relevantRemovedTrees(
+function* relevantRemovedRoots(
 	change: GenericChangeset,
-	removedTreesFromChild: RemovedTreesFromChild,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<Delta.DetachedNodeId> {
 	for (const { nodeChange } of change) {
-		yield* removedTreesFromChild(nodeChange);
+		yield* relevantRemovedRootsFromChild(nodeChange);
 	}
 }

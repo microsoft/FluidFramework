@@ -54,6 +54,9 @@ interface ITypeColumn {
 	rowData: IInspectorRow;
 }
 
+/**
+ * @internal
+ */
 export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) => {
 	const classes = useStyles();
 	const mapTypeToColor = {
@@ -116,4 +119,7 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
 	);
 };
 
+/**
+ * @internal
+ */
 export const useChipStyles = useStyles;

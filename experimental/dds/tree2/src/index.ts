@@ -120,17 +120,7 @@ export {
 	HasListeners,
 } from "./events";
 
-export {
-	cursorToJsonObject,
-	singleJsonCursor,
-	jsonArray,
-	jsonObject,
-	jsonSchema,
-	nodeKeyField,
-	nodeKeySchema,
-	leaf,
-	SchemaBuilder,
-} from "./domains";
+export { leaf } from "./domains";
 
 export {
 	FieldKind,
@@ -146,7 +136,6 @@ export {
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	PrimitiveValue,
 	StableNodeKey,
 	LocalNodeKey,
 	compareLocalNodeKeys,
@@ -168,7 +157,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
 	AllowedTypes,
-	TreeNodeSchema,
+	TreeNodeSchema as FlexTreeNodeSchema,
 	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
@@ -209,7 +198,7 @@ export {
 	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema,
+	ImplicitFieldSchema as FlexImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
@@ -227,22 +216,7 @@ export {
 	stackTreeFieldCursor,
 } from "./feature-libraries";
 
-export {
-	IterableTreeListContent,
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeMapNode,
-	TreeObjectNode,
-	Tree,
-	TreeApi,
-	TreeNode,
-	TreeObjectFactory,
-	FactoryTreeSchema,
-} from "./simple-tree";
+export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
 
 export {
 	ISharedTree,
@@ -258,15 +232,27 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
-	TypedTreeFactory,
-	TypedTreeOptions,
-	ITree,
 	SharedTreeContentSnapshot,
 	FlexTreeView,
-	TreeView,
 	ITreeViewFork,
 	buildTreeConfiguration,
 } from "./shared-tree";
+
+export {
+	ITree,
+	TreeNodeSchema,
+	TreeConfiguration,
+	TreeView,
+	SchemaFactory,
+	Tree,
+	TreeApi,
+	NodeBase,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	TreeNodeEvents,
+	NodeFromSchema,
+} from "./class-tree";
+export { TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
