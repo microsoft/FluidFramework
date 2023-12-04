@@ -151,7 +151,7 @@ export class SharedMatrix<T = any>
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
-	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
+	private readonly cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
 	// Used to track if there is any reentrancy in setCell code.
@@ -528,7 +528,6 @@ export class SharedMatrix<T = any>
 				[
 					this.cells.snapshot(),
 					this.pending.snapshot(),
-					this.cellLastWriteTracker.snapshot(),
 					this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 				],
 				this.handle,
@@ -717,25 +716,12 @@ export class SharedMatrix<T = any>
 				new ObjectStoragePartition(storage, SnapshotPath.cols),
 				this.serializer,
 			);
-			const [
-				cellData,
-				_pendingCliSeqData,
-				cellLastWriteTracker,
-				setCellLwwToFwwPolicySwitchOpSeqNumber,
-			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
+			const [cellData, _pendingCliSeqData, setCellLwwToFwwPolicySwitchOpSeqNumber] =
+				await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
 			this.cells = SparseArray2D.load(cellData);
-
-			// Old summaries will not have this info, so check that.
-			if (cellLastWriteTracker !== undefined) {
-				assert(
-					setCellLwwToFwwPolicySwitchOpSeqNumber !== undefined,
-					"Both tracker and seq number should be present",
-				);
-				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
-				this.setCellLwwToFwwPolicySwitchOpSeqNumber =
-					setCellLwwToFwwPolicySwitchOpSeqNumber;
-			}
+			this.setCellLwwToFwwPolicySwitchOpSeqNumber =
+				setCellLwwToFwwPolicySwitchOpSeqNumber ?? -1;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}

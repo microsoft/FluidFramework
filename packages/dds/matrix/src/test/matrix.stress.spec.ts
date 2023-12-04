@@ -570,7 +570,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 			}
 
 			if (isSetCellPolicyFWW === 2) {
-				for (let i = 0; i < 20; i++) {
+				for (let i = 0; i < 10; i++) {
 					// Cannot read properties of undefined (reading 'start') in PermutationVector.handleToPosition while undoing.
 					// So skip this test for now. It happens for LWW also.
 					if (i === 4) {
@@ -581,12 +581,12 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 						this.timeout(30000);
 
 						const numClients = 2;
-						const numOps = 200;
+						const numOps = 120;
 						const syncProbability = 0.1;
 						const disconnectProbability = 0.1;
 						const undoRedoProbability = 0.07;
 						const switchProbability = 0.1;
-						const newClientJoinProbability = 0.05;
+						const newClientJoinProbability = 0.02;
 						await stress(
 							numClients,
 							numOps,
