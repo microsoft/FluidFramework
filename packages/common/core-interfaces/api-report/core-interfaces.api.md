@@ -436,13 +436,13 @@ export interface ITelemetryBaseLogger {
 // @alpha
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
     // (undocumented)
     eventName: string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -450,7 +450,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
@@ -458,7 +458,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;
@@ -508,7 +508,7 @@ export interface Tagged<V, T extends string = string> {
 // @internal
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
-// @internal @deprecated
+// @alpha @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @alpha @deprecated
