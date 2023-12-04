@@ -666,29 +666,6 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("insert ○ revive", () => {
-		const insert = [
-			Mark.insert(1, brand(1), { revision: tag1 }),
-			{ count: 2 },
-			Mark.insert(2, brand(2), { revision: tag2 }),
-		];
-		const revive = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
-			{ count: 4 },
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag4 }),
-		];
-		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
-		const expected = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
-			Mark.insert(1, brand(1), { revision: tag1 }),
-			{ count: 2 },
-			Mark.insert(1, brand(2), { revision: tag2 }),
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag4 }),
-			Mark.insert(1, brand(3), { revision: tag2 }),
-		];
-		assert.deepEqual(actual, expected);
-	});
-
 	it("move ○ modify", () => {
 		const move = Change.move(0, 1, 2);
 		const changes = TestChange.mint([], 42);

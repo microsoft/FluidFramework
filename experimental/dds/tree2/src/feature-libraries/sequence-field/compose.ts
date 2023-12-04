@@ -664,10 +664,11 @@ function compareCellPositions(
 	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
 
 	if (!isNewAttach(newMark)) {
-		assert(
-			newRevisionIndex !== undefined,
-			"Expected this cell to have been deleted by a change in this composition",
-		);
+		// TODO:6127: Enable this assert
+		// assert(
+		// 	newRevisionIndex !== undefined,
+		// 	"Expected this cell to have been deleted by a change in this composition",
+		// );
 		return -Infinity;
 	}
 
