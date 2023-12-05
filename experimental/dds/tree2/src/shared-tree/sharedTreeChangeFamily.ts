@@ -4,20 +4,15 @@
  */
 
 import { ICodecFamily, ICodecOptions } from "../codec";
-import { ChangeFamily, ChangeRebaser, Delta, TaggedChange, tagChange } from "../core";
-import {
-	fieldKinds,
-	ModularChangeFamily,
-	ModularChangeset,
-	SchemaChangeFamily,
-} from "../feature-libraries";
+import { ChangeFamily, ChangeRebaser, TaggedChange, tagChange } from "../core";
+import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
 import { Mutable, fail } from "../util";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
 
 /**
- * Implementation of {@link ChangeFamily} combines edits to fields and schema changes.
+ * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
  *
  * @sealed
  */
@@ -27,25 +22,19 @@ export class SharedTreeChangeFamily
 		ChangeRebaser<SharedTreeChange>
 {
 	public static emptyChange: SharedTreeChange = {
-		changes: [{ type: "data", change: ModularChangeFamily.emptyChange }],
+		changes: [],
 	};
 
 	public readonly codecs: ICodecFamily<SharedTreeChange>;
 	private readonly modularChangeFamily: ModularChangeFamily;
-	private readonly schemaChangeFamily: SchemaChangeFamily;
 
 	public constructor(codecOptions: ICodecOptions) {
 		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, codecOptions);
-		this.schemaChangeFamily = new SchemaChangeFamily(codecOptions);
 		this.codecs = makeSharedTreeChangeCodecFamily(fieldKinds, codecOptions);
 	}
 
 	public buildEditor(changeReceiver: (change: SharedTreeChange) => void): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(
-			this.schemaChangeFamily,
-			this.modularChangeFamily,
-			changeReceiver,
-		);
+		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
@@ -57,12 +46,12 @@ export class SharedTreeChangeFamily
 					if (dataChangeRun.length > 0) {
 						newChanges.push({
 							type: "data",
-							change: this.modularChangeFamily.compose(dataChangeRun),
+							innerChange: this.modularChangeFamily.compose(dataChangeRun),
 						});
 					}
 					newChanges.push(change);
 				} else {
-					dataChangeRun.push(tagChange(change.change, topChange.revision));
+					dataChangeRun.push(tagChange(change.innerChange, topChange.revision));
 				}
 			}
 		}
@@ -77,19 +66,28 @@ export class SharedTreeChangeFamily
 				case "data":
 					return {
 						type: "data",
-						change: this.modularChangeFamily.invert(
-							tagChange(innerChange.change, change.revision),
+						innerChange: this.modularChangeFamily.invert(
+							tagChange(innerChange.innerChange, change.revision),
 							isRollback,
 						),
 					};
-				case "schema":
+				case "schema": {
+					if (innerChange.innerChange.schema === undefined) {
+						return {
+							type: "schema",
+							innerChange: {},
+						};
+					}
 					return {
 						type: "schema",
-						change: this.schemaChangeFamily.invert(
-							tagChange(innerChange.change, change.revision),
-							isRollback,
-						),
+						innerChange: {
+							schema: {
+								new: innerChange.innerChange.schema.old,
+								old: innerChange.innerChange.schema.new,
+							},
+						},
 					};
+				}
 				default:
 					fail("Unknown SharedTree change type.");
 			}
@@ -103,10 +101,6 @@ export class SharedTreeChangeFamily
 		change: SharedTreeChange,
 		over: TaggedChange<SharedTreeChange>,
 	): SharedTreeChange {
-		throw new Error("Not implemented");
-	}
-
-	public intoDelta(change: TaggedChange<SharedTreeChange>): Delta.Root {
 		throw new Error("Not implemented");
 	}
 

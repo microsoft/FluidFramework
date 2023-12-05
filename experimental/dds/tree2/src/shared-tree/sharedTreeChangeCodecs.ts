@@ -43,12 +43,12 @@ export function makeSharedTreeChangeCodec(
 				if (decodedChange.type === "data") {
 					changes.push({
 						type: "data",
-						change: modularChangeCodec.encode(decodedChange.change),
+						change: modularChangeCodec.encode(decodedChange.innerChange),
 					});
 				} else if (decodedChange.type === "schema") {
 					changes.push({
 						type: "schema",
-						change: schemaChangeCodec.encode(decodedChange.change),
+						change: schemaChangeCodec.encode(decodedChange.innerChange),
 					});
 				}
 			}
@@ -61,12 +61,12 @@ export function makeSharedTreeChangeCodec(
 				if (subChange.type === "data") {
 					changes.push({
 						type: "data",
-						change: modularChangeCodec.decode(subChange.change),
+						innerChange: modularChangeCodec.decode(subChange.change),
 					});
 				} else if (subChange.type === "schema") {
 					changes.push({
 						type: "schema",
-						change: schemaChangeCodec.decode(subChange.change),
+						innerChange: schemaChangeCodec.decode(subChange.change),
 					});
 				}
 			}

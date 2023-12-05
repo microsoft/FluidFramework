@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamilyEditor } from "../core";
-import {
-	DefaultEditBuilder,
-	IDefaultEditBuilder,
-	SchemaEditor,
-	ISchemaEditor,
-	ModularChangeFamily,
-	SchemaChangeFamily,
-} from "../feature-libraries";
+import { ChangeFamilyEditor, TreeStoredSchema } from "../core";
+import { DefaultEditBuilder, IDefaultEditBuilder, ModularChangeFamily } from "../feature-libraries";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
 /**
@@ -20,11 +13,12 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes";
  */
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
 	/**
-	 * An object with methods to edit the schema of the SharedTree.
-	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
-	 * is bounded by the lifetime of this edit builder.
+	 * Updates the stored schema.
+	 * @param newSchema - The new schema to apply.
+	 * @param oldSchema - The schema being overwritten.
+	 * @alpha
 	 */
-	schema: ISchemaEditor;
+	setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -35,22 +29,20 @@ export class SharedTreeEditBuilder
 	extends DefaultEditBuilder
 	implements ChangeFamilyEditor, ISharedTreeEditor
 {
-	public readonly schemaEditor: SchemaEditor;
-
 	public constructor(
-		schemaChangeFamily: SchemaChangeFamily,
 		modularChangeFamily: ModularChangeFamily,
-		changeReceiver: (change: SharedTreeChange) => void,
+		private readonly changeReceiver: (change: SharedTreeChange) => void,
 	) {
 		super(modularChangeFamily, (change) =>
-			changeReceiver({ changes: [{ type: "data", change }] }),
-		);
-		this.schemaEditor = new SchemaEditor(schemaChangeFamily, (change) =>
-			changeReceiver({ changes: [{ type: "schema", change }] }),
+			changeReceiver({ changes: [{ type: "data", innerChange: change }] }),
 		);
 	}
 
-	public get schema(): ISchemaEditor {
-		return this.schemaEditor;
+	public setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void {
+		this.changeReceiver({
+			changes: [
+				{ type: "schema", innerChange: { schema: { new: newSchema, old: oldSchema } } },
+			],
+		});
 	}
 }

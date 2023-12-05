@@ -270,12 +270,6 @@ export { SchemaAware };
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
 
-export {
-	SchemaChange,
-	SchemaChangeFamily,
-	SchemaEditor,
-	makeSchemaChangeCodec,
-	ISchemaEditor,
-} from "./schema-editing";
+export { SchemaChange, makeSchemaChangeCodec } from "./schema-edits";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

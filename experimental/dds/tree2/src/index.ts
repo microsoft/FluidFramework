@@ -225,7 +225,6 @@ export {
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 	stackTreeFieldCursor,
-	ISchemaEditor,
 } from "./feature-libraries";
 
 export {

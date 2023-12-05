@@ -4,37 +4,26 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { RevisionTag } from "../../core";
 import { ICodecFamily, ICodecOptions, IJsonCodec, makeCodecFamily } from "../../codec";
 import { Format, makeSchemaCodec } from "../schemaIndexFormat";
 import { SchemaChange } from "./schemaChangeTypes";
 
 interface DataEncodedSchemaChange {
-	readonly schemaData: ReturnType<ReturnType<typeof makeSchemaCodec>["encode"]>;
-}
-
-interface TagEncodedSchemaChange {
-	readonly schemaTag: RevisionTag;
+	readonly new: Format;
+	readonly old: Format;
 }
 
 interface EmptyEncodedSchemaChange {}
 
-export type EncodedSchemaChange =
-	| DataEncodedSchemaChange
-	| TagEncodedSchemaChange
-	| EmptyEncodedSchemaChange;
+export type EncodedSchemaChange = DataEncodedSchemaChange | EmptyEncodedSchemaChange;
 
 export const EncodedSchemaChange = Type.Object({
-	schemaData: Type.Optional(Format),
-	schemaTag: Type.Optional(Type.String()),
+	new: Type.Optional(Format),
+	old: Type.Optional(Format),
 });
 
 function isDataEncodedSchemaChange(change: EncodedSchemaChange): change is DataEncodedSchemaChange {
-	return (change as DataEncodedSchemaChange).schemaData !== undefined;
-}
-
-function isTagEncodedSchemaChange(change: EncodedSchemaChange): change is TagEncodedSchemaChange {
-	return (change as TagEncodedSchemaChange).schemaTag !== undefined;
+	return (change as DataEncodedSchemaChange).new !== undefined;
 }
 
 export function makeSchemaChangeCodec({
@@ -43,23 +32,21 @@ export function makeSchemaChangeCodec({
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
 	return {
 		encode: (schemaChange) => {
-			if (typeof schemaChange.newSchema === "object") {
-				return { schemaData: schemaCodec.encode(schemaChange.newSchema) };
-			}
-			return {
-				schemaTag: schemaChange.newSchema,
-			};
+			return schemaChange.schema !== undefined
+				? {
+						new: schemaCodec.encode(schemaChange.schema.new),
+						old: schemaCodec.encode(schemaChange.schema.old),
+				  }
+				: {};
 		},
 		decode: (json) => {
 			const encodedSchemaChange = json as EncodedSchemaChange;
 			if (isDataEncodedSchemaChange(encodedSchemaChange)) {
 				return {
-					newSchema: schemaCodec.decode(encodedSchemaChange.schemaData),
-				};
-			}
-			if (isTagEncodedSchemaChange(encodedSchemaChange)) {
-				return {
-					newSchema: encodedSchemaChange.schemaTag,
+					schema: {
+						new: schemaCodec.decode(encodedSchemaChange.new),
+						old: schemaCodec.decode(encodedSchemaChange.old),
+					},
 				};
 			}
 			return {};

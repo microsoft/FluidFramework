@@ -20,11 +20,12 @@ import {
 	makeDetachedFieldIndex,
 	Revertible,
 	ChangeFamily,
+	tagChange,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { buildForest, intoDelta } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult } from "../util";
+import { TransactionResult, fail } from "../util";
 import { noopValidator } from "../codec";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
@@ -276,14 +277,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const delta = intoDelta(event.change);
-				const anchorVisitor = this.forest.anchors.acquireVisitor();
-				const combinedVisitor = combineVisitors(
-					[this.forest.acquireVisitor(), anchorVisitor],
-					[anchorVisitor],
-				);
-				visitDelta(delta, combinedVisitor, this.removedTrees);
-				combinedVisitor.free();
+				for (const change of event.change.change.changes) {
+					if (change.type === "data") {
+						const delta = intoDelta(
+							tagChange(change.innerChange, event.change.revision),
+						);
+						const anchorVisitor = this.forest.anchors.acquireVisitor();
+						const combinedVisitor = combineVisitors(
+							[this.forest.acquireVisitor(), anchorVisitor],
+							[anchorVisitor],
+						);
+						visitDelta(delta, combinedVisitor, this.removedTrees);
+						combinedVisitor.free();
+					} else if (change.type === "schema") {
+						if (change.innerChange.schema !== undefined) {
+							storedSchema.update(change.innerChange.schema.new);
+						}
+					} else {
+						fail("Unknown Shared Tree change type.");
+					}
+				}
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
