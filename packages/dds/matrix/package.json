@@ -124,6 +124,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedMatrix": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
