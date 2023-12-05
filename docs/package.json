@@ -70,9 +70,6 @@
 		"rimraf": "^5.0.1",
 		"start-server-and-test": "^2.0.0"
 	},
-	"devDependencies": {
-		"@microsoft/api-extractor": "^7.38.3"
-	},
 	"pnpm": {
 		"overrides": {
 			"qs": "^6.11.0"
