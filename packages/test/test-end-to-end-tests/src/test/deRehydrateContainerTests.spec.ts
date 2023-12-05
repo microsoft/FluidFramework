@@ -36,7 +36,7 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
 	// eslint-disable-next-line import/no-internal-modules
@@ -121,7 +121,7 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 	};
 }
 
-describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjectProvider) => {
 	function assertSubtree(
 		tree: ISnapshotTreeWithBlobContents,
 		key: string,

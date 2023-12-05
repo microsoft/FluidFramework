@@ -5,6 +5,7 @@
 
 /**
  * Used to replace console.assert to make sure that it always throws an error, both in the browser and in Node
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ConsoleUtils {

@@ -10,7 +10,7 @@ window.performance.measure ??= () => undefined as PerformanceMeasure;
 
 import { strict as assert } from "assert";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { htmlFormatter } from "../index.js";
 import { FlowDocument } from "../document/index.js";
 import { Layout } from "../view/layout.js";
@@ -36,7 +36,7 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
 	assert.strictEqual(i, children.length);
 }
 
-describeLoaderCompat("Layout", (getTestObjectProvider) => {
+describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 	let doc: FlowDocument;
 	let root: HTMLElement;
 	let layout: Layout;

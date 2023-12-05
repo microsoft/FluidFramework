@@ -7,7 +7,7 @@
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
 
-// @public
+// @internal
 export class MountableView implements IFluidMountableView {
     constructor(view: FluidObject);
     // (undocumented)

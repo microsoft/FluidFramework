@@ -4,55 +4,14 @@
  */
 
 // Used by public types, but not part of the desired API surface.
-export {
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	BrandedType,
-	ExtractFromOpaque,
-	Assume,
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
-	_InlineTrick,
-	_RecursiveTrick,
-	FlattenKeys,
-	AllowOptionalNotFlattened,
-	isAny,
-	RestrictiveReadonlyRecord,
-	BrandedKeyContent,
-} from "./util";
-
-export {
-	NormalizeField,
-	NormalizeAllowedTypes,
-
-	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
-	// These names also are collision prone.
-	Required,
-	Optional,
-	NodeKeyFieldKind,
-	Forbidden,
-	Sequence,
-} from "./feature-libraries";
-
-export { FactoryObjectNodeSchema, FactoryObjectNodeSchemaRecursive } from "./domains";
+export { MakeNominal, RestrictiveReadonlyRecord } from "./util";
 
 export {
 	NodeKind,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaCore,
-	InternalEditableTreeTypes,
+	InternalClassTreeTypes,
 } from "./class-tree";
 
-export {
-	TreeListNodeBase,
-	InsertableTreeField,
-	InsertableTreeFieldInner,
-	InsertableTreeNodeUnion,
-	InsertableTreeObjectNode,
-	InsertableTreeObjectNodeFields,
-	InsertableTypedNode,
-} from "./simple-tree";
+export { TreeListNodeBase } from "./simple-tree";

@@ -17,6 +17,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
  * Wraps the given IDocumentStorageService to override the `uploadSummaryWithContext` method. It calls the
  * `uploadSummaryCb` whenever a summary is uploaded by the client. The summary context can be updated in the
  * callback before it is uploaded to the server.
+ * @internal
  */
 export function wrapDocumentStorageService(
 	innerDocStorageService: IDocumentStorageService,
@@ -39,6 +40,7 @@ export function wrapDocumentStorageService(
  * the client.
  * The document storage service that is created in `connectToStorage` is wrapped by calling `wrapDocumentStorageService`
  * to pass in the `uploadSummaryCb`.
+ * @internal
  */
 export function wrapDocumentService(
 	innerDocService: IDocumentService,
@@ -58,6 +60,7 @@ export function wrapDocumentService(
  * uploaded by the client.
  * The document service that is created in `createDocumentService` is wrapped by calling `wrapDocumentService` to
  * pass in the `uploadSummaryCb`.
+ * @internal
  */
 export function wrapDocumentServiceFactory(
 	innerDocServiceFactory: IDocumentServiceFactory,

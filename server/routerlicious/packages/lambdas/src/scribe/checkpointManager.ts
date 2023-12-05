@@ -20,6 +20,7 @@ import { ICheckpointManager } from "./interfaces";
 
 /**
  * MongoDB specific implementation of ICheckpointManager
+ * @internal
  */
 export class CheckpointManager implements ICheckpointManager {
 	private readonly clientFacadeRetryEnabled: boolean;

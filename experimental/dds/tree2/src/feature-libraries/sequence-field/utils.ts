@@ -41,7 +41,7 @@ import {
 	AttachAndDetach,
 	MarkEffect,
 	InverseAttachFields,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
@@ -311,8 +311,15 @@ export function isDetachOfRemovedNodes(
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function isCellRename(mark: Mark<unknown>): mark is CellMark<CellRename, unknown> {
-	return isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark);
+export function isImpactfulCellRename(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): mark is CellMark<CellRename, unknown> {
+	return (
+		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
+		isImpactful(mark, revision, revisionMetadata)
+	);
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
@@ -338,6 +345,26 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 }
 
 /**
+ * Creates a mark that is equivalent to the given `mark` but with effects removed if those have no impact in the input
+ * context of that mark.
+ *
+ * @param mark - The mark to settle. Never mutated.
+ * @param revision - The revision associated with the mark.
+ * @param revisionMetadata - Metadata source for the revision associated with the mark.
+ * @returns either the original mark or a shallow clone of it with effects stripped out.
+ */
+export function settleMark<TChildChange>(
+	mark: Mark<TChildChange>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): Mark<TChildChange> {
+	if (isImpactful(mark, revision, revisionMetadata)) {
+		return mark;
+	}
+	return omitMarkEffect(mark);
+}
+
+/**
  * @returns true, iff the given `mark` would have impact on the field when applied.
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
@@ -353,12 +380,13 @@ export function isImpactful(
 		case "Placeholder":
 			return false;
 		case "Delete": {
-			if (mark.cellId === undefined) {
+			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			if (inputId === undefined) {
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
 			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
-			return !areEqualChangeAtomIds(mark.cellId, outputId);
+			return !areEqualChangeAtomIds(inputId, outputId);
 		}
 		case "AttachAndDetach":
 		case "MoveOut":
@@ -1111,6 +1139,21 @@ export function extractMarkEffect<TEffect extends MarkEffect>(
 ): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
+}
+
+// TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
+export function omitMarkEffect<TChildChange>(
+	mark: CellMark<unknown, TChildChange>,
+): CellMark<NoopMark, TChildChange> {
+	const { cellId, count, changes } = mark;
+	const noopMark: CellMark<NoopMark, TChildChange> = { count };
+	if (cellId !== undefined) {
+		noopMark.cellId = cellId;
+	}
+	if (changes !== undefined) {
+		noopMark.changes = changes;
+	}
+	return noopMark;
 }
 
 export function withNodeChange<

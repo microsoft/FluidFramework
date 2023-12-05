@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core";
 import { IdAllocator } from "../../util";
-import { Mark } from "./format";
+import { Mark } from "./types";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
 import { splitMark } from "./utils";
 

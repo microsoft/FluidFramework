@@ -24,9 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
@@ -57,9 +60,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 1,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 1
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 1
                                 }
@@ -93,9 +99,12 @@
                                 "count": 2
                               },
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 2,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
@@ -136,9 +145,12 @@
                                 "count": 3
                               },
                               {
-                                "type": "Insert",
-                                "id": 2,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 2
                                 }

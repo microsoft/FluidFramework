@@ -10,7 +10,6 @@ import {
 	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
-	Delta,
 	FieldKey,
 	UpPath,
 	TaggedChange,
@@ -29,6 +28,10 @@ import {
 	makeDetachedNodeId,
 	ITreeCursor,
 	emptyDelta,
+	DeltaFieldMap,
+	DeltaFieldChanges,
+	DeltaDetachedNodeBuild,
+	DeltaRoot,
 } from "../../core";
 import {
 	brand,
@@ -78,7 +81,7 @@ import {
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	public static readonly emptyChange: ModularChangeset = makeModularChangeset(new Map());
+	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
@@ -223,7 +226,13 @@ export class ModularChangeFamily
 				}
 			}
 		}
-		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, allBuilds);
+		return makeModularChangeset(
+			this.pruneFieldMap(composedFields),
+			idState.maxId,
+			revInfos,
+			undefined,
+			allBuilds,
+		);
 	}
 
 	private composeFieldMaps(
@@ -339,7 +348,7 @@ export class ModularChangeFamily
 	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
-			return makeModularChangeset(new Map());
+			return makeModularChangeset();
 		}
 
 		const idState: IdAllocationState = { maxId: change.change.maxId ?? -1 };
@@ -530,7 +539,7 @@ export class ModularChangeFamily
 		}
 
 		return makeModularChangeset(
-			this.pruneFieldMap(rebasedFields) ?? new Map(),
+			this.pruneFieldMap(rebasedFields),
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
@@ -761,7 +770,7 @@ export class ModularChangeFamily
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Delta.Root {
+): DeltaRoot {
 	const change = taggedChange.change;
 	// Return an empty delta for changes with constraint violations
 	if ((change.constraintViolationCount ?? 0) > 0) {
@@ -770,13 +779,13 @@ export function intoDelta(
 
 	const revision = revisionFromTaggedChange(taggedChange);
 	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-	const rootDelta: Mutable<Delta.Root> = {};
+	const rootDelta: Mutable<DeltaRoot> = {};
 	const fieldDeltas = intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
 	if (fieldDeltas.size > 0) {
 		rootDelta.fields = fieldDeltas;
 	}
 	if (change.builds && change.builds.size > 0) {
-		const builds: Delta.DetachedNodeBuild[] = [];
+		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
 			builds.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
@@ -799,13 +808,13 @@ function intoDeltaImpl(
 	revision: RevisionTag | undefined,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Map<FieldKey, Delta.FieldChanges> {
-	const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
+): Map<FieldKey, DeltaFieldChanges> {
+	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 	for (const [field, fieldChange] of change) {
 		const fieldRevision = fieldChange.revision ?? revision;
 		const deltaField = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			tagChange(fieldChange.change, fieldRevision),
-			(childChange): Delta.FieldMap =>
+			(childChange): DeltaFieldMap =>
 				deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator, fieldKinds),
 			idAllocator,
 		);
@@ -820,7 +829,7 @@ function deltaFromNodeChange(
 	{ change, revision }: TaggedChange<NodeChangeset>,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Delta.FieldMap {
+): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
 	}
@@ -1038,13 +1047,13 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 }
 
 function makeModularChangeset(
-	changes: FieldChangeMap,
+	changes: FieldChangeMap | undefined = undefined,
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<JsonableTree>,
 ): ModularChangeset {
-	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
+	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
 		changeset.revisions = revisions;
 	}
@@ -1138,7 +1147,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset(
-							new Map(),
+							undefined,
 							undefined,
 							undefined,
 							undefined,

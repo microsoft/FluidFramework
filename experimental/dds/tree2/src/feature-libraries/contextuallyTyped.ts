@@ -31,7 +31,11 @@ import {
 	allowedTypesToTypeSet,
 } from "./typed-schema";
 import { cursorForMapTreeNode } from "./mapTreeCursor";
-import { AllowedTypesToTypedTrees, TypedField, TypedNode } from "./schema-aware";
+import {
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
+	InsertableFlexNode,
+} from "./schema-aware";
 import { isFluidHandle, allowsValue } from "./valueUtilities";
 import { TreeDataContext } from "./fieldGenerator";
 
@@ -389,7 +393,7 @@ export function cursorFromContextualData(
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedNode<T>,
+	data: InsertableFlexNode<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -406,7 +410,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
 	schema: T,
-	data: AllowedTypesToTypedTrees<T>,
+	data: AllowedTypesToFlexInsertableTree<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -437,7 +441,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T>,
+	data: InsertableFlexField<T>,
 ): ITreeCursorSynchronous[] {
 	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }

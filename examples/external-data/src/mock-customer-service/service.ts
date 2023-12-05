@@ -153,6 +153,7 @@ export interface ServiceProps {
 
 /**
  * Initializes the mock customer service.
+ * @internal
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
 	const {

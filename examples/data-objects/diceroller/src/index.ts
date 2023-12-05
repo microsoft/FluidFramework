@@ -17,6 +17,7 @@ const diceRollerViewCallback = (model: DiceRoller) =>
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
  * as our model (using the factory we provide), and the view callback we provide will pair that model with an
  * appropriate view.
+ * @internal
  */
 export const fluidExport = new ContainerViewRuntimeFactory(
 	DiceRollerInstantiationFactory,

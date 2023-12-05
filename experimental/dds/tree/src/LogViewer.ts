@@ -143,6 +143,7 @@ export type CachedEditingResult = AttemptedEditResultCacheEntry & {
 
 /**
  * Creates `RevisionView`s for the revisions in an `EditLog`
+ * @internal
  */
 export interface LogViewer {
 	/**
