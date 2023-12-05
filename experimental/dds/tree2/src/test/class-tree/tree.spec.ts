@@ -18,10 +18,18 @@ class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 const factory = new TreeFactory({});
 
 describe("class-tree tree", () => {
-	it.skip("ListRoot", () => {
+	it("ListRoot", () => {
 		const config = new TreeConfiguration(NodeList, () => new NodeList(["a", "b"]));
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view: TreeView<NodeList> = tree.schematize(config);
+		assert.deepEqual([...view.root], ["a", "b"]);
+	});
+
+	it("Implicit ListRoot", () => {
+		const config = new TreeConfiguration(NodeList, () => ["a", "b"]);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const view: TreeView<NodeList> = tree.schematize(config);
+		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
 	it("ObjectRoot - Data", () => {
@@ -55,5 +63,17 @@ describe("class-tree tree", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view: TreeView<undefined | string> = tree.schematize(config);
 		assert.equal(view.root, "x");
+	});
+
+	it("Nested list", () => {
+		const nestedList = schema.list(schema.list(schema.string));
+		const config = new TreeConfiguration(nestedList, () => [["a"]]);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const view = tree.schematize(config);
+		assert.equal(view.root?.length, 1);
+		const child = view.root[0];
+		assert.equal(child.length, 1);
+		const child2 = child[0];
+		assert.equal(child2, "a");
 	});
 });

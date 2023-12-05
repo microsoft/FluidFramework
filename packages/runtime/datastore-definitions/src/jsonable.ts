@@ -40,7 +40,7 @@
  * ```typescript
  * function foo<T>(value: Jsonable<T>) { ... }
  * ```
- * @internal
+ * @alpha
  */
 export type Jsonable<T = any, TReplaced = void> = T extends
 	| undefined
