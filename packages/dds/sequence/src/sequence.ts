@@ -722,16 +722,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.intervalCollections.tryGetStashedOpLocalMetadata(content) as IIntervalDeltaOp;
 		const collection = this.getIntervalCollection(content.key);
 		let metadata: IMapMessageLocalMetadata | SegmentGroup | SegmentGroup[];
+		let interval: SequenceInterval | undefined;
 		switch (intervalContent.opName) {
 			case IntervalOpType.ADD:
 				assert(intervalContent.value.start !== undefined, "start is undefined");
 				assert(intervalContent.value.end !== undefined, "end is undefined");
-				collection.add({
+				interval = collection.add({
 					start: intervalContent.value.start,
 					end: intervalContent.value.end,
 					props: intervalContent.value.properties,
 				});
 				metadata = { localSeq: collection["getNextLocalSeq"]() };
+				collection["localSeqToSerializedInterval"].set(
+					metadata.localSeq,
+					interval.serialize(),
+				);
 				break;
 			case IntervalOpType.DELETE:
 				collection.removeIntervalById(intervalContent.value.properties?.intervalId);
@@ -740,12 +745,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			case IntervalOpType.CHANGE:
 				assert(intervalContent.value.start !== undefined, "start is undefined");
 				assert(intervalContent.value.end !== undefined, "end is undefined");
-				collection.change(
+				interval = collection.change(
 					intervalContent.value.properties?.intervalId,
 					intervalContent.value.start,
 					intervalContent.value.end,
 				);
 				metadata = { localSeq: collection["getNextLocalSeq"]() };
+				collection["localSeqToSerializedInterval"].set(
+					metadata.localSeq,
+					interval?.serialize(),
+				);
 				break;
 			case IntervalOpType.PROPERTY_CHANGED:
 				assert(intervalContent.value.properties !== undefined, "properties are undefined");
@@ -753,12 +762,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				const { intervalId, ...props } = intervalContent.value.properties;
 				collection.changeProperties(intervalId, props);
 				metadata = { localSeq: collection["getNextLocalSeq"]() };
+				collection["localSeqToSerializedInterval"].set(
+					metadata.localSeq,
+					collection.getIntervalById(intervalId)?.serialize(),
+				);
 				break;
 			case IntervalOpType.POSITION_REMOVE:
 				assert(typeof intervalContent.value.start === "number", "start is not a number");
 				assert(typeof intervalContent.value.end === "number", "start is not a number");
 				this.removeRange(intervalContent.value.start, intervalContent.value.end);
 				metadata = { localSeq: collection["getNextLocalSeq"]() };
+				collection["localSeqToSerializedInterval"].set(
+					metadata.localSeq,
+					collection
+						.getIntervalById(intervalContent.value.properties?.intervalId)
+						?.serialize(),
+				);
 				break;
 			default:
 				// eslint-disable-next-line no-case-declarations

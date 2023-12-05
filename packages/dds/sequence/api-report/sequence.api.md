@@ -547,8 +547,8 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
-    // (undocumented)
-    protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[];
+    // @internal (undocumented)
+    protected applyStashedOp(content: any): IMapMessageLocalMetadata | SegmentGroup | SegmentGroup[];
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
