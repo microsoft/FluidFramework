@@ -476,7 +476,6 @@ export function shouldItemBeIncluded(
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
 		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
-		// If no release
 		const parent = getFilteredParent(apiItem);
 		if (parent === undefined) {
 			// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
