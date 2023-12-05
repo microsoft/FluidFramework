@@ -41,7 +41,6 @@ import {
 	withNodeChange,
 	withRevision,
 	markEmptiesCells,
-	areOverlappingIdRanges,
 	isNewAttach,
 	getInputCellId,
 	isAttach,
@@ -55,6 +54,7 @@ import {
 	asAttachAndDetach,
 	isImpactfulCellRename,
 	settleMark,
+	compareCellsFromSameRevision,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -623,11 +623,17 @@ function compareCellPositions(
 ): number {
 	const newCellId = getInputCellId(newMark, newIntention, metadata);
 	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
-	if (
-		baseCellId.revision === newCellId.revision &&
-		areOverlappingIdRanges(baseCellId.localId, baseCellCount, newCellId.localId, newMark.count)
-	) {
-		return baseCellId.localId - newCellId.localId;
+	if (baseCellId.revision === newCellId.revision) {
+		const comparison = compareCellsFromSameRevision(
+			baseCellId,
+			baseCellCount,
+			newCellId,
+			newMark.count,
+		);
+
+		if (comparison !== undefined) {
+			return comparison;
+		}
 	}
 
 	const offsetInBase = getOffsetInCellRange(

@@ -1102,4 +1102,18 @@ describe("SequenceField - Compose", () => {
 
 		assert.deepEqual(composed, expected);
 	});
+
+	it("same revision - no overlap", () => {
+		const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 3 }];
+		const cellA = Mark.modify("A", { revision: tag1, localId: brand(1), adjacentCells });
+		const cellC = Mark.modify("C", { revision: tag1, localId: brand(3), adjacentCells });
+
+		const composedAC = shallowCompose([tagChange([cellA], tag2), tagChange([cellC], tag3)]);
+		const composedCA = shallowCompose([tagChange([cellC], tag3), tagChange([cellA], tag2)]);
+
+		const expected = [cellA, cellC];
+
+		assert.deepEqual(composedAC, expected);
+		assert.deepEqual(composedCA, expected);
+	});
 });
