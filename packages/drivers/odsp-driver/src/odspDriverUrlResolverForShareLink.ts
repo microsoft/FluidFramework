@@ -30,7 +30,7 @@ import { getFileLink } from "./getFileLink";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
- * @internal
+ * @alpha
  */
 export interface ShareLinkFetcherProps {
 	/**
