@@ -44,7 +44,7 @@ export interface ICreateInfo {
     csn: number;
 }
 
-// @internal
+// @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -96,7 +96,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
     type: "deleteSubDirectory";
 }
 
-// @internal
+// @alpha
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -131,7 +131,7 @@ export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClea
 // @internal
 export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
 
-// @internal
+// @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
@@ -155,7 +155,7 @@ export interface ISerializedValue {
     value: string | undefined;
 }
 
-// @internal
+// @alpha
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -163,7 +163,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @internal
+// @alpha
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -183,7 +183,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IValueChanged {
     key: string;
     previousValue: any;
