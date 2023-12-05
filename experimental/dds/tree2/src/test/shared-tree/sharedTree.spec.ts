@@ -17,6 +17,14 @@ import {
 	boxedIterator,
 	TreeSchema,
 } from "../../feature-libraries";
+import {
+	ChunkedForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/chunked-forest/chunkedForest";
+import {
+	ObjectForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/object-forest/objectForest";
 import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
 	SharedTreeTestFactory,
@@ -1361,7 +1369,7 @@ describe("SharedTree", () => {
 					jsonValidator: typeboxValidator,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Reference uses ObjectForest", () => {
@@ -1372,7 +1380,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1383,7 +1391,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Optimized,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ChunkedForest");
+			assert.equal(trees[0].view.forest instanceof ChunkedForest, true);
 		});
 	});
 });

@@ -10,8 +10,6 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeNodeSchemaIdentifier,
-	SimpleObservingDependent,
-	recordDependency,
 	Value,
 	TreeValue,
 	StoredSchemaRepository,
@@ -93,10 +91,7 @@ export class Chunker implements IChunker {
 	 */
 	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
-	/**
-	 * Tracks the dependencies on `schema`.
-	 */
-	private readonly dependent: SimpleObservingDependent;
+	private unregisterSchemaCallback: (() => void) | undefined;
 
 	public constructor(
 		public readonly schema: StoredSchemaRepository,
@@ -112,7 +107,7 @@ export class Chunker implements IChunker {
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
 	) {
-		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
+		this.schema.on("afterSchemaChange", () => this.schemaChanged());
 	}
 
 	public clone(schema: StoredSchemaRepository): IChunker {
@@ -133,7 +128,9 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		recordDependency(this.dependent, this.schema);
+		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+			this.schemaChanged(),
+		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
 	}
 
@@ -144,7 +141,10 @@ export class Chunker implements IChunker {
 
 	private schemaChanged(): void {
 		this.typeShapes.clear();
-		this.dependent.unregisterDependees();
+		if (this.unregisterSchemaCallback) {
+			this.unregisterSchemaCallback();
+			this.unregisterSchemaCallback = undefined;
+		}
 	}
 }
 
