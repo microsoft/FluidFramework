@@ -190,18 +190,15 @@ function makeV0Codec(
 	function encodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
+			const encodedRevision: Mutable<RevisionInfo> = {
+				revision: revisionTagCodec.encode(revision.revision),
+			};
+
 			if (revision.rollbackOf !== undefined) {
-				encodedRevisions.push({
-					...revision,
-					rollbackOf: revisionTagCodec.encode(revision.rollbackOf),
-					revision: revisionTagCodec.encode(revision.revision),
-				});
+				encodedRevision.rollbackOf = revisionTagCodec.encode(revision.rollbackOf);
 			}
 
-			encodedRevisions.push({
-				...revision,
-				revision: revisionTagCodec.encode(revision.revision),
-			});
+			encodedRevisions.push(encodedRevision);
 		}
 
 		return encodedRevisions;
@@ -210,18 +207,15 @@ function makeV0Codec(
 	function decodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
+			const decodedRevision: Mutable<RevisionInfo> = {
+				revision: revisionTagCodec.decode(revision.revision),
+			};
+
 			if (revision.rollbackOf !== undefined) {
-				decodedRevisions.push({
-					...revision,
-					rollbackOf: revisionTagCodec.decode(revision.rollbackOf),
-					revision: revisionTagCodec.decode(revision.revision),
-				});
+				decodedRevision.rollbackOf = revisionTagCodec.decode(revision.rollbackOf);
 			}
 
-			decodedRevisions.push({
-				...revision,
-				revision: revisionTagCodec.decode(revision.revision),
-			});
+			decodedRevisions.push(decodedRevision);
 		}
 
 		return decodedRevisions;
