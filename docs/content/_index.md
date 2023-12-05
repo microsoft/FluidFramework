@@ -31,25 +31,25 @@ summary: "An open-source client technology stack that enables real-time collabor
     <h2><strong>Start building with Fluid</strong></h2>
         <div class="container">
             <div class="row">
-                <div class="col-sm-3 col-xs-6">
+                <!-- <div class="col-sm-3 col-xs-6">
                     <div class="value-prop" id="home-value-prop-better-perf-link">
                         <div class="value-prop-icon better-perf"></div>
                         <b>Industry-leading speed, scale, reliability, security, and cost</b>
                     </div>
-                </div>
-                <div class="col-sm-3 col-xs-6">
+                </div> -->
+                <div class="col-sm-4 col-xs-6">
                     <div class="value-prop" id="home-value-prop-easy-to-use-link">
                         <div class="value-prop-icon easy-to-use"></div>
                         <b>Easy to use</b>
                     </div>
                 </div>
-                <div class="col-sm-3 col-xs-6">
+                <div class="col-sm-4 col-xs-6">
                     <div class="value-prop" id="home-value-prop-open-source-link">
                         <div class="value-prop-icon open-source"></div>
                         <b>Open Source</b>
                     </div>
                 </div>
-                <div class="col-sm-3 col-xs-6">
+                <div class="col-sm-4 col-xs-6">
                     <div class="value-prop" id="home-value-prop-open-source-link">
                         <div class="value-prop-icon open-source"></div>
                             <b>Better Performance</b>
