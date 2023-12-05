@@ -73,8 +73,7 @@ export interface OdspContainerServices {
  */
 export interface OdspMember extends IMember {
 	/**
-	 * The object ID or object Identifier (oid). It is a unique identifier assigned to each user, group, or other entity within AAD or another Microsoft 365 service.
-	 * Overrides the documentation from IMember.userId.
+	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
 	userId: string;
 	/**
