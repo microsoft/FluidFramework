@@ -147,6 +147,9 @@ extends:
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
     - test:copyresults
+    # This check must be run after the build, since it relies on built files being present.
+    # Eventually it might be moved to the "pack" stage since it can use
+    - check:are-the-types-wrong
     testResultDirs:
     - nyc/azure
     - nyc/examples
