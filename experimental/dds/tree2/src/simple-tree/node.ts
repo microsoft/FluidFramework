@@ -10,7 +10,7 @@ import {
 	TreeStatus,
 } from "../feature-libraries";
 import { getOrCreateNodeProxy } from "./proxies";
-import { getEditNode, tryGetFlexNode } from "./editNode";
+import { getFlexNode, tryGetFlexNode } from "./flexNode";
 import { TypedNode, TreeNode } from "./types";
 
 /**
@@ -70,7 +70,7 @@ export interface TreeApi {
  */
 export const nodeApi: TreeApi = {
 	schema: (node: TreeNode) => {
-		return getEditNode(node).schema;
+		return getFlexNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
@@ -79,7 +79,7 @@ export const nodeApi: TreeApi = {
 		return tryGetFlexNode(value)?.is(schema) ?? false;
 	},
 	parent: (node: TreeNode) => {
-		const editNode = getEditNode(node).parentField.parent.parent;
+		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode !== undefined) {
 			return getOrCreateNodeProxy(editNode);
 		}
@@ -87,7 +87,7 @@ export const nodeApi: TreeApi = {
 		return undefined;
 	},
 	key: (node: TreeNode) => {
-		const editNode = getEditNode(node);
+		const editNode = getFlexNode(node);
 		const parent = nodeApi.parent(node);
 		if (parent !== undefined) {
 			const parentSchema = nodeApi.schema(parent);
@@ -105,9 +105,9 @@ export const nodeApi: TreeApi = {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	) => {
-		return getEditNode(node).on(eventName, listener);
+		return getFlexNode(node).on(eventName, listener);
 	},
 	status: (node: TreeNode) => {
-		return getEditNode(node).treeStatus();
+		return getFlexNode(node).treeStatus();
 	},
 };
