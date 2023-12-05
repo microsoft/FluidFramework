@@ -132,7 +132,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     waitAttached(): Promise<void>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
