@@ -7,7 +7,7 @@
  * Base interface for event emitters.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEvent} instead.
- * @internal
+ * @alpha
  */
 export interface IEvent {
 	/**
@@ -44,7 +44,7 @@ export interface IErrorEvent extends IEvent {
  * Base interface for event providers.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEventProvider} instead.
- * @internal
+ * @alpha
  */
 export interface IEventProvider<TEvent extends IEvent> {
 	/**

@@ -60,19 +60,19 @@ export enum TelemetryDataTag {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;

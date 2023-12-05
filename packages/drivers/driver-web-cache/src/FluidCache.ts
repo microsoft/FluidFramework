@@ -29,7 +29,7 @@ interface StorageQuotaUsageDetails {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface FluidCacheConfig {
 	/**

@@ -55,7 +55,7 @@ export interface IInboundSignalMessage extends ISignalMessage {
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
- * @internal
+ * @alpha
  */
 export interface IAttachMessage {
 	/**

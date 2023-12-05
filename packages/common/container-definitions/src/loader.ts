@@ -30,7 +30,7 @@ import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } fr
 
 /**
  * Encapsulates a module entry point with corresponding code details.
- * @internal
+ * @alpha
  */
 export interface IFluidModuleWithDetails {
 	/**

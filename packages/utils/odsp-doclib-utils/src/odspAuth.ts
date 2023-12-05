@@ -26,7 +26,7 @@ export interface IClientConfig {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;

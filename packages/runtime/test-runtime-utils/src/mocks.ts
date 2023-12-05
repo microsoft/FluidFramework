@@ -52,7 +52,7 @@ import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
- * @internal
+ * @alpha
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -96,7 +96,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 /**
- * @internal
+ * @alpha
  */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
@@ -106,7 +106,7 @@ export interface IMockContainerRuntimePendingMessage {
 
 /**
  * Options for the container runtime mock.
- * @internal
+ * @alpha
  */
 export interface IMockContainerRuntimeOptions {
 	/**
@@ -147,7 +147,7 @@ interface IInternalMockRuntimeMessage {
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
- * @internal
+ * @alpha
  */
 export class MockContainerRuntime {
 	public clientId: string;
@@ -337,7 +337,7 @@ export class MockContainerRuntime {
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
- * @internal
+ * @alpha
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;

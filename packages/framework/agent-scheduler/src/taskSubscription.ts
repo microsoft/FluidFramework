@@ -9,7 +9,7 @@ import { IAgentScheduler } from "./agent";
 
 /**
  * Events emitted by {@link TaskSubscription}.
- * @internal
+ * @alpha
  */
 export interface ITaskSubscriptionEvents extends IEvent {
 	(event: "gotTask" | "lostTask", listener: () => void);
