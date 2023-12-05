@@ -32,7 +32,7 @@ export function isLocationRedirectionError(error: any): error is ILocationRedire
  * @param urlResolver - resolver used to resolve the url.
  * @param logger - logger to send events.
  * @returns Response from the API call.
- * @internal
+ * @alpha
  */
 export async function resolveWithLocationRedirectionHandling<T>(
 	api: (request: IRequest) => Promise<T>,
