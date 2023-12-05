@@ -55,15 +55,22 @@ const create = Symbol("Create IterableTreeListContent");
 /**
  * Used to insert iterable content into a {@link (TreeListNode:interface)}.
  * Use {@link (TreeListNode:variable).inline} to create an instance of this type.
- * @privateRemarks
- * TODO: Figure out how to link {@link TreeListNode.inline} above such that it works with API-Extractor.
  * @beta
  */
 export class IterableTreeListContent<T> implements Iterable<T> {
 	private constructor(private readonly content: Iterable<T>) {}
+
+	/**
+	 * Package internal construction API.
+	 * Use {@link (TreeListNode:variable).inline} to create an instance of this type instead.
+	 */
 	public static [create]<T>(content: Iterable<T>): IterableTreeListContent<T> {
 		return new IterableTreeListContent(content);
 	}
+
+	/**
+	 * Iterates over content for nodes to insert.
+	 */
 	public [Symbol.iterator](): Iterator<T> {
 		return this.content[Symbol.iterator]();
 	}

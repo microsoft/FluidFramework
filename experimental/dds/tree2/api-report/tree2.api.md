@@ -423,7 +423,7 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 // @alpha
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
-// @beta (undocumented)
+// @beta
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha (undocumented)
@@ -453,9 +453,7 @@ export abstract class FieldKind<TName extends string = string, TMultiplicity ext
 
 // @beta
 enum FieldKind_2 {
-    // (undocumented)
     Optional = 0,
-    // (undocumented)
     Required = 1
 }
 
@@ -520,7 +518,6 @@ class FieldSchema<out Kind extends FieldKind_2 = FieldKind_2, out Types extends 
     readonly allowedTypes: Types;
     // (undocumented)
     readonly kind: Kind;
-    // (undocumented)
     protected _typeCheck?: MakeNominal;
 }
 
@@ -980,9 +977,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 // @beta
 export class IterableTreeListContent<T> implements Iterable<T> {
-    // (undocumented)
     static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
-    // (undocumented)
     [Symbol.iterator](): Iterator<T>;
 }
 
@@ -1241,13 +1236,9 @@ export interface NodeKeys {
 
 // @beta
 enum NodeKind {
-    // (undocumented)
     Leaf = 3,
-    // (undocumented)
     List = 1,
-    // (undocumented)
     Map = 0,
-    // (undocumented)
     Object = 2
 }
 
@@ -1397,7 +1388,6 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 export interface Revertible {
     discard(): DiscardResult;
     readonly kind: RevertibleKind;
-    // (undocumented)
     readonly origin: {
         readonly isLocal: boolean;
     };
@@ -1675,7 +1665,7 @@ export enum TreeCompressionStrategy {
     Uncompressed = 1
 }
 
-// @beta (undocumented)
+// @beta
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
@@ -1834,8 +1824,8 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
 
 // @beta
 interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never> extends TreeNodeSchemaCore<Name, Kind> {
-    // (undocumented)
-    new (data: TInsertable): TNode;
+    // @sealed
+    new (data: TInsertable): Unhydrated<TNode>;
 }
 
 // @beta
