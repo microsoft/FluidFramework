@@ -4,7 +4,7 @@
 
 ```ts
 
-// @internal
+// @alpha
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @alpha
@@ -33,7 +33,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @alpha
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @internal
+// @alpha
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
