@@ -788,7 +788,7 @@ export class DataStores implements IDisposable {
 			// Delete the summarizer node of the sweep ready data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
-		return Array.from(sweepReadyDataStoreRoutes);
+		return sweepReadyDataStoreRoutes;
 	}
 
 	/**

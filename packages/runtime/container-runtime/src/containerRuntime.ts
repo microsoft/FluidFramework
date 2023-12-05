@@ -2640,18 +2640,28 @@ export class ContainerRuntime
 	}
 
 	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
-		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
-		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
-		if (type === ContainerMessageType.Attach) {
-			const attachMessage = contents as InboundAttachMessage;
-			if (attachMessage.id === agentSchedulerId) {
+		// Certain container runtime messages should not mark the container dirty such as the old build-in
+		// AgentScheduler and Garbage collector messages.
+		switch (type) {
+			case ContainerMessageType.Attach: {
+				const attachMessage = contents as InboundAttachMessage;
+				if (attachMessage.id === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
+				const envelope = contents;
+				if (envelope.address === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.GC: {
 				return false;
 			}
-		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents;
-			if (envelope.address === agentSchedulerId) {
-				return false;
-			}
+			default:
+				break;
 		}
 		return true;
 	}
