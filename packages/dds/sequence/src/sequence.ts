@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/dot-notation */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 /* eslint-disable import/no-deprecated */
+/* eslint-disable @typescript-eslint/dot-notation */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";

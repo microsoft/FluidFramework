@@ -14,10 +14,10 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
@@ -80,7 +80,7 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeNoCompat("IntervalCollection with stashed ops", (getTestObjectProvider) => {
+describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let sharedString1: SharedString;
 	let sharedString2: SharedString;
