@@ -27,7 +27,7 @@ export interface IJSONTextSegment extends IJSONSegment {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";

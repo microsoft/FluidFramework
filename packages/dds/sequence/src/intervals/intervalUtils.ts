@@ -84,7 +84,7 @@ export const IntervalOpType = {
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 /**
- * @internal
+ * @alpha
  */
 export enum IntervalType {
 	Simple = 0x0,

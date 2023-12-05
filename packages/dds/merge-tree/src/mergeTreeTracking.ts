@@ -26,7 +26,7 @@ export interface ITrackingGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
 	private readonly trackedSet: SortedSegmentSet<Trackable>;

@@ -64,7 +64,7 @@ function _validateReferenceType(refType: ReferenceType) {
 }
 /**
  * @sealed
- * @internal
+ * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
 	callbacks?: Partial<

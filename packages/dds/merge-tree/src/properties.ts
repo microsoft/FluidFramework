@@ -8,7 +8,7 @@
 import { ICombiningOp } from "./ops";
 
 /**
- * @internal
+ * @alpha
  */
 export interface MapLike<T> {
 	[index: string]: T;

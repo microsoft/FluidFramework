@@ -51,7 +51,7 @@ export interface IMarkerDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 /**
- * @internal
+ * @alpha
  */
 export const MergeTreeDeltaType = {
 	INSERT: 0,
@@ -64,7 +64,7 @@ export const MergeTreeDeltaType = {
 } as const;
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
