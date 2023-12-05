@@ -900,7 +900,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
- * @internal
+ * @alpha
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

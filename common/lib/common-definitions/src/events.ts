@@ -109,7 +109,7 @@ export type ExtendEventProvider<
  * The placeholder type that should be used instead of `this` in events.
  *
  * @deprecated Use {@link @fluidframework/core-interfaces#IEventThisPlaceholder} instead.
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };

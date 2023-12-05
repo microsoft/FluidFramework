@@ -38,7 +38,7 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
- * @internal
+ * @alpha
  */
 export function makeHandlesSerializable(
 	value: any,
@@ -56,7 +56,7 @@ export function makeHandlesSerializable(
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
- * @internal
+ * @alpha
  */
 export function parseHandles(value: any, serializer: IFluidSerializer) {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
