@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -22,6 +21,7 @@ import {
 	IRequest,
 	IRequestHeader,
 	IResponse,
+	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
 import {
 	IContainer,
@@ -114,7 +114,7 @@ export class RelativeLoader implements ILoader {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ILoaderOptions extends ILoaderOptions1 {
 	summarizeProtocolTree?: boolean;
@@ -125,7 +125,7 @@ export interface ILoaderOptions extends ILoaderOptions1 {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
- * @internal
+ * @alpha
  */
 export interface IFluidModuleWithDetails {
 	/** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
@@ -143,7 +143,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @internal
+ * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -157,7 +157,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
- * @internal
+ * @alpha
  */
 export interface ILoaderProps {
 	/**
@@ -214,7 +214,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
- * @internal
+ * @alpha
  */
 export interface ILoaderServices {
 	/**
@@ -267,7 +267,7 @@ export interface ILoaderServices {
 /**
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
- * @internal
+ * @alpha
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;
@@ -307,7 +307,7 @@ export async function requestResolvedObjectFromContainer(
 
 /**
  * Manages Fluid resource loading
- * @internal
+ * @alpha
  */
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;

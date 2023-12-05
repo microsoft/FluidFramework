@@ -78,6 +78,7 @@ importers:
 
   azure/packages/azure-client:
     specifiers:
+      '@fluid-experimental/tree2': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@2.0.0-internal.7.2.0
@@ -133,6 +134,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       axios: 0.26.1
     devDependencies:
+      '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/2.0.0-internal.7.2.0
