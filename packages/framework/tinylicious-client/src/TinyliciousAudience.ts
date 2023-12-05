@@ -10,17 +10,14 @@ import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./inte
 
 /**
  * {@inheritDoc ITinyliciousAudience}
- *
- * @public
  * @deprecated use {@link ITinyliciousAudience} instead
+ * @internal
  */
 export class TinyliciousAudience
 	extends ServiceAudience<TinyliciousMember>
 	implements ITinyliciousAudience
 {
-	/**
-	 * @internal
-	 */
+	/***/
 	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
 		return createTinyliciousAudienceMember(audienceMember);
 	}

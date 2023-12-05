@@ -29,6 +29,7 @@ import { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryReader
+ * @internal
  */
 export class SummaryReader implements ISummaryReader {
 	private readonly lumberProperties: Record<string, any>;

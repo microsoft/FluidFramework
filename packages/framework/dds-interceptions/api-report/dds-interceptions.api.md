@@ -11,13 +11,13 @@ import * as MergeTree from '@fluidframework/merge-tree';
 import { SharedMap } from '@fluidframework/map';
 import { SharedString } from '@fluidframework/sequence';
 
-// @public
+// @internal
 export function createDirectoryWithInterception<T extends IDirectory>(baseDirectory: T, context: IFluidDataStoreContext, setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void): T;
 
-// @public
+// @internal
 export function createSharedMapWithInterception(sharedMap: SharedMap, context: IFluidDataStoreContext, setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap;
 
-// @public
+// @internal
 export function createSharedStringWithInterception(sharedString: SharedString, context: IFluidDataStoreContext, propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet): SharedString;
 
 // (No @packageDocumentation comment for this package)

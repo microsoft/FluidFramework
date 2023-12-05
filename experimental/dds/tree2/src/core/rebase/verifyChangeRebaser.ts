@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { makeAnonChange } from "./changeRebaser";
-import { ChangeRebaser } from ".";
+import { ChangeRebaser, makeAnonChange } from "./changeRebaser";
+import { revisionMetadataSourceFromInfo } from "./utils";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
 
@@ -96,7 +96,10 @@ export function verifyChangeRebaser<TChange>(
 	changes: ReadonlySet<TChange>,
 	isEquivalent: (a: TChange, b: TChange) => boolean,
 ): OutputType<TChange> {
-	const rebase = (change: TChange, over: TChange) => rebaser.rebase(change, makeAnonChange(over));
+	const metadata = revisionMetadataSourceFromInfo([]);
+	const rebase = (change: TChange, over: TChange) =>
+		rebaser.rebase(change, makeAnonChange(over), metadata);
+
 	const compose = (changeToCompose: TChange[]) =>
 		rebaser.compose(changeToCompose.map(makeAnonChange));
 	// TODO: test with isRollback = true

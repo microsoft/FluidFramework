@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../domains";
-import { treeViewWithContent } from "../utils";
-import { pretty } from "./utils";
+import { TreeField } from "../../simple-tree";
+import { getOldRoot, pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
 
@@ -57,13 +57,8 @@ describe("List", () => {
 	}
 
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree() {
-		// Consider 'readonlyTreeWithContent' for readonly tests?
-		const view = treeViewWithContent({
-			schema,
-			initialTree: { numbers: { "": [] }, strings: { "": [] } },
-		});
-		return view.root;
+	function createTree(): TreeField<typeof schema.rootFieldSchema> {
+		return getOldRoot(schema, { numbers: [], strings: [] });
 	}
 
 	// TODO: Combine createList helpers once we unbox unions.

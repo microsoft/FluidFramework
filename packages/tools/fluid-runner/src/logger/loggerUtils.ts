@@ -21,6 +21,7 @@ import { JSONFileLogger } from "./jsonFileLogger";
  * Note: if an output format is not supplied, default is JSON.
  *
  * @returns Both the `IFileLogger` implementation and `ITelemetryLoggerExt` wrapper to be called.
+ * @internal
  */
 export function createLogger(
 	filePath: string,
@@ -45,6 +46,7 @@ export function createLogger(
 /**
  * Validate the telemetryFile command line argument
  * @param telemetryFile - path where telemetry will be written
+ * @internal
  */
 export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
 	if (!telemetryFile) {
@@ -60,6 +62,7 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  * Validate the provided output format and default properties
  * @param format - desired output format of the telemetry
  * @param props - default properties to be added to every telemetry entry
+ * @internal
  */
 export function validateAndParseTelemetryOptions(
 	format?: string,

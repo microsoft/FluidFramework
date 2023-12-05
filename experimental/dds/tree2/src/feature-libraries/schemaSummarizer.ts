@@ -17,14 +17,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import {
-	cachedValue,
-	ICachedValue,
-	recordDependency,
-	TreeStoredSchema,
-	StoredSchemaRepository,
-	schemaDataIsEmpty,
-} from "../core";
+import { TreeStoredSchema, StoredSchemaRepository, schemaDataIsEmpty } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { JsonCompatible } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
@@ -42,7 +35,7 @@ const schemaStringKey = "SchemaString";
 export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
-	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
+	private schemaBlobCache: IFluidHandle<ArrayBufferLike> | undefined;
 	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
 
 	public constructor(
@@ -51,13 +44,9 @@ export class SchemaSummarizer implements Summarizable {
 		options: ICodecOptions,
 	) {
 		this.codec = makeSchemaCodec(options);
-		this.schemaBlob = cachedValue(async (observer) => {
-			recordDependency(observer, this.schema);
-			// Currently no Fluid handles are used, so just use JSON.stringify.
-			const schemaText = JSON.stringify(this.codec.encode(this.schema));
-
-			// For now we are not chunking the the schema, but still put it in a reusable blob:
-			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
+		this.schema.on("afterSchemaChange", () => {
+			// Invalidate the cache, as we need to regenerate the blob if the schema changes
+			this.schemaBlobCache = undefined;
 		});
 	}
 
@@ -78,8 +67,14 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		const schemaBlobHandle = await this.schemaBlob.get();
-		return createSingleBlobSummary(schemaBlobKey, stringify(schemaBlobHandle));
+		if (this.schemaBlobCache === undefined) {
+			// Currently no Fluid handles are used, so just use JSON.stringify.
+			const schemaText = JSON.stringify(this.codec.encode(this.schema));
+
+			// For now we are not chunking the the schema, but still put it in a reusable blob:
+			this.schemaBlobCache = await this.runtime.uploadBlob(IsoBuffer.from(schemaText));
+		}
+		return createSingleBlobSummary(schemaBlobKey, stringify(this.schemaBlobCache));
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {

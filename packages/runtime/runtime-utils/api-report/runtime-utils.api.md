@@ -31,45 +31,45 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
-// @public (undocumented)
+// @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function calculateStats(summary: SummaryObject): ISummaryStats;
 
-// @public
+// @internal
 export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats;
 
-// @public
+// @internal
 export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;
 
-// @public
+// @internal
 export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISummarizeResult;
 
-// @public
+// @internal
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const create404Response: (request: IRequest) => IResponse;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createDataStoreFactory(type: string, factory: Factory | Promise<Factory>): IFluidDataStoreFactory & IFluidDataStoreRegistry;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createResponseError(status: number, value: string, request: IRequest, headers?: {
     [key: string]: any;
 }): IResponse;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
 // @internal
@@ -92,22 +92,22 @@ export class GCDataBuilder implements IGarbageCollectionData {
     }): void;
 }
 
-// @public
+// @internal
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getBlobSize(content: ISummaryBlob["content"]): number;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
-// @public (undocumented)
+// @internal (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
-// @public
+// @internal
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats;
 
-// @public
+// @internal
 export class ObjectStoragePartition implements IChannelStorageService {
     constructor(storage: IChannelStorageService, path: string);
     // (undocumented)
@@ -118,13 +118,13 @@ export class ObjectStoragePartition implements IChannelStorageService {
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @public
+// @internal
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
-// @public
+// @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -141,10 +141,10 @@ export class RequestParser implements IRequest {
     get url(): string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function responseToException(response: IResponse, request: IRequest): Error;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     // (undocumented)
     hasInitialized(_runtime: T): Promise<void>;
@@ -160,10 +160,10 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @public
+// @internal
 export function seqFromTree(tree: ISnapshotTree, readAndParseBlob: ReadAndParseBlob): Promise<number>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor();
     // (undocumented)
@@ -182,7 +182,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get summary(): ISummaryTree;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
     get(prefix: string, property: string): TelemetryEventPropertyType;
@@ -194,10 +194,10 @@ export class TelemetryContext implements ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
-// @public
+// @internal
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function utf8ByteLength(str: string): number;
 
 // (No @packageDocumentation comment for this package)

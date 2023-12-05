@@ -20,6 +20,7 @@ const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Represents a connection to a stream of delta updates
+ * @internal
  */
 export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**

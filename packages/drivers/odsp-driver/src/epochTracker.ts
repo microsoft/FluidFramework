@@ -44,7 +44,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
 /**
- * @public
+ * @alpha
  */
 export type FetchType =
 	| "blob"
@@ -60,7 +60,7 @@ export type FetchType =
 	| "versions";
 
 /**
- * @public
+ * @alpha
  */
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -83,7 +83,7 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
- * @public
+ * @alpha
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -603,7 +603,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ICacheAndTracker {
 	cache: IOdspCache;

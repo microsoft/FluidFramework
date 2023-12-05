@@ -7,6 +7,9 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import { ICollection, ICheckpointRepository } from "./database";
 import { ICheckpoint, IDeliState, IScribe } from "./document";
 
+/**
+ * @internal
+ */
 export class MongoCheckpointRepository implements ICheckpointRepository {
 	constructor(
 		private readonly collection: ICollection<ICheckpoint>,

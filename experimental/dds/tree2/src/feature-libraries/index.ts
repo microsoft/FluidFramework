@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -120,17 +119,13 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
 	ModularChangeFamily,
 	makeModularChangeCodec,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
 
 export {
@@ -161,6 +156,12 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	NormalizeObjectNodeFields,
+	NormalizeField as NormalizeFieldSchema,
+	Fields,
 } from "./typed-schema";
 
 export {
@@ -232,7 +233,6 @@ export {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeOptionalField,
@@ -252,21 +252,44 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	FlexTreeTyped,
 	Context,
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	isFlexTreeNode,
+
+	// Internal
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-export { SchemaAware };
+export {
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+
+	// Internal
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+} from "./schema-aware";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
 

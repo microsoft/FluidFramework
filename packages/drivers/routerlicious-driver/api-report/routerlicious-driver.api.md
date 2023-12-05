@@ -12,7 +12,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 
-// @public
+// @internal
 export class DefaultTokenProvider implements ITokenProvider {
     constructor(jwt: string);
     // (undocumented)
@@ -21,7 +21,7 @@ export class DefaultTokenProvider implements ITokenProvider {
     fetchStorageToken(): Promise<ITokenResponse>;
 }
 
-// @public
+// @internal
 export class DocumentPostCreateError extends Error {
     constructor(
     innerError: Error);
@@ -31,7 +31,7 @@ export class DocumentPostCreateError extends Error {
     get stack(): string | undefined;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRouterliciousDriverPolicies {
     enableDiscovery: boolean;
     enableInternalSummaryCaching: boolean;
@@ -44,25 +44,25 @@ export interface IRouterliciousDriverPolicies {
     maxConcurrentStorageRequests: number;
 }
 
-// @public
+// @alpha
 export interface ITokenProvider {
     documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ITokenResponse {
     fromCache?: boolean;
     jwt: string;
 }
 
-// @public
+// @internal
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
 
-// @public
+// @internal
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
     // (undocumented)
@@ -71,13 +71,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export enum RouterliciousErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     sslCertError = "sslCertError"
 }
 
-// @public
+// @internal
 export const RouterliciousErrorTypes: {
     readonly sslCertError: "sslCertError";
     readonly genericNetworkError: "genericNetworkError";
@@ -100,7 +100,7 @@ export const RouterliciousErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export type RouterliciousErrorTypes = (typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
 
 // (No @packageDocumentation comment for this package)

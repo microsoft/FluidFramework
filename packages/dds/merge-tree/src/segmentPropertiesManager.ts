@@ -11,6 +11,9 @@ import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import { combine, createMap, MapLike, PropertySet } from "./properties";
 
+/**
+ * @alpha
+ */
 export enum PropertiesRollback {
 	/** Not in a rollback */
 	None,
@@ -28,6 +31,9 @@ export enum PropertiesRollback {
 	Rewrite,
 }
 
+/**
+ * @alpha
+ */
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
 	private pendingRewriteCount: number;

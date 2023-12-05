@@ -24,7 +24,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @public
+// @alpha
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
@@ -53,10 +53,10 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly storage: IDocumentStorageService;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
-// @public
+// @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
@@ -64,7 +64,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;

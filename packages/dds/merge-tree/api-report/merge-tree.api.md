@@ -15,25 +15,22 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha @sealed
+// @internal @sealed
 export interface AttributionPolicy {
-    // @internal
     attach: (client: Client) => void;
-    // @internal
     detach: () => void;
-    // @internal (undocumented)
+    // (undocumented)
     isAttached: boolean;
-    // @internal
     serializer: IAttributionCollectionSerializer;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
@@ -43,7 +40,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
     append(other: ISegment): void;
-    // @alpha (undocumented)
+    // (undocumented)
     attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
@@ -87,7 +84,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract readonly type: string;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
     // (undocumented)
@@ -190,71 +187,68 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export class CollaborationWindow {
     // (undocumented)
     clientId: number;
     // (undocumented)
     collaborating: boolean;
-    // (undocumented)
     currentSeq: number;
     // (undocumented)
     loadFrom(a: CollaborationWindow): void;
-    // (undocumented)
     localSeq: number;
-    // (undocumented)
     minSeq: number;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue: any, seq?: number): any;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const compareNumbers: (a: number, b: number) => number;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const compareStrings: (a: string, b: string) => number;
 
 // @internal (undocumented)
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
-// @public @deprecated
+// @internal @deprecated
 export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
 
-// @public @deprecated
+// @internal @deprecated
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function createMap<T>(): MapLike<T>;
 
-// @public @deprecated
+// @internal @deprecated
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function debugMarkerToString(marker: Marker): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const DetachedReferencePosition = -1;
 
 // @internal (undocumented)
@@ -269,13 +263,13 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
 // @internal
@@ -289,19 +283,17 @@ export function getSlideToSegoff(segoff: {
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
-    // @internal (undocumented)
+    // (undocumented)
     append(other: IAttributionCollection<T>): void;
     // (undocumented)
     readonly channelNames: Iterable<string>;
-    // @internal (undocumented)
+    // (undocumented)
     clone(): IAttributionCollection<T>;
-    // @internal
     getAll(): IAttributionCollectionSpec<T>;
     getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
     readonly length: number;
-    // @internal (undocumented)
+    // (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
-    // @internal
     update(name: string | undefined, channel: IAttributionCollection<T>): any;
 }
 
@@ -315,7 +307,7 @@ export interface IAttributionCollectionSerializer {
     }>): SerializedAttributionCollection;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IAttributionCollectionSpec<T> {
     // (undocumented)
     channels?: {
@@ -333,7 +325,17 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @public @deprecated (undocumented)
+// @alpha
+export interface IClientEvents {
+    // (undocumented)
+    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @alpha @deprecated (undocumented)
 export interface ICombiningOp {
     // (undocumented)
     defaultValue?: any;
@@ -345,7 +347,7 @@ export interface ICombiningOp {
     name: string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IConsensusInfo {
     // (undocumented)
     callback: (m: Marker) => void;
@@ -353,7 +355,7 @@ export interface IConsensusInfo {
     marker: Marker;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IConsensusValue {
     // (undocumented)
     seq: number;
@@ -369,37 +371,37 @@ export interface IIntegerRange {
     start: number;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
     marker: IMarkerDef;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IJSONSegment {
     // (undocumented)
     props?: Record<string, any>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IJSONTextSegment extends IJSONSegment {
     // (undocumented)
     text: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMarkerDef {
     // (undocumented)
     refType?: ReferenceType;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IMarkerModifiedAction {
     // (undocumented)
     (marker: Marker): void;
 }
 
-// @public
+// @alpha
 export interface IMergeNodeCommon {
     index: number;
     // (undocumented)
@@ -407,7 +409,7 @@ export interface IMergeNodeCommon {
     ordinal: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // @deprecated (undocumented)
     combiningOp?: ICombiningOp;
@@ -425,15 +427,13 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IMergeTreeAttributionOptions {
-    // @alpha
     policyFactory?: () => AttributionPolicy;
-    // @alpha
     track?: boolean;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IMergeTreeClientSequenceArgs {
     // (undocumented)
     readonly clientId: number;
@@ -443,12 +443,12 @@ export interface IMergeTreeClientSequenceArgs {
     readonly sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
     // (undocumented)
     readonly deltaSegments: IMergeTreeSegmentDelta[];
@@ -456,10 +456,10 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
     readonly operation: TOperationType;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
@@ -467,7 +467,7 @@ export interface IMergeTreeDeltaOpArgs {
     readonly stashed?: boolean;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
@@ -475,7 +475,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.GROUP;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
@@ -491,26 +491,25 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.INSERT;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
-    // @alpha
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
     newMergeTreeSnapshotFormat?: boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     // (undocumented)
     pos1?: number;
@@ -524,7 +523,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.REMOVE;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMergeTreeSegmentDelta {
     // (undocumented)
     propertyDeltas?: PropertySet;
@@ -532,13 +531,13 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function internedSpaces(n: number): string;
 
 // @internal (undocumented)
@@ -555,21 +554,21 @@ export interface IRBMatcher<TKey, TData> {
     matchNode(node: RBNode<TKey, TData> | undefined, key: TKey): boolean;
 }
 
-// @public
+// @alpha
 export interface IRelativePosition {
     before?: boolean;
     id?: string;
     offset?: number;
 }
 
-// @public
+// @alpha
 export interface IRemovalInfo {
     localRemovedSeq?: number;
     removedClientIds: number[];
     removedSeq: number;
 }
 
-// @public
+// @alpha
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     // @deprecated
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
@@ -577,7 +576,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
-    // @alpha
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
@@ -604,16 +602,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ISegmentAction<TClientData> {
     // (undocumented)
     (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
 }
 
-// @alpha
+// @internal
 export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ITrackingGroup {
     // (undocumented)
     has(trackable: Trackable): boolean;
@@ -633,50 +631,46 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const LocalClientId = -1;
 
-// @public
+// @alpha
 export class LocalReferenceCollection {
-    // @internal (undocumented)
+    // (undocumented)
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;
         [Symbol.iterator](): any;
     };
-    // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
-    // @internal (undocumented)
+    // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // @internal (undocumented)
+    // (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // @internal (undocumented)
+    // (undocumented)
     addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
-    // @internal
     append(other: LocalReferenceCollection): void;
-    // @internal (undocumented)
+    // (undocumented)
     clear(): void;
-    // @internal (undocumented)
+    // (undocumented)
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    // @internal (undocumented)
+    // (undocumented)
     get empty(): boolean;
-    // @internal
     has(lref: ReferencePosition): boolean;
-    // @internal (undocumented)
+    // (undocumented)
     hierRefCount: number;
-    // @internal (undocumented)
+    // (undocumented)
     isAfterTombstone(lref: LocalReferencePosition): boolean;
-    // @internal (undocumented)
+    // (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // @internal
     split(offset: number, splitSeg: ISegment): void;
-    // @internal (undocumented)
+    // (undocumented)
     walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
-// @public @sealed (undocumented)
+// @alpha @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
@@ -685,13 +679,13 @@ export interface LocalReferencePosition extends ReferencePosition {
     readonly trackingCollection: TrackingGroupCollection;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface MapLike<T> {
     // (undocumented)
     [index: string]: T;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class Marker extends BaseSegment implements ReferencePosition {
     constructor(refType: ReferenceType);
     // (undocumented)
@@ -730,13 +724,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
     readonly type = "Marker";
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     cachedLength: number;
@@ -748,16 +742,16 @@ export class MergeNode implements IMergeNodeCommon {
     ordinal: string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
     trackingGroup: ITrackingGroup;
@@ -770,7 +764,7 @@ export type MergeTreeDeltaRevertible = {
     propertyDeltas: PropertySet;
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const MergeTreeDeltaType: {
     readonly INSERT: 0;
     readonly REMOVE: 1;
@@ -778,13 +772,13 @@ export const MergeTreeDeltaType: {
     readonly GROUP: 3;
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
 
-// @public
+// @alpha
 export const MergeTreeMaintenanceType: {
     readonly APPEND: -1;
     readonly SPLIT: -2;
@@ -792,7 +786,7 @@ export const MergeTreeMaintenanceType: {
     readonly ACKNOWLEDGED: -4;
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 // @alpha (undocumented)
@@ -805,13 +799,13 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): any;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const NonCollabClient = -2;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class PropertiesManager {
     constructor();
     // (undocumented)
@@ -826,7 +820,7 @@ export class PropertiesManager {
     hasPendingProperty(key: string): boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export enum PropertiesRollback {
     None = 0,
     // @deprecated
@@ -848,7 +842,7 @@ export interface PropertyAction<TKey, TData> {
     <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type PropertySet = MapLike<any>;
 
 // @internal (undocumented)
@@ -859,7 +853,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // @internal (undocumented)
@@ -939,7 +933,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     walkExactMatchesForward(compareFn: (node: RBNode<TKey, TData>) => number, actionFn: (node: RBNode<TKey, TData>) => void, continueLeftFn: (number: number) => boolean, continueRightFn: (number: number) => boolean): void;
 }
 
-// @public
+// @alpha
 export interface ReferencePosition {
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
@@ -954,7 +948,7 @@ export interface ReferencePosition {
     slidingPreference?: SlidingPreference;
 }
 
-// @public
+// @alpha
 export enum ReferenceType {
     // @deprecated (undocumented)
     NestBegin = 2,
@@ -972,49 +966,49 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const refGetRangeLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function refHasRangeLabels(refPos: ReferencePosition): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const reservedMarkerIdKey = "markerId";
 
-// @public (undocumented)
+// @internal (undocumented)
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
-// @public (undocumented)
+// @internal (undocumented)
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-// @public (undocumented)
+// @internal (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface SegmentAccumulator {
     // (undocumented)
     segments: ISegment[];
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
@@ -1026,7 +1020,7 @@ export interface SegmentGroup {
     segments: ISegment[];
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
     // (undocumented)
@@ -1060,13 +1054,13 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     length: number;
 }
 
-// @public
+// @alpha
 export const SlidingPreference: {
     readonly BACKWARD: 0;
     readonly FORWARD: 1;
 };
 
-// @public
+// @alpha
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
@@ -1079,7 +1073,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     min(): Property<TKey, TData> | undefined;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
     protected findItemPosition(item: T): {
@@ -1090,12 +1084,12 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
     protected getKey(item: T): string;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export abstract class SortedSet<T, U extends string | number> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
@@ -1118,7 +1112,7 @@ export abstract class SortedSet<T, U extends string | number> {
     get size(): number;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export class Stack<T> {
     // (undocumented)
     empty(): boolean;
@@ -1132,7 +1126,7 @@ export class Stack<T> {
     top(): T | undefined;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class TextSegment extends BaseSegment {
     constructor(text: string);
     // (undocumented)
@@ -1166,13 +1160,13 @@ export class TextSegment extends BaseSegment {
     readonly type = "TextSegment";
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type Trackable = ISegment | LocalReferencePosition;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class TrackingGroup implements ITrackingGroup {
     constructor();
     // (undocumented)
@@ -1187,7 +1181,7 @@ export class TrackingGroup implements ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class TrackingGroupCollection {
     constructor(trackable: Trackable);
     // (undocumented)
@@ -1204,13 +1198,13 @@ export class TrackingGroupCollection {
     unlink(trackingGroup: ITrackingGroup): boolean;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const TreeMaintenanceSequenceNumber = -2;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const UnassignedSequenceNumber = -1;
 
-// @public @deprecated
+// @internal @deprecated
 export const UniversalSequenceNumber = 0;
 
 // (No @packageDocumentation comment for this package)

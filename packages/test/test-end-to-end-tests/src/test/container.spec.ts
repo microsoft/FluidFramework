@@ -43,7 +43,7 @@ import {
 	getDataStoreFactory,
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -66,7 +66,7 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeNoCompat("Container", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -861,7 +861,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Driver", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;

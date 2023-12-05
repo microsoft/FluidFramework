@@ -16,6 +16,7 @@ const { ValueArrayProperty } = require("./valueArrayProperty");
 
 /**
  * An ArrayProperty which stores reference values
+ * @internal
  */
 export class ReferenceArrayProperty extends ValueArrayProperty {
 	/**

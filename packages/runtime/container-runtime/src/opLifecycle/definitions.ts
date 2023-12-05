@@ -53,7 +53,7 @@ export interface IBatchCheckpoint {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IChunkedOp {
 	chunkId: number;

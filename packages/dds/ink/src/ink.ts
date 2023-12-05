@@ -99,6 +99,7 @@ const snapshotFileName = "header";
  * ink.on("clear", this.renderClear.bind(this));
  * ```
  * @sealed
+ * @internal
  */
 export class Ink extends SharedObject<IInkEvents> implements IInk {
 	/**

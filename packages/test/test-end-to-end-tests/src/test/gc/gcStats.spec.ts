@@ -12,7 +12,7 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -25,7 +25,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
  * nodes, data stores, blobs, etc.
  */
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container: IContainer;
 	let containerRuntime: ContainerRuntime;
@@ -97,6 +97,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -144,6 +150,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -238,6 +250,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -306,6 +324,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 				attachmentBlobCount: 0,
 				unrefAttachmentBlobCount: 0,
 				updatedAttachmentBlobCount: 0,
+				lifetimeNodeCount: 7,
+				lifetimeDataStoreCount: 3,
+				lifetimeAttachmentBlobCount: 0,
+				deletedNodeCount: 0,
+				deletedDataStoreCount: 0,
+				deletedAttachmentBlobCount: 0,
 			};
 
 			// Add both data store handles in default data store to mark them referenced.

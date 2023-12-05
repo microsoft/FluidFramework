@@ -17,6 +17,7 @@ import {
 	ITreeCursorSynchronous,
 	TreeStoredSchema,
 	isCursor,
+	TreeValue,
 } from "../core";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
@@ -30,7 +31,11 @@ import {
 	allowedTypesToTypeSet,
 } from "./typed-schema";
 import { cursorForMapTreeNode } from "./mapTreeCursor";
-import { AllowedTypesToTypedTrees, TypedField, TypedNode } from "./schema-aware";
+import {
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
+	InsertableFlexNode,
+} from "./schema-aware";
 import { isFluidHandle, allowsValue } from "./valueUtilities";
 import { TreeDataContext } from "./fieldGenerator";
 
@@ -106,25 +111,16 @@ export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
 
 /**
- * @alpha
- * @deprecated This definition of PrimitiveValue is from editable-tree-1 and should not be used.
- * @privateRemarks
- * TODO: remove from package API when old editable-tree API is removed
+ * Checks if a value is a {@link TreeValue}.
  */
-export type PrimitiveValue = string | boolean | number;
-
-/**
- * Checks if a value is a {@link PrimitiveValue}.
- * @deprecated This definition of PrimitiveValue is from editable-tree-1 and should not be used.
- */
-export function isPrimitiveValue(nodeValue: unknown): nodeValue is PrimitiveValue {
+export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
 	switch (typeof nodeValue) {
 		case "string":
 		case "number":
 		case "boolean":
 			return true;
 		default:
-			return false;
+			return nodeValue === null || isFluidHandle(nodeValue);
 	}
 }
 
@@ -239,7 +235,11 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
  */
 export type ContextuallyTypedNodeData =
 	| ContextuallyTypedNodeDataObject
-	| PrimitiveValue
+	| number
+	| string
+	| boolean
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
 	| readonly ContextuallyTypedNodeData[]
 	| MarkedArrayLike<ContextuallyTypedNodeData>;
 
@@ -277,7 +277,7 @@ export function isArrayLike(
 export function isContextuallyTypedNodeDataObject(
 	data: ContextuallyTypedNodeData | undefined,
 ): data is ContextuallyTypedNodeDataObject {
-	return !(isPrimitiveValue(data) || isArrayLike(data) || data === null);
+	return !(isTreeValue(data) || isArrayLike(data));
 }
 
 /**
@@ -331,7 +331,7 @@ function shallowCompatibilityTest(
 	);
 	const schema =
 		schemaData.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
-	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
+	if (isTreeValue(data)) {
 		return allowsValue(schema.leafValue, data);
 	}
 	// TODO: once this is using view schema, replace with schemaIsLeaf
@@ -393,7 +393,7 @@ export function cursorFromContextualData(
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedNode<T>,
+	data: InsertableFlexNode<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -410,7 +410,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
 	schema: T,
-	data: AllowedTypesToTypedTrees<T>,
+	data: AllowedTypesToFlexInsertableTree<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -441,7 +441,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T>,
+	data: InsertableFlexField<T>,
 ): ITreeCursorSynchronous[] {
 	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
@@ -476,7 +476,7 @@ export function applyTypesFromContext(
 	const schema =
 		context.schema.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
+	if (isTreeValue(data)) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,

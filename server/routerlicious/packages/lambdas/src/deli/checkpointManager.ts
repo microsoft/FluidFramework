@@ -10,6 +10,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
 
+/**
+ * @internal
+ */
 export interface IDeliCheckpointManager {
 	writeCheckpoint(
 		checkpoint: IDeliState,
@@ -19,6 +22,9 @@ export interface IDeliCheckpointManager {
 	deleteCheckpoint(checkpointParams: ICheckpointParams, isLocal: boolean): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface ICheckpointParams {
 	/**
 	 * The reason why this checkpoint was triggered
@@ -46,6 +52,9 @@ export interface ICheckpointParams {
 	clear?: boolean;
 }
 
+/**
+ * @internal
+ */
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,

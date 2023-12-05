@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// TODO: remove flexible types from "schema-aware", and just accept cursors.
-import * as SchemaAware from "../schema-aware";
+import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware";
 import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util";
+import { Assume, FlattenKeys } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	TreeFieldSchema,
@@ -18,13 +17,36 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	Any,
-	ArrayHasFixedLength,
 	Fields,
+	FlexListToUnion,
+	FlexList,
 } from "../typed-schema";
 import { FieldKinds } from "../default-schema";
 import { FieldKind } from "../modular-schema";
 import { EditableTreeEvents } from "./treeEvents";
 import { FlexTreeContext } from "./context";
+
+/**
+ * Indicates that an object is a flex tree.
+ * @alpha
+ */
+export const flexTreeMarker = Symbol("flexTreeMarker");
+
+export function isFlexTreeEntity(t: unknown): t is FlexTreeEntity {
+	return typeof t === "object" && t !== null && flexTreeMarker in t;
+}
+
+export function isFlexTreeNode(t: unknown): t is FlexTreeNode {
+	return isFlexTreeEntity(t) && t[flexTreeMarker] === FlexTreeEntityKind.Node;
+}
+
+/**
+ * @alpha
+ */
+export enum FlexTreeEntityKind {
+	Node,
+	Field,
+}
 
 /**
  * Allows boxed iteration of a tree/field
@@ -48,6 +70,12 @@ export const boxedIterator = Symbol();
  * @alpha
  */
 export interface FlexTreeEntity<out TSchema = unknown> {
+	/**
+	 * Indicates that an object is a specific kind of flex tree FlexTreeEntity.
+	 * This makes it possible to both down cast FlexTreeEntities safely as well as validate if an object is or is not a FlexTreeEntity.
+	 */
+	readonly [flexTreeMarker]: FlexTreeEntityKind;
+
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -78,7 +106,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 
 /**
  * Status of the tree that a particular node belongs to.
- * @alpha
+ * @beta
  */
 export enum TreeStatus {
 	/**
@@ -121,6 +149,8 @@ export const onNextChange = Symbol("onNextChange");
  * @alpha
  */
 export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
+	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
+
 	/**
 	 * Value stored on this node.
 	 */
@@ -197,6 +227,8 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
  * @alpha
  */
 export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
+	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
+
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -548,7 +580,7 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
  * @alpha
  */
 export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
-	| SchemaAware.TypedField<TSchema>
+	| InsertableFlexField<TSchema>
 	| ITreeCursorSynchronous;
 
 /**
@@ -558,7 +590,7 @@ export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
  * @alpha
  */
 export type FlexibleNodeContent<TTypes extends AllowedTypes> =
-	| SchemaAware.AllowedTypesToTypedTrees<TTypes>
+	| AllowedTypesToFlexInsertableTree<TTypes>
 	| ITreeCursorSynchronous;
 
 /**
@@ -570,7 +602,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> =
  * @alpha
  */
 export type FlexibleNodeSubSequence<TTypes extends AllowedTypes> =
-	| Iterable<SchemaAware.AllowedTypesToTypedTrees<TTypes>>
+	| Iterable<AllowedTypesToFlexInsertableTree<TTypes>>
 	| ITreeCursorSynchronous;
 
 /**
@@ -614,8 +646,14 @@ export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> exten
 	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
 	/**
-	 * Gets a boxed node of this field by its index.
-	 * Note that a node must exist at the given index.
+	 * Gets a node of this field by its index without unboxing.
+	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
+	 *
+	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
+	 * or index \>= array.length.
+	 *
+	 * @remarks
+	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
 	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 
@@ -884,58 +922,9 @@ export type FlexTreeTypedFieldInner<
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link AllowedTypes}.
  * @alpha
  */
-export type FlexTreeTypedNodeUnion<TTypes extends AllowedTypes> =
-	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-		? FlexTreeTypedNodeUnionHelper<TTypes>
-		: FlexTreeNode;
-
-/**
- * Helper for implementing TypedNodeUnion.
- * @privateRemarks
- * Inlining this into TypedNodeUnion causes it to not compile.
- * The reason for this us unknown, but splitting it out fixed it.
- * @alpha
- */
-export type FlexTreeTypedNodeUnionHelper<
-	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>,
-> = InternalTypedSchemaTypes.ArrayToUnion<
-	TypeArrayToTypedFlexTreeArray<
-		Assume<InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>
-	>
->;
-/**
- * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
- * @alpha
- */
-export type TypeArrayToTypedFlexTreeArray<T extends readonly TreeNodeSchema[]> = [
-	ArrayHasFixedLength<T> extends false
-		? T extends readonly (infer InnerT)[]
-			? [FlexTreeTypedNode<Assume<InnerT, TreeNodeSchema>>]
-			: never
-		: FixedSizeTypeArrayToTypedFlexTree<T>,
-][_InlineTrick];
-
-/**
- * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
- * @alpha
- */
-export type FixedSizeTypeArrayToTypedFlexTree<T extends readonly TreeNodeSchema[]> = [
-	T extends readonly [infer Head, ...infer Tail]
-		? [
-				FlexTreeTypedNode<Assume<Head, TreeNodeSchema>>,
-				...FixedSizeTypeArrayToTypedFlexTree<Assume<Tail, readonly TreeNodeSchema[]>>,
-		  ]
-		: [],
-][_InlineTrick];
-
-/**
- * Schema aware specialization of {@link FlexTreeEntity}.
- * @alpha
- */
-export type FlexTreeTyped<TSchema extends TreeFieldSchema | TreeNodeSchema> =
-	TSchema extends TreeNodeSchema
-		? FlexTreeTypedNode<TSchema>
-		: FlexTreeTypedField<Assume<TSchema, TreeFieldSchema>>;
+export type FlexTreeTypedNodeUnion<T extends AllowedTypes> = T extends FlexList<TreeNodeSchema>
+	? FlexTreeTypedNode<Assume<FlexListToUnion<T>, TreeNodeSchema>>
+	: FlexTreeNode;
 
 /**
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link TreeNodeSchema}.
@@ -969,7 +958,7 @@ export type FlexTreeUnboxField<
 > = FlexTreeUnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
- * Helper for implementing {@link InternalEditableTreeTypes#UnboxField}.
+ * Helper for implementing FlexTreeUnboxField.
  * @alpha
  */
 export type FlexTreeUnboxFieldInner<

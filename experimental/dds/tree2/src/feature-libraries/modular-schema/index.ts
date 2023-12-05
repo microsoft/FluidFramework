@@ -31,9 +31,8 @@ export {
 	NodeChangeRebaser,
 	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
-	RemovedTreesFromChild,
-	RevisionMetadataSource,
-	RevisionIndexer,
+	RebaseRevisionMetadata,
+	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
@@ -44,7 +43,6 @@ export {
 	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeset,
-	RevisionInfo,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
@@ -55,7 +53,7 @@ export {
 	EditDescription,
 	GlobalEditDescription,
 	FieldEditDescription,
-	revisionMetadataSourceFromInfo,
+	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 } from "./modularChangeFamily";
 export { makeModularChangeCodec } from "./modularChangeCodecs";

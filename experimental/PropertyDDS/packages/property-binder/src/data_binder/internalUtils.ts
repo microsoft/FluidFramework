@@ -742,7 +742,7 @@ const isPrimitiveCollection = function (in_property: BaseProperty): boolean {
  *
  * @param in_rootProperty - the property from which to recurse from
  * @param in_callback - function to call for each path. Recursion continues if the function returns true.
- *
+ * @internal
  */
 const forEachProperty = function (
 	in_rootProperty: BaseProperty,

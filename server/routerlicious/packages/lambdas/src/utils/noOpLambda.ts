@@ -5,6 +5,9 @@
 
 import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class NoOpLambda implements IPartitionLambda {
 	constructor(private readonly context: IContext) {}
 
