@@ -11,7 +11,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
  */
 export const snapshotKey = "snapshot";
 /**
- * @internal
+ * @alpha
  */
 export type CacheContentType = "snapshot" | "ops";
 
@@ -40,7 +40,7 @@ export interface IFileEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @internal
+ * @alpha
  */
 export interface IEntry {
 	/**
