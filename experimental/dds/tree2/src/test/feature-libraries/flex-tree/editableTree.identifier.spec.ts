@@ -12,7 +12,7 @@ import {
 	NodeKeyManager,
 } from "../../../feature-libraries";
 import { leaf, nodeKeyField, nodeKeySchema, SchemaBuilder } from "../../../domains";
-import { treeWithContent } from "../../utils";
+import { flexTreeWithContent } from "../../utils";
 
 const builder = new SchemaBuilder({
 	scope: "EditableTree Node Keys",
@@ -43,7 +43,7 @@ describe("editable-tree: node keys", () => {
 		const parentKey = nodeKeyManager.generateLocalNodeKey();
 		const childAKey = nodeKeyManager.generateLocalNodeKey();
 		const childBKey = nodeKeyManager.generateLocalNodeKey();
-		const typedView = treeWithContent(
+		const typedView = flexTreeWithContent(
 			{
 				initialTree: {
 					children: [
