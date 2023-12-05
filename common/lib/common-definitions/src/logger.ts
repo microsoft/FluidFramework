@@ -40,7 +40,7 @@ export interface ITaggedTelemetryPropertyType {
  * JSON-serializable properties, which will be logged with telemetry.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
- * @internal
+ * @alpha
  */
 export interface ITelemetryProperties {
 	[index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
