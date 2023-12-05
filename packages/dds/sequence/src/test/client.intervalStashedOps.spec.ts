@@ -71,7 +71,7 @@ describe("Interval Stashed Ops on client ", () => {
 		sharedString.connect(services1);
 	});
 
-	describe.only("applyStashedOp", () => {
+	describe("applyStashedOp", () => {
 		let collection: IIntervalCollection<SequenceInterval>;
 		let intervalId: string;
 		const label = "test";
