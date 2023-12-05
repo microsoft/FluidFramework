@@ -38,7 +38,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Represents a connection to a stream of delta updates.
- * @alpha
+ * @internal
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
