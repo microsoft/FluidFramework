@@ -57,7 +57,7 @@ export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 // @internal
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
-// @internal
+// @alpha
 export class EpochTracker implements IPersistedFileCache {
     constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
     // (undocumented)
@@ -91,10 +91,10 @@ export class EpochTracker implements IPersistedFileCache {
     protected validateEpochFromResponse(epochFromResponse: string | undefined, fetchType: FetchTypeInternal, fromCache?: boolean): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" | "treesLatest" | "uploadSummary" | "push" | "versions";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";
 
 // @internal
@@ -109,7 +109,7 @@ export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean)
 // @internal
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ICacheAndTracker {
     // (undocumented)
     cache: IOdspCache;
@@ -123,7 +123,7 @@ export interface IClpCompliantAppHeader {
     [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
 
-// @internal
+// @alpha
 export interface INonPersistentCache {
     readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
     readonly sessionJoinCache: PromiseCache<string, {
@@ -133,12 +133,12 @@ export interface INonPersistentCache {
     readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
-// @internal
+// @alpha
 export interface IOdspCache extends INonPersistentCache {
     readonly persistedCache: IPersistedFileCache;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOdspResponse<T> {
     // (undocumented)
     content: T;
@@ -150,7 +150,7 @@ export interface IOdspResponse<T> {
     propsToLog: ITelemetryProperties;
 }
 
-// @internal
+// @alpha
 export interface IPersistedFileCache {
     // (undocumented)
     get(entry: IEntry): Promise<any>;
@@ -160,7 +160,7 @@ export interface IPersistedFileCache {
     removeEntries(): Promise<void>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IPrefetchSnapshotContents extends ISnapshotContents {
     // (undocumented)
     fluidEpoch: string;
@@ -174,7 +174,7 @@ export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISnapshotContents {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -213,12 +213,12 @@ export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 // @internal (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
-// @internal
+// @alpha
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
 }
 
-// @internal
+// @alpha
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
@@ -241,7 +241,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
 }
 
-// @internal
+// @alpha
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
