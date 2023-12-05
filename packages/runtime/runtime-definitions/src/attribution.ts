@@ -8,7 +8,7 @@ import type { IUser } from "@fluidframework/protocol-definitions";
 /**
  * AttributionKey representing a reference to some op in the op stream.
  * Content associated with this key aligns with content modified by that op.
- * @internal
+ * @alpha
  */
 export interface OpAttributionKey {
 	/**
@@ -32,7 +32,7 @@ export interface OpAttributionKey {
  * is currently unsupported, as applications can effectively modify content anonymously while detached.
  * The runtime has no mechanism for reliably obtaining the user. It would be reasonable to start supporting
  * this functionality if the host provided additional context to their attributor or attach calls.
- * @internal
+ * @alpha
  */
 export interface DetachedAttributionKey {
 	type: "detached";
@@ -50,7 +50,7 @@ export interface DetachedAttributionKey {
 
 /**
  * AttributionKey associated with content that has been made locally but not yet acked by the server.
- * @internal
+ * @alpha
  */
 export interface LocalAttributionKey {
 	type: "local";
@@ -58,7 +58,7 @@ export interface LocalAttributionKey {
 
 /**
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
- * @internal
+ * @alpha
  */
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
