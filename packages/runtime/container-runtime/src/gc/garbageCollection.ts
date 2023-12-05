@@ -574,7 +574,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// 3. Run the Mark phase.
 		// It will mark nodes as referenced / unreferenced and return a list of node ids that are ready to be swept.
-		const sweepReadyNodeIds = this.runMarkPhase(
+		const { tombstoneReadyNodeIds, sweepReadyNodeIds } = this.runMarkPhase(
 			gcResult,
 			allReferencedNodeIds,
 			currentReferenceTimestampMs,
@@ -582,7 +582,11 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// 4. Run the Sweep phase.
 		// It will delete sweep ready nodes and return a list of deleted node ids.
-		const deletedNodeIds = this.runSweepPhase(gcResult, sweepReadyNodeIds);
+		const deletedNodeIds = this.runSweepPhase(
+			gcResult,
+			tombstoneReadyNodeIds,
+			sweepReadyNodeIds,
+		);
 
 		this.gcDataFromLastRun = cloneGCData(
 			gcData,
@@ -617,7 +621,9 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		allReferencedNodeIds: string[],
 		currentReferenceTimestampMs: number,
-	): Set<string> {
+	) {
+		//* Put explicit return type annotation back
+
 		// 1. Marks all referenced nodes by clearing their unreferenced tracker, if any.
 		for (const nodeId of allReferencedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
@@ -630,6 +636,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// 2. Mark unreferenced nodes in this run by starting unreferenced tracking for them.
+		const tombstoneReadyNodeIds: Set<string> = new Set();
 		const sweepReadyNodeIds: Set<string> = new Set();
 		for (const nodeId of gcResult.deletedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
@@ -649,8 +656,10 @@ export class GarbageCollector implements IGarbageCollector {
 				// is from the ops seen, this will ensure that we keep updating unreferenced state as time moves forward.
 				nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 
-				//* Duplicate for Tombstone as well
-				// If a node is sweep ready, store it so it can be returned.
+				// If a node is tombstone or sweep ready, store it so it can be returned.
+				if (nodeStateTracker.state === UnreferencedState.TombstoneReady) {
+					tombstoneReadyNodeIds.add(nodeId);
+				}
 				if (nodeStateTracker.state === UnreferencedState.SweepReady) {
 					sweepReadyNodeIds.add(nodeId);
 				}
@@ -660,8 +669,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// 3. Call the runtime to update referenced nodes in this run.
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
-		//* Return tsReady and sweepReady nodes separately
-		return sweepReadyNodeIds;
+		return { tombstoneReadyNodeIds, sweepReadyNodeIds };
 	}
 
 	/**
@@ -674,9 +682,11 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @returns A list of nodes that have been deleted.
 	 */
-	private runSweepPhase(gcResult: IGCResult, sweepReadyNodes: Set<string>): string[] {
-		//* Add param tombstoneReadyNodes: string[],
-
+	private runSweepPhase(
+		gcResult: IGCResult,
+		tombstoneReadyNodes: Set<string>,
+		sweepReadyNodes: Set<string>,
+	): string[] {
 		/**
 		 * Under "Test Mode", Unreferenced nodes are immediately deleted without waiting for them to be sweep ready.
 		 *
@@ -689,15 +699,12 @@ export class GarbageCollector implements IGarbageCollector {
 			return [];
 		}
 
-		//* This all needs to be updated to run boht TS and Sweep phases
+		//* Any config check before processing Tombstones?
 
-		if (this.configs.tombstoneMode) {
-			this.tombstones = Array.from(sweepReadyNodes);
-			// If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
-			// involving access to "deleted" data without actually deleting the data from summaries.
-			this.runtime.updateTombstonedRoutes(this.tombstones);
-			return [];
-		}
+		this.tombstones = Array.from(tombstoneReadyNodes);
+		// If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
+		// involving access to "deleted" data without actually deleting the data from summaries.
+		this.runtime.updateTombstonedRoutes(this.tombstones);
 
 		if (!this.configs.shouldRunSweep) {
 			return [];
@@ -851,7 +858,6 @@ export class GarbageCollector implements IGarbageCollector {
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
-			//* Rename above to tombstoneTimeoutMs
 		};
 	}
 

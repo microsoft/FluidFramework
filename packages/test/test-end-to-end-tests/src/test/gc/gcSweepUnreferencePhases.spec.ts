@@ -31,17 +31,7 @@ import {
 /**
  * Validates that an unreferenced datastore goes through all the GC phases without overlapping.
  */
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-//* ONLY
-describeNoCompat.only("GC unreference phases", (getTestObjectProvider) => {
+describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
 	const sweepTimeoutMs = 200; // Tombstone at 200ms
