@@ -8,12 +8,12 @@ import { IFluidLoadable } from "./fluidLoadable";
 import { FluidObject } from "./provider";
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -21,7 +21,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @internal
+ * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
@@ -49,12 +49,12 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidHandle {
 	readonly IFluidHandle: IFluidHandle;
@@ -62,7 +62,7 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @internal
+ * @alpha
  */
 export interface IFluidHandle<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
