@@ -149,9 +149,6 @@ export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? 
 } : never;
 
 // @alpha
-export type JsonableType = JsonableTypeWith<never>;
-
-// @alpha
 export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
 // @alpha

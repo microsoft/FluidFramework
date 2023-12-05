@@ -10,6 +10,9 @@
  * @remarks
  * Use `JsonableTypeWith<never>` for just JSON serializable types.
  * See {@link Jsonable} for serialization pitfalls.
+ *
+ * @privateRemarks
+ * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
  * @alpha
  */
 export type JsonableTypeWith<T> =
@@ -35,12 +38,6 @@ export type JsonableTypeWith<T> =
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }
-
-/**
- * Type constraint for types that are serializable as JSON.
- * @alpha
- */
-export type JsonableType = JsonableTypeWith<never>;
 
 /**
  * Used to constrain a type `T` to types that are serializable as JSON.
@@ -70,8 +67,8 @@ export type JsonableType = JsonableTypeWith<never>;
  *
  * Also, `Jsonable<T>` does not prevent the construction of circular references.
  *
- * Using `Jsonable<unknown>`, or `Jsonable<any>` is just a type alias for
- * {@link JsonableType} and should not be used if precise type safety is desired.
+ * Using `Jsonable<unknown>` or `Jsonable<any>` is a type alias for
+ * {@link JsonableTypeWith}`<never>` and should not be used if precise type safety is desired.
  *
  * @example Typical usage
  *
