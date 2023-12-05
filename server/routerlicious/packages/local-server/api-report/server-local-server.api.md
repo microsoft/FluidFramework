@@ -20,7 +20,7 @@ import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { IWebSocket } from '@fluidframework/server-services-core';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
 
-// @internal
+// @alpha
 export interface ILocalDeltaConnectionServer {
     // (undocumented)
     close(): Promise<void>;
