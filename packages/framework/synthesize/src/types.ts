@@ -14,7 +14,7 @@ import { IFluidDependencySynthesizer } from ".";
  * ```typescript
  * { IFoo: "IFoo" }
  * ```
- * @internal
+ * @alpha
  */
 export type FluidObjectSymbolProvider<T> = {
 	[P in keyof T]?: P;
@@ -46,7 +46,7 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
- * @internal
+ * @alpha
  */
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> &
 	AsyncRequiredFluidObjectProvider<R>;

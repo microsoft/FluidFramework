@@ -127,7 +127,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryErrorEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @internal
+ * @alpha
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;

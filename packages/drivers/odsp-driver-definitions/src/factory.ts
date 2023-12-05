@@ -79,7 +79,7 @@ export interface ICollabSessionOptions {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;

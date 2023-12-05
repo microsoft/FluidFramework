@@ -80,7 +80,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
- * @internal
+ * @alpha
  */
 export const VisibilityState = {
 	/**
@@ -107,7 +107,7 @@ export const VisibilityState = {
 	GloballyVisible: "GloballyVisible",
 };
 /**
- * @internal
+ * @alpha
  */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 

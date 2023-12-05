@@ -516,7 +516,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
- * @internal
+ * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
