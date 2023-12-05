@@ -21,7 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export enum FileMode {
 	File = "100644",
@@ -92,7 +92,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- * @internal
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -101,7 +101,7 @@ export enum TreeEntry {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITree {
 	entries: ITreeEntry[];

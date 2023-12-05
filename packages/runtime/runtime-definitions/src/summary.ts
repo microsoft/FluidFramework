@@ -31,7 +31,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @internal
+ * @alpha
  */
 export interface ISummaryTreeWithStats {
 	/**
