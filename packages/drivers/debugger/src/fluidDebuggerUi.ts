@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
 /**
- * @public
+ * @internal
  */
 export interface IDebuggerUI {
 	/**
@@ -60,7 +60,7 @@ export interface IDebuggerUI {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IDebuggerController {
 	/**
@@ -139,7 +139,7 @@ Step to move: <input type='number' id='steps' value='1' min='1' style='width:50p
 </body>`;
 
 /**
- * @public
+ * @internal
  */
 export class DebuggerUI {
 	public static create(controller: IDebuggerController): DebuggerUI | null {

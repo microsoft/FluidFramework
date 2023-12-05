@@ -326,6 +326,9 @@ const initializeGUIDGenerator = (...args) => {
 	guidRNG.initialize(...args);
 };
 
+/**
+ * @internal
+ */
 export const GuidUtils = {
 	uint32x4ToGUID,
 	guidToUint32x4,

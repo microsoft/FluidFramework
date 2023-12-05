@@ -8,6 +8,9 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
+/**
+ * @internal
+ */
 export function createServiceAudience<M extends IMember = IMember>(props: {
 	container: IContainer;
 	createServiceMember: (audienceMember: IClient) => M;
@@ -31,6 +34,7 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
  * @deprecated use {@link createServiceAudience} and {@link IServiceAudience} instead
+ * @internal
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>

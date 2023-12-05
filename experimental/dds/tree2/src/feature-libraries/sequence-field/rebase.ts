@@ -29,7 +29,6 @@ import {
 	getOffsetInCellRange,
 	compareLineages,
 	withNodeChange,
-	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
 	isNewAttach,
@@ -40,7 +39,8 @@ import {
 	splitMark,
 	isAttach,
 	getDetachOutputId,
-	isCellRename,
+	isImpactfulCellRename,
+	compareCellsFromSameRevision,
 } from "./utils";
 import {
 	Changeset,
@@ -56,7 +56,7 @@ import {
 	MarkEffect,
 	MoveOut,
 	MoveIn,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	getMoveEffect,
@@ -153,7 +153,11 @@ function rebaseMarkList<TNodeChange>(
 
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
-		if ((markEmptiesCells(baseMark) || isCellRename(baseMark)) && !isInverseAttach(baseMark)) {
+		if (
+			(markEmptiesCells(baseMark) ||
+				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
+			!isInverseAttach(baseMark)
+		) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
@@ -921,16 +925,9 @@ function compareCellPositions(
 	assert(newId !== undefined, "newMark should have cell ID");
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
-		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
-			return baseId.localId - newId.localId;
-		}
-
-		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
-		if (adjacentCells !== undefined) {
-			return (
-				getPositionAmongAdjacentCells(adjacentCells, baseId.localId) -
-				getPositionAmongAdjacentCells(adjacentCells, newId.localId)
-			);
+		const cmp = compareCellsFromSameRevision(baseId, baseMark.count, newId, newMark.count);
+		if (cmp !== undefined) {
+			return cmp;
 		}
 	}
 
@@ -987,17 +984,4 @@ function compareCellPositions(
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	return -Infinity;
-}
-
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
-	}
-
-	fail("Could not find id in adjacentCells");
 }

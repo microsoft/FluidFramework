@@ -18,7 +18,7 @@ import {
 	MoveOut,
 	MoveIn,
 	MarkList,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { splitMark } from "./utils";
 

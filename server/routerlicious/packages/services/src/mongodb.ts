@@ -57,6 +57,9 @@ const errorResponseKeysAllowList = new Set([
 	"writeConcernErrors",
 ]);
 
+/**
+ * @internal
+ */
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
@@ -535,6 +538,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 }
 
+/**
+ * @internal
+ */
 export class MongoDb implements core.IDb {
 	constructor(
 		private readonly client: MongoClient,
@@ -576,6 +582,9 @@ export class MongoDb implements core.IDb {
 	}
 }
 
+/**
+ * @internal
+ */
 export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
 const DefaultMongoDbMonitoringEvents = [
 	"serverOpening",
@@ -638,6 +647,9 @@ interface IMongoDBConfig {
 	consecutiveFailedThresholdForLowerTotalRequests: number;
 }
 
+/**
+ * @internal
+ */
 export class MongoDbFactory implements core.IDbFactory {
 	private readonly operationsDbEndpoint: string;
 	private readonly globalDbEndpoint?: string;

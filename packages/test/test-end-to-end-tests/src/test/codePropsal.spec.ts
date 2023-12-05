@@ -21,7 +21,7 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -38,7 +38,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 // REVIEW: enable compat testing?
-describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
+describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider) => {
 	const packageV1: ICodeProposalTestPackage = {
 		name: "test",
 		version: 1,

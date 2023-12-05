@@ -21,12 +21,10 @@ import {
 	FlexTreeObjectNode,
 	IsArrayOfOne,
 	FlexTreeUnknownUnboxed,
-	TypeArrayToTypedFlexTreeArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/flexTreeTypes";
 import {
 	areSafelyAssignable,
-	Assume,
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
@@ -45,6 +43,8 @@ import {
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
 
 describe("editableTreeTypes", () => {
 	/**
@@ -268,21 +268,6 @@ describe("editableTreeTypes", () => {
 		}
 	}
 
-	// TypeArrayToTypedTreeArray
-	{
-		// Direct
-		{
-			type UnionBasic1 = TypeArrayToTypedFlexTreeArray<[typeof basicStruct]>;
-			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, [BasicStruct]>>;
-		}
-
-		// Type-Erased
-		{
-			type Result = TypeArrayToTypedFlexTreeArray<TreeNodeSchema[]>;
-			type _1 = requireTrue<areSafelyAssignable<Result, [FlexTreeNode]>>;
-		}
-	}
-
 	// TypedNodeUnion
 	{
 		// Any
@@ -340,7 +325,7 @@ describe("editableTreeTypes", () => {
 				>
 			>;
 			type _4 = requireTrue<areSafelyAssignable<FlexTreeTypedNodeUnion<[Any]>, FlexTreeNode>>;
-			type y = InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TreeNodeSchema[]>;
+			type y = ConstantFlexListToNonLazyArray<TreeNodeSchema[]>;
 
 			type _5 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<TreeNodeSchema[]>, FlexTreeNode>
@@ -348,18 +333,6 @@ describe("editableTreeTypes", () => {
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
 			>;
-
-			type TypedNodeUnion2<TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>> =
-				InternalTypedSchemaTypes.ArrayToUnion<
-					TypeArrayToTypedFlexTreeArray<
-						Assume<
-							InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>,
-							readonly TreeNodeSchema[]
-						>
-					>
-				>;
-
-			type x = TypedNodeUnion2<TreeNodeSchema[]>;
 
 			type z = InternalTypedSchemaTypes.ArrayToUnion<[FlexTreeNode]>;
 		}

@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @public
+ * @internal
  */
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 	private readonly map: Map<

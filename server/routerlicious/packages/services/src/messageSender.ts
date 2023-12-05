@@ -71,6 +71,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
  *
  * @deprecated This was functionality related to RabbitMq which is not used anymore,
  * and will be removed in a future release.
+ * @internal
  */
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
 	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
