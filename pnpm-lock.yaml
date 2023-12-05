@@ -10522,7 +10522,6 @@ importers:
 
   packages/test/test-service-load:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
@@ -10593,7 +10592,6 @@ importers:
       start-server-and-test: 1.15.5
       tinylicious: 2.0.2
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
