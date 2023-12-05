@@ -12,7 +12,7 @@ import {
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
- * @internal
+ * @alpha
  */
 export enum ConsensusResult {
 	Release,
