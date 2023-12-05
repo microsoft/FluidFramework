@@ -1093,7 +1093,7 @@ describe("SequenceField - Compose", () => {
 
 		// B is the inverse of a new attach. Since that new attach comes after A (temporally),
 		// its tiebreak policy causes the cell to come before A's insert (spatially).
-		// When composing the rollback with A's insert, we the delete should come before the insert,
+		// When composing the rollback with A's insert, the delete should come before the insert,
 		// even though A's insert has a tiebreak policy which puts it before other new cells.
 		const expected = [
 			Mark.delete(1, { revision: tag3, localId: brand(0) }),
