@@ -877,7 +877,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
- * @internal
+ * @alpha
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
