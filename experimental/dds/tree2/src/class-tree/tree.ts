@@ -18,7 +18,7 @@ import {
 /**
  * Channel for a Fluid Tree DDS.
  * @remarks
- * Allows storing and collaboratively editing schema aware hierarchial data.
+ * Allows storing and collaboratively editing schema-aware hierarchial data.
  * @beta
  */
 export interface ITree extends IChannel {

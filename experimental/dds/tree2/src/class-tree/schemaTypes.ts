@@ -149,21 +149,21 @@ export enum FieldKind {
  */
 export enum NodeKind {
 	/**
-	 * Node which serves as a map, storing children under string keys.
+	 * A node which serves as a map, storing children under string keys.
 	 */
 	Map,
 	/**
-	 * Node which serves as a list, storing children in an ordered sequence.
+	 * A node which serves as a list, storing children in an ordered sequence.
 	 */
 	List,
 	/**
-	 * Node which stores a heterogenous collection of children in named fields.
+	 * A node which stores a heterogenous collection of children in named fields.
 	 * @remarks
 	 * Each field gets its own schema.
 	 */
 	Object,
 	/**
-	 * Node which stores a single leaf value.
+	 * A node which stores a single leaf value.
 	 */
 	Leaf,
 }
