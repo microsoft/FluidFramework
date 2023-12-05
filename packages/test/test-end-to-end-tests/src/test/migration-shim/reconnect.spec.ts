@@ -18,11 +18,12 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import {
-	AllowedUpdateType,
 	type ISharedTree,
-	SchemaBuilder,
-	SharedTreeFactory,
+	TreeFactory,
 	disposeSymbol,
+	SchemaFactory,
+	TreeConfiguration,
+	ITree,
 } from "@fluid-experimental/tree2";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
@@ -112,22 +113,15 @@ class TestDataObject extends DataObject {
 	}
 }
 
-const builder = new SchemaBuilder({ scope: "test" });
+const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
-const quantityType = builder.object("quantityObj", {
+class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
-});
-const schema = builder.intoSchema(quantityType);
+}) {}
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function getNewTreeView(tree: ISharedTree) {
-	return tree.schematizeOld({
-		initialTree: {
-			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+function getNewTreeView(tree: ITree) {
+	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
 describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
@@ -159,7 +153,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new SharedTreeFactory();
+	const newSharedTreeFactory = new TreeFactory({});
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -175,13 +169,11 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			// migrate data
 			const quantity = getQuantity(legacyTree);
 			newTree
-				.schematizeOld({
-					initialTree: {
+				.schematize(
+					new TreeConfiguration(QuantityType, () => ({
 						quantity,
-					},
-					allowedSchemaModifications: AllowedUpdateType.None,
-					schema,
-				})
+					})),
+				)
 				[disposeSymbol]();
 		},
 	);
