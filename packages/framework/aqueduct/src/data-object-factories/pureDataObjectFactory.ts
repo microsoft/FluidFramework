@@ -33,8 +33,8 @@ import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
 /**
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
- * @internal
  * @deprecated Will be removed in future major release. Please remove all usage of it.
+ * @alpha
  */
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 	// eslint-disable-next-line import/no-deprecated

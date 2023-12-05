@@ -24,7 +24,7 @@ export type FluidObjectSymbolProvider<T> = {
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type mapped to an object that implements
  * the property.
- * @internal
+ * @alpha
  */
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
@@ -36,7 +36,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
- * @internal
+ * @alpha
  */
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
