@@ -5,10 +5,11 @@
 
 import {
 	FieldKindIdentifier,
-	Delta,
 	ITreeCursor,
 	forbiddenFieldKindIdentifier,
 	ChangesetLocalId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
 } from "../../core";
 import { fail } from "../../util";
 import {
@@ -40,8 +41,8 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): Delta.FieldChanges => ({}),
-	relevantRemovedTrees: (change): Iterable<Delta.DetachedNodeId> => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
+	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 };
 

@@ -33,6 +33,7 @@ const diceRollerId = "dice-roller";
 
 /**
  * The runtime factory for our Fluid container.
+ * @internal
  */
 export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
 	constructor() {

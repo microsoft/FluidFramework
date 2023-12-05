@@ -22,6 +22,9 @@ import {
 import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
+/**
+ * @internal
+ */
 export class KafkaRunner implements IRunner {
 	private deferred: Deferred<void> | undefined;
 	private partitionManager: PartitionManager | undefined;

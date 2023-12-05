@@ -273,6 +273,7 @@ export class Integer64Property extends ValueProperty {
 
 /**
  * A primitive property class for big signed integer values.
+ * @internal
  */
 export class Int64Property extends Integer64Property {
 	/**
@@ -292,6 +293,7 @@ Int64Property.prototype._castFunctor = _castFunctors.Int64;
 
 /**
  * A primitive property class for big unsingned integer values.
+ * @internal
  */
 export class Uint64Property extends Integer64Property {
 	/**

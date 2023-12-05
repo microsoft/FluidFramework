@@ -9,11 +9,17 @@ import { BaseProperty } from "@fluid-experimental/property-properties";
 import { BaseTableProps, SortOrder } from "react-base-table";
 import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
 
+/**
+ * @internal
+ */
 export interface SearchResult {
 	foundMatches?: IInspectorSearchMatch[];
 	matchesMap?: IInspectorSearchMatchMap;
 	currentResult?: number;
 }
+/**
+ * @internal
+ */
 export interface IShowNextResultResult {
 	/**
 	 * New rows needed to expand to show next results
@@ -34,6 +40,9 @@ interface ISearchLevelState {
 	index: number;
 }
 
+/**
+ * @internal
+ */
 export interface IInspectorSearchState {
 	abort?: boolean;
 	newMatchFound?: boolean;
@@ -47,10 +56,16 @@ export interface IInspectorSearchState {
 	childToParentMap: { [key: string]: string };
 }
 
+/**
+ * @internal
+ */
 export interface IInspectorSearchControls {
 	abortHandler: IInspectorSearchAbortHandler;
 	state: IInspectorSearchState;
 }
+/**
+ * @internal
+ */
 export interface IRowData<T = never> {
 	/**
 	 * The raw data to be visualized.
@@ -64,6 +79,9 @@ export interface IRowData<T = never> {
 	isNewDataRow?: boolean;
 }
 
+/**
+ * @internal
+ */
 export type IToTableRowsProps = Pick<
 	IInspectorTableProps,
 	| "dataCreationHandler"
@@ -73,6 +91,9 @@ export type IToTableRowsProps = Pick<
 	| "readOnly"
 >;
 
+/**
+ * @internal
+ */
 export interface IToTableRowsOptions {
 	depth: number;
 	addDummy: boolean;
@@ -81,11 +102,17 @@ export interface IToTableRowsOptions {
 	parentIsConstant?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IPropertyToTableRowOptions extends Partial<IToTableRowsOptions> {
 	depth: number;
 	dataCreation: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IColumns {
 	dataGetter?: (params: IDataGetterParameter) => React.ReactNode | null;
 	key: string;
@@ -99,6 +126,7 @@ export interface IColumns {
 
 /**
  * The interface for an entry of the visualization data array.
+ * @internal
  */
 export interface IInspectorRow extends IRowData<BaseProxifiedProperty> {
 	context: string;
@@ -115,6 +143,7 @@ export interface IInspectorRow extends IRowData<BaseProxifiedProperty> {
 }
 /**
  * The interface for the cell data getter function parameter
+ * @internal
  */
 export interface IDataGetterParameter {
 	columns: IColumns[];
@@ -124,6 +153,9 @@ export interface IDataGetterParameter {
 	rowIndex: number;
 }
 
+/**
+ * @internal
+ */
 export interface IDataCreationOptions {
 	/**
 	 * The name that is shown in the table row that allows the creation of new data.
@@ -135,10 +167,16 @@ export interface IDataCreationOptions {
 	options?: any;
 }
 
+/**
+ * @internal
+ */
 export type IInspectorColumnsKeys = "name" | "type" | "value";
 
 type BaseTablePropsPartial<T> = Omit<BaseTableProps<T>, "columns">;
 
+/**
+ * @internal
+ */
 export interface IInspectorTableProps<T extends IRowData<T> = any>
 	extends BaseTablePropsPartial<T> {
 	/**
@@ -281,6 +319,9 @@ export interface IInspectorTableProps<T extends IRowData<T> = any>
 	columnsRenderers?: Record<string, (...props: any) => any>;
 }
 
+/**
+ * @internal
+ */
 export interface IInspectorSearchMatch {
 	/**
 	 * Index of column, containing match
@@ -293,6 +334,9 @@ export interface IInspectorSearchMatch {
 	rowId: string;
 }
 
+/**
+ * @internal
+ */
 export type IInspectorSearchCallback = (
 	foundMatches: IInspectorSearchMatch[],
 	matchesMap: IInspectorSearchMatchMap,
@@ -300,16 +344,28 @@ export type IInspectorSearchCallback = (
 	childToParentMap: { [key: string]: string },
 ) => void;
 
+/**
+ * @internal
+ */
 export type IInspectorSearchAbortHandler = () => void;
 
+/**
+ * @internal
+ */
 export interface IInspectorSearchMatchMap {
 	[key: string]: boolean[];
 }
 
+/**
+ * @internal
+ */
 export interface IExpandedMap {
 	[key: string]: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IInspectorTableState<T = any> {
 	childToParentMap: { [key: string]: string };
 	commitHistoryVisible?: boolean;
@@ -333,6 +389,9 @@ export interface IInspectorTableState<T = any> {
 	tableRows: T[];
 }
 
+/**
+ * @internal
+ */
 export interface ColumnRendererType {
 	rowData: IInspectorRow;
 	cellData: React.ReactNode | undefined;
@@ -346,6 +405,9 @@ export interface ColumnRendererType {
 	};
 }
 
+/**
+ * @internal
+ */
 export interface IEditableValueCellProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/**
 	 * Indicates whether we are following references or not.

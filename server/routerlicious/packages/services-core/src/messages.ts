@@ -14,29 +14,51 @@ import {
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
+/**
+ * @internal
+ */
 export const RawOperationType = "RawOperation";
 
 // String identifying the sequenced operation message
+/**
+ * @internal
+ */
 export const SequencedOperationType = "SequencedOperation";
 
 // String identifying nack messages
+/**
+ * @internal
+ */
 export const NackOperationType = "Nack";
 
 // String identifying signal messages
+/**
+ * @internal
+ */
 export const SignalOperationType = "Signal";
 
+/**
+ * @internal
+ */
 export const SystemType: string = "System";
 
+/**
+ * @internal
+ */
 export const BoxcarType = "boxcar";
 
 /**
  * Base class for messages placed on the distributed log
+ * @alpha
  */
 export interface IMessage {
 	// The type of the message
 	type: string;
 }
 
+/**
+ * @internal
+ */
 export enum SystemOperations {
 	// Service joining the cluster
 	Join,
@@ -47,6 +69,7 @@ export enum SystemOperations {
 
 /**
  * Object that indicates a specific session/document in the system
+ * @alpha
  */
 export interface IRoutingKey {
 	// The tenant id
@@ -56,6 +79,9 @@ export interface IRoutingKey {
 	documentId: string;
 }
 
+/**
+ * @internal
+ */
 export interface ISystemMessage extends IMessage {
 	// Id of the service sending the message
 	id: string;
@@ -69,6 +95,7 @@ export interface ISystemMessage extends IMessage {
 
 /**
  * Message relating to an object
+ * @internal
  */
 export interface IObjectMessage extends IMessage, IRoutingKey {
 	// The client who submitted the message
@@ -81,6 +108,7 @@ export interface IObjectMessage extends IMessage, IRoutingKey {
 
 /**
  * Message sent when a client is updating their sequence number directly
+ * @internal
  */
 export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
 	// The sequence number that is being updated
@@ -89,6 +117,7 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
 
 /**
  * Raw message inserted into the event hub queue
+ * @internal
  */
 export interface IRawOperationMessage extends IObjectMessage {
 	// The type of the message
@@ -100,6 +129,7 @@ export interface IRawOperationMessage extends IObjectMessage {
 
 /**
  * A group of IRawOperationMessage objects. Used in receiving batches of ops from Kafka.
+ * @internal
  */
 export interface IRawOperationMessageBatch extends IRoutingKey {
 	// Some ordered index to distinguish different batches. In the Kafka context, it is the Kafka offset.
@@ -109,10 +139,14 @@ export interface IRawOperationMessageBatch extends IRoutingKey {
 }
 
 // Need to change this name - it isn't necessarily ticketed
+/**
+ * @alpha
+ */
 export interface ITicketedMessage extends IMessage, IRoutingKey {}
 
 /**
  * Message sent when a raw operation is nacked
+ * @internal
  */
 export interface INackMessage extends ITicketedMessage {
 	// The type of the message
@@ -131,6 +165,7 @@ export interface INackMessage extends ITicketedMessage {
 
 /**
  * Message sent when a raw operation causes a signal
+ * @internal
  */
 export interface ITicketedSignalMessage extends ITicketedMessage {
 	// The type of the message
@@ -146,6 +181,7 @@ export interface ITicketedSignalMessage extends ITicketedMessage {
 
 /**
  * A sequenced operation
+ * @alpha
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
 	// The type of the message
@@ -155,6 +191,9 @@ export interface ISequencedOperationMessage extends ITicketedMessage {
 	operation: ISequencedDocumentMessage;
 }
 
+/**
+ * @internal
+ */
 export interface IBoxcarMessage extends ITicketedMessage {
 	// The type of the message
 	type: typeof BoxcarType;
@@ -164,6 +203,7 @@ export interface IBoxcarMessage extends ITicketedMessage {
 
 /**
  * Control messages for service to service communication only
+ * @internal
  */
 export interface IControlMessage {
 	type: string;
@@ -173,6 +213,7 @@ export interface IControlMessage {
 
 /**
  * Control messages types
+ * @internal
  */
 export enum ControlMessageType {
 	// Instruction sent to update Durable sequence number
@@ -188,6 +229,9 @@ export enum ControlMessageType {
 	ExtendClient = "extendClient",
 }
 
+/**
+ * @internal
+ */
 export interface IUpdateDSNControlMessageContents {
 	durableSequenceNumber: number;
 	isClientSummary: boolean;
@@ -196,6 +240,7 @@ export interface IUpdateDSNControlMessageContents {
 
 /**
  * Nack messages types
+ * @internal
  */
 export enum NackMessagesType {
 	// Used when ops should be nacked because a summary hasn't been made for a while
@@ -204,6 +249,7 @@ export enum NackMessagesType {
 
 /**
  * Control message sent to enable a nack message
+ * @internal
  */
 export interface INackMessagesControlMessageContents {
 	/**
@@ -230,6 +276,7 @@ export interface INackMessagesControlMessageContents {
 
 /**
  * Control message sent to disable a nack message
+ * @internal
  */
 export interface IDisableNackMessagesControlMessageContents {
 	/**
@@ -243,11 +290,17 @@ export interface IDisableNackMessagesControlMessageContents {
 	content: undefined;
 }
 
+/**
+ * @internal
+ */
 export interface ILambdaStartControlMessageContents {
 	lambdaName: LambdaName;
 	success: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IExtendClientControlMessageContents {
 	clientId?: string;
 	clientIds?: string[];

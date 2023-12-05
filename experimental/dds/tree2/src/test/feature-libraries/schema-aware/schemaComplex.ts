@@ -7,9 +7,10 @@
 
 import { SchemaBuilder } from "../../../domains";
 import {
+	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
+	InsertableFlexNode,
 	TreeFieldSchema,
-	SchemaAware,
 	TreeNodeSchema,
 } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
@@ -37,11 +38,11 @@ export const appSchemaData = builder.intoSchema(rootFieldSchema);
 
 // Schema aware types
 
-type FlexibleListTask = SchemaAware.TypedNode<typeof listTaskSchema>;
+type FlexibleListTask = InsertableFlexNode<typeof listTaskSchema>;
 
-type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<typeof rootFieldSchema.allowedTypes>;
+type FlexibleTask = AllowedTypesToFlexInsertableTree<typeof rootFieldSchema.allowedTypes>;
 
-type FlexibleStringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;
+type FlexibleStringTask = InsertableFlexNode<typeof stringTaskSchema>;
 
 // Example Use
 {

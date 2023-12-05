@@ -205,6 +205,9 @@ function checkThrottleAndUsage(
 	}
 }
 
+/**
+ * @internal
+ */
 export function configureWebSocketServices(
 	webSocketServer: core.IWebSocketServer,
 	orderManager: core.IOrdererManager,

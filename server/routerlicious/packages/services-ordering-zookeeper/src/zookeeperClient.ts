@@ -9,6 +9,9 @@
 import { IZookeeperClient } from "@fluidframework/server-services-core";
 import type ZooKeeper from "zookeeper";
 
+/**
+ * @internal
+ */
 export class ZookeeperClient implements IZookeeperClient {
 	private client: ZooKeeper;
 

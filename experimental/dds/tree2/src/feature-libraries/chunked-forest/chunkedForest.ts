@@ -15,7 +15,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Delta,
 	UpPath,
 	Anchor,
 	FieldAnchor,
@@ -28,6 +27,7 @@ import {
 	Range,
 	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
+	ProtoNodes,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -126,7 +126,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.invalidateDependents();
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
