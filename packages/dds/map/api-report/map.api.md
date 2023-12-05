@@ -22,7 +22,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @internal @sealed
+// @alpha @sealed
 export class DirectoryFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -38,13 +38,13 @@ export class DirectoryFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @internal
+// @alpha
 export interface ICreateInfo {
     ccIds: string[];
     csn: number;
 }
 
-// @internal
+// @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -58,20 +58,20 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
-// @internal
+// @alpha
 export interface IDirectoryClearOperation {
     path: string;
     type: "clear";
 }
 
-// @internal
+// @alpha
 export interface IDirectoryCreateSubDirectoryOperation {
     path: string;
     subdirName: string;
     type: "createSubDirectory";
 }
 
-// @internal
+// @alpha
 export interface IDirectoryDataObject {
     ci?: ICreateInfo;
     storage?: {
@@ -82,21 +82,21 @@ export interface IDirectoryDataObject {
     };
 }
 
-// @internal
+// @alpha
 export interface IDirectoryDeleteOperation {
     key: string;
     path: string;
     type: "delete";
 }
 
-// @internal
+// @alpha
 export interface IDirectoryDeleteSubDirectoryOperation {
     path: string;
     subdirName: string;
     type: "deleteSubDirectory";
 }
 
-// @internal
+// @alpha
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -105,7 +105,7 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @internal
+// @alpha
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 // @internal
@@ -114,10 +114,10 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-// @internal
+// @alpha
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
-// @internal
+// @alpha
 export interface IDirectorySetOperation {
     key: string;
     path: string;
@@ -125,37 +125,37 @@ export interface IDirectorySetOperation {
     value: ISerializableValue;
 }
 
-// @internal
+// @alpha
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
-// @internal
+// @alpha
 export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
 
-// @internal
+// @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-// @internal
+// @alpha
 export interface ILocalValue {
     makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
     readonly type: string;
     readonly value: any;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ISerializableValue {
     type: string;
     value: any;
 }
 
-// @internal
+// @alpha
 export interface ISerializedValue {
     type: string;
     value: string | undefined;
 }
 
-// @internal
+// @alpha
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -163,7 +163,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @internal
+// @alpha
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -171,32 +171,32 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @internal
+// @alpha
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @internal
+// @alpha
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IValueChanged {
     key: string;
     previousValue: any;
 }
 
-// @internal
+// @alpha
 export class LocalValueMaker {
     constructor(serializer: IFluidSerializer);
     fromInMemory(value: unknown): ILocalValue;
     fromSerializable(serializable: ISerializableValue): ILocalValue;
 }
 
-// @internal @sealed
+// @alpha @sealed
 export class MapFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -212,7 +212,7 @@ export class MapFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @internal @sealed
+// @alpha @sealed
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     [Symbol.toStringTag]: string;
@@ -261,7 +261,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     values(): IterableIterator<any>;
 }
 
-// @internal
+// @alpha
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;

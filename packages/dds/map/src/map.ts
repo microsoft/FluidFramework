@@ -30,7 +30,7 @@ const snapshotFileName = "header";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class MapFactory implements IChannelFactory {
 	/**

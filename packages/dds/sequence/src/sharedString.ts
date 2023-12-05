@@ -24,7 +24,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
- * @internal
+ * @alpha
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -54,7 +54,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type SharedStringSegment = TextSegment | Marker;
 

@@ -7,7 +7,7 @@
  * Examples of known categories, however category can be any string for extensibility.
  *
  * @deprecated Moved to \@fluidframework/telemetry-utils package
- * @internal
+ * @alpha
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -114,7 +114,7 @@ export interface ITelemetryBaseLogger {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryGenericEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @internal
+ * @alpha
  */
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
 	eventName: string;
@@ -127,7 +127,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryErrorEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @internal
+ * @alpha
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;
@@ -139,7 +139,7 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryPerformanceEventExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @internal
+ * @alpha
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 	duration?: number; // Duration of event (optional)
@@ -163,7 +163,7 @@ export interface ILoggingError extends Error {
  *
  * @deprecated For internal use within FluidFramework, use ITelemetryLoggerExt in \@fluidframework/telemetry-utils.
  * No replacement intended for FluidFramework consumers.
- * @internal
+ * @alpha
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**

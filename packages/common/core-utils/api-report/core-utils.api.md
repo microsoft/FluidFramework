@@ -10,7 +10,7 @@ export function assert(condition: boolean, message: string | number): asserts co
 // @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
-// @internal
+// @alpha
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;

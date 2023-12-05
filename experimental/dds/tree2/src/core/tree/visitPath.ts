@@ -9,7 +9,7 @@ import {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree";
-import * as Delta from "./delta";
+import { ProtoNodes } from "./delta";
 
 /**
  * Delta visitor for the path tree.
@@ -121,5 +121,5 @@ export interface PathVisitor {
 	 *
 	 * @deprecated Migrate to using the other events.
 	 */
-	onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+	onInsert(path: UpPath, content: ProtoNodes): void;
 }

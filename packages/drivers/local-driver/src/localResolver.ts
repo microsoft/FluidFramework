@@ -11,7 +11,7 @@ import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth";
 
 /**
- * @internal
+ * @alpha
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
 	const createNewRequest: IRequest = {

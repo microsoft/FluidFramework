@@ -213,7 +213,7 @@ function compatBehaviorAllowsMessageType(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -235,7 +235,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -298,21 +298,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
@@ -349,7 +349,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -366,7 +366,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @internal
+ * @alpha
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -516,7 +516,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
- * @internal
+ * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",

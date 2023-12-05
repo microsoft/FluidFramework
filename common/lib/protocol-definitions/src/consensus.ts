@@ -101,7 +101,7 @@ export interface IQuorumClients {
 
 /**
  * Interface for tracking proposals in the Quorum.
- * @internal
+ * @alpha
  */
 export interface IQuorumProposals {
 	propose(key: string, value: unknown): Promise<void>;
@@ -150,7 +150,7 @@ export interface IProtocolState {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;

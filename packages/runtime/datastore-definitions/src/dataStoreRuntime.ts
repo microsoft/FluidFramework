@@ -35,7 +35,8 @@ import {
 import { IChannel } from ".";
 
 /**
- * @internal
+ * Events emitted by {@link IFluidDataStoreRuntime}.
+ * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);

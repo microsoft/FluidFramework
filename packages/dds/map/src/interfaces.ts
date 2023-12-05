@@ -297,7 +297,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
- * @internal
+ * @alpha
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -381,7 +381,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated.
- * @internal
+ * @alpha
  */
 export interface ISerializableValue {
 	/**
@@ -398,7 +398,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
- * @internal
+ * @alpha
  */
 export interface ISerializedValue {
 	/**

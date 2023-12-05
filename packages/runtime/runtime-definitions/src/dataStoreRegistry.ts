@@ -16,17 +16,17 @@ export type FluidDataStoreRegistryEntry = Readonly<
 /**
  * An associated pair of an identifier and registry entry.  Registry entries
  * may be dynamically loaded.
- * @internal
+ * @alpha
  */
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 /**
  * An iterable identifier/registry entry pair list
- * @internal
+ * @alpha
  */
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry =
 	"IFluidDataStoreRegistry";
@@ -41,7 +41,7 @@ export interface IProvideFluidDataStoreRegistry {
 /**
  * An association of identifiers to data store registry entries, where the
  * entries can be used to create data stores.
- * @internal
+ * @alpha
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
 	get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;

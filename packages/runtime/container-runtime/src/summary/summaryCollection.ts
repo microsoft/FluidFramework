@@ -19,7 +19,7 @@ import {
 
 /**
  * Interface for summary op messages with typed contents.
- * @internal
+ * @alpha
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
@@ -28,7 +28,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
- * @internal
+ * @alpha
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
@@ -37,7 +37,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
- * @internal
+ * @alpha
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
