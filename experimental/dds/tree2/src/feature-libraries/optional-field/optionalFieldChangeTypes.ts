@@ -47,9 +47,7 @@ export interface OptionalChangeset {
 	/**
 	 * Nested changes to nodes that occupy registers.
 	 *
-	 * Nodes are identified by the register they occupy in the *output* context of the changeset.
-	 * Note that this is different from the delta format.
-	 * Switching this to be consistent is tracked by AB#6296.
+	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
 	childChanges: [register: RegisterId, childChange: NodeChangeset][];
 

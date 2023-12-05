@@ -5,7 +5,7 @@
 
 /**
  * Specifies an environment on Fluid property of a IFluidPackage.
- * @internal
+ * @alpha
  */
 export interface IFluidPackageEnvironment {
 	/**
@@ -36,7 +36,7 @@ export interface IFluidPackageEnvironment {
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
  * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
- * @internal
+ * @alpha
  */
 export interface IFluidPackage {
 	/**
@@ -73,7 +73,7 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
@@ -81,7 +81,7 @@ export interface IFluidCodeDetailsConfig {
 
 /**
  * Data structure used to describe the code to load on the Fluid document
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetails {
 	/**
@@ -114,13 +114,13 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
 };
 
 /**
- * @internal
+ * @alpha
  */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 	"IFluidCodeDetailsComparer";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidCodeDetailsComparer {
 	readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
@@ -128,7 +128,7 @@ export interface IProvideFluidCodeDetailsComparer {
 
 /**
  * Provides capability to compare Fluid code details.
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**

@@ -190,10 +190,11 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 			"npm-package-json-script-mocha-config": [
-				// these doesn't use mocha config for reporters yet.
+				// these don't use mocha config for reporters yet.
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
+				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",

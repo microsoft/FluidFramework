@@ -17,12 +17,12 @@ import {
 	NodeKeyIndex,
 	LocalNodeKey,
 	StableNodeKey,
-	SchemaAware,
 	nodeKeyFieldKey,
 	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
+	InsertableFlexField,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
@@ -45,7 +45,7 @@ function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey
 
 describe("Node Key Index", () => {
 	function createView(
-		initialTree: SchemaAware.TypedField<typeof nodeSchemaData.rootFieldSchema>,
+		initialTree: InsertableFlexField<typeof nodeSchemaData.rootFieldSchema>,
 	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
 		return treeWithContent({ initialTree, schema: nodeSchemaData });
 	}
