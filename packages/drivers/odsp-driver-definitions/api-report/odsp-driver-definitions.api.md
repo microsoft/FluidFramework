@@ -296,7 +296,7 @@ export enum SharingLinkScope {
 // @internal
 export const snapshotKey = "snapshot";
 
-// @internal
+// @alpha
 export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
 // @alpha
@@ -309,7 +309,7 @@ export interface TokenFetchOptions {
 // @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
-// @internal
+// @alpha
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;
