@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { type IUser } from "@fluidframework/protocol-definitions";
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IOdspTokenProvider } from "./token";
 
 /**

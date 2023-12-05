@@ -10,10 +10,7 @@ import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IQuorumClientsEvents } from '@fluidframework/protocol-definitions';
-import { IQuorumEvents } from '@fluidframework/protocol-definitions';
 import { IQuorumProposals } from '@fluidframework/protocol-definitions';
-import { IQuorumProposalsEvents } from '@fluidframework/protocol-definitions';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
@@ -48,7 +45,7 @@ export interface IProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @internal
+// @alpha
 export interface IQuorumSnapshot {
     // (undocumented)
     members: QuorumClientsSnapshot;
@@ -95,7 +92,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 }
 
 // @internal
-export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
+export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum {
     constructor(members: QuorumClientsSnapshot, proposals: QuorumProposalsSnapshot["proposals"], values: QuorumProposalsSnapshot["values"], sendProposal: (key: string, value: any) => number);
     addMember(clientId: string, details: ISequencedClient): void;
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
@@ -120,7 +117,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 }
 
 // @internal
-export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
+export class QuorumClients extends TypedEventEmitter<IQuorumClients["on"]> implements IQuorumClients {
     constructor(snapshot: QuorumClientsSnapshot);
     addMember(clientId: string, details: ISequencedClient): void;
     // (undocumented)
@@ -133,11 +130,11 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     snapshot(): QuorumClientsSnapshot;
 }
 
-// @internal
+// @alpha
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 // @internal
-export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
+export class QuorumProposals extends TypedEventEmitter<IQuorumProposals["on"]> implements IQuorumProposals {
     constructor(snapshot: QuorumProposalsSnapshot, sendProposal: (key: string, value: any) => number);
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
@@ -155,7 +152,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
-// @internal
+// @alpha
 export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];

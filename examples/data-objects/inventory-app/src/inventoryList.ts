@@ -7,7 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
 	ForestType,
 	TreeFactory,
-	TreeViewOld,
+	TreeView,
 	typeboxValidator,
 	ITree,
 } from "@fluid-experimental/tree2";
@@ -26,7 +26,7 @@ const factory = new TreeFactory({
  */
 export class InventoryList extends DataObject {
 	#tree?: ITree;
-	#view?: TreeViewOld<Inventory>;
+	#view?: TreeView<Inventory>;
 
 	public get inventory(): Inventory {
 		if (this.#view === undefined)

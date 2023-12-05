@@ -15,12 +15,12 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeNoCompat("Pong", (getTestObjectProvider) => {
+	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 

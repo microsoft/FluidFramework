@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware, typeNameSymbol, SchemaBuilder, leaf } from "../../../";
+import { SchemaBuilder, leaf } from "../../../domains";
+import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
@@ -21,9 +22,9 @@ export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.TypedNode<typeof leaf.number>;
+	type FlexibleNumber = InsertableFlexNode<typeof leaf.number>;
 
-	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema>;
+	type FlexiblePoint = InsertableFlexNode<typeof pointSchema>;
 
 	const point: FlexiblePoint = {
 		x: 1,

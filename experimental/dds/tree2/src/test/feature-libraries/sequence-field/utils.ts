@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
 	RevisionInfo,
 	RevisionTag,
 	TaggedChange,
@@ -206,7 +206,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange, revision)),

@@ -13,7 +13,7 @@ import {
 	mockConfigProvider,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -24,7 +24,7 @@ import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
-describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
+describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 	const tests = (tombstoneEnabled: boolean = false) => {
 		let provider: ITestObjectProvider;
 

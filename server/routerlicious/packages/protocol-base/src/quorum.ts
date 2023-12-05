@@ -10,10 +10,7 @@ import {
 	ICommittedProposal,
 	IQuorum,
 	IQuorumClients,
-	IQuorumClientsEvents,
-	IQuorumEvents,
 	IQuorumProposals,
-	IQuorumProposalsEvents,
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISequencedProposal,
@@ -33,13 +30,13 @@ class PendingProposal implements ISequencedProposal {
 
 /**
  * Snapshot format for a QuorumClients
- * @internal
+ * @alpha
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 /**
  * Snapshot format for a QuorumProposals
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type QuorumProposalsSnapshot = {
@@ -49,7 +46,7 @@ export type QuorumProposalsSnapshot = {
 
 /**
  * Snapshot format for a Quorum
- * @internal
+ * @alpha
  */
 export interface IQuorumSnapshot {
 	members: QuorumClientsSnapshot;
@@ -62,7 +59,7 @@ export interface IQuorumSnapshot {
  * @internal
  */
 export class QuorumClients
-	extends TypedEventEmitter<IQuorumClientsEvents>
+	extends TypedEventEmitter<IQuorumClients["on"]>
 	implements IQuorumClients
 {
 	private readonly members: Map<string, ISequencedClient>;
@@ -145,7 +142,7 @@ export class QuorumClients
  * @internal
  */
 export class QuorumProposals
-	extends TypedEventEmitter<IQuorumProposalsEvents>
+	extends TypedEventEmitter<IQuorumProposals["on"]>
 	implements IQuorumProposals
 {
 	private readonly proposals: Map<number, PendingProposal>;
@@ -438,7 +435,7 @@ export class QuorumProposals
  * they have agreed upon and any pending proposals.
  * @internal
  */
-export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
+export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum {
 	private readonly quorumClients: QuorumClients;
 	private readonly quorumProposals: QuorumProposals;
 	private isDisposed: boolean = false;

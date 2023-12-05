@@ -53,4 +53,4 @@ export {
 } from "./utils";
 export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable";
 
-export { relevantRemovedTrees } from "./relevantRemovedTrees";
+export { relevantRemovedRoots } from "./relevantRemovedRoots";

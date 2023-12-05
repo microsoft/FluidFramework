@@ -13,7 +13,7 @@ import {
 	SchemaFactory,
 	TreeConfiguration,
 } from "@fluid-experimental/tree2";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -58,7 +58,7 @@ function getNewTreeView(tree: ITree): TreeView<RootType> {
 
 const testValue = 5;
 
-describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
+describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

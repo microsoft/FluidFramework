@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RestrictiveReadonlyRecord, fail, getOrCreate, isReadonlyArray } from "../util";
+import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util";
 import {
 	FlexTreeNode,
 	LeafNodeSchema as FlexLeafNodeSchema,
@@ -12,13 +12,15 @@ import {
 	ObjectNodeSchema,
 	isLazy,
 	markEager,
+	MapNodeSchema,
+	FieldNodeSchema,
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
 import { TreeListNode, TreeMapNodeBase } from "../simple-tree";
 import {
 	createNodeProxy,
-	createRawObjectProxy,
+	createRawNodeProxy,
 	getClassSchema,
 	getSequenceField,
 	listPrototypeProperties,
@@ -223,7 +225,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 					return createNodeProxy(input, allowAdditionalProperties, this) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawObjectProxy(
+					return createRawNodeProxy(
 						flexSchema as ObjectNodeSchema,
 						input,
 						allowAdditionalProperties,
@@ -242,7 +244,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
@@ -274,7 +276,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	>;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeBase}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
@@ -344,8 +346,13 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 						customizable ? this : undefined,
 					) as schema;
 				} else {
-					// unhydrated data case.
-					fail("TODO: Support constructing unhydrated maps.");
+					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+					return createRawNodeProxy(
+						flexSchema as MapNodeSchema,
+						input,
+						customizable,
+						customizable ? this : undefined,
+					) as schema;
 				}
 			}
 		}
@@ -476,8 +483,13 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 						customizable ? this : undefined,
 					) as schema;
 				} else {
-					// unhydrated data case.
-					fail("TODO: Support constructing unhydrated lists.");
+					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+					return createRawNodeProxy(
+						flexSchema as FieldNodeSchema,
+						[...input],
+						customizable,
+						customizable ? this : undefined,
+					) as schema;
 				}
 			}
 		}

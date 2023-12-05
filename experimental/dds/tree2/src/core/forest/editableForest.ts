@@ -7,13 +7,13 @@ import { assert } from "@fluidframework/core-utils";
 import { FieldKey } from "../schema-stored";
 import {
 	DetachedField,
-	Delta,
 	Anchor,
 	ITreeCursorSynchronous,
 	DeltaVisitor,
 	applyDelta,
 	makeDetachedFieldIndex,
 	deltaForRootInitialization,
+	DeltaRoot,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -47,7 +47,7 @@ export function initializeForest(
 	content: readonly ITreeCursorSynchronous[],
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: Delta.Root = deltaForRootInitialization(content);
+	const delta: DeltaRoot = deltaForRootInitialization(content);
 	applyDelta(delta, forest, makeDetachedFieldIndex("init"));
 }
 
