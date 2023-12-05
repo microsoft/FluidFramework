@@ -78,7 +78,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
-): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>> {
+): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>, TreeValue<T["info"]>> {
 	return new LeafNodeSchema(schema);
 }
 
@@ -405,7 +405,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.List<${string}>`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	/**
@@ -435,7 +435,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${string}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -446,7 +446,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				`${TScope}.${string}`,
 				NodeKind.List,
 				TreeListNode<T>,
-				Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
 		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true);
@@ -465,7 +465,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -474,7 +474,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public get length(): number {
 				return getSequenceField(this as unknown as TreeListNode).length;
 			}
-			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
+			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
 					return createNodeProxy(
@@ -501,7 +501,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.List,
 			TreeListNode<T>,
-			Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 
