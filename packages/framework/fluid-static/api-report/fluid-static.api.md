@@ -71,7 +71,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
     get isDirty(): boolean;
 }
 
-// @internal
+// @alpha
 export interface IConnection {
     id: string;
     mode: "write" | "read";
@@ -100,7 +100,7 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
-// @internal
+// @alpha
 export interface IMember {
     connections: IConnection[];
     userId: string;
@@ -123,13 +123,13 @@ export interface IRootDataObject extends IProvideRootDataObject {
     readonly initialObjects: LoadableObjectRecord;
 }
 
-// @internal
+// @alpha
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
     getMyself(): Myself<M> | undefined;
 }
 
-// @internal
+// @alpha
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     // @eventProperty
     (event: "membersChanged", listener: () => void): void;
@@ -151,10 +151,10 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 // @alpha
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
-// @internal
+// @alpha
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
-// @internal
+// @alpha
 export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
