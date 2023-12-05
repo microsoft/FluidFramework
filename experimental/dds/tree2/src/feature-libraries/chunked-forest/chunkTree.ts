@@ -106,9 +106,7 @@ export class Chunker implements IChunker {
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
-	) {
-		this.schema.on("afterSchemaChange", () => this.schemaChanged());
-	}
+	) {}
 
 	public clone(schema: StoredSchemaRepository): IChunker {
 		// This does not preserve the cache.
