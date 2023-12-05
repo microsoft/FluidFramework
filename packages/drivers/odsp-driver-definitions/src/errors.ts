@@ -11,7 +11,7 @@ import {
 /**
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
- * @internal
+ * @alpha
  */
 export const OdspErrorTypes = {
 	// Inherit base driver error types
@@ -62,7 +62,7 @@ export const OdspErrorTypes = {
 	blockedIPAddress: "blockedIPAddress",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 

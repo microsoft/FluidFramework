@@ -116,7 +116,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>

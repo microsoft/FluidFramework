@@ -101,7 +101,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
- * @internal
+ * @alpha
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -1184,7 +1184,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @internal
+ * @alpha
  */
 export const mixinSummaryHandler = (
 	handler: (

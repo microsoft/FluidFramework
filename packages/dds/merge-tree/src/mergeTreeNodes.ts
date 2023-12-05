@@ -132,7 +132,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @internal
+ * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;

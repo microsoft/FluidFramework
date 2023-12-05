@@ -20,7 +20,7 @@ import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaRevertible =
 	| {

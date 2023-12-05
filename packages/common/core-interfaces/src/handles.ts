@@ -21,7 +21,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @internal
+ * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
