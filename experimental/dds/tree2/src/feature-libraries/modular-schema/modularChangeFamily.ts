@@ -81,6 +81,8 @@ import {
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
+	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
+
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(
