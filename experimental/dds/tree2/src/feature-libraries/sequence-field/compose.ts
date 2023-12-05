@@ -660,23 +660,30 @@ function compareCellPositions(
 		"Cells should have defined revisions",
 	);
 
-	const newRevisionIndex = metadata.getIndex(newCellId.revision);
-	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
-
 	if (!isNewAttach(newMark)) {
+		// If `newMark` were targeting a cell older than the composition window
+		// there would be lineage determining the relative order of `newCell` and `baseCell`.
+
 		// TODO:6127: Enable this assert
 		// assert(
 		// 	newRevisionIndex !== undefined,
-		// 	"Expected this cell to have been deleted by a change in this composition",
+		// 	"Expected lineage to determine cell order",
 		// );
+
+		// `newCell` was detached by a change in this composition, so there will be a corresponding mark
+		// later in the base changeset.
 		return -Infinity;
 	}
 
-	return newRevisionIndex !== undefined &&
-		baseRevisionIndex !== undefined &&
-		baseRevisionIndex > newRevisionIndex
-		? -Infinity
-		: Infinity;
+	const newRevisionIndex = metadata.getIndex(newCellId.revision);
+	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
+	assert(
+		newRevisionIndex !== undefined,
+		"A cell from a new attach should have a defined revision index",
+	);
+
+	// We use the tiebreaking policy of the newer cell.
+	return (baseRevisionIndex ?? -Infinity) > newRevisionIndex ? -Infinity : Infinity;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
