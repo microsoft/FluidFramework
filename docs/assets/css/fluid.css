@@ -13,6 +13,12 @@ footer {
 	background-color: #404049;
 }
 
+.availableServices {
+	font-size: 2rem;
+	text-align: center;
+	background-color: #f3f5f7;
+}
+
 .row-cta {
 	display: flex;
 	flex-wrap: wrap;
