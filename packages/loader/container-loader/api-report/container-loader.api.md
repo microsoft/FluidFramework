@@ -139,13 +139,13 @@ export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot:
 // @internal @deprecated
 export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
-// @internal
+// @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @internal
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
-// @internal
+// @alpha
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 // (No @packageDocumentation comment for this package)

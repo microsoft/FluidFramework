@@ -36,7 +36,7 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 // @internal (undocumented)
 export const connectedEventName = "connected";
 
-// @internal
+// @alpha
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
@@ -237,13 +237,13 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBags {
     // (undocumented)
     all?: ITelemetryLoggerPropertyBag;
@@ -410,7 +410,7 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
     string | number | boolean | undefined | (string | number | boolean)[];
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 // @internal @deprecated

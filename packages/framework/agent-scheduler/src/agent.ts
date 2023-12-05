@@ -6,7 +6,7 @@
 import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
- * @internal
+ * @alpha
  */
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 

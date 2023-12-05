@@ -481,7 +481,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;

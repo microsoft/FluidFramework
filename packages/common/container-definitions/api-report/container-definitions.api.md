@@ -64,7 +64,7 @@ export enum ContainerErrorType {
     usageError = "usageError"
 }
 
-// @internal
+// @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
     readonly genericError: "genericError";
@@ -74,7 +74,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
@@ -107,7 +107,7 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @internal
+// @alpha
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -308,7 +308,7 @@ export interface IDeltaSender {
 
 export { IErrorBase }
 
-// @internal
+// @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
     // (undocumented)
     fluid: {
@@ -317,7 +317,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
     };
 }
 
-// @internal
+// @alpha
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
     umd: {
         files: string[];
@@ -357,7 +357,7 @@ export interface IFluidModule {
     fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
-// @internal
+// @alpha
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -489,13 +489,13 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
-// @internal
+// @alpha
 export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
 // @internal
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
-// @internal
+// @alpha
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @alpha
@@ -514,7 +514,7 @@ export { IThrottlingWarning }
 
 export { IUsageError }
 
-// @internal
+// @alpha
 export enum LoaderHeader {
     // @deprecated (undocumented)
     cache = "fluid-cache",

@@ -38,7 +38,7 @@ export function getAsync(url: string, authRequestInfo: IOdspAuthRequestInfo): Pr
 // @internal (undocumented)
 export function getChildrenByDriveItem(driveItem: IOdspDriveItem, server: string, authRequestInfo: IOdspAuthRequestInfo): Promise<IOdspDriveItem[]>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function getDriveId(server: string, account: string, library: string | undefined, authRequestInfo: IOdspAuthRequestInfo): Promise<string>;
 
 // @internal (undocumented)
@@ -59,7 +59,7 @@ export function getLoginPageUrl(server: string, clientConfig: IClientConfig, sco
 // @internal (undocumented)
 export const getOdspRefreshTokenFn: (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const getOdspScope: (server: string) => string;
 
 // @internal (undocumented)
@@ -90,7 +90,7 @@ export interface IClientConfig {
     clientSecret: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOdspAuthRequestInfo {
     // (undocumented)
     accessToken: string;
@@ -162,7 +162,7 @@ export function parseFacetCodes(errorResponse: OdspErrorResponse): string[];
 // @internal (undocumented)
 export function postAsync(url: string, body: any, authRequestInfo: IOdspAuthRequestInfo): Promise<Response>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 // @internal (undocumented)
