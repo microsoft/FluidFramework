@@ -7,7 +7,7 @@
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -37,7 +37,7 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @internal @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
@@ -48,25 +48,25 @@ export interface IContainerExperimental extends IContainer {
     getPendingLocalState?(): Promise<string>;
 }
 
-// @internal
+// @alpha
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
 };
 
-// @internal @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
     summarizeProtocolTree?: boolean;
 }
 
-// @internal
+// @alpha
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
@@ -79,7 +79,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
+// @alpha
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
@@ -99,7 +99,7 @@ export interface IParsedUrl {
     version: string | null | undefined;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
@@ -110,7 +110,7 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 // @internal
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
 
-// @internal
+// @alpha
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
@@ -133,7 +133,7 @@ export class Loader implements IHostLoader {
     readonly services: ILoaderServices;
 }
 
-// @internal
+// @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @internal @deprecated
