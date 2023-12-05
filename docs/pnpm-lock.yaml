@@ -6132,14 +6132,16 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0
-      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-      chalk: 4.1.2
+      chalk: 2.4.2
       markdown-magic-package-scripts: 1.2.2_bfrwj6ys6wock6p526xv5vf35u
       markdown-magic-template: 1.0.1_bfrwj6ys6wock6p526xv5vf35u
       yargs: 17.7.2
     transitivePeerDependencies:
-      - '@types/node'
+      - eslint
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
       - markdown-magic
       - supports-color
+      - typescript
     dev: false
