@@ -8,6 +8,18 @@
 		"url": "https://github.com/microsoft/FluidFramework.git",
 		"directory": "packages/framework/tinylicious-client"
 	},
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
