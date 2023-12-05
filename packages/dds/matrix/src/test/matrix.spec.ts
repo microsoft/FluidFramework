@@ -15,6 +15,7 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
@@ -66,7 +67,7 @@ function createMatrixForReconnection(
 	return { matrix, containerRuntime };
 }
 
-describe("Matrix", () => {
+describe("Matrix1", () => {
 	[false, true].forEach((isSetCellPolicyFWW: boolean) => {
 		describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 			describe("local client", () => {
@@ -1097,7 +1098,10 @@ describe("Matrix", () => {
 			let containerRuntime2: MockContainerRuntimeForReconnection;
 			let mockHandle: MockHandle<unknown>;
 
-			const expect = async (expected?: readonly (readonly any[])[]) => {
+			const expect = async (
+				expected?: readonly (readonly any[])[],
+				extraClient?: { matrix: SharedMatrix; consumer: TestConsumer }[],
+			) => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = extract(matrix1);
@@ -1109,7 +1113,13 @@ describe("Matrix", () => {
 					assert.deepEqual(actual1, expected, "matrix not as expected");
 				}
 
-				for (const consumer of [consumer1, consumer2]) {
+				const consumers = [consumer1, consumer2];
+				if (extraClient !== undefined) {
+					for (const client of extraClient) {
+						consumers.push(client.consumer);
+					}
+				}
+				for (const consumer of consumers) {
 					assert.deepEqual(
 						extract(consumer),
 						actual1,
@@ -1117,6 +1127,37 @@ describe("Matrix", () => {
 					);
 				}
 			};
+
+			async function getNewClient<T>(matrix: SharedMatrix<T>): Promise<{
+				matrix: SharedMatrix;
+				containerRuntime: MockContainerRuntimeForReconnection;
+				consumer: TestConsumer;
+			}> {
+				// Create a summary
+				const objectStorage = MockStorage.createFromSummary(
+					matrix.getAttachSummary().summary,
+				);
+
+				const dataStoreRuntime = new MockFluidDataStoreRuntime();
+				const containerRuntime =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+
+				// Load the summary into a newly created 2nd SharedMatrix.
+				const matrix2 = new SharedMatrix<T>(
+					dataStoreRuntime,
+					`load(${matrix.id})`,
+					SharedMatrixFactory.Attributes,
+				);
+				const services: IChannelServices = {
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
+					objectStorage,
+				};
+				await matrix2.load(services);
+
+				matrix2.connect(services);
+				const consumer = new TestConsumer(matrix2);
+				return { matrix: matrix2, containerRuntime, consumer };
+			}
 
 			beforeEach(async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -1466,6 +1507,50 @@ describe("Matrix", () => {
 				matrix2.insertRows(1, 1);
 				containerRuntime1.connected = true;
 				await expect([[undefined], [undefined]]);
+			});
+
+			it("Winner op in FWW is made before summary and loser op is sequenced after summary, second op is rejected due to FWW", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				await expect([[undefined]]);
+
+				switchPolicy(matrix1);
+				containerRuntimeFactory.processAllMessages();
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				containerRuntimeFactory.processOneMessage();
+				// Load another client in between processing of second op and see that it treats
+				// second set op as FWW and rejects it.
+				const newClient = await getNewClient(matrix1);
+				newClient.containerRuntime.connected = true;
+
+				containerRuntimeFactory.processAllMessages();
+				await expect([["A"]], [{ ...newClient }]);
+			});
+
+			it("New client loads from summary made in LWW mode and follow LWW for ops before switching and FWW after switching", async () => {
+				// Insert a row and a column in the first shared matrix.
+				matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+				matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+				await expect([[undefined]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+				containerRuntimeFactory.processAllMessages();
+
+				const newClient = await getNewClient(matrix1);
+				newClient.containerRuntime.connected = true;
+
+				switchPolicy(matrix1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["C1"]);
+				await expect([["C1"]], [{ ...newClient }]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["D"]);
+				matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["E"]);
+
+				await expect([["D"]], [{ ...newClient }]);
 			});
 		});
 	});

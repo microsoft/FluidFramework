@@ -151,7 +151,7 @@ export class SharedMatrix<T = any>
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
-	private readonly cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
+	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
 	private setCellLwwToFwwPolicySwitchOpSeqNumber: number;
 	// Used to track if there is any reentrancy in setCell code.
@@ -522,16 +522,19 @@ export class SharedMatrix<T = any>
 			SnapshotPath.cols,
 			this.cols.summarize(this.runtime, this.handle, serializer),
 		);
+		const artifactsToSummarize = [
+			this.cells.snapshot(),
+			this.pending.snapshot(),
+			this.setCellLwwToFwwPolicySwitchOpSeqNumber,
+		];
+
+		// Only need to store it in the snapshot if we have switched the policy already.
+		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
+			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
+		}
 		builder.addBlob(
 			SnapshotPath.cells,
-			serializer.stringify(
-				[
-					this.cells.snapshot(),
-					this.pending.snapshot(),
-					this.setCellLwwToFwwPolicySwitchOpSeqNumber,
-				],
-				this.handle,
-			),
+			serializer.stringify(artifactsToSummarize, this.handle),
 		);
 		return builder.getSummaryTree();
 	}
@@ -716,12 +719,19 @@ export class SharedMatrix<T = any>
 				new ObjectStoragePartition(storage, SnapshotPath.cols),
 				this.serializer,
 			);
-			const [cellData, _pendingCliSeqData, setCellLwwToFwwPolicySwitchOpSeqNumber] =
-				await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
+			const [
+				cellData,
+				_pendingCliSeqData,
+				setCellLwwToFwwPolicySwitchOpSeqNumber,
+				cellLastWriteTracker,
+			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
 			this.cells = SparseArray2D.load(cellData);
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber =
 				setCellLwwToFwwPolicySwitchOpSeqNumber ?? -1;
+			if (cellLastWriteTracker !== undefined) {
+				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
+			}
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
