@@ -501,7 +501,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.List,
 			TreeListNode<T>,
-			Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 
