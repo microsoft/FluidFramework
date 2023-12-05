@@ -199,7 +199,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 <div class="value-props">
     <h2><strong>What our customers are saying about Fluid Framework: </strong></h2>
 </div>
-{{< carousel items="1" height="500" unit="px" duration="1000" >}}
+<!-- {{< carousel items="1" height="500" unit="px" duration="1000" >}} -->
 
 <!-- {{<swimlane_container fullPage="yes">}}
     {{<swimlane
