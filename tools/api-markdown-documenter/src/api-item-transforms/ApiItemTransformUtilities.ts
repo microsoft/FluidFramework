@@ -4,15 +4,15 @@
  */
 import * as Path from "node:path";
 
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { getQualifiedApiItemName } from "../utilities";
+import { getQualifiedApiItemName, getReleaseTag } from "../utilities";
 import {
-	ApiItemTransformationConfiguration,
-	DocumentBoundaries,
-	HierarchyBoundaries,
+	type ApiItemTransformationConfiguration,
+	type DocumentBoundaries,
+	type HierarchyBoundaries,
 } from "./configuration";
 
 /**
@@ -458,4 +458,36 @@ function doesItemGenerateHierarchy(
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
 	return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
+}
+
+/**
+ * Determines whether or not the specified API item should have documentation generated for it.
+ * This is determined based on its release tag compared to {@link ApiItemTransformationConfiguration.releaseLevel}.
+ *
+ * @remarks Items without an associated release tag will always be included as a precaution.
+ *
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+export function shouldItemBeIncluded(
+	apiItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): boolean {
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
+		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
+		// If no release
+		const parent = getFilteredParent(apiItem);
+		if (parent === undefined) {
+			// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
+			// or not it is intended to be included in the generated documentation suite.
+			// To be safe, log a warning but return true.
+			config.logger.warning("Encountered an API item with no release tag in ancestry.");
+			return true;
+		}
+
+		return shouldItemBeIncluded(parent, config);
+	}
+
+	return releaseTag >= (config.releaseLevel as ReleaseTag);
 }

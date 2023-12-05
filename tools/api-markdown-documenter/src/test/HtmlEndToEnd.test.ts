@@ -4,7 +4,7 @@
  */
 import * as Path from "node:path";
 
-import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { Suite } from "mocha";
@@ -219,6 +219,7 @@ describe("HTML rendering end-to-end tests", () => {
 					ApiItemKind.Variable,
 				],
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+				releaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			},
 			renderConfig: {
 				startingHeadingLevel: 2,
