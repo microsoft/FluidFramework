@@ -16,7 +16,7 @@ import {
 import { Mutable, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
-import { Delta, makeDetachedNodeId } from "../../../core";
+import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
 
 /**
  * Picks the last value written.
@@ -81,8 +81,8 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: ({ change, revision }): Delta.FieldChanges => {
-		const delta: Mutable<Delta.FieldChanges> = {};
+	intoDelta: ({ change, revision }): DeltaFieldChanges => {
+		const delta: Mutable<DeltaFieldChanges> = {};
 		if (change !== 0) {
 			// This is an arbitrary number for testing.
 			const changeId = makeDetachedNodeId(revision, 424242);

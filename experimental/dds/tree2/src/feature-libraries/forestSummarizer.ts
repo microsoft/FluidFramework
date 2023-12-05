@@ -14,7 +14,7 @@ import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	applyDelta,
-	Delta,
+	DeltaFieldChanges,
 	FieldKey,
 	IEditableForest,
 	ITreeCursorSynchronous,
@@ -119,7 +119,7 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = this.codec.decode(parse(treeBufferString) as Format);
 			const allocator = idAllocatorFromMaxId();
-			const fieldChanges: [FieldKey, Delta.FieldChanges][] = fields.map(
+			const fieldChanges: [FieldKey, DeltaFieldChanges][] = fields.map(
 				([fieldKey, content]) => {
 					const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
 						cursor.fork(),
