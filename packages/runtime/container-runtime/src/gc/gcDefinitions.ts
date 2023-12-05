@@ -40,12 +40,6 @@ export const nextGCVersion: GCVersion = 4;
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable throwing an error when tombstone
- * object is loaded (requested).
- */
-export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
-
-/**
  * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
  *
  * If unset altogether, Sweep will be disabled.
@@ -353,6 +347,13 @@ export interface IGCRuntimeOptions {
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
 	sessionExpiryTimeoutMs?: number;
+
+	/**
+	 * If true, then Tombstoned objects will merely trigger a log message when loaded.
+	 *
+	 * By default, attempting to load a Tombstoned object will result in an error.
+	 */
+	disableGCThrowOnTombstoneLoad?: boolean;
 
 	/**
 	 * Allows additional GC options to be passed.
