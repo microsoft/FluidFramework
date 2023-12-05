@@ -166,7 +166,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		assert.throws(
 			codeBlock,
 			(e: IErrorBase) =>
-				e.errorType === ContainerErrorType.usageError &&
+				e.errorType === ContainerErrorTypes.usageError &&
 				e.message === `Id cannot contain slashes: ${invalidId}`,
 		);
 	});
