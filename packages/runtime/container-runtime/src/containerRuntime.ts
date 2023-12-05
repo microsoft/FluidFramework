@@ -3074,10 +3074,10 @@ export class ContainerRuntime
 			);
 		}
 
-		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
-		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
-		// within the timeout, check if it should be failed or can continue.
-		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
+		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
+		// saved within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.isDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
@@ -3099,7 +3099,7 @@ export class ContainerRuntime
 			// happens, whether we attempted to wait for these ops to be acked and what was the result.
 			summaryNumberLogger.sendTelemetryEvent({
 				eventName: "PendingOpsWhileSummarizing",
-				saved: this.hasPendingMessages() ? false : true,
+				saved: !this.isDirty,
 				timeout: pendingOpsTimeout,
 				countBefore,
 				countAfter: this.pendingMessagesCount,
@@ -3378,7 +3378,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
 	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
@@ -3394,7 +3394,7 @@ export class ContainerRuntime
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
 	): Promise<IBaseSummarizeResult | undefined> {
-		if (!this.hasPendingMessages()) {
+		if (!this.isDirty) {
 			return;
 		}
 

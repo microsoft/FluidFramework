@@ -281,7 +281,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
+				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
@@ -571,7 +571,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
+				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 				await sendOpToUpdateSummaryTimestampToNow(summarizer);
@@ -622,6 +622,41 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summary3.summaryTree,
 					sweepReadyDataStoreNodePath,
 					false /* expectDelete */,
+				);
+			},
+		);
+	});
+
+	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
+		beforeEach(() => {
+			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
+		});
+
+		itExpects(
+			"can run sweep without failing summaries due to local changes",
+			[
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					clientType: "noninteractive/summarizer",
+				},
+			],
+			async () => {
+				const { summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
+
+				// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
+				// the GC op does not fail summary due to local changes.
+				await assert.doesNotReject(
+					async () => summarizeNow(summarizer),
+					"Summary and GC should succeed in presence of GC op",
+				);
+
+				// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
+				// summarize and GC succeed.
+				await assert.doesNotReject(
+					async () => summarizeNow(summarizer),
+					"Summary and GC should succeed with deleted data store",
 				);
 			},
 		);
