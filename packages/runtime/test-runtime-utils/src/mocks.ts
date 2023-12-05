@@ -579,7 +579,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
- * @internal
+ * @alpha
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter

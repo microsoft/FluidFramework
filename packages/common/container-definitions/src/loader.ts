@@ -604,7 +604,7 @@ export type ILoaderOptions = {
 
 /**
  * Accepted header keys for requests coming to the Loader
- * @internal
+ * @alpha
  */
 export enum LoaderHeader {
 	/**

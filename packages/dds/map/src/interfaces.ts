@@ -117,7 +117,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
- * @internal
+ * @alpha
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
@@ -190,7 +190,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
- * @internal
+ * @alpha
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -336,7 +336,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
- * @internal
+ * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

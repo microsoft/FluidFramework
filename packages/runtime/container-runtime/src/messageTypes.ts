@@ -14,7 +14,7 @@ import { IDataStoreAliasMessage } from "./dataStore";
 import { IChunkedOp } from "./opLifecycle";
 
 /**
- * @internal
+ * @alpha
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store

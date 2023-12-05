@@ -375,7 +375,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
- * @internal
+ * @alpha
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -826,8 +826,9 @@ export class PerformanceEvent {
 				}
 			}
 		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
-				?.usedJSHeapSize;
+			this.startMemoryCollection = (
+				performance as PerformanceWithMemory
+			)?.memory?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);

@@ -8,7 +8,7 @@ import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 /**
  * A single registry entry that may be used to create data stores
  * It has to have either factory or registry, or both.
- * @internal
+ * @alpha
  */
 export type FluidDataStoreRegistryEntry = Readonly<
 	Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>
@@ -32,7 +32,7 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry =
 	"IFluidDataStoreRegistry";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideFluidDataStoreRegistry {
 	readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;

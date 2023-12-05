@@ -128,7 +128,7 @@ export interface IQuorumProposals {
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
- * @internal
+ * @alpha
  */
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,

@@ -58,7 +58,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
- * @internal
+ * @alpha
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
@@ -238,7 +238,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
- * @internal
+ * @alpha
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId

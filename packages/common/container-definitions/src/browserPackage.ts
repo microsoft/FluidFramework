@@ -52,7 +52,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
 /**
  * Determines if any object is an IFluidBrowserPackage
  * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
- * @internal
+ * @alpha
  */
 export const isFluidBrowserPackage = (
 	maybePkg: unknown,

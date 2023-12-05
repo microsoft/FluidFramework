@@ -320,7 +320,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
- * @internal
+ * @alpha
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -384,7 +384,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
- * @internal
+ * @alpha
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -476,7 +476,7 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
- * @internal
+ * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 /**
@@ -487,7 +487,7 @@ export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the 
 
 /**
  * Tombstone error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
@@ -718,7 +718,7 @@ export async function TEST_requestSummarizer(loader: ILoader, url: string): Prom
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
- * @internal
+ * @alpha
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>

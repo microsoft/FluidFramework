@@ -14,7 +14,7 @@
  * use numbered error codes instead.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
- * @internal
+ * @alpha
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {

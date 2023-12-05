@@ -47,7 +47,7 @@ export type TypedEventTransform<TThis, TEvent> =
  * Event Emitter helper class the supports emitting typed events
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
- * @internal
+ * @alpha
  */
 export class TypedEventEmitter<TEvent>
 	extends EventEmitter

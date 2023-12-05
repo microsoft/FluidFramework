@@ -250,7 +250,7 @@ export interface IChannelServices {
  *
  * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
- * @internal
+ * @alpha
  */
 export interface IChannelFactory {
 	/**

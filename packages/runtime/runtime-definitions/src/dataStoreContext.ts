@@ -142,7 +142,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Handle to the data store's entryPoint
  * - Fluid router for the data store
  * - Can be assigned an alias
- * @internal
+ * @alpha
  */
 export interface IDataStore {
 	/**
