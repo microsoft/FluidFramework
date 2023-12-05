@@ -16,7 +16,7 @@ import {
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
- * @internal
+ * @alpha
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**

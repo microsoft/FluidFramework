@@ -225,7 +225,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
- * @internal
+ * @alpha
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,
