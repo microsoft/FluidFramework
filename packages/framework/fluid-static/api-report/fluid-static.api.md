@@ -20,7 +20,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal
+// @alpha
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -43,7 +43,7 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
     createServiceMember: (audienceMember: IClient) => M;
 }): IServiceAudience<M>;
 
-// @internal
+// @alpha
 export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: IFluidDataStoreFactory;
 } & LoadableObjectCtor<T>;
@@ -77,7 +77,7 @@ export interface IConnection {
     mode: "write" | "read";
 }
 
-// @internal
+// @alpha
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
@@ -91,7 +91,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly isDirty: boolean;
 }
 
-// @internal
+// @alpha
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: () => void): void;
     (event: "disconnected", listener: () => void): void;
@@ -106,7 +106,7 @@ export interface IMember {
     userId: string;
 }
 
-// @internal
+// @alpha
 export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
 };
@@ -139,16 +139,16 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
-// @internal
+// @alpha
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-// @internal
+// @alpha
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
-// @internal
+// @alpha
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// @internal
+// @alpha
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @internal
@@ -172,7 +172,7 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
     protected shouldIncludeAsMember(member: IClient): boolean;
 }
 
-// @internal
+// @alpha
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
