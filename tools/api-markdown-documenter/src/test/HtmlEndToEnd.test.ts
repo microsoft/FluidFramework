@@ -186,6 +186,7 @@ describe("HTML rendering end-to-end tests", () => {
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
+				minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 			},
 			renderConfig: {},
 		},
