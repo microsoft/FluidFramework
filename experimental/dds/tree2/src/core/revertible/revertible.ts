@@ -12,6 +12,9 @@
 export interface Revertible {
 	/** Indicates the type of edit that produced this revertible. */
 	readonly kind: RevertibleKind;
+	/**
+	 * Information about which client created the edit.
+	 */
 	readonly origin: {
 		readonly isLocal: boolean;
 	};
