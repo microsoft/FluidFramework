@@ -12,7 +12,6 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { DOProviderContainerRuntimeFactory, FluidContainer } from "@fluidframework/fluid-static";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -25,6 +24,10 @@ import {
 
 import { DiceRollerController } from "../src/controller";
 import { makeAppView } from "../src/view";
+import {
+	IFluidContainer,
+	createDOProviderContainerRuntimeFactory,
+} from "@fluidframework/fluid-static";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -105,7 +108,7 @@ export const containerConfig = {
 	},
 };
 
-async function initializeNewContainer(container: FluidContainer): Promise<void> {
+async function initializeNewContainer(container: IFluidContainer): Promise<void> {
 	// We now get the first SharedMap from the container
 	const sharedMap1 = container.initialObjects.map1 as SharedMap;
 	const sharedMap2 = container.initialObjects.map2 as SharedMap;
@@ -128,12 +131,12 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		new DOProviderContainerRuntimeFactory(containerConfig),
+		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
 		createNewFlag,
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = (await container.getEntryPoint()) as FluidContainer;
+	const fluidContainer = (await container.getEntryPoint()) as IFluidContainer;
 	if (createNewFlag) {
 		await initializeNewContainer(fluidContainer);
 		await attach?.();

@@ -18,5 +18,6 @@
 		// don't do.
 		"declaration": true,
 		"declarationMap": true,
+		"noImplicitAny": false,
 	},
 }

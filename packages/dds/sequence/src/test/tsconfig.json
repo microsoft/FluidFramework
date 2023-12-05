@@ -14,5 +14,6 @@
 		"outDir": "../../dist/test",
 		"types": ["mocha"],
 		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory,
+		"noImplicitAny": false,
 	},
 }

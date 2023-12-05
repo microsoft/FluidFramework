@@ -307,6 +307,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -355,6 +356,7 @@ declare function get_current_InterfaceDeclaration_IDataStore():
 declare function use_old_InterfaceDeclaration_IDataStore(
     use: TypeOnly<old.IDataStore>): void;
 use_old_InterfaceDeclaration_IDataStore(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataStore());
 
 /*
@@ -427,6 +429,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -451,6 +454,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -475,6 +479,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -1015,6 +1020,7 @@ declare function get_old_InterfaceDeclaration_IdCreationRange():
 declare function use_current_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<current.IdCreationRange>): void;
 use_current_InterfaceDeclaration_IdCreationRange(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IdCreationRange());
 
 /*
@@ -1548,26 +1554,14 @@ use_old_VariableDeclaration_gcTreeKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_initialClusterCapacity": {"forwardCompat": false}
+* "RemovedVariableDeclaration_initialClusterCapacity": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_initialClusterCapacity():
-    TypeOnly<typeof old.initialClusterCapacity>;
-declare function use_current_VariableDeclaration_initialClusterCapacity(
-    use: TypeOnly<typeof current.initialClusterCapacity>): void;
-use_current_VariableDeclaration_initialClusterCapacity(
-    get_old_VariableDeclaration_initialClusterCapacity());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_initialClusterCapacity": {"backCompat": false}
+* "RemovedVariableDeclaration_initialClusterCapacity": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_initialClusterCapacity():
-    TypeOnly<typeof current.initialClusterCapacity>;
-declare function use_old_VariableDeclaration_initialClusterCapacity(
-    use: TypeOnly<typeof old.initialClusterCapacity>): void;
-use_old_VariableDeclaration_initialClusterCapacity(
-    get_current_VariableDeclaration_initialClusterCapacity());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -4,13 +4,13 @@
  */
 
 import {
+	getTextAndMarkers,
 	MergeTreeDeltaType,
 	TextSegment,
 	ReferenceType,
 	reservedTileLabelsKey,
 	Marker,
-} from "@fluidframework/merge-tree";
-import { getTextAndMarkers } from "@fluidframework/sequence";
+} from "@fluidframework/sequence";
 
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";

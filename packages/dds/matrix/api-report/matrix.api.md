@@ -25,15 +25,15 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 // @public (undocumented)
 export interface IRevertible {
     // (undocumented)
-    discard(): any;
+    discard(): void;
     // (undocumented)
-    revert(): any;
+    revert(): void;
 }
 
 // @public (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
-    pushToCurrentOperation(revertible: IRevertible): any;
+    pushToCurrentOperation(revertible: IRevertible): void;
 }
 
 // @public

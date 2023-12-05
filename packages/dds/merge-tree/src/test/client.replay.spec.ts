@@ -29,15 +29,13 @@ describe("MergeTree.Client", () => {
 			originalClient.startOrUpdateCollaboration("A");
 			for (const group of file) {
 				for (const msg of group.msgs) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					if (!msgClients.has(msg.clientId as string)) {
+					assert(msg.clientId, "expected clientId to be defined");
+					if (!msgClients.has(msg.clientId)) {
 						const client = await TestClient.createFromClientSnapshot(
 							originalClient,
-							// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-							msg.clientId as string,
+							msg.clientId,
 						);
-						// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-						msgClients.set(msg.clientId as string, { client, msgs: [] });
+						msgClients.set(msg.clientId, { client, msgs: [] });
 					}
 				}
 			}
@@ -48,8 +46,7 @@ describe("MergeTree.Client", () => {
 				const initialText = logger.validate();
 				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
 				for (const msg of group.msgs) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					const msgClient = msgClients.get(msg.clientId as string)!;
+					const msgClient = msgClients.get(msg.clientId!)!;
 					while (
 						msgClient.msgs.length > 0 &&
 						msg.referenceSequenceNumber > msgClient.client.getCurrentSeq()

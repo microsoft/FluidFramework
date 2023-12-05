@@ -93,7 +93,7 @@ export function generateUser(): IUser;
 // @internal (undocumented)
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
-// @internal (undocumented)
+// @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
 // @internal (undocumented)
@@ -397,7 +397,7 @@ export interface ISummaryUploadManager {
     writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
 }
 
-// @internal (undocumented)
+// @internal
 export interface ITimeoutContext {
     bindTimeout(maxDurationMs: number, callback: () => void): void;
     bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
@@ -592,7 +592,7 @@ export abstract class RestWrapper {
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
 
-// @internal (undocumented)
+// @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @internal

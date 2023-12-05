@@ -716,8 +716,8 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const base64Content = (compressorSummary as any).content as string;
 		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
 		return {
-			sessionCount: floatView[3],
-			clusterCount: floatView[4],
+			sessionCount: floatView[2],
+			clusterCount: floatView[3],
 		};
 	}
 
