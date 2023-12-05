@@ -552,7 +552,7 @@ export class ComposeQueue<T> {
 
 			const cmp = compareCellPositions(
 				baseCellId,
-				baseMark,
+				baseMark.count,
 				newMark,
 				this.newRevision,
 				this.revisionMetadata,
@@ -616,7 +616,7 @@ interface ComposeMarks<T> {
  */
 function compareCellPositions(
 	baseCellId: CellId,
-	baseMark: Mark<unknown>,
+	baseCellCount: number,
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
@@ -625,7 +625,7 @@ function compareCellPositions(
 	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
 	if (
 		baseCellId.revision === newCellId.revision &&
-		areOverlappingIdRanges(baseCellId.localId, baseMark.count, newCellId.localId, newMark.count)
+		areOverlappingIdRanges(baseCellId.localId, baseCellCount, newCellId.localId, newMark.count)
 	) {
 		return baseCellId.localId - newCellId.localId;
 	}
@@ -644,7 +644,7 @@ function compareCellPositions(
 		newCellId.lineage,
 		baseCellId.revision,
 		baseCellId.localId,
-		baseMark.count,
+		baseCellCount,
 	);
 	if (offsetInNew !== undefined) {
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
