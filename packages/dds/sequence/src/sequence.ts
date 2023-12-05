@@ -13,6 +13,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -210,6 +211,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return ops;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
@@ -247,6 +249,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
+		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({

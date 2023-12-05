@@ -24,9 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
@@ -97,9 +100,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveOut",
-                                          "id": 0,
-                                          "count": 2
+                                          "count": 2,
+                                          "effect": {
+                                            "moveOut": {
+                                              "id": 0
+                                            }
+                                          }
                                         }
                                       ]
                                     },
@@ -111,9 +117,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveIn",
-                                          "id": 0,
                                           "count": 2,
+                                          "effect": {
+                                            "moveIn": {
+                                              "id": 0
+                                            }
+                                          },
                                           "cellId": {
                                             "localId": 0
                                           }

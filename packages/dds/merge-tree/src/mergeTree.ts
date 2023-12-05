@@ -74,6 +74,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
+// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
 
@@ -306,6 +307,7 @@ export interface AttributionPolicy {
 	 * This must be done in an eventually consistent fashion.
 	 * @internal
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.

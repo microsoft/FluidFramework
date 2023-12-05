@@ -98,7 +98,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     wasMovedOnInsert?: boolean | undefined;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet);
     // (undocumented)

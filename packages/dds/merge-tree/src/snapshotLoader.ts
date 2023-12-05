@@ -19,6 +19,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
@@ -33,6 +34,7 @@ export class SnapshotLoader {
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,

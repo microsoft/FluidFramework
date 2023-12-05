@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISharedTree } from '@fluid-experimental/tree2';
+import { type ITree } from '@fluid-experimental/tree2';
 import {
 	type IChannel,
 	type IChannelAttributes,
@@ -72,5 +72,5 @@ export type IOpContents = IStampedContents | IUnstampedContents | IMigrationOp;
 export interface IShim extends IChannel {
 	create(): void;
 	load(channelServices: IChannelServices): Promise<void>;
-	currentTree: ISharedTree | LegacySharedTree;
+	currentTree: ITree | LegacySharedTree;
 }
