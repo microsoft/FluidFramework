@@ -82,6 +82,13 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 	return new LeafNodeSchema(schema);
 }
 
+// Leaf schema shared between all SchemaFactory instances.
+const stringSchema = makeLeaf(leaf.string);
+const numberSchema = makeLeaf(leaf.number);
+const booleanSchema = makeLeaf(leaf.boolean);
+const nullSchema = makeLeaf(leaf.null);
+const handleSchema = makeLeaf(leaf.handle);
+
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string
 >
@@ -123,7 +130,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	public readonly string = makeLeaf(leaf.string);
+	public readonly string = stringSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
@@ -139,12 +146,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	public readonly number = makeLeaf(leaf.number);
+	public readonly number = numberSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a boolean.
 	 */
-	public readonly boolean = makeLeaf(leaf.boolean);
+	public readonly boolean = booleanSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for JavaScript `null`.
@@ -154,12 +161,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * This {@link TreeNodeSchema} node provide the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
-	public readonly null = makeLeaf(leaf.null);
+	public readonly null = nullSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
-	public readonly handle = makeLeaf(leaf.handle);
+	public readonly handle = handleSchema;
 
 	/**
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
