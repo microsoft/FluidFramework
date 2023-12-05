@@ -1,5 +1,3 @@
 {
-  "ignoreRules": [
-    "false-cjs"
-  ]
+	"ignoreRules": ["false-cjs"]
 }
