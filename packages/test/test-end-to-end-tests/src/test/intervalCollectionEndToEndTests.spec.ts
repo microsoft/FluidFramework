@@ -96,10 +96,6 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 		sharedString1.insertText(0, "hello world");
 		collection1 = sharedString1.getIntervalCollection(collectionId);
-
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 
 	it("doesn't resend successful op", async () => {
@@ -133,7 +129,14 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		collection1.change(id, 2, 9);
 		await provider.ensureSynchronized();
 
+		// reload the container and verify that the above change takes effect
+		const container2 = await provider.loadTestContainer(testContainerConfig);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 		collection2 = sharedString2.getIntervalCollection(collectionId);
+
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
 
 		assertIntervals(sharedString1, collection1, [{ start: 2, end: 9 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 2, end: 9 }]);
