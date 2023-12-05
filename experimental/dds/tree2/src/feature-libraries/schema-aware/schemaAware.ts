@@ -111,7 +111,7 @@ export type InsertableFlexNode<TSchema extends TreeNodeSchema> = FlattenKeys<
 		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
 			? TypedFields<TFields>
 			: TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema>
-			? { "": InsertableFlexField<TField> }
+			? InsertableFlexField<TField>
 			: TSchema extends MapNodeSchema<string, infer TField extends TreeFieldSchema>
 			? {
 					readonly [P in string]: InsertableFlexField<TField>;
