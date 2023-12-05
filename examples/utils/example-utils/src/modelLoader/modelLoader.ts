@@ -18,6 +18,9 @@ import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory
 // that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
 // runtime and container, and this helper will appropriately translate to/from the request/response format.
 
+/**
+ * @internal
+ */
 export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	private readonly loader: IHostLoader;
 	private readonly generateCreateNewRequest: () => IRequest;
