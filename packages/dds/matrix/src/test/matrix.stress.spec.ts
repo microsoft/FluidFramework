@@ -400,7 +400,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 						if (
 							float64() < newClientJoinProbability &&
-							(maxClients === undefined || maxClients < matrices.length)
+							(maxClients === undefined || matrices.length < maxClients)
 						) {
 							await createNewClientFromSummary(summarizer);
 							trace?.push(`New client joined!!`);
@@ -602,6 +602,32 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 						);
 					});
 				}
+
+				it(`Stress Test With Small Matrix and lots of clients addition`, async function () {
+					// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
+					this.timeout(30000);
+
+					const numClients = 2;
+					const numOps = 120;
+					const syncProbability = 0.06;
+					const disconnectProbability = 0.1;
+					const undoRedoProbability = 0.0;
+					const switchProbability = 0.04;
+					const newClientJoinProbability = 0.3;
+					await stress(
+						numClients,
+						numOps,
+						syncProbability,
+						disconnectProbability,
+						undoRedoProbability,
+						switchProbability,
+						newClientJoinProbability,
+						1000,
+						2, // maxRows
+						2, // maxCols
+						10, // maxClients
+					);
+				});
 			}
 
 			it.skip("stress-loop", async function () {
