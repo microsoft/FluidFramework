@@ -439,9 +439,7 @@ export const maxUmpPostBodySize = 79872;
  * @param shareLinkType - Kind of sharing link requested
  * @returns A string of request parameters that can be concatenated with the base URI
  */
-export function buildOdspShareLinkReqParams(
-	shareLinkType: ISharingLinkKind | undefined,
-) {
+export function buildOdspShareLinkReqParams(shareLinkType: ISharingLinkKind | undefined) {
 	if (!shareLinkType) {
 		return;
 	}

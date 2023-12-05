@@ -71,7 +71,6 @@ export interface ShareLinkInfoType {
 	 * from the /snapshot api response.
 	 */
 	createLink?: {
-
 		/**
 		 * Share link created when the file is created for the first time with /snapshot api call.
 		 */

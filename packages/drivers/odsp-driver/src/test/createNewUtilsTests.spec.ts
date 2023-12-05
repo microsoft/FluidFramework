@@ -192,7 +192,6 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-
 	it("Should save 'sharing' information received during createNewFluidFile", async () => {
 		const createLinkType: ISharingLinkKind = {
 			scope: SharingLinkScope.users,
