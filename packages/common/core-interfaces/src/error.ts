@@ -119,7 +119,7 @@ export interface IUsageError extends IErrorBase {
 
 /**
  * Warning emitted when requests to storage are being throttled
- * @internal
+ * @alpha
  */
 export interface IThrottlingWarning extends IErrorBase {
 	/**

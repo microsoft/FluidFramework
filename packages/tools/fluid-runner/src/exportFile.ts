@@ -17,7 +17,7 @@ import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUt
 /* eslint-enable import/no-internal-modules */
 
 /**
- * @internal
+ * @alpha
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
