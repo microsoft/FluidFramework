@@ -377,17 +377,6 @@ export interface DeltaVisitor {
 }
 
 // @alpha
-export interface Dependee extends NamedComputation {
-    registerDependent(dependent: Dependent): boolean;
-    removeDependent(dependent: Dependent): void;
-}
-
-// @alpha
-export interface Dependent extends NamedComputation {
-    markInvalid(token?: InvalidationToken): void;
-}
-
-// @alpha
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
@@ -864,7 +853,7 @@ export interface IEmitter<E extends Events<E>> {
 }
 
 // @alpha
-export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
+export interface IForestSubscription extends ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
@@ -957,17 +946,6 @@ declare namespace InternalTypes {
     }
 }
 export { InternalTypes }
-
-// @alpha
-export class InvalidationToken {
-    constructor(description: string, isSecondaryInvalidation?: boolean);
-    // (undocumented)
-    readonly description: string;
-    // (undocumented)
-    readonly isSecondaryInvalidation: boolean;
-    // (undocumented)
-    protected readonly _typeCheck: MakeNominal;
-}
 
 // @alpha
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
@@ -1213,13 +1191,6 @@ export interface Named<TName> {
 }
 
 // @alpha
-export interface NamedComputation {
-    readonly computationName: string;
-    listDependees?(): Iterable<Dependee>;
-    listDependents?(): Iterable<Dependent>;
-}
-
-// @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @alpha
@@ -1324,13 +1295,6 @@ export class ObjectNodeSchema<const out Name extends string = string, const out 
 }
 
 // @alpha
-export interface ObservingDependent extends Dependent {
-    // @override
-    listDependees(): Iterable<Dependee>;
-    registerDependee(dependee: Dependee): void;
-}
-
-// @alpha
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @alpha
@@ -1408,9 +1372,6 @@ export interface RangeQueryResult<T> {
 // @alpha
 export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range_2 {
 }
-
-// @alpha
-export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha
 export type _RecursiveTrick = never;
@@ -1647,20 +1608,6 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 }
 
 // @alpha
-export class SimpleDependee implements Dependee {
-    constructor(computationName?: string);
-    // (undocumented)
-    readonly computationName: string;
-    invalidateDependents(token?: InvalidationToken): void;
-    // @sealed (undocumented)
-    listDependents(): Set<Dependent>;
-    // (undocumented)
-    registerDependent(dependent: Dependent): boolean;
-    // (undocumented)
-    removeDependent(dependent: Dependent): void;
-}
-
-// @alpha
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
@@ -1678,7 +1625,7 @@ export interface StoredSchemaCollection {
 }
 
 // @alpha
-export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, TreeStoredSchema {
+export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
     update(newSchema: TreeStoredSchema): void;
 }
 
