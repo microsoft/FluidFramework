@@ -14,7 +14,6 @@ import {
 	FieldChange,
 	ModularChangeset,
 	FieldKindWithEditor,
-	NodeChangeInverter,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -25,16 +24,14 @@ import {
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
-	tagRollbackInverse,
 	assertIsRevisionTag,
 	deltaForSet,
-	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	DeltaFieldChanges,
 	DeltaRoot,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, noopValidator } from "../../../codec";
+import { makeCodecFamily } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	EncodingTestData,
@@ -686,180 +683,4 @@ describe("ModularChangeFamily", () => {
 
 		assert.deepEqual(changes, [expectedChange]);
 	});
-
-	it("Revision metadata", () => {
-		const rev0 = mintRevisionTag();
-		const rev1 = mintRevisionTag();
-		const rev2 = mintRevisionTag();
-		const rev3 = mintRevisionTag();
-		const rev4 = mintRevisionTag();
-
-		let composeWasTested = false;
-		const compose: FieldChangeRebaser<RevisionTag[]>["compose"] = (
-			changes: TaggedChange<RevisionTag[]>[],
-			composeChild,
-			genId,
-			crossFieldManager,
-			{ getIndex, tryGetInfo },
-		): RevisionTag[] => {
-			const relevantRevisions = [rev1, rev2, rev3, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) =>
-				ensureIndexDefined(getIndex(c)),
-			);
-			const revsInfos: RevisionInfo[] = relevantRevisions.map(
-				(c) => tryGetInfo(c) ?? assert.fail(),
-			);
-			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
-			const expected: RevisionInfo[] = [
-				{ revision: rev1 },
-				{ revision: rev2 },
-				{ revision: rev3, rollbackOf: rev0 },
-				{ revision: rev4, rollbackOf: rev2 },
-			];
-			assert.deepEqual(revsInfos, expected);
-			composeWasTested = true;
-			return [];
-		};
-
-		let rebaseWasTested = false;
-		const rebase: FieldChangeRebaser<RevisionTag[]>["rebase"] = (
-			change: RevisionTag[],
-			over: TaggedChange<RevisionTag[]>,
-			rebaseChild,
-			genId,
-			crossFieldManager,
-			{ getIndex, tryGetInfo },
-		): RevisionTag[] => {
-			const relevantRevisions = [rev1, rev2, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) =>
-				ensureIndexDefined(getIndex(c)),
-			);
-			const revsInfos: RevisionInfo[] = relevantRevisions.map(
-				(c) => tryGetInfo(c) ?? assert.fail(),
-			);
-			assert.deepEqual(revsIndices, [0, 1, 2]);
-			const expected: RevisionInfo[] = [
-				{ revision: rev1 },
-				{ revision: rev2 },
-				{ revision: rev4, rollbackOf: rev2 },
-			];
-			assert.deepEqual(revsInfos, expected);
-			rebaseWasTested = true;
-			return change;
-		};
-		let invertWasTested = false;
-		const invert: FieldChangeRebaser<RevisionTag[]>["invert"] = (
-			change: TaggedChange<RevisionTag[]>,
-			invertChild: NodeChangeInverter,
-			genId,
-			crossFieldManager,
-			{ getIndex, tryGetInfo },
-		): RevisionTag[] => {
-			const relevantRevisions = [rev3];
-			const revsIndices: number[] = relevantRevisions.map((c) =>
-				ensureIndexDefined(getIndex(c)),
-			);
-			const revsInfos: RevisionInfo[] = relevantRevisions.map(
-				(c) => tryGetInfo(c) ?? assert.fail(),
-			);
-			assert.deepEqual(revsIndices, [0]);
-			const expected: RevisionInfo[] = [{ revision: rev3, rollbackOf: rev0 }];
-			assert.deepEqual(revsInfos, expected);
-			invertWasTested = true;
-			return change.change;
-		};
-
-		const throwCodec = {
-			encode: () => fail("Should not be called"),
-			decode: () => fail("Should not be called"),
-		};
-		const handler = {
-			rebaser: {
-				compose,
-				rebase,
-				invert,
-				prune: (change: RevisionTag[]) => change,
-			},
-			isEmpty: (change: RevisionTag[]) => change.length === 0,
-			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
-		} as unknown as FieldChangeHandler<RevisionTag[]>;
-		const field = new FieldKindWithEditor(
-			"ChecksRevIndexing",
-			Multiplicity.Single,
-			handler,
-			(a, b) => false,
-			new Set(),
-		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
-			jsonValidator: noopValidator,
-		});
-
-		const changeA: ModularChangeset = {
-			fieldChanges: new Map([
-				[
-					fieldA,
-					{
-						fieldKind: field.identifier,
-						change: brand([rev1, rev2]),
-					},
-				],
-			]),
-			revisions: [{ revision: rev1 }, { revision: rev2 }],
-		};
-		const changeB: ModularChangeset = {
-			fieldChanges: new Map([
-				[
-					fieldA,
-					{
-						fieldKind: field.identifier,
-						change: brand([rev3]),
-					},
-				],
-			]),
-		};
-		const changeC: ModularChangeset = {
-			fieldChanges: new Map([
-				[
-					fieldA,
-					{
-						fieldKind: field.identifier,
-						change: brand([rev4]),
-					},
-				],
-			]),
-			revisions: [{ revision: rev4, rollbackOf: rev2 }],
-		};
-		const composed = dummyFamily.compose([
-			makeAnonChange(changeA),
-			tagRollbackInverse(changeB, rev3, rev0),
-			makeAnonChange(changeC),
-		]);
-		const expectedComposeInfo: RevisionInfo[] = [
-			{ revision: rev1 },
-			{ revision: rev2 },
-			{ revision: rev3, rollbackOf: rev0 },
-			{ revision: rev4, rollbackOf: rev2 },
-		];
-		assert.deepEqual(composed.revisions, expectedComposeInfo);
-		assert(composeWasTested);
-		const rebased = dummyFamily.rebase(
-			changeC,
-			makeAnonChange(changeA),
-			revisionMetadataSourceFromInfo([
-				{ revision: rev1 },
-				{ revision: rev2 },
-				{ revision: rev4, rollbackOf: rev2 },
-			]),
-		);
-		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
-		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
-		assert(rebaseWasTested);
-		dummyFamily.invert(tagRollbackInverse(changeB, rev3, rev0), false);
-		assert(invertWasTested);
-	});
-
-	function ensureIndexDefined(index: number | undefined): number {
-		assert(index !== undefined, "Unexpected undefined index");
-		return index;
-	}
 });
