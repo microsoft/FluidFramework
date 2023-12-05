@@ -75,6 +75,8 @@
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
+		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",

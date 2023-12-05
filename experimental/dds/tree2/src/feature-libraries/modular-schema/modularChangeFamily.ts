@@ -78,7 +78,7 @@ import {
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	public static readonly emptyChange: ModularChangeset = makeModularChangeset(new Map());
+	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly codecs: ICodecFamily<ModularChangeset>;
 
@@ -223,7 +223,13 @@ export class ModularChangeFamily
 				}
 			}
 		}
-		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, allBuilds);
+		return makeModularChangeset(
+			this.pruneFieldMap(composedFields),
+			idState.maxId,
+			revInfos,
+			undefined,
+			allBuilds,
+		);
 	}
 
 	private composeFieldMaps(
@@ -339,7 +345,7 @@ export class ModularChangeFamily
 	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
-			return makeModularChangeset(new Map());
+			return makeModularChangeset();
 		}
 
 		const idState: IdAllocationState = { maxId: change.change.maxId ?? -1 };
@@ -530,7 +536,7 @@ export class ModularChangeFamily
 		}
 
 		return makeModularChangeset(
-			this.pruneFieldMap(rebasedFields) ?? new Map(),
+			this.pruneFieldMap(rebasedFields),
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
@@ -1038,13 +1044,13 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 }
 
 function makeModularChangeset(
-	changes: FieldChangeMap,
+	changes: FieldChangeMap | undefined = undefined,
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<JsonableTree>,
 ): ModularChangeset {
-	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
+	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
 		changeset.revisions = revisions;
 	}
@@ -1138,7 +1144,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset(
-							new Map(),
+							undefined,
 							undefined,
 							undefined,
 							undefined,

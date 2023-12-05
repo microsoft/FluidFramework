@@ -29,10 +29,6 @@ import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schem
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
 
-export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
-	return compose(changes.map(makeAnonChange));
-}
-
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
@@ -48,8 +44,14 @@ export function compose(
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
 
-export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
-	return shallowCompose(changes.map(makeAnonChange));
+export function prune(
+	change: TestChangeset,
+	childPruner?: (child: TestChange) => TestChange | undefined,
+): TestChangeset {
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
+	);
 }
 
 export function shallowCompose<T>(

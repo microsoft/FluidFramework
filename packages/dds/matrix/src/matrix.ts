@@ -25,6 +25,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
@@ -504,6 +505,7 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		pos: number,
 		referenceSequenceNumber: number,

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import {
 	Counter,
-	DiscriminatedUnionDispatcher,
 	getChecked,
 	jsonMinimizingFilter,
 	readStream,
@@ -15,6 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
 import { makeArray } from "../../../../util";
+import { DiscriminatedUnionDispatcher } from "../../../../codec";
 
 describe("chunkEncodingUtilities", () => {
 	describe("counter", () => {

@@ -1048,6 +1048,44 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
+
+			it("can submit op compat behavior", async () => {
+				// Create a container runtime type where the submit method is public. This makes it easier to test
+				// submission and processing of ops. The other option is to send data store or alias ops whose
+				// processing requires creation of data store context and runtime as well.
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+				const containerRuntimeWithSubmit =
+					containerRuntime as unknown as ContainerRuntimeWithSubmit;
+
+				const runtimeCompatMessage: Omit<
+					OutboundContainerRuntimeMessage,
+					"type" | "contents"
+				> & {
+					type: string;
+					contents: any;
+				} = {
+					type: "NEW",
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				assert.doesNotThrow(
+					() =>
+						containerRuntimeWithSubmit.submit(
+							runtimeCompatMessage as OutboundContainerRuntimeMessage,
+							undefined,
+							undefined,
+						),
+					"Cannot submit container runtime message with compatDetails",
+				);
+			});
+
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
 					Record<string, unknown> = {
