@@ -8,7 +8,6 @@ import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
@@ -27,7 +26,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
+import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -143,13 +142,13 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedMap.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			this.dataObjectFactory,
-			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-			undefined,
-			undefined,
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: this.dataObjectFactory,
+			registryEntries: [
+				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
+			],
 			runtimeOptions,
-		);
+		});
 		switch (this.props.documentType) {
 			case "DocumentMap":
 				this.keysInMap = this.props.documentTypeInfo.numberOfItems;
@@ -210,7 +209,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 		await this.populateMap();
 		await this._mainContainer.attach(
@@ -242,7 +241,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		const container2 = await loader.resolve(request);
 
 		await this.props.provider.ensureSynchronized();
-		const dataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		const dataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		const mapHandle = dataStore._root.get(mapId);
 		assert(mapHandle !== undefined, "map not found");

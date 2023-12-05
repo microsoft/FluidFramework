@@ -6,11 +6,13 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
+	// eslint-disable-next-line import/no-deprecated
 	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
 	ContainerSchema,
 	DataObjectClass,
@@ -38,12 +40,15 @@ export interface RootDataObjectProps {
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class RootDataObject
+class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
+	public get IRootDataObject() {
+		return this;
+	}
 
 	private get initialObjectsDir() {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
@@ -123,7 +128,7 @@ export class RootDataObject
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-		const entryPoint = await dataStore.entryPoint?.get();
+		const entryPoint = await dataStore.entryPoint.get();
 		return entryPoint as unknown as T;
 	}
 
@@ -139,12 +144,23 @@ export class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
+ * @internal
+ */
+export function createDOProviderContainerRuntimeFactory(props: {
+	schema: ContainerSchema;
+}): IRuntimeFactory {
+	return new DOProviderContainerRuntimeFactory(props.schema);
+}
+
+/**
  * Container code that provides a single {@link IRootDataObject}.
  *
  * @remarks
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ * @deprecated use {@link createDOProviderContainerRuntimeFactory} instead
+ * @internal
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
@@ -165,14 +181,22 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			{},
 			registryEntries,
 		);
-		super(
-			[rootDataObjectFactory.registryEntry],
-			undefined,
-			[defaultRouteRequestHandler(rootDataStoreId)],
+		super({
+			registryEntries: [rootDataObjectFactory.registryEntry],
+			// eslint-disable-next-line import/no-deprecated
+			requestHandlers: [defaultRouteRequestHandler(rootDataStoreId)],
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO
-			{ flushMode: FlushMode.Immediate },
-		);
+			runtimeOptions: { flushMode: FlushMode.Immediate },
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint =
+					await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+				if (entryPoint === undefined) {
+					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
+				}
+				return entryPoint.get();
+			},
+		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;
 	}

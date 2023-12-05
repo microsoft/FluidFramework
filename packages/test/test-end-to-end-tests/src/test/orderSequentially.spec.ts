@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
@@ -14,12 +13,12 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";
@@ -38,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
+describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -70,7 +69,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);

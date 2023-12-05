@@ -4,18 +4,6 @@
  */
 
 export {
-	EditableField,
-	EditableTree,
-	EditableTreeContext,
-	EditableTreeOrPrimitive,
-	getEditableTreeContext,
-	isEditableField,
-	isPrimitive,
-	isEditableTree,
-	proxyTargetSymbol,
-	UnwrappedEditableField,
-	UnwrappedEditableTree,
-	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -52,16 +40,12 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
-	setField,
-	TreeStatus,
-} from "./editable-tree";
-
+} from "./editableTreeBinder";
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -75,28 +59,37 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	FieldGenerator,
-	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
-	assertAllowedValue,
+	getPossibleTypes,
 } from "./contextuallyTyped";
 
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
+
 export { ForestSummarizer } from "./forestSummarizer";
-export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
+export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
-	singleStackTreeCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
 	CursorWithNode,
+	stackTreeFieldCursor,
 } from "./treeCursorUtils";
-export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
+export {
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+} from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -105,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -126,46 +119,69 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
-	TypedSchemaCollection,
+	TreeFieldSchema,
+	TreeSchema,
 	Any,
 	SchemaLibraryData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
-	StructSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
+	Unenforced,
+	AllowedTypeSet,
+	markEager,
+	MapFieldSchema,
+	SchemaCollection,
+	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	NormalizeObjectNodeFields,
+	NormalizeField as NormalizeFieldSchema,
+	Fields,
 } from "./typed-schema";
-export { SchemaBuilder, SchemaLibrary } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export {
+	SchemaBuilderBase,
+	SchemaLibrary,
+	ImplicitFieldSchema,
+	NormalizeField,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+	SchemaBuilderOptions,
+	normalizeAllowedTypes,
+	normalizeField,
+} from "./schemaBuilderBase";
+export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -173,6 +189,10 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
+	decode,
+	uncompressedEncode,
+	schemaCompressedEncode,
+	EncodedChunk,
 } from "./chunked-forest";
 
 export {
@@ -189,12 +209,11 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -203,48 +222,71 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
+	intoDelta,
+} from "./default-schema";
 
 export {
-	UntypedField,
-	UntypedTree,
-	UntypedTreeContext,
-	UntypedTreeCore,
-	UnwrappedUntypedField,
-	UnwrappedUntypedTree,
-	UntypedTreeOrPrimitive,
-	typeSymbol,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	treeStatus,
-} from "./untypedTree";
-
-export {
-	FieldNode,
+	AssignableFieldKinds,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
-	Leaf,
-	MapNode,
-	OptionalField,
-	RequiredField,
-	Sequence as Sequence2,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
 	Skip,
-	Struct,
-	StructTyped,
-	TreeContext,
-	TypedField,
-	TypedNode,
-	TypedNodeUnion,
-	Tree,
-	TreeField,
-	TreeNode,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	FlexTreeContext,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
+	FlexTreeEntity,
+	FlexTreeField,
+	FlexTreeNode,
 	getTreeContext,
-} from "./editable-tree-2";
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
+	Context,
+	TreeEvent,
+	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
+	isFlexTreeNode,
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-export { SchemaAware };
+	// Internal
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
+} from "./flex-tree";
+
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
+export { TreeCompressionStrategy } from "./treeCompressionUtils";
+
+export {
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+
+	// Internal
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+} from "./schema-aware";
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

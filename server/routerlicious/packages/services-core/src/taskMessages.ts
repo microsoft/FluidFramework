@@ -5,6 +5,10 @@
 
 /**
  * Message for the task.
+ *
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ * @internal
  */
 export interface ITaskMessage {
 	type: string;
@@ -14,6 +18,7 @@ export interface ITaskMessage {
 
 /**
  * Type of agent and name.
+ * @internal
  */
 export interface IAgent {
 	type: string;
@@ -23,6 +28,7 @@ export interface IAgent {
 
 /**
  * Interface to implement the agent loader.
+ * @internal
  */
 export interface IAgentUploader {
 	/**
@@ -43,6 +49,10 @@ export interface IAgentUploader {
 
 /**
  * Interface to implement the task sender.
+ *
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ * @internal
  */
 export interface ITaskMessageSender {
 	/**
@@ -68,6 +78,10 @@ export interface ITaskMessageSender {
 
 /**
  * Interface to implement the task receiver.
+ *
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ * @internal
  */
 export interface ITaskMessageReceiver {
 	/**

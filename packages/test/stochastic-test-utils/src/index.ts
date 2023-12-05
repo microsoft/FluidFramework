@@ -30,8 +30,13 @@ export {
 	take,
 	takeAsync,
 } from "./generators";
-export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";
-export { performFuzzActions, performFuzzActionsAsync } from "./performActions";
+export {
+	MarkovChain,
+	PerformanceWordMarkovChain,
+	SpaceEfficientWordMarkovChain,
+	WordSpacing,
+} from "./markovChain";
+export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions";
 export { makeRandom } from "./random";
 export {
 	AcceptanceCondition,
@@ -46,4 +51,4 @@ export {
 	SaveInfo,
 	Weights,
 } from "./types";
-export { XSadd } from "./xsadd";
+export { XSadd, XSaddCtor } from "./xsadd";

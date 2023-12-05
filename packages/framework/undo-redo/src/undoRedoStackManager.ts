@@ -5,6 +5,9 @@
 
 import { EventEmitter } from "events";
 
+/**
+ * @internal
+ */
 export interface IRevertible {
 	revert();
 	discard();
@@ -80,6 +83,7 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
  * Manages the Undo and Redo stacks, and operations within those stacks.
  * Allows adding items to the current operation on the stack, closing the current operation,
  * and issuing an undo or a redo.
+ * @internal
  */
 export class UndoRedoStackManager {
 	private static revert(revertStack: UndoRedoStack, pushStack: UndoRedoStack) {

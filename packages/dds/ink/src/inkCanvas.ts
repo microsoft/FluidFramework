@@ -29,7 +29,10 @@ class Vector {
 		return new Vector(vector.x / length, vector.y / length);
 	}
 
-	constructor(public x: number, public y: number) {}
+	constructor(
+		public x: number,
+		public y: number,
+	) {}
 
 	public length(): number {
 		return Math.sqrt(this.x * this.x + this.y * this.y);
@@ -105,12 +108,18 @@ function drawShapes(
 	drawCircle(context, { x: endPoint.x, y: endPoint.y }, widthAtEnd);
 }
 
+/**
+ * @internal
+ */
 export class InkCanvas {
 	private readonly context: CanvasRenderingContext2D;
 	private readonly localActiveStrokeMap: Map<number, string> = new Map();
 	private readonly currentPen: IPen;
 
-	constructor(private readonly canvas: HTMLCanvasElement, private readonly model: IInk) {
+	constructor(
+		private readonly canvas: HTMLCanvasElement,
+		private readonly model: IInk,
+	) {
 		this.model.on("clear", this.redraw.bind(this));
 		this.model.on("stylus", this.handleStylus.bind(this));
 		this.canvas.style.touchAction = "none";

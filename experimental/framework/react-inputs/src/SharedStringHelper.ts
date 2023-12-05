@@ -8,6 +8,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 
+/**
+ * @internal
+ */
 export interface ISharedStringHelperTextChangedEventArgs {
 	/**
 	 * Whether the change originated from the local client.
@@ -22,12 +25,17 @@ export interface ISharedStringHelperTextChangedEventArgs {
 	transformPosition: (oldPosition: number) => number;
 }
 
+/**
+ * Events emitted by {@link SharedStringHelper}.
+ * @internal
+ */
 export interface ISharedStringHelperEvents extends IEvent {
 	(event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void);
 }
 
 /**
- * Given a SharedString will provide a friendly API for use.
+ * Given a {@link @fluidframework/sequence#SharedString}, will provide a friendly API for use.
+ * @internal
  */
 export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEvents> {
 	private readonly _sharedString: SharedString;

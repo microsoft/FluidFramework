@@ -20,6 +20,7 @@ import { ICheckpointManager } from "./interfaces";
 
 /**
  * MongoDB specific implementation of ICheckpointManager
+ * @internal
  */
 export class CheckpointManager implements ICheckpointManager {
 	private readonly clientFacadeRetryEnabled: boolean;
@@ -134,7 +135,10 @@ export class CheckpointManager implements ICheckpointManager {
 					3 /* maxRetries */,
 					1000 /* retryAfterMs */,
 					getLumberBaseProperties(this.documentId, this.tenantId),
-					(error) => error.code === 11000 /* shouldIgnoreError */,
+					(error) =>
+						error.code === 11000 ||
+						error.message?.toString()?.indexOf("E11000 duplicate key") >=
+							0 /* shouldIgnoreError */,
 					(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
 				);
 			}

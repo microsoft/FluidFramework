@@ -25,9 +25,8 @@ import {
 	timeoutAwait,
 	createSummarizer,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -35,6 +34,7 @@ import {
 	ITelemetryBaseEvent,
 	IFluidHandle,
 	ITelemetryBaseLogger,
+	FluidErrorTypes,
 } from "@fluidframework/core-interfaces";
 import {
 	defaultMaxAttemptsForSubmitFailures,
@@ -155,15 +155,27 @@ const dataStoreFactory2 = new DataObjectFactory(
 	[],
 	mixinSummaryHandler(getDataObjectAndSendOps),
 );
+const dataStoreFactory3 = new DataObjectFactory(
+	"TestDataObject3",
+	class extends DataObject {},
+	[],
+	[],
+	[],
+	mixinSummaryHandler(async () => {
+		throw new Error("Mixed-in summary handler threw!");
+	}),
+);
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 	[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
+	[dataStoreFactory3.type, Promise.resolve(dataStoreFactory3)],
 ]);
 
 let settings = {};
 
+/** Creates a container with Summary Options overridden to ensure Summarization happens promptly (unless disabled) */
 const createContainer = async (
 	provider: ITestObjectProvider,
 	disableSummary: boolean = true,
@@ -189,13 +201,11 @@ const createContainer = async (
 			summaryConfigOverrides,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		rootDataObjectFactory,
-		registryStoreEntries,
-		undefined /* dependencyContainer */,
-		undefined /* requestHandlers */,
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: rootDataObjectFactory,
+		registryEntries: registryStoreEntries,
 		runtimeOptions,
-	);
+	});
 	return provider.createContainer(runtimeFactory, {
 		logger,
 		configProvider: mockConfigProvider(settings),
@@ -212,7 +222,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
+describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach(async function () {
@@ -240,7 +250,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		async () => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -288,7 +298,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = false;
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -344,10 +354,14 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				mockLogger,
 			);
 
-			const defaultDataStore1 = await requestFluidObject<ITestDataObject>(
-				summarizerContainer,
-				"default",
-			);
+			const runtime = (summarizer as any).runtime as ContainerRuntime;
+			const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			const defaultDataStore1 = await entryPoint.get();
 
 			// Pause op processing and send ops so there are pending ops in the summarizer.
 			const pendingOpCount = 10;
@@ -398,7 +412,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 
 			// This data object will send ops during summarization because the factory uses mixinSummaryHandler
 			// to do so on every summarize.
@@ -466,10 +480,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 					false /* disableSummary */,
 					logger,
 				);
-				const rootDataObject = await requestFluidObject<RootTestDataObject>(
-					mainContainer,
-					"/",
-				);
+				const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
 				);
@@ -575,7 +586,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -659,7 +670,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -699,6 +710,57 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				defaultMaxAttemptsForSubmitFailures,
 				`Unexpected summarize attempts`,
 			);
+		},
+	);
+
+	itExpects(
+		"Errors thrown from mixinSummaryHandler are tagged as DataProcessingError",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "Mixed-in summary handler threw!",
+				errorType: "dataProcessingError",
+			},
+		],
+		async () => {
+			// The "summarize" event is only emitted when this setting is enabled
+			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
+
+			const container = await createContainer(provider, false /* disableSummary */);
+			await waitForContainerConnection(container);
+
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
+			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
+
+			try {
+				const firstSummaryResultP = new Promise<ISummarizeEventProps>((resolve) => {
+					containerRuntime.on("summarize", resolve);
+				});
+
+				// Create and reference the dataObject 3 and wait for Summary
+				// Summary should fail due to mixed-in summary handler throwing
+				const dataObject3 = await dataStoreFactory3.createInstance(
+					rootDataObject.containerRuntime,
+				);
+				rootDataObject._root.set("referenced", dataObject3.handle);
+				await provider.ensureSynchronized();
+				const summarizeResult = await firstSummaryResultP;
+
+				assert.equal(
+					summarizeResult.result,
+					"failure",
+					"Expected summary to fail due to mixed-in summary handler",
+				);
+				assert.equal(
+					summarizeResult.error?.errorType,
+					FluidErrorTypes.dataProcessingError,
+					"Expected the error to be wrapped as DataProcessingError",
+				);
+			} finally {
+				// This will remove all listeners (including "summarize" one above)
+				containerRuntime.dispose();
+			}
 		},
 	);
 });

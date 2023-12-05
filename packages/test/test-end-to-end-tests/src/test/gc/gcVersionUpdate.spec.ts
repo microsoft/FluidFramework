@@ -13,16 +13,16 @@ import {
 	gcTreeKey,
 	IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	createSummarizerFromFactory,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IGCMetadata,
@@ -39,13 +39,13 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
+describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
 	let provider: ITestObjectProvider;
 	// TODO:#4670: Make this compat-version-specific.
-	const dataObjectFactory = new TestFluidObjectFactory([]);
+	const defaultFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
 			summaryConfigOverrides: {
@@ -58,12 +58,14 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		runtimeOptions,
+	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions,
+		},
 	);
 
 	let mainContainer: IContainer;
@@ -111,10 +113,10 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	 * running different GC versions.
 	 */
 	async function setupGCVersionUpdateInMetadata(container: IContainer, gcVersionDiff: number) {
-		const ds = await requestFluidObject<ITestFluidObject>(container, "default");
+		const summarizer = await container.getEntryPoint();
 
 		// Override the getMetadata function in GarbageCollector to update the gcFeature property.
-		const containerRuntime = ds.context.containerRuntime as IContainerRuntimeWithPrivates;
+		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
 		let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;
 		const getMetadataOverride = () => {
 			getMetadataFunc = getMetadataFunc.bind(containerRuntime.garbageCollector);
@@ -133,19 +135,18 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
-		const dataStore1 = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 		dataStore1Id = dataStore1.context.id;
 
 		// Create couple more data stores and mark them as referenced.
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(dataObjectFactory.type),
-			"",
-		);
+		const containerRuntime = dataStore1.context.containerRuntime;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore2", dataStore2.handle);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(dataObjectFactory.type),
-			"",
-		);
+		const dataStore3 = (await (
+			await containerRuntime.createDataStore(defaultFactory.type)
+		).entryPoint.get()) as ITestFluidObject;
 		dataStore1.root.set("dataStore3", dataStore3.handle);
 		dataStore2Id = dataStore2.context.id;
 		dataStore3Id = dataStore3.context.id;
@@ -159,7 +160,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 
 		// Create a summarizer client.
 		const { summarizer: summarizer1, container: container1 } =
-			await createSummarizerFromFactory(provider, mainContainer, dataObjectFactory);
+			await createSummarizerFromFactory(provider, mainContainer, defaultFactory);
 		// Setup the summarizer container's GC version in summary to be decremented by 1. Containers that load from
 		// this summary will have newer GC version.
 		await setupGCVersionUpdateInMetadata(container1, -1 /* gcVersionDiff */);
@@ -184,7 +185,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
-			dataObjectFactory,
+			defaultFactory,
 			summaryVersion,
 		);
 
@@ -204,7 +205,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 
 		// Create a summarizer client.
 		const { summarizer: summarizer1, container: container1 } =
-			await createSummarizerFromFactory(provider, mainContainer, dataObjectFactory);
+			await createSummarizerFromFactory(provider, mainContainer, defaultFactory);
 		// Setup the summarizer container's GC version in summary to be incremented by 1. Containers that load from
 		// this summary will have older GC version.
 		await setupGCVersionUpdateInMetadata(container1, 1 /* gcVersionDiff */);
@@ -229,7 +230,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
-			dataObjectFactory,
+			defaultFactory,
 			summaryVersion,
 		);
 

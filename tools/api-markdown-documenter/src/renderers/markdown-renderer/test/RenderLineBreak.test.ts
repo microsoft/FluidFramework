@@ -14,6 +14,6 @@ describe("LineBreak Markdown rendering tests", () => {
 	});
 
 	it("Table context", () => {
-		expect(testRender(LineBreakNode.Singleton, { insideTable: true })).to.equal("<br>\n");
+		expect(testRender(LineBreakNode.Singleton, { insideTable: true })).to.equal("<br>");
 	});
 });

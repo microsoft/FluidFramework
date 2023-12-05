@@ -217,8 +217,7 @@ describe("MapWithExpiration", () => {
 							m: Map<number, string>,
 						) {
 							assert.equal(this, thisArg, "Incorrect value for 'this'");
-						},
-						thisArg);
+						}, thisArg);
 					}
 				}
 			},

@@ -5,10 +5,10 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
-describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
+describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	before(async () => {

@@ -142,6 +142,9 @@ interface IOpEvent {
 	sequencedMessagesSinceLastOpEvent: number;
 }
 
+/**
+ * @internal
+ */
 export enum OpEventType {
 	/**
 	 * There have been no sequenced ops for X milliseconds since the last message.
@@ -164,6 +167,9 @@ export enum OpEventType {
 	UpdatedDurableSequenceNumber,
 }
 
+/**
+ * @internal
+ */
 export interface IDeliLambdaEvents extends IEvent {
 	/**
 	 * Emitted when certain op event heuristics are triggered.
@@ -229,6 +235,9 @@ const isServiceMessageType = (type: string) =>
 	type === MessageType.SummaryAck ||
 	type === MessageType.SummaryNack;
 
+/**
+ * @internal
+ */
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
 	private sequenceNumber: number;
 	private signalClientConnectionNumber: number;
@@ -266,7 +275,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private noActiveClients: boolean;
 
-	private globalCheckpointOnly;
+	private globalCheckpointOnly: boolean = false;
 
 	private closed: boolean = false;
 
@@ -292,9 +301,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private readonly sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-		private readonly checkpointService: ICheckpointService,
-		private readonly restartOnCheckpointFailure: boolean,
-		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly checkpointService: ICheckpointService | undefined,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -438,16 +445,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			try {
 				if (
 					this.checkpointInfo.currentKafkaCheckpointMessage &&
-					this.kafkaCheckpointOnReprocessingOp
+					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp
 				) {
 					this.context.checkpoint(
 						this.checkpointInfo.currentKafkaCheckpointMessage,
-						this.restartOnCheckpointFailure,
+						this.serviceConfiguration.deli.restartOnCheckpointFailure,
 					);
 				}
 				reprocessOpsMetric.setProperty(
 					"kafkaCheckpointOnReprocessingOp",
-					this.kafkaCheckpointOnReprocessingOp,
+					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp,
 				);
 				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
 			} catch (error) {
@@ -716,6 +723,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		if (this.serviceConfiguration.enableLumberjack) {
 			this.logSessionEndMetrics(closeType);
+			if (
+				this.checkpointService?.getLocalCheckpointEnabled() &&
+				!this.globalCheckpointOnly &&
+				closeType === LambdaCloseType.ActivityTimeout
+			) {
+				Lumberjack.info(
+					`Closing due to ActivityTimeout before NoClient op`,
+					getLumberBaseProperties(this.documentId, this.tenantId),
+				);
+			}
 		}
 	}
 
@@ -835,11 +852,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				"Session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ?? false;
 			this.sessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.SessionResult,
 				this.serviceConfiguration,
+			);
+			this.sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 
@@ -1963,20 +1986,25 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
+					localCheckpointEnabled: this.checkpointService?.getLocalCheckpointEnabled(),
+					globalCheckpointOnly: this.globalCheckpointOnly,
+					localCheckpoint:
+						this.checkpointService?.getLocalCheckpointEnabled() &&
+						!this.globalCheckpointOnly,
 				};
+				const checkpointReason = CheckpointReason[checkpointParams.reason];
+				lumberjackProperties.checkpointReason = checkpointReason;
+				const checkpointMessage = `Writing checkpoint. Reason: ${checkpointReason}`;
+				Lumberjack.info(checkpointMessage, lumberjackProperties);
 				this.checkpointContext
 					.checkpoint(
 						checkpointParams,
-						this.restartOnCheckpointFailure,
+						this.serviceConfiguration.deli.restartOnCheckpointFailure,
 						globalCheckpointOnly,
 					)
 					.catch((error) => {
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
-				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				lumberjackProperties.checkpointReason = checkpointReason;
-				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
-				Lumberjack.info(checkpointResult, lumberjackProperties);
 			})
 			.catch((error) => {
 				const errorMsg = `Could not send message to scriptorium`;

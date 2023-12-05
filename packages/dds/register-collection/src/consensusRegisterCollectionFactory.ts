@@ -13,7 +13,8 @@ import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } fro
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the consensus queue
+ * The factory that defines the consensus queue.
+ * @internal
  */
 export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
 	public static Type = "https://graph.microsoft.com/types/consensus-register-collection";

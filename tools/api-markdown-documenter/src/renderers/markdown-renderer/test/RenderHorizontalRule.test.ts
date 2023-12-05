@@ -14,6 +14,6 @@ describe("HorizontalRule Markdown rendering tests", () => {
 	});
 
 	it("Table context", () => {
-		expect(testRender(HorizontalRuleNode.Singleton, { insideTable: true })).to.equal("<hr>\n");
+		expect(testRender(HorizontalRuleNode.Singleton, { insideTable: true })).to.equal("<hr>");
 	});
 });

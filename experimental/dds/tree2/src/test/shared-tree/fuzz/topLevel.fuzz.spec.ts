@@ -2,16 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import {
+	DDSFuzzModel,
+	createDDSFuzzSuite,
+	DDSFuzzTestState,
+	DDSFuzzSuiteOptions,
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate } from "./fuzzUtils";
+import { failureDirectory, onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-const baseOptions = {
+const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
@@ -31,9 +36,15 @@ const baseOptions = {
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
+	// TODO: Enable other types of ops.
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		insert: 1,
+		delete: 1,
+		move: 1,
+		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
@@ -51,9 +62,22 @@ describe("Fuzz - Top-Level", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateTreeConsistency,
 		};
-		const options = {
+		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			detachedStartOptions: {
+				enabled: false,
+				attachProbability: 0.2,
+			},
+			clientJoinOptions: {
+				clientAddProbability: 0,
+				maxNumberOfClients: 3,
+			},
+			reconnectProbability: 0,
+			skip: [26],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -70,7 +94,7 @@ describe("Fuzz - Top-Level", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateTreeConsistency,
 		};
-		const options = {
+		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			reconnectProbability: 0.0,
 			defaultTestCount: runsPerBatch,
@@ -79,6 +103,10 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			skip: [42],
 		};
 		createDDSFuzzSuite(model, options);
 	});

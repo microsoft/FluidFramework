@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Client } from "@fluidframework/merge-tree";
 import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex";
 import { Interval, intervalHelpers } from "../intervals";
@@ -12,7 +12,7 @@ import {
 	assertPlainNumberIntervals,
 	createTestInterval,
 	generateRandomIntervals,
-} from "./intervalIndexUtils";
+} from "./intervalIndexTestUtils";
 
 class TestStartpointInRangeIndex implements IStartpointInRangeIndex<Interval> {
 	private readonly intervals: Interval[];

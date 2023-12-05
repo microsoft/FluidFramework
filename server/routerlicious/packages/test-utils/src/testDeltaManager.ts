@@ -6,6 +6,9 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaService } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class TestDeltaManager implements IDeltaService {
 	async getDeltas(
 		collectionName: string,

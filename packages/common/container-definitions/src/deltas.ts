@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IEvent,
+	IErrorEvent,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -16,6 +22,7 @@ import {
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
+ * @alpha
  */
 export interface IConnectionDetails {
 	clientId: string;
@@ -37,6 +44,7 @@ export interface IConnectionDetails {
 
 /**
  * Contract supporting delivery of outbound messages to the server
+ * @alpha
  */
 export interface IDeltaSender {
 	/**
@@ -47,6 +55,7 @@ export interface IDeltaSender {
 
 /**
  * Events emitted by {@link IDeltaManager}.
+ * @alpha
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
@@ -115,11 +124,18 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `readonly`: Whether or not the delta manager is now read-only.
 	 */
-	(event: "readonly", listener: (readonly: boolean) => void);
+	(
+		event: "readonly",
+		listener: (
+			readonly: boolean,
+			readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+		) => void,
+	);
 }
 
 /**
  * Manages the transmission of ops between the runtime and storage.
+ * @alpha
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
@@ -200,11 +216,12 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	 */
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 /**
  * Events emitted by {@link IDeltaQueue}.
+ * @alpha
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
@@ -247,6 +264,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 
 /**
  * Queue of ops to be sent to or processed from storage
+ * @alpha
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
@@ -294,6 +312,9 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 	waitTillProcessingDone(): Promise<{ count: number; duration: number }>;
 }
 
+/**
+ * @alpha
+ */
 export type ReadOnlyInfo =
 	| {
 			readonly readonly: false | undefined;

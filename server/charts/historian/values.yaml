@@ -78,3 +78,7 @@ gitrest:
 gitssh:
   name: gitssh
   image: fluidcr.azurecr.io/build/fluidframework/routerlicious/gitssh:latest
+
+lumberjack:
+  options:
+    enableSanitization: false

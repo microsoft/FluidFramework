@@ -4,7 +4,12 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	LogLevel,
+	Lumber,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
 /**
@@ -20,6 +25,8 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @param shouldLogInitialSuccessVerbose - whether to log successful telemetry as verbose level if there is no retry, default is false
+ * @internal
  */
 export async function runWithRetry<T>(
 	api: () => Promise<T>,
@@ -33,6 +40,7 @@ export async function runWithRetry<T>(
 		retryAfterInterval * 2 ** numRetries,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
+	shouldLogInitialSuccessVerbose = false,
 ): Promise<T | undefined> {
 	let result: T | undefined;
 	let retryCount = 0;
@@ -100,7 +108,13 @@ export async function runWithRetry<T>(
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
 			if (success) {
-				metric.success("runWithRetry succeeded");
+				// If we turn on the flag of shouldLogInitialSuccessVerbose and there is no retry,
+				// log as verbose level, otherwise log as info level. By default the flag is off.
+				if (shouldLogInitialSuccessVerbose && retryCount === 0) {
+					metric.success("runWithRetry succeeded", LogLevel.Verbose);
+				} else {
+					metric.success("runWithRetry succeeded");
+				}
 			} else {
 				metric.error("runWithRetry failed", metricError);
 			}
@@ -127,6 +141,7 @@ export async function runWithRetry<T>(
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @internal
  */
 export async function requestWithRetry<T>(
 	request: () => Promise<T>,
@@ -219,6 +234,7 @@ export async function requestWithRetry<T>(
  * Helper function to decide when or not to retry a {@link NetworkError}.
  * Can be used with {@link runWithRetry} and {@link requestWithRetry}.
  * @param error - the error parameter to be inspected when deciding whether to retry or not.
+ * @internal
  */
 export function shouldRetryNetworkError(error: any): boolean {
 	if (error instanceof Error && error?.name === "NetworkError") {
@@ -236,6 +252,7 @@ export function shouldRetryNetworkError(error: any): boolean {
  * @param numRetries - the current retry count to be used in exponential backoff calculation.
  * @param retryAfterInterval - default value to be used when calculating the retry interval. Used when
  * {@link NetworkError.retryAfterMs} is not defined.
+ * @internal
  */
 export function calculateRetryIntervalForNetworkError(
 	error: any,

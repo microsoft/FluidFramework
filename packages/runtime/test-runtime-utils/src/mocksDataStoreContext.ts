@@ -32,12 +32,15 @@ import {
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
+/**
+ * @internal
+ */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
 	public options: ILoaderOptions = undefined as any;
 	public clientId: string | undefined = uuid();
-	public clientDetails: IClientDetails = undefined as any;
+	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
@@ -65,6 +68,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		public readonly logger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
+		private readonly interactive: boolean = true,
 	) {}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -106,10 +110,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public makeLocallyVisible(): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public bindToContext(): void {
 		throw new Error("Method not implemented.");
 	}
 

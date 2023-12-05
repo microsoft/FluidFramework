@@ -9,16 +9,19 @@ import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 	OdspTestDriver,
-} from "@fluid-internal/test-drivers";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/test-drivers";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	createChildLogger,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -198,7 +201,7 @@ export async function initialize(
 		details: JSON.stringify({
 			loaderOptions,
 			containerOptions,
-			configurations,
+			configurations: { ...globalConfigurations, ...configurations },
 			logLevel: minLogLevel,
 		}),
 	});
@@ -211,11 +214,7 @@ export async function initialize(
 		logger,
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
-		configProvider: {
-			getRawConfig(name) {
-				return configurations[name];
-			},
-		},
+		configProvider: configProvider(configurations),
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
@@ -224,7 +223,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
-		const ds = await requestFluidObject<ILoadTest>(container, "/");
+		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
@@ -295,3 +294,26 @@ export async function safeExit(code: number, url: string, runId?: number) {
 
 	process.exit(code);
 }
+
+/**
+ * Global feature gates for all tests. They can be overwritten by individual test configs.
+ */
+export const globalConfigurations: Record<string, ConfigTypes> = {
+	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+};
+
+/**
+ * Config provider to be used for managing feature gates in the stress tests.
+ * It will return values based on the configs supplied as parameters if they are not found
+ * in the global test configuration {@link globalConfigurations}.
+ *
+ * @param configs - the supplied configs
+ * @returns - an instance of a config provider
+ */
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
+	};
+};

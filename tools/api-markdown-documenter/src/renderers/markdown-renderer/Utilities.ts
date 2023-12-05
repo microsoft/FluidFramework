@@ -29,5 +29,10 @@ export function renderNodeWithHtmlSyntax<TNode extends DocumentationNode>(
  * document.
  */
 function translateContext(markdownContext: MarkdownRenderContext): HtmlRenderContext {
-	return markdownContext; // Markdown context is a superset of HTML context, so direct assignment is safe.
+	return {
+		...markdownContext,
+
+		// If we are in a table context, it is not valid to render child contents in a multi-line form.
+		prettyFormatting: !(markdownContext.insideTable ?? false),
+	};
 }

@@ -23,12 +23,16 @@ import {
 
 /**
  * Manages storage of throttling metrics and usage data in redis.
+ * @internal
  */
 export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageStorageManager {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "throttle";
 
-	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
+	constructor(
+		private readonly client: Redis.default,
+		parameters?: IRedisParameters,
+	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}

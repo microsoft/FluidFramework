@@ -11,19 +11,23 @@ import {
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	FluidObject,
+	IRequest,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
+import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
 
@@ -52,11 +56,8 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject: FluidObject<ISummarizer> | undefined = summarizerContainer.getEntryPoint
-		? await summarizerContainer.getEntryPoint?.()
-		: await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
-				url: "_summarizer",
-		  });
+	const fluidObject: FluidObject<ISummarizer> | undefined =
+		await summarizerContainer.getEntryPoint();
 	if (fluidObject?.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
@@ -80,6 +81,7 @@ const defaultSummaryOptions: ISummaryRuntimeOptions = {
  * Creates a summarizer client from the given container and data store factory, and returns the summarizer client's
  * IContainer and ISummarizer.
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ * @internal
  */
 export async function createSummarizerFromFactory(
 	provider: ITestObjectProvider,
@@ -93,12 +95,16 @@ export async function createSummarizerFromFactory(
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new containerRuntimeFactoryType(
-		dataStoreFactory,
-		registryEntries ?? [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
-		undefined,
-		[innerRequestHandler],
-		{ summaryOptions: defaultSummaryOptions },
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		containerRuntimeFactoryType,
+		{
+			defaultFactory: dataStoreFactory,
+			registryEntries: registryEntries ?? [
+				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+			],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions: { summaryOptions: defaultSummaryOptions },
+		},
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
@@ -113,6 +119,7 @@ export async function createSummarizerFromFactory(
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
  *
  * Can pass in a test config provider to enable/disable features.
+ * @internal
  */
 export async function createSummarizer(
 	provider: ITestObjectProvider,
@@ -144,6 +151,7 @@ export async function createSummarizer(
  * @param summarizer - The ISummarizer to use to summarize on demand
  * @param inputs - Either the reason string or the full IOnDemandSummarizeOptions.
  * Defaults to the reason "end-to-end test".
+ * @internal
  */
 export async function summarizeNow(
 	summarizer: ISummarizer,

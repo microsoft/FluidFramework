@@ -12,6 +12,7 @@ import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
 /**
  * Converts ISummaryTree to ITree format.
  * @param summaryTree - summary tree in ISummaryTree format
+ * @internal
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];

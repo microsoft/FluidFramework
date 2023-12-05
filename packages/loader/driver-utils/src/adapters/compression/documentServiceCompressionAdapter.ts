@@ -9,7 +9,10 @@ import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSumma
 import { ICompressionStorageConfig } from "./compressionTypes";
 
 export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
-	constructor(service: IDocumentService, private readonly _config: ICompressionStorageConfig) {
+	constructor(
+		service: IDocumentService,
+		private readonly _config: ICompressionStorageConfig,
+	) {
 		super(service);
 	}
 

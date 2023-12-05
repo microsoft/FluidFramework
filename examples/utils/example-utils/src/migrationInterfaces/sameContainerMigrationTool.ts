@@ -22,14 +22,12 @@ import type { IContainer } from "@fluidframework/container-definitions";
  * * uploadingV2Summary - similar to above
  * * submittingV2Summary - similar to above
  * * migrated - migration has completed, if the client reloads from the latest summary they will be on v2.
+ * @internal
  */
 export type SameContainerMigrationState =
 	| "collaborating"
 	| "proposingMigration"
 	| "stoppingCollaboration"
-	| "generatingV1Summary"
-	| "uploadingV1Summary"
-	| "submittingV1Summary"
 	// TODO: "waitingForV2Proposal"?  Not a guarantee that we will issue a proposal here, if we see the proposal during catch up?
 	| "proposingV2Code"
 	| "waitingForV2ProposalCompletion"
@@ -39,14 +37,14 @@ export type SameContainerMigrationState =
 	| "migrated";
 
 // TODO: Consider whether these should be after-the-fact events (collaborationStopped)
+/**
+ * @internal
+ */
 export interface ISameContainerMigrationToolEvents extends IEvent {
 	(
 		event:
 			| "proposingMigration"
 			| "stoppingCollaboration"
-			| "generatingV1Summary"
-			| "uploadingV1Summary"
-			| "submittingV1Summary"
 			| "proposingV2Code"
 			| "waitingForV2ProposalCompletion"
 			| "readyForMigration"
@@ -57,6 +55,9 @@ export interface ISameContainerMigrationToolEvents extends IEvent {
 	);
 }
 
+/**
+ * @internal
+ */
 export interface ISameContainerMigrationTool
 	extends IEventProvider<ISameContainerMigrationToolEvents> {
 	/**
@@ -92,4 +93,10 @@ export interface ISameContainerMigrationTool
 	 * @param container - the reference to the IContainer associated with this migration tool
 	 */
 	readonly setContainerRef: (container: IContainer) => void;
+
+	/**
+	 * The sequence number that the proposal was accepted at. It will be defined once we reach the "proposingV2Code" migration state,
+	 * and undefined before reaching that state.
+	 */
+	get acceptedSeqNum(): number | undefined;
 }

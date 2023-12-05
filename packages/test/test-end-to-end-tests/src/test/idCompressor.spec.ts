@@ -4,17 +4,17 @@
  */
 import { strict as assert } from "assert";
 import type { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import {
 	IIdCompressor,
@@ -33,7 +33,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
+describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -74,7 +74,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	}
 
 	let provider: ITestObjectProvider;
-	const factory = new DataObjectFactory(
+	const defaultFactory = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
 		[SharedMap.getFactory(), SharedCell.getFactory()],
@@ -85,12 +85,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: true,
 	};
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		factory,
-		[[factory.type, Promise.resolve(factory)]],
-		undefined,
-		undefined,
-		runtimeOptions,
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions,
+		},
 	);
 
 	let containerRuntime: ContainerRuntime;
@@ -110,17 +111,17 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
-		mainDataStore = await requestFluidObject<TestDataObject>(container1, "/");
+		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		sharedMapContainer1 = mainDataStore.map;
 		sharedCellContainer1 = mainDataStore.sharedCell;
 
 		container2 = await provider.loadContainer(runtimeFactory);
-		const container2MainDataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		const container2MainDataStore = (await container2.getEntryPoint()) as TestDataObject;
 		sharedMapContainer2 = container2MainDataStore.map;
 
 		const container3 = await provider.loadContainer(runtimeFactory);
-		const container3MainDataStore = await requestFluidObject<TestDataObject>(container3, "/");
+		const container3MainDataStore = (await container3.getEntryPoint()) as TestDataObject;
 		sharedMapContainer3 = container3MainDataStore.map;
 
 		await waitForContainerConnection(container1);
@@ -138,7 +139,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
 		const container = await provider.makeTestContainer(config);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataObject.getSharedObject<SharedMap>("mapId");
 
 		assert(getIdCompressor(map) === undefined);
@@ -154,7 +155,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
 		const container = await provider.makeTestContainer(config);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataObject.getSharedObject<SharedMap>("mapId");
 		assert(getIdCompressor(map) === undefined);
 
@@ -170,10 +171,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		};
 
 		const enabledContainer = await provider.loadTestContainer(enabledConfig);
-		const enabledDataObject = await requestFluidObject<ITestFluidObject>(
-			enabledContainer,
-			"default",
-		);
+		const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
 		const enabledMap = await enabledDataObject.getSharedObject<SharedMap>("mapId");
 		assert(getIdCompressor(enabledMap) === undefined);
 	});
@@ -183,16 +181,16 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		// The first container should set a metadata property that automatically should
 		// enable it for any other container runtimes that are created.
 		const runtimeFactoryWithoutCompressorEnabled =
-			new ContainerRuntimeFactoryWithDefaultDataStore(
-				factory,
-				[[factory.type, Promise.resolve(factory)]],
-				undefined,
-				undefined,
-				undefined,
+			createContainerRuntimeFactoryWithDefaultDataStore(
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				{
+					defaultFactory,
+					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				},
 			);
 
 		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
-		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
+		const container4MainDataStore = (await container4.getEntryPoint()) as TestDataObject;
 		const sharedMapContainer4 = container4MainDataStore.map;
 
 		assert(
@@ -562,7 +560,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	// IdCompressor is at container runtime level, which means that individual DDSs
 	// in the same container and different DataStores should have the same underlying compressor state
 	it("DDSs in different DataStores have the same compressor state", async () => {
-		const dataStore2 = await factory.createInstance(containerRuntime);
+		const dataStore2 = await defaultFactory.createInstance(containerRuntime);
 		mainDataStore.map.set("DataStore2", dataStore2.handle);
 
 		await provider.ensureSynchronized();
@@ -620,7 +618,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, apis) => {
+describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -641,7 +639,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, a
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
 
 		// Generate an Id before attaching the container
@@ -654,7 +652,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, a
 		const url: any = await container.getAbsoluteUrl("");
 		const loader2 = provider.makeTestLoader(testConfig) as Loader;
 		const container2 = await loader2.resolve({ url });
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
 		// Generate an Id in the second attached container and send an op to send the Ids
 		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
@@ -674,7 +672,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, a
 	});
 });
 
-describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: true },
@@ -725,7 +723,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 	it("Shouldn't include unack'd local ids in summary", async () => {
 		const container = await createContainer(enabledConfig);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
 		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
@@ -749,7 +747,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 	it("Includes ack'd ids in summary", async () => {
 		const container = await createContainer(enabledConfig);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
 		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
@@ -769,7 +767,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 	it("Newly connected container synchronizes from summary", async () => {
 		const container = await createContainer(enabledConfig);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
 		const { summarizer: summarizer1 } = await createSummarizer(
@@ -789,10 +787,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 
 		const container2 = await provider.loadTestContainer(enabledConfig);
-		const container2DataStore = await requestFluidObject<ITestDataObject>(
-			container2,
-			"default",
-		);
+		const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
 		const container2IdCompressor: IIdCompressor = (container2DataStore._root as any).runtime
 			.idCompressor;
 		assert(container2IdCompressor !== undefined, "Second IdCompressor should be present");

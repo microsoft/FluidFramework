@@ -13,6 +13,7 @@ import {
 
 /**
  * Basic implementation of a blob ITreeEntry
+ * @internal
  */
 export class BlobTreeEntry {
 	public readonly mode = FileMode.File;
@@ -36,6 +37,7 @@ export class BlobTreeEntry {
 
 /**
  * Basic implementation of a tree ITreeEntry
+ * @internal
  */
 export class TreeTreeEntry {
 	public readonly mode = FileMode.Directory;
@@ -46,11 +48,15 @@ export class TreeTreeEntry {
 	 * @param path - path of entry
 	 * @param value - subtree
 	 */
-	constructor(public readonly path: string, public readonly value: ITree) {}
+	constructor(
+		public readonly path: string,
+		public readonly value: ITree,
+	) {}
 }
 
 /**
  * Basic implementation of an attachment ITreeEntry
+ * @internal
  */
 export class AttachmentTreeEntry {
 	public readonly mode = FileMode.File;
@@ -62,7 +68,10 @@ export class AttachmentTreeEntry {
 	 * @param path - path of entry
 	 * @param id - id of external blob attachment
 	 */
-	constructor(public readonly path: string, public readonly id: string) {
+	constructor(
+		public readonly path: string,
+		public readonly id: string,
+	) {
 		this.value = { id };
 	}
 }

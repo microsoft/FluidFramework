@@ -5,6 +5,7 @@
 
 import { IEvent } from "@fluidframework/common-definitions";
 import { IClient, IConnected } from "@fluidframework/protocol-definitions";
+import { IRuntimeSignalEnvelope } from "../utils";
 
 /**
  * Connection details of a client.
@@ -32,6 +33,7 @@ export interface IConnectedClient {
 
 /**
  * Identifies a collaboration session for a particular document in a particular instance (tenant) of a Fluid Service.
+ * @internal
  */
 export interface IRoom {
 	/**
@@ -47,6 +49,7 @@ export interface IRoom {
 
 /**
  * Payload of the event emitted when the broadcastSignal endpoint is called.
+ * @internal
  */
 export interface IBroadcastSignalEventPayload {
 	/**
@@ -56,11 +59,12 @@ export interface IBroadcastSignalEventPayload {
 	/**
 	 * Content of the runtime signal introduced from the broadcast-signal endpoint.
 	 */
-	signalContent: string;
+	signalContent: IRuntimeSignalEnvelope;
 }
 
 /**
  * Events emitted during Fluid clients collaboration session
+ * @internal
  */
 export interface ICollaborationSessionEvents extends IEvent {
 	/**

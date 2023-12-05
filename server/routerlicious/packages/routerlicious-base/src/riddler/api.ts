@@ -10,15 +10,18 @@ import {
 	ITenantOrderer,
 	ITenantCustomData,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
-import { ITenantDocument, TenantManager } from "./tenantManager";
+import { decode } from "jsonwebtoken";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import { TenantManager } from "./tenantManager";
+import { ITenantRepository } from "./mongoTenantRepository";
 
 export function create(
-	tenantsCollection: ICollection<ITenantDocument>,
+	tenantRepository: ITenantRepository,
 	baseOrderUrl: string,
 	defaultHistorianUrl: string,
 	defaultInternalHistorianUrl: string,
@@ -29,7 +32,7 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const manager = new TenantManager(
-		tenantsCollection,
+		tenantRepository,
 		baseOrderUrl,
 		defaultHistorianUrl,
 		defaultInternalHistorianUrl,
@@ -46,8 +49,19 @@ export function create(
 	router.post("/tenants/:id/validate", (request, response) => {
 		const tenantId = getParam(request.params, "id");
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const validP = manager.validateToken(tenantId, request.body.token, includeDisabledTenant);
-		handleResponse(validP, response);
+		const token = request.body.token;
+		const claims = decode(token) as ITokenClaims;
+		getGlobalTelemetryContext().bindProperties(
+			{ tenantId, documentId: claims.documentId },
+			() => {
+				const validP = manager.validateToken(
+					tenantId,
+					request.body.token,
+					includeDisabledTenant,
+				);
+				handleResponse(validP, response);
+			},
+		);
 	});
 
 	/**

@@ -4,22 +4,29 @@
  */
 
 export {
-	TreeSchema,
-	FieldSchema,
+	TreeNodeSchema,
+	TreeFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
-	StructSchema,
+	TreeSchema,
+	Unenforced,
+	AllowedTypeSet,
+	MapFieldSchema,
+	SchemaCollection,
+	TreeNodeSchemaBase,
+	Fields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
-	TypedSchemaCollection,
-	RecursiveTreeSchema,
+	schemaIsObjectNode,
+	NormalizeObjectNodeFields,
+	NormalizeField,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -27,14 +34,14 @@ export { ViewSchema } from "./view";
 export {
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./schemaCollection";
 
-export { FlexList } from "./flexList";
+export { FlexList, markEager, FlexListToUnion, LazyItem, isLazy } from "./flexList";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypedSchemaTypes from "./internal";

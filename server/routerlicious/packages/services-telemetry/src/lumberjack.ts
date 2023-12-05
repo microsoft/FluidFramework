@@ -11,14 +11,21 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	handleError,
+	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
+import { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";
 
+/**
+ * @internal
+ */
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
+	enableSanitization?: boolean;
 }
 const defaultLumberjackOptions: ILumberjackOptions = {
 	enableGlobalTelemetryContext: false,
+	enableSanitization: false,
 };
 
 export const getGlobalLumberjackInstance = () =>
@@ -32,10 +39,14 @@ export const setGlobalLumberjackInstance = (lumberjackInstance: Lumberjack) => {
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
 // An optional ILumberjackSchemaValidator list can be provided to validate the schema of the data.
+/**
+ * @internal
+ */
 export class Lumberjack {
 	private readonly _engineList: ILumberjackEngine[] = [];
 	private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
 	private _options: ILumberjackOptions = defaultLumberjackOptions;
+	private _formatters?: ILumberFormatter[];
 	private _isSetupCompleted: boolean = false;
 	protected static _staticOptions: ILumberjackOptions = defaultLumberjackOptions;
 	protected static _instance: Lumberjack | undefined;
@@ -155,6 +166,13 @@ export class Lumberjack {
 			...defaultLumberjackOptions,
 			...options,
 		};
+
+		const lumberFormatters: ILumberFormatter[] = [];
+		if (this._options.enableSanitization) {
+			lumberFormatters.push(new SanitizationLumberFormatter());
+		}
+		this._formatters = lumberFormatters;
+
 		this._isSetupCompleted = true;
 	}
 
@@ -184,7 +202,12 @@ export class Lumberjack {
 	) {
 		this.errorOnIncompleteSetup();
 		const lumberProperties = this._options.enableGlobalTelemetryContext
-			? { ...properties, ...getGlobalTelemetryContext().getProperties() }
+			? {
+					...(properties instanceof Map
+						? Object.fromEntries(properties.entries())
+						: properties),
+					...getGlobalTelemetryContext().getProperties(),
+			  }
 			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,
@@ -192,6 +215,7 @@ export class Lumberjack {
 			this._engineList,
 			this._schemaValidators,
 			lumberProperties,
+			this._formatters,
 		);
 
 		if (level === LogLevel.Warning || level === LogLevel.Error) {

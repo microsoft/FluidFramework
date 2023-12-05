@@ -10,14 +10,10 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import {
-	AllowedUpdateType,
-	FieldKinds,
-	type ISharedTree,
-	SchemaBuilder,
-	ValueSchema,
+	type ITree,
 	SharedTreeFactory,
-	valueSymbol,
-	typeNameSymbol,
+	SchemaFactory,
+	TreeConfiguration,
 } from "@fluid-experimental/tree2";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
@@ -51,7 +47,7 @@ export class AppData extends DataObject {
 
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
-	private _sharedTree: ISharedTree | undefined;
+	private _sharedTree: ITree | undefined;
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
@@ -77,7 +73,7 @@ export class AppData extends DataObject {
 		return this._emojiMatrix;
 	}
 
-	public get sharedTree(): ISharedTree {
+	public get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
 			throw new Error("The SharedTree was not initialized correctly");
 		}
@@ -154,9 +150,7 @@ export class AppData extends DataObject {
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
 			?.get();
-		const sharedTree = await this.root
-			.get<IFluidHandle<ISharedTree>>(this.sharedTreeKey)
-			?.get();
+		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
 		} else {
@@ -193,7 +187,7 @@ export class AppData extends DataObject {
 	 *
 	 * The function below satisfies the requirements to populate the SharedTree within the application.
 	 */
-	private castSharedTreeType(): SharedObjectClass<ISharedTree> {
+	private castSharedTreeType(): SharedObjectClass<ITree> {
 		/**
 		 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
 		 */
@@ -204,70 +198,54 @@ export class AppData extends DataObject {
 			}
 		}
 
-		return SharedTree as unknown as SharedObjectClass<ISharedTree>;
+		return SharedTree as unknown as SharedObjectClass<ITree>;
 	}
 
-	private generateSharedTree(runtime: IFluidDataStoreRuntime): ISharedTree {
+	private generateSharedTree(runtime: IFluidDataStoreRuntime): ITree {
 		const sharedTreeObject = this.castSharedTreeType();
 
 		const factory = sharedTreeObject.getFactory();
-		return runtime.createChannel(undefined, factory.type) as ISharedTree;
+		return runtime.createChannel(undefined, factory.type) as ITree;
 	}
 
-	private populateSharedTree(sharedTree: ISharedTree): void {
+	private populateSharedTree(sharedTree: ITree): void {
 		// Set up SharedTree for visualization
-		const builder = new SchemaBuilder("Devtools_Example_SharedTree");
+		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
-		const stringSchema = builder.leaf("string-property", ValueSchema.String);
-		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
-		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
 		// TODO: Maybe include example handle
-		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
 
-		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldValue(stringSchema, booleanSchema, handleSchema),
-		});
+		class LeafSchema extends builder.object("leaf-item", {
+			leafField: [builder.boolean, builder.handle, builder.string],
+		}) {}
 
-		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
-			childData: SchemaBuilder.fieldOptional(leafSchema),
-		});
+		class ChildSchema extends builder.object("child-item", {
+			childField: [builder.string, builder.boolean],
+			childData: builder.optional(LeafSchema),
+		}) {}
 
-		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldValue(numberSchema),
-		});
+		class RootNodeSchema extends builder.object("root-item", {
+			childrenOne: builder.list(ChildSchema),
+			childrenTwo: builder.number,
+		}) {}
 
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
-		);
-
-		sharedTree.schematize({
-			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: {
-				childrenOne: [
-					{
-						childField: "Hello world!",
-						childData: {
-							leafField: {
-								[typeNameSymbol]: stringSchema.name,
-								[valueSymbol]: "Hello world again!",
-							},
-						},
+		const config = new TreeConfiguration(RootNodeSchema, () => ({
+			childrenOne: [
+				{
+					childField: "Hello world!",
+					childData: {
+						leafField: "Hello world again!",
 					},
-					{
-						childField: true,
-						childData: {
-							leafField: {
-								[typeNameSymbol]: booleanSchema.name,
-								[valueSymbol]: false,
-							},
-						},
+				},
+				{
+					childField: true,
+					childData: {
+						leafField: false,
 					},
-				],
-				childrenTwo: 32,
-			},
-		});
+				},
+			],
+			childrenTwo: 32,
+		}));
+
+		sharedTree.schematize(config);
 	}
 }

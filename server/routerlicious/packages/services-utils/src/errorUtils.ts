@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export class FluidServiceError extends Error {
 	code: FluidServiceErrorCode;
 	constructor(message: string, errorCode: FluidServiceErrorCode) {
@@ -11,6 +14,9 @@ export class FluidServiceError extends Error {
 	}
 }
 
+/**
+ * @internal
+ */
 export enum FluidServiceErrorCode {
 	FeatureDisabled,
 }

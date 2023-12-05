@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -85,10 +87,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		switch (markerType) {
 			case ReferenceType.Tile:
 			case ReferenceType.Tile | ReferenceType.NestBegin:
+				const hasRangeLabels = refHasRangeLabels(segment);
 				const kind = (
-					refHasRangeLabels(segment)
-						? refGetRangeLabels(segment)[0]
-						: refGetTileLabels(segment)[0]
+					hasRangeLabels ? refGetRangeLabels(segment)[0] : refGetTileLabels(segment)[0]
 				) as DocSegmentKind;
 
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
@@ -161,6 +162,9 @@ export interface IFlowDocumentEvents extends IEvent {
 
 const textId = "text";
 
+/**
+ * @internal
+ */
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
 	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
 		documentType,

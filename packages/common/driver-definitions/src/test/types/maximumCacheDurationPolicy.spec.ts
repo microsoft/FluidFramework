@@ -25,12 +25,12 @@ import { IDocumentStorageServicePolicies } from "../../storage";
 declare function assertNever(x: never): void;
 declare const maximumCacheDurationMs: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
 switch (maximumCacheDurationMs) {
-    // These are the only two valid values
-    case undefined:
-    case 432_000_000: {
-        break;
-    }
-    default: {
-        assertNever(maximumCacheDurationMs);
-    }
+	// These are the only two valid values
+	case undefined:
+	case 432_000_000: {
+		break;
+	}
+	default: {
+		assertNever(maximumCacheDurationMs);
+	}
 }

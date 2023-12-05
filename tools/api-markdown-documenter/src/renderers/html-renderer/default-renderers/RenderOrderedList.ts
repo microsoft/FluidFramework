@@ -4,8 +4,8 @@
  */
 import type { OrderedListNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderListContents } from "../Utilities";
 
 /**
  * Renders a {@link OrderedListNode} as HTML.
@@ -19,18 +19,29 @@ export function renderOrderedList(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.writeLine("<ol>");
-	writer.increaseIndent();
+	const prettyFormatting = context.prettyFormatting !== false;
 
-	for (const child of node.children) {
-		writer.writeLine("<li>");
-		writer.increaseIndent();
-		renderNode(child, writer, context);
-		writer.decreaseIndent();
-		writer.ensureNewLine(); // Ensure newline after previous list item
-		writer.writeLine("</li>");
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break before tag
 	}
 
-	writer.decreaseIndent();
-	writer.writeLine("</ol>");
+	writer.write(`<ol>`);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.increaseIndent();
+	}
+
+	renderListContents(node.children, writer, context);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.decreaseIndent();
+	}
+
+	writer.write(`</ol>`);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break after tag
+	}
 }

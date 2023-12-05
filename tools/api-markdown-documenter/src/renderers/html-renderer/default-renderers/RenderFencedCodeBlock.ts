@@ -4,8 +4,8 @@
  */
 import type { FencedCodeBlockNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderContentsUnderTag } from "../Utilities";
 
 /**
  * Renders a {@link FencedCodeBlockNode} as HTML.
@@ -19,10 +19,5 @@ export function renderFencedCodeBlock(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.writeLine("<code>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, context);
-	writer.ensureNewLine(); // Ensure newline after body content
-	writer.decreaseIndent();
-	writer.writeLine("</code>");
+	renderContentsUnderTag(node.children, "code", writer, context);
 }

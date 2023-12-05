@@ -43,5 +43,6 @@ export async function createDocument(
 		resolvedUrl.endpoints.deltaStorageUrl ?? "",
 		quorumValues,
 		false /* enableDiscovery */,
+		false /* isEphemeralContainer */,
 	);
 }

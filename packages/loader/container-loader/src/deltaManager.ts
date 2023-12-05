@@ -9,6 +9,7 @@ import {
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
+	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
 	ICriticalContainerError,
@@ -22,12 +23,12 @@ import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	normalizeError,
-	logIfFalse,
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	UsageError,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
@@ -50,7 +51,6 @@ import {
 	IConnectionStateChangeReason,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
-import { OnlyValidTermValue } from "./protocol";
 import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
@@ -116,15 +116,27 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 }
 
 /**
- * Type is used to cast AbortController to represent new version of DOM API and prevent build issues
- * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+ * Like assert, but logs only if the condition is false, rather than throwing
+ * @param condition - The condition to attest too
+ * @param logger - The logger to log with
+ * @param event - The string or event to log
+ * @returns The outcome of the condition
  */
-type AbortControllerReal = AbortController & { abort(reason?: any): void };
-/**
- * Type is used to cast AbortSignal to represent new version of DOM API and prevent build issues
- * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
- */
-type AbortSignalReal = AbortSignal & { reason: any };
+function logIfFalse(
+	condition: boolean,
+	logger: ITelemetryLoggerExt,
+	event: string | ITelemetryGenericEventExt,
+): condition is true {
+	if (condition) {
+		return true;
+	}
+	const newEvent: ITelemetryBaseEvent =
+		typeof event === "string"
+			? { eventName: event, category: "error" }
+			: { category: "error", ...event };
+	logger.send(newEvent);
+	return false;
+}
 
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
@@ -313,8 +325,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any) {
-		return this.connectionManager.submitSignal(content);
+	public submitSignal(content: any, targetClientId?: string) {
+		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
 	public flush() {
@@ -368,7 +380,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-		this.logger.sendErrorEvent({
+		this.logger.sendTelemetryEvent({
 			...event,
 			// This directly tells us if fetching ops is in flight, and thus likely the reason of
 			// stalled op processing
@@ -403,7 +415,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
+			signalHandler: (signals: ISignalMessage[]) => {
+				for (const signal of signals) {
+					this._inboundSignal.push(signal);
+				}
+			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
@@ -412,8 +428,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
-			readonlyChangeHandler: (readonly?: boolean) =>
-				safeRaiseEvent(this, this.logger, "readonly", readonly),
+			readonlyChangeHandler: (
+				readonly?: boolean,
+				readonlyConnectionReason?: IConnectionStateChangeReason,
+			) => {
+				safeRaiseEvent(this, this.logger, "readonly", readonly, readonlyConnectionReason);
+			},
 			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
 				this.establishingConnection(reason),
 			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
@@ -660,8 +680,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
 			if (!opsFromFetch && cancelFetch(op)) {
-				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-				(controller as AbortControllerReal).abort("DeltaManager getDeltas fetch cancelled");
+				controller.abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}
 		};
@@ -670,10 +689,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
 			this.closeAbortController.signal.onabort = () =>
-				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-				(controller as AbortControllerReal).abort(
-					(this.closeAbortController.signal as AbortSignalReal).reason,
-				);
+				controller.abort(this.closeAbortController.signal.reason);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -701,8 +717,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.logger.sendTelemetryEvent({
 					eventName: "DeltaManager_GetDeltasAborted",
 					fetchReason,
-					// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-					reason: (controller.signal as AbortSignalReal).reason,
+					reason: controller.signal.reason,
 				});
 			}
 			this.closeAbortController.signal.onabort = null;
@@ -759,8 +774,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues() {
-		// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-		(this.closeAbortController as AbortControllerReal).abort("DeltaManager is closed");
+		this.closeAbortController.abort("DeltaManager is closed");
 
 		this._inbound.clear();
 		this._inboundSignal.clear();
@@ -1058,11 +1072,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
 			0x267 /* "lastObservedSeqNumber should be updated first" */,
 		);
-
-		// Back-compat for older server with no term
-		if (message.term === undefined) {
-			message.term = OnlyValidTermValue;
-		}
 
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");

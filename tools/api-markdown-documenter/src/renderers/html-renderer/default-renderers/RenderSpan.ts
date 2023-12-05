@@ -15,6 +15,8 @@ import type { RenderContext } from "../RenderContext";
  * @param context - See {@link RenderContext}.
  */
 export function renderSpan(node: SpanNode, writer: DocumentWriter, context: RenderContext): void {
+	// Note: we don't bother introducing style nesting for code spans.
+	// This policy is arbitrary and could be changed if there is reason to.
 	writer.write("<span>");
 	renderNodes(node.children, writer, {
 		...context,

@@ -4,37 +4,54 @@
  */
 
 import path from "path";
-import { createSnapshot, verifyEqualPastSnapshot } from "./utils";
+import { useAsyncDeterministicStableId } from "../../util";
+import {
+	createSnapshot,
+	dirPathTail,
+	regenTestDirectory,
+	regenerateSnapshots,
+	verifyEqualPastSnapshot,
+} from "./utils";
 import { generateTestTrees } from "./testTrees";
 
-const regenerateSnapshots = process.argv.includes("--snapshot");
-
-const dirPathTail = "src/test/snapshots/files";
-const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
+const dirPath = path.join(__dirname, `../../../${dirPathTail}/files`);
 
 function getFilepath(name: string): string {
 	return path.join(dirPath, `${name}.json`);
 }
 
-describe("Summary snapshot", () => {
-	// Only run this test when you want to regenerate the snapshot.
+const testNames = new Set<string>();
+
+describe("snapshot tests", () => {
 	if (regenerateSnapshots) {
-		describe.only("regenerate", () => {
-			for (const { name, tree } of generateTestTrees()) {
-				it(`for ${name}`, async () => {
-					const { summary } = await tree().summarize(true);
-					await createSnapshot(getFilepath(name), summary);
-				});
-			}
-		});
+		regenTestDirectory(dirPath);
 	}
 
-	describe("matches the historical snapshot", () => {
-		for (const { name, tree } of generateTestTrees()) {
-			it(`for ${name}`, async () => {
-				const { summary } = await tree().summarize(true);
-				await verifyEqualPastSnapshot(getFilepath(name), summary);
+	const testTrees = generateTestTrees();
+
+	for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+		const itFn = only ? it.only : skip ? it.skip : it;
+
+		itFn(`${regenerateSnapshots ? "regenerate " : ""}for ${testName}`, async () => {
+			await useAsyncDeterministicStableId(async () => {
+				return runScenario(async (tree, innerName) => {
+					const fullName = `${testName}-${innerName}`;
+
+					if (testNames.has(fullName)) {
+						throw new Error(`Duplicate snapshot name: ${fullName}`);
+					}
+
+					testNames.add(fullName);
+
+					const { summary } = await tree.summarize(true);
+					// eslint-disable-next-line unicorn/prefer-ternary
+					if (regenerateSnapshots) {
+						await createSnapshot(getFilepath(fullName), summary);
+					} else {
+						await verifyEqualPastSnapshot(getFilepath(fullName), summary, fullName);
+					}
+				});
 			});
-		}
-	});
+		});
+	}
 });

@@ -15,6 +15,9 @@ import {
 import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
+/**
+ * @internal
+ */
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
@@ -39,8 +42,7 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 		private readonly client: Client,
 		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>((a, b) => a.compareEnd(b));
 	}
 
 	public previousInterval(pos: number): TInterval | undefined {
@@ -80,6 +82,9 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 	}
 }
 
+/**
+ * @internal
+ */
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);

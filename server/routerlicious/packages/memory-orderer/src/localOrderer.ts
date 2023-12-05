@@ -89,6 +89,7 @@ class LocalSocketPublisher implements IPublisher {
 
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
+ * @internal
  */
 export class LocalOrderer implements IOrderer {
 	public static async load(
@@ -292,8 +293,6 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					undefined,
 					checkpointService,
-					true,
-					true,
 				);
 			},
 		);
@@ -398,6 +397,8 @@ export class LocalOrderer implements IOrderer {
 			true,
 			true,
 			true,
+			this.details.value.isEphemeralContainer,
+			checkpointService.getLocalCheckpointEnabled(),
 		);
 	}
 

@@ -23,7 +23,7 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -115,6 +115,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
+		this.onlineP.reject(
+			wrapError(error, (message) => new FaultInjectionError(`disposed: ${message}`, false)),
+		);
 		this.internal.dispose(error);
 	}
 
@@ -123,11 +126,12 @@ export class FaultInjectionDocumentService implements IDocumentService {
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
 		);
-		const internal = await this.internal.connectToDeltaStream(client);
-
 		// this method is not expected to resolve until connected
 		await this.onlineP.promise;
-		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
+		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
+			await this.internal.connectToDeltaStream(client),
+			this.online,
+		);
 		return this._currentDeltaStream;
 	}
 
@@ -151,7 +155,10 @@ export class FaultInjectionDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
+	constructor(
+		private readonly internal: IDocumentDeltaConnection,
+		private online: boolean,
+	) {
 		super();
 		this.on("newListener", (event) => this.forwardEvent(event));
 	}
@@ -290,7 +297,10 @@ export class FaultInjectionDocumentDeltaConnection
 }
 
 export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-	constructor(private readonly internal: IDocumentDeltaStorageService, private online: boolean) {}
+	constructor(
+		private readonly internal: IDocumentDeltaStorageService,
+		private online: boolean,
+	) {}
 	public goOffline() {
 		this.online = false;
 	}
@@ -307,7 +317,10 @@ export class FaultInjectionDocumentDeltaStorageService implements IDocumentDelta
 }
 
 export class FaultInjectionDocumentStorageService implements IDocumentStorageService {
-	constructor(private readonly internal: IDocumentStorageService, private online: boolean) {}
+	constructor(
+		private readonly internal: IDocumentStorageService,
+		private online: boolean,
+	) {}
 
 	public goOffline() {
 		this.online = false;

@@ -3,35 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema, SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder } from "../../../";
+import { SchemaBuilder, leaf } from "../../../domains";
+import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries";
 
-const builder = new SchemaBuilder("Simple Schema");
+const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
 // Schema
-export const numberSchema = builder.leaf("number", ValueSchema.Number);
-
-export const pointSchema = builder.struct("point", {
-	x: SchemaBuilder.fieldValue(numberSchema),
-	y: SchemaBuilder.fieldValue(numberSchema),
+export const pointSchema = builder.object("point", {
+	x: builder.number,
+	y: builder.number,
 });
 
-export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
+export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));
 
 // Schema aware types
-export type Number = SchemaAware.TypedNode<typeof numberSchema>;
-
-export type Point = SchemaAware.TypedNode<typeof pointSchema>;
 
 // Example Use
-function dotProduct(a: Point, b: Point): number {
-	return a.x * b.x + a.y * b.y;
-}
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.TypedNode<typeof numberSchema, SchemaAware.ApiMode.Flexible>;
+	type FlexibleNumber = InsertableFlexNode<typeof leaf.number>;
 
-	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema, SchemaAware.ApiMode.Flexible>;
+	type FlexiblePoint = InsertableFlexNode<typeof pointSchema>;
 
 	const point: FlexiblePoint = {
 		x: 1,
@@ -41,6 +34,6 @@ function dotProduct(a: Point, b: Point): number {
 	const point2: FlexiblePoint = {
 		[typeNameSymbol]: pointSchema.name,
 		x: 1,
-		y: { [valueSymbol]: 1 },
+		y: 1,
 	};
 }

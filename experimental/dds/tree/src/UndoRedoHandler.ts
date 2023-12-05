@@ -55,7 +55,10 @@ export class SharedTreeUndoRedoHandler {
  * Tracks a change on a shared tree and allows reverting it
  */
 export class SharedTreeRevertible implements IRevertible {
-	constructor(private readonly editId: EditId, private readonly tree: SharedTree) {}
+	constructor(
+		private readonly editId: EditId,
+		private readonly tree: SharedTree
+	) {}
 
 	public revert() {
 		this.tree.revert(this.editId);

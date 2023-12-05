@@ -11,15 +11,11 @@ import {
 /**
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
+ * @internal
  */
 export const OdspErrorTypes = {
 	// Inherit base driver error types
 	...DriverErrorTypes,
-
-	/**
-	 * Storage is out of space
-	 */
-	outOfStorageError: "outOfStorageError",
 
 	/**
 	 * Invalid file name (at creation of the file)
@@ -59,14 +55,23 @@ export const OdspErrorTypes = {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly: "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress: "blockedIPAddress",
 } as const;
-export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
+/**
+ * @internal
+ */
+export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 /**
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
  *
  * @deprecated Use {@link (OdspErrorTypes:variable)} instead.
+ * @internal
  */
 export enum OdspErrorType {
 	/**
@@ -117,8 +122,16 @@ export enum OdspErrorType {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly = "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress = "blockedIPAddress",
 }
 
+/**
+ * @internal
+ */
 export interface IOdspErrorAugmentations {
 	/**
 	 * Server epoch indicates when the file was last modified.
@@ -141,9 +154,13 @@ export interface IOdspErrorAugmentations {
 /**
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
+ * @internal
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
 	readonly errorType: OdspErrorType;
 }
 
+/**
+ * @internal
+ */
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);

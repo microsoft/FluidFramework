@@ -4,8 +4,8 @@
  */
 import type { BlockQuoteNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderContentsUnderTag } from "../Utilities";
 
 /**
  * Renders a {@link BlockQuoteNode} as HTML.
@@ -19,11 +19,5 @@ export function renderBlockQuote(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.ensureNewLine();
-	writer.writeLine("<blockquote>");
-	writer.increaseIndent();
-	renderNodes(node.children, writer, context);
-	writer.ensureNewLine();
-	writer.decreaseIndent();
-	writer.writeLine("</blockquote>");
+	renderContentsUnderTag(node.children, "blockquote", writer, context);
 }

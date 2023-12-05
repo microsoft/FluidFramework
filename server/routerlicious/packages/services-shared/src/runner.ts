@@ -20,6 +20,7 @@ import { ConfigDumper } from "./configDumper";
 
 /**
  * Uses the provided factories to create and execute a runner.
+ * @internal
  */
 export async function run<T extends IResources>(
 	config: nconf.Provider,
@@ -76,14 +77,19 @@ export async function run<T extends IResources>(
 		// Wait for the runner to complete
 		await runningP;
 	} finally {
-		// And then dispose of any resources
-		await resources.dispose();
+		try {
+			// And then dispose of any resources
+			await resources.dispose();
+		} catch (err) {
+			Lumberjack.error(`Could not dispose the resources due to error`, undefined, err);
+		}
 	}
 }
 
 /**
  * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
  * exit the service once the runner completes.
+ * @internal
  */
 export function runService<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,

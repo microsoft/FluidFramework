@@ -36,6 +36,7 @@ import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
@@ -47,8 +48,11 @@ import {
 	IServerMetadata,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
-import { initializeProtocol, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 
+/**
+ * @internal
+ */
 export class ScribeLambda implements IPartitionLambda {
 	// Value of the last processed Kafka offset
 	private lastOffset: number;
@@ -112,6 +116,8 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly isEphemeralContainer: boolean,
+		private readonly localCheckpointEnabled: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -250,6 +256,7 @@ export class ScribeLambda implements IPartitionLambda {
 									this.lastClientSummaryHead,
 									scribeCheckpoint,
 									this.pendingCheckpointMessages.toArray(),
+									this.isEphemeralContainer,
 								);
 
 								// This block is only executed if the writer is not external. For an external writer,
@@ -351,6 +358,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
+						!this.isEphemeralContainer &&
 						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
@@ -480,6 +488,11 @@ export class ScribeLambda implements IPartitionLambda {
 			scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
 			kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
 			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
+			clientCount: checkpoint.protocolState.members.length,
+			clients: getClientIds(checkpoint.protocolState, 5),
+			localCheckpointEnabled: this.localCheckpointEnabled,
+			globalCheckpointOnly: this.globalCheckpointOnly,
+			localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
 		};
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
@@ -497,11 +510,18 @@ export class ScribeLambda implements IPartitionLambda {
 				"Scribe session metric already completed. Creating a new one.",
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
+			const isEphemeralContainer: boolean =
+				this.scribeSessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ??
+				false;
 			this.scribeSessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
+			);
+			this.scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 		}
 
@@ -533,9 +553,17 @@ export class ScribeLambda implements IPartitionLambda {
 					message.type !== MessageType.ClientLeave
 				) {
 					const clonedMessage = _.cloneDeep(message);
-					clonedMessage.contents = JSON.parse(clonedMessage.contents);
+					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
 					this.protocolHandler.processMessage(clonedMessage, false);
 				} else {
+					if (message.type === MessageType.ClientLeave) {
+						const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+						const clientId = JSON.parse(systemLeaveMessage.data) as string;
+						Lumberjack.info(
+							`Removing client from quorum: ${clientId}`,
+							getLumberBaseProperties(this.documentId, this.tenantId),
+						);
+					}
 					this.protocolHandler.processMessage(message, false);
 				}
 			} catch (error) {
@@ -601,17 +629,19 @@ export class ScribeLambda implements IPartitionLambda {
 			return;
 		}
 		let databaseCheckpointFailed = false;
-		this.pendingP = clearCache
-			? this.checkpointManager.delete(this.protocolHead, true)
-			: this.writeCheckpoint(checkpoint).catch((error) => {
-					databaseCheckpointFailed = true;
-					Lumberjack.error(
-						`Error writing database checkpoint.`,
-						getLumberBaseProperties(this.documentId, this.tenantId),
-						error,
-					);
-			  });
-		this.pendingP
+
+		this.pendingP = (
+			clearCache
+				? this.checkpointManager.delete(this.protocolHead, true)
+				: this.writeCheckpoint(checkpoint).catch((error) => {
+						databaseCheckpointFailed = true;
+						Lumberjack.error(
+							`Error writing database checkpoint.`,
+							getLumberBaseProperties(this.documentId, this.tenantId),
+							error,
+						);
+				  })
+		)
 			.then(() => {
 				this.pendingP = undefined;
 				if (!skipKafkaCheckpoint && !databaseCheckpointFailed) {
@@ -827,8 +857,11 @@ export class ScribeLambda implements IPartitionLambda {
 			) {
 				this.checkpoint(CheckpointReason.IdleTime);
 				if (initialScribeCheckpointMessage) {
+					const checkpoint = this.generateScribeCheckpoint(
+						initialScribeCheckpointMessage.offset,
+					);
 					this.checkpointCore(
-						this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset),
+						checkpoint,
 						initialScribeCheckpointMessage,
 						this.clearCache,
 					);
@@ -837,13 +870,19 @@ export class ScribeLambda implements IPartitionLambda {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 						checkpointReason: "IdleTime",
 						lastOffset: initialScribeCheckpointMessage.offset,
-						deliCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
-						deliCheckpointPartition:
+						scribeCheckpointOffset:
+							this.checkpointInfo.currentCheckpointMessage?.offset,
+						scribeCheckpointPartition:
 							this.checkpointInfo.currentCheckpointMessage?.partition,
 						kafkaCheckpointOffset:
 							this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
 						kafkaCheckpointPartition:
 							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
+						clientCount: checkpoint.protocolState.members.length,
+						clients: getClientIds(checkpoint.protocolState, 5),
+						localCheckpointEnabled: this.localCheckpointEnabled,
+						globalCheckpointOnly: this.globalCheckpointOnly,
+						localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
 					};
 					Lumberjack.info(checkpointResult, lumberjackProperties);
 				}

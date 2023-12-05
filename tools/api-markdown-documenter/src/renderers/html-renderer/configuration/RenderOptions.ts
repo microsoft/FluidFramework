@@ -79,13 +79,14 @@ export const defaultRenderers: Renderers = {
 		renderFencedCodeBlock(node as FencedCodeBlockNode, writer, context),
 	[DocumentationNodeType.Heading]: (node, writer, context): void =>
 		renderHeading(node as HeadingNode, writer, context),
-	[DocumentationNodeType.LineBreak]: (node, writer, context): void => renderLineBreak(writer),
+	[DocumentationNodeType.LineBreak]: (node, writer, context): void =>
+		renderLineBreak(writer, context),
 	[DocumentationNodeType.Link]: (node, writer, context): void =>
 		renderLink(node as LinkNode, writer, context),
 	[DocumentationNodeType.Section]: (node, writer, context): void =>
 		renderHierarchicalSection(node as SectionNode, writer, context),
 	[DocumentationNodeType.HorizontalRule]: (node, writer, context): void =>
-		renderHorizontalRule(writer),
+		renderHorizontalRule(writer, context),
 	[DocumentationNodeType.OrderedList]: (node, writer, context): void =>
 		renderOrderedList(node as OrderedListNode, writer, context),
 	[DocumentationNodeType.Paragraph]: (node, writer, context): void =>

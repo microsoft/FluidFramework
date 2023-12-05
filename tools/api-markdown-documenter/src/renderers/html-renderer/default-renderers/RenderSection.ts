@@ -24,13 +24,25 @@ export function renderSection(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.writeLine("<section>");
-	writer.increaseIndent();
+	const prettyFormatting = context.prettyFormatting !== false;
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break before section tag
+	}
+
+	writer.write("<section>");
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.increaseIndent();
+	}
 
 	// Render section heading, if one was provided.
 	if (node.heading !== undefined) {
 		renderNode(node.heading, writer, context);
-		writer.ensureNewLine(); // Ensure line break after heading element
+		if (prettyFormatting) {
+			writer.ensureNewLine(); // Ensure line break after heading element
+		}
 	}
 
 	renderNodes(node.children, writer, {
@@ -38,6 +50,14 @@ export function renderSection(
 		headingLevel: context.headingLevel + 1, // Increment heading level for child content
 	});
 
-	writer.decreaseIndent();
-	writer.writeLine("</section>");
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.decreaseIndent();
+	}
+
+	writer.write("</section>");
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break after section tag
+	}
 }

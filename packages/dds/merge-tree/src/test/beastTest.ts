@@ -11,7 +11,7 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
-import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -1666,7 +1666,10 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(public name: string, public children: DocumentNode[]) {}
+	constructor(
+		public name: string,
+		public children: DocumentNode[],
+	) {}
 
 	addToMergeTree(client: TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {

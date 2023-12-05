@@ -35,9 +35,13 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	 * @param error - inner error object
 	 * @param props - Telemetry props to include when the error is logged
 	 */
-	// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	constructor(message: string, public readonly error?: any, props?: ITelemetryBaseProperties) {
+	constructor(
+		message: string,
+		// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		public readonly error?: any,
+		props?: ITelemetryBaseProperties,
+	) {
 		// Don't try to log the inner error
 		super(message, props, new Set(["error"]));
 	}
@@ -180,6 +184,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
  * Extracts specific properties from the provided message that we know are safe to log.
  *
  * @param messageLike - Message to include info about via telemetry props.
+ *
+ * @internal
  */
 export const extractSafePropertiesFromMessage = (
 	messageLike: Partial<

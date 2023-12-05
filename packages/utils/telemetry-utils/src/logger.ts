@@ -40,9 +40,13 @@ export interface Memory {
 export interface PerformanceWithMemory extends IsomorphicPerformance {
 	readonly memory: Memory;
 }
+
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
- * Please do not modify existing entries for backwards compatibility.
+ *
+ * @privateRemarks Please do not modify existing entries, to maintain backwards compatibility.
+ *
+ * @internal
  */
 export enum TelemetryDataTag {
 	/**
@@ -55,11 +59,21 @@ export enum TelemetryDataTag {
 	UserData = "UserData",
 }
 
+/**
+ * @internal
+ */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
+/**
+ * @internal
+ */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
+
+/**
+ * @internal
+ */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
 	error?: ITelemetryLoggerPropertyBag;
@@ -67,9 +81,13 @@ export interface ITelemetryLoggerPropertyBags {
 
 /**
  * Attempts to parse number from string.
- * If fails,returns original string.
+ * If it fails, it will return the original string.
+ *
+ * @remarks
  * Used to make telemetry data typed (and support math operations, like comparison),
- * in places where we do expect numbers (like contentsize/duration property in http header)
+ * in places where we do expect numbers (like contentsize/duration property in http header).
+ *
+ * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export function numberFromString(str: string | null | undefined): string | number | undefined {
@@ -80,10 +98,19 @@ export function numberFromString(str: string | null | undefined): string | numbe
 	return Number.isNaN(num) ? str : num;
 }
 
+// TODO: add docs
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+/**
+ * String used to concatenate the namespace of parent loggers and their child loggers.
+ * @internal
+ */
 export const eventNamespaceSeparator = ":" as const;
 
 /**
@@ -92,6 +119,9 @@ export const eventNamespaceSeparator = ":" as const;
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
+	/**
+	 * {@inheritDoc eventNamespaceSeparator}
+	 */
 	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
 
 	public static sanitizePkgName(name: string): string {
@@ -286,6 +316,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
  * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
  * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
+ *
+ * @internal
  */
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
@@ -336,11 +368,14 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 }
 
 /**
- * Create a child logger based on the provided props object
- * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ * Create a child logger based on the provided props object.
  *
  * @remarks
  * Passing in no props object (i.e. undefined) will return a logger that is effectively a no-op.
+ *
+ * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ *
+ * @internal
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -353,7 +388,7 @@ export function createChildLogger(props?: {
 /**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
- * Creates sub-logger that appends properties to all events
+ * Creates sub-logger that appends properties to all events.
  */
 export class ChildLogger extends TelemetryLogger {
 	/**
@@ -449,16 +484,38 @@ export class ChildLogger extends TelemetryLogger {
 }
 
 /**
- * Create a logger which logs to multiple other loggers based on the provided props object
- * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
- * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
+ * Input properties for {@link createMultiSinkLogger}.
+ *
+ * @internal
  */
-export function createMultiSinkLogger(props: {
+export interface MultiSinkLoggerProperties {
+	/**
+	 * Will be prefixed to all event names.
+	 */
 	namespace?: string;
+
+	/**
+	 * Default properties that will be applied to all events flowing through this logger.
+	 */
 	properties?: ITelemetryLoggerPropertyBags;
+
+	/**
+	 * The base loggers that this logger will forward the logs to, after it processes them.
+	 */
 	loggers?: (ITelemetryBaseLogger | undefined)[];
+
+	/**
+	 * If true, the logger will attempt to copy the custom properties (if they are of a known type, i.e. one from this package) of all the base loggers passed to it, to apply them itself to logs that flow through.
+	 */
 	tryInheritProperties?: true;
-}): ITelemetryLoggerExt {
+}
+
+/**
+ * Create a logger which logs to multiple other loggers based on the provided props object.
+ *
+ * @internal
+ */
+export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
@@ -551,10 +608,15 @@ export class MultiSinkLogger extends TelemetryLogger {
 }
 
 /**
- * Describes what events PerformanceEvent should log
- * By default, all events are logged, but client can override this behavior
- * For example, there is rarely a need to record start event, as we really after
+ * Describes what events {@link PerformanceEvent} should log.
+ *
+ * @remarks
+ * By default, all events are logged, but the client can override this behavior.
+ *
+ * For example, there is rarely a need to record a start event, as we're really after
  * success / failure tracking, including duration (on success).
+ *
+ * @internal
  */
 export interface IPerformanceEventMarkers {
 	start?: true;
@@ -563,25 +625,60 @@ export interface IPerformanceEventMarkers {
 }
 
 /**
- * Helper class to log performance events
+ * Helper class to log performance events.
+ *
+ * @internal
  */
 export class PerformanceEvent {
+	/**
+	 * Creates an instance of {@link PerformanceEvent} and starts measurements
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
+	 * but measurements will still be performed and any specified markers will be generated.
+	 * @returns An instance of {@link PerformanceEvent}
+	 */
 	public static start(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
+		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize);
+		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
 	}
 
+	/**
+	 * Measure a synchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static timedExec<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
+		sampleThreshold: number = 1,
 	): T {
-		const perfEvent = PerformanceEvent.start(logger, event, markers);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			undefined, // recordHeapSize
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = callback(perfEvent);
 			perfEvent.autoEnd();
@@ -592,14 +689,37 @@ export class PerformanceEvent {
 		}
 	}
 
+	/**
+	 * Measure an asynchronous task
+	 * @param logger - the logger to be used for publishing events
+	 * @param event - the logging event details which will be published with the performance measurements
+	 * @param callback - the task to be executed and measured
+	 * @param markers - See {@link IPerformanceEventMarkers}
+	 * @param recordHeapSize - whether or not to also record memory performance
+	 * @param sampleThreshold - events with the same name and category will be sent to the logger
+	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @returns The results of the executed task
+	 *
+	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
+	 * tasks (`callback`), `sampleThreshold` is still applied only based on the event's category + eventName,
+	 * so executing either of the tasks will increase the internal counter and they
+	 * effectively "share" the sampling rate for the event.
+	 */
 	public static async timedExecAsync<T>(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
+		sampleThreshold: number = 1,
 	): Promise<T> {
-		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
+		const perfEvent = PerformanceEvent.start(
+			logger,
+			event,
+			markers,
+			recordHeapSize,
+			PerformanceEvent.shouldReport(event, sampleThreshold),
+		);
 		try {
 			const ret = await callback(perfEvent);
 			perfEvent.autoEnd();
@@ -624,6 +744,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly recordHeapSize: boolean = false,
+		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -686,6 +807,10 @@ export class PerformanceEvent {
 			return;
 		}
 
+		if (!this.emitLogs) {
+			return;
+		}
+
 		const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
@@ -701,21 +826,31 @@ export class PerformanceEvent {
 				}
 			}
 		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (
-				performance as PerformanceWithMemory
-			)?.memory?.usedJSHeapSize;
+			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
+				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
+	}
+
+	private static readonly eventHits = new Map<string, number>();
+	private static shouldReport(event: ITelemetryGenericEvent, sampleThreshold: number): boolean {
+		const eventKey = `.${event.category}.${event.eventName}`;
+		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
+		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
+		return hitCount % sampleThreshold === 0;
 	}
 }
 
 /**
  * Null logger that no-ops for all telemetry events passed to it.
- * @deprecated - This will be removed in a future release.
+ *
+ * @deprecated This will be removed in a future release.
  * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
  * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * where the send() method does nothing and using that.
+ *
+ * @internal
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
@@ -785,6 +920,28 @@ function convertToBasePropertyTypeUntagged(
 	}
 }
 
+/**
+ * Tags all given `values` with the same `tag`.
+ *
+ * @param tag - The tag with which all `values` will be annotated.
+ * @param values - The values to be tagged.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagData("someTag", {foo: 1, bar: 2}),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged.
+ *
+ * @internal
+ */
 export const tagData = <
 	T extends TelemetryDataTag,
 	V extends Record<
@@ -827,8 +984,27 @@ export const tagData = <
 		}, {}) as ReturnType<typeof tagData>;
 
 /**
- * Helper function to tag telemetry properties as CodeArtifacts. It supports properties of type
- * TelemetryBaseEventPropertyType as well as getters that return TelemetryBaseEventPropertyType.
+ * Tags all provided `values` as {@link TelemetryDataTag.CodeArtifact}.
+ *
+ * @param values - The values to be tagged.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagCodeArtifacts("someTag", {foo: 1, bar: 2}),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged as {@link TelemetryDataTag.CodeArtifact}.
+ *
+ * @see {@link tagData}
+ *
+ * @internal
  */
 export const tagCodeArtifacts = <
 	T extends Record<

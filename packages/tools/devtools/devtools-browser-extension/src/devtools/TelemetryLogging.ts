@@ -10,6 +10,7 @@ import {
 	type ITelemetryBaseEvent,
 } from "@fluid-experimental/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 
@@ -78,11 +79,15 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
+		// NOTE: this doesn't really use environment variables at runtime.
+		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
+		// and replaces them with inlined values if the corresponding variables exist in the environment
+		// at bundle time, or `undefined` if not.
+		const instrumentationKey = process.env.DEVTOOLS_TELEMETRY_TOKEN ?? "";
+
 		// Configure App insights core to send to collector
 		const coreConfig: IExtendedConfiguration = {
-			// A non-empty instrumentation key needs to provided for the logger to do anything.
-			// AB#5167 tracks how to inject one at build time to keep it out of source control.
-			instrumentationKey: "",
+			instrumentationKey,
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
@@ -98,6 +103,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		if ((coreConfig.instrumentationKey ?? "") !== "") {
 			this.enabled = true;
 			this.appInsightsCore.initialize(coreConfig, []);
+			console.log(formatDevtoolsScriptMessageForLogging(`Injected telemetry token.`));
 		}
 	}
 

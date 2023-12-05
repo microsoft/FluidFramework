@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IAlfredTenant {
 	id: string;
 	key: string;
@@ -10,6 +13,7 @@ export interface IAlfredTenant {
 
 /**
  * Session information that includes the server urls and session status
+ * @alpha
  */
 export interface ISession {
 	/**
@@ -24,6 +28,10 @@ export interface ISession {
 	 * Historian url of the session
 	 */
 	historianUrl: string;
+	/**
+	 * Message broker ID of the session
+	 */
+	messageBrokerId?: string;
 	/**
 	 * Whether session is "alive".
 	 * Session is considered alive if it has been "discovered" via the HTTP endpoint

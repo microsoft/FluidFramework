@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { SectionNode } from "../../documentation-domain";
-import { ApiFunctionLike } from "../ApiItemUtilities";
+import { ApiFunctionLike } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSection, createReturnsSection } from "../helpers";
 

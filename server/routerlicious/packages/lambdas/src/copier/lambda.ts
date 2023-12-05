@@ -13,13 +13,19 @@ import {
 	IRawOperationMessageBatch,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class CopierLambda implements IPartitionLambda {
 	// Below, one job corresponds to the task of sending one batch to Mongo:
 	private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
 	private pendingOffset: IQueuedMessage | undefined;
 	private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
-	constructor(private readonly rawOpCollection: ICollection<any>, protected context: IContext) {}
+	constructor(
+		private readonly rawOpCollection: ICollection<any>,
+		protected context: IContext,
+	) {}
 
 	public handler(message: IQueuedMessage) {
 		// Extract batch of raw ops from Kafka message:

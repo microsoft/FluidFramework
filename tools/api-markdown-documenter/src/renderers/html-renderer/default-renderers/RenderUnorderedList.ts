@@ -4,35 +4,44 @@
  */
 import type { UnorderedListNode } from "../../../documentation-domain";
 import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode } from "../Render";
 import type { RenderContext } from "../RenderContext";
+import { renderListContents } from "../Utilities";
 
 /**
- * Renders an {@link UnorderedList} as HTML.
+ * Renders a {@link UnorderedListNode} as HTML.
  *
  * @param node - The node to render.
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
- *
- * @remarks Will render as HTML when in an HTML context, or within a table context.
  */
 export function renderUnorderedList(
 	node: UnorderedListNode,
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.writeLine("<ul>");
-	writer.increaseIndent();
+	const prettyFormatting = context.prettyFormatting !== false;
 
-	for (const child of node.children) {
-		writer.writeLine("<li>");
-		writer.increaseIndent();
-		renderNode(child, writer, context);
-		writer.decreaseIndent();
-		writer.ensureNewLine(); // Ensure newline after previous list item
-		writer.writeLine("</li>");
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break before tag
 	}
 
-	writer.decreaseIndent();
-	writer.writeLine("</ul>");
+	writer.write(`<ul>`);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.increaseIndent();
+	}
+
+	renderListContents(node.children, writer, context);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine();
+		writer.decreaseIndent();
+	}
+
+	writer.write(`</ul>`);
+
+	if (prettyFormatting) {
+		writer.ensureNewLine(); // Ensure line break after tag
+	}
 }

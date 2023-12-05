@@ -9,7 +9,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
-	getDefaultObjectFromContainer,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -22,10 +21,18 @@ import {
 	createDocumentId,
 	LoaderContainerTracker,
 	ITestObjectProvider,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ContainerRuntime, ISummarizer, Summarizer } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	ISummarizer,
+	TEST_requestSummarizer,
+} from "@fluidframework/container-runtime";
+import { SharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
@@ -93,7 +100,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeNoCompat("LoadModes", (getTestObjectProvider) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -108,7 +115,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
-		dataObject1 = await getDefaultObjectFromContainer<TestDataObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 	});
 
 	afterEach(() => {
@@ -116,11 +123,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -138,14 +144,13 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 
 	async function loadContainer(
 		containerUrl: IResolvedUrl | undefined,
-		factory: IFluidDataStoreFactory,
+		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -160,11 +165,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -176,7 +180,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		if (absoluteUrl === undefined) {
 			throw new Error("URL could not be resolved");
 		}
-		const summarizer = await Summarizer.create(loader, absoluteUrl);
+		const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 		await waitForSummarizerConnection(summarizer);
 		return summarizer;
 	}
@@ -200,7 +204,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			headers,
 		);
 		const initialSequenceNumber = container2.deltaManager.lastSequenceNumber;
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const initialValue = dataObject2.value;
 
 		assert.strictEqual(dataObject1.value, dataObject2.value, "counter values should be equal");
@@ -254,7 +258,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -319,7 +323,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -353,6 +357,45 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			container2.deltaManager.lastSequenceNumber,
 			"container2 should still be at the specified sequence number",
 		);
+	});
+
+	it("forceReadonly works", async () => {
+		const mapId = "mapKey";
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [[mapId, SharedMap.getFactory()]],
+		};
+		const created = await provider.makeTestContainer(testContainerConfig);
+		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
+		const map1 = await do1.getSharedObject<SharedMap>(mapId);
+
+		const headers: IRequestHeader = {
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+		};
+
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const loaded = await loader.resolve({
+			url: await provider.driver.createContainerUrl(provider.documentId),
+			headers,
+		});
+		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
+		loaded.connect();
+		loaded.forceReadonly?.(true);
+		const map2 = await do2.getSharedObject<SharedMap>(mapId);
+		map2.set("key1", "1");
+		map2.set("key2", "2");
+		await provider.ensureSynchronized();
+
+		// The container is in read-only mode, its changes haven't been sent
+		assert.strictEqual(map1.get("key1"), undefined);
+		assert.strictEqual(map1.get("key2"), undefined);
+
+		// The container's read-only mode is cleared, so the pending ops must be sent
+		loaded.forceReadonly?.(false);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get("key1"), "1");
+		assert.strictEqual(map1.get("key2"), "2");
 	});
 
 	describe("Expected error cases", () => {

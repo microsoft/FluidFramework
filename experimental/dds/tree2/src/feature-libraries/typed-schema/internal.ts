@@ -5,29 +5,6 @@
 
 // Used by public types, but not part of the desired API surface
 
-export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./typeUtils";
+export { ArrayToUnion } from "./typeUtils";
 
-export {
-	TreeSchemaSpecification,
-	NormalizeStructFieldsInner,
-	NormalizeStructFields,
-	NormalizeField,
-	Fields,
-	StructSchemaSpecification,
-	MapSchemaSpecification,
-	LeafSchemaSpecification,
-	MapFieldSchema,
-	RecursiveTreeSchemaSpecification,
-	RecursiveTreeSchema,
-} from "./typedTreeSchema";
-
-export {
-	FlexList,
-	FlexListToNonLazyArray,
-	ConstantFlexListToNonLazyArray,
-	LazyItem,
-	NormalizedFlexList,
-	ExtractItemType,
-	ArrayHasFixedLength,
-	ExtractListItemType,
-} from "./flexList";
+export { FlexList, LazyItem, ExtractItemType, FlexListToUnion } from "./flexList";

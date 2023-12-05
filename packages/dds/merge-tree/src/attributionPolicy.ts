@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -190,8 +192,7 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 
 /**
  * @returns An {@link AttributionPolicy} which tracks only insertion of content.
- *
- * @alpha
+ * @internal
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(

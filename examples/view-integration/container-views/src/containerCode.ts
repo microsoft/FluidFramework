@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
@@ -34,6 +33,7 @@ const diceRollerId = "dice-roller";
 
 /**
  * The runtime factory for our Fluid container.
+ * @internal
  */
 export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
 	constructor() {
@@ -54,10 +54,8 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const diceRoller = await requestFluidObject<IDiceRoller>(
-			await runtime.getRootDataStore(diceRollerId),
-			"",
-		);
+		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
+
 		const mountableView = new MountableView(
 			React.createElement(DiceRollerView, { model: diceRoller }),
 		);

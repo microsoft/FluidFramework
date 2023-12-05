@@ -52,6 +52,9 @@ export interface IBatchCheckpoint {
 	rollback: (action: (message: BatchMessage) => void) => void;
 }
 
+/**
+ * @internal
+ */
 export interface IChunkedOp {
 	chunkId: number;
 	totalChunks: number;

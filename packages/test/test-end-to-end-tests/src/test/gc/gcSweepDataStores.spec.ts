@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+	ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
@@ -12,7 +13,6 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -22,14 +22,14 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -37,7 +37,7 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
  * loading, etc.).
  */
-describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(
@@ -100,8 +100,15 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	let opCount = 0;
 	// Sends a unique op that's guaranteed to change the DDS for this specific container.
 	// This can also be used to transition a client to write mode.
-	const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
-		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+	const sendOpToUpdateSummaryTimestampToNow = async (summarizer: ISummarizer) => {
+		const runtime = (summarizer as any).runtime as ContainerRuntime;
+		const entryPoint = (await runtime.getAliasedDataStoreEntryPoint("default")) as
+			| IFluidHandle<ITestDataObject>
+			| undefined;
+		if (entryPoint === undefined) {
+			throw new Error("default dataStore must exist");
+		}
+		const defaultDataObject = await entryPoint.get();
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
@@ -111,13 +118,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		approximateUnreferenceTimestampMs: number,
 	) => {
 		const container = await makeContainer();
-		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(container);
 
 		const handleKey = "handle";
-		const dataStore = await defaultDataObject._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
 		const testDataObject = (await dataStore.entryPoint?.get()) as ITestDataObject | undefined;
 		assert(
 			testDataObject !== undefined,
@@ -131,9 +137,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
-			container,
-		);
+		const { container: summarizingContainer1, summarizer: summarizer1 } =
+			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
@@ -149,11 +154,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			summaryVersion,
 		);
 
-		const summarizerDataObject = await requestFluidObject<ITestDataObject>(
-			summarizingContainer2,
-			testDataObject.handle.absolutePath,
-		);
-		await sendOpToUpdateSummaryTimestampToNow(summarizingContainer2);
+		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+		const response = await containerRuntime.resolveHandle({
+			url: testDataObject.handle.absolutePath,
+		});
+		const summarizerDataObject = response.value as ITestDataObject;
+		await sendOpToUpdateSummaryTimestampToNow(summarizer2);
 
 		return {
 			unreferencedId,
@@ -233,18 +239,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Loading swept data stores not allowed", () => {
-		/**
-		 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
-		 * but the test containers are wired up to route requests to this function.
-		 * (See the innerRequestHandler used in LocalCodeLoader for how it works)
-		 */
-		async function containerRuntime_resolveHandle(
-			container: IContainer,
-			request: IRequest,
-		): Promise<IResponse> {
-			return container.request(request);
-		}
-
 		// TODO: Receive ops scenarios - loaded before and loaded after (are these just context loading errors?)
 		itExpects(
 			"Requesting swept datastores fails in client loaded after sweep timeout and summarizing container",
@@ -262,14 +256,17 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should be swept now
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
 
 				// This request fails since the datastore is swept
-				const errorResponse = await containerRuntime_resolveHandle(container, {
+				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
+				const errorResponse = await (
+					entryPoint._context.containerRuntime as any
+				).resolveHandle({
 					url: unreferencedId,
 				});
 				assert.equal(
@@ -289,10 +286,9 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				);
 
 				// This request fails since the datastore is swept
-				const summarizerResponse = await containerRuntime_resolveHandle(
-					summarizingContainer,
-					{ url: unreferencedId },
-				);
+				const summarizerResponse = await (summarizer as any).runtime.resolveHandle({
+					url: unreferencedId,
+				});
 				assert.equal(
 					summarizerResponse.status,
 					404,
@@ -338,9 +334,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const response = await containerRuntime_resolveHandle(sendingContainer, {
+				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime.resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;
@@ -394,9 +392,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const response = await containerRuntime_resolveHandle(sendingContainer, {
+				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const containerRuntime = entryPoint._context.containerRuntime as ContainerRuntime;
+				const response = await containerRuntime.resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;
@@ -472,7 +472,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 			// The datastore should be swept now
 			const summary2 = await summarize(summarizer);
@@ -496,7 +496,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should NOT be swept here.
 				// We need to do fullTree because the GC data won't change (since it's not swept).

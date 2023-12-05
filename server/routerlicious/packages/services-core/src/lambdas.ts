@@ -9,6 +9,9 @@ import { safelyParseJSON } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
+/**
+ * @internal
+ */
 export interface IPartitionLambdaPlugin {
 	create(
 		config: Provider,
@@ -19,6 +22,7 @@ export interface IPartitionLambdaPlugin {
 
 /**
  * Reasons why a lambda is closing
+ * @internal
  */
 export enum LambdaCloseType {
 	Stop = "Stop",
@@ -27,16 +31,25 @@ export enum LambdaCloseType {
 	Error = "Error",
 }
 
+/**
+ * @internal
+ */
 export enum LambdaName {
 	Scribe = "Scribe",
 }
 
+/**
+ * @internal
+ */
 export interface ILogger {
 	info(message: string, metaData?: any): void;
 	warn(message: string, metaData?: any): void;
 	error(message: string, metaData?: any): void;
 }
 
+/**
+ * @internal
+ */
 export interface IContextErrorData {
 	/**
 	 * Indicates whether the error is recoverable and the lambda should be restarted.
@@ -52,8 +65,18 @@ export interface IContextErrorData {
 
 	tenantId?: string;
 	documentId?: string;
+
+	/**
+	 * For KafkaRunner logging purposes.
+	 * Since KafkaRunner metric logs all the errors, this will indicate how the error was handled
+	 * eg: doc corruption error / rdkafkaConsumer error, so that we can filter accordingly
+	 */
+	errorLabel?: string;
 }
 
+/**
+ * @internal
+ */
 export interface IContext {
 	/**
 	 * Updates the checkpoint
@@ -73,6 +96,9 @@ export interface IContext {
 	readonly log: ILogger | undefined;
 }
 
+/**
+ * @internal
+ */
 export interface IPartitionLambda {
 	/**
 	 * Expire document partition after this long of no activity.
@@ -94,6 +120,7 @@ export interface IPartitionLambda {
 
 /**
  * Factory for creating lambda related objects
+ * @internal
  */
 export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitter {
 	/**
@@ -113,12 +140,16 @@ export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitt
 
 /**
  * Lambda config
+ * @internal
  */
 export interface IPartitionLambdaConfig {
 	tenantId: string;
 	documentId: string;
 }
 
+/**
+ * @internal
+ */
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return

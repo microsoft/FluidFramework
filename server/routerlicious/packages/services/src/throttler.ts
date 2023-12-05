@@ -22,6 +22,7 @@ import {
  * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.
  * This should be used for implementing throttling in places where latency matters more than accuracy,
  * such as service endpoints or socket connections.
+ * @internal
  */
 export class Throttler implements IThrottler {
 	private readonly lastThrottleUpdateAtMap: LRUCache<string, number>;

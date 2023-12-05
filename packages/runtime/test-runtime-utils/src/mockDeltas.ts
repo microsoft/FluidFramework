@@ -23,6 +23,7 @@ import { assert } from "@fluidframework/core-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
+ * @internal
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 	protected readonly queue: T[] = [];
@@ -97,6 +98,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
+ * @internal
  */
 export class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -142,6 +144,7 @@ export class MockDeltaManager
 		return undefined as any as string;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get maxMessageSize(): number {
 		return 0;
 	}
@@ -150,6 +153,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get active(): boolean {
 		return true;
 	}

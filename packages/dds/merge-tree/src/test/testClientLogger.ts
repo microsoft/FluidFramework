@@ -117,7 +117,10 @@ export class TestClientLogger {
 		this.disposeCallbacks.length = 0;
 	}
 
-	constructor(private readonly clients: readonly TestClient[], private readonly title?: string) {
+	constructor(
+		private readonly clients: readonly TestClient[],
+		private readonly title?: string,
+	) {
 		const logHeaders: string[] = [];
 		clients.forEach((c, i) => {
 			logHeaders.push("op");

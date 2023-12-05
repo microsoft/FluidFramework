@@ -12,9 +12,13 @@ import { TenantManager } from "./tenant";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
+ * @internal
  */
 export class DeltaManager implements IDeltaService {
-	constructor(private readonly authEndpoint, private readonly internalAlfredUrl: string) {}
+	constructor(
+		private readonly authEndpoint,
+		private readonly internalAlfredUrl: string,
+	) {}
 
 	public async getDeltas(
 		_collectionName: string,

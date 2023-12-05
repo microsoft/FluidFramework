@@ -11,6 +11,7 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
 
 /**
  * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * @internal
  */
 export class LastEditedTrackerDataObject
 	extends DataObject

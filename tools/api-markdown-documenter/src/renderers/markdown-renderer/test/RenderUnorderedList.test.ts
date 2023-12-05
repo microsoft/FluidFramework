@@ -30,7 +30,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 	describe("Table context", () => {
 		it("Empty list", () => {
 			expect(testRender(UnorderedListNode.Empty, { insideTable: true })).to.equal(
-				"<ul>\n</ul>\n",
+				"<ul></ul>",
 			);
 		});
 
@@ -42,20 +42,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 			const input = UnorderedListNode.createFromPlainTextEntries([text1, text2, text3]);
 			const result = testRender(input, { insideTable: true });
 
-			const expected = [
-				"<ul>",
-				"  <li>",
-				`    ${text1}`,
-				"  </li>",
-				"  <li>",
-				`    ${text2}`,
-				"  </li>",
-				"  <li>",
-				`    ${text3}`,
-				"  </li>",
-				"</ul>",
-				"",
-			].join("\n");
+			const expected = `<ul><li>${text1}</li><li>${text2}</li><li>${text3}</li></ul>`;
 
 			expect(result).to.equal(expected);
 		});

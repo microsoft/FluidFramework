@@ -5,6 +5,10 @@
 import { SharedCell } from "@fluidframework/cell";
 import React from "react";
 
+/**
+ * {@link CollaborativeCheckbox} input props.
+ * @internal
+ */
 export interface ICollaborativeCheckboxProps {
 	/**
 	 * The SharedCell that will store the checkbox value.
@@ -26,12 +30,17 @@ export interface ICollaborativeCheckboxProps {
 	style?: React.CSSProperties;
 }
 
+/**
+ * {@link CollaborativeCheckbox} component state.
+ * @internal
+ */
 export interface ICollaborativeCheckboxState {
 	checked: boolean;
 }
 
 /**
  * Given a SharedCell will produce a collaborative checkbox.
+ * @internal
  */
 export class CollaborativeCheckbox extends React.Component<
 	ICollaborativeCheckboxProps,

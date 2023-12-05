@@ -8,12 +8,14 @@ import {
 	IEnvelope,
 	InboundAttachMessage,
 	IAttachMessage,
-	IdCreationRangeWithStashedState,
 	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
 import { IDataStoreAliasMessage } from "./dataStore";
 import { IChunkedOp } from "./opLifecycle";
 
+/**
+ * @internal
+ */
 export enum ContainerMessageType {
 	// An op to be delivered to store
 	FluidDataStoreOp = "component",
@@ -69,7 +71,8 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents>
+	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
@@ -113,13 +116,9 @@ export type ContainerRuntimeAliasMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,
 	IDataStoreAliasMessage
 >;
-export type LocalContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.IdAllocation,
-	IdCreationRangeWithStashedState
->;
 export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.IdAllocation,
-	IdCreationRange & { stashedState?: never }
+	IdCreationRange
 >;
 
 /**
@@ -160,7 +159,7 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| LocalContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeIdAllocationMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 
@@ -210,7 +209,7 @@ export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDoc
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  *
- * @deprecated - this is an internal type which should not be used outside of the package.
+ * @deprecated this is an internal type which should not be used outside of the package.
  * Internally, it is superseded by `TypedContainerRuntimeMessage`.
  *
  * @internal

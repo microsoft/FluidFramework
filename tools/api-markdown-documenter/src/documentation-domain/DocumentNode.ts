@@ -4,6 +4,7 @@
  */
 import type { Parent as UnistParent } from "unist";
 
+import { ApiItem } from "..";
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { SectionNode } from "./SectionNode";
 
@@ -14,9 +15,9 @@ import { SectionNode } from "./SectionNode";
  */
 export interface DocumentNodeProperties {
 	/**
-	 * Name of the API item from which this document node was generated.
+	 * The ApiItem the document node was created for, if it was created for an ApiItem.
 	 */
-	readonly apiItemName: string;
+	readonly apiItem?: ApiItem;
 
 	/**
 	 * Child nodes.
@@ -55,9 +56,9 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentNodeProps.apiItemName}
+	 * {@inheritDoc DocumentNodeProps.apiItem}
 	 */
-	public readonly apiItemName: string;
+	public readonly apiItem?: ApiItem;
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.children}
@@ -75,7 +76,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly frontMatter?: string;
 
 	public constructor(properties: DocumentNodeProperties) {
-		this.apiItemName = properties.apiItemName;
+		this.apiItem = properties.apiItem;
 		this.children = properties.children;
 		this.documentPath = properties.documentPath;
 		this.frontMatter = properties.frontMatter;

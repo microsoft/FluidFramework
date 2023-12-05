@@ -25,7 +25,7 @@ function getOrAddLocalMap(key: string, getter: () => Buffer) {
 export const handler: Handler = {
 	name: "dockerfile-packages",
 	match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
-	handler: (file) => {
+	handler: async (file) => {
 		// strip server path since all paths are relative to server directory
 		const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
 
@@ -47,7 +47,9 @@ export const handler: Handler = {
 			// regex basically find the last of 3 or more consecutive COPY package lines
 			const endOfCopyLinesRegex =
 				/(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const localNewline = regexMatch.groups!.newline;
 			const insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 

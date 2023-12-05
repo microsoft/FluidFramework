@@ -11,11 +11,15 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Redis based cache client
+ * @internal
  */
 export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
-	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
+	constructor(
+		private readonly client: Redis.default,
+		parameters?: IRedisParameters,
+	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}

@@ -59,6 +59,9 @@ export interface MemoryBenchmarkStats {
 	totalRunTimeMs: number;
 }
 
+/**
+ * @public
+ */
 export interface IMemoryTestObject extends MemoryTestObjectProps {
 	/**
 	 * The method with code to profile.
@@ -96,6 +99,9 @@ export interface IMemoryTestObject extends MemoryTestObjectProps {
 	after?: HookFunction;
 }
 
+/**
+ * @public
+ */
 export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 	/**
 	 * If true, this benchmark will create a Mocha test function with 'it.only()'
@@ -184,6 +190,8 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
  *
  * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by fitering on that value.
+ *
+ * @public
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 	const options: Required<MemoryTestObjectProps> = {

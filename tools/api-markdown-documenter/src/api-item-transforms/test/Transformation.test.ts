@@ -32,7 +32,7 @@ import {
 	TableNode,
 	UnorderedListNode,
 } from "../../documentation-domain";
-import { getHeadingForApiItem } from "../ApiItemUtilities";
+import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
 import { apiItemToSections } from "../TransformApiItem";
 import {
 	ApiItemTransformationConfiguration,
@@ -376,7 +376,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
 		const expectedPackageDocument = new DocumentNode({
-			apiItemName: "test-package",
+			apiItem: model.packages[0],
 			documentPath: "test-package",
 			children: [
 				new SectionNode(
@@ -414,7 +414,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
 		const expectedEntryPointADocument = new DocumentNode({
-			apiItemName: "entry-point-a",
+			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
@@ -498,7 +498,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
 		const expectedEntryPointBDocument = new DocumentNode({
-			apiItemName: "entry-point-b",
+			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(

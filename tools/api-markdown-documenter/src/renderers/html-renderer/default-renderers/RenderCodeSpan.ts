@@ -19,6 +19,8 @@ export function renderCodeSpan(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
+	// Note: we don't bother introducing style nesting for code spans.
+	// This policy is arbitrary and could be changed if there is reason to.
 	writer.write("<code>");
 	renderNodes(node.children, writer, context);
 	writer.write("</code>");

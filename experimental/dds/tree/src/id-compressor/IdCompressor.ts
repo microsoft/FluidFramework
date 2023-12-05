@@ -1656,12 +1656,12 @@ export class IdCompressor {
 			| [
 					serialized: SerializedIdCompressorWithNoSession,
 					newSessionIdMaybe: SessionId,
-					attributionIdMaybe?: AttributionId
+					attributionIdMaybe?: AttributionId,
 			  ]
 			| [
 					serialized: SerializedIdCompressorWithOngoingSession,
 					newSessionIdMaybe?: undefined,
-					attributionIdMaybe?: undefined
+					attributionIdMaybe?: undefined,
 			  ]
 	): IdCompressor {
 		const [serialized, newSessionIdMaybe, attributionIdMaybe] = args;

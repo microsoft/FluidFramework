@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-common",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Package containing common configs",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,11 +18,11 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore"
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore"
 	},
 	"devDependencies": {
-		"prettier": "~2.6.2"
+		"prettier": "~3.0.3"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

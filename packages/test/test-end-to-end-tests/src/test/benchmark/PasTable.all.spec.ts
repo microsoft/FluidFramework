@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -20,7 +20,7 @@ function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
 	return new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
 }
 
-describeNoCompat("PAS Test", () => {
+describeCompat("PAS Test", "NoCompat", () => {
 	let matrix: SharedMatrix;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

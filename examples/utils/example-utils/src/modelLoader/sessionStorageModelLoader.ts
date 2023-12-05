@@ -32,6 +32,9 @@ const getDocumentServiceFactory = (documentId: string) => {
 	return new LocalDocumentServiceFactory(deltaConnection);
 };
 
+/**
+ * @internal
+ */
 export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelType> {
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,
@@ -63,5 +66,14 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
+	}
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+		const modelLoader = new ModelLoader<ModelType>({
+			urlResolver,
+			documentServiceFactory: getDocumentServiceFactory(id),
+			codeLoader: this.codeLoader,
+			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
+		});
+		return modelLoader.loadExistingPaused(`${window.location.origin}/${id}`, sequenceNumber);
 	}
 }

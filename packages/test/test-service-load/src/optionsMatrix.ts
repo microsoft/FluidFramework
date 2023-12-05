@@ -8,7 +8,7 @@ import {
 	generatePairwiseOptions,
 	OptionsMatrix,
 	numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluid-private/test-pairwise-generator";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -66,7 +66,6 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 	disableGC: booleanCases,
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
-	sweepAllowed: [false],
 	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 

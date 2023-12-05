@@ -55,6 +55,10 @@ const warn = console.warn;
 let currentTestLogger: ITelemetryBufferedLogger | undefined;
 let currentTestName: string | undefined;
 let originalLogger: ITelemetryBufferedLogger;
+
+/**
+ * @internal
+ */
 export const mochaHooks = {
 	beforeAll() {
 		originalLogger = _global.getTestLogger?.() ?? nullLogger;

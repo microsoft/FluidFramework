@@ -56,6 +56,7 @@ function getLastEditDetailsFromMessage(
  * @param lastEditedTracker - The last edited tracker.
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.
+ * @internal
  */
 export function setupLastEditedTrackerForContainer(
 	lastEditedTracker: IFluidLastEditedTracker,

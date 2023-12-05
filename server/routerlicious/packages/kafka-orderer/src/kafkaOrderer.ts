@@ -12,6 +12,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class KafkaOrdererConnection implements core.IOrdererConnection {
 	public static async create(
 		producer: core.IProducer,
@@ -161,6 +164,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 	}
 }
 
+/**
+ * @internal
+ */
 export class KafkaOrderer implements core.IOrderer {
 	public static async create(
 		producer: core.IProducer,
@@ -210,6 +216,9 @@ export class KafkaOrderer implements core.IOrderer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class KafkaOrdererFactory {
 	private readonly ordererMap = new Map<string, Promise<core.IOrderer>>();
 

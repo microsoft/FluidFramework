@@ -124,11 +124,7 @@ let impl:
 	| typeof implementations.performance;
 if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 	impl = implementations.node;
-} else if (
-	typeof window !== "undefined" &&
-	typeof window.performance !== "undefined" &&
-	typeof window.performance.now !== "undefined"
-) {
+} else if (typeof window?.performance?.now !== "undefined") {
 	impl = implementations.performance;
 } else {
 	impl = implementations.date;
@@ -136,6 +132,7 @@ if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 
 /**
  * Creates and starts a new Chronometer.
+ * @internal
  */
 export class Chronometer {
 	constructor() {

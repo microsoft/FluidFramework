@@ -1,5 +1,10 @@
 # @fluidframework/location-redirection-utils
 
+**NOTE: THIS PACKAGE IS DEPRECATED AND WILL BE REMOVED IN A FUTURE RELEASE.**
+**ALL EXPORTS HAVE BEEN MARKED AS DEPRECATED, AND HAVE BEEN MOVED TO THE `@fluidframework/container-loader` PACKAGE.**
+**PLEASE MIGRATE ANY IMPORTS FROM THIS PACKAGE AS NEEDED.**
+**THIS PACKAGE WILL RECEIVE NO FURTHER SUPPORT.**
+
 Shared utilities for handling location change of container on server.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
@@ -70,8 +75,7 @@ const response = await resolveWithLocationRedirectionHandling<IResponse>(
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
