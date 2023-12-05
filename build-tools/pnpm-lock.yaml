@@ -121,6 +121,7 @@ importers:
       prettier: ~3.0.3
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       semver-utils: ^1.1.4
@@ -168,6 +169,7 @@ importers:
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
+      replace-in-file: 6.3.5
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
@@ -9399,7 +9401,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       glob: 7.2.3
-      yargs: 17.7.1
+      yargs: 17.7.2
 
   /require-directory/2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -11197,6 +11199,7 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
 
   /yargs/17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
@@ -11209,7 +11212,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
 
   /yarn/1.22.19:
     resolution: {integrity: sha512-/0V5q0WbslqnwP91tirOvldvYISzaqhClxzyUKXYxs07yUILIs5jx/k6CFe8bvKSkds5w+eiOqta39Wk3WxdcQ==}

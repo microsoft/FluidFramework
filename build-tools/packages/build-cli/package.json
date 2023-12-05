@@ -109,6 +109,7 @@
 		"prettier": "~3.0.3",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
+		"replace-in-file": "^6.3.5",
 		"semver": "^7.5.4",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.19.1",
