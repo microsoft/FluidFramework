@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	SharingLinkRole,
 	SharingLinkScope,
-	ShareLinkTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { buildOdspShareLinkReqParams } from "../odspUtils";
 

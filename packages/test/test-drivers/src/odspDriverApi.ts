@@ -73,7 +73,6 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		cacheCreateNewSummary: booleanCases,
 		fetchBinarySnapshotFormat: [undefined],
 		isolateSocketCache: [true],
-		enableShareLinkWithCreate: [false],
 		enableSingleRequestForShareLinkWithCreate: [false],
 		avoidPrefetchSnapshotCache: booleanCases,
 	};

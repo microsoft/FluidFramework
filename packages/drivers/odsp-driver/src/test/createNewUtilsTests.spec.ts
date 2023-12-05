@@ -228,7 +228,6 @@ describe("Create New Utils Tests", () => {
 					false /* forceAccessTokenViaAuthorizationHeader */,
 					undefined /* isClpCompliantApp */,
 					true /* enableSingleRequestForShareLinkWithCreate */,
-					false /* enableShareLinkWithCreate */,
 				),
 			{
 				itemId: "mockItemId",
