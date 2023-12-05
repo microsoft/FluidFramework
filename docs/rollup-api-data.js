@@ -29,7 +29,7 @@ const memberCombineInstructions = [
 		sourceImports: new Map([
 			[
 				"@fluidframework/container-definitions",
-				["ContainerErrorTypes", "ICriticalContainerError"],
+				["ICriticalContainerError"],
 			],
 			["@fluidframework/routerlicious-driver", ["ITokenProvider", "ITokenResponse"]],
 			["@fluidframework/protocol-definitions", ["ScopeType", "ITokenClaims", "IUser"]],
@@ -45,7 +45,7 @@ const memberCombineInstructions = [
 		sourceImports: new Map([
 			[
 				"@fluidframework/container-definitions",
-				["AttachState", "ContainerErrorTypes", "ICriticalContainerError"],
+				["AttachState", "ICriticalContainerError"],
 			],
 		]),
 	},
