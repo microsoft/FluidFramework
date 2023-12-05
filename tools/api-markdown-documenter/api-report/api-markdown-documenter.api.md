@@ -265,7 +265,7 @@ export interface DocumentationSuiteOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
-    releaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
     skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 

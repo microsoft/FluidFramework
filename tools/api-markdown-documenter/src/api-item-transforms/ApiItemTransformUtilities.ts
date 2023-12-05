@@ -462,7 +462,7 @@ function doesItemGenerateHierarchy(
 
 /**
  * Determines whether or not the specified API item should have documentation generated for it.
- * This is determined based on its release tag compared to {@link ApiItemTransformationConfiguration.releaseLevel}.
+ * This is determined based on its release tag compared to {@link ApiItemTransformationConfiguration.minimumReleaseLevel}.
  *
  * @remarks Items without an associated release tag will always be included as a precaution.
  *
@@ -489,5 +489,5 @@ export function shouldItemBeIncluded(
 		return shouldItemBeIncluded(parent, config);
 	}
 
-	return releaseTag >= (config.releaseLevel as ReleaseTag);
+	return releaseTag >= (config.minimumReleaseLevel as ReleaseTag);
 }

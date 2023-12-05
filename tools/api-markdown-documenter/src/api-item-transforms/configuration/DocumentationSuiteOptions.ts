@@ -231,7 +231,7 @@ export interface DocumentationSuiteOptions {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	releaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+	minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
 }
 
 /**
@@ -382,7 +382,7 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
 	frontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatter,
-	releaseLevel: ReleaseTag.Internal, // Include everything in the input model
+	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
 
 /**
