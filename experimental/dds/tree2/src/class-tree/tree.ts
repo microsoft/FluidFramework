@@ -61,7 +61,7 @@ export interface ITree extends IChannel {
 }
 
 /**
- * Configuration for how to schematize a tree.
+ * Configuration for how to {@link ITree.schematize|schematize} a tree.
  * @beta
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
