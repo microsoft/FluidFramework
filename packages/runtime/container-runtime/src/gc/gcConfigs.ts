@@ -166,7 +166,7 @@ export function generateGCConfigs(
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
 	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
 	// via feature flags.
-	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
+	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
 	const tombstoneSweepDelayMs =
