@@ -78,12 +78,17 @@ pr:
     - tools/pipelines/templates/1ES/include-install-pnpm.yml
     - tools/pipelines/templates/1ES/include-use-node-version.yml
 
-extends:
-  template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
+variables:
+- template: /tools/pipelines/templates/1ES/include-vars.yml@self
   parameters:
     releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildNumberInPatch: true
+
+extends:
+  template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
+  parameters:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian
@@ -98,4 +103,3 @@ extends:
     pack: true
     checks:
     - prettier
-    
