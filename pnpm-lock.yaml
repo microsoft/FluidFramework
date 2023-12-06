@@ -3500,7 +3500,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/expect-puppeteer': 2.2.1
-      '@types/node': ^16.18.38
+      '@types/node': ^18.19.0
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3536,14 +3536,14 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.28.0_odqn5ikgnr4m4a2pux7lzjasre
+      '@fluid-tools/build-cli': 0.28.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.28.0_5zfdhjqbashqwl2j3jeah6v2xm
+      '@fluidframework/build-tools': 0.28.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
-      '@types/node': 16.18.65
+      '@types/node': 18.19.1
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
