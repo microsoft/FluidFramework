@@ -10,7 +10,6 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
-	verboseConsoleLogger,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
@@ -35,9 +34,7 @@ async function renderApiDocumentation(version) {
 	console.log("Loading API model...");
 	console.group();
 
-	const logger = verboseConsoleLogger;
-
-	const apiModel = await loadModel(apiReportsDirectoryPath, logger);
+	const apiModel = await loadModel(apiReportsDirectoryPath);
 
 	console.groupEnd();
 

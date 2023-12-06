@@ -19,6 +19,7 @@ docVersions = renderMultiVersion ? versions.params.previousVersions : versions.p
 
 docVersions.forEach(version => {
 	const targetPath = path.resolve(".", "_api-extractor-temp", version);
+	// change to empty string since current build:docs doesn't append version number to _api-extractor-temp
 	version = (version === versions.params.currentVersion[0]) ? "" : "-" + version
 	const originalPath = path.resolve("..", "_api-extractor-temp" + version, "doc-models");
 
