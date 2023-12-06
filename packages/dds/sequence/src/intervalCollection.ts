@@ -731,7 +731,7 @@ const isSequencePlace = (place: any): place is SequencePlace => {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export interface Endpoints {
 	start: SequencePlace;
@@ -739,7 +739,7 @@ export interface Endpoints {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ChangeArgs {
 	endpoints?: Endpoints;
