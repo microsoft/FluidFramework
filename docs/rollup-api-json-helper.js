@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const chalk = require("chalk");
 const yaml = require('js-yaml');
 const fs   = require('fs');
