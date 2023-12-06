@@ -197,7 +197,7 @@ extends:
 
                 pushImage=$(pushImage)
                 releaseImage=$(releaseImage)
-                release=$(release)"
+                release=$(release)
 
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
@@ -205,6 +205,7 @@ extends:
                 containerTag=$(containerTag)
                 latestContainerTagSuffix=$(latestContainerTagSuffix)
                 buildContainerName=$(buildContainerName)
+              "
 
               if [[ "$(release)" == "release" ]]; then
                 if [[ "$(canRelease)" == "False" ]]; then

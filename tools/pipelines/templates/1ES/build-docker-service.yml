@@ -38,18 +38,6 @@ parameters:
   type: boolean
   default: true
 
-- name: releaseImage
-  type: boolean
-  default: false
-
-- name: publishOverride
-  type: string
-  default: default
-
-- name: releaseBuildOverride
-  type: string
-  default: none
-
 - name: releaseKind
   type: string
   default: docker
@@ -133,12 +121,6 @@ extends:
       displayName: Build Stage
       dependsOn: [] # this stage doesn't depend on preceding stage
       variables:
-        - template: /tools/pipelines/templates/1ES/include-vars.yml@self
-          parameters:
-            releaseImage: ${{ parameters.releaseImage }}
-            publishOverride: ${{ parameters.publishOverride }}
-            releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
         - group: container-registry-info
         - ${{ if eq(variables.testBuild, true) }}:
           - name: buildContainerName
@@ -202,10 +184,6 @@ extends:
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
 
-              Override Parameters:
-                publishOverride=${{ parameters.publishOverride }}
-                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
-
               Tasks Parameters:
                 Lint=${{ parameters.lint }}
                 Test=${{ parameters.test }}
@@ -219,7 +197,7 @@ extends:
 
                 pushImage=$(pushImage)
                 releaseImage=$(releaseImage)
-                release=$(release)"
+                release=$(release)
 
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
@@ -227,6 +205,7 @@ extends:
                 containerTag=$(containerTag)
                 latestContainerTagSuffix=$(latestContainerTagSuffix)
                 buildContainerName=$(buildContainerName)
+              "
 
               if [[ "$(release)" == "release" ]]; then
                 if [[ "$(canRelease)" == "False" ]]; then
@@ -267,7 +246,7 @@ extends:
 
         # for npm ci in component detection and set version
         - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
-        
+
         # Component detection
         - ${{ if eq(variables.componentDetection, true) }}:
           - template: /tools/pipelines/templates/1ES/include-generate-notice-steps.yml@self
@@ -289,7 +268,7 @@ extends:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 ${{ parameters.packageManagerInstallCommand }}
-          
+
           - template: /tools/pipelines/templates/1ES/include-set-package-version.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
@@ -306,7 +285,7 @@ extends:
               script: |
                 echo "0.0.$(Build.BuildNumber)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
-        
+
         - ${{ if eq(variables.buildBase, true) }}:
           # Build - Base
           - task: 1ES.BuildContainerImage@1
@@ -351,8 +330,8 @@ extends:
                   flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
                   flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
-          # Note: The publishing steps have been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template 
-          
+          # Note: The publishing steps have been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template
+
           # Lint
           - ${{ if eq(parameters.lint, true) }}:
             - task: Docker@1
@@ -405,8 +384,8 @@ extends:
               inputs:
                 command: run
                 arguments: '--user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
-        
-          # Note: The doc publishing step has been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template 
+
+          # Note: The doc publishing step has been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template
 
         # Build
         - task: 1ES.BuildContainerImage@1
