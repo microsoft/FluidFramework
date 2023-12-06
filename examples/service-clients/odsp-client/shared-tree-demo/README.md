@@ -7,9 +7,3 @@ This app demonstrates how to create a simple tree data structure and build a Rea
 ## Gettting started
 
 All the code required to set up the Fluid Framework and SharedTree data structure is in the `fluid.ts` source file. Most of this code will be the same for any app. However, because SharedTree is still in the alpha stage, the code to set it up isn't optimized yet.
-
-## Data model
-
-This app uses the following distributed data structure:
-
--   SharedTree
