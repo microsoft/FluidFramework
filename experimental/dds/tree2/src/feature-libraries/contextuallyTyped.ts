@@ -23,7 +23,7 @@ import {
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema";
-import { FieldKind, Multiplicity } from "./modular-schema";
+import { FieldKind } from "./modular-schema";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -38,6 +38,7 @@ import {
 } from "./schema-aware";
 import { isFluidHandle, allowsValue } from "./valueUtilities";
 import { TreeDataContext } from "./fieldGenerator";
+import { Multiplicity } from "./multiplicity";
 
 /**
  * This library defines a tree data format that can infer its types from context.

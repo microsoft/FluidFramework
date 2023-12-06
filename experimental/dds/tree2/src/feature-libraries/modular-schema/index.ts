@@ -20,7 +20,7 @@ export {
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, Multiplicity, FieldKindWithEditor } from "./fieldKind";
+export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,

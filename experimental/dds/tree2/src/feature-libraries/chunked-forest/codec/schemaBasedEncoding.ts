@@ -11,8 +11,9 @@ import {
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
+import { Multiplicity } from "../../multiplicity";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
