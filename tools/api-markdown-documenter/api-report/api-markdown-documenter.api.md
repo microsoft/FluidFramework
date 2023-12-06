@@ -71,8 +71,10 @@ export interface ApiItemTransformationOptions {
 declare namespace ApiItemUtilities {
     export {
         doesItemRequireOwnDocument,
+        filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
+        shouldItemBeIncluded,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
@@ -309,6 +311,9 @@ export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
     outputDirectoryPath: string;
 }
+
+// @public
+function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
@@ -586,6 +591,9 @@ export class SectionNode extends DocumentationParentNodeBase implements MultiLin
     get singleLine(): false;
     readonly type = DocumentationNodeType.Section;
 }
+
+// @public
+function shouldItemBeIncluded(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): boolean;
 
 // @public
 export interface SingleLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {

@@ -9,8 +9,10 @@
 
 export {
 	doesItemRequireOwnDocument,
+	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
+	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities";
 export {
 	type ApiItemTransformationConfiguration,

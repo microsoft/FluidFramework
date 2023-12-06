@@ -18,6 +18,7 @@ import { SectionNode } from "../../documentation-domain";
 import { ApiModuleLike, filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { filterItems } from "../ApiItemTransformUtilities";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).
@@ -64,9 +65,8 @@ export function transformApiModuleLike(
 ): SectionNode[] {
 	const children: SectionNode[] = [];
 
-	const hasAnyChildren = childItems.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterItems(childItems, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
 			(_apiItem) => _apiItem as ApiInterface,
