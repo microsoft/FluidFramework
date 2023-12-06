@@ -418,8 +418,7 @@ extends:
             displayName: Docker Push
             inputs:
               image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix)
-              buildArguments: --tag ${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
+              remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
         # Cleanup
         - task: Docker@1

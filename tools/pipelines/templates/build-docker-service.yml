@@ -323,11 +323,11 @@ extends:
                 script: |
                   mkdir -p $(Build.ArtifactStagingDirectory)/pack
 
-            - task: Docker@0
+            - task: Docker@1
               displayName: Pack
               inputs:
-                action: 'Run a Docker command'
-                customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+                command: run
+                arguments: '-v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -353,8 +353,8 @@ extends:
             - task: Docker@1
               displayName: npm run lint
               inputs:
-                command: 'Run a Docker command'
-                arguments: 'run -t $(baseContainerTag) npm run lint'
+                command: run
+                arguments: '-t $(baseContainerTag) npm run lint'
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
@@ -364,7 +364,7 @@ extends:
                 displayName: npm run ${{ parameters.test }}
                 inputs:
                   command: run
-                  arguments: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
+                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
 
             # Test - With coverage
             - ${{ if eq(variables.testCoverage, true) }}:
@@ -372,7 +372,7 @@ extends:
                 displayName: npm run ci:test:coverage
                 inputs:
                   command: run
-                  arguments: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
+                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
 
               - task: PublishCodeCoverageResults@1
                 displayName: Publish Code Coverage
@@ -399,7 +399,7 @@ extends:
               displayName: npm run ci:build:docs
               inputs:
                 command: run
-                arguments: 'run --user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
+                arguments: '--user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
         
           # Note: The doc publishing step has been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template 
 
@@ -418,11 +418,10 @@ extends:
             displayName: Docker Push
             inputs:
               image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix)
-              buildArguments: --tag ${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
+              remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
         # Cleanup
-        - task: Docker@01
+        - task: Docker@1
           displayName: Docker Cleanup - Container prune
           inputs:
             command: run
