@@ -4,13 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
 	EmptyKey,
 	FieldKey,
 	TreeType,
@@ -271,7 +264,7 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 } from "./class-tree";
-export { TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";

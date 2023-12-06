@@ -9,7 +9,7 @@ import { INode } from "./orderer";
 
 /**
  * Interface to abstract the backend database
- * @internal
+ * @alpha
  */
 export interface IDatabaseManager {
 	/**
@@ -267,12 +267,12 @@ export function isRetryEnabled<T>(collection: ICollection<T>): boolean {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type IDbEvents = "close" | "reconnect" | "error" | "reconnectFailed";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDb {
 	close(): Promise<void>;
@@ -294,7 +294,7 @@ export interface IDb {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDbFactory {
 	connect(global: boolean): Promise<IDb>;
