@@ -17,4 +17,4 @@
 
 Deprecate a number of error related enums, and replace them with new object-based based enumerations.
 
-The changes involve deprecation of error related enums ContainerErrorType, DriverErrorType, OdspErrorType and RouterliciousErrorType and replacement to new object-based enumerations of ContainerErrorTypes, DriverErrorTypes, OdspErrorTypes and RouterliciousErrorTypes. In addition, it adds a stricter type checking logic to the test suites on the changed error enumerations.
+The changes involve deprecation of error related enums ContainerErrorType, DriverErrorType, OdspErrorType and RouterliciousErrorType and replacement to new object-based enumerations of ContainerErrorTypes, DriverErrorTypes, OdspErrorTypes and RouterliciousErrorTypes.
