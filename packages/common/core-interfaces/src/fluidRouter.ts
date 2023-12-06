@@ -3,17 +3,26 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[index: string]: any;
 }
 
+/**
+ * @internal
+ */
 export interface IRequest {
 	url: string;
 	headers?: IRequestHeader;
 }
 
+/**
+ * @internal
+ */
 export interface IResponse {
 	mimeType: string;
 	status: number;

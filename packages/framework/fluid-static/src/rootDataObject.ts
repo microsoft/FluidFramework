@@ -143,6 +143,9 @@ class RootDataObject
 
 const rootDataStoreId = "rootDOId";
 
+/**
+ * @internal
+ */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
 }): IRuntimeFactory {
@@ -156,6 +159,8 @@ export function createDOProviderContainerRuntimeFactory(props: {
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ *
+ * @internal
  */
 class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<

@@ -20,7 +20,7 @@ import { Change } from './ChangeTypes';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
- * @public
+ * @internal
  */
 export enum CheckoutEvent {
 	/**
@@ -32,6 +32,7 @@ export enum CheckoutEvent {
 
 /**
  * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
+ * @internal
  */
 export interface ICheckoutEvents extends IErrorEvent {
 	(event: 'viewChange', listener: (before: TreeView, after: TreeView) => void);
@@ -39,7 +40,7 @@ export interface ICheckoutEvents extends IErrorEvent {
 
 /**
  * The result of validation of an Edit.
- * @public
+ * @internal
  */
 export enum EditValidationResult {
 	/**
@@ -73,7 +74,7 @@ export enum EditValidationResult {
  * Events emitted by `Checkout` are documented in {@link CheckoutEvent}.
  * Exceptions thrown during event handling will be emitted as error events, which are automatically surfaced as error events on the
  * `SharedTree` used at construction time.
- * @public
+ * @internal
  */
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
@@ -145,7 +146,6 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 	/**
 	 * @returns true iff there is an open edit.
-	 * @internal
 	 */
 	public hasOpenEdit(): boolean {
 		return this.currentEdit !== undefined;

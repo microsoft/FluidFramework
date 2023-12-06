@@ -27,6 +27,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
+ * @internal
  */
 export interface IParsedUrl {
 	/**
@@ -56,6 +57,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
+ * @internal
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = parse(url, true);

@@ -17,10 +17,10 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-// @public
+// @internal
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
-// @public
+// @internal
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
     createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
@@ -35,30 +35,30 @@ class TinyliciousClient {
 export { TinyliciousClient }
 export default TinyliciousClient;
 
-// @public
+// @internal
 export interface TinyliciousClientProps {
     connection?: TinyliciousConnectionConfig;
     logger?: ITelemetryBaseLogger;
 }
 
-// @public
+// @internal
 export interface TinyliciousConnectionConfig {
     domain?: string;
     port?: number;
     tokenProvider?: ITokenProvider;
 }
 
-// @public
+// @internal
 export interface TinyliciousContainerServices {
     audience: ITinyliciousAudience;
 }
 
-// @public
+// @internal
 export interface TinyliciousMember extends IMember {
     userName: string;
 }
 
-// @public
+// @internal
 export interface TinyliciousUser extends IUser {
     name: string;
 }

@@ -21,7 +21,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
- * @public
+ * @internal
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -47,7 +47,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 /**
- * @public
+ * @internal
  */
 export type SharedStringSegment = TextSegment | Marker;
 
@@ -59,8 +59,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- *
- * @public
+ * @internal
  */
 export class SharedString
 	extends SharedSegmentSequence<SharedStringSegment>
@@ -315,7 +314,7 @@ interface ITextAndMarkerAccumulator {
  * // parallelMarkers === [<paragraph marker 1 object>, <paragraph marker 2 object>]
  * // Note parallelText does not include "missing".
  * ```
- * @public
+ * @internal
  */
 export function getTextAndMarkers(
 	sharedString: SharedString,

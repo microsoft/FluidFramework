@@ -34,6 +34,7 @@ const normalizeOpts: ISnapshotNormalizerConfig = {
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
+ * @internal
  */
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
 	const normalizedSnapshot: IFileSnapshot = {
@@ -49,6 +50,9 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 	return normalizedSnapshot;
 }
 
+/**
+ * @internal
+ */
 export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
@@ -101,6 +105,9 @@ export function compareWithReferenceSnapshot(
 	}
 }
 
+/**
+ * @internal
+ */
 export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
@@ -186,6 +193,9 @@ export async function loadContainer(
 	return loader.resolve({ url: resolved.url });
 }
 
+/**
+ * @internal
+ */
 export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;

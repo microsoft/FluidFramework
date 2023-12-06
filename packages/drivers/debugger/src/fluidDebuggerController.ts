@@ -27,15 +27,14 @@ import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
 import { Sanitizer } from "./sanitizer";
 
 /**
- * @public
+ * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
 /**
  * Replay controller that uses pop-up window to control op playback
- *
- * @public
+ * @internal
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
 	// eslint-disable-next-line @rushstack/no-new-null

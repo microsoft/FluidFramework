@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 
 /**
- * @public
+ * @internal
  */
 export class RateLimiter {
 	private readonly tasks: (() => void)[] = [];

@@ -15,6 +15,7 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -239,7 +240,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 		it("marks non-root data stores as referenced / unreferenced correctly", async () => {
 			const dataStore =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
+			const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
 			// Add data store's handle in root component and verify its marked as referenced.
 			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
@@ -278,7 +279,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 			// Create a non-root data store - dataStore1.
 			const dataStore1 =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject1 = (await dataStore1.entryPoint.get()) as ITestDataObject;
+			const dataObject1 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore1);
 			// Add dataStore1's handle in root component and verify its marked as referenced.
 			mainDataStore._root.set("nonRootDS1", dataObject1.handle);
 			await validateDataStoreReferenceState(
@@ -292,7 +293,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 			// Create another non-root data store - dataStore2.
 			const dataStore2 =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = (await dataStore1.entryPoint.get()) as ITestDataObject;
+			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
 			// Add dataStore2's handle in dataStore1 and verify its marked as referenced.
 			dataObject1._root.set("nonRootDS2", dataObject2.handle);
 			await validateDataStoreReferenceState(

@@ -11,7 +11,7 @@ export {
 	SequenceOffsets,
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
-export { Client } from "./client";
+export { Client, IClientEvents } from "./client";
 export {
 	ConflictAction,
 	Dictionary,
