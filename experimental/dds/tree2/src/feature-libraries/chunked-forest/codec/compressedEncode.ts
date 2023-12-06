@@ -12,8 +12,10 @@ import {
 	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
+	FieldKindIdentifier,
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
+import { type FieldKind } from "../../modular-schema";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
@@ -417,6 +419,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 	public constructor(
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 	) {}
 
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
