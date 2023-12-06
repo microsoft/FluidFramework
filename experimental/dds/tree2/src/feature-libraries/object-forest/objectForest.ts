@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	SimpleDependee,
-	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
 	IEditableForest,
 	ITreeSubscriptionCursorState,
@@ -58,9 +56,7 @@ function makeRoot(): MapTree {
  * This implementation focuses on correctness and simplicity, not performance.
  * It does not use compressed chunks: instead nodes are implemented using objects.
  */
-class ObjectForest extends SimpleDependee implements IEditableForest {
-	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-
+export class ObjectForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	public readonly roots: MapTree = makeRoot();
@@ -70,9 +66,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
-		super("object-forest.ObjectForest");
-	}
+	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
@@ -133,19 +127,15 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
-				this.forest.invalidateDependents();
 				this.forest.delete(detachedField);
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
-				this.forest.invalidateDependents();
 				this.forest.add(content, destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				this.forest.invalidateDependents();
 				this.attachEdit(source, count, destination);
 			},
 			detach(source: Range, destination: FieldKey): void {
-				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -214,7 +204,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					newContentSource !== oldContentDestination,
 					0x7ba /* Replace detached source field and detached destination field must be different */,
 				);
-				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},

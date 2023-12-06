@@ -65,8 +65,6 @@ import {
 	mapRootChanges,
 } from "../feature-libraries";
 import {
-	InvalidationToken,
-	SimpleObservingDependent,
 	moveToDetachedField,
 	mapCursorField,
 	JsonableTree,
@@ -148,6 +146,9 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
  * @param object - The object to freeze.
  */
 export function deepFreeze<T>(object: T): void {
+	if (object === undefined || object === null) {
+		return;
+	}
 	if (object instanceof Map) {
 		for (const [key, value] of object.entries()) {
 			deepFreeze(key);
@@ -171,13 +172,6 @@ export function deepFreeze<T>(object: T): void {
 		}
 	}
 	Object.freeze(object);
-}
-
-export class MockDependent extends SimpleObservingDependent {
-	public readonly tokens: (InvalidationToken | undefined)[] = [];
-	public constructor(name: string = "MockDependent") {
-		super((token) => this.tokens.push(token), name);
-	}
 }
 
 /**

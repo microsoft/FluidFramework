@@ -17,7 +17,6 @@ import {
 	rebaseChange,
 	RevisionTag,
 	SessionId,
-	SimpleDependee,
 } from "../core";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
@@ -45,7 +44,7 @@ export class EditManager<
 	TEditor extends ChangeFamilyEditor,
 	TChangeset,
 	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
-> extends SimpleDependee {
+> {
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -120,7 +119,6 @@ export class EditManager<
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 	) {
-		super("EditManager");
 		this.trunkBase = {
 			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			change: changeFamily.rebaser.compose([]),
