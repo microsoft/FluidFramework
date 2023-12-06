@@ -21,6 +21,3 @@ export {
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey";
 
 export { leaf } from "./leafDomain";
-
-import * as testRecursiveDomain from "./testRecursiveDomain";
-export { testRecursiveDomain };

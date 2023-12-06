@@ -75,4 +75,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 	}
 }
 
+/**
+ * @internal
+ */
 export const fluidExport = new CodeMirrorFactory();

@@ -20,6 +20,7 @@ import {
 	mapCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
+// TODO: stop depending on contextuallyTyped
 import { cursorFromContextualData } from "../contextuallyTyped";
 import {
 	FieldKinds,
@@ -46,6 +47,8 @@ import {
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
+	FlexTreeEntityKind,
+	flexTreeMarker,
 } from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
@@ -60,6 +63,30 @@ import {
 } from "./lazyEntity";
 import { unboxedUnion } from "./unboxed";
 import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities";
+
+/**
+ * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
+ * usage of negative indices, which regular indexing using `[` and `]` does not.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+ * for additional context on the semantics.
+ *
+ * @returns A positive index that can be used in regular indexing. Returns
+ * undefined if that index would be out-of-bounds.
+ */
+function indexForAt(index: number, length: number): number | undefined {
+	let finalIndex = Math.trunc(+index);
+	if (isNaN(finalIndex)) {
+		finalIndex = 0;
+	}
+	if (finalIndex < -length || finalIndex >= length) {
+		return undefined;
+	}
+	if (finalIndex < 0) {
+		finalIndex = finalIndex + length;
+	}
+	return finalIndex;
+}
 
 export function makeField(
 	context: Context,
@@ -96,6 +123,9 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
+		return FlexTreeEntityKind.Field;
+	}
 	public readonly key: FieldKey;
 
 	public constructor(
@@ -164,10 +194,16 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
+	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined {
+		const finalIndex = indexForAt(index, this.length);
+
+		if (finalIndex === undefined) {
+			return undefined;
+		}
+
+		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			makeTree(this.context, cursor),
-		) as FlexTreeTypedNodeUnion<TTypes>;
+		) as unknown as FlexTreeTypedNodeUnion<TTypes>;
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
@@ -183,7 +219,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as FlexTreeTypedNodeUnion<TTypes>,
+			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
 		);
 	}
 
@@ -243,18 +279,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
-		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
-		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
-		let finalIndex = Math.trunc(+index);
-		if (isNaN(finalIndex)) {
-			finalIndex = 0;
-		}
-		if (finalIndex < -this.length || finalIndex >= this.length) {
+		const finalIndex = indexForAt(index, this.length);
+
+		if (finalIndex === undefined) {
 			return undefined;
 		}
-		if (finalIndex < 0) {
-			finalIndex = finalIndex + this.length;
-		}
+
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -386,7 +416,8 @@ export class LazySequence<TTypes extends AllowedTypes>
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.boxedAt(sourceStart);
+				const sourceNode =
+					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
 				if (!this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
@@ -441,7 +472,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
 

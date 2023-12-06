@@ -30,19 +30,15 @@ import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
- *
- * @alpha
+ * @internal
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 const idMap = new Map<string, string>();
 
-type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
-
 /**
  * Data for undoing edits affecting Intervals.
- *
- * @alpha
+ * @internal
  */
 export type IntervalRevertible =
 	| {
@@ -96,7 +92,7 @@ function getUpdatedId(intervalId: string): string {
 
 /**
  * Create revertibles for adding an interval
- * @alpha
+ * @internal
  */
 export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
@@ -112,7 +108,7 @@ export function appendAddIntervalToRevertibles(
 
 /**
  * Create revertibles for deleting an interval
- * @alpha
+ * @internal
  */
 export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
@@ -158,7 +154,7 @@ export function appendDeleteIntervalToRevertibles(
 
 /**
  * Create revertibles for moving endpoints of an interval
- * @alpha
+ * @internal
  */
 export function appendChangeIntervalToRevertibles(
 	string: SharedString,
@@ -208,7 +204,7 @@ export function appendChangeIntervalToRevertibles(
 
 /**
  * Create revertibles for changing properties of an interval
- * @alpha
+ * @internal
  */
 export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
@@ -268,8 +264,7 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
- *
- * @alpha
+ * @internal
  */
 export function appendSharedStringDeltaToRevertibles(
 	string: SharedString,
@@ -362,7 +357,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 /**
  * Clean up resources held by revertibles that are no longer needed.
- * @alpha
+ * @internal
  */
 export function discardSharedStringRevertibles(
 	sharedString: SharedString,
@@ -654,8 +649,7 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
- *
- * @alpha
+ * @internal
  */
 export function revertSharedStringRevertibles(
 	sharedString: SharedString,

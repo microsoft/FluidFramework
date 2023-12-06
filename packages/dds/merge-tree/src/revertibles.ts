@@ -20,7 +20,7 @@ import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
 
 /**
- * @alpha
+ * @internal
  */
 export type MergeTreeDeltaRevertible =
 	| {
@@ -39,8 +39,7 @@ export type MergeTreeDeltaRevertible =
 
 /**
  * Tests whether x is a MergeTreeDeltaRevertible
- *
- * @alpha
+ * @internal
  */
 export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible {
 	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
@@ -192,7 +191,7 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function appendToMergeTreeDeltaRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -222,7 +221,7 @@ export function appendToMergeTreeDeltaRevertibles(
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
 	revertibles.forEach((r) => {
@@ -384,7 +383,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
- * @alpha
+ * @internal
  */
 export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,

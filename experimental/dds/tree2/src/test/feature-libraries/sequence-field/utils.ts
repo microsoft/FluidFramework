@@ -4,32 +4,30 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import {
-	RevisionInfo,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
-	SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
+	RevisionInfo,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
+	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { TestChangeset } from "./testEdits";
-
-export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
-	return compose(changes.map(makeAnonChange));
-}
 
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
@@ -46,8 +44,14 @@ export function compose(
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
 
-export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
-	return shallowCompose(changes.map(makeAnonChange));
+export function prune(
+	change: TestChangeset,
+	childPruner?: (child: TestChange) => TestChange | undefined,
+): TestChangeset {
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
+	);
 }
 
 export function shallowCompose<T>(
@@ -92,13 +96,16 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RevisionMetadataSource,
+	revisionMetadata?: RebaseRevisionMetadata,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
 	const metadata =
-		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+		revisionMetadata ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
+			base.revision,
+		]);
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
@@ -112,26 +119,41 @@ export function rebase(
 	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(
-			rebasedChange,
+		rebasedChange = SF.rebase(
+			change,
 			base,
-			(a, b) => a,
+			TestChange.rebase,
 			idAllocator,
 			moveEffects,
 			metadata,
 		);
-		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }
 
 export function rebaseTagged(
 	change: TaggedChange<TestChangeset>,
-	...baseChanges: TaggedChange<TestChangeset>[]
+	baseChange: TaggedChange<TestChangeset>,
+): TaggedChange<TestChangeset> {
+	return rebaseOverChanges(change, [baseChange]);
+}
+
+export function rebaseOverChanges(
+	change: TaggedChange<TestChangeset>,
+	baseChanges: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+		currChange = tagChange(
+			rebase(
+				currChange.change,
+				base,
+				rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			),
+			currChange.revision,
+		);
 	}
 
 	return currChange;
@@ -140,7 +162,7 @@ export function rebaseTagged(
 export function rebaseOverComposition(
 	change: TestChangeset,
 	base: TestChangeset,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): TestChangeset {
 	return rebase(change, makeAnonChange(base), metadata);
 }
@@ -153,27 +175,28 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const table = SF.newCrossFieldTable();
+	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
-		defaultRevisionMetadataFromChanges([change]),
+		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = SF.amendInvert(
-			inverted,
-			change.revision,
+		inverted = SF.invert(
+			change,
+			TestChange.invert,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
+			revisionMetadata,
 		);
-		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
 	}
 
 	return inverted;
@@ -183,7 +206,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange, revision)),

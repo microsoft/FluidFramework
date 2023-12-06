@@ -42,7 +42,6 @@ export {
 	GenericTreeNode,
 	JsonableTree,
 	EncodedJsonableTree,
-	Delta,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -103,6 +102,16 @@ export {
 	ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
+	DeltaRoot,
+	DeltaProtoNode,
+	DeltaMark,
+	DeltaDetachedNodeId,
+	DeltaFieldMap,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
 } from "./tree";
 
 export {
@@ -157,6 +166,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -169,7 +179,12 @@ export {
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
+	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
 } from "./rebase";
 
 export {

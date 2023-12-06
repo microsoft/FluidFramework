@@ -30,8 +30,7 @@ import {
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- *
- * @public
+ * @alpha
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -40,8 +39,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 
 /**
  * Events emitted by {@link IContainerRuntime}.
- *
- * @public
+ * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
@@ -49,15 +47,14 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 /**
- * @public
+ * @alpha
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
- *
- * @public
+ * @alpha
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,

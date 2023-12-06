@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
+import {
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaMark,
+	makeAnonChange,
+	RevisionMetadataSource,
+	tagChange,
+	TaggedChange,
+} from "../../core";
 import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -12,8 +20,8 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	RevisionMetadataSource,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
+	NodeChangePruner,
 } from "./fieldChangeHandler";
 import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
@@ -76,9 +84,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				}),
 			);
 		},
-		amendInvert: () => fail("Not implemented"),
 		rebase: rebaseGenericChange,
-		amendRebase: rebaseGenericChange,
+		prune: pruneGenericChange,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -89,9 +96,9 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (
 		{ change }: TaggedChange<GenericChangeset>,
 		deltaFromChild: ToDelta,
-	): Delta.FieldChanges => {
+	): DeltaFieldChanges => {
 		let nodeIndex = 0;
-		const markList: Delta.Mark[] = [];
+		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
@@ -103,7 +110,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return { local: markList };
 	},
-	relevantRemovedTrees,
+	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
@@ -149,6 +156,20 @@ function rebaseGenericChange(
 	}
 
 	return rebased;
+}
+
+function pruneGenericChange(
+	changeset: GenericChangeset,
+	pruneChild: NodeChangePruner,
+): GenericChangeset {
+	const pruned: GenericChangeset = [];
+	for (const change of changeset) {
+		const prunedNode = pruneChild(change.nodeChange);
+		if (prunedNode !== undefined) {
+			pruned.push({ ...change, nodeChange: prunedNode });
+		}
+	}
+	return pruned;
 }
 
 /**
@@ -199,11 +220,11 @@ export function newGenericChangeset(): GenericChangeset {
 	return [];
 }
 
-function* relevantRemovedTrees(
+function* relevantRemovedRoots(
 	change: GenericChangeset,
-	removedTreesFromChild: RemovedTreesFromChild,
-): Iterable<Delta.DetachedNodeId> {
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {
-		yield* removedTreesFromChild(nodeChange);
+		yield* relevantRemovedRootsFromChild(nodeChange);
 	}
 }

@@ -8,18 +8,22 @@ import { leaf } from "../../domains";
 import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import {
 	FieldKey,
-	Delta,
 	DeltaVisitor,
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
 	deltaForSet,
+	DeltaRoot,
+	DeltaFieldChanges,
+	DeltaMark,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeRename,
 } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 function visit(
-	delta: Delta.Root,
+	delta: DeltaRoot,
 	visitor: DeltaVisitor,
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
@@ -47,7 +51,7 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 ];
 
 function testVisit(
-	delta: Delta.Root,
+	delta: DeltaRoot,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
@@ -70,11 +74,11 @@ function testVisit(
 }
 
 function testTreeVisit(
-	marks: Delta.FieldChanges,
+	marks: DeltaFieldChanges,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
-	testVisit(new Map([[rootKey, marks]]), expected, detachedFieldIndex);
+	testVisit({ fields: new Map([[rootKey, marks]]) }, expected, detachedFieldIndex);
 }
 
 const rootKey: FieldKey = brand("root");
@@ -131,7 +135,7 @@ describe("visitDelta", () => {
 	});
 	it("insert child", () => {
 		const index = makeDetachedFieldIndex("");
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			local: [
 				{
 					count: 1,
@@ -160,7 +164,7 @@ describe("visitDelta", () => {
 	});
 	it("remove root", () => {
 		const index = makeDetachedFieldIndex("");
-		const mark: Delta.Mark = {
+		const mark: DeltaMark = {
 			count: 2,
 			detach: { minor: 42 },
 		};
@@ -184,11 +188,11 @@ describe("visitDelta", () => {
 	});
 	it("remove child", () => {
 		const index = makeDetachedFieldIndex("");
-		const remove: Delta.Mark = {
+		const remove: DeltaMark = {
 			count: 1,
 			detach: { minor: 42 },
 		};
-		const mark: Delta.Mark = {
+		const mark: DeltaMark = {
 			count: 1,
 			fields: new Map([[fooKey, { local: [{ count: 42 }, remove] }]]),
 		};
@@ -214,15 +218,15 @@ describe("visitDelta", () => {
 	it("changes under insert", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			build: [{ id: { minor: 43 }, trees: [content] }],
 			global: [
 				{
@@ -259,11 +263,11 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		// start with 0123 then move 1 so the order is 0213
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
@@ -282,15 +286,15 @@ describe("visitDelta", () => {
 	it("move children to the left", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 2,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 2,
 			attach: moveId,
 		};
-		const modify: Delta.Mark = {
+		const modify: DeltaMark = {
 			count: 1,
 			fields: new Map([[fooKey, { local: [{ count: 2 }, moveIn, { count: 3 }, moveOut] }]]),
 		};
@@ -319,15 +323,15 @@ describe("visitDelta", () => {
 	it("move cousins", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
-		const modify: Delta.Mark = {
+		const modify: DeltaMark = {
 			count: 1,
 			fields: new Map([
 				[fooKey, { local: [moveIn] }],
@@ -361,15 +365,15 @@ describe("visitDelta", () => {
 	it("changes under remove", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
-		const remove: Delta.Mark = {
+		const remove: DeltaMark = {
 			detach: { minor: 42 },
 			count: 1,
 			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
@@ -402,19 +406,19 @@ describe("visitDelta", () => {
 		const node1 = { minor: 42 };
 		index.createEntry(node1);
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
-		const nested: Delta.DetachedNodeChanges = {
+		const nested: DeltaDetachedNodeChanges = {
 			id: node1,
 			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
 		};
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			global: [nested],
 			destroy: [{ id: node1, count: 1 }],
 		};
@@ -442,11 +446,25 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("build-rename-destroy", () => {
+	it("destroy (root level)", () => {
+		const index = makeDetachedFieldIndex("");
+		const id = { minor: 42 };
+		index.createEntry(id, 2);
+		const delta: DeltaRoot = {
+			destroy: [{ id, count: 2 }],
+		};
+		const expected: VisitScript = [
+			["destroy", field0, 1],
+			["destroy", field1, 1],
+		];
+		testVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
+	it("build-rename-destroy (field level)", () => {
 		const index = makeDetachedFieldIndex("");
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			build: [{ id: buildId, trees: [content] }],
 			rename: [{ oldId: buildId, newId: detachId, count: 1 }],
 			destroy: [{ id: detachId, count: 1 }],
@@ -469,19 +487,19 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
-		const moveIn1: Delta.Mark = {
+		const moveIn1: DeltaMark = {
 			count: 1,
 			attach: moveId1,
 		};
-		const moveOut2: Delta.Mark = {
+		const moveOut2: DeltaMark = {
 			count: 1,
 			detach: moveId2,
 		};
-		const moveIn2: Delta.Mark = {
+		const moveIn2: DeltaMark = {
 			count: 1,
 			attach: moveId2,
 		};
-		const moveOut1: Delta.Mark = {
+		const moveOut1: DeltaMark = {
 			count: 1,
 			detach: moveId1,
 			fields: new Map([[fooKey, { local: [moveOut2, moveIn2] }]]),
@@ -512,19 +530,19 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
-		const moveOut2: Delta.Mark = {
+		const moveOut2: DeltaMark = {
 			count: 1,
 			detach: moveId2,
 		};
-		const moveOut1: Delta.Mark = {
+		const moveOut1: DeltaMark = {
 			count: 1,
 			detach: moveId1,
 		};
-		const moveIn2: Delta.Mark = {
+		const moveIn2: DeltaMark = {
 			count: 1,
 			attach: moveId2,
 		};
-		const replace: Delta.Mark = {
+		const replace: DeltaMark = {
 			count: 1,
 			detach: { minor: 42 },
 			attach: moveId1,
@@ -558,20 +576,20 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
-		const moveOut2: Delta.Mark = {
+		const moveOut2: DeltaMark = {
 			count: 1,
 			detach: moveId2,
 		};
-		const moveIn2: Delta.Mark = {
+		const moveIn2: DeltaMark = {
 			count: 1,
 			attach: moveId2,
 		};
-		const moveOut1: Delta.Mark = {
+		const moveOut1: DeltaMark = {
 			count: 1,
 			detach: moveId1,
 			fields: new Map([[fooKey, { local: [moveOut2, moveIn2] }]]),
 		};
-		const replace: Delta.Mark = {
+		const replace: DeltaMark = {
 			count: 1,
 			detach: { minor: 42 },
 			attach: moveId1,
@@ -600,7 +618,7 @@ describe("visitDelta", () => {
 	});
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("");
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			build: [{ id: { minor: 42 }, trees: [content] }],
 			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
 		};
@@ -620,17 +638,17 @@ describe("visitDelta", () => {
 	it("changes under transient", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };
-		const delta: Delta.FieldChanges = {
+		const delta: DeltaFieldChanges = {
 			build: [{ id: buildId, trees: [content] }],
 			global: [{ id: buildId, fields: new Map([[barKey, { local: [moveOut, moveIn] }]]) }],
 			rename: [{ oldId: buildId, count: 1, newId: detachId }],
@@ -666,7 +684,7 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const restore: Delta.Mark = {
+		const restore: DeltaMark = {
 			count: 1,
 			attach: node1,
 		};
@@ -686,12 +704,12 @@ describe("visitDelta", () => {
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveId = { minor: 2 };
-		const rename: Delta.DetachedNodeRename = {
+		const rename: DeltaDetachedNodeRename = {
 			count: 1,
 			oldId: node1,
 			newId: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
@@ -717,15 +735,15 @@ describe("visitDelta", () => {
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveId = { minor: 2 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId,
 		};
-		const moveIn: Delta.Mark = {
+		const moveIn: DeltaMark = {
 			count: 1,
 			attach: moveId,
 		};
-		const modify: Delta.DetachedNodeChanges = {
+		const modify: DeltaDetachedNodeChanges = {
 			id: { minor: 1 },
 			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
 		};
@@ -758,7 +776,7 @@ describe("visitDelta", () => {
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
 		const detachId = { minor: 42 };
-		const moveOut: Delta.Mark = {
+		const moveOut: DeltaMark = {
 			count: 1,
 			detach: moveId1,
 			fields: new Map([
@@ -773,7 +791,7 @@ describe("visitDelta", () => {
 				],
 			]),
 		};
-		const moveIn: Delta.DetachedNodeRename = {
+		const moveIn: DeltaDetachedNodeRename = {
 			count: 1,
 			oldId: moveId1,
 			newId: detachId,
@@ -808,7 +826,7 @@ describe("visitDelta", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const restore: Delta.DetachedNodeRename = {
+		const restore: DeltaDetachedNodeRename = {
 			count: 1,
 			oldId: node1,
 			newId: { minor: 42 },
@@ -832,12 +850,12 @@ describe("visitDelta", () => {
 		index.createEntry(node1);
 		const buildId = { minor: 2 };
 		const detachId = { minor: 42 };
-		const renameOldNode: Delta.DetachedNodeRename = {
+		const renameOldNode: DeltaDetachedNodeRename = {
 			count: 1,
 			oldId: node1,
 			newId: detachId,
 		};
-		const renameNewNode: Delta.DetachedNodeRename = {
+		const renameNewNode: DeltaDetachedNodeRename = {
 			count: 1,
 			oldId: buildId,
 			newId: node1,
@@ -874,7 +892,7 @@ describe("visitDelta", () => {
 					it("Rename ordering: 1/1", () => {
 						const index = makeDetachedFieldIndex("");
 						index.createEntry(pointA);
-						const rename: Delta.DetachedNodeRename = {
+						const rename: DeltaDetachedNodeRename = {
 							count: 1,
 							oldId: pointA,
 							newId: end,
@@ -910,12 +928,12 @@ describe("visitDelta", () => {
 							const index = makeDetachedFieldIndex("");
 							index.createEntry(pointA);
 							const pointB = { minor: 2 };
-							const rename1: Delta.DetachedNodeRename = {
+							const rename1: DeltaDetachedNodeRename = {
 								count: 1,
 								oldId: pointA,
 								newId: pointB,
 							};
-							const rename2: Delta.DetachedNodeRename = {
+							const rename2: DeltaDetachedNodeRename = {
 								count: 1,
 								oldId: pointB,
 								newId: cycle ? pointA : end,
@@ -948,17 +966,17 @@ describe("visitDelta", () => {
 						it(`Rename ordering: ${ordering}/6`, () => {
 							const pointB = { minor: 2 };
 							const pointC = { minor: 3 };
-							const ab: Delta.DetachedNodeRename = {
+							const ab: DeltaDetachedNodeRename = {
 								count: 1,
 								oldId: pointA,
 								newId: pointB,
 							};
-							const bc: Delta.DetachedNodeRename = {
+							const bc: DeltaDetachedNodeRename = {
 								count: 1,
 								oldId: pointB,
 								newId: pointC,
 							};
-							const cd: Delta.DetachedNodeRename = {
+							const cd: DeltaDetachedNodeRename = {
 								count: 1,
 								oldId: pointC,
 								newId: end,

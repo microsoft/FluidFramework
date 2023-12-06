@@ -24,50 +24,56 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "Node",
-                                    "fields": {
-                                      "foo": [
-                                        {
-                                          "type": "Node",
-                                          "value": "a"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "b"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "c"
-                                        }
-                                      ],
-                                      "bar": [
-                                        {
-                                          "type": "Node",
-                                          "value": "d"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "e"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "f"
-                                        }
-                                      ]
-                                    }
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "Node",
+                              "fields": {
+                                "foo": [
+                                  {
+                                    "type": "Node",
+                                    "value": "a"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "b"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "c"
+                                  }
+                                ],
+                                "bar": [
+                                  {
+                                    "type": "Node",
+                                    "value": "d"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "e"
+                                  },
+                                  {
+                                    "type": "Node",
+                                    "value": "f"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
@@ -94,9 +100,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveOut",
-                                          "id": 0,
-                                          "count": 2
+                                          "count": 2,
+                                          "effect": {
+                                            "moveOut": {
+                                              "id": 0
+                                            }
+                                          }
                                         }
                                       ]
                                     },
@@ -108,9 +117,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveIn",
-                                          "id": 0,
                                           "count": 2,
+                                          "effect": {
+                                            "moveIn": {
+                                              "id": 0
+                                            }
+                                          },
                                           "cellId": {
                                             "localId": 0
                                           }

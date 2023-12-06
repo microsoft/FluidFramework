@@ -8,9 +8,9 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
@@ -19,8 +19,9 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
  * retrieving a data store that was created locally works fine even if the outer data store has not finished
  * initializing.
  */
-describeFullCompat(
+describeCompat(
 	"data store retrieval during creation / initialization tests",
+	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		const {
 			dataRuntime: { DataObject, DataObjectFactory },
@@ -113,7 +114,8 @@ describeFullCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the outer dataStore from the detached container. This will create and load the inner data store
 			// during initialization.
-			const outerDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			const outerDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			assert(outerDataStore !== undefined, "Could not load outer data store");
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
@@ -138,7 +140,8 @@ describeFullCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			// Get the default dataStore from the detached container.
-			const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
 			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			// This will create and load the inner data store during initialization.

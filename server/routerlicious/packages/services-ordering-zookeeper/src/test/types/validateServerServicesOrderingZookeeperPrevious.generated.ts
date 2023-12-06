@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_ZookeeperClient():
     TypeOnly<old.ZookeeperClient>;
 declare function use_current_ClassDeclaration_ZookeeperClient(
-    use: TypeOnly<current.ZookeeperClient>);
+    use: TypeOnly<current.ZookeeperClient>): void;
 use_current_ClassDeclaration_ZookeeperClient(
     get_old_ClassDeclaration_ZookeeperClient());
 
@@ -41,6 +41,6 @@ use_current_ClassDeclaration_ZookeeperClient(
 declare function get_current_ClassDeclaration_ZookeeperClient():
     TypeOnly<current.ZookeeperClient>;
 declare function use_old_ClassDeclaration_ZookeeperClient(
-    use: TypeOnly<old.ZookeeperClient>);
+    use: TypeOnly<old.ZookeeperClient>): void;
 use_old_ClassDeclaration_ZookeeperClient(
     get_current_ClassDeclaration_ZookeeperClient());

@@ -3,16 +3,26 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
+/* eslint-disable import/no-deprecated */
+
 import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
 
+/**
+ * @internal
+ */
 export const reservedTileLabelsKey = "referenceTileLabels";
+/**
+ * @internal
+ */
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
+/**
+ * @internal
+ */
 export function refTypeIncludesFlag(
 	refPosOrType: ReferencePosition | ReferenceType,
 	flags: ReferenceType,
@@ -22,6 +32,9 @@ export function refTypeIncludesFlag(
 	return (refType & flags) !== 0;
 }
 
+/**
+ * @internal
+ */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
 		? (refPos.properties[reservedTileLabelsKey] as string[])
@@ -29,6 +42,7 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @internal
  */
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
 	// eslint-disable-next-line no-bitwise
@@ -37,6 +51,9 @@ export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefin
 		? (refPos.properties[reservedRangeLabelsKey] as string[])
 		: undefined;
 
+/**
+ * @internal
+ */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
 	return tileLabels?.includes(label) ?? false;
@@ -44,18 +61,23 @@ export function refHasTileLabel(refPos: ReferencePosition, label: string): boole
 
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @internal
  */
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
 	const rangeLabels = refGetRangeLabels(refPos);
 	return rangeLabels?.includes(label) ?? false;
 }
 
+/**
+ * @internal
+ */
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;
 }
 
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @internal
  */
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
 	return refGetRangeLabels(refPos) !== undefined;
@@ -65,6 +87,7 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
+ * @alpha
  */
 export interface ReferencePosition {
 	/**
@@ -107,20 +130,32 @@ export interface ReferencePosition {
 
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @alpha
  */
-// eslint-disable-next-line import/no-deprecated
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
+/**
+ * @internal
+ */
 export const DetachedReferencePosition = -1;
 
+/**
+ * @internal
+ */
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
 	return compareReferencePositions(a, b) < 0 ? a : b;
 }
 
+/**
+ * @internal
+ */
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T {
 	return compareReferencePositions(a, b) > 0 ? a : b;
 }
 
+/**
+ * @internal
+ */
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
 	const aSeg = a.getSegment();
 	const bSeg = b.getSegment();

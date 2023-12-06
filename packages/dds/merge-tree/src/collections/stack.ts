@@ -6,6 +6,7 @@
 /**
  * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
+ * @alpha
  */
 export class Stack<T> {
 	public items: T[] = [];

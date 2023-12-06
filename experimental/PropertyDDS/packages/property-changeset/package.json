@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,8 +31,8 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
@@ -61,8 +61,8 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
-		"ajv": "7.1.1",
-		"ajv-keywords": "4.0.0",
+		"ajv": "^8.12.0",
+		"ajv-keywords": "^5.1.0",
 		"async": "^3.2.2",
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
@@ -75,7 +75,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",

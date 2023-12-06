@@ -17,6 +17,7 @@ const path = require("path");
 
 const { alertNodeType } = require("./alert-node");
 const { layoutContent } = require("./api-documentation-layout");
+const { buildNavBar } = require("./build-api-nav");
 const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
 const { createHugoFrontMatter } = require("./front-matter");
 
@@ -30,9 +31,12 @@ async function renderApiDocumentation() {
 	await fs.emptyDir(apiDocsDirectoryPath);
 
 	// Process API reports
+	console.log("Loading API model...");
 	console.group();
 
 	const apiModel = await loadModel(apiReportsDirectoryPath);
+
+	console.groupEnd();
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -41,12 +45,17 @@ async function renderApiDocumentation() {
 		[alertNodeType]: renderAlertNode,
 	};
 
-	console.groupEnd();
-
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
+		documentBoundaries: [
+			ApiItemKind.Class,
+			ApiItemKind.Enum,
+			ApiItemKind.Interface,
+			ApiItemKind.Namespace,
+		],
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
+		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
@@ -74,6 +83,18 @@ async function renderApiDocumentation() {
 		documents = transformApiModel(config);
 	} catch (error) {
 		console.error("Encountered error while generating API documentation:", error);
+		throw error;
+	}
+
+	console.groupEnd();
+
+	console.group();
+	console.log("Generating nav contents...");
+
+	try {
+		await buildNavBar(documents);
+	} catch (error) {
+		console.error("Error saving nav bar yaml files:", error);
 		throw error;
 	}
 

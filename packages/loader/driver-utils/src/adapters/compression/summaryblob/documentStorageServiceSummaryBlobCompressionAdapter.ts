@@ -20,7 +20,7 @@ import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProx
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
 /**
- * @public
+ * @internal
  */
 export const blobHeadersBlobName = ".metadata.blobHeaders";
 const metadataBlobName = ".metadata";

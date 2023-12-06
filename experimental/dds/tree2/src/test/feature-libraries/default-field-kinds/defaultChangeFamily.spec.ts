@@ -5,12 +5,10 @@
 
 import { strict as assert } from "assert";
 import {
-	Delta,
 	FieldKey,
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
@@ -19,6 +17,7 @@ import {
 	UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
+	DeltaRoot,
 } from "../../../core";
 import { leaf, jsonObject } from "../../../domains";
 import {
@@ -27,6 +26,7 @@ import {
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
+	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -89,9 +89,8 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX = { type: leaf.string.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
 
-function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
+function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 	assert.equal(actual.length, expected.length);
 	for (let i = 0; i < actual.length; ++i) {
 		assertDeltaEqual(actual[i], expected[i]);
@@ -105,7 +104,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	forest: IForestSubscription;
 	builder: DefaultEditBuilder;
 	changes: TaggedChange<DefaultChangeset>[];
-	deltas: Delta.Root[];
+	deltas: DeltaRoot[];
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
@@ -113,12 +112,12 @@ function initializeEditableForest(data?: JsonableTree): {
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
-	const deltas: Delta.Root[] = [];
+	const deltas: DeltaRoot[] = [];
 	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
-		const delta = defaultChangeFamily.intoDelta(taggedChange);
+		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
 		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();

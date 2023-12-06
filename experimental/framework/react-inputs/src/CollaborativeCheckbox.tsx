@@ -7,8 +7,7 @@ import React from "react";
 
 /**
  * {@link CollaborativeCheckbox} input props.
- *
- * @public
+ * @internal
  */
 export interface ICollaborativeCheckboxProps {
 	/**
@@ -33,8 +32,7 @@ export interface ICollaborativeCheckboxProps {
 
 /**
  * {@link CollaborativeCheckbox} component state.
- *
- * @public
+ * @internal
  */
 export interface ICollaborativeCheckboxState {
 	checked: boolean;
@@ -42,8 +40,7 @@ export interface ICollaborativeCheckboxState {
 
 /**
  * Given a SharedCell will produce a collaborative checkbox.
- *
- * @public
+ * @internal
  */
 export class CollaborativeCheckbox extends React.Component<
 	ICollaborativeCheckboxProps,

@@ -4,7 +4,7 @@
  */
 
 /**
- * @public
+ * @internal
  */
 export enum SummaryCompressionAlgorithm {
 	None = 0,
@@ -12,7 +12,7 @@ export enum SummaryCompressionAlgorithm {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ICompressionStorageConfig {
 	algorithm: SummaryCompressionAlgorithm;

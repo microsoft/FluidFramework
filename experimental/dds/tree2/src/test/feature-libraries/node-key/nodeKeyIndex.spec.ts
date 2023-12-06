@@ -17,16 +17,16 @@ import {
 	NodeKeyIndex,
 	LocalNodeKey,
 	StableNodeKey,
-	SchemaAware,
 	nodeKeyFieldKey,
 	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
+	InsertableFlexField,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
-import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
+import { SummarizeType, TestTreeProvider, flexTreeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
@@ -45,12 +45,9 @@ function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey
 
 describe("Node Key Index", () => {
 	function createView(
-		initialTree: SchemaAware.TypedField<
-			typeof nodeSchemaData.rootFieldSchema,
-			SchemaAware.ApiMode.Simple
-		>,
+		initialTree: InsertableFlexField<typeof nodeSchemaData.rootFieldSchema>,
 	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
-		return treeWithContent({ initialTree, schema: nodeSchemaData });
+		return flexTreeWithContent({ initialTree, schema: nodeSchemaData });
 	}
 
 	function assertIds(tree: NodeKeys, ids: LocalNodeKey[]): void {
@@ -65,7 +62,7 @@ describe("Node Key Index", () => {
 	}
 
 	it("can look up a node that was inserted", () => {
-		const view = treeWithContent({ initialTree: undefined, schema: nodeSchemaData });
+		const view = flexTreeWithContent({ initialTree: undefined, schema: nodeSchemaData });
 		const key = view.context.nodeKeys.generate();
 		view.content = {
 			child: undefined,
@@ -183,7 +180,7 @@ describe("Node Key Index", () => {
 	it.skip("errors on nodes which have keys of the wrong type", () => {
 		assert.throws(
 			() =>
-				treeWithContent({
+				flexTreeWithContent({
 					initialTree: {
 						[nodeKeyFieldKey]: 5 as unknown as StableNodeKey,
 						child: undefined,
@@ -223,10 +220,9 @@ describe("Node Key Index", () => {
 
 		const nodeKeyManager = createMockNodeKeyManager();
 
-		const view = treeWithContent(
+		const view = flexTreeWithContent(
 			{
 				initialTree: {
-					// @ts-expect-error: Strong typing for map node literals is not implemented yet
 					[nodeKeyFieldKey]: nodeKeyManager.stabilizeNodeKey(
 						nodeKeyManager.generateLocalNodeKey(),
 					),

@@ -18,9 +18,9 @@ import {
 	FieldKinds,
 	allowsRepoSuperset,
 	TreeSchema,
-	SchemaAware,
 	TreeFieldSchema,
 	ViewSchema,
+	InsertableFlexField,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
@@ -221,7 +221,7 @@ export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
+		| InsertableFlexField<TRoot>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }

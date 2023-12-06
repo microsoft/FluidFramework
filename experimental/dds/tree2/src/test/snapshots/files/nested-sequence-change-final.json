@@ -24,14 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "has-sequence-map.SeqMap"
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 },
@@ -42,14 +40,12 @@
                                       "fieldKind": "Sequence",
                                       "change": [
                                         {
-                                          "type": "Insert",
-                                          "id": 1,
                                           "count": 1,
-                                          "content": [
-                                            {
-                                              "type": "has-sequence-map.SeqMap"
+                                          "effect": {
+                                            "insert": {
+                                              "id": 1
                                             }
-                                          ],
+                                          },
                                           "cellId": {
                                             "localId": 1
                                           }
@@ -61,6 +57,20 @@
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "type": "has-sequence-map.SeqMap"
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "type": "has-sequence-map.SeqMap"
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",

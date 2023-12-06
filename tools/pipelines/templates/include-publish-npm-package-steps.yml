@@ -4,9 +4,6 @@
 # include-publish-npm-package-steps template to publish NPM packages/projects
 
 parameters:
-- name: namespace
-  type: boolean
-
 - name: feedUrl
   type: string
 
@@ -30,35 +27,11 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
-    ${{ if eq(parameters.namespace, true) }}:
-      ${{ if ne(parameters.feedKind, 'public') }}:
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedUrl }}
-          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-example:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-private:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-      ${{ if eq(parameters.feedKind, 'public') }}:
-        # The official feed excludes @fluid-example and @fluid-private. While earlier steps should also exclude these
-        # packages, excluding those scopes here is an additional defense.
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedUrl }}
-          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-    ${{ if eq(parameters.namespace, false) }}:
-      script: |
-        echo Generating .npmrc for ${{ parameters.feedUrl }}
-        echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
-        echo "always-auth=true" >> ./.npmrc
-        cat .npmrc
+    script: |
+      echo Generating .npmrc for ${{ parameters.feedUrl }}
+      echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -14,7 +13,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -28,7 +27,7 @@ import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestS
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC phases without overlapping.
  */
-describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
+describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	const inactiveTimeoutMs = 100;
 	const sweepTimeoutMs = 200;
 
@@ -62,7 +61,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const { summarizer } = await createSummarizer(provider, mainContainer, {
