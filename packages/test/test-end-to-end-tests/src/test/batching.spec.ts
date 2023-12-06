@@ -105,7 +105,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Flushing ops", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
-describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Generate Summary Stats", "FullCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

@@ -58,7 +58,7 @@ function getNewTreeView(tree: ITree): TreeView<RootType> {
 
 const testValue = 5;
 
-describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedTreeShim", "FullCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

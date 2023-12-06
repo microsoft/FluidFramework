@@ -20,7 +20,7 @@ function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
 	return new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
 }
 
-describeCompat("PAS Test", "NoCompat", () => {
+describeCompat("PAS Test", "FullCompat", () => {
 	let matrix: SharedMatrix;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

@@ -381,7 +381,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedMap orderSequentially", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

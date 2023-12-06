@@ -89,7 +89,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Storing handles detached", "FullCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

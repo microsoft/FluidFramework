@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedCounter - runtime benchmarks", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const counters: ISharedCounter[] = [];
 

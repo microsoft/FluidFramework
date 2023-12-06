@@ -17,7 +17,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Cache CreateNewSummary", "FullCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

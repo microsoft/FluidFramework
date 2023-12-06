@@ -24,7 +24,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 // REVIEW: enable compat testing?
 describeCompat(
 	`Attach/Reference Api Tests For Attached Container`,
-	"NoCompat",
+	"FullCompat",
 	(getTestObjectProvider) => {
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
