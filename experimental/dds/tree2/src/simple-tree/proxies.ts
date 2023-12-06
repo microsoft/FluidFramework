@@ -40,7 +40,7 @@ import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
 import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
 import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
-import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetFlexNode } from "./editNode";
+import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
@@ -103,7 +103,7 @@ export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | un
 export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	flexNode: FlexTreeNode,
 ): TypedNode<TSchema> {
-	const cachedProxy = tryGetEditNodeTarget(flexNode);
+	const cachedProxy = tryGetFlexNodeTarget(flexNode);
 	if (cachedProxy !== undefined) {
 		return cachedProxy as TypedNode<TSchema>;
 	}
@@ -161,7 +161,7 @@ export function createNodeProxy<TSchema extends TreeNodeSchema>(
 	} else {
 		fail("unrecognized node kind");
 	}
-	setEditNode(proxy as TreeNode, flexNode);
+	setFlexNode(proxy as TreeNode, flexNode);
 	return proxy;
 }
 
@@ -187,7 +187,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy(targetObject, {
 		get(target, key): unknown {
-			const field = getEditNode(proxy).tryGetField(key as FieldKey);
+			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
 			if (field !== undefined) {
 				return getProxyForField(field);
 			}
@@ -196,17 +196,17 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			return Reflect.get(target, key, proxy);
 		},
 		set(target, key, value: InsertableContent) {
-			const editNode = getEditNode(proxy);
-			const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
+			const flexNode = getFlexNode(proxy);
+			const fieldSchema = flexNode.schema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
-			assert(editNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
+			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 			assert(typeof key === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(editNode, brand(key), fieldSchema);
+			const field = getBoxedField(flexNode, brand(key), fieldSchema);
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
@@ -216,9 +216,9 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						| FlexTreeOptionalField<AllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(content, editNode.context, fieldSchema.types);
+					const cursor = cursorFromNodeData(content, flexNode.context, fieldSchema.types);
 					modifyChildren(
-						editNode,
+						flexNode,
 						() => {
 							typedField.content = cursor;
 						},
@@ -246,7 +246,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 			];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
-			const field = getEditNode(proxy).tryGetField(key as FieldKey);
+			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
 
 			if (field === undefined) {
 				return allowAdditionalProperties
@@ -271,7 +271,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
  * Given a list proxy, returns its underlying LazySequence field.
  */
 export const getSequenceField = <TTypes extends AllowedTypes>(list: TreeListNodeOld) =>
-	getEditNode(list).content as FlexTreeSequenceField<TTypes>;
+	getFlexNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -329,9 +329,9 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 
 			modifyChildren(
-				getEditNode(this),
+				getFlexNode(this),
 				() => sequenceField.insertAt(index, cursor),
-				(listEditNode) => hydrateProxies(listEditNode),
+				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
 		},
 	},
@@ -350,9 +350,9 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 
 			modifyChildren(
-				getEditNode(this),
+				getFlexNode(this),
 				() => sequenceField.insertAtStart(cursor),
-				(listEditNode) => hydrateProxies(listEditNode),
+				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
 		},
 	},
@@ -374,9 +374,9 @@ export const listPrototypeProperties: PropertyDescriptorMap = {
 			);
 
 			modifyChildren(
-				getEditNode(this),
+				getFlexNode(this),
 				() => sequenceField.insertAtEnd(cursor),
-				(listEditNode) => hydrateProxies(listEditNode),
+				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
 		},
 	},
@@ -676,13 +676,13 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 	},
 	delete: {
 		value(this: TreeMapNode, key: string): void {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 			node.delete(key);
 		},
 	},
 	entries: {
 		*value(this: TreeMapNode): IterableIterator<[string, unknown]> {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 			for (const key of node.keys()) {
 				yield [key, getProxyForField(node.getBoxed(key))];
 			}
@@ -690,20 +690,20 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 	},
 	get: {
 		value(this: TreeMapNode, key: string): unknown {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
 		value(this: TreeMapNode, key: string): boolean {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
 		value(this: TreeMapNode): IterableIterator<string> {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 			return node.keys();
 		},
 	},
@@ -713,7 +713,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			key: string,
 			value: InsertableTreeNodeUnion<AllowedTypes>,
 		): TreeMapNode {
-			const node = getEditNode(this);
+			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
 			const cursor = cursorFromNodeData(content, node.context, node.schema.mapFields.types);
@@ -727,7 +727,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 	},
 	size: {
 		get(this: TreeMapNode) {
-			return getEditNode(this).size;
+			return getFlexNode(this).size;
 		},
 	},
 	values: {
@@ -829,26 +829,26 @@ export function createRawNodeProxy<TSchema extends TreeNodeSchema>(
 	target?: object,
 ): Unhydrated<TreeNode> {
 	// Shallow copy the content and then add the type name symbol to it.
-	let editNode: RawTreeNode<TSchema, InsertableTypedNode<TreeNodeSchema>>;
+	let flexNode: RawTreeNode<TSchema, InsertableTypedNode<TreeNodeSchema>>;
 	let proxy: TreeNode;
 	if (schema instanceof ObjectNodeSchema) {
 		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
-		editNode = createRawNode(schema, contentCopy);
+		flexNode = createRawNode(schema, contentCopy);
 		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
 	} else if (schema instanceof FieldNodeSchema) {
 		// simple-tree uses field nodes exclusively to represent lists
 		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
-		editNode = createRawNode(schema, contentCopy);
+		flexNode = createRawNode(schema, contentCopy);
 		proxy = createListProxy(allowAdditionalProperties, target);
 	} else if (schema instanceof MapNodeSchema) {
 		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
-		editNode = createRawNode(schema, contentCopy);
+		flexNode = createRawNode(schema, contentCopy);
 		proxy = createMapProxy(allowAdditionalProperties, target);
 	} else {
 		fail("Unrecognized content schema");
 	}
 
-	return setEditNode(proxy, editNode);
+	return setFlexNode(proxy, flexNode);
 }
 
 function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
@@ -862,7 +862,7 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }
 
-type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
+type ProxyHydrator = (flexNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
@@ -873,7 +873,7 @@ interface ExtractedFactoryContent<out T = FactoryContent> {
 	 * A function which walks all factory-created object that underwent replacement/extraction.
 	 * Before hydration, those objects are unusable (see {@link createRawObjectProxy}).
 	 * However, after the content is fully inserted into the tree the `hydrateProxies` function may be invoked in order to update the contents of these objects such that they become a mirror of the content in the tree.
-	 * This must be done before any calls to {@link getOrCreateNodeProxy} so that the "edit node to proxy" mapping is correctly updated (see {@link setEditNode}).
+	 * This must be done before any calls to {@link getOrCreateNodeProxy} so that the "edit node to proxy" mapping is correctly updated (see {@link setFlexNode}).
 	 */
 	readonly hydrateProxies: ProxyHydrator;
 }
@@ -909,9 +909,9 @@ export function extractFactoryContent(
 ): ExtractedFactoryContent {
 	let content: FactoryContent;
 	let fromFactory = false;
-	const rawEditNode = tryGetFlexNode(input);
-	if (rawEditNode !== undefined) {
-		const factoryContent = extractRawNodeContent(rawEditNode);
+	const rawFlexNode = tryGetFlexNode(input);
+	if (rawFlexNode !== undefined) {
+		const factoryContent = extractRawNodeContent(rawFlexNode);
 		if (factoryContent === undefined) {
 			// We were passed a proxy, but that proxy doesn't have any raw content.
 			throw new Error("Cannot insert a node that is already in the tree");
@@ -951,10 +951,10 @@ export function extractFactoryContent(
 	if (fromFactory) {
 		return {
 			content: extractedContent.content,
-			hydrateProxies: (editNode) => {
+			hydrateProxies: (flexNode) => {
 				// This makes the input proxy usable and updates the proxy cache
-				setEditNode(input as TreeNode, editNode ?? fail("Expected edit node"));
-				extractedContent.hydrateProxies(editNode);
+				setFlexNode(input as TreeNode, flexNode ?? fail("Expected edit node"));
+				extractedContent.hydrateProxies(flexNode);
 			},
 		};
 	}
@@ -984,19 +984,19 @@ function extractContentArray(
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
+		hydrateProxies: (flexNode: FlexTreeNode | undefined) => {
 			assert(
-				editNode !== undefined,
+				flexNode !== undefined,
 				0x7f6 /* Expected edit node to be defined when hydrating list */,
 			);
 			assert(
-				schemaIsFieldNode(editNode.schema),
+				schemaIsFieldNode(flexNode.schema),
 				0x7f7 /* Expected field node when hydrating list */,
 			);
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
 					getListChildNode(
-						editNode as FlexTreeFieldNode<FieldNodeSchema>,
+						flexNode as FlexTreeFieldNode<FieldNodeSchema>,
 						insertedAtIndex + i,
 					),
 				),
@@ -1021,14 +1021,14 @@ function extractContentMap(input: ReadonlyMap<string, FactoryContent>): Extracte
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
+		hydrateProxies: (flexNode: FlexTreeNode | undefined) => {
 			assert(
-				editNode !== undefined,
+				flexNode !== undefined,
 				0x7f8 /* Expected edit node to be defined when hydrating map */,
 			);
-			assert(schemaIsMap(editNode.schema), 0x7f9 /* Expected map node when hydrating map */);
+			assert(schemaIsMap(flexNode.schema), 0x7f9 /* Expected map node when hydrating map */);
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getMapChildNode(editNode as FlexTreeMapNode<MapNodeSchema>, key)),
+				hydrate(getMapChildNode(flexNode as FlexTreeMapNode<MapNodeSchema>, key)),
 			);
 		},
 	};
@@ -1043,6 +1043,8 @@ function extractContentObject(input: {
 	}
 	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
 	for (const [key, value] of Object.entries(input)) {
+		// Treat undefined fields and missing fields the same.
+		// Generally tree does not require explicit undefined values at runtime despite some of the schema aware type checking currently requiring it.
 		if (value !== undefined) {
 			const { content: childContent, hydrateProxies } = extractFactoryContent(value);
 			output[key] = childContent;
@@ -1052,17 +1054,17 @@ function extractContentObject(input: {
 
 	return {
 		content: output,
-		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
+		hydrateProxies: (flexNode: FlexTreeNode | undefined) => {
 			assert(
-				editNode !== undefined,
+				flexNode !== undefined,
 				0x7fa /* Expected edit node to be defined when hydrating object */,
 			);
 			assert(
-				schemaIsObjectNode(editNode.schema),
+				schemaIsObjectNode(flexNode.schema),
 				0x7fb /* Expected object node when hydrating object content */,
 			);
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getObjectChildNode(editNode as FlexTreeObjectNode, key)),
+				hydrate(getObjectChildNode(flexNode as FlexTreeObjectNode, key)),
 			);
 		},
 	};
@@ -1146,7 +1148,7 @@ function modifyChildren<T extends FlexTreeNode>(
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
 function getNodeKind(node: NodeBase): NodeKind {
 	return (
-		getClassSchema(getEditNode(node as TreeNode).schema)?.kind ??
+		getClassSchema(getFlexNode(node as TreeNode).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }

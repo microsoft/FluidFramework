@@ -110,7 +110,7 @@ export interface ICreateCommitParams {
     tree: string;
 }
 
-// @internal
+// @alpha
 export interface ICreateRefParams {
     // (undocumented)
     ref: string;
@@ -166,7 +166,7 @@ export interface IHeader {
     tree: ITree;
 }
 
-// @internal
+// @alpha
 export interface IPatchRefParams {
     // (undocumented)
     force: boolean;
