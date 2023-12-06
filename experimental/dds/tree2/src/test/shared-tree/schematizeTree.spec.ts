@@ -15,7 +15,6 @@ import {
 import { CheckoutEvents } from "../../shared-tree";
 import {
 	AllowedUpdateType,
-	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
 	TreeStoredSchema,
 	cloneSchemaData,
@@ -81,19 +80,11 @@ describe("schematizeTree", () => {
 					let previousSchema: TreeStoredSchema = cloneSchemaData(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
+					storedSchema.on("afterSchemaChange", () => {
+						previousSchema = cloneSchemaData(storedSchema);
+					});
+
 					let currentData: NewFieldContent;
-
-					storedSchema.registerDependent(
-						new SimpleObservingDependent(() => {
-							// This should run after the schema change.
-
-							// TODO: check currentData compatible with previousSchema.
-							// TODO: check currentData compatible with storedSchema.
-
-							previousSchema = cloneSchemaData(storedSchema);
-						}),
-					);
-
 					initializeContent(storedSchema, content.schema, () => {
 						// TODO: check currentData is compatible with current schema.
 						// TODO: check data in cursors is compatible with current schema.
@@ -109,9 +100,9 @@ describe("schematizeTree", () => {
 					const storedSchema = new InMemoryStoredSchemaRepository();
 					const log: string[] = [];
 
-					storedSchema.registerDependent(
-						new SimpleObservingDependent(() => log.push("schema")),
-					);
+					storedSchema.on("afterSchemaChange", () => {
+						log.push("schema");
+					});
 					initializeContent(storedSchema, content.schema, () => log.push("content"));
 
 					assert.deepEqual(
@@ -145,7 +136,9 @@ describe("schematizeTree", () => {
 					const storedSchema = new InMemoryStoredSchemaRepository(data);
 
 					// Error if modified
-					storedSchema.registerDependent(new SimpleObservingDependent(() => fail()));
+					storedSchema.on("afterSchemaChange", () => {
+						fail();
+					});
 
 					// No op upgrade with AllowedUpdateType.None does not error
 					schematize(events, storedSchema, {
@@ -183,11 +176,9 @@ describe("schematizeTree", () => {
 			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
 
 			let modified = false;
-			storedSchema.registerDependent(
-				new SimpleObservingDependent(() => {
-					modified = true;
-				}),
-			);
+			storedSchema.on("afterSchemaChange", () => {
+				modified = true;
+			});
 
 			assert.throws(() => {
 				schematize(events, storedSchema, {
