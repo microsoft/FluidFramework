@@ -29,19 +29,23 @@ export const loadFluidData = async (
 	services: OdspContainerServices;
 	container: IFluidContainer;
 }> => {
-	let container: IFluidContainer;
-	let services: OdspContainerServices;
+	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
+		await client.getContainer(itemId, schema);
 
-	// Get or create the document depending if we are running through the create new flow
-	if (itemId.length === 0) {
-		// The client will create a new detached container using the schema
-		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(schema));
-	} else {
-		// Use the unique item Id to fetch the container created earlier. It will already be connected to the
-		// collaboration session.
-		({ container, services } = await client.getContainer(itemId, schema));
-	}
+	return { services, container };
+};
+
+export const createFluidData = async (
+	schema: ContainerSchema,
+): Promise<{
+	services: OdspContainerServices;
+	container: IFluidContainer;
+}> => {
+	// The client will create a new detached container using the schema
+	// A detached container will enable the app to modify the container before attaching it to the client
+	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
+		await client.createContainer(schema);
+
 	return { services, container };
 };
 

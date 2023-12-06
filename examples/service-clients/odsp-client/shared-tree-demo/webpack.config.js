@@ -21,9 +21,22 @@ module.exports = (env) => {
 			},
 			module: {
 				rules: [
+					// Necessary in order to use TypeScript
 					{
-						test: /\.tsx?$/,
-						loader: "ts-loader",
+						test: /\.ts$|tsx/,
+						use: "ts-loader",
+						exclude: /node_modules/,
+					},
+					{
+						test: /\.css$/,
+						use: [
+							{
+								loader: "style-loader",
+							},
+							{
+								loader: "css-loader",
+							},
+						],
 					},
 				],
 			},

@@ -6,23 +6,31 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { ITree } from "@fluid-experimental/tree2";
-import { loadFluidData, containerSchema } from "./fluid";
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { loadFluidData, containerSchema, createFluidData } from "./fluid";
 import { treeConfiguration, Letter } from "./schema";
+// eslint-disable-next-line import/no-unassigned-import
+import "./output.css";
 import { ReactApp } from "./reactApp";
 
-async function main() {
+async function start() {
 	// create the root element for React
 	const app = document.createElement("div");
 	app.id = "app";
 	document.body.appendChild(app);
 
-	// Get the root item Id from the URL
-	// If there is no item Id, then the app will make
+	// Get the root item id from the URL
+	// If there is no item id, then the app will make
 	// a new container.
 	let itemId = location.hash.substring(1);
+	const createNew = itemId.length === 0;
+	let container: IFluidContainer;
 
-	// Initialize Fluid Container
-	const { container } = await loadFluidData(itemId, containerSchema);
+	if (createNew) {
+		({ container } = await createFluidData(containerSchema));
+	} else {
+		({ container } = await loadFluidData(itemId, containerSchema));
+	}
 
 	// Initialize the SharedTree Data Structure
 	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
@@ -44,7 +52,7 @@ async function main() {
 	);
 
 	// If this is a new container, fill it with data
-	if (itemId.length === 0) {
+	if (createNew) {
 		const used: { x: number; y: number }[] = [];
 		let id = 0;
 		"HELLOWORLD"
@@ -73,11 +81,8 @@ async function main() {
 					id++;
 				}
 			});
-	}
-
-	// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
-	// This uploads the container to the service and connects to the collaboration session.
-	if (itemId.length === 0) {
+		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
+		// This uploads the container to the service and connects to the collaboration session.
 		itemId = await container.attach();
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
@@ -85,4 +90,4 @@ async function main() {
 	}
 }
 
-export { main };
+start().catch(console.error);
