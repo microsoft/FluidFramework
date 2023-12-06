@@ -369,19 +369,17 @@ extends:
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
-                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                  # that is now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
                   - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
                     - task: 1ES.PublishPipelineArtifact@1
+                      displayName: Publish Artifact - Tinylicious Log
+                      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                       inputs:
-                        displayName: Publish Artifact - Tinylicious Log
-                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                         targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
                         artifactName: tinyliciousLog_attempt-$(System.JobAttempt)
                         sbomEnabled: false
                         publishLocation: pipeline
-                        continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-                  
+
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/1ES/include-process-test-results.yml@self
                     parameters:
@@ -401,18 +399,16 @@ extends:
                       workingDirectory: '${{ parameters.buildDirectory }}'
                       filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
-                  # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below. // TODO: Delete/Update this comment on successful inline test
                   - task: 1ES.PublishPipelineArtifact@1
+                    displayName: Publish Artifact - pack
                     inputs:
-                      displayName: Publish Artifact - pack
                       targetPath: $(Build.ArtifactStagingDirectory)/pack
                       artifactName: pack
                       publishLocation: pipeline
 
                   - task: 1ES.PublishPipelineArtifact@1
+                    displayName: Publish Artifact - Test Files
                     inputs:
-                      displayName: Publish Artifact - Test Files
                       targetPath: $(Build.ArtifactStagingDirectory)/test-files
                       artifactName: test-files
                       publishLocation: pipeline
@@ -426,12 +422,10 @@ extends:
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:collect'
 
-                  # At this point we want to publish the artifact with the bundle size analysis,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
                   - task: 1ES.PublishPipelineArtifact@1
+                    displayName: Publish Artifacts - bundle-analysis
+                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                     inputs:
-                      displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                       targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
                       artifactname: bundleAnalysis
                       publishLocation: Container
@@ -486,12 +480,10 @@ extends:
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
 
-              # At this point we want to publish the artifact with the _api-extractor-temp folder,
-              # but as part of 1ES migration that's now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
               - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                 - task: 1ES.PublishPipelineArtifact@1
+                  displayName: Publish Artifact - _api-extractor-temp
                   inputs:
-                    displayName: Publish Artifact - _api-extractor-temp
                     targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
                     artifactName: _api-extractor-temp
                     publishLocation: pipeline
