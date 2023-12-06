@@ -93,9 +93,9 @@ describe("SharedString interval collections", () => {
 		const intervalId = interval.getIntervalId();
 		assert(intervalId);
 		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { start: 1, end: undefined });
+		collection.change(intervalId, { endpoints: { start: 1, end: undefined } });
 		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { start: undefined, end: 1 });
+		collection.change(intervalId, { endpoints: { start: undefined, end: 1 } });
 	}
 
 	describe("in a connected state with a remote SharedString", () => {
@@ -184,6 +184,48 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString2, collection2, [
 				{ start: sharedString2.getLength() - 1, end: sharedString2.getLength() - 1 },
 			]);
+		});
+
+		describe("changing endpoints and/or properties", () => {
+			it("changes only endpoints with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { endpoints: { start: 1, end: 4 } });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
+			it("changes only properties with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { props: { a: 2 } });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+			});
+			it("changes endpoints and properties with new signature", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { endpoints: { start: 1, end: 4 }, props: { a: 2 } });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+			});
 		});
 
 		// Regression test for bug described in <https://dev.azure.com/fluidframework/internal/_workitems/edit/4477>
