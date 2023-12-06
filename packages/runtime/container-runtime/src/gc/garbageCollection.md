@@ -55,13 +55,14 @@ they could never be referenced again by any active clients, i.e., clients that h
 The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee all in-memory objects are cleared before
 it concludes an object is safe to delete.
 
-GC sweep phase runs in two stages. The first is the "Tombstone" stage, where objects are marked as Tombstones, meaning
-GC believes they will never be referenced again and are safe to delete. They are not yet deleted at this point, but any
-attempt to load them will fail. This way, in case a GC-impacting bug is introduced resulting in objects wrongly being Tombstoned,
-the data is not yet gone from the documents and a recovery plan can be implemented by the app.
+GC sweep phase runs in two stages:
 
-The second stage is where the objects are fully deleted, after a configurable delay, to give time for application teams to
-monitor for Tombstone-related errors and react before delete occurs.
+-   The first stage is the "Tombstone" stage, where objects are marked as Tombstones, meaning GC believes they will
+    never be referenced again and are safe to delete. They are not yet deleted at this point, but any attempt to
+    load them will fail. This way, there's a chance to recover a Tombstoned object in case we detect it's still being used.
+-   The second stage is the "Sweep" or "Delete" stage, where the objects are fully deleted.
+    This occurs after a configurable delay called the "Sweep Grace Period", to give time for application teams
+    to monitor for Tombstone-related errors and react before delete occurs.
 
 ## GC Configuration
 
@@ -96,12 +97,11 @@ covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-confi
 
 ### Enabling Sweep Phase
 
-To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
-The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#more-about-gcsweepgeneration-and-gctombstonegeneration).
-Note that this will disabled Tombstone Mode.
+The Tombstone stage of Sweep is enabled by default.
 
-A full treatment of Tombstone and Sweep configuration can be found in
-[this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
+To enable the Delete Stage for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
+This generation number is persisted, and any document where the persisted value matches the current value will have
+Sweep enabled.
 
 ### More Advanced Configuration
 

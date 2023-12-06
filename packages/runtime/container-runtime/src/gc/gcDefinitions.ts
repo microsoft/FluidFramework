@@ -357,7 +357,7 @@ export interface IGCRuntimeOptions {
 
 	/**
 	 * Delay between when Tombstone should run and when the object should be deleted.
-	 * This grace period gives apps a chance to intervene to recover if needed, before Sweep deletes the object.
+	 * This grace period gives a chance to intervene to recover if needed, before Sweep deletes the object.
 	 * If not present, a default (non-zero) value will be used.
 	 */
 	sweepGracePeriodMs?: number;
