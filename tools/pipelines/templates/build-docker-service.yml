@@ -307,7 +307,7 @@ extends:
             inputs:
               dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
               context: ${{ parameters.buildDirectory }}
-              image: $(containerRegistryUrl)/base:$(containerTagSuffix)
+              image: ${{ variables.buildContainerName }}/base:$(containerTagSuffix)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
 
           # Pack
@@ -415,7 +415,7 @@ extends:
           - task: 1ES.PushContainerImage@1
             displayName: Docker Push
             inputs:
-              image: $(containerRegistryUrl)/${{ variables.buildContainerName }}:$(containerTagSuffix)
+              image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
               remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
         templateContext:
