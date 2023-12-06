@@ -172,3 +172,10 @@ lumberjack:
 
 config:
   configDumpEnabled: false
+  secretNamesToRedactInConfigDump:
+    - mongo.globalDbEndpoint
+    - mongo.operationsDbEndpoint
+    - redis.pass
+    - redisForTenantCache.pass
+    - redis2.pass
+    - redisForThrottling.pass

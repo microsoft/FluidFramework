@@ -23,16 +23,20 @@ export class ConfigDumper {
 	// Check library for issues/malware
 	constructor(
 		config: Record<string, any>,
-		logger: ILogger | undefined,
+		logger?: ILogger,
 		secretNamesToRedactInConfigDump?: string[],
 	) {
-		this.config = JSON.parse(JSON.stringify(config));
+		this.config = config;
 		if (secretNamesToRedactInConfigDump !== undefined) {
 			this.secretNamesToRedactInConfigDump = this.secretNamesToRedactInConfigDump.concat(
 				secretNamesToRedactInConfigDump,
 			);
 		}
 		this.logger = logger;
+	}
+
+	public getConfig(): Record<string, any> {
+		return this.config;
 	}
 
 	public dumpConfig() {

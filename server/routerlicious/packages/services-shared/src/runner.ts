@@ -98,7 +98,6 @@ export function runService<T extends IResources>(
 	group: string,
 	configOrPath: nconf.Provider | string,
 	waitBeforeExitInMs?: number,
-	secretNamesToRedactInConfigDump?: string[],
 ) {
 	const config =
 		typeof configOrPath === "string"
@@ -110,9 +109,11 @@ export function runService<T extends IResources>(
 			: configOrPath;
 
 	const configDumpEnabled = (config.get("config:configDumpEnabled") as boolean) ?? false;
+	const secretNamesToRedactInConfigDump =
+		(config.get("config:secretNamesToRedactInConfigDump") as string[]) ?? undefined;
 	if (configDumpEnabled) {
 		const configDumper = new ConfigDumper(
-			config.get(),
+			JSON.parse(JSON.stringify(config.get())),
 			logger,
 			secretNamesToRedactInConfigDump,
 		);

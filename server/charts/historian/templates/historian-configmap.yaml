@@ -24,7 +24,8 @@ data:
             }
         },
         "config": {
-            "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }}
+            "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.historian.config.secretNamesToRedactInConfigDump }}
         },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",

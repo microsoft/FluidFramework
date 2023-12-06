@@ -24,7 +24,8 @@ data:
             }
         },
         "config": {
-            "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }}
+            "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.gitrest.config.secretNamesToRedactInConfigDump }}
         },
         "requestSizeLimit": "1gb",
         "storageDir": {
