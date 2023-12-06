@@ -273,7 +273,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](docs/simple-suite-test#testinterface-interface), [TestMappedType](docs/simple-suite-test#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
+**Extends:** [TestInterface](docs/simple-suite-test#testinterface-interface), [TestMappedType](docs/simple-suite-test#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt;
 
 ### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -845,7 +845,7 @@ Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
 ### Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {
+export type TestMappedType = {
     [K in TestEnum]: boolean;
 };
 ```
@@ -861,7 +861,7 @@ Test Type-Alias
 ### Signature {#typealias-signature}
 
 ```typescript
-export declare type TypeAlias = string;
+export type TypeAlias = string;
 ```
 
 ### Remarks {#typealias-remarks}
@@ -1007,9 +1007,9 @@ const bar = foo
 
 ### Interfaces
 
-| Interface | Description |
-| --- | --- |
-| [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) | Test interface |
+| Interface | Alerts | Description |
+| --- | --- | --- |
+| [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) | `ALPHA` | Test interface |
 
 ### Classes
 
@@ -1037,9 +1037,9 @@ const bar = foo
 
 ### Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Description |
+| --- | --- | --- | --- |
+| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` | Test Constant |
 
 ### Namespaces
 
@@ -1048,56 +1048,6 @@ const bar = foo
 | [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 ### Interface Details
-
-#### TestInterface {#testnamespace-testinterface-interface}
-
-Test interface
-
-##### Signature {#testinterface-signature}
-
-```typescript
-interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
-```
-
-**Extends:** [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)
-
-##### Properties
-
-| Property | Type | Description |
-| --- | --- | --- |
-| [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) | boolean | Test interface property |
-
-##### Methods
-
-| Method | Return Type | Description |
-| --- | --- | --- |
-| [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
-
-##### Property Details
-
-###### testInterfaceProperty {#testnamespace-testinterface-testinterfaceproperty-propertysignature}
-
-Test interface property
-
-<a name="testinterfaceproperty-signature" />
-**Signature**
-
-```typescript
-testInterfaceProperty: boolean;
-```
-
-##### Method Details
-
-###### testInterfaceMethod {#testnamespace-testinterface-testinterfacemethod-methodsignature}
-
-Test interface method
-
-<a name="testinterfacemethod-signature" />
-**Signature**
-
-```typescript
-testInterfaceMethod(): void;
-```
 
 ### Class Details
 
@@ -1281,9 +1231,11 @@ An Error
 
 ### Variable Details
 
-#### TestConst {#testnamespace-testconst-variable}
+#### TestConst (BETA) {#testnamespace-testconst-variable}
 
 Test Constant
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 ##### Signature {#testconst-signature}
 
