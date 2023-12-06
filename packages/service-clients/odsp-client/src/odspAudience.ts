@@ -8,7 +8,7 @@ import { type IClient } from "@fluidframework/protocol-definitions";
 import { type OdspMember } from "./interfaces";
 
 /**
- * Since ODSP provides user names and oids for all of its members, we extend the
+ * Since ODSP provides user names, email and oids for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * @internal
  */
