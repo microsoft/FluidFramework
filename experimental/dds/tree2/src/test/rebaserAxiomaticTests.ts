@@ -6,7 +6,9 @@
 import { strict as assert } from "assert";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange, tagRollbackInverse } from "../core";
 import { fail } from "../util";
-import { defaultRevisionMetadataFromChanges } from "./utils";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema";
+import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils";
 import {
 	FieldStateTree,
 	generatePossibleSequenceOfEdits,
@@ -48,11 +50,15 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 	function rebaseTagged(
 		change: TaggedChange<TChangeset>,
-		...baseChanges: TaggedChange<TChangeset>[]
+		rebasePath: TaggedChange<TChangeset>[],
+		baseBranch: TaggedChange<TChangeset>[],
 	): TaggedChange<TChangeset> {
 		let currChange = change;
-		const metadata = defaultRevisionMetadataFromChanges([change, ...baseChanges]);
-		for (const base of baseChanges) {
+		const metadata = rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges(rebasePath),
+			baseBranch.map(({ revision }) => revision),
+		);
+		for (const base of rebasePath) {
 			currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
 		}
 
@@ -154,12 +160,13 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							);
 							const rebaseWithoutCompose = rebaseTagged(
 								edit,
-								...editsToRebaseOver,
+								editsToRebaseOver,
+								editsToRebaseOver,
 							).change;
-							const metadata = defaultRevisionMetadataFromChanges([
-								...editsToRebaseOver,
-								edit,
-							]);
+							const metadata = rebaseRevisionMetadataFromInfo(
+								defaultRevInfosFromChanges(editsToRebaseOver),
+								editsToRebaseOver.map(({ revision }) => revision),
+							);
 							const rebaseWithCompose = rebaseComposed(
 								metadata,
 								edit.change,
@@ -225,13 +232,13 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 							for (let i = 0; i < sourceEdits.length; i++) {
 								const edit = sourceEdits[i];
-								const editsToRebaseOver = [
+								const rebasePath = [
 									...inverses.slice(sourceEdits.length - i),
 									editToRebaseOver,
 									...rebasedEditsWithoutCompose,
 								];
 								rebasedEditsWithoutCompose.push(
-									rebaseTagged(edit, ...editsToRebaseOver),
+									rebaseTagged(edit, rebasePath, [editToRebaseOver]),
 								);
 							}
 
@@ -239,15 +246,28 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
 							const allTaggedEdits = [...inverses, editToRebaseOver];
 							for (let i = 0; i < sourceEdits.length; i++) {
-								let metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
 								const edit = sourceEdits[i];
+								const rebasePath = [
+									...inverses.slice(sourceEdits.length - i),
+									editToRebaseOver,
+									...rebasedEditsWithoutCompose,
+								];
+								const rebaseMetadata = rebaseRevisionMetadataFromInfo(
+									defaultRevInfosFromChanges(rebasePath),
+									[editToRebaseOver.revision],
+								);
 								const rebasedEdit = tagChange(
-									rebaseComposed(metadata, edit.change, currentComposedEdit),
+									rebaseComposed(
+										rebaseMetadata,
+										edit.change,
+										currentComposedEdit,
+									),
 									edit.revision,
 								);
 								rebasedEditsWithCompose.push(rebasedEdit);
 								allTaggedEdits.push(rebasedEdit);
-								metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
+								const composeMetadata =
+									defaultRevisionMetadataFromChanges(allTaggedEdits);
 								currentComposedEdit = makeAnonChange(
 									compose(
 										[
@@ -255,7 +275,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 											currentComposedEdit,
 											rebasedEdit,
 										],
-										metadata,
+										composeMetadata,
 									),
 								);
 							}

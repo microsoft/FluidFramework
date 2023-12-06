@@ -840,7 +840,9 @@ function deltaFromNodeChange(
 /**
  * @alpha
  * @param revInfos - This should describe all revisions in the rebase path, even if not part of the current base changeset.
- * @param baseRevisions - The set of revisions in the changeset being rebased over
+ * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `revInfos` must include
+ * the changes [A⁻¹ X, Y, A'] for each rebase step of B.
+ * @param baseRevisions - The set of revisions in the changeset being rebased over.
  * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
  */
 export function rebaseRevisionMetadataFromInfo(
