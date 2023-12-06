@@ -1,6 +1,0 @@
-parameters:
-  currentVersion: 
-    - main
-  previousVersions:
-    - lts
-    - test/michaelzhen-lts
