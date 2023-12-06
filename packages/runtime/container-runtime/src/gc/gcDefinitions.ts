@@ -399,7 +399,10 @@ export interface IGarbageCollectorConfigs {
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
 	readonly sweepTimeoutMs: number | undefined;
-	/** The delay between tombstone and sweep. Not persisted. */
+	/**
+	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
+	 * Sweep is implemented in an eventually-consistent way so this is acceptable.
+	 */
 	readonly tombstoneSweepDelayMs: number;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;

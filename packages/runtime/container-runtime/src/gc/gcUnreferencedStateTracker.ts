@@ -4,6 +4,7 @@
  */
 
 import { assert, Timer } from "@fluidframework/core-utils";
+import { validatePrecondition } from "@fluidframework/telemetry-utils";
 import { UnreferencedState } from "./gcDefinitions";
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
@@ -52,10 +53,10 @@ export class UnreferencedStateTracker {
 		/** The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined) */
 		private readonly tombstoneSweepDelayMs: number,
 	) {
-		assert(
+		validatePrecondition(
 			this.tombstoneTimeoutMs === undefined ||
 				this.tombstoneTimeoutMs >= this.inactiveTimeoutMs,
-			0x3b0 /* inactiveTimeoutMs must not be greater than the tombstoneTimeoutMs */,
+			"inactiveTimeoutMs must not be greater than the tombstoneTimeoutMs",
 		);
 
 		this.sweepTimer = new TimerWithNoDefaultTimeout(() => {
