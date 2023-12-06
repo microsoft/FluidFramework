@@ -10,6 +10,7 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
+	ReleaseTag,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
@@ -73,6 +74,7 @@ async function renderApiDocumentation() {
 				: DefaultPolicies.defaultFileNamePolicy(apiItem);
 		},
 		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	console.log("Generating API documentation...");
