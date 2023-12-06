@@ -14,8 +14,11 @@ import {
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 } from "./schemaTypes";
+
 /**
- * Channel for a Tree DDS.
+ * Channel for a Fluid Tree DDS.
+ * @remarks
+ * Allows storing and collaboratively editing schema-aware hierarchial data.
  * @beta
  */
 export interface ITree extends IChannel {
@@ -58,6 +61,7 @@ export interface ITree extends IChannel {
 }
 
 /**
+ * Configuration for how to {@link ITree.schematize|schematize} a tree.
  * @beta
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {

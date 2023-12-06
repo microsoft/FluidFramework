@@ -7,7 +7,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
  * Socket storage discovery api response
- * @internal
+ * @alpha
  */
 export interface ISocketStorageDiscovery {
 	// The id of the web socket
@@ -43,7 +43,7 @@ export interface ISocketStorageDiscovery {
 /**
  * An interface that allows a concrete instance of a driver factory to interrogate itself
  * to find out if it is session aware.
- * @internal
+ * @alpha
  */
 export interface IProvideSessionAwareDriverFactory {
 	readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
@@ -52,7 +52,7 @@ export interface IProvideSessionAwareDriverFactory {
 /**
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
- * @internal
+ * @alpha
  */
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(
