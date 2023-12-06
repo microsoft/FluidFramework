@@ -44,14 +44,14 @@ export interface IRouterliciousDriverPolicies {
     maxConcurrentStorageRequests: number;
 }
 
-// @internal
+// @alpha
 export interface ITokenProvider {
     documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITokenResponse {
     fromCache?: boolean;
     jwt: string;

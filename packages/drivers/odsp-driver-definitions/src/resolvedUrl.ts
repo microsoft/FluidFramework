@@ -6,7 +6,7 @@
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspUrlParts {
 	siteUrl: string;
@@ -17,7 +17,7 @@ export interface IOdspUrlParts {
 /**
  * @deprecated Use ISharingLinkKind type instead.
  * Type of shareLink requested/created when creating the file for the first time.
- * @internal
+ * @alpha
  */
 export enum ShareLinkTypes {
 	csl = "csl",
@@ -25,7 +25,7 @@ export enum ShareLinkTypes {
 
 /**
  * Sharing scope of the share links created for a file.
- * @internal
+ * @alpha
  */
 export enum SharingLinkScope {
 	organization = "organization",
@@ -36,7 +36,7 @@ export enum SharingLinkScope {
 
 /**
  * View/edit permission role for a sharing link.
- * @internal
+ * @alpha
  */
 export enum SharingLinkRole {
 	view = "view",
@@ -46,7 +46,7 @@ export enum SharingLinkRole {
 /**
  * Defines the permissions scope for a share link requested to be created during the creation the file in ODSP.
  * Providing these properties to the /snapshot api will also create and return the requested kind of sharing link.
- * @internal
+ * @alpha
  */
 export interface ISharingLinkKind {
 	scope: SharingLinkScope;
@@ -59,7 +59,7 @@ export interface ISharingLinkKind {
 
 /**
  * Sharing link data received from the /snapshot api response.
- * @internal
+ * @alpha
  */
 export interface ISharingLink extends ISharingLinkKind {
 	webUrl: string;
@@ -69,7 +69,7 @@ export interface ISharingLink extends ISharingLinkKind {
  * Sharing link data created for the ODSP item.
  * Contains information about either sharing link created while creating a new file or
  * a redeemable share link created when loading an existing file
- * @internal
+ * @alpha
  */
 export interface ShareLinkInfoType {
 	/**
@@ -108,7 +108,7 @@ export interface ShareLinkInfoType {
 	sharingLinkToRedeem?: string;
 }
 /**
- * @internal
+ * @alpha
  */
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	type: "fluid";
