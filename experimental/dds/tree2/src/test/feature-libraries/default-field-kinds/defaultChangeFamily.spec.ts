@@ -366,11 +366,7 @@ describe("DefaultEditBuilder", () => {
 		});
 
 		describe("encodes insert ops using schema based encoding", () => {
-			// testFields were omitted, as we currently do not encode ops with fieldCursors.
-			const skipIndices = [0, 5];
-			for (const { name, treeFactory, schemaData } of testTrees.filter(
-				(_, index) => !skipIndices.includes(index),
-			)) {
+			for (const { name, treeFactory, schemaData } of testTrees) {
 				it(name, () => {
 					const tree = treeFactory();
 					const changes: ModularChangeset[] = [];
@@ -388,14 +384,20 @@ describe("DefaultEditBuilder", () => {
 							0,
 							tree.map((node) => cursorForJsonableTreeNode(node)),
 						);
-					const changesetId: ChangesetLocalId = brand(0);
-					const encodedOp = changes[0].builds?.get(undefined)?.get(changesetId);
-					const expectedOp = schemaCompressedEncode(
-						schemaData,
-						defaultSchemaPolicy,
-						cursorForJsonableTreeField(tree),
-					);
-					assert.deepEqual(encodedOp, expectedOp);
+
+					for (let index = 0; index < tree.length; index++) {
+						const treeField = tree.length === 1 ? tree : [tree[index]];
+						const expectedOp = schemaCompressedEncode(
+							schemaData,
+							defaultSchemaPolicy,
+							cursorForJsonableTreeField(treeField),
+						);
+
+						const changesetId: ChangesetLocalId = brand(index);
+						const encodedOp = changes[0].builds?.get(undefined)?.get(changesetId);
+
+						assert.deepEqual(encodedOp, expectedOp);
+					}
 				});
 			}
 		});

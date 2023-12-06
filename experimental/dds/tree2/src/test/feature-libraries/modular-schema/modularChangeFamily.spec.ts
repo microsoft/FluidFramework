@@ -14,7 +14,6 @@ import {
 	FieldChange,
 	ModularChangeset,
 	FieldKindWithEditor,
-	NodeChangeInverter,
 	chunkTree,
 	defaultChunkPolicy,
 	uncompressedEncode,
@@ -35,11 +34,9 @@ import {
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
-	tagRollbackInverse,
-	RevisionInfo,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, noopValidator } from "../../../codec";
+import { makeCodecFamily } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	EncodingTestData,
