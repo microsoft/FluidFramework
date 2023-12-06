@@ -12,13 +12,13 @@ import {
 	moveToDetachedField,
 	FieldUpPath,
 	PathVisitor,
-	Delta,
 	DetachedRangeUpPath,
 	RangeUpPath,
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	AnchorNode,
 	EmptyKey,
+	ProtoNodes,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -1658,7 +1658,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,
@@ -2145,7 +2145,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,

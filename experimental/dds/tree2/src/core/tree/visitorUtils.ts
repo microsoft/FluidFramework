@@ -6,10 +6,10 @@
 import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { FieldKey } from "../schema-stored";
 import { ICodecOptions } from "../../codec";
-import * as Delta from "./delta";
 import { PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
+import { ProtoNodes, Root } from "./delta";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
@@ -23,7 +23,7 @@ export function makeDetachedFieldIndex(
 }
 
 export function applyDelta(
-	delta: Delta.Root,
+	delta: Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
@@ -33,7 +33,7 @@ export function applyDelta(
 }
 
 export function announceDelta(
-	delta: Delta.Root,
+	delta: Root,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
@@ -95,7 +95,7 @@ export interface AnnouncedVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void;
+	afterCreate(content: ProtoNodes, destination: FieldKey): void;
 	beforeDestroy(field: FieldKey, count: number): void;
 	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	afterAttach(source: FieldKey, destination: Range): void;

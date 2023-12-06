@@ -9,7 +9,7 @@ import { List, walkList } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 /**
- * @internal
+ * @alpha
  */
 export class SegmentGroupCollection {
 	private readonly segmentGroups: List<SegmentGroup>;

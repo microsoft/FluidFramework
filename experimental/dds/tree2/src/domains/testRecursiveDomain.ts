@@ -10,25 +10,22 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { FieldKinds, TreeFieldSchema } from "../feature-libraries";
+import { AllowedTypes, FieldKinds, SchemaBuilderBase, TreeFieldSchema } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import { leaf } from "./leafDomain";
-import { SchemaBuilder } from "./schemaBuilder";
 
-const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+const builder = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
 
-/**
- */
 export const recursiveObject = builder.objectRecursive("object", {
 	recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	number: leaf.number,
 });
 
-const recursiveReference = () => recursiveObject2;
-builder.fixRecursiveReference(recursiveReference);
+function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 
-/**
- */
+const recursiveReference = () => recursiveObject2;
+fixRecursiveReference(recursiveReference);
+
 export const recursiveObject2 = builder.object("object2", {
 	recursive: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 	number: leaf.number,
@@ -41,12 +38,11 @@ type _1 = requireTrue<
 		ReturnType<(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]>
 	>
 >;
-/**
- */
+
 export const library = builder.intoLibrary();
 
 {
-	const b = new SchemaBuilder({ scope: "Test Recursive Domain" });
+	const b = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
 	const node = b.objectRecursive("object", {
 		child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node]),
 	});

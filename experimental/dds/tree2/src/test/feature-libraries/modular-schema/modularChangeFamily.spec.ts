@@ -26,19 +26,18 @@ import {
 	tagChange,
 	TaggedChange,
 	FieldKindIdentifier,
-	Delta,
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
-	tagRollbackInverse,
 	assertIsRevisionTag,
 	deltaForSet,
-	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
+	DeltaFieldChanges,
+	DeltaRoot,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, noopValidator } from "../../../codec";
+import { makeCodecFamily } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	EncodingTestData,
@@ -77,7 +76,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+	intoDelta: ({ change }, deltaFromChild): DeltaFieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
@@ -101,6 +100,7 @@ const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValid
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -310,6 +310,8 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
 		],
 	]),
 };
+
+const node1 = singleJsonCursor(1);
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -537,6 +539,53 @@ describe("ModularChangeFamily", () => {
 
 			assert.deepEqual(composed, expected);
 		});
+
+		it("builds", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(0), node1]])],
+						[tag3, new Map([[brand(0), node1]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[undefined, new Map([[brand(2), node1]])],
+						[tag3, new Map([[brand(2), node1]])],
+					]),
+					revisions: [{ revision: tag2 }],
+				},
+				undefined,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				builds: new Map([
+					[tag1, new Map([[brand(0), node1]])],
+					[tag2, new Map([[brand(2), node1]])],
+					[
+						tag3,
+						new Map([
+							[brand(0), node1],
+							[brand(2), node1],
+						]),
+					],
+				]),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {
@@ -628,7 +677,7 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: Delta.FieldChanges = {
+			const nodeDelta: DeltaFieldChanges = {
 				local: [
 					{
 						count: 1,
@@ -639,7 +688,7 @@ describe("ModularChangeFamily", () => {
 				],
 			};
 
-			const expectedDelta: Delta.Root = {
+			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
 					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
