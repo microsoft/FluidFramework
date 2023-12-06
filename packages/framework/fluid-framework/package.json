@@ -54,8 +54,7 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/map": "workspace:~",
-		"@fluidframework/sequence": "workspace:~"
+		"@fluidframework/map": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.28.0",
