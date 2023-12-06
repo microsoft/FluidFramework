@@ -410,10 +410,7 @@ extends:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
             image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
-            buildArguments: ${{ parameters.additionalBuildArguments }}
-            tags: |
-              $(containerTagSuffix)
-              ${{ variables.latestContainerTagSuffix }}
+            buildArguments: --tag ${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }} ${{ parameters.additionalBuildArguments }}
 
         # Push
         - ${{ if eq(variables.pushImage, true) }}:
@@ -422,9 +419,7 @@ extends:
             inputs:
               image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
               remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix)
-              tags: |
-                $(containerTagSuffix)
-                ${{ variables.latestContainerTagSuffix }}
+              buildArguments: --tag ${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
         # Cleanup
         - task: Docker@01
