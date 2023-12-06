@@ -17,7 +17,7 @@ import {
 import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../feature-libraries";
 import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
-import { expectEqualPaths } from "../../utils";
+import { expectEqualPaths, validateTreeConsistency } from "../../utils";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {
@@ -44,6 +44,16 @@ export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.opt
 export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
 	assert(tree instanceof SharedTree);
 	return tree.view;
+}
+
+export function validateConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	const viewA = fuzzViewFromTree(treeA);
+	const viewB = fuzzViewFromTree(treeB);
+	if (viewA.transaction.inProgress() || viewB.transaction.inProgress()) {
+		// Views are not expected to align during a transaction.
+		return;
+	}
+	validateTreeConsistency(treeA, treeB);
 }
 
 export const onCreate = (tree: SharedTree) => {

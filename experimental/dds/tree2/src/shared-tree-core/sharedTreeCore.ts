@@ -101,20 +101,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localSessionId = generateStableId();
 		this.editManager = new EditManager(changeFamily, localSessionId);
 		this.editManager.localBranch.on("afterChange", (args) => {
-			const { type } = args;
-			switch (type) {
+			if (this.getLocalBranch().isTransacting()) {
+				// Avoid submitting ops for changes that are part of a transaction.
+				return;
+			}
+			switch (args.type) {
 				case "append":
 					for (const c of args.newCommits) {
-						if (!this.getLocalBranch().isTransacting()) {
-							this.submitCommit(c);
-						}
+						this.submitCommit(c);
 					}
 					break;
 				case "replace":
 					if (getChangeReplaceType(args) === "transactionCommit") {
-						if (!this.getLocalBranch().isTransacting()) {
-							this.submitCommit(args.newCommits[0]);
-						}
+						this.submitCommit(args.newCommits[0]);
 					}
 					break;
 				default:
@@ -177,14 +176,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: GraphCommit<TChange>): void {
+	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
 		if (!this.submitOps) {
 			return;
 		}
 
 		// Edits should not be submitted until all transactions finish
 		assert(
-			!this.getLocalBranch().isTransacting(),
+			!this.getLocalBranch().isTransacting() || isResubmit,
 			0x68b /* Unexpected edit submitted during transaction */,
 		);
 
@@ -244,7 +243,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content);
 		const [commit] = this.editManager.findLocalCommit(revision);
-		this.submitCommit(commit);
+		this.submitCommit(commit, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {

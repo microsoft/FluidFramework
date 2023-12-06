@@ -23,6 +23,7 @@ import {
 	DiscardResult,
 	BranchRebaseResult,
 	rebaseChangeOverChanges,
+	tagRollbackInverse,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
@@ -140,6 +141,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private readonly revertibles = new Set<Revertible>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
+	private readonly initialTransactionRevToCurrentRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -250,6 +252,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToCurrentRev.clear();
+		}
+
 		if (commits.length === 0) {
 			return undefined;
 		}
@@ -299,6 +305,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToCurrentRev.clear();
+		}
+
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -306,7 +316,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagChange(inverse, mintRevisionTag()));
+			inverses.push(tagRollbackInverse(inverse, mintRevisionTag(), commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -331,7 +341,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
-		const { startRevision } = this.transactions.pop();
+		const { startRevision: startRevisionOriginal } = this.transactions.pop();
+		let startRevision = startRevisionOriginal;
+		while (this.initialTransactionRevToCurrentRev.has(startRevision)) {
+			startRevision = this.initialTransactionRevToCurrentRev.get(startRevision)!;
+		}
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
@@ -468,6 +482,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 
 		const newCommits = targetCommits.concat(sourceCommits);
+		if (this.isTransacting()) {
+			const src = targetCommits[0].parent?.revision;
+			const dst = targetCommits.at(-1)?.revision;
+			if (src !== undefined && dst !== undefined) {
+				this.initialTransactionRevToCurrentRev.set(src, dst);
+			}
+		}
 		const changeEvent = {
 			type: "replace",
 			get change() {

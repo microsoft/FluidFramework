@@ -177,7 +177,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { srcToDst, dstToSrc };
 		};
 
-		let latestReservedDetachId: RegisterId | undefined;
+		let earliestReservedDetachId: RegisterId | undefined;
 		let inputContext: "empty" | "filled" | undefined;
 
 		// Using a map here avoids potential duplicate builds from sandwich rebases.
@@ -212,8 +212,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			>();
 			const nextDstToSrc = new RegisterMap<RegisterId>();
 
-			if (change.reservedDetachId !== undefined) {
-				latestReservedDetachId = withIntention(change.reservedDetachId);
+			if (change.reservedDetachId !== undefined && earliestReservedDetachId === undefined) {
+				earliestReservedDetachId = withIntention(change.reservedDetachId);
 			}
 
 			// Compose all the things that `change` moved.
@@ -285,7 +285,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		};
 
 		if (inputContext === "empty") {
-			composed.reservedDetachId = latestReservedDetachId;
+			composed.reservedDetachId = earliestReservedDetachId;
 		}
 
 		return composed;
@@ -313,18 +313,20 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let inverseFillsSelf = false;
 		let inverseEmptiesSelf = false;
 		const invertedMoves: typeof change.moves = [];
-		for (const [src, dst] of moves) {
-			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
-			assert(
-				src === "self" || dst === "self",
-				"Invert is not currently supported for changes that transfer nodes between non-self registers.",
-			);
-			if (src !== "self" && dst === "self") {
+		for (const [src, dst, target] of moves) {
+			if (src === "self" && dst === "self") {
+				assert(target === "nodeTargeting", "A self->self move must be node-targeting");
+				// No need to augment with intentions as it's a noop for "self".
+				invertedMoves.push([dst, src, target]);
+				// TODO: What happens with inverseEmptiesSelf/inverseFillsSelf here?
+			} else if (src !== "self" && dst === "self") {
 				inverseEmptiesSelf = true;
 				// TODO:AB#6319: This might lead to a situation where we put a node in a register it never came from, and that register may not be empty.
 				invertedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
-			} else {
+			} else if (src === "self" && dst !== "self") {
 				inverseFillsSelf = true;
+				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
+			} else {
 				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
 			}
 		}
@@ -631,14 +633,12 @@ function* relevantRemovedRoots(
 	change: OptionalChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<Delta.DetachedNodeId> {
-	const dstToSrc = new RegisterMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
 	for (const { id } of change.build) {
 		alreadyYieldedOrNewlyBuilt.set(id, true);
 	}
 
-	for (const [src, dst] of change.moves) {
-		dstToSrc.set(dst, src);
+	for (const [src] of change.moves) {
 		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
 			alreadyYieldedOrNewlyBuilt.set(src, true);
 			yield nodeIdFromChangeAtom(src);
@@ -648,10 +648,9 @@ function* relevantRemovedRoots(
 	for (const [id, childChange] of change.childChanges) {
 		// Child changes are relevant unless they apply to the tree which existed in the starting context of
 		// of this change.
-		const startingId = dstToSrc.get(id) ?? id;
-		if (startingId !== "self" && !alreadyYieldedOrNewlyBuilt.has(startingId)) {
-			alreadyYieldedOrNewlyBuilt.set(startingId, true);
-			yield nodeIdFromChangeAtom(startingId);
+		if (id !== "self" && !alreadyYieldedOrNewlyBuilt.has(id)) {
+			alreadyYieldedOrNewlyBuilt.set(id, true);
+			yield nodeIdFromChangeAtom(id);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}
