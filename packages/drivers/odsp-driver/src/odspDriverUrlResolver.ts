@@ -80,7 +80,7 @@ function removeBeginningSlash(str: string): string {
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
- * @internal
+ * @alpha
  */
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}

@@ -12,7 +12,8 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config && npm run prettier",
+		"build": "npm run print-config && npm run build:readme && npm run prettier",
+		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
@@ -25,8 +26,7 @@
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
 		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
-		"test": "mocha src/test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup"
+		"test": "mocha src/test"
 	},
 	"dependencies": {
 		"@rushstack/eslint-patch": "~1.4.0",
@@ -48,10 +48,13 @@
 		"ts-morph": "^20.0.0"
 	},
 	"devDependencies": {
+		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
 		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.1.0",
+		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"sort-json": "^2.0.1",

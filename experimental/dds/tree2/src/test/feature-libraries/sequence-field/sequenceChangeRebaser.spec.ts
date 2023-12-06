@@ -635,6 +635,37 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	});
 });
 
+describe("SequenceField - Sandwich composing", () => {
+	it("insert ↷ redundant delete", () => {
+		const insertA = tagChange(
+			[
+				Mark.insert(1, {
+					localId: brand(0),
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				}),
+			],
+			tag3,
+		);
+		const uninsertA = tagRollbackInverse(invert(insertA), tag4, tag3);
+		const redundantDeleteT = tagChange(
+			[Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+			tag2,
+		);
+
+		const composed = compose([uninsertA, redundantDeleteT, insertA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.delete(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{ cellId: { revision: tag1, localId: brand(0) } },
+			),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
+});
+
 describe("SequenceField - Composed sandwich rebasing", () => {
 	it("Nested inserts ↷ []", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
