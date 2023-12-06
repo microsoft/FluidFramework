@@ -26,7 +26,7 @@ import {
 	ITestFluidObject,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedMap } from "@fluidframework/map";
 
@@ -96,7 +96,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeNoCompat("LoadModes", (getTestObjectProvider) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();

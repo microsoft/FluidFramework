@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	describeInstallVersions,
-	describeNoCompat,
+	describeCompat,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
 import {
@@ -48,7 +48,7 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeNoCompat("no compat", (getTestObjectProvider) => {
+	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 		});

@@ -13,13 +13,13 @@ import {
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
-describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(function () {
 		provider = getTestObjectProvider();

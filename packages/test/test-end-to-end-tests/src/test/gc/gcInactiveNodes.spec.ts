@@ -24,7 +24,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -52,7 +52,7 @@ function manufactureHandle<T>(handleContext: IFluidHandleContext, url: string): 
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
+describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider) => {
 	const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
 	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";

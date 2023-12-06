@@ -39,7 +39,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {
@@ -229,7 +229,7 @@ class TestDataObject1 extends DataObject implements SearchContent {
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider) => {
+describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataStoreFactory1 = new DataObjectFactory(
 		TestDataObjectType1,

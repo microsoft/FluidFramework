@@ -16,14 +16,14 @@ import {
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
  * This test validates that changing the FlushMode does not hit any validation errors in PendingStateManager.
  * It also validates the scenario in this bug - https://github.com/microsoft/FluidFramework/issues/9398.
  */
-describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
+describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider) => {
 	const map1Id = "map1Key";
 	const registry: ChannelFactoryRegistry = [[map1Id, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

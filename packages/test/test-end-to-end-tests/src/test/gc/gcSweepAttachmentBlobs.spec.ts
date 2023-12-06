@@ -14,7 +14,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -35,7 +35,7 @@ import {
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
  * removed from the summary, added to the GC deleted blob, and retrieving them should be prevented.
  */
-describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
+describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };

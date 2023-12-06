@@ -25,10 +25,10 @@ import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IDataStore } from "@fluidframework/runtime-definitions";
 
-describeFullCompat("Named root data stores", (getTestObjectProvider) => {
+describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

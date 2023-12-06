@@ -19,10 +19,7 @@ import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeNoCompat,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
@@ -80,7 +77,7 @@ function assertAttributionMatches(
 	}
 }
 
-describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
+describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
