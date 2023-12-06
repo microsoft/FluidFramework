@@ -7,7 +7,7 @@ export { GarbageCollector } from "./garbageCollection";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
-	defaultTombstoneSweepDelayMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,

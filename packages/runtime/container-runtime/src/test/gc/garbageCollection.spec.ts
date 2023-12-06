@@ -50,7 +50,7 @@ import {
 	IGCRuntimeOptions,
 	UnreferencedStateTracker,
 	UnreferencedState,
-	defaultTombstoneSweepDelayMs,
+	defaultSweepGracePeriodMs,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
@@ -254,7 +254,7 @@ describe("Garbage Collection Tests", () => {
 			revivedEventName: string,
 			changedEventName: string,
 			loadedEventName: string,
-			tombstoneSweepDelayMsOverride?: number,
+			sweepGracePeriodMsOverride?: number,
 		) => {
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
@@ -268,8 +268,7 @@ describe("Garbage Collection Tests", () => {
 				);
 			}
 
-			const tombstoneSweepDelayMs =
-				tombstoneSweepDelayMsOverride ?? defaultTombstoneSweepDelayMs;
+			const sweepGracePeriodMs = sweepGracePeriodMsOverride ?? defaultSweepGracePeriodMs;
 
 			const createGCOverride = (
 				baseSnapshot?: ISnapshotTree,
@@ -279,9 +278,9 @@ describe("Garbage Collection Tests", () => {
 					mode === "tombstone"
 						? timeout
 						: mode === "sweep"
-						? timeout - tombstoneSweepDelayMs
+						? timeout - sweepGracePeriodMs
 						: undefined;
-				const gcOptions = { tombstoneSweepDelayMs: tombstoneSweepDelayMsOverride };
+				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({ baseSnapshot, gcOptions }, gcBlobsMap, {
 					sweepTimeoutMs,
 				});
@@ -728,20 +727,20 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		describe("SweepReady events - No tombstoneSweepDelayMs (summarizer container)", () => {
+		describe("SweepReady events - No sweepGracePeriodMs (summarizer container)", () => {
 			summarizerContainerTests(
 				defaultSweepTimeoutMs,
 				"sweep", // Jump straight to SweepReady given 0 delay
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
 				"GarbageCollector:SweepReadyObject_Loaded",
-				0 /* tombstoneSweepDelayMsOverride */,
+				0 /* sweepGracePeriodMsOverride */,
 			);
 		});
 
-		describe("SweepReady events (summarizer container)", () => {
+		describe("SweepReady events - with sweepGracePeriodMs delay (summarizer container)", () => {
 			summarizerContainerTests(
-				defaultSweepTimeoutMs + defaultTombstoneSweepDelayMs,
+				defaultSweepTimeoutMs + defaultSweepGracePeriodMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
@@ -926,7 +925,7 @@ describe("Garbage Collection Tests", () => {
 			validateUnreferencedStates({ 2: "TombstoneReady", 3: "TombstoneReady" });
 
 			// Advance the clock the sweep delay and validate that we get sweep ready events.
-			clock.tick(defaultTombstoneSweepDelayMs);
+			clock.tick(defaultSweepGracePeriodMs);
 			await garbageCollector.collectGarbage({});
 			validateUnreferencedStates({ 2: "SweepReady", 3: "SweepReady" });
 		});
@@ -1706,10 +1705,10 @@ describe("Garbage Collection Tests", () => {
 					deletedAttachmentBlobCount: 0,
 				};
 
-				const tombstoneSweepDelayMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
+				const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
 				const gcOptions: IGCRuntimeOptions = sweepEnabled
-					? { gcSweepGeneration: 1, tombstoneSweepDelayMs }
-					: { tombstoneSweepDelayMs };
+					? { gcSweepGeneration: 1, sweepGracePeriodMs }
+					: { sweepGracePeriodMs };
 				garbageCollector = createGarbageCollector({ gcOptions });
 			});
 

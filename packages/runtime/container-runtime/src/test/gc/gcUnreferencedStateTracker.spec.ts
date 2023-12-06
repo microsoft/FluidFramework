@@ -14,8 +14,8 @@ type Steps = [
 		time: number;
 		/** Expected initial state */
 		state: UnreferencedState;
-		/** Configured tombstoneSweepDelayMs - defaults to 10ms */
-		tombstoneSweepDelayMs?: number;
+		/** Configured sweepGracePeriodMs - defaults to 10ms for these tests */
+		sweepGracePeriodMs?: number;
 	},
 	...{
 		/** Local time of the next step */
@@ -65,7 +65,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* inactiveTimeoutMs */,
 				start.time /* currentReferenceTimestampMs */,
 				20 /* sweepTimeoutMs */,
-				start.tombstoneSweepDelayMs ?? 10 /* tombstoneSweepDelayMs */,
+				start.sweepGracePeriodMs ?? 10 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, start.state, `Wrong starting state`);
 			steps.forEach(({ time: advanceClockTo, updateWith, state: expectedState }, index) => {
@@ -90,7 +90,7 @@ describe("Garbage Collection Tests", () => {
 		 * - unreferencedTimestampMs = 0
 		 * - inactiveTimeoutMs = 10
 		 * - sweepTimeoutMs = 20
-		 * - tombstoneSweepDelayMs defaults to 10 (so sweep at 30)
+		 * - sweepGracePeriodMs defaults to 10 (so sweep at 30)
 		 */
 		const testCases: {
 			name: string;
@@ -109,9 +109,9 @@ describe("Garbage Collection Tests", () => {
 				],
 			},
 			{
-				name: "No calls to updateTracking - tombstoneSweepDelayMs 0 (no Tombstone phase)",
+				name: "No calls to updateTracking - sweepGracePeriodMs 0 (no Tombstone phase)",
 				steps: [
-					{ time: 0, state: "Active", tombstoneSweepDelayMs: 0 },
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
 					{ time: 3, state: "Active" },
 					{ time: 5, state: "Active" },
 					{ time: 12, state: "Inactive" },
@@ -129,17 +129,17 @@ describe("Garbage Collection Tests", () => {
 				],
 			},
 			{
-				name: "Skip to SweepReady - tombstoneSweepDelayMs 0 (no Tombstone phase)",
+				name: "Skip to SweepReady - sweepGracePeriodMs 0 (no Tombstone phase)",
 				steps: [
-					{ time: 0, state: "Active", tombstoneSweepDelayMs: 0 },
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
 					{ time: 5, state: "Active" },
 					{ time: 20, state: "SweepReady" },
 				],
 			},
 			{
-				name: "Skip to SweepReady (via updateTracking) - tombstoneSweepDelayMs 0 (no Tombstone phase)",
+				name: "Skip to SweepReady (via updateTracking) - sweepGracePeriodMs 0 (no Tombstone phase)",
 				steps: [
-					{ time: 0, state: "Active", tombstoneSweepDelayMs: 0 },
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
 					{ time: 5, state: "Active" },
 					{ time: 20, updateWith: 20, state: "SweepReady" },
 				],
@@ -198,7 +198,7 @@ describe("Garbage Collection Tests", () => {
 				3 /* inactiveTimeoutMs */,
 				11 /* currentReferenceTimestampMs */,
 				7 /* sweepTimeoutMs */,
-				15 /* tombstoneSweepDelayMs */,
+				15 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			clock.tick(2);
@@ -226,7 +226,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
 				12 /* sweepTimeoutMs */,
-				0 /* tombstoneSweepDelayMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			tracker.updateTracking(10);
@@ -250,7 +250,7 @@ describe("Garbage Collection Tests", () => {
 				20 /* inactiveTimeoutMs */,
 				5 /* currentReferenceTimestampMs */,
 				undefined /* sweepTimeoutMs */,
-				0 /* tombstoneSweepDelayMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
@@ -270,7 +270,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
 				undefined /* sweepTimeoutMs */,
-				0 /* tombstoneSweepDelayMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			clock.tick(5); // at T5, 5 to go

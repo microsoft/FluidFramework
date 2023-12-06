@@ -35,7 +35,7 @@ import {
 	runGCKey,
 	runSweepKey,
 	defaultInactiveTimeoutMs,
-	defaultTombstoneSweepDelayMs,
+	defaultSweepGracePeriodMs,
 	gcTestModeKey,
 	nextGCVersion,
 	stableGCVersion,
@@ -827,38 +827,38 @@ describe("Garbage Collection configurations", () => {
 				);
 			});
 		});
-		describe("tombstoneSweepDelayMs", () => {
+		describe("sweepGracePeriodMs", () => {
 			const testCases: {
 				option: number | undefined;
 				expectedResult: number;
 			}[] = [
 				{ option: 123, expectedResult: 123 },
 				{ option: 0, expectedResult: 0 },
-				{ option: undefined, expectedResult: defaultTombstoneSweepDelayMs },
+				{ option: undefined, expectedResult: defaultSweepGracePeriodMs },
 			];
 			testCases.forEach((testCase) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					gc = createGcWithPrivateMembers(
 						{} /* metadata */,
 						{
-							tombstoneSweepDelayMs: testCase.option,
+							sweepGracePeriodMs: testCase.option,
 						},
 					);
-					assert.equal(gc.configs.tombstoneSweepDelayMs, testCase.expectedResult);
+					assert.equal(gc.configs.sweepGracePeriodMs, testCase.expectedResult);
 				});
 			});
-			it("tombstoneSweepDelayMs must be non-negative", () => {
+			it("sweepGracePeriodMs must be non-negative", () => {
 				assert.throws(
 					() => {
 						gc = createGcWithPrivateMembers(
 							{} /* metadata */,
 							{
-								tombstoneSweepDelayMs: -1,
+								sweepGracePeriodMs: -1,
 							},
 						);
 					},
 					(e: IErrorBase) => e.errorType === "usageError",
-					"tombstoneSweepDelayMs must be non-negative",
+					"sweepGracePeriodMs must be non-negative",
 				);
 			});
 		});

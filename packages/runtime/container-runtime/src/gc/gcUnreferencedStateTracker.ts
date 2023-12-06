@@ -51,7 +51,7 @@ export class UnreferencedStateTracker {
 		/** The time after which node transitions to TombstoneReady state; undefined if session expiry is disabled. */
 		private readonly tombstoneTimeoutMs: number | undefined,
 		/** The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined) */
-		private readonly tombstoneSweepDelayMs: number,
+		private readonly sweepGracePeriodMs: number,
 	) {
 		validatePrecondition(
 			this.tombstoneTimeoutMs === undefined ||
@@ -74,9 +74,9 @@ export class UnreferencedStateTracker {
 				"inactiveTimer still running after tombstoneTimer fired!",
 			); // aka 0x3b1
 
-			if (this.tombstoneSweepDelayMs > 0) {
+			if (this.sweepGracePeriodMs > 0) {
 				// After the node becomes tombstone ready, start the sweep timer after which the node will be ready for sweep.
-				this.sweepTimer.restart(this.tombstoneSweepDelayMs);
+				this.sweepTimer.restart(this.sweepGracePeriodMs);
 			} else {
 				this._state = UnreferencedState.SweepReady;
 			}
@@ -104,7 +104,7 @@ export class UnreferencedStateTracker {
 		// If the node has been unreferenced long enough, update the state to SweepReady.
 		if (
 			this.tombstoneTimeoutMs !== undefined &&
-			unreferencedDurationMs >= this.tombstoneTimeoutMs + this.tombstoneSweepDelayMs
+			unreferencedDurationMs >= this.tombstoneTimeoutMs + this.sweepGracePeriodMs
 		) {
 			this._state = UnreferencedState.SweepReady;
 			return;
@@ -119,7 +119,7 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.TombstoneReady;
 
 			this.sweepTimer.restart(
-				this.tombstoneTimeoutMs + this.tombstoneSweepDelayMs - unreferencedDurationMs,
+				this.tombstoneTimeoutMs + this.sweepGracePeriodMs - unreferencedDurationMs,
 			);
 			return;
 		}

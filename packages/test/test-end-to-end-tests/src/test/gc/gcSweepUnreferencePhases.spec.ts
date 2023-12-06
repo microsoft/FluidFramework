@@ -35,12 +35,12 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
 	const sweepTimeoutMs = 200; // Tombstone at 200ms
-	const tombstoneSweepDelayMs = 100; // Sweep at 300ms
+	const sweepGracePeriodMs = 100; // Sweep at 300ms
 
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: sweepTimeoutMs / 2, // Required to avoid an error
-		tombstoneSweepDelayMs,
+		sweepGracePeriodMs,
 	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
@@ -165,8 +165,8 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"Datastore should be tombstoned",
 		);
 
-		// Wait tombstoneSweepDelayMs, triggering Sweep
-		await delay(tombstoneSweepDelayMs);
+		// Wait sweepGracePeriodMs, triggering Sweep
+		await delay(sweepGracePeriodMs);
 		mainDataStore._root.set("send", "op2");
 		await provider.ensureSynchronized();
 		const summaryWithObjectDeleted = await summarizeNow(summarizer);

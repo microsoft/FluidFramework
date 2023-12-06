@@ -46,7 +46,7 @@ describe("GC Telemetry Tracker", () => {
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
-	let tombstoneSweepDelayMs = 1000; // Default case for these tests
+	let sweepGracePeriodMs = 1000; // Default case for these tests
 	let unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
 	let telemetryTracker: GCTelemetryTracker;
 
@@ -82,7 +82,7 @@ describe("GC Telemetry Tracker", () => {
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
-			tombstoneSweepDelayMs,
+			sweepGracePeriodMs,
 			tombstoneEnforcementAllowed: false,
 			throwOnTombstoneLoad: false,
 			throwOnTombstoneUsage: false,
@@ -116,7 +116,7 @@ describe("GC Telemetry Tracker", () => {
 					inactiveTimeoutMs,
 					Date.now(),
 					sweepTimeoutMs,
-					tombstoneSweepDelayMs,
+					sweepGracePeriodMs,
 				),
 			);
 		});
@@ -186,7 +186,7 @@ describe("GC Telemetry Tracker", () => {
 		clock.reset();
 		mockLogger.clear();
 		injectedSettings = {};
-		tombstoneSweepDelayMs = 1000; // Default case for these tests
+		sweepGracePeriodMs = 1000; // Default case for these tests
 	});
 
 	after(() => {
@@ -290,29 +290,29 @@ describe("GC Telemetry Tracker", () => {
 			);
 
 			// Advance the clock by the delay and validate that SweepReady events are as expected.
-			clock.tick(tombstoneSweepDelayMs);
+			clock.tick(sweepGracePeriodMs);
 			mockNodeChanges(nodes);
 			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs + tombstoneSweepDelayMs,
+						timeout: sweepTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs + tombstoneSweepDelayMs,
+						timeout: sweepTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs + tombstoneSweepDelayMs,
+						timeout: sweepTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs + tombstoneSweepDelayMs,
+						timeout: sweepTimeoutMs + sweepGracePeriodMs,
 						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 				],
@@ -347,7 +347,7 @@ describe("GC Telemetry Tracker", () => {
 			revivedEventName: string,
 			changedEventName: string,
 			loadedEventName: string,
-			tombstoneSweepDelayMsOverride?: number,
+			sweepGracePeriodMsOverride?: number,
 		) => {
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
@@ -362,8 +362,8 @@ describe("GC Telemetry Tracker", () => {
 			}
 
 			beforeEach(() => {
-				if (tombstoneSweepDelayMsOverride !== undefined) {
-					tombstoneSweepDelayMs = tombstoneSweepDelayMsOverride;
+				if (sweepGracePeriodMsOverride !== undefined) {
+					sweepGracePeriodMs = sweepGracePeriodMsOverride;
 				}
 				telemetryTracker = createTelemetryTracker(
 					mode !== "inactive" /* enableSweep */,
@@ -565,13 +565,13 @@ describe("GC Telemetry Tracker", () => {
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
 				"GarbageCollector:SweepReadyObject_Loaded",
-				0 /* tombstoneSweepDelayMsOverride */,
+				0 /* sweepGracePeriodMsOverride */,
 			);
 		});
 
 		describe("SweepReady events", () => {
 			unreferencedPhasesEventTests(
-				sweepTimeoutMs + tombstoneSweepDelayMs,
+				sweepTimeoutMs + sweepGracePeriodMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",

@@ -151,7 +151,7 @@ export class GCTelemetryTracker {
 				case UnreferencedState.SweepReady:
 					return (
 						this.configs.sweepTimeoutMs &&
-						this.configs.sweepTimeoutMs + this.configs.tombstoneSweepDelayMs
+						this.configs.sweepTimeoutMs + this.configs.sweepGracePeriodMs
 					);
 				default:
 					return undefined;

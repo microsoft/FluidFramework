@@ -442,7 +442,7 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
-    tombstoneSweepDelayMs?: number;
+    sweepGracePeriodMs?: number;
 }
 
 // @alpha

@@ -418,7 +418,7 @@ export class GarbageCollector implements IGarbageCollector {
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
 						this.configs.sweepTimeoutMs,
-						this.configs.tombstoneSweepDelayMs,
+						this.configs.sweepGracePeriodMs,
 					),
 				);
 			}
@@ -646,7 +646,7 @@ export class GarbageCollector implements IGarbageCollector {
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
 						this.configs.sweepTimeoutMs,
-						this.configs.tombstoneSweepDelayMs,
+						this.configs.sweepGracePeriodMs,
 					),
 				);
 			} else {

@@ -31,7 +31,7 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 	gcThrowOnTombstoneLoadOptionName,
-	defaultTombstoneSweepDelayMs,
+	defaultSweepGracePeriodMs,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
@@ -169,10 +169,10 @@ export function generateGCConfigs(
 	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
-	const tombstoneSweepDelayMs =
-		createParams.gcOptions.tombstoneSweepDelayMs ?? defaultTombstoneSweepDelayMs;
-	validatePrecondition(tombstoneSweepDelayMs >= 0, "tombstoneSweepDelayMs must be non-negative", {
-		tombstoneSweepDelayMs,
+	const sweepGracePeriodMs =
+		createParams.gcOptions.sweepGracePeriodMs ?? defaultSweepGracePeriodMs;
+	validatePrecondition(sweepGracePeriodMs >= 0, "sweepGracePeriodMs must be non-negative", {
+		sweepGracePeriodMs,
 	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
@@ -204,7 +204,7 @@ export function generateGCConfigs(
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
-		tombstoneSweepDelayMs,
+		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,

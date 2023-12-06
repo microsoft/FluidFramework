@@ -89,7 +89,7 @@ export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
-export const defaultTombstoneSweepDelayMs = 1 * oneDayMs; // 1 day
+export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
  * @see IGCMetadata.gcFeatureMatrix
@@ -357,9 +357,10 @@ export interface IGCRuntimeOptions {
 
 	/**
 	 * Delay between when Tombstone should run and when the object should be deleted.
+	 * This grace period gives apps a chance to intervene to recover if needed, before Sweep deletes the object.
 	 * If not present, a default (non-zero) value will be used.
 	 */
-	tombstoneSweepDelayMs?: number;
+	sweepGracePeriodMs?: number;
 
 	/**
 	 * Allows additional GC options to be passed.
@@ -403,7 +404,7 @@ export interface IGarbageCollectorConfigs {
 	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
 	 * Sweep is implemented in an eventually-consistent way so this is acceptable.
 	 */
-	readonly tombstoneSweepDelayMs: number;
+	readonly sweepGracePeriodMs: number;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
