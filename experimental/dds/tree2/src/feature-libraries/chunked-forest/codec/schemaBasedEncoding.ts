@@ -11,9 +11,10 @@ import {
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FieldKind, FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
 import { fieldKinds } from "../../default-schema";
+import { Multiplicity } from "../../multiplicity";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,

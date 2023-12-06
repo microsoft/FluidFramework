@@ -17,12 +17,13 @@ import {
 	TreeStoredSchema,
 	StoredSchemaCollection,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
+import { FullSchemaPolicy } from "../modular-schema";
 import { fail } from "../../util";
 import { TreeChunk, tryGetChunk } from "./chunk";
 import { BasicChunk } from "./basicChunk";
 import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk";
 import { SequenceChunk } from "./sequenceChunk";
+import { Multiplicity } from "../multiplicity";
 
 export interface Disposable {
 	/**
