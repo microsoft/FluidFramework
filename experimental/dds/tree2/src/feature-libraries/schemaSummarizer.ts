@@ -14,6 +14,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
@@ -34,6 +35,8 @@ import {
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -72,10 +75,32 @@ export class SchemaSummarizer implements Summarizable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		latestSequenceNumber?: number,
 	): ISummaryTreeWithStats {
 		// Currently no Fluid handles are used, so just use JSON.stringify.
 		const dataString = JSON.stringify(this.codec.encode(this.schema));
-		return createSingleBlobSummary(schemaStringKey, dataString);
+		const builder = new SummaryTreeBuilder();
+		if (incrementalSummaryContext !== undefined) {
+			assert(incrementalSummaryContext !== undefined, "");
+			assert(latestSequenceNumber !== undefined, "");
+			if (latestSequenceNumber <= incrementalSummaryContext.latestSummarySequenceNumber) {
+				// This is an example assert that detects that the system behaving incorrectly.
+				assert(
+					latestSequenceNumber <= incrementalSummaryContext.summarySequenceNumber,
+					"Ops processed beyond the summarySequenceNumber!",
+				);
+				builder.addHandle(
+					schemaStringKey,
+					SummaryType.Blob,
+					`${incrementalSummaryContext.summaryPath}/indexes/Schema/${schemaStringKey}`,
+				);
+			}
+		} else {
+			builder.addBlob(schemaStringKey, dataString);
+		}
+
+		return builder.getSummaryTree();
 	}
 
 	public async summarize(

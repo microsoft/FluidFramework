@@ -14,6 +14,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
@@ -51,6 +52,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
+
+	private schemaSequenceNumber: number = 0; // unsure if 0 is the lowest it should start at
 
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
@@ -142,6 +145,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
@@ -154,6 +158,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					undefined,
 					undefined,
 					telemetryContext,
+					incrementalSummaryContext,
+					this.schemaSequenceNumber,
 				),
 			);
 		}
@@ -214,7 +220,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const contents: unknown = this.serializer.decode(message.contents);
 		const { commit, sessionId } = this.messageCodec.decode(contents);
-
+		if (message.type === "SchemaOp") {
+			this.schemaSequenceNumber = message.sequenceNumber;
+		}
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
@@ -296,6 +304,8 @@ export interface Summarizable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		latestSequenceNumber?: number,
 	): ISummaryTreeWithStats;
 
 	/**
