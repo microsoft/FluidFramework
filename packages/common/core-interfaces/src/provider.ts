@@ -83,6 +83,6 @@ export type FluidObject<T = unknown> = {
  * See {@link FluidObject}
  *
  * For example `FluidObjectKeys<IFoo & IBar>` would result in `"IFoo" | "IBar"`
- * @internal
+ * @alpha
  */
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
