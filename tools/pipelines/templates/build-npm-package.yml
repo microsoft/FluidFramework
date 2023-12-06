@@ -373,6 +373,7 @@ extends:
                   # that is now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
                   - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
                     - task: 1ES.PublishPipelineArtifact@1
+                    inputs:
                       displayName: Publish Artifact - Tinylicious Log
                       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                       targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
@@ -403,12 +404,14 @@ extends:
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below. // TODO: Delete/Update this comment on successful inline test
                   - task: 1ES.PublishPipelineArtifact@1
+                    inputs:
                       displayName: Publish Artifact - pack
                       targetPath: $(Build.ArtifactStagingDirectory)/pack
                       artifactName: pack
                       publishLocation: pipeline
 
                   - task: 1ES.PublishPipelineArtifact@1
+                    inputs:
                       displayName: Publish Artifact - Test Files
                       targetPath: $(Build.ArtifactStagingDirectory)/test-files
                       artifactName: test-files
@@ -426,11 +429,12 @@ extends:
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
                   - task: 1ES.PublishPipelineArtifact@1
-                      displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-                      targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
-                      artifactname: bundleAnalysis
-                      publishLocation: Container
+                  inputs:
+                    displayName: Publish Artifacts - bundle-analysis
+                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                    targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
+                    artifactname: bundleAnalysis
+                    publishLocation: Container
 
                   - task: Npm@1
                     displayName: run bundle size comparison
@@ -485,11 +489,12 @@ extends:
               # At this point we want to publish the artifact with the _api-extractor-temp folder,
               # but as part of 1ES migration that's now part of templateContext.outputs below. TODO: Delete/Update this comment on successful inline test
               - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
-                    - task: 1ES.PublishPipelineArtifact@1
-                      displayName: Publish Artifact - _api-extractor-temp
-                      targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-                      artifactName: _api-extractor-temp
-                      publishLocation: pipeline
+                - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  displayName: Publish Artifact - _api-extractor-temp
+                  targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                  artifactName: _api-extractor-temp
+                  publishLocation: pipeline
 
               - ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
