@@ -135,7 +135,7 @@ resources:
     - repository: m365Pipelines
       type: git
       name: 1ESPipelineTemplates/M365GPT
-      ref: refs/tags/release
+      ref: refs/heads/user/dannyvv/test-taggingchange
 
 extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
