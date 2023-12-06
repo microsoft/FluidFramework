@@ -171,7 +171,9 @@
 			"canonicalReference": "test-package!",
 			"name": "",
 			"preserveMemberOrder": false,
-			"members": []
+			"members": [
+				// Add members here as needed for your test case
+			]
 		}
 	]
 }
