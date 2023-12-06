@@ -87,7 +87,6 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
-  - template: templates/include-doc-versions.yml
 
 # no PR triggers
 trigger:
