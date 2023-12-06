@@ -211,18 +211,25 @@ extends:
                 Test=${{ parameters.test }}
 
               Computed variables:
-                shouldPublish=${{ variables.shouldPublish }}
-                componentDetection=${{ variables.componentDetection }}
-                publish=${{ variables.publish }}
-                canRelease=${{ variables.canRelease }}
+                shouldPublish=$(shouldPublish)
+                componentDetection=$(componentDetection)
+                publish=$(publish)
+                canRelease=$(canRelease)
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
-                pushImage=${{ variables.pushImage }}
-                releaseImage=${{ variables.releaseImage }}
+                pushImage=$(pushImage)
+                releaseImage=$(releaseImage)
                 release=$(release)"
 
+                containerTagSuffix=$(containerTagSuffix)
+                containerRegistryUrl=$(containerRegistryUrl)
+                containerRegistryConnection=$(containerRegistryConnection)
+                containerTag=$(containerTag)
+                latestContainerTagSuffix=$(latestContainerTagSuffix)
+                buildContainerName=$(buildContainerName)
+
               if [[ "$(release)" == "release" ]]; then
-                if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                if [[ "$(canRelease)" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
                   exit -1;
                 fi
@@ -247,12 +254,12 @@ extends:
               fi
 
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.pushImage }}" != "True" ]]; then
+                if [[ "$(pushImage)" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
                   exit -1;
                 fi
 
-                if [[ "${{ variables.releaseImage }}" != "True" ]]; then
+                if [[ "$(releaseImage)" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
                   exit -1;
                 fi
@@ -307,7 +314,7 @@ extends:
             inputs:
               dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
               context: ${{ parameters.buildDirectory }}
-              image: ${{ variables.buildContainerName }}/base:$(containerTagSuffix)
+              image: $(containerRegistryUrl)/base:$(containerTagSuffix)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
 
           # Pack
@@ -403,20 +410,20 @@ extends:
 
         # Build
         - task: 1ES.BuildContainerImage@1
-          displayName: Docker Build - ${{ variables.buildContainerName }}
+          displayName: Docker Build - $(buildContainerName)
           inputs:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
-            image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
-            buildArguments: --tag ${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }} ${{ parameters.additionalBuildArguments }}
+            image: $(buildContainerName):$(containerTagSuffix)
+            buildArguments: --tag $(buildContainerName):$(latestContainerTagSuffix) ${{ parameters.additionalBuildArguments }}
 
         # Push
         - ${{ if eq(variables.pushImage, true) }}:
           - task: 1ES.PushContainerImage@1
             displayName: Docker Push
             inputs:
-              image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
+              image: $(buildContainerName):$(containerTagSuffix)
+              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(containerTagSuffix), $(containerRegistryConnection)/$(buildContainerName):$(latestContainerTagSuffix)
 
         templateContext:
           outputs:
@@ -447,4 +454,4 @@ extends:
           containerTag: $(containerTag)
           containerRegistryUrl: $(containerRegistryUrl)
           containerName: ${{ parameters.containerName }}
-          tagName: ${{ variables.tagNameOnReleaseImage }}
+          tagName: $(tagNameOnReleaseImage)
