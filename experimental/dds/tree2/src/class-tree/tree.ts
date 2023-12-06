@@ -48,7 +48,7 @@ export interface ITree extends IChannel {
 	 * Other approaches tend to have easy-to-make mistakes.
 	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing documents,
 	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed in to separate places and could cause issues if they didn't match.
+	 * It also would require the schema to be passed into separate places and could cause issues if they didn't match.
 	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
 	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
 	 * on the create code-path (for example how a schematized factory might do it),
