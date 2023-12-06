@@ -196,12 +196,15 @@ extends:
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
                 pushImage=$(pushImage)
+                pushImage_compile=${{ variables.pushImage }}
                 releaseImage=$(releaseImage)
+                releaseImage_compile=${{ variables.releaseImage }}
                 release=$(release)
 
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
                 containerRegistryConnection=$(containerRegistryConnection)
+                containerRegistry=$(containerRegistry)
                 containerTag=$(containerTag)
                 latestContainerTagSuffix=$(latestContainerTagSuffix)
                 buildContainerName=$(buildContainerName)
