@@ -13,7 +13,8 @@ import {
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
+import { Multiplicity } from "../multiplicity";
+import { FullSchemaPolicy, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
