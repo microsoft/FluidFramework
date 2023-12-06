@@ -10,10 +10,7 @@ import {
 	ICommittedProposal,
 	IQuorum,
 	IQuorumClients,
-	IQuorumClientsEvents,
-	IQuorumEvents,
 	IQuorumProposals,
-	IQuorumProposalsEvents,
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISequencedProposal,
@@ -33,11 +30,13 @@ class PendingProposal implements ISequencedProposal {
 
 /**
  * Snapshot format for a QuorumClients
+ * @internal
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 /**
  * Snapshot format for a QuorumProposals
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type QuorumProposalsSnapshot = {
@@ -47,6 +46,7 @@ export type QuorumProposalsSnapshot = {
 
 /**
  * Snapshot format for a Quorum
+ * @internal
  */
 export interface IQuorumSnapshot {
 	members: QuorumClientsSnapshot;
@@ -56,9 +56,10 @@ export interface IQuorumSnapshot {
 
 /**
  * The QuorumClients is used to track members joining and leaving the collaboration session.
+ * @internal
  */
 export class QuorumClients
-	extends TypedEventEmitter<IQuorumClientsEvents>
+	extends TypedEventEmitter<IQuorumClients["on"]>
 	implements IQuorumClients
 {
 	private readonly members: Map<string, ISequencedClient>;
@@ -138,9 +139,10 @@ export class QuorumClients
 /**
  * The QuorumProposals holds a key/value store.  Proposed values become finalized in the store once all connected
  * clients have seen the proposal.
+ * @internal
  */
 export class QuorumProposals
-	extends TypedEventEmitter<IQuorumProposalsEvents>
+	extends TypedEventEmitter<IQuorumProposals["on"]>
 	implements IQuorumProposals
 {
 	private readonly proposals: Map<number, PendingProposal>;
@@ -431,8 +433,9 @@ export class QuorumProposals
 /**
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
+ * @internal
  */
-export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
+export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum {
 	private readonly quorumClients: QuorumClients;
 	private readonly quorumProposals: QuorumProposals;
 	private isDisposed: boolean = false;

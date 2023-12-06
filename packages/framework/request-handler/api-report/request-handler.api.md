@@ -12,7 +12,7 @@ import { RequestParser } from '@fluidframework/runtime-utils';
 // @internal @deprecated (undocumented)
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
-// @public @deprecated
+// @internal @deprecated
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 // (No @packageDocumentation comment for this package)

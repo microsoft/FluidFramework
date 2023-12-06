@@ -20,8 +20,17 @@ export const UniversalSequenceNumber = 0;
  */
 export const UnassignedSequenceNumber = -1;
 
+/**
+ * @internal
+ */
 export const TreeMaintenanceSequenceNumber = -2;
 
+/**
+ * @internal
+ */
 export const LocalClientId = -1;
 
+/**
+ * @internal
+ */
 export const NonCollabClient = -2;

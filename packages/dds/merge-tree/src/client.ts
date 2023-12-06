@@ -55,6 +55,7 @@ import {
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
+// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
@@ -222,8 +223,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @param start - The inclusive start of the range to obliterate
 	 * @param end - The exclusive end of the range to obliterate
-	 *
-	 * @alpha
 	 */
 	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(start, end);
@@ -1051,6 +1050,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public createTextHelper(): IMergeTreeTextHelper {
 		return new MergeTreeTextHelper(this._mergeTree);
 	}

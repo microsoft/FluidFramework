@@ -25,7 +25,7 @@ interface ISequencedOpInfo<TOp> {
 }
 
 /**
- * @public
+ * @internal
  */
 export abstract class SharedOT<TState, TOp> extends SharedObject {
 	/**

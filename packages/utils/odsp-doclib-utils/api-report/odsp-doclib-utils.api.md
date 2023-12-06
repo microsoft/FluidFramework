@@ -11,78 +11,78 @@ import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { OdspError } from '@fluidframework/odsp-driver-definitions';
 
-// @public
+// @internal
 export function authRequestWithRetry(authRequestInfo: IOdspAuthRequestInfo, requestCallback: (config: RequestInit) => Promise<Response>): Promise<Response>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createOdspNetworkError(errorMessage: string, statusCode: number, retryAfterSeconds?: number, response?: Response, responseText?: string, props?: ITelemetryProperties): IFluidErrorBase & OdspError;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function enrichOdspError(error: IFluidErrorBase & OdspError, response?: Response, facetCodes?: string[], props?: ITelemetryProperties): IFluidErrorBase & OdspError;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const fetchIncorrectResponse = 712;
 
-// @public
+// @internal
 export function fetchTokens(server: string, scope: string, clientConfig: IClientConfig, credentials: TokenRequestCredentials): Promise<IOdspTokens>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getAadTenant(server: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getAadUrl(server: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getAsync(url: string, authRequestInfo: IOdspAuthRequestInfo): Promise<Response>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getChildrenByDriveItem(driveItem: IOdspDriveItem, server: string, authRequestInfo: IOdspAuthRequestInfo): Promise<IOdspDriveItem[]>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getDriveId(server: string, account: string, library: string | undefined, authRequestInfo: IOdspAuthRequestInfo): Promise<string>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getDriveItemByRootFileName(server: string, account: string | undefined, path: string, authRequestInfo: IOdspAuthRequestInfo, create: boolean, driveId?: string): Promise<IOdspDriveItem>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getDriveItemByServerRelativePath(server: string, serverRelativePath: string, authRequestInfo: IOdspAuthRequestInfo, create: boolean): Promise<IOdspDriveItem>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getDriveItemFromDriveAndItem(server: string, drive: string, item: string, authRequestInfo: IOdspAuthRequestInfo): Promise<IOdspDriveItem>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getFetchTokenUrl(server: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getLoginPageUrl(server: string, clientConfig: IClientConfig, scope: string, odspAuthRedirectUri: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getOdspRefreshTokenFn: (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getOdspScope: (server: string) => string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getPushRefreshTokenFn: (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getRefreshTokenFn: (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getServer(tenantId: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getSiteUrl(server: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
     get: (id: string) => string | undefined | null;
 }): ITelemetryProperties;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes">;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IClientConfig {
     // (undocumented)
     clientId: string;
@@ -90,7 +90,7 @@ export interface IClientConfig {
     clientSecret: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IOdspAuthRequestInfo {
     // (undocumented)
     accessToken: string;
@@ -98,7 +98,7 @@ export interface IOdspAuthRequestInfo {
     refreshTokenFn?: () => Promise<string>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IOdspDriveItem {
     // (undocumented)
     driveId: string;
@@ -112,7 +112,7 @@ export interface IOdspDriveItem {
     path: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IOdspTokens {
     // (undocumented)
     readonly accessToken: string;
@@ -120,13 +120,13 @@ export interface IOdspTokens {
     readonly refreshToken: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function isOdspHostname(server: string): boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function isPushChannelHostname(server: string): boolean;
 
-// @public
+// @internal
 export interface OdspErrorResponse {
     // (undocumented)
     error: OdspErrorResponseInnerError & {
@@ -134,7 +134,7 @@ export interface OdspErrorResponse {
     };
 }
 
-// @public
+// @internal
 export interface OdspErrorResponseInnerError {
     // (undocumented)
     code?: string;
@@ -142,7 +142,7 @@ export interface OdspErrorResponseInnerError {
     innerError?: OdspErrorResponseInnerError;
 }
 
-// @public
+// @internal
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
     constructor(message: string, redirectLocation: string | undefined, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -153,28 +153,28 @@ export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
     readonly redirectLocation: string | undefined;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
-// @public (undocumented)
+// @internal (undocumented)
 export function parseFacetCodes(errorResponse: OdspErrorResponse): string[];
 
-// @public (undocumented)
+// @internal (undocumented)
 export function postAsync(url: string, body: any, authRequestInfo: IOdspAuthRequestInfo): Promise<Response>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
-// @public (undocumented)
+// @internal (undocumented)
 export function putAsync(url: string, authRequestInfo: IOdspAuthRequestInfo): Promise<Response>;
 
-// @public
+// @internal
 export function refreshTokens(server: string, scope: string, clientConfig: IClientConfig, tokens: IOdspTokens): Promise<IOdspTokens>;
 
-// @public
+// @internal
 export function throwOdspNetworkError(errorMessage: string, statusCode: number, response: Response, responseText?: string, props?: ITelemetryProperties): never;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type TokenRequestCredentials = {
     grant_type: "authorization_code";
     code: string;
@@ -188,7 +188,7 @@ export type TokenRequestCredentials = {
     password: string;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export function tryParseErrorResponse(response: string | undefined): {
     success: true;
     errorResponse: OdspErrorResponse;
@@ -196,7 +196,7 @@ export function tryParseErrorResponse(response: string | undefined): {
     success: false;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export function unauthPostAsync(url: string, body: any): Promise<Response>;
 
 // (No @packageDocumentation comment for this package)

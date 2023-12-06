@@ -23,95 +23,95 @@ import * as resources from '@fluidframework/gitresources';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
     constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => RawAxiosRequestHeaders, getCorrelationId?: () => string | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
 
-// @public
+// @internal
 export const buildTreePath: (...nodeNames: string[]) => string;
 
-// @public
+// @internal
 export const canDeleteDoc: (scopes: string[]) => boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const canRead: (scopes: string[]) => boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const canRevokeToken: (scopes: string[]) => boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const canSummarize: (scopes: string[]) => boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const canWrite: (scopes: string[]) => boolean;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const choose: () => string;
 
-// @public
+// @internal
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
 
-// @public
+// @internal
 export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][];
 
-// @public
+// @internal
 export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | undefined, tree: ISummaryTree, path?: string, rootNodeName?: string): IWholeSummaryTree;
 
-// @public
+// @internal
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const CorrelationIdHeaderName = "x-correlation-id";
 
-// @public
+// @internal
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const defaultHash = "00000000";
 
-// @public
+// @internal
 export const DocDeleteScopeType = "doc:delete";
 
-// @public (undocumented)
+// @internal (undocumented)
 export const DriverVersionHeaderName = "x-driver-version";
 
-// @public (undocumented)
+// @internal (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
 
-// @public
+// @internal
 export function generateToken(tenantId: string, documentId: string, key: string, scopes: ScopeType[], user?: IUser, lifetime?: number, ver?: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function generateUser(): IUser;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: RawAxiosRequestHeaders): Promise<void>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
-// @public
+// @internal
 export const getRandomInt: (range: number) => number;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class GitManager implements IGitManager {
     constructor(historian: IHistorian);
     // (undocumented)
@@ -158,7 +158,7 @@ export class GitManager implements IGitManager {
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
 
-// @public
+// @internal
 export class Historian implements IHistorian {
     constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper);
     // (undocumented)
@@ -205,7 +205,7 @@ export class Historian implements IHistorian {
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IAlfredTenant {
     // (undocumented)
     id: string;
@@ -213,7 +213,7 @@ export interface IAlfredTenant {
     key: string;
 }
 
-// @public
+// @internal
 export interface ICreateRefParamsExternal extends resources.ICreateRefParams {
     // Warning: (ae-forgotten-export) The symbol "IExternalWriterConfig" needs to be exported by the entry point index.d.ts
     //
@@ -221,7 +221,7 @@ export interface ICreateRefParamsExternal extends resources.ICreateRefParams {
     config?: IExternalWriterConfig;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ICredentials {
     // (undocumented)
     password: string;
@@ -229,19 +229,19 @@ export interface ICredentials {
     user: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IEmbeddedSummaryHandle extends ISummaryHandle {
     // (undocumented)
     embedded: boolean;
 }
 
-// @public
+// @internal
 export interface IGetRefParamsExternal {
     // (undocumented)
     config?: IExternalWriterConfig;
 }
 
-// @public
+// @internal
 export interface IGitCache {
     // (undocumented)
     blobs: resources.IBlob[];
@@ -255,7 +255,7 @@ export interface IGitCache {
     trees: resources.ITree[];
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IGitManager {
     // (undocumented)
     createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse>;
@@ -297,7 +297,7 @@ export interface IGitManager {
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
 
-// @public
+// @internal
 export interface IGitService {
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
@@ -337,7 +337,7 @@ export interface IGitService {
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }
 
-// @public
+// @internal
 export interface IHistorian extends IGitService {
     // (undocumented)
     endpoint: string;
@@ -346,7 +346,7 @@ export interface IHistorian extends IGitService {
     getHeader(sha: string): Promise<resources.IHeader>;
 }
 
-// @public
+// @internal
 export interface INetworkErrorDetails {
     canRetry?: boolean;
     isFatal?: boolean;
@@ -355,7 +355,7 @@ export interface INetworkErrorDetails {
     retryAfterMs?: number;
 }
 
-// @public
+// @internal
 export interface INormalizedWholeSummary {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -365,13 +365,13 @@ export interface INormalizedWholeSummary {
     snapshotTree: ISnapshotTree;
 }
 
-// @public
+// @internal
 export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     // (undocumented)
     config?: IExternalWriterConfig;
 }
 
-// @public
+// @internal
 export interface ISession {
     deltaStreamUrl: string;
     historianUrl: string;
@@ -381,10 +381,10 @@ export interface ISession {
     ordererUrl: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function isNetworkError(error: unknown): error is NetworkError;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
     // (undocumented)
     tree: {
@@ -392,7 +392,7 @@ export interface ISummaryTree extends ISummaryTree_2 {
     };
 }
 
-// @public
+// @internal
 export interface ISummaryUploadManager {
     writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
 }
@@ -404,7 +404,7 @@ export interface ITimeoutContext {
     checkTimeout(): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeFlatSummary {
     // (undocumented)
     blobs?: IWholeFlatSummaryBlob[];
@@ -414,7 +414,7 @@ export interface IWholeFlatSummary {
     trees: IWholeFlatSummaryTree[];
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeFlatSummaryBlob {
     // (undocumented)
     content: string;
@@ -426,7 +426,7 @@ export interface IWholeFlatSummaryBlob {
     size: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeFlatSummaryTree {
     // (undocumented)
     entries: IWholeFlatSummaryTreeEntry[];
@@ -436,10 +436,10 @@ export interface IWholeFlatSummaryTree {
     sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type IWholeFlatSummaryTreeEntry = IWholeFlatSummaryTreeEntryTree | IWholeFlatSummaryTreeEntryBlob;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeFlatSummaryTreeEntryBlob {
     // (undocumented)
     id: string;
@@ -449,7 +449,7 @@ export interface IWholeFlatSummaryTreeEntryBlob {
     type: "blob";
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeFlatSummaryTreeEntryTree {
     // (undocumented)
     path: string;
@@ -459,7 +459,7 @@ export interface IWholeFlatSummaryTreeEntryTree {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryBlob {
     // (undocumented)
     content: string;
@@ -469,7 +469,7 @@ export interface IWholeSummaryBlob {
     type: "blob";
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryPayload {
     // (undocumented)
     entries: WholeSummaryTreeEntry[];
@@ -481,10 +481,10 @@ export interface IWholeSummaryPayload {
     type: IWholeSummaryPayloadType;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type IWholeSummaryPayloadType = "container" | "channel";
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryTree {
     // (undocumented)
     entries?: WholeSummaryTreeEntry[];
@@ -492,7 +492,7 @@ export interface IWholeSummaryTree {
     type: "tree";
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryTreeBaseEntry {
     // (undocumented)
     path: string;
@@ -500,13 +500,13 @@ export interface IWholeSummaryTreeBaseEntry {
     type: "blob" | "tree" | "commit";
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryTreeHandleEntry extends IWholeSummaryTreeBaseEntry {
     // (undocumented)
     id: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWholeSummaryTreeValueEntry extends IWholeSummaryTreeBaseEntry {
     // (undocumented)
     unreferenced?: true;
@@ -514,19 +514,19 @@ export interface IWholeSummaryTreeValueEntry extends IWholeSummaryTreeBaseEntry 
     value: WholeSummaryTreeValue;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IWriteSummaryResponse {
     // (undocumented)
     id: string;
 }
 
-// @public
+// @internal
 export const LatestSummaryId = "latest";
 
-// @public (undocumented)
+// @internal (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree, protocolTree: ITree): ICreateTreeEntry[];
 
-// @public
+// @internal
 export class NetworkError extends Error {
     constructor(
     code: number,
@@ -534,26 +534,30 @@ export class NetworkError extends Error {
     canRetry?: boolean,
     isFatal?: boolean,
     retryAfterMs?: number);
+    // @public
     readonly canRetry?: boolean;
+    // @public
     readonly code: number;
     get details(): INetworkErrorDetails | string;
+    // @public
     readonly isFatal?: boolean;
     readonly retryAfter: number;
+    // @public
     readonly retryAfterMs?: number;
     toJSON(): INetworkErrorDetails & {
         code: number;
     };
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
 
-// @public
+// @internal
 export class RestLessClient {
     translate(request: AxiosRequestConfig): AxiosRequestConfig;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export enum RestLessFieldNames {
     // (undocumented)
     Body = "body",
@@ -563,7 +567,7 @@ export enum RestLessFieldNames {
     Method = "method"
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export abstract class RestWrapper {
     constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number);
     // (undocumented)
@@ -591,32 +595,32 @@ export abstract class RestWrapper {
 // @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
-// @public
+// @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
 
-// @public
+// @internal
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
 
-// @public
+// @internal
 export const TokenRevokeScopeType = "token:revoke";
 
-// @public
+// @internal
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;
 
-// @public
+// @internal
 export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type WholeSummaryTreeEntry = IWholeSummaryTreeValueEntry | IWholeSummaryTreeHandleEntry;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 
-// @public
+// @internal
 export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager);
     // (undocumented)

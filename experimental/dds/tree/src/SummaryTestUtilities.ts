@@ -49,7 +49,7 @@ export async function getUploadedEditChunkContents(sharedTree: SharedTree): Prom
 /**
  * Returns a serialized description of blob paths and their associated contents for all uploaded edit chunks in the given edit log.
  * @deprecated Edit virtualization is no longer supported. Do not use this.
- * @public
+ * @internal
  */
 export async function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string> {
 	return JSON.stringify(await getUploadedEditChunkContents(sharedTree));

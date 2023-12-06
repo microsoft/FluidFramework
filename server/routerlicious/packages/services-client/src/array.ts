@@ -7,6 +7,7 @@
  * Converts the given number array into an array of ranges
  * Example: [1, 2, 3, 4, 5, 6] to [[1, 6]]
  * [1, 2, 3, 5, 6] to [[1,3],[5,6]]
+ * @internal
  */
 export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][] {
 	const ranges: number[][] = [];

@@ -18,6 +18,9 @@ export function colNameToIndex(colName: string) {
 }
 
 // Convert a 0-based column index into an Excel-like column name (e.g., 0 -> 'A')
+/**
+ * @internal
+ */
 export function colIndexToName(colIndex: number) {
 	let name = "";
 
@@ -31,6 +34,9 @@ export function colIndexToName(colIndex: number) {
 	return name;
 }
 
+/**
+ * @internal
+ */
 export function parseRange(range: string) {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const matches = rangeExpr.exec(range)!;

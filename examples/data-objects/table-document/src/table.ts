@@ -10,6 +10,7 @@ export type TableDocumentItem = any;
 /**
  * @deprecated `ITable` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @internal
  */
 export interface ITable {
 	readonly numRows: number;

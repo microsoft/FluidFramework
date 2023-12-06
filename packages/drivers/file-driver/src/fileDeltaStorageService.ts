@@ -11,6 +11,7 @@ import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
+ * @internal
  */
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 	private readonly messages: api.ISequencedDocumentMessage[];

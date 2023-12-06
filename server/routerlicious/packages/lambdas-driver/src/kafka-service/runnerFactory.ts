@@ -13,6 +13,9 @@ import {
 import { Provider } from "nconf";
 import { KafkaRunner } from "./runner";
 
+/**
+ * @internal
+ */
 export interface IKafkaResources extends IResources {
 	lambdaFactory: IPartitionLambdaFactory;
 
@@ -21,6 +24,9 @@ export interface IKafkaResources extends IResources {
 	config?: Provider;
 }
 
+/**
+ * @internal
+ */
 export class KafkaRunnerFactory implements IRunnerFactory<IKafkaResources> {
 	public async create(resources: IKafkaResources): Promise<IRunner> {
 		return new KafkaRunner(resources.lambdaFactory, resources.consumer, resources.config);

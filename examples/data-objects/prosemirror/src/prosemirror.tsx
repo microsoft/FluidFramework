@@ -50,6 +50,7 @@ function insertMarkers(
  * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
+ * @internal
  */
 export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
@@ -117,6 +118,9 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	}
 }
 
+/**
+ * @internal
+ */
 export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/prosemirror";
 	public readonly type = ProseMirrorFactory.type;
@@ -189,6 +193,9 @@ export interface IProseMirrorReactViewProps {
 	readonly collabManager: FluidCollabManager;
 }
 
+/**
+ * @internal
+ */
 export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
 	props: IProseMirrorReactViewProps,
 ) => {

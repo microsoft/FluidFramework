@@ -10,6 +10,9 @@ import { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes";
 
 const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 
+/**
+ * @internal
+ */
 export const fetchRegisteredTemplates = () => {
 	const toTemplateList = (x: string) => ({ value: x, label: x });
 	// extract primitive templates
@@ -32,6 +35,9 @@ export const fetchRegisteredTemplates = () => {
 	return templates;
 };
 
+/**
+ * @internal
+ */
 export const handlePropertyDataCreationOptionGeneration = (
 	rowData: IInspectorRow,
 	nameOnly: boolean,
@@ -81,6 +87,9 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
 	return parent.getProperty().getRoot().getWorkspace().commit();
 };
 
+/**
+ * @internal
+ */
 export const handlePropertyDataCreation = (
 	rowData: IInspectorRow,
 	name: string,
