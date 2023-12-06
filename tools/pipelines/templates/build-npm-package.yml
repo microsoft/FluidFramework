@@ -132,10 +132,14 @@ parameters:
 
 resources:
   repositories:
-    - repository: m365Pipelines
+    - repository: 1ESPipelineTemplates
       type: git
-      name: 1ESPipelineTemplates/M365GPT
-      ref: refs/tags/release
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release-2023-11-30-2
+    # - repository: m365Pipelines
+    #   type: git
+    #   name: 1ESPipelineTemplates/M365GPT
+    #   ref: refs/tags/release
 
 extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
