@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IUser, type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
 
 import { type OdspMember } from "./interfaces";
 
@@ -12,13 +12,13 @@ import { type OdspMember } from "./interfaces";
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * @internal
  */
-interface OdspUser extends IUser {
+interface OdspUser {
 	/**
 	 * The user's email address
 	 */
-	id: string;
+	email: string;
 	/**
-	 * This is the name of the user
+	 * The user's name
 	 */
 	name: string;
 	/**
@@ -28,16 +28,16 @@ interface OdspUser extends IUser {
 }
 
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
-	const user = audienceMember.user as OdspUser;
+	const user = audienceMember.user as unknown as OdspUser;
 	assert(
-		user.name !== undefined || user.id !== undefined || user.oid !== undefined,
+		user.name !== undefined || user.email !== undefined || user.oid !== undefined,
 		0x836 /* Provided user was not an "OdspUser". */,
 	);
 
 	return {
 		userId: user.oid,
 		name: user.name,
-		email: user.id,
+		email: user.email,
 		connections: [],
 	};
 }
