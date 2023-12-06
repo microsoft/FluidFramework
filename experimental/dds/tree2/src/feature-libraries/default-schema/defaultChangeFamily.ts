@@ -16,6 +16,7 @@ import {
 	topDownPath,
 	TaggedChange,
 	DeltaRoot,
+	StoredSchemaCollection,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {

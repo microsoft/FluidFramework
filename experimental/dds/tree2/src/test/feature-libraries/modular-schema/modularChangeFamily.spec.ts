@@ -35,9 +35,11 @@ import {
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
+	tagRollbackInverse,
+	RevisionInfo,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily } from "../../../codec";
+import { makeCodecFamily, noopValidator } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	EncodingTestData,
@@ -545,8 +547,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1]])],
-						[tag3, new Map([[brand(0), node1]])],
+						[undefined, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
 					]),
 				},
 				tag1,
@@ -556,8 +558,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), node1]])],
-						[tag3, new Map([[brand(2), node1]])],
+						[undefined, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -571,13 +573,13 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), node1]])],
-					[tag2, new Map([[brand(2), node1]])],
+					[tag1, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+					[tag2, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					[
 						tag3,
 						new Map([
-							[brand(0), node1],
-							[brand(2), node1],
+							[brand(0), encodedChunkFromCursor(node1)],
+							[brand(2), encodedChunkFromCursor(node1)],
 						]),
 					],
 				]),
