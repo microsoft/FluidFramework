@@ -132,13 +132,13 @@ parameters:
 
 resources:
   repositories:
-    - repository: m365Pipelines
+    - repository: 1ESPipelineTemplates
       type: git
-      name: 1ESPipelineTemplates/M365GPT
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/heads/user/dannyvv/test-taggingchange
 
 extends:
-  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
       name: NewLarge-linux-1ES
