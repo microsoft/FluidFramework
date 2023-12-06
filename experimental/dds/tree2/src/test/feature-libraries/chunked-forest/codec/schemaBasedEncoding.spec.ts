@@ -42,6 +42,8 @@ import {
 } from "../../../testTrees";
 import { typeboxValidator } from "../../../../external-utilities";
 import { leaf, SchemaBuilder } from "../../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -60,6 +62,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -86,6 +89,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => anyNodeShape,
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -108,6 +112,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -138,6 +143,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = treeShaper(
 				library,
@@ -153,6 +159,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -188,6 +195,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(

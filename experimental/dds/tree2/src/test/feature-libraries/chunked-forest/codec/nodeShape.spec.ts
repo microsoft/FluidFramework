@@ -22,6 +22,8 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
 import { JsonableTree } from "../../../../core";
 import { brand } from "../../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema";
 import { checkNodeEncode } from "./checkEncode";
 
 describe("nodeShape", () => {
@@ -35,6 +37,7 @@ describe("nodeShape", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 
 			const buffer = checkNodeEncode(shape, cache, {
@@ -51,6 +54,7 @@ describe("nodeShape", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, cache, {
@@ -64,6 +68,7 @@ describe("nodeShape", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 
 			const fieldShapeLocal = cache.nestedArray(
@@ -98,6 +103,7 @@ describe("nodeShape", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 
 			// Shape which encodes to nothing.
