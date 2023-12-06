@@ -7,6 +7,7 @@ import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import {
 	ChangesetLocalId,
+	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
@@ -43,10 +44,11 @@ import {
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
 } from "./modularChangeFormat";
+import { EncodedRevisionInfo } from ".";
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
@@ -187,41 +189,35 @@ function makeV0Codec(
 		return nestedMapFromFlatList(list);
 	}
 
-	function encodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
+	function encodeRevisionInfos(revisions: RevisionInfo[]): EncodedRevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
+			const encodedRevision: Mutable<EncodedRevisionInfo> = {
+				revision: revisionTagCodec.encode(revision.revision),
+			};
+
 			if (revision.rollbackOf !== undefined) {
-				encodedRevisions.push({
-					...revision,
-					rollbackOf: revisionTagCodec.encode(revision.rollbackOf),
-					revision: revisionTagCodec.encode(revision.revision),
-				});
+				encodedRevision.rollbackOf = revisionTagCodec.encode(revision.rollbackOf);
 			}
 
-			encodedRevisions.push({
-				...revision,
-				revision: revisionTagCodec.encode(revision.revision),
-			});
+			encodedRevisions.push(encodedRevision);
 		}
 
 		return encodedRevisions;
 	}
 
-	function decodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
+	function decodeRevisionInfos(revisions: EncodedRevisionInfo[]): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
+			const decodedRevision: Mutable<RevisionInfo> = {
+				revision: revisionTagCodec.decode(revision.revision),
+			};
+
 			if (revision.rollbackOf !== undefined) {
-				decodedRevisions.push({
-					...revision,
-					rollbackOf: revisionTagCodec.decode(revision.rollbackOf),
-					revision: revisionTagCodec.decode(revision.revision),
-				});
+				decodedRevision.rollbackOf = revisionTagCodec.decode(revision.rollbackOf);
 			}
 
-			decodedRevisions.push({
-				...revision,
-				revision: revisionTagCodec.decode(revision.revision),
-			});
+			decodedRevisions.push(decodedRevision);
 		}
 
 		return decodedRevisions;
@@ -263,7 +259,7 @@ function makeV0Codec(
 
 export function makeModularChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
 	return makeCodecFamily([[0, makeV0Codec(fieldKinds, revisionTagCodec, options)]]);

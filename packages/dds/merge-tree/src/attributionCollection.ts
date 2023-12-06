@@ -41,7 +41,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
 	root: Iterable<{ offset: number; key: T | null }>;
@@ -72,7 +72,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollection<T> {
 	/**

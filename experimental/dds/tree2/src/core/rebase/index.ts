@@ -12,6 +12,8 @@ export {
 	GraphCommit,
 	RevisionTag,
 	RevisionTagSchema,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,

@@ -206,7 +206,9 @@ export class ModularChangeFamily
 			0x59b /* Should not need more than one amend pass. */,
 		);
 		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
-		for (const { revision, change } of changes) {
+		for (const taggedChange of changes) {
+			const revision = revisionFromTaggedChange(taggedChange);
+			const change = taggedChange.change;
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
@@ -1251,6 +1253,22 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
 		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	const revisions = new Set<RevisionTag>();
+	const rolledBackRevisions: RevisionTag[] = [];
+	for (const info of revInfos) {
+		revisions.add(info.revision);
+		if (info.rollbackOf !== undefined) {
+			rolledBackRevisions.push(info.rollbackOf);
+		}
+	}
+
+	rolledBackRevisions.reverse();
+	for (const revision of rolledBackRevisions) {
+		if (!revisions.has(revision)) {
+			revInfos.push({ revision });
+		}
 	}
 
 	return { maxId: brand(maxId), revInfos };

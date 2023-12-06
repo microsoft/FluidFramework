@@ -4,20 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
-	cachedValue,
-	ICachedValue,
-	DisposingDependee,
-	SimpleObservingDependent,
-} from "./dependency-tracking";
-
-export {
 	EmptyKey,
 	TreeType,
 	Value,
@@ -185,6 +171,8 @@ export {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 } from "./rebase";
 
 export {

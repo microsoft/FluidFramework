@@ -29,7 +29,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
- * @internal
+ * @alpha
  */
 export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
