@@ -20,18 +20,19 @@ export class ConfigDumper {
 	];
 	private readonly logger: ILogger | undefined;
 
-	// Check library for issues/malware
 	constructor(
 		config: Record<string, any>,
 		logger?: ILogger,
 		secretNamesToRedactInConfigDump?: string[],
 	) {
+		// Create a deep copy of the config so that we can redact values without affecting the original config.
 		this.config = JSON.parse(JSON.stringify(config));
 		if (secretNamesToRedactInConfigDump !== undefined) {
 			this.secretNamesToRedactInConfigDump = this.secretNamesToRedactInConfigDump.concat(
 				secretNamesToRedactInConfigDump,
 			);
 		}
+		// Ensure unique redaction keys.
 		this.secretNamesToRedactInConfigDump = Array.from(
 			new Set(this.secretNamesToRedactInConfigDump),
 		);
