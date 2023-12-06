@@ -73,7 +73,9 @@ function makeMockAudience(clientIds: string[]): IAudience {
 	} as IAudience;
 }
 
-type PropertySet = Record<string, any>;
+interface PropertySet {
+	[name: string]: any;
+}
 
 interface Client {
 	sharedString: SharedString;
@@ -89,43 +91,34 @@ interface FuzzTestState extends BaseFuzzTestState {
 	serializer?: Encoder<IAttributor, string>;
 }
 
-// Type aliases are used here instead of interfaces to avoid ts error 2345:
-//   Index signature for type 'string' is missing in type 'Operation[]'
-// when sent to writeJson which requires Jsonable<unknown>.
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-
-type ClientSpec = {
+interface ClientSpec {
 	stringId: string;
-};
+}
 
-type RangeSpec = {
+interface RangeSpec {
 	start: number;
 	end: number;
-};
+}
 
-type AddText = ClientSpec & {
+interface AddText extends ClientSpec {
 	type: "addText";
 	index: number;
 	content: string;
 	props?: PropertySet;
-};
+}
 
-type RemoveRange = ClientSpec &
-	RangeSpec & {
-		type: "removeRange";
-	};
+interface RemoveRange extends ClientSpec, RangeSpec {
+	type: "removeRange";
+}
 
-type AnnotateRange = ClientSpec &
-	RangeSpec & {
-		type: "annotateRange";
-		properties: PropertySet;
-	};
+interface AnnotateRange extends ClientSpec, RangeSpec {
+	type: "annotateRange";
+	properties: PropertySet;
+}
 
-type Synchronize = {
+interface Synchronize {
 	type: "synchronize";
-};
-
-/* eslint-enable @typescript-eslint/consistent-type-definitions */
+}
 
 type TextOperation = AddText | RemoveRange | AnnotateRange;
 
@@ -369,11 +362,82 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	return { operations, generator };
 }
 
-function readJson<T extends Jsonable<unknown>>(filepath: string): Jsonable<T> {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as Jsonable<T>;
+/**
+ * Type constraint for types that are likely deserializable from JSON or have a custom
+ * alternate type.
+ */
+type JsonDeserializedTypeWith<T> =
+	| null
+	| boolean
+	| number
+	| string
+	| T
+	| { [P in string]: JsonDeserializedTypeWith<T> }
+	| JsonDeserializedTypeWith<T>[];
+
+type NonSymbolWithDefinedNonFunctionPropertyOf<T extends object> = Exclude<
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		[K in keyof T]: undefined extends T[K] ? never : T[K] extends Function ? never : K;
+	}[keyof T],
+	undefined | symbol
+>;
+type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
+	{
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		[K in keyof T]: undefined extends T[K] ? (T[K] extends Function ? never : K) : never;
+	}[keyof T],
+	undefined | symbol
+>;
+
+/**
+ * Used to constrain a type `T` to types that are deserializable from JSON.
+ *
+ * When used as a filter to inferred generic `T`, a compile-time error can be
+ * produced trying to assign `JsonDeserialized<T>` to `T`.
+ *
+ * Deserialized JSON never contains `undefined` values, so properties with
+ * `undefined` values become optional. If the original property was not already
+ * optional, then compilation of assignment will fail.
+ *
+ * Similarly, function valued properties are removed.
+ */
+type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean extends (
+	T extends never ? true : false
+)
+	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
+	: /* test for 'unknown' */ unknown extends T
+	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
+	: /* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
+	? /* primitive types => */ T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	/* test for not a function */ Extract<T, Function> extends never
+	? /* not a function => test for object */ T extends object
+		? /* object => test for array */ T extends (infer E)[]
+			? /* array => */ JsonDeserialized<E, TReplaced>[]
+			: /* property bag => */
+			  /* properties with symbol keys or function values are removed */
+			  {
+					/* properties with defined values are recursed */
+					[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  } & {
+					/* properties that may have undefined values are optional */
+					[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  }
+		: /* not an object => */ never
+	: /* function => */ never;
+
+function readJson<T>(filepath: string): JsonDeserialized<T> {
+	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as JsonDeserialized<T>;
 }
 
-function writeJson(filepath: string, content: Jsonable<unknown>) {
+function writeJson<T>(filepath: string, content: Jsonable<T>) {
 	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf-8" });
 }
 
@@ -616,7 +680,7 @@ describe("SharedString Attribution", () => {
 				let operations: Operation[];
 				before(() => {
 					paths = getDocumentPaths(document);
-					operations = readJson(paths.operations);
+					operations = readJson<Operation[]>(paths.operations);
 				});
 
 				for (const { filename, factory } of dataGenerators) {
