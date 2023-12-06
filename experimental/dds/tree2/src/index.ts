@@ -4,13 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
 	EmptyKey,
 	FieldKey,
 	TreeType,

@@ -9,6 +9,7 @@ export enum MatrixOp {
 	spliceCols,
 	spliceRows,
 	set,
+	changeSetCellPolicy,
 }
 
 export interface IMatrixMsg {
@@ -26,4 +27,8 @@ export interface IMatrixCellMsg extends IMatrixMsg {
 	row: number;
 	col: number;
 	value: Serializable;
+}
+
+export interface IMatrixSwitchSetCellPolicy extends IMatrixMsg {
+	type: MatrixOp.changeSetCellPolicy;
 }

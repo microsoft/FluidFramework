@@ -23,6 +23,7 @@ import {
 	DiscardResult,
 	BranchRebaseResult,
 	rebaseChangeOverChanges,
+	tagRollbackInverse,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
@@ -306,7 +307,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagChange(inverse, mintRevisionTag()));
+			inverses.push(tagRollbackInverse(inverse, mintRevisionTag(), commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
