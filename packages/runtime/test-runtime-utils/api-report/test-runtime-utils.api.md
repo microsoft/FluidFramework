@@ -155,7 +155,7 @@ export class MockContainerRuntimeFactory {
     sequenceNumber: number;
 }
 
-// @internal
+// @alpha
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
     // (undocumented)
     clearOutstandingClientMessages(clientId: string): void;
@@ -200,7 +200,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @internal
+// @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor();
     // (undocumented)
@@ -251,7 +251,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     get version(): string;
 }
 
-// @internal
+// @alpha
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     constructor();
     // (undocumented)
@@ -523,7 +523,7 @@ export class MockHandle<T> implements IFluidHandle {
     protected readonly value: T;
 }
 
-// @internal
+// @alpha
 export class MockObjectStorageService implements IChannelStorageService {
     constructor(contents: {
         [key: string]: string;
@@ -536,7 +536,7 @@ export class MockObjectStorageService implements IChannelStorageService {
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)

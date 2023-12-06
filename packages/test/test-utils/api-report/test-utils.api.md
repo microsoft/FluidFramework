@@ -58,7 +58,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 // @internal (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
-// @internal
+// @alpha
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
 // @internal
@@ -152,7 +152,7 @@ export interface IDocumentIdStrategy {
     update(resolvedUrl?: IResolvedUrl): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -216,7 +216,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;

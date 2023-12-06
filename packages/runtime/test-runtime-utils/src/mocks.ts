@@ -481,7 +481,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
@@ -877,7 +877,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
- * @internal
+ * @alpha
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}

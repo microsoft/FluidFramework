@@ -751,7 +751,7 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 // @alpha (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
     trackingGroup: ITrackingGroup;
@@ -987,7 +987,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)

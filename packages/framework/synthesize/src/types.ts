@@ -53,7 +53,7 @@ export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjec
 
 /**
  * Multiple ways to provide a Fluid object.
- * @internal
+ * @alpha
  */
 export type FluidObjectProvider<T> =
 	| NonNullable<T>

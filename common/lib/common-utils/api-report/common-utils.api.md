@@ -17,7 +17,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { TransformedEvent } from '@fluidframework/common-definitions';
 
-// @internal @deprecated
+// @alpha @deprecated
 export function assert(condition: boolean, message: string | number): asserts condition;
 
 // @internal @deprecated
@@ -35,10 +35,10 @@ export class Buffer extends Uint8Array {
     toString(encoding?: string): string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
-// @internal @deprecated
+// @alpha @deprecated
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
@@ -53,7 +53,7 @@ export const delay: (timeMs: number) => Promise<void>;
 // @internal @deprecated
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
 
-// @internal @deprecated
+// @alpha @deprecated
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
@@ -173,7 +173,7 @@ export class Lazy<T> {
     get value(): T;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -296,7 +296,7 @@ export class Trace {
     trace(): ITraceEvent;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();
     // (undocumented)
@@ -315,7 +315,7 @@ export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventPro
     readonly removeListener: TypedEventTransform<this, TEvent>;
 }
 
-// @internal @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 // @internal @deprecated
