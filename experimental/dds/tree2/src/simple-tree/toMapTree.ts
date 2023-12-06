@@ -32,7 +32,7 @@ import {
 	type TreeDataContext,
 	type TreeNodeSchema,
 } from "../feature-libraries";
-import { brand, fail } from "../util";
+import { brand } from "../util";
 import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
@@ -325,13 +325,34 @@ function getType(
 ): TreeNodeSchemaIdentifier {
 	const possibleTypes = getPossibleTypes(context, typeSet, data as ContextuallyTypedNodeData);
 	assert(possibleTypes.length !== 0, "data is incompatible with all types allowed by the schema");
-	assert(
+	checkInput(
 		possibleTypes.length === 1,
-		"data is compatible with more than one type allowed by the schema",
+		() =>
+			`Data is compatible with more than one type allowed by the schema.
+The set of possible types is ${JSON.stringify([...possibleTypes], undefined)}.
+Explicitly construct an unhydrated node of the desired type to disambiguate.
+For class based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
 	return possibleTypes[0];
 }
 
 function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
-	return context.schema.nodeSchema.get(type) ?? fail("Requested type does not exist in schema.");
+	return (
+		context.schema.nodeSchema.get(type) ??
+		invalidInput("Requested type does not exist in schema.")
+	);
+}
+
+/**
+ * An invalid tree has been provided, presumably by the user of this package.
+ * Throw and an error that properly preserves the message (unlike asserts which will get hard to read short codes intended for package internal logic errors).
+ */
+function invalidInput(message: string): never {
+	throw new Error(message);
+}
+
+function checkInput(condition: boolean, message: string | (() => string)): asserts condition {
+	if (!condition) {
+		invalidInput(typeof message === "string" ? message : message());
+	}
 }
