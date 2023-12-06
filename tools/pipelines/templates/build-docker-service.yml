@@ -309,8 +309,6 @@ extends:
               context: ${{ parameters.buildDirectory }}
               image: base:$(containerTagSuffix)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
-              tags: |
-                $(containerTagSuffix)
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
