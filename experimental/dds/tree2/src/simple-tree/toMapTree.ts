@@ -329,10 +329,10 @@ function getType(
 	checkInput(
 		possibleTypes.length === 1,
 		() =>
-			`Data is compatible with more than one type allowed by the schema.
+			`The provided data is compatible with more than one type allowed by the schema.
 The set of possible types is ${JSON.stringify([...possibleTypes], undefined)}.
 Explicitly construct an unhydrated node of the desired type to disambiguate.
-For class based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
+For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
 	return possibleTypes[0];
 }
