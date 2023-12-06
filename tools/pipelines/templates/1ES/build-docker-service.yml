@@ -418,51 +418,6 @@ extends:
               image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
               remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
-        # Cleanup
-        - task: Docker@1
-          displayName: Docker Cleanup - Container prune
-          inputs:
-            command: run
-            arguments: container prune -f
-          continueOnError: true
-          condition: succeededOrFailed()
-
-        - task: Docker@1
-          displayName: Docker Cleanup - ${{ variables.buildContainerName }}
-          inputs:
-            command: run
-            arguments: rmi $(containerTag)
-          continueOnError: true
-          condition: succeededOrFailed()
-
-        - ${{ if eq(variables.buildBase, true) }}:
-          - task: Docker@1
-            displayName: Docker Cleanup - base
-            inputs:
-              command: run
-              arguments: rmi $(baseContainerTag)
-            continueOnError: true
-            condition: succeededOrFailed()
-
-        - ${{ if ne(variables.latestContainerTag, '') }}:
-          - task: Docker@1
-            displayName: Docker Cleanup - ${{ variables.latestContainerTag }}
-            inputs:
-              command: run
-              arguments: rmi ${{ variables.latestContainerTag }}
-            continueOnError: true
-            condition: succeededOrFailed()
-
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-          - task: Bash@3
-            displayName: Prune pnpm store
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                pnpm store prune
-
 
         templateContext:
           outputs:
