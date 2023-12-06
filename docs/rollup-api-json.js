@@ -15,23 +15,20 @@
  * create copies.
  */
 
-const chalk = require("chalk");
 const cpy = require("cpy");
 const fs = require("fs-extra");
 const path = require("path");
 const replace = require("replace-in-file");
 
-const originalPath = path.resolve(process.argv[2]);
-const targetPath = path.resolve(process.argv.length > 3 ? process.argv[3] : originalPath);
-const stagingPath = path.join(targetPath, "_staging");
-const outputPath = path.join(targetPath, "_build");
+const main = async (originalPath, targetPath) => {
+	const stagingPath = path.join(targetPath, "_staging");
+	const outputPath = path.join(targetPath, "_build");
 
-const main = async () => {
 	// Clear output folders.
 	await fs.emptyDir(stagingPath);
 	await fs.emptyDir(outputPath);
 
-	const apiExtractorInputDir = path.resolve("..", "_api-extractor-temp", "doc-models");
+	const apiExtractorInputDir = originalPath;
 
 	// Copy all the files to staging that need to be present for member processing.
 	await cpy(apiExtractorInputDir, stagingPath);
@@ -61,13 +58,6 @@ const main = async () => {
 	});
 };
 
-main().then(
-	() => {
-		console.log(chalk.green("SUCCESS: API log files staged!"));
-		process.exit(0);
-	},
-	(error) => {
-		console.error("FAILURE: API log files could not be staged due to an error.", error);
-		process.exit(1);
-	},
-);
+module.exports = {
+	main,
+};

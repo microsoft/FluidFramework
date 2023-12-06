@@ -172,35 +172,14 @@ stages:
                 STORAGE_KEY: $(STORAGE_KEY)
                 uploadAsLatest: ${{ variables.isMain }}
 
-    - job: parse_version_params
-      displayName: 'Parse document version parameters'
-      pool: Large
-      steps:
-        - task: Bash@3
-          displayName: read yaml data
-          name: setYamlDataStep
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              # Read YAML data
-              yamlData=$(cat docs/data/docVersions.yaml)
-              # Set pipeline variable
-              echo "##vso[task.setvariable variable=documentVersions;isOutput=true]$yamlData"
-
     - job: build_site
       displayName: 'Build website'
-      dependsOn: ['upload_json', 'parse_version_params']
+      dependsOn: upload_json
       pool: Large
-      variables:
-        docBranchVersions: $[ dependencies.parse_version_params.outputs['setYamlDataStep.documentVersions'] ] 
       steps:
         - checkout: self
           submodules: false
           clean: true
-
-        - script: echo $(docBranchVersions)
-          name: echovar
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
@@ -261,11 +240,11 @@ stages:
               pnpm i --frozen-lockfile
 
         - task: Npm@1
-          displayName: npm run build
+          displayName: npm run build:multi-version
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build'
+            customCommand: 'run build:multi-version'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'

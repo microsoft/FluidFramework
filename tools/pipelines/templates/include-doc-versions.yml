@@ -2,5 +2,5 @@
 # e.g. lts,2.0,1.0 would be split using ',' as the separator 
 variables:
   currentVersion: main
-  previousVersions: lts,2.0,1.0
+  previousVersions: lts
   

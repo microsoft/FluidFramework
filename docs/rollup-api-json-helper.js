@@ -1,12 +1,10 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 const chalk = require("chalk");
 const yaml = require('js-yaml');
 const fs   = require('fs');
-const { renderApiDocumentation } = require("./render-api-documentation");
+const path = require("path");
+const { main } = require('./rollup-api-json');
+const { rimraf } = require("rimraf");
+
 const renderMultiVersion = process.argv[2];
 
 let docVersions;
@@ -19,14 +17,22 @@ try {
 }
 
 docVersions.forEach(version => {
-	renderApiDocumentation(version).then(
+	version = (version === 'main') ? "" : "-"+version
+	
+	const originalPath = path.resolve("..", "_api-extractor-temp"+version, "doc-models");
+	const targetPath = path.resolve(".", "_api-extractor-temp"+version);
+
+	rimraf(targetPath);
+
+	main(originalPath, targetPath).then(
 		() => {
-			console.log(chalk.green("API docs written!"));
+			console.log(chalk.green("SUCCESS: API log files staged!"));
 			process.exit(0);
 		},
 		(error) => {
-			console.error("API docs could not be written due to an error:", error);
+			console.error("FAILURE: API log files could not be staged due to an error.", error);
 			process.exit(1);
 		},
 	);
+	
 });
