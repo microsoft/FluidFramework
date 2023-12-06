@@ -462,12 +462,43 @@ function doesItemGenerateHierarchy(
 
 /**
  * Determines whether or not the specified API item should have documentation generated for it.
- * This is determined based on its release tag compared to {@link ApiItemTransformationConfiguration.minimumReleaseLevel}.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link ApiItemTransformationConfiguration.minimumReleaseLevel}.
  *
- * @remarks Items without an associated release tag will always be included as a precaution.
+ * @remarks
+ *
+ * If an item does not have its own release tag, it will inherit its release scope from its nearest ancestor.
+ *
+ * Items without an associated release tag (directly or in their ancestry) will always be included as a precaution.
  *
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @example Hierarchical inheritance
+ *
+ * Items with tagged ancestors inherit their release scope when one is not specified.
+ * This includes class/interface members...
+ *
+ * ```typescript
+ * // @public
+ * export interface Foo {
+ * 	// `@public` inherited from the interface
+ * 	bar: string;
+ * }
+ * ```
+ *
+ * This also includes scopes like namespaces, which can add further hierarchy...
+ *
+ * ```typescript
+ * // @public
+ * export namespace Foo {
+ * 	// `@public` inherited from the namespace
+ * 	export interface Bar {
+ * 		// `@public` inherited from the namespace
+ * 		baz: string;
+ * 	}
+ * }
+ * ```
  */
 export function shouldItemBeIncluded(
 	apiItem: ApiItem,
