@@ -26,7 +26,7 @@ index 76604a00e7e6a1028db6803ab38bdb45d2b5d395..4999a627a954d859eafb3b1586c86d86
              if (configObject.compiler.overrideTsconfig === undefined) {
                  if (!tsconfigFilePath) {
 diff --git a/lib/collector/Collector.js b/lib/collector/Collector.js
-index 34702cd3969e8357dd97815185af571c7d85b49e..7fa2f56a1d3bdf77cc47b4e0dbf832cf629bab75 100644
+index 34702cd3969e8357dd97815185af571c7d85b49e..e777cae87784182a747ddce8a97436e35937fb73 100644
 --- a/lib/collector/Collector.js
 +++ b/lib/collector/Collector.js
 @@ -81,11 +81,55 @@ class Collector {
