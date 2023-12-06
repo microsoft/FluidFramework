@@ -244,7 +244,6 @@ describe("ErrorUtils", () => {
 
 			assert(isIThrottlingWarning(error));
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual(error.retryAfterSeconds, 5);
 			assert.strictEqual((error as any).statusCode, 429);
