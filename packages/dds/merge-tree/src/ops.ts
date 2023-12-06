@@ -178,15 +178,3 @@ export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMer
  * @alpha
  */
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
-
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
-
-interface InteriorSequencePlace {
-	pos: number;
-	side: Side;
-}
-
-enum Side {
-	Before = 0,
-	After = 1,
-}
