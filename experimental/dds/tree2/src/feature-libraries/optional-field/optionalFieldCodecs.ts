@@ -38,7 +38,6 @@ function makeRegisterIdCodec(
 			}
 
 			return encodedRegisterId;
-			// return { revision: encodedRegisterId.revision, localId: encodedRegisterId.localId };
 		},
 		decode: (registerId: EncodedRegisterId) => {
 			if (registerId === 0) {
