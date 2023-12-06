@@ -19,7 +19,7 @@ import {
  *
  * This type allow us to correctly handle either type
  *
- * @internal
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
@@ -27,7 +27,7 @@ export type EventEmitterEventType = EventEmitter extends { on(event: infer E, li
 	: never;
 
 /**
- * @internal
+ * @alpha
  */
 export type TypedEventTransform<TThis, TEvent> =
 	// Event emitter supports some special events for the emitter itself to use
@@ -49,7 +49,7 @@ export type TypedEventTransform<TThis, TEvent> =
 /**
  * Event Emitter helper class the supports emitting typed events
  *
- * @internal
+ * @alpha
  */
 export class TypedEventEmitter<TEvent>
 	extends EventEmitter
