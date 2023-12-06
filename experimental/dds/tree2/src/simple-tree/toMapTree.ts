@@ -5,6 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 import {
 	type FieldKey,
@@ -32,7 +33,7 @@ import {
 	type TreeDataContext,
 	type TreeNodeSchema,
 } from "../feature-libraries";
-import { brand } from "../util";
+import { brand, fail } from "../util";
 import { InsertableTreeField, InsertableTypedNode } from "./insertable";
 
 /**
@@ -337,10 +338,7 @@ For class based schema, this can be done by replacing an expression like "{foo: 
 }
 
 function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
-	return (
-		context.schema.nodeSchema.get(type) ??
-		invalidInput("Requested type does not exist in schema.")
-	);
+	return context.schema.nodeSchema.get(type) ?? fail("Requested type does not exist in schema.");
 }
 
 /**
@@ -348,7 +346,7 @@ function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): Tr
  * Throw and an error that properly preserves the message (unlike asserts which will get hard to read short codes intended for package internal logic errors).
  */
 function invalidInput(message: string): never {
-	throw new Error(message);
+	throw new UsageError(message);
 }
 
 function checkInput(condition: boolean, message: string | (() => string)): asserts condition {
