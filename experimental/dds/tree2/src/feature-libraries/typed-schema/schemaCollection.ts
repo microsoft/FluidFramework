@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
 import { capitalize, fail, requireAssignableTo } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
+import { Multiplicity } from "../multiplicity";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -19,7 +20,6 @@ import {
 } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
-import { Multiplicity } from "../multiplicity";
 
 // TODO: tests for this file
 

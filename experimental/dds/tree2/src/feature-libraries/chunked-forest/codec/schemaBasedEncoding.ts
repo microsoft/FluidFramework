@@ -14,7 +14,6 @@ import {
 import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
 import { Multiplicity } from "../../multiplicity";
-import { FullSchemaPolicy } from "../../modular-schema";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,

@@ -19,11 +19,11 @@ import {
 } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
 import { fail } from "../../util";
+import { Multiplicity } from "../multiplicity";
 import { TreeChunk, tryGetChunk } from "./chunk";
 import { BasicChunk } from "./basicChunk";
 import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk";
 import { SequenceChunk } from "./sequenceChunk";
-import { Multiplicity } from "../multiplicity";
 
 export interface Disposable {
 	/**
