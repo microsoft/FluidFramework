@@ -67,6 +67,7 @@ The default configuration for GC today is:
 
 -   GC Mark Phase is **enabled**, including Tombstone Mode
 -   Session Expiry is **enabled**
+-   GC Tombstone enforcement is **enabled** (attempting to load a tombstoned object will fail)
 -   GC Sweep Phase is **disabled**
     -   Note: Once enabled, Sweep will only run for documents created from that point forward
 
