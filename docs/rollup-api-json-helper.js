@@ -7,20 +7,20 @@ const { rimraf } = require("rimraf");
 
 const renderMultiVersion = process.argv[2];
 
-let docVersions;
+let versions;
+
 try {
-	const versions = yaml.load(fs.readFileSync('../tools/pipelines/templates/include-doc-versions.yml', 'utf8'));
-	docVersions = renderMultiVersion ? versions.variables.previousVersions : versions.variables.currentVersion;
-	docVersions = docVersions.split(",");
+	versions = yaml.load(fs.readFileSync('./data/versions.yaml', 'utf8'));
   } catch (e) {
 	console.log(e);
 }
 
+docVersions = renderMultiVersion ? versions.params.previousVersions : versions.params.currentVersion;
+
 docVersions.forEach(version => {
-	version = (version === 'main') ? "" : "-"+version
-	
-	const originalPath = path.resolve("..", "_api-extractor-temp"+version, "doc-models");
-	const targetPath = path.resolve(".", "_api-extractor-temp"+version);
+	const targetPath = path.resolve(".", "_api-extractor-temp", version);
+	version = (version === versions.params.currentVersion[0]) ? "" : "-" + version
+	const originalPath = path.resolve("..", "_api-extractor-temp" + version, "doc-models");
 
 	rimraf(targetPath);
 

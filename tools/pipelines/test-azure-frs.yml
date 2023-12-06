@@ -34,6 +34,13 @@ parameters:
     displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
+  - name: docVersions
+    type: object
+    default:
+      currentVersion: '2.0'
+      ltsVersion: '1.0' 
+      previousVersions:
+        - '1.0'
 
 variables:
   - group: doc-versions
@@ -188,7 +195,7 @@ stages:
             artifact: api-extractor-combined
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
-        - ${{ each version in split(variables.previousVersions, ',') }}:
+        - ${{ each version in parameters.docVersions.previousVersions }}:
           - task: Bash@3
             displayName: print name
             inputs:
@@ -222,8 +229,8 @@ stages:
             inputs:
               destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models'
               archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
-              cleanDestinationFolder: false
-              overwriteExistingFiles: false
+              cleanDestinationFolder: true
+              overwriteExistingFiles: true
 
         - template: templates/include-use-node-version.yml
 
