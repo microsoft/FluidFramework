@@ -39,11 +39,11 @@ historian:
     configDumpEnabled: false
     secretNamesToRedactInConfigDump:
       - mongo.globalDbEndpoint
-			- mongo.operationsDbEndpoint
-			- redis.pass
-			- redisForTenantCache.pass
-			- redis2.pass
-			- redisForThrottling.pass
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitrest:
   name: gitrest
@@ -83,11 +83,11 @@ gitrest:
     configDumpEnabled: false
     secretNamesToRedactInConfigDump:
       - mongo.globalDbEndpoint
-			- mongo.operationsDbEndpoint
-			- redis.pass
-			- redisForTenantCache.pass
-			- redis2.pass
-			- redisForThrottling.pass
+      - mongo.operationsDbEndpoint
+      - redis.pass
+      - redisForTenantCache.pass
+      - redis2.pass
+      - redisForThrottling.pass
 
 gitssh:
   name: gitssh

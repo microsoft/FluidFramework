@@ -27,6 +27,43 @@ describe("ConfigDumper", () => {
 			assert.strictEqual(redactedConfig.key2, "value2");
 		});
 
+		it("redacted object should not be the same be as the config object if a value is redacted", () => {
+			const nconf = {
+				key1: "value1",
+				key2: "value2",
+			};
+
+			const secretNamesToRedactInConfigDump = ["key1"];
+			const configDumper = new ConfigDumper(
+				nconf,
+				undefined,
+				secretNamesToRedactInConfigDump,
+			);
+			configDumper.dumpConfig();
+			const redactedConfig = configDumper.getConfig();
+
+			assert.notDeepStrictEqual(nconf, redactedConfig);
+		});
+
+		it("redacted object should not be the same be as the config object if no value is redacted", () => {
+			const nconf = {
+				key1: "value1",
+				key2: "value2",
+			};
+
+			const secretNamesToRedactInConfigDump = [];
+			const configDumper = new ConfigDumper(
+				nconf,
+				undefined,
+				secretNamesToRedactInConfigDump,
+			);
+			configDumper.dumpConfig();
+			const redactedConfig = configDumper.getConfig();
+
+			assert.deepStrictEqual(nconf, redactedConfig);
+			assert.notStrictEqual(nconf, redactedConfig);
+		});
+
 		it("should not throw an error if secretNamesToRedactInConfigDump values are not present in nconf", () => {
 			const nconf = {
 				key1: "value1",

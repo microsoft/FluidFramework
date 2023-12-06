@@ -109,11 +109,11 @@ export function runService<T extends IResources>(
 			: configOrPath;
 
 	const configDumpEnabled = (config.get("config:configDumpEnabled") as boolean) ?? false;
-	const secretNamesToRedactInConfigDump =
-		(config.get("config:secretNamesToRedactInConfigDump") as string[]) ?? undefined;
 	if (configDumpEnabled) {
+		const secretNamesToRedactInConfigDump =
+			(config.get("config:secretNamesToRedactInConfigDump") as string[]) ?? undefined;
 		const configDumper = new ConfigDumper(
-			JSON.parse(JSON.stringify(config.get())),
+			config.get(),
 			logger,
 			secretNamesToRedactInConfigDump,
 		);

@@ -26,12 +26,15 @@ export class ConfigDumper {
 		logger?: ILogger,
 		secretNamesToRedactInConfigDump?: string[],
 	) {
-		this.config = config;
+		this.config = JSON.parse(JSON.stringify(config));
 		if (secretNamesToRedactInConfigDump !== undefined) {
 			this.secretNamesToRedactInConfigDump = this.secretNamesToRedactInConfigDump.concat(
 				secretNamesToRedactInConfigDump,
 			);
 		}
+		this.secretNamesToRedactInConfigDump = Array.from(
+			new Set(this.secretNamesToRedactInConfigDump),
+		);
 		this.logger = logger;
 	}
 
