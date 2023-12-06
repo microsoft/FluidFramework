@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ConfigTypes } from "@fluidframework/core-interfaces";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	tagCodeArtifacts,
