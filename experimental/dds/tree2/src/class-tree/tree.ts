@@ -68,9 +68,9 @@ export interface ITree extends IChannel {
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
-	 * @param initialTree - Default tree content to initialize the tree with iff the tree is uninitialized
+	 * @param initialTree - Function that returns the default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
-	 * If the `initialTree` returns any actual node instances, they should be recreated each time the `initialTree` runs.
+	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
 	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
 	 */
 	public constructor(
