@@ -170,7 +170,8 @@
 			"kind": "EntryPoint",
 			"canonicalReference": "test-package!",
 			"name": "",
-			"preserveMemberOrder": false
+			"preserveMemberOrder": false,
+			"members": []
 		}
 	]
 }
