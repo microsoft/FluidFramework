@@ -66,6 +66,14 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 // @internal (undocumented)
+export interface ChangeArgs {
+    // (undocumented)
+    endpoints?: Endpoints;
+    // (undocumented)
+    props?: PropertySet;
+}
+
+// @internal (undocumented)
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
 
 // @internal (undocumented)
@@ -88,6 +96,14 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @internal
 export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
+
+// @internal (undocumented)
+export interface Endpoints {
+    // (undocumented)
+    end: SequencePlace;
+    // (undocumented)
+    start: SequencePlace;
+}
 
 // @internal
 export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
@@ -146,7 +162,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
+    // @deprecated
     change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
+    change(id: string, args: ChangeArgs): TInterval | undefined;
+    // @deprecated
     changeProperties(id: string, props: PropertySet): any;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
