@@ -135,7 +135,7 @@ resources:
     - repository: 1ESPipelineTemplates
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
-      ref: refs/tags/release-2023-11-30-2
+      ref: refs/heads/user/dannyvv/test-taggingchange
     # - repository: m365Pipelines
     #   type: git
     #   name: 1ESPipelineTemplates/M365GPT
