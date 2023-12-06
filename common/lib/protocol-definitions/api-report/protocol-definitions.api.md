@@ -109,7 +109,7 @@ export interface IConnect {
     versions: string[];
 }
 
-// @internal
+// @alpha
 export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
@@ -565,7 +565,7 @@ export enum SignalType {
 // @alpha
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @internal
+// @alpha
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @alpha

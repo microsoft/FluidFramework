@@ -42,7 +42,7 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this.data, this.rootFieldSchema, schema)) {
 			this.data.rootFieldSchema = schema;
-			this.invalidateDependents();
+			this.events.emit("afterSchemaChange", this.data);
 			return true;
 		}
 		return false;
@@ -58,7 +58,7 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 		const original = this.nodeSchema.get(identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
 			this.data.nodeSchema.set(identifier, schema);
-			this.invalidateDependents();
+			this.events.emit("afterSchemaChange", this.data);
 			return true;
 		}
 		return false;

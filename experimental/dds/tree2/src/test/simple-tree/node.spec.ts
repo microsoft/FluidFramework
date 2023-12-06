@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { rootFieldKey } from "../../core";
 import { TreeStatus, Any } from "../../feature-libraries";
-import { TreeRoot, TreeNode, Tree, InsertableTreeRoot } from "../../simple-tree";
+import { TreeNode, Tree, InsertableTreeRoot, TreeField } from "../../simple-tree";
 import { SchemaBuilder } from "../../domains";
 import { getOldRoot } from "./utils";
 
@@ -119,7 +119,7 @@ describe("node API", () => {
 	});
 
 	describe("events", () => {
-		function check(mutate: (root: TreeRoot<typeof treeSchema>) => void) {
+		function check(mutate: (root: TreeField<typeof treeSchema.rootFieldSchema>) => void) {
 			it(".on(..) must subscribe to change event", () => {
 				const root = getOldRoot(treeSchema, initialTree);
 				const log: any[][] = [];
