@@ -418,7 +418,6 @@ extends:
               image: ${{ variables.buildContainerName }}:$(containerTagSuffix)
               remoteImage: $(containerRegistryConnection)/${{ variables.buildContainerName }}:$(containerTagSuffix), $(containerRegistryConnection)/${{ variables.buildContainerName }}:${{ variables.latestContainerTagSuffix }}
 
-
         templateContext:
           outputs:
           - ${{ if and(eq(variables.buildBase, true), eq(parameters.pack, true)) }}:
