@@ -15,6 +15,7 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil";
+import { ProtoNodes } from "./delta";
 
 /**
  * Implementation notes:
@@ -90,6 +91,7 @@ export function visitDelta(
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
+	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
 		for (let i = 0; i < count; i += 1) {
 			const offsetId = offsetDetachId(id, i);
@@ -209,7 +211,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: Delta.ProtoNodes, destination: FieldKey): void;
+	create(content: ProtoNodes, destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -355,9 +357,7 @@ function visitNode(
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
 	processBuilds(delta.build, config, visitor);
-	if (delta.destroy !== undefined) {
-		config.rootDestructions.push(...delta.destroy);
-	}
+	collectDestroys(delta.destroy, config);
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getEntry(id);
@@ -416,6 +416,15 @@ function processBuilds(
 				}
 			}
 		}
+	}
+}
+
+function collectDestroys(
+	destroys: readonly Delta.DetachedNodeDestruction[] | undefined,
+	config: PassConfig,
+) {
+	if (destroys !== undefined) {
+		config.rootDestructions.push(...destroys);
 	}
 }
 

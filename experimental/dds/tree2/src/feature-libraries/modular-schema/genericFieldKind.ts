@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, RevisionMetadataSource, tagChange, TaggedChange } from "../../core";
+import {
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaMark,
+	makeAnonChange,
+	RevisionMetadataSource,
+	tagChange,
+	TaggedChange,
+} from "../../core";
 import { fail, IdAllocator } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -88,9 +96,9 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (
 		{ change }: TaggedChange<GenericChangeset>,
 		deltaFromChild: ToDelta,
-	): Delta.FieldChanges => {
+	): DeltaFieldChanges => {
 		let nodeIndex = 0;
-		const markList: Delta.Mark[] = [];
+		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
@@ -215,7 +223,7 @@ export function newGenericChangeset(): GenericChangeset {
 function* relevantRemovedRoots(
 	change: GenericChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {
 		yield* relevantRemovedRootsFromChild(nodeChange);
 	}

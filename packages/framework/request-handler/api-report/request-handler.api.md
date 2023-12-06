@@ -29,7 +29,7 @@ export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(uri: strin
 // @internal @deprecated
 export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @internal @deprecated
+// @alpha @deprecated
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 // @internal @deprecated

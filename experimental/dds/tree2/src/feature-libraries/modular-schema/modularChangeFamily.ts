@@ -10,7 +10,6 @@ import {
 	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
-	Delta,
 	FieldKey,
 	UpPath,
 	TaggedChange,
@@ -29,6 +28,10 @@ import {
 	makeDetachedNodeId,
 	ITreeCursor,
 	emptyDelta,
+	DeltaFieldMap,
+	DeltaFieldChanges,
+	DeltaDetachedNodeBuild,
+	DeltaRoot,
 } from "../../core";
 import {
 	brand,
@@ -196,7 +199,9 @@ export class ModularChangeFamily
 			0x59b /* Should not need more than one amend pass. */,
 		);
 		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
-		for (const { revision, change } of changes) {
+		for (const taggedChange of changes) {
+			const revision = revisionFromTaggedChange(taggedChange);
+			const change = taggedChange.change;
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
@@ -767,7 +772,7 @@ export class ModularChangeFamily
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Delta.Root {
+): DeltaRoot {
 	const change = taggedChange.change;
 	// Return an empty delta for changes with constraint violations
 	if ((change.constraintViolationCount ?? 0) > 0) {
@@ -776,13 +781,13 @@ export function intoDelta(
 
 	const revision = revisionFromTaggedChange(taggedChange);
 	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-	const rootDelta: Mutable<Delta.Root> = {};
+	const rootDelta: Mutable<DeltaRoot> = {};
 	const fieldDeltas = intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
 	if (fieldDeltas.size > 0) {
 		rootDelta.fields = fieldDeltas;
 	}
 	if (change.builds && change.builds.size > 0) {
-		const builds: Delta.DetachedNodeBuild[] = [];
+		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
 			builds.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
@@ -805,13 +810,13 @@ function intoDeltaImpl(
 	revision: RevisionTag | undefined,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Map<FieldKey, Delta.FieldChanges> {
-	const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
+): Map<FieldKey, DeltaFieldChanges> {
+	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 	for (const [field, fieldChange] of change) {
 		const fieldRevision = fieldChange.revision ?? revision;
 		const deltaField = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			tagChange(fieldChange.change, fieldRevision),
-			(childChange): Delta.FieldMap =>
+			(childChange): DeltaFieldMap =>
 				deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator, fieldKinds),
 			idAllocator,
 		);
@@ -826,7 +831,7 @@ function deltaFromNodeChange(
 	{ change, revision }: TaggedChange<NodeChangeset>,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Delta.FieldMap {
+): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
 	}
@@ -1241,6 +1246,22 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
 		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	const revisions = new Set<RevisionTag>();
+	const rolledBackRevisions: RevisionTag[] = [];
+	for (const info of revInfos) {
+		revisions.add(info.revision);
+		if (info.rollbackOf !== undefined) {
+			rolledBackRevisions.push(info.rollbackOf);
+		}
+	}
+
+	rolledBackRevisions.reverse();
+	for (const revision of rolledBackRevisions) {
+		if (!revisions.has(revision)) {
+			revInfos.push({ revision });
+		}
 	}
 
 	return { maxId: brand(maxId), revInfos };
