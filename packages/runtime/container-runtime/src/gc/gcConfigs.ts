@@ -164,8 +164,8 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
-	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
-	// via feature flags.
+	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
+	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
 	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 

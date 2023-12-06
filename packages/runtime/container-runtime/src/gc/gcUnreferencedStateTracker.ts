@@ -48,7 +48,7 @@ export class UnreferencedStateTracker {
 		/** The current reference timestamp used to track how long this node has been unreferenced for. */
 		currentReferenceTimestampMs: number,
 		/** The time after which node transitions to TombstoneReady state; undefined if session expiry is disabled. */
-		private readonly tombstoneTimeoutMs: number | undefined, //* Rename to tombstoneTimeoutMs
+		private readonly tombstoneTimeoutMs: number | undefined,
 		/** The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined) */
 		private readonly tombstoneSweepDelayMs: number,
 	) {
@@ -105,7 +105,7 @@ export class UnreferencedStateTracker {
 			this.tombstoneTimeoutMs !== undefined &&
 			unreferencedDurationMs >= this.tombstoneTimeoutMs + this.tombstoneSweepDelayMs
 		) {
-			this._state = UnreferencedState.SweepReady; //* Try doing a bug here
+			this._state = UnreferencedState.SweepReady;
 			return;
 		}
 
@@ -127,7 +127,6 @@ export class UnreferencedStateTracker {
 		// Also, start a timer for the remainder of the tombstone timeout.
 		if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
 			this._state = UnreferencedState.Inactive;
-			this.inactiveTimer.clear();
 
 			if (this.tombstoneTimeoutMs !== undefined) {
 				this.tombstoneTimer.restart(this.tombstoneTimeoutMs - unreferencedDurationMs);

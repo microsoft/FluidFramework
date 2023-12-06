@@ -21,7 +21,7 @@ import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay } from "@fluidframework/core-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import {
 	getGCStateFromSummary,
 	getGCDeletedStateFromSummary,
@@ -95,7 +95,8 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
-		const { container, summarizer } = await loadSummarizer(mainContainer);
+		const { container: nonInteractiveContainer, summarizer } =
+			await loadSummarizer(mainContainer);
 
 		// create datastore
 		const dataStore =
@@ -192,11 +193,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"Data Store should not be in the summary!",
 		);
 
-		//* QUESTION: What about the return value IContainer of this load...?
-		await provider.loadTestContainer(testContainerConfig, {
-			[LoaderHeader.version]: summaryWithObjectDeleted.summaryVersion,
-		});
-		container.close(); // The Summarizer Container
+		nonInteractiveContainer.close();
 
 		const { summarizer: remoteSummarizer } = await loadSummarizer(
 			mainContainer,

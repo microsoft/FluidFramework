@@ -357,7 +357,7 @@ export interface IGCRuntimeOptions {
 
 	/**
 	 * Delay between when Tombstone should run and when the object should be deleted.
-	 * If not present, a default (non-zero) valua will be used.
+	 * If not present, a default (non-zero) value will be used.
 	 */
 	tombstoneSweepDelayMs?: number;
 
@@ -397,7 +397,6 @@ export interface IGarbageCollectorConfigs {
 	readonly runFullGC: boolean | undefined;
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
-	//* Will become tombstoneTimeoutMs
 	/** The time after which an unreferenced node is ready to be swept. */
 	readonly sweepTimeoutMs: number | undefined;
 	/** The delay between tombstone and sweep. Not persisted. */
@@ -407,12 +406,11 @@ export interface IGarbageCollectorConfigs {
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**
-	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
+	 * Tracks whether GC should run in tombstone mode. In this mode, objects are marked as tombstones as a step along the
+	 * way before they are fully deleted.
 	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
-	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
-	 * step for sweep where accidental sweep ready objects can be recovered.
-	 *
-	 * @deprecated //* Always tombstone-then-sweep per the delay above
+	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a "warning"
+	 * step before sweep, where objects wrongly marked as unreferenced can be recovered.
 	 */
 	readonly tombstoneMode: boolean;
 	/** @see GCFeatureMatrix. */
@@ -438,7 +436,7 @@ export const UnreferencedState = {
 	/** The node is inactive, i.e., it should not become referenced. */
 	Inactive: "Inactive",
 	/** The node is ready to be tombstoned */
-	TombstoneReady: "TombstoneReady", //* Make sure this is accounted for propertly everywhere that deals with this state
+	TombstoneReady: "TombstoneReady",
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
