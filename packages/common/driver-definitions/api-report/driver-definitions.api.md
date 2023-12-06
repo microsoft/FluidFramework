@@ -50,7 +50,7 @@ export enum DriverErrorType {
     writeError = "writeError"
 }
 
-// @internal
+// @alpha
 export const DriverErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
@@ -72,10 +72,10 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
-// @internal
+// @alpha
 export enum DriverHeader {
     // (undocumented)
     createNew = "createNew",
@@ -83,7 +83,7 @@ export enum DriverHeader {
     summarizingClient = "fluid-client-summarizer"
 }
 
-// @internal
+// @alpha
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
     criticalBootDomains?: string[];

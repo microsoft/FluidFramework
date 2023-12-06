@@ -64,13 +64,13 @@ export interface IInsecureUser extends IUser {
     name: string;
 }
 
-// @internal
+// @alpha
 export interface IMockContainerRuntimeOptions {
     readonly enableGroupedBatching?: boolean;
     readonly flushMode?: FlushMode;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IMockContainerRuntimePendingMessage {
     // (undocumented)
     clientSequenceNumber: number;
@@ -92,7 +92,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @internal
+// @alpha
 export class MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -129,7 +129,7 @@ export class MockContainerRuntime {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @internal
+// @alpha
 export class MockContainerRuntimeFactory {
     constructor(mockContainerRuntimeOptions?: IMockContainerRuntimeOptions);
     // (undocumented)
@@ -165,7 +165,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     }): MockContainerRuntimeForReconnection;
 }
 
-// @internal
+// @alpha
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
@@ -179,7 +179,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @internal
+// @alpha
 export class MockDeltaConnection implements IDeltaConnection {
     constructor(submitFn: (messageContent: any, localOpMetadata: unknown) => number, dirtyFn: () => void);
     // (undocumented)
@@ -303,7 +303,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
     submit(messageContent: any): number;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
     attachState: AttachState;
@@ -373,7 +373,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @internal
+// @alpha
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
@@ -502,7 +502,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     waitAttached(): Promise<void>;
 }
 
-// @internal
+// @alpha
 export class MockHandle<T> implements IFluidHandle {
     constructor(value: T, path?: string, absolutePath?: string);
     // (undocumented)
@@ -583,7 +583,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     setMaxListeners(n: number): this;
 }
 
-// @internal
+// @alpha
 export class MockSharedObjectServices implements IChannelServices {
     constructor(contents: {
         [key: string]: string;

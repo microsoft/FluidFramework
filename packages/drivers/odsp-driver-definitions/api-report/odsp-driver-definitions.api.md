@@ -49,7 +49,7 @@ export interface ICollabSessionOptions {
     unauthenticatedUserDisplayName?: string;
 }
 
-// @internal
+// @alpha
 export type IdentityType = "Consumer" | "Enterprise";
 
 // @alpha
@@ -217,7 +217,7 @@ export enum OdspErrorType {
     snapshotTooBig = "snapshotTooBig"
 }
 
-// @internal
+// @alpha
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -246,7 +246,7 @@ export const OdspErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 // @alpha

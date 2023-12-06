@@ -133,9 +133,10 @@ async function createDataObject<
  * @alpha
  */
 export class PureDataObjectFactory<
-	TObj extends PureDataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> implements
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	implements
 		IFluidDataStoreFactory,
 		Partial<IProvideFluidDataStoreRegistry>,
 		IRootDataObjectFactory

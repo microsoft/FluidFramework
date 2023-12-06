@@ -10,10 +10,10 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
-// @internal
+// @alpha
 export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;
 
-// @internal
+// @alpha
 export class FluidCache implements IPersistedCache {
     constructor(config: FluidCacheConfig);
     // (undocumented)
@@ -24,7 +24,7 @@ export class FluidCache implements IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface FluidCacheConfig {
     closeDbAfterMs?: number;
     logger?: ITelemetryBaseLogger;

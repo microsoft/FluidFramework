@@ -52,7 +52,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;
 // @internal
 export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISummarizeResult;
 
-// @internal
+// @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
 // @internal (undocumented)

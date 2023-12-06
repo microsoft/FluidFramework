@@ -7,7 +7,7 @@ import { ITelemetryBaseProperties } from "./index";
 
 /**
  * Error types the Fluid Framework may report.
- * @internal
+ * @alpha
  */
 export const FluidErrorTypes = {
 	/**
@@ -35,8 +35,9 @@ export const FluidErrorTypes = {
 	 */
 	usageError: "usageError",
 } as const;
+
 /**
- * @internal
+ * @alpha
  */
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
