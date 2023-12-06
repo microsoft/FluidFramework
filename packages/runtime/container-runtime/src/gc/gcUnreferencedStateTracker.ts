@@ -62,7 +62,7 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.SweepReady;
 			assert(
 				!this.inactiveTimer.hasTimer && !this.tombstoneTimer.hasTimer,
-				0x3b1 /* inactiveTimer or tombstoneTimer still running after sweepTimer fired! */,
+				"inactiveTimer or tombstoneTimer still running after sweepTimer fired!",
 			);
 		});
 
@@ -70,8 +70,8 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.TombstoneReady;
 			assert(
 				!this.inactiveTimer.hasTimer,
-				0x3b1 /* inactiveTimer still running after tombstoneTimer fired! */,
-			);
+				"inactiveTimer still running after tombstoneTimer fired!",
+			); // aka 0x3b1
 
 			if (this.tombstoneSweepDelayMs > 0) {
 				// After the node becomes tombstone ready, start the sweep timer after which the node will be ready for sweep.

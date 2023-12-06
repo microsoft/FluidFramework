@@ -50,16 +50,18 @@ Mark phase is enabled by default for a container. It is enabled during creation 
 
 ### Sweep phase
 
-In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (typically 30-40 days) and deletes them.
-Objects are only swept once the GC system is sure that they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it.
-The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee an object is safe to delete after sufficient time has elapsed.
+In this phase, the GC algorithm deletes any Fluid object that has been unreferenced for a sufficient time to guarantee
+they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it again.
+The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee all in-memory objects are cleared before
+it concludes an object is safe to delete.
 
-GC sweep phase has not been enabled by default yet. A "soft" version of Sweep called "Tombstone Mode" is enabled by default
-as part of the Mark Phase when Sweep is disabled. In this mode, any object that GC determines is ready to be deleted is
-marked as a "Tombstone", which triggers certain logging events and/or behavior changes if/when that Tombstoned object is
-accessed by the application.
+GC sweep phase runs in two stages. The first is the "Tombstone" stage, where objects are marked as Tombstones, meaning
+GC believes they will never be referenced again and are safe to delete. They are not yet deleted at this point, but any
+attempt to load them will fail. This way, in case a GC-impacting bug is introduced resulting in objects wrongly being Tombstoned,
+the data is not yet gone from the documents and a recovery plan can be implemented by the app.
 
-Tombstone is intended for use by early adopters of GC and is documented in more detail [here](./gcEarlyAdoption.md).
+The second stage is where the objects are fully deleted, after a configurable delay, to give time for application teams to
+monitor for Tombstone-related errors and react before delete occurs.
 
 ## GC Configuration
 
