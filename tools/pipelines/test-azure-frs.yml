@@ -94,7 +94,6 @@ trigger:
     include:
     - release/*
     - main
-    - test/michaelzhen-main
 pr: none
 
 resources:
@@ -196,21 +195,12 @@ stages:
 
         - ${{ each version in parameters.docVersions.previousVersions }}:
           - task: Bash@3
-            displayName: print name
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)
-              script: |
-                echo "version: "
-                echo "${{version}}"
-
-          - task: Bash@3
             displayName: Create ${{version}} api-extractor-temp directory
             inputs:
               targetType: 'inline'
               workingDirectory: $(Build.SourcesDirectory)
               script: |
-                echo "creating api-extractor-temp folder"
+                echo "creating api-extractor-temp-${{version}} folder"
                 mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models
 
           - task: AzureCLI@2
