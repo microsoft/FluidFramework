@@ -13,7 +13,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "npm run build:api && npm run build:md-magic && npm run hugo",
-		"build:multi-version": "npm run build:api:multi-version && npm run build:md-magic && npm run hugo",
+		"build:multi-version": "npm run build:api && npm run build:api:multi-version && npm run build:md-magic && npm run hugo",
 		"build:api": "npm run build:api-rollup && npm run build:api-documentation",
 		"build:api:multi-version": "npm run build:api-rollup:multi-version && npm run build:api-documentation:multi-version",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",

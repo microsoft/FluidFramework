@@ -23,12 +23,6 @@ const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./cu
 const { createHugoFrontMatter } = require("./front-matter");
 
 async function renderApiDocumentation(version) {
-	if(version === "main"){
-		version = "";
-	} else {
-		version = "-"+version;
-	}
-
 	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp"+version, "_build");
 	const apiDocsDirectoryPath = path.resolve(__dirname, "..", "content", "docs", "apis"+version);
 

@@ -7,6 +7,7 @@ const chalk = require("chalk");
 const yaml = require('js-yaml');
 const fs   = require('fs');
 const { renderApiDocumentation } = require("./render-api-documentation");
+
 const renderMultiVersion = process.argv[2];
 
 let docVersions;
@@ -19,6 +20,8 @@ try {
 }
 
 docVersions.forEach(version => {
+	version = (version === 'main') ? "" : "-" + version;
+
 	renderApiDocumentation(version).then(
 		() => {
 			console.log(chalk.green("API docs written!"));
