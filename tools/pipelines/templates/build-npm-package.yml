@@ -135,14 +135,14 @@ resources:
     - repository: 1ESPipelineTemplates
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
-      ref: refs/heads/user/dannyvv/test-taggingchange
+      ref: refs/tags/release-2023-11-30-2
     # - repository: m365Pipelines
     #   type: git
     #   name: 1ESPipelineTemplates/M365GPT
     #   ref: refs/tags/release
 
 extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
       name: NewLarge-linux-1ES
@@ -209,3 +209,51 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+
+      # Publish stage
+      - ${{ if eq(variables.publish, true) }}:
+        - template: include-publish-npm-package.yml
+          parameters:
+            tagName: ${{ parameters.tagName }}
+            isReleaseGroup: ${{ parameters.isReleaseGroup }}
+
+      # Capture per-pipeline stage results
+      # Capture pipeline stage results
+      - ${{ if eq(parameters.telemetry, true) }}:
+        - stage: upload_run_telemetry
+          displayName: Upload pipeline run telemetry to Kusto
+          condition: succeededOrFailed()
+          dependsOn:
+            - build
+          jobs:
+            - job: upload_run_telemetry
+              displayName: Upload pipeline run telemetry to Kusto
+              pool: Small
+              variables:
+              - name: pipelineTelemetryWorkdir
+                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+              steps:
+              - template: /tools/pipelines/templates/1ES/include-telemetry-setup.yml@self
+                parameters:
+                  devFeedUrl: $(ado-feeds-dev)
+                  officeFeedUrl: $(ado-feeds-office)
+                  isCheckoutNeeded: true
+              - task: Bash@3
+                displayName: Retrieve buildId results
+                inputs:
+                  targetType: inline
+                  workingDirectory: $(absolutePathToTelemetryGenerator)
+                  script: |
+                    echo "Creating output folder ..."
+                    mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
+                    echo "Retrieving pipeline run timeline data ..."
+                    echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
+                    pwd;
+                    ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+                    cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+                    node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
+                env:
+                  BUILD_ID: $(Build.BuildId)
+                  ADO_API_TOKEN: $(System.AccessToken)
+                  PIPELINE: BuildClient
