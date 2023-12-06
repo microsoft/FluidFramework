@@ -1,349 +1,65 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-docs pipeline
-# This pipeline builds the main branch docs each time the client packages are built
+# test-azure-frs pipeline
 
 name: $(Build.BuildId)
 
-parameters:
-  - name: deployOverride
-    displayName: Deployment Override (default = based on branch)
-    type: string
-    default: default
-    values:
-      - default
-      - skip
-      - force
-  - name: deployEnvironment
-    displayName: Static web app environment to deploy to
-    type: string
-    default: new
-    values:
-      - new
-      - old
-  - name: guardianAssetRetentionOverride
-    displayName: Guardian Asset Retention Override (default = based on branch)
-    type: string
-    default: default
-    values:
-      - default
-      - skip
-      - force
-  - name: publishGuardianBaselines
-    displayName: Publish Guardian Baseline Files
-    type: boolean
-    default: false
-  - name: docVersions
-    type: object
-    default:
-      currentVersion: '2.0'
-      ltsVersion: '1.0' 
-      previousVersions:
-        - '1.0'
-
-variables:
-  - group: doc-versions
-  - group: storage-vars
-  - group: InfoSec-SecurityResults
-  - name: repoToTrigger
-    value: microsoft/FluidFramework
-  - name: latestPipeline
-    value: ${{ or(
-      eq(variables['Build.SourceBranchName'], 'main'),
-      eq(variables['Build.SourceBranchName'], 'pl-test')
-      )}}
-  - name: n1Branch
-    value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
-  - name: n1Pipeline
-    value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
-  - name: releasePipeline
-    value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
-  - name: validRun
-    value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
-  - name: Packaging.EnableSBOMSigning
-    value: true
-  - name: isMain
-    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
-  - name: shouldDeploy
-    value: ${{ or(
-      eq(parameters.deployOverride, 'force'),
-      and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
-      )}}
-  - name: shouldRetainGuardianAssets
-    value: ${{ or(
-      eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
-      )}}
-  - name: arrow.releasedtoproduction
-    value: eq(variables.shouldDeploy, true)
-  - name: deploymentToken
-    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
-      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
-    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
-      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
-  # skip injected CG detection as we manually trigger it in a parallel job
-  - name: skipComponentGovernanceDetection
-    value: true
-  - name: pnpmStorePath
-    value: $(Pipeline.Workspace)/.pnpm-store
-
-# no PR triggers
-trigger:
-  branches:
-    include:
-    - release/*
-    - main
+trigger: none
 pr: none
 
 resources:
   pipelines:
-  - pipeline: common_definitions
-    source: Build - common-definitions
-  - pipeline: common_utils
-    source: Build - common-utils
-  - pipeline: container_definitions
-    source: Build - container-definitions
-  - pipeline: core_interfaces
-    source: Build - core-interfaces
-  - pipeline: driver_definitions
-    source: Build - driver-definitions
-  - pipeline: protocol_definitions
-    source: Build - protocol-definitions
-  - pipeline: azure
-    source: Build - azure
-  - pipeline: client
+  - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
-        include:
-        - main
-        - docs/**
-  - pipeline: server
-    source: server-routerlicious
+      - release/*
+      - main
+      - next
+      - lts
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluidframework/azure-end-to-end-tests"
+  readonly: true
 
 stages:
-- stage: build
-  displayName: 'Build website'
-  dependsOn: [] # run in parallel
-  jobs:
-    - job: debug_variables
-      displayName: Show Variables
-      dependsOn: [] # run in parallel
-      pool: Small
-      steps:
-        - checkout: none
-        - script: |
-            echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
-            echo BASE_URL: $(BASE_URL)
-            echo RELEASE_VERSION: $(RELEASE_VERSION)
-            echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
-            echo N1_VERSION: $(N1_VERSION)
-            echo HUGO_PARAMS_APPINSIGHTKEY=$(HUGO_PARAMS_APPINSIGHTKEY)
-            echo releasePipeline ${{ variables.releasePipeline }}
-            echo latestPipeline ${{ variables.latestPipeline }}
-            echo n1Pipeline ${{ variables.n1Pipeline }}
-            echo repoToTrigger ${{ variables.repoToTrigger }}
-            echo shouldDeploy ${{ variables.shouldDeploy }}
-            echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
-            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
-          displayName: Show Variables
+  # Run Azure Client FRS Tests
+  - stage:
+    displayName: e2e - azure client with frs
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:azure
+        artifactBuildId: $(resources.pipeline.client.runID)
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+          azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
+          azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-    - job: component_detection
-      displayName: Component Detection
-      dependsOn: [] # run in parallel
-      pool: Small
-      steps:
-        - task: ComponentGovernanceComponentDetection@0
-          displayName: Component Detection
-          inputs:
-            sourceScanPath: docs
-            verbosity: Verbose
-            scanType: Register
-            alertWarningLevel: High
-
-    - deployment: upload_json
-      displayName: 'Combine api-extractor JSON'
-      dependsOn: [] # run in parallel
-      environment: 'fluid-docs-env'
-      pool: Large
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - template: templates/upload-json-steps.yml
-              parameters:
-                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                STORAGE_KEY: $(STORAGE_KEY)
-                uploadAsLatest: ${{ variables.isMain }}
-
-    - job: build_site
-      displayName: 'Build website'
-      dependsOn: upload_json
-      pool: Large
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy api-extractor JSON to staging folder'
-          inputs:
-            source: current
-            artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-
-        - ${{ each version in parameters.docVersions.previousVersions }}:
-          - task: Bash@3
-            displayName: Create ${{version}} api-extractor-temp directory
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)
-              script: |
-                echo "creating api-extractor-temp-${{version}} folder"
-                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models
-
-          - task: AzureCLI@2
-            displayName: 'Download ${{version}} api-extractor JSON blob'
-            continueOnError: true
-            inputs:
-              azureSubscription: 'fluid-docs'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az storage blob download -f '$(Build.SourcesDirectory)/latest-${{version}}.tar.gz' -c 'api-extractor-json' -n latest-${{version}}.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-
-          - task: ExtractFiles@1
-            displayName: 'Extract ${{version}} blob content'
-            inputs:
-              destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models'
-              archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
-              cleanDestinationFolder: true
-              overwriteExistingFiles: true
-
-        - template: templates/include-use-node-version.yml
-
-        - template: templates/include-install-pnpm.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              pnpm i --frozen-lockfile
-
-        - task: Npm@1
-          displayName: npm run build:multi-version
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build:multi-version'
-
-        - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
-          displayName: 'Generate SBOM'
-          inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/public
-            PackageName: 'fluidframework-docs'
-            PackageVersion: '$(Build.BuildId)'
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish site build artifact'
-          inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs/public'
-            artifactName: 'fluidframework-docs'
-            publishLocation: 'pipeline'
-
-  # BEGIN Secure development tasks
-- stage: guardian
-  displayName: Guardian
-  dependsOn: [] # run in parallel
-  pool: Large
-  jobs:
-    - job: guardian_tasks
-      displayName: Guardian tasks
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - template: templates/include-use-node-version.yml
-
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core 3.x'
-          condition: succeededOrFailed()
-          inputs:
-            packageType: sdk
-            version: 3.x
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
-          displayName: 'Run ESLint'
-          condition: succeededOrFailed()
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
-          displayName: 'Publish Guardian Artifacts - All Tools'
-          condition: succeededOrFailed()
-          inputs:
-            ArtifactType: M365
-
-        - task: AssetRetention@3
-          displayName: Guardian Asset Retention
-          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
-          inputs:
-            ArrowServiceConnection: 'Arrow_FluidFramework_internal'
-            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
-            AssetNumber: '$(Build.BuildId)'
-            IsShipped: false # based on value of arrow.releasedtoproduction variable
-            DropsToRetain: 'CodeAnalysisLogs'
-
-        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
-          displayName: 'Guardian Break'
-          condition: succeededOrFailed()
-          continueOnError: false
-          inputs:
-            GdnBreakPolicyMinSev: Warning
-            GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
-            GdnBreakGdnToolESLint: true
-            GdnBreakGdnToolESLintSeverity: Warning
-            GdnBreakPolicy: M365
-            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Baselines'
-          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
-            artifactName: .gdn
-# END Secure development tasks
-
-- stage: deploy
-  displayName: 'Deploy website'
-  pool: Small
-  dependsOn: ['build', 'guardian']
-  jobs:
-    - job: deploy_site
-      displayName: 'Deploy website'
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy fluidframework-docs to public folder'
-          inputs:
-            source: current
-            artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/public'
-
-        - task: AzureStaticWebApp@0
-          displayName: 'Deploy website to ASWA'
-          condition: eq(variables.shouldDeploy, true)
-          inputs:
-            skip_app_build: true # site was built in previous stage
-            cwd: $(Build.SourcesDirectory)
-            app_location: 'docs/public'
-            output_location: ''
-            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
+  - stage:
+    displayName: e2e - azure client with azure local service
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:tinylicious
+        artifactBuildId: $(resources.pipeline.client.runID)
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+          logger__morganFormat: tiny
