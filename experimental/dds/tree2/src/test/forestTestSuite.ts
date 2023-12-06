@@ -12,7 +12,6 @@ import {
 	TreeNavigationResult,
 	InMemoryStoredSchemaRepository,
 	StoredSchemaRepository,
-	recordDependency,
 	FieldKey,
 	JsonableTree,
 	mapCursorField,
@@ -50,7 +49,6 @@ import {
 	TreeFieldSchema,
 } from "../feature-libraries";
 import {
-	MockDependent,
 	applyTestDelta,
 	expectEqualFieldPaths,
 	expectEqualPaths,
@@ -867,41 +865,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				reader.exitNode();
 				reader.exitField();
 				assert.equal(reader.nextNode(), true);
-			});
-		});
-
-		describe("top level invalidation", () => {
-			it("data editing", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonSequenceRootSchema));
-				const dependent = new MockDependent("dependent");
-				recordDependency(dependent, forest);
-
-				const delta: DeltaFieldMap = new Map([
-					[rootFieldKey, deltaForSet(singleJsonCursor(1), buildId)],
-				]);
-
-				assert.deepEqual(dependent.tokens, []);
-				applyTestDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 2);
-
-				applyTestDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 4);
-
-				// Remove the dependency so the dependent stops getting invalidation messages
-				forest.removeDependent(dependent);
-				applyTestDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 4);
-			});
-
-			it("schema editing", () => {
-				const schema = new InMemoryStoredSchemaRepository(jsonSequenceRootSchema);
-				const forest = factory(schema);
-				const dependent = new MockDependent("dependent");
-				recordDependency(dependent, forest);
-				schema.update(jsonSequenceRootSchema);
-
-				// Forest no longer observes schema and should not be invalidated by it changing.
-				assert.deepEqual(dependent.tokens, []);
 			});
 		});
 

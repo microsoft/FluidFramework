@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
-	SimpleObservingDependent,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	ITreeCursorSynchronous,
@@ -169,7 +168,12 @@ export function afterSchemaChanges(
 	// Set only when such a callback is pending.
 	let afterBatchCheck: undefined | (() => void);
 
-	const dependent = new SimpleObservingDependent(() => {
+	// TODO: errors thrown by this will usually be in response to remote edits, and thus may not surface to the app.
+	// Two fixes should be done related to this:
+	// 1. Ensure errors in response to edits like this crash app and report telemetry.
+	// 2. Replace these (and the above) exception based errors with
+	// out of schema handlers which update the schematized view of the tree instead of throwing.
+	const unregister = storedSchema.on("afterSchemaChange", () => {
 		// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
 		// This avoids erroring about invalid schema in the middle of a batch of changes.
 		// TODO:
@@ -184,17 +188,10 @@ export function afterSchemaChanges(
 			afterBatchCheck = undefined;
 
 			if (!callback()) {
-				dependent.dispose();
+				unregister();
 			}
 		});
 	});
-
-	// TODO: errors thrown by this will usually be in response to remote edits, and thus may not surface to the app.
-	// Two fixes should be done related to this:
-	// 1. Ensure errors in response to edits like this crash app and report telemetry.
-	// 2. Replace these (and the above) exception based errors with
-	// out of schema handlers which update the schematized view of the tree instead of throwing.
-	storedSchema.registerDependent(dependent);
 }
 
 /**
