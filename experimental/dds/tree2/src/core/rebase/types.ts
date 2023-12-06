@@ -21,7 +21,8 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
-export const RevisionTagSchema = brandedStringType<StableId>();
+export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
+export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
@@ -47,6 +48,11 @@ export interface ChangeAtomId {
 	/**
 	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 	 */
+	readonly localId: ChangesetLocalId;
+}
+
+export interface EncodedChangeAtomId {
+	readonly revision?: EncodedRevisionTag;
 	readonly localId: ChangesetLocalId;
 }
 

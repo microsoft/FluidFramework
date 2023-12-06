@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, IMultiFormatCodec } from "../codec";
-import { RevisionTag } from "../core";
+import { EncodedRevisionTag, RevisionTag } from "../core";
 import { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema, mapIterable } from "../util";
 import { SummaryData } from "./editManager";
-import { Commit, EncodedEditManager } from "./editManagerFormat";
+import { Commit, EncodedCommit, EncodedEditManager } from "./editManagerFormat";
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SummaryData<TChangeset>> {
 	const format = validator.compile(
@@ -25,7 +25,7 @@ export function makeEditManagerCodec<TChangeset>(
 		change: changeCodec.json.encode(commit.change),
 	});
 
-	const decodeCommit = <T extends Commit<JsonCompatibleReadOnly>>(commit: T) => ({
+	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(commit: T) => ({
 		...commit,
 		revision: revisionTagCodec.decode(commit.revision),
 		change: changeCodec.json.decode(commit.change),
@@ -41,7 +41,7 @@ export function makeEditManagerCodec<TChangeset>(
 				]),
 			};
 			assert(format.check(json), 0x6cc /* Encoded schema should validate */);
-			return json;
+			return json as unknown as JsonCompatibleReadOnly;
 		},
 		decode: (json) => {
 			assert(format.check(json), 0x6cd /* Encoded schema should validate */);
@@ -50,7 +50,11 @@ export function makeEditManagerCodec<TChangeset>(
 				branches: new Map(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
-						{ ...branch, commits: branch.commits.map(decodeCommit) },
+						{
+							...branch,
+							base: revisionTagCodec.decode(branch.base),
+							commits: branch.commits.map(decodeCommit),
+						},
 					]),
 				),
 			};

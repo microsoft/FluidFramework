@@ -7,6 +7,7 @@ import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import {
 	ChangesetLocalId,
+	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
@@ -43,10 +44,11 @@ import {
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
 } from "./modularChangeFormat";
+import { EncodedRevisionInfo } from ".";
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
@@ -187,10 +189,10 @@ function makeV0Codec(
 		return nestedMapFromFlatList(list);
 	}
 
-	function encodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
+	function encodeRevisionInfos(revisions: RevisionInfo[]): EncodedRevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
-			const encodedRevision: Mutable<RevisionInfo> = {
+			const encodedRevision: Mutable<EncodedRevisionInfo> = {
 				revision: revisionTagCodec.encode(revision.revision),
 			};
 
@@ -204,7 +206,7 @@ function makeV0Codec(
 		return encodedRevisions;
 	}
 
-	function decodeRevisionInfos(revisions: RevisionInfo[]): RevisionInfo[] {
+	function decodeRevisionInfos(revisions: EncodedRevisionInfo[]): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
 			const decodedRevision: Mutable<RevisionInfo> = {
@@ -257,7 +259,7 @@ function makeV0Codec(
 
 export function makeModularChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
 	return makeCodecFamily([[0, makeV0Codec(fieldKinds, revisionTagCodec, options)]]);

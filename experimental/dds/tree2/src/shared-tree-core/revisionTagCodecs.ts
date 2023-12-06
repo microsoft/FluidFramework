@@ -4,13 +4,13 @@
  */
 
 import { IJsonCodec } from "../codec";
-import { RevisionTag } from "../core";
+import { EncodedRevisionTag, RevisionTag } from "../core";
 
-export class RevisionTagCodec implements IJsonCodec<RevisionTag, RevisionTag> {
+export class RevisionTagCodec implements IJsonCodec<RevisionTag, EncodedRevisionTag> {
 	public encode(tag: RevisionTag) {
-		return tag;
+		return tag as unknown as EncodedRevisionTag;
 	}
-	public decode(tag: RevisionTag) {
-		return tag;
+	public decode(tag: EncodedRevisionTag) {
+		return tag as unknown as RevisionTag;
 	}
 }

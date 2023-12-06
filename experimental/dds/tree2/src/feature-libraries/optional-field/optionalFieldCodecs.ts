@@ -5,7 +5,8 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { RevisionTag } from "../../core";
+import { EncodedRevisionTag, RevisionTag } from "../../core";
+import { Mutable } from "../../util";
 import type { NodeChangeset } from "../modular-schema";
 import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 import {
@@ -18,12 +19,12 @@ export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCod
 
 export const makeOptionalFieldCodecFamily = (
 	childCodec: IJsonCodec<NodeChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 ): ICodecFamily<OptionalChangeset> =>
 	makeCodecFamily([[0, makeOptionalFieldCodec(childCodec, revisionTagCodec)]]);
 
 function makeRegisterIdCodec(
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 ): IJsonCodec<RegisterId, EncodedRegisterId> {
 	return {
 		encode: (registerId: RegisterId) => {
@@ -31,18 +32,25 @@ function makeRegisterIdCodec(
 				return 0;
 			}
 
-			return registerId.revision === undefined
-				? { ...registerId }
-				: { ...registerId, revision: revisionTagCodec.encode(registerId.revision) };
+			const encodedRegisterId: EncodedRegisterId = { localId: registerId.localId };
+			if (registerId.revision !== undefined) {
+				encodedRegisterId.revision = revisionTagCodec.encode(registerId.revision);
+			}
+
+			return encodedRegisterId;
+			// return { revision: encodedRegisterId.revision, localId: encodedRegisterId.localId };
 		},
 		decode: (registerId: EncodedRegisterId) => {
 			if (registerId === 0) {
 				return "self";
 			}
 
-			return registerId.revision === undefined
-				? { ...registerId }
-				: { ...registerId, revision: revisionTagCodec.decode(registerId.revision) };
+			const decodedRegisterId: Mutable<RegisterId> = { localId: registerId.localId };
+			if (registerId.revision !== undefined) {
+				decodedRegisterId.revision = revisionTagCodec.decode(registerId.revision);
+			}
+
+			return decodedRegisterId;
 		},
 		encodedSchema: EncodedRegisterId,
 	};
@@ -50,7 +58,7 @@ function makeRegisterIdCodec(
 
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-	revisionTagCodec: IJsonCodec<RevisionTag, RevisionTag>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 ): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
@@ -62,7 +70,7 @@ function makeOptionalFieldCodec(
 				for (const build of change.build) {
 					builds.push([
 						build.id.revision === undefined
-							? build.id
+							? { localId: build.id.localId }
 							: { ...build.id, revision: revisionTagCodec.encode(build.id.revision) },
 						build.set,
 					]);
@@ -107,13 +115,15 @@ function makeOptionalFieldCodec(
 				) ?? [];
 			const decoded: OptionalChangeset = {
 				build:
-					encoded.b?.map(([id, set]) => ({
-						id:
-							id.revision === undefined
-								? id
-								: { ...id, revision: revisionTagCodec.decode(id.revision) },
-						set,
-					})) ?? [],
+					encoded.b?.map(([id, set]) => {
+						return {
+							id:
+								id.revision === undefined
+									? { localId: id.localId }
+									: { ...id, revision: revisionTagCodec.decode(id.revision) },
+							set,
+						};
+					}) ?? [],
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [

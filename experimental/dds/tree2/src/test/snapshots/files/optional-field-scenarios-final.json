@@ -151,8 +151,8 @@
                               "c": [
                                 [
                                   {
-                                    "revision": "beefbeef-beef-4000-8000-000000000007",
-                                    "localId": 5
+                                    "localId": 5,
+                                    "revision": "beefbeef-beef-4000-8000-000000000007"
                                   },
                                   {
                                     "fieldChanges": [

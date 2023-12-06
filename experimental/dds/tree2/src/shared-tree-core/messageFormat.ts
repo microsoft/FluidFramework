@@ -5,7 +5,7 @@
 
 import { Type, TSchema } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util";
-import { RevisionTag, RevisionTagSchema, SessionIdSchema } from "../core";
+import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -14,7 +14,7 @@ export interface Message {
 	/**
 	 * The revision tag for the change in this message
 	 */
-	readonly revision: RevisionTag;
+	readonly revision: EncodedRevisionTag;
 	/**
 	 * The stable ID that identifies the originator of the message.
 	 */
