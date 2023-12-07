@@ -342,8 +342,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			 * 1. It has two destinations for the "self" register
 			 * 2. One of those destinations is non-empty, without a corresponding move to empty it.
 			 */
-			const target =
-				src !== "self" && dst === "self" ? "cellTargeting" : ("nodeTargeting" as const);
+			const target: "nodeTargeting" | "cellTargeting" =
+				src !== "self" && dst === "self" ? "cellTargeting" : "nodeTargeting";
 			invertedMoves.push([withIntention(dst), withIntention(src), target]);
 		}
 		const inverted: OptionalChangeset = {
