@@ -47,21 +47,15 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
-		"build:test": [
-			...tscDependsOn,
-			"typetests:gen",
-			"tsc",
-			"api-extractor:commonjs",
-			"api-extractor:esnext",
-		],
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
-		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
-		"build:docs": [...tscDependsOn, "tsc"],
-		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": ["api-extractor:commonjs", "build:esnext"],
+		"build:docs": ["tsc"],
+		"ci:build:docs": ["tsc"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
