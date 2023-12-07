@@ -37,14 +37,14 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
 
 /**
  * Events emitted by {@link IOldestClientObservable}.
- * @internal
+ * @alpha
  */
 export interface IOldestClientObserverEvents extends IEvent {
 	(event: "becameOldest" | "lostOldest", listener: () => void);
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
 	isOldest(): boolean;
