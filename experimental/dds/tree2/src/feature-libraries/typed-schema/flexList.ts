@@ -94,6 +94,7 @@ export type NormalizedFlexList<Item> = readonly Item[];
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
+ * Get the `Item` type from a `LazyItem<Item>`.
  * @beta
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
@@ -111,7 +112,6 @@ type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? Lis
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @alpha
  */
 export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
 	? ConstantFlexListToNonLazyArray<List>
@@ -143,8 +143,6 @@ export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends
  * Type operations designed to work on tuples can often behave very badly on regular arrays.
  * For example recursive patterns for processing them often just return the base case,
  * losing all the type information.
- *
- * @alpha
  */
 // This works by determining if the length is `number` (and not a specific number).
 export type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"]

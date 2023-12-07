@@ -78,9 +78,16 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
-): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>> {
+): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>, TreeValue<T["info"]>> {
 	return new LeafNodeSchema(schema);
 }
+
+// Leaf schema shared between all SchemaFactory instances.
+const stringSchema = makeLeaf(leaf.string);
+const numberSchema = makeLeaf(leaf.number);
+const booleanSchema = makeLeaf(leaf.boolean);
+const nullSchema = makeLeaf(leaf.null);
+const handleSchema = makeLeaf(leaf.handle);
 
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string
@@ -123,7 +130,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	public readonly string = makeLeaf(leaf.string);
+	public readonly string = stringSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
@@ -139,12 +146,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * We should be much more clear about what happens if you use problematic values.
 	 * We should validate and/or normalize them when inserting content.
 	 */
-	public readonly number = makeLeaf(leaf.number);
+	public readonly number = numberSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding a boolean.
 	 */
-	public readonly boolean = makeLeaf(leaf.boolean);
+	public readonly boolean = booleanSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for JavaScript `null`.
@@ -154,12 +161,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * This {@link TreeNodeSchema} node provide the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
-	public readonly null = makeLeaf(leaf.null);
+	public readonly null = nullSchema;
 
 	/**
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
-	public readonly handle = makeLeaf(leaf.handle);
+	public readonly handle = handleSchema;
 
 	/**
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
@@ -405,7 +412,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.List<${string}>`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	/**
@@ -435,7 +442,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${string}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -446,7 +453,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				`${TScope}.${string}`,
 				NodeKind.List,
 				TreeListNode<T>,
-				Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
 		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true);
@@ -465,7 +472,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -474,7 +481,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			public get length(): number {
 				return getSequenceField(this as unknown as TreeListNode).length;
 			}
-			public constructor(input: Iterable<TreeNodeFromImplicitAllowedTypes<T>>) {
+			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
 					return createNodeProxy(
@@ -501,7 +508,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.List,
 			TreeListNode<T>,
-			Iterable<TreeNodeFromImplicitAllowedTypes<T>>
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 

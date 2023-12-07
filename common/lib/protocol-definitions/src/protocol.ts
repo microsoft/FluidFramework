@@ -437,7 +437,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
- * @internal
+ * @alpha
  */
 export interface ISummaryProposal {
 	/**
@@ -448,7 +448,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
- * @internal
+ * @alpha
  */
 export interface ISummaryAck {
 	/**
@@ -464,7 +464,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
- * @internal
+ * @alpha
  */
 export interface ISummaryNack {
 	/**

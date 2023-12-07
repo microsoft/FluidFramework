@@ -9,6 +9,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
@@ -17,12 +18,13 @@ import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IRevertible {
     // (undocumented)
     discard(): any;
@@ -30,18 +32,23 @@ export interface IRevertible {
     revert(): any;
 }
 
-// @internal (undocumented)
+// @alpha
+export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
+    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @alpha (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
     pushToCurrentOperation(revertible: IRevertible): any;
 }
 
-// @internal
+// @alpha
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-// @internal
-export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+// @alpha
+export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -62,6 +69,8 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     insertCols(colStart: number, count: number): void;
     // (undocumented)
     insertRows(rowStart: number, count: number): void;
+    // (undocumented)
+    isSetCellConflictResolutionPolicyFWW(): boolean;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
@@ -92,6 +101,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    switchSetCellPolicy(): void;
     // (undocumented)
     toString(): string;
     // (undocumented)
@@ -100,7 +110,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
-// @internal
+// @alpha
 export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

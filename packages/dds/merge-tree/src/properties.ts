@@ -8,7 +8,7 @@
 import { ICombiningOp } from "./ops";
 
 /**
- * @internal
+ * @alpha
  */
 export interface MapLike<T> {
 	[index: string]: T;
@@ -18,7 +18,7 @@ export interface MapLike<T> {
 // such as toJSON(), JSON.stringify accepts most types other
 // than functions
 /**
- * @internal
+ * @alpha
  */
 export type PropertySet = MapLike<any>;
 

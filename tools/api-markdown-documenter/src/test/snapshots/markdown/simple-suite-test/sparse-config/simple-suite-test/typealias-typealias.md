@@ -5,7 +5,7 @@ Test Type-Alias
 ### Signature {#typealias-signature}
 
 ```typescript
-export declare type TypeAlias = string;
+export type TypeAlias = string;
 ```
 
 ### Remarks {#typealias-remarks}

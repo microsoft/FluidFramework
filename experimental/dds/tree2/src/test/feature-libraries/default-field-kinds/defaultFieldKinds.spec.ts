@@ -105,7 +105,7 @@ describe("defaultFieldKinds", () => {
 				[{ localId: brand(41) }, "self", "nodeTargeting"],
 				["self", { localId: brand(1) }, "cellTargeting"],
 			],
-			childChanges: [["self", nodeChange1]],
+			childChanges: [[{ localId: brand(41) }, nodeChange1]],
 		};
 
 		/**
@@ -167,7 +167,9 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [["self", nodeChange1]],
+					childChanges: [
+						[{ localId: brand(41), revision: change1.revision }, nodeChange1],
+					],
 				};
 				const actual = fieldHandler.rebaser.compose(
 					[change1, taggedChildChange1],
@@ -206,9 +208,7 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [
-						[{ revision: change1.revision, localId: brand(1) }, nodeChange1],
-					],
+					childChanges: [["self", nodeChange1]],
 				};
 				assertEqual(makeAnonChange(actual), makeAnonChange(expected2));
 			});
@@ -260,9 +260,7 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [
-						[{ localId: brand(41), revision: taggedChange.revision }, nodeChange2],
-					],
+					childChanges: [["self", nodeChange2]],
 				}),
 			);
 		});

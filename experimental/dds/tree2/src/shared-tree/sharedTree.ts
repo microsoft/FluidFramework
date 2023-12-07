@@ -50,7 +50,6 @@ import {
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
 } from "../feature-libraries";
-import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import {
@@ -60,8 +59,8 @@ import {
 	toFlexConfig,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
+	TreeView,
 } from "../class-tree";
-import { TreeView, type ITree as OldSimpleTree } from "./simpleTree";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
@@ -147,7 +146,7 @@ export interface ISharedTree extends ISharedObject, ITree {
  */
 export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
-	implements ISharedTree, OldSimpleTree
+	implements ISharedTree
 {
 	private readonly _events: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
@@ -350,13 +349,6 @@ export class SharedTree
 		);
 	}
 
-	public schematizeOld<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
-		const view = this.schematizeInternal(config);
-		return new WrapperTreeView(view);
-	}
-
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
@@ -470,28 +462,5 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
-	}
-}
-
-/**
- * Implementation of TreeView wrapping a FlexTreeView.
- */
-export class WrapperTreeView<
-	in out TRoot extends TreeFieldSchema,
-	TView extends FlexTreeView<TRoot>,
-> implements TreeView<TreeField<TRoot>>
-{
-	public constructor(public readonly view: TView) {}
-
-	public [disposeSymbol](): void {
-		this.view[disposeSymbol]();
-	}
-
-	public get events(): ISubscribable<CheckoutEvents> {
-		return this.view.checkout.events;
-	}
-
-	public get root(): TreeRoot<TreeSchema<TRoot>> {
-		return getProxyForField(this.view.editableTree);
 	}
 }

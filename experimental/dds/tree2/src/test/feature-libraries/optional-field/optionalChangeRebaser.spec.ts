@@ -11,7 +11,7 @@ import {
 } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
 	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
@@ -92,7 +92,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.FieldChanges {
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
 	);

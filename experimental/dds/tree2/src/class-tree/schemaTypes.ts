@@ -94,7 +94,14 @@ export interface TreeNodeSchemaClass<
 	out TNode = unknown,
 	in TInsertable = never,
 > extends TreeNodeSchemaCore<Name, Kind> {
-	new (data: TInsertable): TNode;
+	/**
+	 * Constructs an {@link Unhydrated} node with this schema.
+	 * @remarks
+	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
+	 * Therefor overriding this constructor is not type-safe and is not supported.
+	 * @sealed
+	 */
+	new (data: TInsertable): Unhydrated<TNode>;
 }
 
 /**
@@ -122,7 +129,17 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  * @beta
  */
 export enum FieldKind {
+	/**
+	 * A field which can be empty or filled.
+	 * @remarks
+	 * Allows 0 or one child.
+	 */
 	Optional,
+	/**
+	 * A field which must always be filled.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
 	Required,
 }
 
@@ -131,9 +148,23 @@ export enum FieldKind {
  * @beta
  */
 export enum NodeKind {
+	/**
+	 * A node which serves as a map, storing children under string keys.
+	 */
 	Map,
+	/**
+	 * A node which serves as a list, storing children in an ordered sequence.
+	 */
 	List,
+	/**
+	 * A node which stores a heterogenous collection of children in named fields.
+	 * @remarks
+	 * Each field gets its own schema.
+	 */
 	Object,
+	/**
+	 * A node which stores a single leaf value.
+	 */
 	Leaf,
 }
 
@@ -148,7 +179,10 @@ export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
-	// This class is used with instanceof, and therefore should have nominal typing.
+	/**
+	 * This class is used with instanceof, and therefore should have nominal typing.
+	 * This field enforces that.
+	 */
 	protected _typeCheck?: MakeNominal;
 
 	/**
@@ -231,7 +265,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
 	? InsertableTypedNode<FlexListToUnion<TSchema>>
-	: unknown;
+	: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

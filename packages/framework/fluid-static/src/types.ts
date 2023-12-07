@@ -9,14 +9,14 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
- * @internal
+ * @alpha
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject` in a {@link LoadableObjectRecord}.
- * @internal
+ * @alpha
  */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
@@ -24,7 +24,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
- * @internal
+ * @alpha
  */
 export type LoadableObjectClass<T extends IFluidLoadable> =
 	| DataObjectClass<T>
@@ -35,7 +35,7 @@ export type LoadableObjectClass<T extends IFluidLoadable> =
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
- * @internal
+ * @alpha
  */
 export type DataObjectClass<T extends IFluidLoadable> = {
 	readonly factory: IFluidDataStoreFactory;
@@ -46,7 +46,7 @@ export type DataObjectClass<T extends IFluidLoadable> = {
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `SharedObject`.
- * @internal
+ * @alpha
  */
 export type SharedObjectClass<T extends IFluidLoadable> = {
 	readonly getFactory: () => IChannelFactory;
@@ -56,7 +56,7 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
  *
  * @typeParam T - The class of the loadable object.
- * @internal
+ * @alpha
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
@@ -67,7 +67,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
  *
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
- * @internal
+ * @alpha
  */
 export interface ContainerSchema {
 	/**
@@ -138,7 +138,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
  * @param member - The service-specific member object for the client.
  *
  * @see See {@link IServiceAudienceEvents} for usage details.
- * @internal
+ * @alpha
  */
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
@@ -151,7 +151,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
- * @internal
+ * @alpha
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 	/**
@@ -185,7 +185,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * details about the connecting client, such as device information, environment, or a username.
  *
  * @typeParam M - A service-specific {@link IMember} type.
- * @internal
+ * @alpha
  */
 export interface IServiceAudience<M extends IMember>
 	extends IEventProvider<IServiceAudienceEvents<M>> {
@@ -206,7 +206,7 @@ export interface IServiceAudience<M extends IMember>
  * Base interface for information for each connection made to the Fluid session.
  *
  * @remarks This interface can be extended to provide additional information specific to each service.
- * @internal
+ * @alpha
  */
 export interface IConnection {
 	/**
@@ -224,7 +224,7 @@ export interface IConnection {
  * Base interface to be implemented to fetch each service's member.
  *
  * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
- * @internal
+ * @alpha
  */
 export interface IMember {
 	/**
@@ -240,6 +240,6 @@ export interface IMember {
 
 /**
  * An extended member object that includes currentConnection
- * @internal
+ * @alpha
  */
 export type Myself<M extends IMember = IMember> = M & { currentConnection: string };

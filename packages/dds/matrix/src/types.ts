@@ -7,7 +7,7 @@
 //       of SharedMatrix undo while we decide on the correct layering for undo.
 
 /**
- * @internal
+ * @alpha
  */
 export interface IRevertible {
 	revert();
@@ -15,7 +15,7 @@ export interface IRevertible {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IUndoConsumer {
 	pushToCurrentOperation(revertible: IRevertible);

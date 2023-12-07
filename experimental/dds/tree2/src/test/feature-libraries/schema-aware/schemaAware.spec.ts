@@ -8,10 +8,9 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 import {
-	AllowedTypesToTypedTrees,
-	TypedNode,
-	TypedField,
-	TypeArrayToTypedTreeArray,
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexNode,
+	InsertableFlexField,
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
@@ -30,6 +29,8 @@ import {
 	InternalTypedSchemaTypes,
 } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
 
 // Test UnbrandedName
 {
@@ -58,9 +59,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 		type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
 		const numberFieldLazy = TreeFieldSchema.create(required, [() => numberSchema]);
-		type NonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<
-			typeof numberFieldLazy.allowedTypes
-		>;
+		type NonLazy = FlexListToNonLazyArray<typeof numberFieldLazy.allowedTypes>;
 		type check4_ = requireAssignableTo<NonLazy, typeof numberField1.allowedTypes>;
 	}
 
@@ -92,14 +91,14 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	const schemaData = builder.intoLibrary();
 
 	// Example Use:
-	type BallTree = TypedNode<typeof ballSchema>;
+	type BallTree = InsertableFlexNode<typeof ballSchema>;
 
 	{
 		type check1_ = requireAssignableTo<BallTree, ContextuallyTypedNodeDataObject>;
 	}
 
 	// We can also get the type for the "number" nodes.
-	type NumberTree = TypedNode<typeof numberSchema>;
+	type NumberTree = InsertableFlexNode<typeof numberSchema>;
 
 	const n1: NumberTree = 5;
 
@@ -124,7 +123,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	{
 		type XField = (typeof ballSchema)["objectNodeFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
-		type XContent = TypedField<XField>;
+		type XContent = InsertableFlexField<XField>;
 		type XChild = XField["allowedTypes"];
 		type _check = requireAssignableTo<XContent, number>;
 	}
@@ -138,11 +137,11 @@ import { leaf, SchemaBuilder } from "../../../domains";
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
 		type check_ = requireAssignableTo<BallXFieldTypes, readonly [typeof numberSchema]>;
 
-		type Child = AllowedTypesToTypedTrees<BallXFieldTypes>;
+		type Child = AllowedTypesToFlexInsertableTree<BallXFieldTypes>;
 
 		type check3_ = requireAssignableTo<Child, NumberTree>;
 		type check4_ = requireAssignableTo<NumberTree, Child>;
-		type Child2 = AllowedTypesToTypedTrees<[typeof numberSchema]>;
+		type Child2 = AllowedTypesToFlexInsertableTree<[typeof numberSchema]>;
 
 		type check3x_ = requireAssignableTo<Child2, NumberTree>;
 		type check4x_ = requireAssignableTo<NumberTree, Child2>;
@@ -157,7 +156,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test terminal cases:
 	{
-		type S = TypedNode<typeof numberSchema>;
+		type S = InsertableFlexNode<typeof numberSchema>;
 		type _check4 = requireTrue<areSafelyAssignable<S, number>>;
 	}
 
@@ -185,7 +184,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test non recursive cases:
 	{
-		type S = TypedNode<typeof ballSchema>;
+		type S = InsertableFlexNode<typeof ballSchema>;
 		type _check4 = requireTrue<areSafelyAssignable<S, SimpleBall>>;
 	}
 
@@ -216,13 +215,12 @@ import { leaf, SchemaBuilder } from "../../../domains";
 				ChildSchemaTypes,
 				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
-			type NormalizedChildSchemaTypes =
-				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
-			type ChildTypes = AllowedTypesToTypedTrees<ChildSchemaTypes>;
+			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
+			type ChildTypes = AllowedTypesToFlexInsertableTree<ChildSchemaTypes>;
 		}
 
 		{
-			type S = TypedNode<typeof parent>;
+			type S = InsertableFlexNode<typeof parent>;
 			type _check4 = requireTrue<areSafelyAssignable<S, SimpleParent>>;
 		}
 	}
@@ -246,7 +244,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 		// Confirm schema's recursive type is correct.
 		{
 			type Allowed = RecFieldSchema["allowedTypes"];
-			type AllowedNonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<Allowed>[0];
+			type AllowedNonLazy = FlexListToNonLazyArray<Allowed>[0];
 			type _check1 = requireTrue<areSafelyAssignable<AllowedNonLazy, RecObjectSchema>>;
 		}
 
@@ -266,12 +264,12 @@ import { leaf, SchemaBuilder } from "../../../domains";
 				x: ExpectedSimple2 | undefined;
 			};
 
-			type Simple = TypedNode<typeof rec>;
+			type Simple = InsertableFlexNode<typeof rec>;
 
 			// Check Simple's field type unit tests
 			{
-				type ChildTree = AllowedTypesToTypedTrees<RecFieldSchema["allowedTypes"]>;
-				type SimpleField = TypedField<RecFieldSchema>;
+				type ChildTree = AllowedTypesToFlexInsertableTree<RecFieldSchema["allowedTypes"]>;
+				type SimpleField = InsertableFlexField<RecFieldSchema>;
 			}
 
 			// Overall integration tests
@@ -282,7 +280,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 	// Test recursive cases:
 	{
-		type S = TypedNode<typeof boxSchema>;
+		type S = InsertableFlexNode<typeof boxSchema>;
 
 		interface FlexBox {
 			[typeNameSymbol]?: "SchemaAwareTests.box";
@@ -303,32 +301,21 @@ import { leaf, SchemaBuilder } from "../../../domains";
 				ChildSchemaTypes,
 				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
-			type NormalizedChildSchemaTypes =
-				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
-			type ChildTypeArray = TypeArrayToTypedTreeArray<
-				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>
-			>;
+			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			{
-				type _check7 = requireAssignableTo<ChildTypeArray[1], FlexBox>;
 				{
 					// Should be the same as FlexBox
-					type BoxChildType = ChildTypeArray[1];
-					type BoxChildType2 = TypeArrayToTypedTreeArray<[typeof boxSchema]>[0];
-					type BoxChildType3 = TypedNode<typeof boxSchema>;
+					type BoxChildType3 = InsertableFlexNode<typeof boxSchema>;
 
 					type BoxChildTypeFields = TypedFields<typeof boxSchema.objectNodeFieldsObject>;
 
-					type BoxChildTypeField = TypedField<
+					type BoxChildTypeField = InsertableFlexField<
 						typeof boxSchema.objectNodeFieldsObject.children
 					>;
 				}
-				type _check8 = requireAssignableTo<ChildTypeArray[0], FlexBall>;
 			}
-			type ChildTypes = AllowedTypesToTypedTrees<ChildSchemaTypes>;
-			{
-				type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
-			}
-			type Field = TypedField<ChildSchema>;
+			type ChildTypes = AllowedTypesToFlexInsertableTree<ChildSchemaTypes>;
+			type Field = InsertableFlexField<ChildSchema>;
 		}
 
 		{
