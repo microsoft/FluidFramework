@@ -87,17 +87,6 @@ describe("SharedString interval collections", () => {
 		);
 	});
 
-	function checkIntervalChange() {
-		const collection = sharedString.getIntervalCollection("test");
-		const interval = collection.add({ start: 0, end: 0 });
-		const intervalId = interval.getIntervalId();
-		assert(intervalId);
-		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { endpoints: { start: 1, end: undefined } });
-		// @ts-expect-error - require passing both interval endpoints
-		collection.change(intervalId, { endpoints: { start: undefined, end: 1 } });
-	}
-
 	describe("in a connected state with a remote SharedString", () => {
 		let sharedString2: SharedString;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -192,7 +181,7 @@ describe("SharedString interval collections", () => {
 				sharedString.insertText(0, "hello world");
 				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
 
-				collection.change(id, { endpoints: { start: 1, end: 4 } });
+				collection.change(id, { start: 1, end: 4 });
 
 				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
 					start: 1,
@@ -218,7 +207,7 @@ describe("SharedString interval collections", () => {
 				sharedString.insertText(0, "hello world");
 				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
 
-				collection.change(id, { endpoints: { start: 1, end: 4 }, props: { a: 2 } });
+				collection.change(id, { start: 1, end: 4, props: { a: 2 } });
 
 				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
 					start: 1,

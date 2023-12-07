@@ -731,36 +731,6 @@ const isSequencePlace = (place: any): place is SequencePlace => {
 };
 
 /**
- * @alpha
- * Wraps interval endpoints to ensure that both start and end are always defined on interval change.
- */
-export interface Endpoints {
-	/**
-	 * Start position of the interval.
-	 */
-	start: SequencePlace;
-	/**
-	 * End position of the interval.
-	 */
-	end: SequencePlace;
-}
-
-/**
- * @alpha
- * Arguments to allow modification of interval endpoints, properties, or both on interval change.
- */
-export interface ChangeArgs {
-	/**
-	 * The desired new start and end position of the interval.
-	 */
-	endpoints?: Endpoints;
-	/**
-	 * The desired new properties of the interval.
-	 */
-	props?: PropertySet;
-}
-
-/**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
  * @alpha
@@ -917,7 +887,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * only pass the desired object as the args parameter. To leave an endpoint unchanged, pass the current value.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
-	change(id: string, args: ChangeArgs): TInterval | undefined;
+	change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1441,10 +1414,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * @deprecated - call change with the id and an object containing the new start, end, and/or props values
 	 */
 	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
-	public change(id: string, args: ChangeArgs): TInterval | undefined;
+	public change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined;
 	public change(
 		arg1: string,
-		arg2: SequencePlace | ChangeArgs,
+		arg2: SequencePlace | { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
 		arg3?: SequencePlace,
 	): TInterval | undefined {
 		const id: string = arg1;
@@ -1455,8 +1431,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			start = arg2;
 			end = arg3;
 		} else {
-			start = arg2.endpoints?.start;
-			end = arg2.endpoints?.end;
+			start = arg2.start;
+			end = arg2.end;
 			props = arg2.props;
 		}
 
@@ -1466,13 +1442,20 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		// Force id to be a string.
 		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
+			throw new UsageError("Change API requires an ID that is a string");
+		}
+
+		// Ensure that both start and end are defined or both are undefined.
+		if ((start === undefined) !== (end === undefined)) {
+			throw new UsageError(
+				"Change API requires both start and end to be defined or undefined",
+			);
 		}
 
 		// prevent the overwriting of an interval label, it should remain unchanged
 		// once it has been inserted into the collection.
 		if (props !== undefined && props[reservedRangeLabelsKey] !== undefined) {
-			throw new LoggingError(
+			throw new UsageError(
 				"The label property should not be modified once inserted to the collection",
 			);
 		}
