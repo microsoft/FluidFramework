@@ -147,11 +147,11 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				? [
 						{
 							eventName:
-								"fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 						},
 						{
 							eventName:
-								"fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 						},
 				  ]
 				: [],

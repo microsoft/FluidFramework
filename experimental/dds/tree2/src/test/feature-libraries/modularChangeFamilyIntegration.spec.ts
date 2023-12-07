@@ -29,7 +29,7 @@ import {
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
-import { defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
+import { assertDeltaEqual, defaultRevisionMetadataFromChanges, testChangeReceiver } from "../utils";
 import {
 	intoDelta,
 	ModularChangeFamily,
@@ -244,7 +244,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const delta = intoDelta(makeAnonChange(composed), family.fieldKinds);
-			assert.deepEqual(delta, expected);
+			assertDeltaEqual(delta, expected);
 		});
 
 		it("cross-field move and inverse with nested changes", () => {
@@ -309,7 +309,7 @@ describe("ModularChangeFamily integration", () => {
 					],
 				]),
 			};
-			assert.deepEqual(actual, expected);
+			assertDeltaEqual(actual, expected);
 		});
 
 		it("two cross-field moves of same node", () => {
