@@ -310,25 +310,41 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertIdMap.set(src, dst);
 		}
 
-		let inverseFillsSelf = false;
-		let inverseEmptiesSelf = false;
+		let changeEmptiesSelf = false;
+		let changeFillsSelf = false;
 		const invertedMoves: typeof change.moves = [];
-		for (const [src, dst, target] of moves) {
-			if (src === "self" && dst === "self") {
-				assert(target === "nodeTargeting", "A self->self move must be node-targeting");
-				// No need to augment with intentions as it's a noop for "self".
-				invertedMoves.push([dst, src, target]);
-				// TODO: What happens with inverseEmptiesSelf/inverseFillsSelf here?
-			} else if (src !== "self" && dst === "self") {
-				inverseEmptiesSelf = true;
-				// TODO:AB#6319: This might lead to a situation where we put a node in a register it never came from, and that register may not be empty.
-				invertedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
-			} else if (src === "self" && dst !== "self") {
-				inverseFillsSelf = true;
-				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
-			} else {
-				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
-			}
+		for (const [src, dst] of moves) {
+			changeEmptiesSelf ||= src === "self";
+			changeFillsSelf ||= dst === "self";
+
+			/**
+			 * TODO:AB#6319: The targeting choices here are not really semantically right; this can lead to a situation where we put a node
+			 * in a non-empty register.
+			 *
+			 * Consider:
+			 * Start: field contents are "A". An edit E1 replaces "A" with "B". Then two branches with that edit on their undo-redo stack
+			 * concurrently undo it.
+			 *
+			 * Giving names to these edits:
+			 * E1: Replace A with B ( build [E1,1], move: cell:self->[E1,2], node:[E1,1]->self )
+			 * E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 * E3, concurrent to E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 *
+			 * Say E2 is sequenced first. Output context of E2 has registers "self" and [E1,1] filled with "A" and "B" respectively.
+			 *
+			 * Now consider E3' = rebase(E3 over E2).
+			 *
+			 * When rebasing the moves,
+			 * cell:self->[E1,1] remains the same as it targets the cell.
+			 * node:[E1,2]->self becomes self->self.
+			 *
+			 * This is an invalid edit for two reasons:
+			 * 1. It has two destinations for the "self" register
+			 * 2. One of those destinations is non-empty, without a corresponding move to empty it.
+			 */
+			const target =
+				src !== "self" && dst === "self" ? "cellTargeting" : ("nodeTargeting" as const);
+			invertedMoves.push([withIntention(dst), withIntention(src), target]);
 		}
 		const inverted: OptionalChangeset = {
 			build: [],
@@ -339,6 +355,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			]),
 		};
 
+		const inverseEmptiesSelf = changeFillsSelf;
+		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
 			inverted.reservedDetachId = { localId: genId.getNextId() };
 		}

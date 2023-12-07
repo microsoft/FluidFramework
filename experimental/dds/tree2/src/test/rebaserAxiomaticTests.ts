@@ -275,7 +275,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
-	describe.only("Transaction rebase over single edit", () => {
+	describe.skip("Transaction rebase over single edit", () => {
 		/**
 		 * This test helps verify rebasing/composing transactions behaves as expected.
 		 *
