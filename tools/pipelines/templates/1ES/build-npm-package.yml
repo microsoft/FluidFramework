@@ -156,7 +156,13 @@ extends:
         image: windows-2022
         os: windows
     settings:
-      skipBuildTags: true
+      skipBuildTagsForGitHubPullRequests: true
+      fixedTrue: true
+      fixedFalse: false
+      fixedOne: 1
+      fixedZero: 0
+      fixedEmptyString: ""
+      fixedNonEmptyString: "abc"
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
