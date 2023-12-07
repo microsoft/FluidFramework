@@ -15,6 +15,7 @@ export {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
+	TreeSummarizablesEvents,
 } from "./sharedTreeCore";
 
 export { TransactionStack } from "./transactionStack";

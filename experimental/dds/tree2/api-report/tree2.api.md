@@ -1637,6 +1637,13 @@ readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf,
 }>>;
 
 // @alpha
+export interface TransactionEvents {
+    abort(): void;
+    commit(): void;
+    start(): void;
+}
+
+// @alpha
 export enum TransactionResult {
     Abort = 0,
     Commit = 1

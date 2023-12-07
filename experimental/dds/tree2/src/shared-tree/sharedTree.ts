@@ -16,11 +16,10 @@ import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
+	DetachedFieldIndex,
 	FieldKey,
+	IEditableForest,
 	InMemoryStoredSchemaRepository,
-	SimpleDependee,
-	cachedValue,
-	recordDependency,
 	JsonableTree,
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
@@ -28,7 +27,7 @@ import {
 	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core";
-import { SharedTreeCore } from "../shared-tree-core";
+import { SharedTreeCore, TreeSummarizablesEvents } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	ForestSummarizer,
@@ -205,23 +204,34 @@ export class SharedTree
 				// programmatically reload the SharedTree container.
 				throw error;
 			},
-		); // Note: SchemaSummarizer maintains meaningful summarization state, so avoiding recreating it
+		);
+		// Note: SchemaSummarizer maintains meaningful summarization state, so avoiding recreating it
 		// when possible is desirable.
-		const summarizableDependee = new SimpleDependee("summarizables");
-		const summarizables = cachedValue((observer) => {
-			recordDependency(observer, summarizableDependee);
-			return [
-				new SchemaSummarizer(runtime, schema, options),
-				new ForestSummarizer(
-					this.viewForSummarization?.forest ?? this.view.forest,
-					schema,
-					defaultSchemaPolicy,
-					options.summaryEncodeType,
-					options,
-				),
-				new DetachedFieldIndexSummarizer(this.viewForSummarization.removedTrees),
-			];
-		});
+		const createSummarizables = (
+			forestI: IEditableForest,
+			removedRootsI: DetachedFieldIndex,
+		) => [
+			new SchemaSummarizer(runtime, schema, options),
+			new ForestSummarizer(
+				forestI,
+				schema,
+				defaultSchemaPolicy,
+				options.summaryEncodeType,
+				options,
+			),
+			new DetachedFieldIndexSummarizer(removedRootsI),
+		];
+
+		const summarizables = {
+			current: createSummarizables(forest, removedRoots),
+			events: createEmitter<TreeSummarizablesEvents>(),
+		};
+
+		const recomputeSummarizables = () => {
+			const checkout = this.viewForSummarization;
+			summarizables.current = createSummarizables(checkout.forest, checkout.removedRoots);
+			summarizables.events.emit("afterChange", summarizables.current);
+		};
 
 		super(
 			summarizables,
@@ -254,7 +264,7 @@ export class SharedTree
 		const beginTransaction = () => {
 			if (activeTransactionCount === 0) {
 				this.viewForSummarization = this.view.fork();
-				summarizableDependee.invalidateDependents();
+				recomputeSummarizables();
 			}
 			activeTransactionCount++;
 		};
@@ -263,7 +273,7 @@ export class SharedTree
 			if (activeTransactionCount === 0) {
 				this.viewForSummarization.dispose();
 				this.viewForSummarization = this.view;
-				summarizableDependee.invalidateDependents();
+				recomputeSummarizables();
 			}
 		};
 		const deregisterStart = this.view.transaction.events.on("start", beginTransaction);

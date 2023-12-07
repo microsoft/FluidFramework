@@ -7,7 +7,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
 import { typeboxValidator } from "../../external-utilities";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
-import { cachedValue } from "../../core";
+import { createEmitter } from "../../events";
 
 /**
  * A `SharedTreeCore` with
@@ -27,7 +27,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		summarizables: readonly Summarizable[] = [],
 	) {
 		super(
-			cachedValue(() => summarizables),
+			{ current: summarizables, events: createEmitter() },
 			new DefaultChangeFamily({ jsonValidator: typeboxValidator }),
 			{ jsonValidator: typeboxValidator },
 			id,

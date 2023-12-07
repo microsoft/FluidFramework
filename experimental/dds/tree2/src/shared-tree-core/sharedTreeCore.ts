@@ -18,7 +18,8 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit, ICachedValue } from "../core";
+import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core";
+import { ISubscribable } from "../events";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -32,6 +33,14 @@ const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
 
+export interface TreeSummarizablesEvents {
+	/**
+	 * Signals that the set of summarizables to use has changed.
+	 * @param summarizables - The new set of summarizables to use.
+	 */
+	afterChange(summarizables: readonly Summarizable[]): void;
+}
+
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
  *
@@ -40,7 +49,7 @@ const summarizablesTreeKey = "indexes";
  */
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly getSummarizables: () => readonly Summarizable[];
+	private summarizables: readonly Summarizable[];
 
 	/** Iff false, calls to `submitOp` will have no effect */
 	private submitOps = true;
@@ -72,7 +81,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
 	/**
-	 * @param summarizables - Summarizers for all indexes used by this tree
+	 * @param summarizables - Summarizers for all indexes used by this tree. The set of summarizables to use may
+	 * change outside of a summary, and change should be signaled using a {@link TreeSummarizablesEvents} event.
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param id - The id of the shared object
@@ -81,7 +91,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		summarizables: ICachedValue<readonly Summarizable[]>,
+		summarizables: {
+			current: readonly Summarizable[];
+			events: ISubscribable<TreeSummarizablesEvents>;
+		},
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		// Base class arguments
@@ -127,8 +140,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			options,
 		);
 		const editManagerSummarizable = new EditManagerSummarizer(this.editManager, options);
-		this.getSummarizables = () => {
-			const summarizablesCurrent = [editManagerSummarizable, ...summarizables.get()];
+		const getSummarizables = (addedSummarizables: readonly Summarizable[]) => {
+			const summarizablesCurrent = [editManagerSummarizable, ...addedSummarizables];
 			assert(
 				new Set(summarizablesCurrent.map((e) => e.key)).size ===
 					summarizablesCurrent.length,
@@ -136,6 +149,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			);
 			return summarizablesCurrent;
 		};
+
+		this.summarizables = getSummarizables(summarizables.current);
+		summarizables.events.on("afterChange", (addedSummarizables) => {
+			this.summarizables = getSummarizables(addedSummarizables);
+		});
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -147,7 +165,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
-		for (const s of this.getSummarizables()) {
+		for (const s of this.summarizables) {
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
@@ -164,8 +182,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const summarizables = this.getSummarizables();
-		const loadSummaries = summarizables.map(async (summaryElement) =>
+		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
 				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
@@ -265,8 +282,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = super.getGCData(fullGC).gcNodes;
-		const summarizables = this.getSummarizables();
-		for (const s of summarizables) {
+		for (const s of this.summarizables) {
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
