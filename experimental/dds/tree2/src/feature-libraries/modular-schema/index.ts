@@ -19,7 +19,11 @@ export {
 	CrossFieldTarget,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
-export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
+export {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+} from "./modularChangeFormat";
 export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
 	FieldChangeHandler,
