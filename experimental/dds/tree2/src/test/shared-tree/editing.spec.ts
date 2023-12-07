@@ -1698,6 +1698,41 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
+		it("throws when moved under child node", () => {
+			const tree = makeTreeFromJson({ foo: { bar: "A" } });
+			const fooPath: UpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			assert.throws(() =>
+				tree.editor.move(
+					{ parent: rootNode, field: brand("foo") },
+					0,
+					1,
+					{ parent: fooPath, field: brand("bar") },
+					0,
+				),
+			);
+		});
+
+		it("concurrent cycle creating move", () => {
+			const tree = makeTreeFromJson({ foo: ["A"], bar: ["B"] });
+			const tree2 = tree.fork();
+
+			const fooPath: FieldUpPath = { parent: rootNode, field: brand("foo") };
+			const barPath: FieldUpPath = { parent: rootNode, field: brand("bar") };
+
+			tree.editor.move(fooPath, 0, 1, barPath, 0);
+
+			tree2.editor.move(barPath, 0, 1, fooPath, 0);
+
+			tree.merge(tree2, false);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{ foo: ["B"], bar: ["A"] }]);
+		});
+
 		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
