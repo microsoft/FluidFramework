@@ -435,7 +435,7 @@ extends:
 
         templateContext:
           authenticatedContainerRegistries:
-          - serviceConnection: $[variables.containerRegistryConnection]
+          - serviceConnection: 'Azure Fluid Container Registry' # TESTING. TODO: don't hardcode this
           outputs:
           - ${{ if and(eq(variables.buildBase, true), eq(parameters.pack, true)) }}:
             - output: pipelineArtifact
