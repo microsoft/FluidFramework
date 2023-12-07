@@ -102,7 +102,7 @@ const noteSchema = sf.object('Note', {
 });
 ```
 
-Create a TypeScript datatype by extending the notional type object. 
+Create a TypeScript datatype by extending the notional type object.
 
 ```typescript
 class Note extends noteSchema { /* members of the class defined here */ };
@@ -436,7 +436,7 @@ Removes the items indicated by the `start` index (inclusive) and `end` index (ex
 
 ###### Move methods
 
-List nodes have three methods that move items within a list or from one list node to another. When moving from one list node to another, these methods must be called from the destination list node. Note that in all of the following, the `T` can be any type that is derived from an object that is returned by a call of `SchemaFactory.list()`, such as the `Notes` and `Items` classes in the sticky notes example. 
+List nodes have three methods that move items within a list or from one list node to another. When moving from one list node to another, these methods must be called from the destination list node. Note that in all of the following, the `T` can be any type that is derived from an object that is returned by a call of `SchemaFactory.list()`, such as the `Notes` and `Items` classes in the sticky notes example.
 
 ```typescript
 moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: T)
