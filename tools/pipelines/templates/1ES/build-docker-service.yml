@@ -92,10 +92,6 @@ parameters:
   type: boolean
   default: false
 
-- name: containerRegistryServiceConnectionName
-  type: string
-  default: ''
-
 trigger: none
 
 resources:
@@ -204,7 +200,6 @@ extends:
               Other parameters:
                 pushImage=${{ parameters.pushImage }}
                 testBuild=${{ parameters.testBuild }}
-                containerRegistryServiceConnectionName=${{ parameters.containerRegistryServiceConnectionName }}
 
               Computed variables:
                 shouldPublish=$(shouldPublish)
@@ -219,6 +214,7 @@ extends:
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
                 containerRegistry=$(containerRegistry)
+                containerRegistryConnection=$(containerRegistryConnection)
                 containerTag=$(containerTag)
                 buildContainerName=$(buildContainerName)
               "
@@ -437,9 +433,12 @@ extends:
               remoteImage: $(latestContainerTag)
 
         templateContext:
-          ${{ if ne(parameters.containerRegistryServiceConnectionName, '') }}:
+          ${{ if eq(parameters.pushImage, true) }}:
             authenticatedContainerRegistries:
-            - serviceConnection: ${{ parameters.containerRegistryServiceConnectionName }}
+            # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+            # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+            # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+            - serviceConnection: $(containerRegistryConnection)
           outputs:
           - ${{ if and(eq(variables.buildBase, true), eq(parameters.pack, true)) }}:
             - output: pipelineArtifact

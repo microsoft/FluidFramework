@@ -80,10 +80,6 @@ pr:
     - tools/pipelines/templates/1ES/include-install-pnpm.yml
     - tools/pipelines/templates/1ES/include-use-node-version.yml
 
-# Some variables feed into functionality in the templates which uses template-expression syntax ( '${{ }}' ) and thus gets
-# processed at parse/compile time. For that to work, those values must be passed to the templates as parameters, and the
-# only way to do that is to define some variables at the pipeline level because that's the only way we can make them
-# available at compile time so we can pass them as parameters.
 variables:
 - template: /tools/pipelines/templates/1ES/include-vars.yml@self
   parameters:
@@ -99,7 +95,6 @@ extends:
     testBuild: ${{ variables.testBuild }}
     pushImage: ${{ variables.pushImage }}
     releaseKind: ${{ parameters.releaseKind }}
-    containerRegistryServiceConnectionName: ${{ variables.containerRegistryConnection }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
     packageManager: pnpm
