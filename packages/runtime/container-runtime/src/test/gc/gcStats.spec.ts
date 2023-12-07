@@ -307,13 +307,17 @@ describe("Garbage Collection Stats", () => {
 	 * Note that the life time and deleted stats are the same whether sweep is enabled or not.
 	 */
 	describe("Sweep phase stats", () => {
+		const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
+
 		/**
 		 * When sweep is enabled, deleted stats are updated in the GC run next to the one where the objects become
 		 * sweep ready. This is because the objects are deleted when the GC op sent during GC is ack'd.
 		 */
 		it("can generate stats with deleted nodes - sweep enabled", async () => {
 			// Create garbage collector with sweep enabled.
-			garbageCollector = createGarbageCollector({ gcOptions: { gcSweepGeneration: 1 } });
+			garbageCollector = createGarbageCollector({
+				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+			});
 
 			let previousGCMessagesCount = gcMessagesCount;
 
@@ -366,7 +370,9 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the objects are deleted when the GC op sent during GC is ack'd.
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep enabled", async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { gcSweepGeneration: 1 } });
+			garbageCollector = createGarbageCollector({
+				gcOptions: { gcSweepGeneration: 1, sweepGracePeriodMs },
+			});
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});
@@ -453,7 +459,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({});
+			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});
@@ -482,7 +488,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({});
+			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});

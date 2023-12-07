@@ -46,14 +46,9 @@ import {
 	GCVersion,
 	stableGCVersion,
 	IGarbageCollectionSnapshotData,
-<<<<<<< HEAD
-	IGCStats,
-	IGCRuntimeOptions,
 	UnreferencedStateTracker,
 	UnreferencedState,
 	defaultSweepGracePeriodMs,
-=======
->>>>>>> 2791eb4d3e (Added garbage collection op. This will be sent after GC runs and contain list of deleted nodes.)
 } from "../../gc";
 import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import {

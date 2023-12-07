@@ -150,18 +150,13 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"GC tree should not have changed (indicated by incremental summary using the SummaryType.Handle)",
 		);
 
-		// Stage 2 - Inactive -> Tombstone //
+		// Stage 2 - Unreferenced -> Tombstone //
 
 		// Wait the other half of sweepTimeoutMs, triggering Tombstone
 		await delay(sweepTimeoutMs / 2);
 		mainDataStore._root.set("send", "op2");
-		// Close the main container before sweep so that it doesn't end up deleting local data stores which
-		// logs GC_Deleted_DataStore_Unexpected_Delete error. This error shouldn't happen outside of tests
-		// because sweep only runs after session expiry which means no local data store should be deleted.
-		mainContainer.close();
 
 		await provider.ensureSynchronized();
-
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 
 		const rootGCTree = summaryTree.tree[gcTreeKey];
@@ -186,12 +181,16 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
+		// GC Tombstone check
+		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
 		assert(
-			summaryTree.tree[gcTreeKey].type === SummaryType.Handle,
-			"The GC tree should be the same as before",
+			tombstoneState === undefined,
+			"Tombstone nodes should have transitioned to sweep ready",
 		);
+		deletedState = getGCDeletedStateFromSummary(summaryTree);
+		assert(deletedState === undefined, "Nothing should be deleted yet");
 
-		// Stage 4 - SweepReady -> Sweep //
+		// Stage 4 - SweepReady -> Swept (deleted) //
 
 		// Wait for the GC op to be processed so that the sweep ready nodes are swept.
 		await provider.ensureSynchronized();
