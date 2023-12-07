@@ -222,7 +222,7 @@ export function newGenericChangeset(): GenericChangeset {
 }
 
 function* relevantRemovedRoots(
-	change: GenericChangeset,
+	{ change }: TaggedChange<GenericChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {
