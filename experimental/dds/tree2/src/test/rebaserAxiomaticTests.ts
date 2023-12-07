@@ -51,14 +51,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	function rebaseTagged(
 		change: TaggedChange<TChangeset>,
 		rebasePath: TaggedChange<TChangeset>[],
-		baseBranch: TaggedChange<TChangeset>[],
 	): TaggedChange<TChangeset> {
 		let currChange = change;
-		const metadata = rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges(rebasePath),
-			baseBranch.map(({ revision }) => revision),
-		);
+		const revisionInfo = defaultRevInfosFromChanges(rebasePath);
 		for (const base of rebasePath) {
+			const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]);
 			currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
 		}
 
@@ -161,7 +158,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const rebaseWithoutCompose = rebaseTagged(
 								edit,
 								editsToRebaseOver,
-								editsToRebaseOver,
 							).change;
 							const metadata = rebaseRevisionMetadataFromInfo(
 								defaultRevInfosFromChanges(editsToRebaseOver),
@@ -237,9 +233,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 									editToRebaseOver,
 									...rebasedEditsWithoutCompose,
 								];
-								rebasedEditsWithoutCompose.push(
-									rebaseTagged(edit, rebasePath, [editToRebaseOver]),
-								);
+								rebasedEditsWithoutCompose.push(rebaseTagged(edit, rebasePath));
 							}
 
 							let currentComposedEdit = editToRebaseOver;
