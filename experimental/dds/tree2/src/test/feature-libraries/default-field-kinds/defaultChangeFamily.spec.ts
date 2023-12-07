@@ -17,6 +17,7 @@ import {
 	UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
+	ChangesetLocalId,
 	DeltaRoot,
 } from "../../../core";
 import { leaf, jsonObject } from "../../../domains";
@@ -24,14 +25,19 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	ModularChangeset,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
+	schemaCompressedEncode,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
+import { testTrees } from "../../testTrees";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const family = defaultChangeFamily;
@@ -357,6 +363,43 @@ describe("DefaultEditBuilder", () => {
 				},
 			};
 			expectForest(forest, expected);
+		});
+
+		describe("encodes insert ops using schema based encoding", () => {
+			for (const { name, treeFactory, schemaData } of testTrees) {
+				it(name, () => {
+					const tree = treeFactory();
+					const changes: ModularChangeset[] = [];
+					const changeReceiver = (change: ModularChangeset) => changes.push(change);
+					const builder = new DefaultEditBuilder(defaultChangeFamily, changeReceiver);
+					builder
+						.sequenceField(
+							{ parent: undefined, field: rootKey },
+							{
+								schema: schemaData,
+								policy: defaultSchemaPolicy,
+							},
+						)
+						.insert(
+							0,
+							tree.map((node) => cursorForJsonableTreeNode(node)),
+						);
+
+					for (let index = 0; index < tree.length; index++) {
+						const treeField = tree.length === 1 ? tree : [tree[index]];
+						const expectedOp = schemaCompressedEncode(
+							schemaData,
+							defaultSchemaPolicy,
+							cursorForJsonableTreeField(treeField),
+						);
+
+						const changesetId: ChangesetLocalId = brand(index);
+						const encodedOp = changes[0].builds?.get(undefined)?.get(changesetId);
+
+						assert.deepEqual(encodedOp, expectedOp);
+					}
+				});
+			}
 		});
 
 		it("Can delete a root node", () => {

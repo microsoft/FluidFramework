@@ -41,8 +41,28 @@
                           [
                             0,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "42"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "42",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
