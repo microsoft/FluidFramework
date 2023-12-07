@@ -10,7 +10,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal
+// @alpha
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
     // (undocumented)
     attachState: AttachState;
@@ -22,7 +22,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     getQuorum(): IQuorumClients;
 }
 
-// @internal
+// @alpha
 export interface IOldestClientObservableEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: () => void): any;
