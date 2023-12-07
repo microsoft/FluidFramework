@@ -13,8 +13,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
-	ShareLinkTypes,
-	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
@@ -94,7 +92,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
-			const createLinkType = searchParams.get("createLinkType");
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
@@ -102,14 +99,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 					DriverErrorType.genericError,
 					{ driverVersion: pkgVersion },
 				);
-			}
-			let shareLinkInfo: ShareLinkInfoType | undefined;
-			if (createLinkType && createLinkType in ShareLinkTypes) {
-				shareLinkInfo = {
-					createLink: {
-						type: ShareLinkTypes[createLinkType],
-					},
-				};
 			}
 			return {
 				endpoints: {
@@ -133,7 +122,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 					containerPackageName: packageName ?? undefined,
 				},
 				fileVersion: undefined,
-				shareLinkInfo,
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}

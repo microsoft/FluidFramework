@@ -4,7 +4,7 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ShareLinkTypes, ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
 import { buildOdspShareLinkReqParams } from "./odspUtils";
 
 /**
@@ -13,8 +13,7 @@ import { buildOdspShareLinkReqParams } from "./odspUtils";
  * @param driveId - drive identifier
  * @param filePath - path where file needs to be created
  * @param fileName - name of the new file to be created
- * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
- * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
+ * @param createShareLinkType - type of sharing link you would like to create for this file.
  * @internal
  */
 export function createOdspCreateContainerRequest(
@@ -22,7 +21,7 @@ export function createOdspCreateContainerRequest(
 	driveId: string,
 	filePath: string,
 	fileName: string,
-	createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
+	createShareLinkType?: ISharingLinkKind,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {

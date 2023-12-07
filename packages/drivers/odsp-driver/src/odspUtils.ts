@@ -444,16 +444,12 @@ export const maxUmpPostBodySize = 79872;
  * @returns A string of request parameters that can be concatenated with the base URI
  */
 export function buildOdspShareLinkReqParams(
-	shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined,
+	shareLinkType: ISharingLinkKind | undefined,
 ) {
 	if (!shareLinkType) {
 		return;
 	}
 	const scope = (shareLinkType as ISharingLinkKind).scope;
-	if (!scope) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		return `createLinkType=${shareLinkType}`;
-	}
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
 	const role = (shareLinkType as ISharingLinkKind).role;
 	shareLinkRequestParams = role

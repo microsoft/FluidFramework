@@ -13,7 +13,6 @@ import {
 	OdspErrorType,
 	ShareLinkInfoType,
 	ISharingLinkKind,
-	ShareLinkTypes,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -138,7 +137,7 @@ export async function createNewFluidFile(
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
-	requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
+	requestedSharingLinkKind: ISharingLinkKind | undefined,
 	response: ICreateFileResponse,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
 	enableShareLinkWithCreate?: boolean,
@@ -165,19 +164,6 @@ function extractShareLinkData(
 					: undefined,
 				error: sharing.error,
 				shareId: sharing.shareId,
-			},
-		};
-	} else if (enableShareLinkWithCreate) {
-		const { sharing, sharingLink, sharingLinkErrorReason } = response;
-		if (!sharingLink && !sharingLinkErrorReason) {
-			return;
-		}
-		shareLinkInfo = {
-			createLink: {
-				type: requestedSharingLinkKind,
-				link: sharingLink,
-				error: sharingLinkErrorReason,
-				shareId: sharing?.shareId,
 			},
 		};
 	}
