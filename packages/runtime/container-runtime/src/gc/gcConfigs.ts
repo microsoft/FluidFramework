@@ -183,7 +183,7 @@ export function generateGCConfigs(
 
 	const throwOnTombstoneLoadConfig =
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
-		!createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName];
+		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
 	const throwOnTombstoneLoad =
 		throwOnTombstoneLoadConfig &&
 		tombstoneEnforcementAllowed &&
