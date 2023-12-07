@@ -155,7 +155,7 @@ export function addSummarizeResultToSummary(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;

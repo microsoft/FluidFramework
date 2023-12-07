@@ -163,7 +163,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 // @internal
 export function seqFromTree(tree: ISnapshotTree, readAndParseBlob: ReadAndParseBlob): Promise<number>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor();
     // (undocumented)

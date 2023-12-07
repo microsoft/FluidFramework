@@ -7,7 +7,7 @@
 // @internal
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @internal
+// @alpha
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
 // @alpha

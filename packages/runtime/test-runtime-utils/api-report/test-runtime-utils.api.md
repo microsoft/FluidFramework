@@ -596,7 +596,7 @@ export class MockSharedObjectServices implements IChannelServices {
     objectStorage: MockObjectStorageService;
 }
 
-// @internal
+// @alpha
 export class MockStorage implements IChannelStorageService {
     constructor(tree?: ITree | undefined);
     // (undocumented)
