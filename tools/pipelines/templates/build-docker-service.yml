@@ -92,6 +92,10 @@ parameters:
   type: boolean
   default: false
 
+- name: containerRegistryServiceConnectionName
+  type: string
+  default: ''
+
 trigger: none
 
 resources:
@@ -145,7 +149,7 @@ extends:
             value: $(buildContainerName):$(containerTagSuffix)
         - ${{ else }}:
           - name: containerRegistry
-            value: $[variables.containerRegistryConnection]
+            value: ${{ parameters.containerRegistryServiceConnectionName }}
           - name: containerTag
             value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
           - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
@@ -200,6 +204,7 @@ extends:
               Other parameters:
                 pushImage=${{ parameters.pushImage }}
                 testBuild=${{ parameters.testBuild }}
+                containerRegistryServiceConnectionName=${{ parameters.containerRegistryServiceConnectionName }}
 
               Computed variables:
                 shouldPublish=$(shouldPublish)
@@ -213,7 +218,6 @@ extends:
 
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
-                containerRegistryConnection=$(containerRegistryConnection)
                 containerRegistry=$(containerRegistry)
                 containerTag=$(containerTag)
                 buildContainerName=$(buildContainerName)
@@ -433,11 +437,9 @@ extends:
               remoteImage: $(latestContainerTag)
 
         templateContext:
-          # This assumes that we set ${{ variables.containerRegistryConnection }} to an appropriate value when
-          # parameters.pushImage is true.
-          ${{ if eq(parameters.pushImage, true) }}:
+          ${{ if ne(parameters.containerRegistryServiceConnectionName, '') }}:
             authenticatedContainerRegistries:
-            - serviceConnection: ${{ variables.containerRegistryConnection }}
+            - serviceConnection: ${{ parameters.containerRegistryServiceConnectionName }}
           outputs:
           - ${{ if and(eq(variables.buildBase, true), eq(parameters.pack, true)) }}:
             - output: pipelineArtifact
