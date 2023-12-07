@@ -194,8 +194,8 @@ export class TelemetryContext implements ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
-// @internal
-export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
+// @public
+export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;
 
 // @internal (undocumented)
 export function utf8ByteLength(str: string): number;

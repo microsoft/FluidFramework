@@ -2893,7 +2893,7 @@ export class ContainerRuntime
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
 	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
 		// summarizing is required and asserted by the the summarizer node. We are the root and are
 		// always referenced, so the used routes is only self-route (empty string).
@@ -2907,7 +2907,7 @@ export class ContainerRuntime
 	 * This is called to update objects whose routes are unused.
 	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]) {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
 		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
@@ -2917,7 +2917,7 @@ export class ContainerRuntime
 	/**
 	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
-	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
@@ -2926,7 +2926,7 @@ export class ContainerRuntime
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 * @returns The routes of nodes that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[] {
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
@@ -2938,7 +2938,7 @@ export class ContainerRuntime
 	 * This is called to update objects that are tombstones.
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
@@ -2998,7 +2998,7 @@ export class ContainerRuntime
 	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
-	private getDataStoreAndBlobManagerRoutes(routes: string[]) {
+	private getDataStoreAndBlobManagerRoutes(routes: readonly string[]) {
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
