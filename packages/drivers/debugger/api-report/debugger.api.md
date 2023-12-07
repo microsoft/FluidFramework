@@ -123,10 +123,11 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected static readonly WindowClosedSeq = -1;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export namespace FluidDebugger {
+    // @internal
     export function createFromService(documentService: IDocumentService): Promise<IDocumentService>;
-    // (undocumented)
+    // @internal (undocumented)
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;
 }
 

@@ -489,7 +489,7 @@ export interface INackSummaryResult extends IRetriableFailureResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @internal
+// @alpha
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha (undocumented)

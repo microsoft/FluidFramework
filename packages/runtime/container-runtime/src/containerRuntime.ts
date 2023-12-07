@@ -492,7 +492,7 @@ export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the 
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @internal
+ * @alpha
  */
 export const InactiveResponseHeaderKey = "isInactive";
 

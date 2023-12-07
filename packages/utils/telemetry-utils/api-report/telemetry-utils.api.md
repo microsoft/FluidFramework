@@ -30,7 +30,7 @@ import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces'
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal @deprecated
+// @alpha @deprecated
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @internal (undocumented)
@@ -142,7 +142,7 @@ export interface IConfigProvider extends IConfigProviderBase_2 {
     getStringArray(name: string): string[] | undefined;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface IConfigProviderBase {
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
