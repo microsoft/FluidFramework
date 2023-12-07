@@ -649,7 +649,7 @@ function* relevantRemovedRoots(
 	}
 
 	for (const [id, childChange] of change.childChanges) {
-		// Child changes are relevant unless they apply to the tree which existed in the starting context of
+		// Child changes make the tree they apply to relevant unless that tree existed in the starting context of
 		// of this change.
 		if (id !== "self" && !alreadyYieldedOrNewlyBuilt.has(id)) {
 			alreadyYieldedOrNewlyBuilt.set(id, true);
