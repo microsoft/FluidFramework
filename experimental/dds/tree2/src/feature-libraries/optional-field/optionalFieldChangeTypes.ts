@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, JsonableTree } from "../../core";
+import { ChangeAtomId } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 /**
@@ -27,7 +27,7 @@ export interface OptionalChangeset {
 	/**
 	 * Detached trees to build.
 	 */
-	build: { set: JsonableTree; id: ChangeAtomId }[];
+	build: ChangeAtomId[];
 
 	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.

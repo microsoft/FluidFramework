@@ -30,8 +30,8 @@ export function assertEqual(
 	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };
 	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
-	aCopy.change.build.sort((c, d) => compareRegisterIds(c.id, d.id));
-	bCopy.change.build.sort((c, d) => compareRegisterIds(c.id, d.id));
+	aCopy.change.build.sort((c, d) => compareRegisterIds(c, d));
+	bCopy.change.build.sort((c, d) => compareRegisterIds(c, d));
 
 	assert.equal(
 		aCopy.change.reservedDetachId !== undefined,

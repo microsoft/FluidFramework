@@ -11,17 +11,15 @@ import {
 	ChangesetLocalId,
 	RevisionTag,
 	areEqualChangeAtomIds,
-	JsonableTree,
 	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
-	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
+	JsonableTree,
 } from "../../core";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
-import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
+import { fail, Mutable, IdAllocator, SizedNestedMap, brand } from "../../util";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -202,13 +200,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				return { revision: intention, localId: id.localId };
 			};
 
-			for (const { id, set } of change.build) {
+			for (const id of change.build) {
 				builds.set(
 					{
 						revision: id.revision ?? revision,
 						localId: id.localId,
 					},
-					set,
+					{
+						type: brand("test"),
+					},
 				);
 			}
 
@@ -276,9 +276,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const composedBuilds: OptionalChangeset["build"] = [];
-		for (const [id, set] of builds.entries()) {
+		for (const [id] of builds.entries()) {
 			assert(id !== "self", "Detached trees should not be built directly to self register");
-			composedBuilds.push({ id, set });
+			composedBuilds.push(id);
 		}
 		const composed: OptionalChangeset = {
 			build: composedBuilds,
@@ -510,7 +510,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	): OptionalChangeset => {
 		const result: OptionalChangeset = {
-			build: [{ id: { localId: ids.fill }, set: jsonableTreeFromCursor(newContent) }],
+			build: [{ localId: ids.fill }],
 			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
 			childChanges: [],
 		};
@@ -546,17 +546,6 @@ export function optionalFieldIntoDelta(
 	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
 	const delta: Mutable<DeltaFieldChanges> = {};
-
-	if (change.build.length > 0) {
-		const builds: DeltaDetachedNodeBuild[] = [];
-		for (const build of change.build) {
-			builds.push({
-				id: { major: build.id.revision ?? revision, minor: build.id.localId },
-				trees: [cursorForJsonableTreeNode(build.set)],
-			});
-		}
-		delta.build = builds;
-	}
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -638,7 +627,7 @@ function* relevantRemovedRoots(
 ): Iterable<DeltaDetachedNodeId> {
 	const dstToSrc = new RegisterMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
-	for (const { id } of change.build) {
+	for (const id of change.build) {
 		alreadyYieldedOrNewlyBuilt.set(id, true);
 	}
 

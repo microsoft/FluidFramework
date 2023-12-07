@@ -17,7 +17,7 @@ import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
-import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild, testTreeCursor } from "../fieldKindTestUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils";
 // eslint-disable-next-line import/no-internal-modules
@@ -50,7 +50,7 @@ describe("defaultFieldKinds", () => {
 	describe("valueFieldEditor.set", () => {
 		it("valueFieldEditor.set", () => {
 			const expected: OptionalChangeset = {
-				build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
+				build: [{ localId: brand(41) }],
 				moves: [
 					[{ localId: brand(41) }, "self", "nodeTargeting"],
 					["self", { localId: brand(1) }, "cellTargeting"],
@@ -100,7 +100,7 @@ describe("defaultFieldKinds", () => {
 		);
 
 		const change1WithChildChange: OptionalChangeset = {
-			build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
+			build: [{ localId: brand(41) }],
 			moves: [
 				[{ localId: brand(41) }, "self", "nodeTargeting"],
 				["self", { localId: brand(1) }, "cellTargeting"],
@@ -113,8 +113,8 @@ describe("defaultFieldKinds", () => {
 		 */
 		const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
 			build: [
-				{ id: { localId: brand(41), revision: change1.revision }, set: testTree("tree1") },
-				{ id: { localId: brand(42), revision: change2.revision }, set: testTree("tree2") },
+				{ localId: brand(41), revision: change1.revision },
+				{ localId: brand(42), revision: change2.revision },
 			],
 			moves: [
 				[
@@ -149,12 +149,7 @@ describe("defaultFieldKinds", () => {
 			it("a field change and a child change", () => {
 				const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
 				const expected: OptionalChangeset = {
-					build: [
-						{
-							id: { localId: brand(41), revision: change1.revision },
-							set: testTree("tree1"),
-						},
-					],
+					build: [{ localId: brand(41), revision: change1.revision }],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },
@@ -190,12 +185,7 @@ describe("defaultFieldKinds", () => {
 					defaultRevisionMetadataFromChanges([change1]),
 				);
 				const expected2: OptionalChangeset = {
-					build: [
-						{
-							id: { localId: brand(41), revision: change1.revision },
-							set: testTree("tree1"),
-						},
-					],
+					build: [{ localId: brand(41), revision: change1.revision }],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },

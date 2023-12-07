@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { OptionalChangeset } from "../optional-field";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
@@ -27,6 +28,7 @@ import {
 	FieldEditDescription,
 	FullSchemaPolicy,
 	intoDelta as intoModularDelta,
+	EditDescription,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -153,13 +155,23 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const fillId = this.modularBuilder.generateId();
+
+				const build = this.modularBuilder.buildTrees(fillId, [newContent]);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set(newContent, {
-						fill: this.modularBuilder.generateId(),
+						fill: fillId,
 						detach: this.modularBuilder.generateId(),
 					}),
 				);
-				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
+
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: valueFieldKind.identifier,
+					change,
+				};
+				this.modularBuilder.submitChanges([build, edit]);
 			},
 		};
 	}
@@ -168,15 +180,36 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
 				const id = this.modularBuilder.generateId();
-				const optionalChange =
-					newContent === undefined
-						? optional.changeHandler.editor.clear(wasEmpty, id)
-						: optional.changeHandler.editor.set(newContent, wasEmpty, {
-								fill: this.modularBuilder.generateId(),
-								detach: this.modularBuilder.generateId(),
-						  });
+				const edits: EditDescription[] = [];
+				let optionalChange: OptionalChangeset;
+				if (newContent !== undefined) {
+					const fillId = this.modularBuilder.generateId();
+					const detachId = this.modularBuilder.generateId();
+
+					const build = this.modularBuilder.buildTrees(fillId, [newContent]);
+					edits.push(build);
+
+					optionalChange = optional.changeHandler.editor.set(newContent, wasEmpty, {
+						fill: fillId,
+						detach: detachId,
+					});
+				} else {
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, id);
+				}
+
 				const change: FieldChangeset = brand(optionalChange);
-				this.modularBuilder.submitChange(field, optional.identifier, change);
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: optional.identifier,
+					change,
+				};
+				edits.push(edit);
+				if (newContent !== undefined) {
+				}
+
+				// TODO: What's the deal with this maxId
+				this.modularBuilder.submitChanges(edits);
 			},
 		};
 	}

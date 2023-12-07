@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild, testTreeCursor } from "../fieldKindTestUtils";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
@@ -32,7 +32,7 @@ const childCodec1: IJsonCodec<NodeChangeset> = {
 };
 
 const change1: OptionalChangeset = {
-	build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
+	build: [{ localId: brand(41) }],
 	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 	childChanges: [],
 	reservedDetachId: { localId: brand(1) },
@@ -55,7 +55,7 @@ const change2Inverted: OptionalChangeset = {
 const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
 
 const change1WithChildChange: OptionalChangeset = {
-	build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
+	build: [{ localId: brand(41) }],
 	moves: [
 		[{ localId: brand(41) }, "self", "nodeTargeting"],
 		["self", { localId: brand(1) }, "cellTargeting"],

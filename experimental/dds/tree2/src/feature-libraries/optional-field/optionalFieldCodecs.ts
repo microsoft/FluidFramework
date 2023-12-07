@@ -45,7 +45,7 @@ function makeOptionalFieldCodec(
 			if (change.build.length > 0) {
 				const builds: EncodedBuild[] = [];
 				for (const build of change.build) {
-					builds.push([build.id, build.set]);
+					builds.push([build]);
 				}
 				encoded.b = builds;
 			}
@@ -87,9 +87,8 @@ function makeOptionalFieldCodec(
 				) ?? [];
 			const decoded: OptionalChangeset = {
 				build:
-					encoded.b?.map(([id, set]) => ({
-						id,
-						set,
+					encoded.b?.map(([id]) => ({
+						...id,
 					})) ?? [],
 				moves,
 				childChanges:
