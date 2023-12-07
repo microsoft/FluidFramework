@@ -130,7 +130,6 @@ extends:
       displayName: Build Stage
       dependsOn: [] # this stage doesn't depend on preceding stage
       variables:
-        - group: container-registry-info
         - ${{ if eq(parameters.testBuild, true) }}:
           - name: buildContainerName
             value: test/${{ parameters.containerName }}
