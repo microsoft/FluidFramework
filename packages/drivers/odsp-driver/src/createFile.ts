@@ -127,9 +127,9 @@ export async function createNewFluidFile(
 }
 
 /**
- * If user requested creation of a sharing link along with the creation of the file by providing either
- * createLinkType (now deprecated) or createLinkScope in the request parameters, extract and save
- * sharing link information from the response if it is available.
+ * If user requested creation of a sharing link along with the creation of the file by providing
+ * createLinkScope in the request parameters then extract and save the sharing link information from 
+ * the response if it is available.
  * In case there was an error in creation of the sharing link, error is provided back in the response,
  * and does not impact the creation of file in ODSP.
  * @param requestedSharingLinkKind - Kind of sharing link requested to be created along with the creation of file.
@@ -153,7 +153,6 @@ function extractShareLinkData(
 		}
 		shareLinkInfo = {
 			createLink: {
-				type: requestedSharingLinkKind,
 				link: sharing.sharingLink
 					? {
 							scope: sharing.sharingLink.scope,
