@@ -51,6 +51,8 @@ export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
  * If unset altogether, Sweep will be disabled.
  * If 0 is passed in, Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
  * If any other number is passed in, Sweep will be enabled only for documents with the same value persisted.
+ *
+ * @deprecated use gcTombstoneGenerationOptionName + SweepEnabled GC Option
  */
 export const gcSweepGenerationOptionName = "gcSweepGeneration";
 
@@ -341,6 +343,13 @@ export interface IGCRuntimeOptions {
 	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
 	 */
 	disableGC?: boolean;
+
+	/**
+	 * Flag that if true, will enable the full sweep phase of garbage collection.
+	 *
+	 * Current default behavior is for Sweep Phase to not actually delete unreferenced objects.
+	 */
+	enableGCSweep?: true;
 
 	/**
 	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
