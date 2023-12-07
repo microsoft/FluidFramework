@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	type IConfigProviderBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
 /**
  * Props for initializing a new AzureClient instance
- * @internal
+ * @alpha
  */
 export interface AzureClientProps {
 	/**
@@ -33,7 +35,7 @@ export interface AzureClientProps {
 
 /**
  * Container version metadata.
- * @internal
+ * @alpha
  */
 export interface AzureContainerVersion {
 	/**
@@ -50,7 +52,7 @@ export interface AzureContainerVersion {
 
 /**
  * Options for "Get Container Versions" API.
- * @internal
+ * @alpha
  */
 export interface AzureGetVersionsOptions {
 	/**
@@ -65,13 +67,13 @@ export interface AzureGetVersionsOptions {
  * - "local" for local connections to a Fluid relay instance running on the localhost
  *
  * - "remote" for client connections to the Azure Fluid Relay service
- * @internal
+ * @alpha
  */
 export type AzureConnectionConfigType = "local" | "remote";
 
 /**
  * Parameters for establishing a connection with the Azure Fluid Relay.
- * @internal
+ * @alpha
  */
 export interface AzureConnectionConfig {
 	/**
@@ -90,7 +92,7 @@ export interface AzureConnectionConfig {
 
 /**
  * Parameters for establishing a remote connection with the Azure Fluid Relay.
- * @internal
+ * @alpha
  */
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 	/**
@@ -105,7 +107,7 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 
 /**
  * Parameters for establishing a local connection with a local instance of the Azure Fluid Relay.
- * @internal
+ * @alpha
  */
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
 	/**
@@ -124,7 +126,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
  *
  * Any functionality regarding how the data is handled within the FluidContainer itself, i.e. which data objects
  * or DDSes to use, will not be included here but rather on the FluidContainer class itself.
- * @internal
+ * @alpha
  */
 export interface AzureContainerServices {
 	/**
@@ -165,7 +167,7 @@ export interface AzureUser<T = any> extends IUser {
  * @typeParam T - See {@link AzureMember.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
- * @internal
+ * @alpha
  */
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,6 +185,6 @@ export interface AzureMember<T = any> extends IMember {
 
 /**
  * Audience object for Azure Fluid Relay containers
- * @internal
+ * @alpha
  */
 export type IAzureAudience = IServiceAudience<AzureMember>;

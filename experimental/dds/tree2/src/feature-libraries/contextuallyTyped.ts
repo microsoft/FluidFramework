@@ -23,7 +23,7 @@ import {
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema";
-import { FieldKind, Multiplicity } from "./modular-schema";
+import { FieldKind } from "./modular-schema";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -31,9 +31,14 @@ import {
 	allowedTypesToTypeSet,
 } from "./typed-schema";
 import { cursorForMapTreeNode } from "./mapTreeCursor";
-import { AllowedTypesToTypedTrees, TypedField, TypedNode } from "./schema-aware";
+import {
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
+	InsertableFlexNode,
+} from "./schema-aware";
 import { isFluidHandle, allowsValue } from "./valueUtilities";
 import { TreeDataContext } from "./fieldGenerator";
+import { Multiplicity } from "./multiplicity";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -389,7 +394,7 @@ export function cursorFromContextualData(
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedNode<T>,
+	data: InsertableFlexNode<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -406,7 +411,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 export function cursorForTypedData<T extends AllowedTypes>(
 	context: TreeDataContext,
 	schema: T,
-	data: AllowedTypesToTypedTrees<T>,
+	data: AllowedTypesToFlexInsertableTree<T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		context,
@@ -437,7 +442,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T>,
+	data: InsertableFlexField<T>,
 ): ITreeCursorSynchronous[] {
 	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }

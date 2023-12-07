@@ -7,7 +7,7 @@
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -25,7 +25,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
-// @internal
+// @alpha
 export class AzureClient {
     constructor(properties: AzureClientProps);
     copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
@@ -43,7 +43,7 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
 }
 
-// @internal
+// @alpha
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
@@ -52,22 +52,22 @@ export interface AzureClientProps {
     readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
-// @internal
+// @alpha
 export interface AzureConnectionConfig {
     endpoint: string;
     tokenProvider: ITokenProvider;
     type: AzureConnectionConfigType;
 }
 
-// @internal
+// @alpha
 export type AzureConnectionConfigType = "local" | "remote";
 
-// @internal
+// @alpha
 export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @internal
+// @alpha
 export interface AzureContainerVersion {
     date?: string;
     id: string;
@@ -82,23 +82,23 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @internal
+// @alpha
 export interface AzureGetVersionsOptions {
     maxCount: number;
 }
 
-// @internal
+// @alpha
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
     type: "local";
 }
 
-// @internal
+// @alpha
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
     userName: string;
 }
 
-// @internal
+// @alpha
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     tenantId: string;
     type: "remote";
@@ -110,7 +110,7 @@ export interface AzureUser<T = any> extends IUser {
     name: string;
 }
 
-// @internal
+// @alpha
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { ITelemetryBaseEvent }

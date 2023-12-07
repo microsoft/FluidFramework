@@ -83,6 +83,15 @@ export interface Root<TTree = ProtoNode> {
 	 * then the build should be listed under ID A.
 	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
+	/**
+	 * New detached nodes to be destroyed.
+	 * The ordering has no significance.
+	 *
+	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
+	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,
+	 * then the destruction should be listed under ID B.
+	 */
+	readonly destroy?: readonly DetachedNodeDestruction[];
 }
 /**
  * The default representation for inserted content.
@@ -225,8 +234,11 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
 	/**
-	 * New detached nodes to be constructed.
+	 * New detached nodes to be destroyed.
 	 * The ordering has no significance.
+	 *
+	 * @deprecated - Destroys should be set at the root.
+	 * TODO:6308 migrate all reader/writers away from this and remove it.
 	 *
 	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
 	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,

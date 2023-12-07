@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, Delta, makeAnonChange, mintRevisionTag, tagChange } from "../../../core";
+import {
+	ChangeAtomId,
+	DeltaDetachedNodeId,
+	makeAnonChange,
+	mintRevisionTag,
+	tagChange,
+} from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -12,7 +18,7 @@ import { TestChangeset, MarkMaker as Mark } from "./testEdits";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };
-const deltaId: Delta.DetachedNodeId = { minor: atomId.localId };
+const deltaId: DeltaDetachedNodeId = { minor: atomId.localId };
 const childChange = TestChange.mint([0], 1);
 const relevantNestedTree = { minor: 4242 };
 const oneTreeDelegate = (child: TestChange) => {

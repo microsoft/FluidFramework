@@ -18,8 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];

@@ -3,8 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, RevisionMetadataSource, tagChange, TaggedChange } from "../../core";
+import {
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaMark,
+	makeAnonChange,
+	RevisionMetadataSource,
+	tagChange,
+	TaggedChange,
+} from "../../core";
 import { fail, IdAllocator } from "../../util";
+import { Multiplicity } from "../multiplicity";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -15,7 +24,7 @@ import {
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler";
-import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
+import { FieldKindWithEditor } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 import { NodeChangeset } from "./modularChangeTypes";
@@ -88,9 +97,9 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (
 		{ change }: TaggedChange<GenericChangeset>,
 		deltaFromChild: ToDelta,
-	): Delta.FieldChanges => {
+	): DeltaFieldChanges => {
 		let nodeIndex = 0;
-		const markList: Delta.Mark[] = [];
+		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
@@ -215,7 +224,7 @@ export function newGenericChangeset(): GenericChangeset {
 function* relevantRemovedRoots(
 	{ change }: TaggedChange<GenericChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {
 		yield* relevantRemovedRootsFromChild(nodeChange);
 	}

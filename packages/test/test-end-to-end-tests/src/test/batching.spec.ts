@@ -25,8 +25,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const map1Id = "map1Key";
 const map2Id = "map2Key";
 const registry: ChannelFactoryRegistry = [

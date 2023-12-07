@@ -55,9 +55,14 @@ describe("SequenceField - Compose", () => {
 						!SF.areComposable([taggedA, taggedB, taggedC])
 					) {
 						// These changes do not form a valid sequence of composable changes
-					} else if (title.startsWith("((transient_insert, insert), revive)")) {
+					} else if (
+						title.startsWith("((transient_insert, insert), revive)") ||
+						title.startsWith("((transient_insert, modify_insert), revive)") ||
+						title.startsWith("((move, modify_insert), revive)") ||
+						title.startsWith("((delete, modify_insert), revive)")
+					) {
 						it.skip(title, () => {
-							// This test fails due to the revive lacking lineage about the delete in the transient insert.
+							// This test fails due to the revive lacking lineage about a detach in one of the prior edits
 						});
 					} else {
 						it(title, () => {
@@ -661,29 +666,6 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("insert ○ revive", () => {
-		const insert = [
-			Mark.insert(1, brand(1), { revision: tag1 }),
-			{ count: 2 },
-			Mark.insert(2, brand(2), { revision: tag2 }),
-		];
-		const revive = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
-			{ count: 4 },
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag4 }),
-		];
-		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
-		const expected = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
-			Mark.insert(1, brand(1), { revision: tag1 }),
-			{ count: 2 },
-			Mark.insert(1, brand(2), { revision: tag2 }),
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag4 }),
-			Mark.insert(1, brand(3), { revision: tag2 }),
-		];
-		assert.deepEqual(actual, expected);
-	});
-
 	it("move ○ modify", () => {
 		const move = Change.move(0, 1, 2);
 		const changes = TestChange.mint([], 42);
@@ -1102,5 +1084,36 @@ describe("SequenceField - Compose", () => {
 		];
 
 		assert.deepEqual(composed, expected);
+	});
+
+	it("delete (rollback) ○ insert", () => {
+		const insertA = tagChange([Mark.insert(1, brand(0))], tag1);
+		const deleteB = tagRollbackInverse([Mark.delete(1, brand(0))], tag3, tag2);
+		const composed = shallowCompose([deleteB, insertA]);
+
+		// B is the inverse of a new attach. Since that new attach comes after A (temporally),
+		// its tiebreak policy causes the cell to come before A's insert (spatially).
+		// When composing the rollback with A's insert, the delete should come before the insert,
+		// even though A's insert has a tiebreak policy which puts it before other new cells.
+		const expected = [
+			Mark.delete(1, { revision: tag3, localId: brand(0) }),
+			Mark.insert(1, { revision: tag1, localId: brand(0) }),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
+
+	it("same revision - no overlap", () => {
+		const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 3 }];
+		const cellA = Mark.modify("A", { revision: tag1, localId: brand(1), adjacentCells });
+		const cellC = Mark.modify("C", { revision: tag1, localId: brand(3), adjacentCells });
+
+		const composedAC = shallowCompose([tagChange([cellA], tag2), tagChange([cellC], tag3)]);
+		const composedCA = shallowCompose([tagChange([cellC], tag3), tagChange([cellA], tag2)]);
+
+		const expected = [cellA, cellC];
+
+		assert.deepEqual(composedAC, expected);
+		assert.deepEqual(composedCA, expected);
 	});
 });

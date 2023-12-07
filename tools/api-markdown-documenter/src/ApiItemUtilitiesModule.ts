@@ -9,8 +9,10 @@
 
 export {
 	doesItemRequireOwnDocument,
+	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
+	shouldItemBeIncluded,
 } from "./api-item-transforms";
 export {
 	getDefaultValueBlock,

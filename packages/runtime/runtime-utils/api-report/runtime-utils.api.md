@@ -124,7 +124,7 @@ export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 // @internal @deprecated (undocumented)
 export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 
-// @internal
+// @alpha
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -144,7 +144,7 @@ export class RequestParser implements IRequest {
 // @internal (undocumented)
 export function responseToException(response: IResponse, request: IRequest): Error;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     // (undocumented)
     hasInitialized(_runtime: T): Promise<void>;

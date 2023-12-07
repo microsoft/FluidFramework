@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 /**
  * @internal

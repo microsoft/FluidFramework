@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	Delta,
 	ITreeCursor,
 	TaggedChange,
 	tagChange,
@@ -14,6 +13,12 @@ import {
 	areEqualChangeAtomIds,
 	JsonableTree,
 	RevisionMetadataSource,
+	DeltaFieldChanges,
+	DeltaDetachedNodeRename,
+	DeltaMark,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeId,
+	DeltaDetachedNodeChanges,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -250,7 +255,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				const originalId = nextDstToSrc.get(withIntention(id)) ?? id;
+				const intentionedId = withIntention(id);
+				const originalId = current.dstToSrc.get(intentionedId) ?? intentionedId;
 				const existingChanges = childChangesByOriginalId.get(originalId);
 				const taggedChange = tagChange(childChange, revision);
 				if (existingChanges === undefined) {
@@ -278,7 +284,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			build: composedBuilds,
 			moves: composedMoves,
 			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
-				current.srcToDst.get(id)?.[0] ?? id,
+				id,
 				composeChild(childChanges),
 			]),
 		};
@@ -306,7 +312,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { revision: id.revision ?? revision, localId: id.localId };
 		};
 		for (const [src, dst] of moves) {
-			invertIdMap.set(dst, src);
+			invertIdMap.set(src, dst);
 		}
 
 		let inverseFillsSelf = false;
@@ -417,30 +423,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const overChildChangesBySrc = new RegisterMap<NodeChangeset>();
 		for (const [id, childChange] of overChange.childChanges ?? []) {
-			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, childChange);
-		}
-
-		// Maps the content occupying a given register id in the output context of `change` to the register id
-		// that content occupies in the output context of the rebased change.
-		// This is necessary since child changes to nodes are keyed on the register they occupy in the output
-		// context of the changeset, and `change` might make child changes to content which it doesn't move, but
-		// `over` does.
-		const renamedDsts = new RegisterMap<RegisterId>();
-		for (const [_, dst] of moves) {
-			renamedDsts.set(dst, dst);
-		}
-		for (const [src, dst] of overSrcToDst.entries()) {
-			if (!renamedDsts.has(src)) {
-				renamedDsts.set(src, dst);
-			}
+			overChildChangesBySrc.set(withIntention(id) ?? id, childChange);
 		}
 
 		const rebasedChildChanges: typeof childChanges = [];
 		for (const [id, childChange] of childChanges) {
-			const rebasedId = renamedDsts.get(id) ?? id;
-			// locate corresponding child change
-			const srcId = changeDstToSrc.get(id) ?? id;
-			const overChildChange = overChildChangesBySrc.get(srcId);
+			const overChildChange = overChildChangesBySrc.get(id);
+
+			const rebasedId = overSrcToDst.get(id) ?? id;
 			const rebasedChildChange = rebaseChild(
 				childChange,
 				overChildChange,
@@ -554,11 +544,11 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	deltaFromChild: ToDelta,
-): Delta.FieldChanges {
-	const delta: Mutable<Delta.FieldChanges> = {};
+): DeltaFieldChanges {
+	const delta: Mutable<DeltaFieldChanges> = {};
 
 	if (change.build.length > 0) {
-		const builds: Delta.DetachedNodeBuild[] = [];
+		const builds: DeltaDetachedNodeBuild[] = [];
 		for (const build of change.build) {
 			builds.push({
 				id: { major: build.id.revision ?? revision, minor: build.id.localId },
@@ -568,15 +558,12 @@ export function optionalFieldIntoDelta(
 		delta.build = builds;
 	}
 
-	const dstToSrc = new RegisterMap<RegisterId>();
-
 	let markIsANoop = true;
-	const mark: Mutable<Delta.Mark> = { count: 1 };
+	const mark: Mutable<DeltaMark> = { count: 1 };
 
 	if (change.moves.length > 0) {
-		const renames: Delta.DetachedNodeRename[] = [];
+		const renames: DeltaDetachedNodeRename[] = [];
 		for (const [src, dst] of change.moves) {
-			dstToSrc.set(dst, src);
 			if (src === "self" && dst !== "self") {
 				mark.detach = { major: dst.revision ?? revision, minor: dst.localId };
 				markIsANoop = false;
@@ -598,14 +585,13 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.childChanges.length > 0) {
-		const globals: Delta.DetachedNodeChanges[] = [];
+		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
-			const srcId = dstToSrc.get(id) ?? id;
 			const childDelta = deltaFromChild(childChange);
-			if (srcId !== "self") {
+			if (id !== "self") {
 				const fields = childDelta;
 				globals.push({
-					id: { major: srcId.revision ?? revision, minor: srcId.localId },
+					id: { major: id.revision ?? revision, minor: id.localId },
 					fields,
 				});
 			} else {
@@ -649,12 +635,10 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<Delta.DetachedNodeId> {
-	const dstToSrc = new RegisterMap<RegisterId>();
+): Iterable<DeltaDetachedNodeId> {
 	const alreadyYielded = new RegisterMap<boolean>();
 
-	for (const [src, dst] of change.moves) {
-		dstToSrc.set(dst, src);
+	for (const [src] of change.moves) {
 		if (src !== "self" && !alreadyYielded.has(src)) {
 			alreadyYielded.set(src, true);
 			yield nodeIdFromChangeAtom(src, revision);
@@ -662,12 +646,11 @@ function* relevantRemovedRoots(
 	}
 
 	for (const [id, childChange] of change.childChanges) {
-		// Child changes are relevant unless they apply to the tree which existed in the starting context of
+		// Child changes make the tree they apply to relevant unless that tree existed in the starting context of
 		// of this change.
-		const startingId = dstToSrc.get(id) ?? id;
-		if (startingId !== "self" && !alreadyYielded.has(startingId)) {
-			alreadyYielded.set(startingId, true);
-			yield nodeIdFromChangeAtom(startingId, revision);
+		if (id !== "self" && !alreadyYielded.has(id)) {
+			alreadyYielded.set(id, true);
+			yield nodeIdFromChangeAtom(id);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}

@@ -4,7 +4,7 @@
  */
 
 /**
- * @internal
+ * @alpha
  */
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
@@ -13,7 +13,7 @@ export interface IRequestHeader {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IRequest {
 	url: string;
@@ -21,7 +21,7 @@ export interface IRequest {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IResponse {
 	mimeType: string;
@@ -37,14 +37,14 @@ export interface IResponse {
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
+ * @alpha
  */
 export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
 
 /**
  * Request routing
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
+ * @alpha
  */
 export interface IProvideFluidRouter {
 	readonly IFluidRouter: IFluidRouter;
@@ -52,7 +52,7 @@ export interface IProvideFluidRouter {
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
+ * @alpha
  */
 export interface IFluidRouter extends IProvideFluidRouter {
 	request(request: IRequest): Promise<IResponse>;

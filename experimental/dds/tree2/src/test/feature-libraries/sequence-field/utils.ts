@@ -7,8 +7,9 @@ import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
 	RevisionInfo,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -38,7 +39,7 @@ export function composeNoVerify(
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
@@ -71,7 +72,7 @@ export function shallowCompose<T>(
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -81,7 +82,9 @@ function composeI<T>(
 		idAllocator,
 		moveEffects,
 		revInfos !== undefined
-			? revisionMetadataSourceFromInfo(revInfos)
+			? Array.isArray(revInfos)
+				? revisionMetadataSourceFromInfo(revInfos)
+				: revInfos
 			: defaultRevisionMetadataFromChanges(changes),
 	);
 
@@ -206,7 +209,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange, revision)),

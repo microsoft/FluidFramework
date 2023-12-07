@@ -4,11 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,

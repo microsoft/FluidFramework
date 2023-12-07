@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IDirectory,
 	IDirectoryValueChanged,
@@ -15,7 +15,6 @@ import {
 	SharedDirectory,
 	SharedMap,
 } from "@fluidframework/map";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,

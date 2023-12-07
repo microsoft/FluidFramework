@@ -64,7 +64,7 @@ export enum ContainerErrorType {
 
 /**
  * Represents warnings raised on container.
- * @internal
+ * @alpha
  */
 export interface ContainerWarning extends IErrorBase {
 	/**
@@ -89,6 +89,6 @@ export interface ContainerWarning extends IErrorBase {
  * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
- * @internal
+ * @alpha
  */
 export type ICriticalContainerError = IErrorBase;
