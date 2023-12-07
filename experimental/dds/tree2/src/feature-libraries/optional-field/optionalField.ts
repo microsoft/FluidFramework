@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	ITreeCursor,
 	TaggedChange,
 	tagChange,
 	ChangesetLocalId,
@@ -459,7 +458,6 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		ids: {
 			fill: ChangesetLocalId;
@@ -477,7 +475,6 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		ids: {
 			fill: ChangesetLocalId;
@@ -598,11 +595,11 @@ function* relevantRemovedRoots(
 	change: OptionalChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
-	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
+	const alreadyYielded = new RegisterMap<boolean>();
 
 	for (const [src] of change.moves) {
-		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
-			alreadyYieldedOrNewlyBuilt.set(src, true);
+		if (src !== "self" && !alreadyYielded.has(src)) {
+			alreadyYielded.set(src, true);
 			yield nodeIdFromChangeAtom(src);
 		}
 	}
@@ -610,8 +607,8 @@ function* relevantRemovedRoots(
 	for (const [id, childChange] of change.childChanges) {
 		// Child changes make the tree they apply to relevant unless that tree existed in the starting context of
 		// of this change.
-		if (id !== "self" && !alreadyYieldedOrNewlyBuilt.has(id)) {
-			alreadyYieldedOrNewlyBuilt.set(id, true);
+		if (id !== "self" && !alreadyYielded.has(id)) {
+			alreadyYielded.set(id, true);
 			yield nodeIdFromChangeAtom(id);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);

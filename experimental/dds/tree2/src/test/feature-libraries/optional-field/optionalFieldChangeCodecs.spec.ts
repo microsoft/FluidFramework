@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-import { changesetForChild, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild } from "../fieldKindTestUtils";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 
 const nodeChange1 = changesetForChild("nodeChange1");
@@ -38,7 +38,7 @@ const change1: OptionalChangeset = {
 	reservedDetachId: { localId: brand(1) },
 };
 
-const change2: OptionalChangeset = optionalFieldEditor.set(testTreeCursor("tree2"), false, {
+const change2: OptionalChangeset = optionalFieldEditor.set(false, {
 	fill: brand(42),
 	detach: brand(2),
 });

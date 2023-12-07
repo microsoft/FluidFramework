@@ -160,7 +160,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 				const build = this.modularBuilder.buildTrees(fillId, [newContent]);
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, {
+					valueFieldKind.changeHandler.editor.set({
 						fill: fillId,
 						detach: this.modularBuilder.generateId(),
 					}),
@@ -189,7 +189,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					const build = this.modularBuilder.buildTrees(fillId, [newContent]);
 					edits.push(build);
 
-					optionalChange = optional.changeHandler.editor.set(newContent, wasEmpty, {
+					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
 						fill: fillId,
 						detach: detachId,
 					});

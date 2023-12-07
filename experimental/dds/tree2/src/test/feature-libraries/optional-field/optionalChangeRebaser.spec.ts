@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	CrossFieldManager,
-	NodeChangeset,
-	cursorForJsonableTreeNode,
-} from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -75,7 +71,7 @@ const OptionalChange = {
 			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
+		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
 	clear(wasEmpty: boolean, id: ChangesetLocalId) {

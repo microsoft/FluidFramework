@@ -104,7 +104,7 @@ const change1: TaggedChange<OptionalChangeset> = tagChange(
 );
 
 const change2: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), false, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(false, { fill: brand(42), detach: brand(2) }),
 	mintRevisionTag(),
 );
 
@@ -124,7 +124,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
  * Represents what change2 would have been had it been concurrent with change1.
  */
 const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.set(testTreeCursor("tree2"), true, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(true, { fill: brand(42), detach: brand(2) }),
 	change2.revision,
 );
 
@@ -138,7 +138,7 @@ describe("optionalField", () => {
 	// TODO: more editor tests
 	describe("editor", () => {
 		it("can be created", () => {
-			const actual: OptionalChangeset = optionalFieldEditor.set(testTreeCursor("x"), true, {
+			const actual: OptionalChangeset = optionalFieldEditor.set(true, {
 				fill: brand(42),
 				detach: brand(43),
 			});
@@ -491,7 +491,7 @@ describe("optionalField", () => {
 
 	describe("relevantRemovedRoots", () => {
 		const fill = tagChange(
-			optionalFieldEditor.set(testTreeCursor(""), true, { detach: brand(1), fill: brand(2) }),
+			optionalFieldEditor.set(true, { detach: brand(1), fill: brand(2) }),
 			mintRevisionTag(),
 		);
 		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());

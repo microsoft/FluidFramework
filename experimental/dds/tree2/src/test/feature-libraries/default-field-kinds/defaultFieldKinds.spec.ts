@@ -17,7 +17,7 @@ import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
-import { changesetForChild, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild } from "../fieldKindTestUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils";
 // eslint-disable-next-line import/no-internal-modules
@@ -57,7 +57,7 @@ describe("defaultFieldKinds", () => {
 				childChanges: [],
 			};
 			assert.deepEqual(
-				valueFieldEditor.set(testTreeCursor("tree1"), {
+				valueFieldEditor.set({
 					detach: brand(1),
 					fill: brand(41),
 				}),
@@ -87,11 +87,11 @@ describe("defaultFieldKinds", () => {
 		};
 
 		const change1 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree1"), { detach: brand(1), fill: brand(41) }),
+			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }),
 			mintRevisionTag(),
 		);
 		const change2 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree2"), { detach: brand(2), fill: brand(42) }),
+			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }),
 			mintRevisionTag(),
 		);
 
