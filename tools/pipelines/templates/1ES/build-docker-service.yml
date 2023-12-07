@@ -205,9 +205,7 @@ extends:
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
                 pushImage=$(pushImage)
-                pushImage_compile=${{ variables.pushImage }}
                 releaseImage=$(releaseImage)
-                releaseImage_compile=${{ variables.releaseImage }}
                 release=$(release)
 
                 containerTagSuffix=$(containerTagSuffix)
