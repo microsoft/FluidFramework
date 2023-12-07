@@ -96,14 +96,6 @@ pr:
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
-variables:
-- template: /tools/pipelines/templates/1ES/include-vars.yml@self
-  parameters:
-    releaseImage: true
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildNumberInPatch: false
-
 extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
   parameters:
