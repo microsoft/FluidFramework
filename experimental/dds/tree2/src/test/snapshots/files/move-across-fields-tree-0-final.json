@@ -41,37 +41,58 @@
                           [
                             0,
                             {
-                              "type": "Node",
-                              "fields": {
-                                "foo": [
-                                  {
-                                    "type": "Node",
-                                    "value": "a"
-                                  },
-                                  {
-                                    "type": "Node",
-                                    "value": "b"
-                                  },
-                                  {
-                                    "type": "Node",
-                                    "value": "c"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
                                   }
-                                ],
-                                "bar": [
-                                  {
-                                    "type": "Node",
-                                    "value": "d"
-                                  },
-                                  {
-                                    "type": "Node",
-                                    "value": "e"
-                                  },
-                                  {
-                                    "type": "Node",
-                                    "value": "f"
-                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "Node",
+                                  false,
+                                  [
+                                    "foo",
+                                    [
+                                      "Node",
+                                      true,
+                                      "a",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "b",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "c",
+                                      []
+                                    ],
+                                    "bar",
+                                    [
+                                      "Node",
+                                      true,
+                                      "d",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "e",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "f",
+                                      []
+                                    ]
+                                  ]
                                 ]
-                              }
+                              ]
                             }
                           ]
                         ]

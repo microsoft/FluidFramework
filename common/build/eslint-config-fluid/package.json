@@ -53,6 +53,8 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
 		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.1.0",
+		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"sort-json": "^2.0.1",

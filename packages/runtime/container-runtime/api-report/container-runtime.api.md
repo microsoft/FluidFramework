@@ -442,6 +442,7 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
+    sweepGracePeriodMs?: number;
 }
 
 // @alpha
