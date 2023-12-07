@@ -162,6 +162,60 @@ export function cellSourcesFromMarks(
 	return set;
 }
 
+/**
+ * Returns a number N which encodes how the cells of the two marks are aligned.
+ * - If N is zero, then the first cells are the same.
+ * - If N is positive, then the new cell is before the base cell.
+ * - If N is negative, then the base cell is before the new cell.
+ */
+export function compareCellPositionsUsingTombstones(
+	baseCellId: ChangeAtomId,
+	baseMarksCellSources: ReadonlySet<RevisionTag | undefined>,
+	newCellId: ChangeAtomId,
+	newMarksCellSources: ReadonlySet<RevisionTag | undefined>,
+	metadata: RevisionMetadataSource,
+): number {
+	if (areEqualChangeAtomIds(baseCellId, newCellId)) {
+		return 0;
+	} else if (newMarksCellSources.has(baseCellId.revision)) {
+		// If both changeset have tombstones for both revisions then those should have the same ordering.
+		assert(!baseMarksCellSources.has(newCellId.revision), "Inconsistent cell ordering");
+		// The new changeset has tombstones for this revision, so a tombstone matching `baseId` must occur later in the new changeset.
+		// This means `newMark` comes before that cell and therefore should be returned first.
+		return 1;
+	} else if (baseMarksCellSources.has(newCellId.revision)) {
+		// The new base has tombstones for this revision, so a tombstone matching `newId` must occur later in the new changeset.
+		// This means `baseMark` comes before that cell and therefore should be returned first.
+		return -1;
+	} else {
+		// These tombstones are not ordered relative to each other.
+		// We resort to tie-breaking using the preference (hard-coded to "merge left") of the younger cell.
+		if (newCellId.revision === undefined) {
+			// An undefined revision must mean that the cell was created on the branch we are rebasing.
+			// Since it is newer than the `baseMark`'s cell, it should come first.
+			return 1;
+		}
+
+		assert(baseCellId.revision !== undefined, "Base cell should have a revision");
+		const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
+		const newRevisionIndex = metadata.getIndex(newCellId.revision);
+
+		if (newRevisionIndex !== undefined && baseRevisionIndex !== undefined) {
+			return newRevisionIndex > baseRevisionIndex ? 1 : -1;
+		}
+
+		if (newRevisionIndex !== undefined) {
+			return 1;
+		}
+
+		if (baseRevisionIndex !== undefined) {
+			return -1;
+		}
+
+		assert(false, "Unexpected cell ordering scenario");
+	}
+}
+
 export function getDetachOutputId(
 	mark: Detach,
 	revision: RevisionTag | undefined,

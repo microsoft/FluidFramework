@@ -12,7 +12,6 @@ import {
 	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-	areEqualChangeAtomIds,
 } from "../../core";
 import {
 	CrossFieldManager,
@@ -42,6 +41,7 @@ import {
 	compareCellsFromSameRevision,
 	cellSourcesFromMarks,
 	isTombstone,
+	compareCellPositionsUsingTombstones,
 } from "./utils";
 import {
 	Changeset,
@@ -298,49 +298,19 @@ class RebaseQueue<T> {
 			const baseId = getInputCellId(baseMark, this.baseMarks.revision, this.metadata);
 			const newId = getInputCellId(newMark, undefined, this.metadata);
 			assert(baseId !== undefined && newId !== undefined, "Both marks should have cell IDs");
-			if (areEqualChangeAtomIds(baseId, newId)) {
-				return this.dequeueBoth();
-			} else if (this.newMarksCellSources.has(baseId.revision)) {
-				// If both changeset have tombstones for both revisions then those should have the same ordering.
-				assert(
-					!this.baseMarksCellSources.has(newId.revision),
-					"Inconsistent cell ordering",
-				);
-				// The new changeset has tombstones for this revision, so a tombstone matching `baseId` must occur later in the new changeset.
-				// This means `newMark` comes before that cell and therefore should be returned first.
-				return this.dequeueNew();
-			} else if (this.baseMarksCellSources.has(newId.revision)) {
-				// The new base has tombstones for this revision, so a tombstone matching `newId` must occur later in the new changeset.
-				// This means `baseMark` comes before that cell and therefore should be returned first.
+			const comparison = compareCellPositionsUsingTombstones(
+				baseId,
+				this.baseMarksCellSources,
+				newId,
+				this.newMarksCellSources,
+				this.metadata,
+			);
+			if (comparison < 0) {
 				return this.dequeueBase();
+			} else if (comparison > 0) {
+				return this.dequeueNew();
 			} else {
-				// These tombstones are not ordered relative to each other.
-				// We resort to tie-breaking using the preference (hard-coded to "merge left") of the younger cell.
-				if (newId.revision === undefined) {
-					// An undefined revision must mean that the cell was created on the branch we are rebasing.
-					// Since it is newer than the `baseMark`'s cell, it should come first.
-					return this.dequeueNew();
-				}
-
-				assert(baseId.revision !== undefined, "Base cell should have a revision");
-				const baseRevisionIndex = this.metadata.getIndex(baseId.revision);
-				const newRevisionIndex = this.metadata.getIndex(newId.revision);
-
-				if (newRevisionIndex !== undefined && baseRevisionIndex !== undefined) {
-					return newRevisionIndex > baseRevisionIndex
-						? this.dequeueNew()
-						: this.dequeueBase();
-				}
-
-				if (newRevisionIndex !== undefined) {
-					return this.dequeueNew();
-				}
-
-				if (baseRevisionIndex !== undefined) {
-					return this.dequeueBase();
-				}
-
-				assert(false, "Unexpected cell ordering scenario");
+				return this.dequeueBoth();
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
