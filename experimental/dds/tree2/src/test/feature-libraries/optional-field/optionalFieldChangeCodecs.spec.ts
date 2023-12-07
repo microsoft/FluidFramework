@@ -15,6 +15,7 @@ import {
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
 import { changesetForChild, testTreeCursor } from "../fieldKindTestUtils";
+import { RevisionTagCodec } from "../../../shared-tree-core";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
@@ -75,7 +76,10 @@ describe("defaultFieldChangeCodecs", () => {
 			],
 		};
 
-		makeEncodingTestSuite(makeOptionalFieldCodecFamily(childCodec1), encodingTestData);
+		makeEncodingTestSuite(
+			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec()),
+			encodingTestData,
+		);
 	});
 
 	// TODO: test other kinds of changesets
