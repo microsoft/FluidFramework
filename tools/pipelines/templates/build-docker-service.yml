@@ -174,7 +174,7 @@ extends:
           buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
           testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
-          containerTagSuffix: $(SetVersion.version)
+          containerTagSuffix: 0.0.${{ variables['Build.BuildNumber'] }}
         steps:
         # Setup
         - checkout: self
@@ -192,10 +192,15 @@ extends:
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
+                sourceBranch=${{ variables['Build.SourceBranch'] }}
 
               Tasks Parameters:
                 Lint=${{ parameters.lint }}
                 Test=${{ parameters.test }}
+
+              Other parameters:
+                pushImage=${{ parameters.pushImage }}
+                testBuild=${{ parameters.testBuild }}
 
               Computed variables:
                 shouldPublish=$(shouldPublish)
@@ -204,7 +209,6 @@ extends:
                 canRelease=$(canRelease)
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
-                pushImage=$(pushImage)
                 releaseImage=$(releaseImage)
                 release=$(release)
 
@@ -213,7 +217,6 @@ extends:
                 containerRegistryConnection=$(containerRegistryConnection)
                 containerRegistry=$(containerRegistry)
                 containerTag=$(containerTag)
-                latestContainerTagSuffix=$(latestContainerTagSuffix)
                 buildContainerName=$(buildContainerName)
               "
 
@@ -243,7 +246,7 @@ extends:
               fi
 
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "$(pushImage)" != "True" ]]; then
+                if [[ "${{ parameters.pushImage }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
                   exit -1;
                 fi
@@ -293,8 +296,8 @@ extends:
             inputs:
               targetType: 'inline'
               script: |
-                echo "0.0.$(Build.BuildNumber)"
-                echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
+                echo "$(containerTagSuffix)"
+                echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
         - ${{ if eq(variables.buildBase, true) }}:
           # Build - Base
@@ -404,15 +407,28 @@ extends:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
             image: $(buildContainerName):$(containerTagSuffix)
-            buildArguments: --tag $(buildContainerName):$(latestContainerTagSuffix) ${{ parameters.additionalBuildArguments }}
+            buildArguments: ${{ parameters.additionalBuildArguments }}
+
+        # - task: Docker@1
+        #   displayName: Tag image for main/next
+        #   condition: $[variables.latestContainerTagSuffix != '']
+        #   inputs:
+        #     command: tag
+        #     arguments: '$(buildContainerName):$(containerTagSuffix) $(buildContainerName):$(latestContainerTagSuffix)'
 
         # Push
-        - ${{ if eq(variables.pushImage, true) }}:
+        - ${{ if eq(parameters.pushImage, true) }}:
           - task: 1ES.PushContainerImage@1
-            displayName: Docker Push
+            displayName: Docker Push - $(buildContainerName):$(containerTagSuffix)
             inputs:
               image: $(buildContainerName):$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(containerTagSuffix), $(containerRegistryConnection)/$(buildContainerName):$(latestContainerTagSuffix)
+              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(containerTagSuffix)
+          - task: 1ES.PushContainerImage@1
+            displayName: Docker Push - $(buildContainerName):$(latestContainerTagSuffix)
+            condition: $[variables.latestContainerTagSuffix != '']
+            inputs:
+              image: $(buildContainerName):$(containerTagSuffix)
+              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(latestContainerTagSuffix)
 
         templateContext:
           outputs:
