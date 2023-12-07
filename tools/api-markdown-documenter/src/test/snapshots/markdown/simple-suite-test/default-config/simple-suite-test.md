@@ -186,7 +186,7 @@ Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 #### Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {
+export type TestMappedType = {
     [K in TestEnum]: boolean;
 };
 ```
@@ -202,7 +202,7 @@ Test Type-Alias
 #### Signature {#typealias-signature}
 
 ```typescript
-export declare type TypeAlias = string;
+export type TypeAlias = string;
 ```
 
 #### Remarks {#typealias-remarks}
