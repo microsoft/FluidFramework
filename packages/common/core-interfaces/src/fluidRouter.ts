@@ -4,7 +4,7 @@
  */
 
 /**
- * @internal
+ * @alpha
  */
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
@@ -13,7 +13,7 @@ export interface IRequestHeader {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IRequest {
 	url: string;
@@ -21,7 +21,7 @@ export interface IRequest {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IResponse {
 	mimeType: string;
