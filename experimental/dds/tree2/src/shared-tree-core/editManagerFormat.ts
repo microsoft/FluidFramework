@@ -5,7 +5,13 @@
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
 import { Brand, brandedNumberType } from "../util";
-import { SessionId, SessionIdSchema, RevisionTag, RevisionTagSchema } from "../core";
+import {
+	SessionId,
+	SessionIdSchema,
+	RevisionTag,
+	RevisionTagSchema,
+	EncodedRevisionTag,
+} from "../core";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -16,6 +22,13 @@ export interface Commit<TChangeset> {
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
 }
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type EncodedCommit<TChangeset> = {
+	readonly revision: EncodedRevisionTag;
+	readonly change: TChangeset;
+	readonly sessionId: SessionId;
+};
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
