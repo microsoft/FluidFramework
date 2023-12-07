@@ -174,7 +174,7 @@ extends:
           buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
           testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
-          containerTagSuffix: 0.0.${{ variables['Build.BuildNumber'] }}
+          containerTagSuffix: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
         steps:
         # Setup
         - checkout: self
