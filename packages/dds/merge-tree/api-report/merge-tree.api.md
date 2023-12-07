@@ -18,7 +18,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 // @internal @deprecated (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @internal @sealed
@@ -263,7 +263,7 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @internal @deprecated (undocumented)
@@ -999,7 +999,7 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 // @internal (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @internal @deprecated (undocumented)

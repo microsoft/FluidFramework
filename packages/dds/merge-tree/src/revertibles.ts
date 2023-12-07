@@ -191,7 +191,7 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -221,7 +221,7 @@ export function appendToMergeTreeDeltaRevertibles(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
 	revertibles.forEach((r) => {
@@ -383,7 +383,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,
