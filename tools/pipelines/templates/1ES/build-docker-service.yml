@@ -436,7 +436,7 @@ extends:
         templateContext:
           # This assumes that we set $(containerRegistryConnection) to an appropriate value when parameters.pushImage
           # is true.
-          - ${{ if eq(parameters.pushImage, true) }}:
+          ${{ if eq(parameters.pushImage, true) }}:
             authenticatedContainerRegistries:
             - serviceConnection: $(containerRegistryConnection)
           outputs:
