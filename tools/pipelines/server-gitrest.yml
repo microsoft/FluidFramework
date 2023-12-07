@@ -99,7 +99,7 @@ extends:
     testBuild: ${{ variables.testBuild }}
     pushImage: ${{ variables.pushImage }}
     releaseKind: ${{ parameters.releaseKind }}
-    containerRegistryServiceConnectionName: $(containerRegistryConnection)
+    containerRegistryServiceConnectionName: ${{ variables.containerRegistryConnection }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
     packageManager: pnpm
