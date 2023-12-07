@@ -154,7 +154,7 @@ export function cellSourcesFromMarks(
 ): Set<RevisionTag | undefined> {
 	const set = new Set<RevisionTag | undefined>();
 	for (const mark of marks) {
-		const cell = contextGetter(mark, revision, undefined);
+		const cell = contextGetter(mark, revision, metadata);
 		if (cell !== undefined) {
 			set.add(cell.revision);
 		}

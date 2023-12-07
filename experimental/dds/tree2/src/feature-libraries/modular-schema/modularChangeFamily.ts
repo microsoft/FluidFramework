@@ -269,6 +269,7 @@ export class ModularChangeFamily
 
 		const composedFields: FieldChangeMap = new Map();
 		for (const [field, changesForField] of fieldChanges) {
+			ccc += 1;
 			const { fieldKind, changesets } = this.normalizeFieldChanges(
 				changesForField,
 				genId,
@@ -1322,3 +1323,6 @@ function revisionFromRevInfos(
 	}
 	return revInfos[0].revision;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let ccc = 0;

@@ -36,7 +36,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 50;
+	const runsPerBatch = 200;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
@@ -77,7 +77,7 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skip: [26],
+			// skip: [26],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -106,7 +106,7 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [42],
+			// skip: [42],
 		};
 		createDDSFuzzSuite(model, options);
 	});
