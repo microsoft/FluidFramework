@@ -35,6 +35,7 @@ import {
 	mapCursorField,
 	StoredSchemaCollection,
 } from "../../core";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
@@ -48,7 +49,6 @@ import {
 	Mutable,
 } from "../../util";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
-import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	EncodedChunk,
 	chunkTree,

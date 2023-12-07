@@ -7,7 +7,8 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec";
-import { ChangeAtomId, EncodedChangeAtomId, EncodedRevisionTag, RevisionTag } from "../../core";
+import { EncodedRevisionTag, RevisionTag } from "../../core";
+import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
 import {
 	Attach,
 	AttachAndDetach,
@@ -25,42 +26,6 @@ import {
 import { Changeset as ChangesetSchema, Encoded } from "./format";
 import { isNoopMark } from "./utils";
 
-function encodeChangeAtomId(
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	changeAtomId?: ChangeAtomId,
-): EncodedChangeAtomId | undefined {
-	if (changeAtomId === undefined) {
-		return undefined;
-	}
-
-	if (changeAtomId.revision === undefined) {
-		return { localId: changeAtomId.localId };
-	}
-
-	return {
-		localId: changeAtomId.localId,
-		revision: revisionTagCodec.encode(changeAtomId.revision),
-	};
-}
-
-function decodeChangeAtomId(
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	changeAtomId?: EncodedChangeAtomId,
-): ChangeAtomId | undefined {
-	if (changeAtomId === undefined) {
-		return undefined;
-	}
-
-	if (changeAtomId.revision === undefined) {
-		return { localId: changeAtomId.localId };
-	}
-
-	return {
-		localId: changeAtomId.localId,
-		revision: revisionTagCodec.decode(changeAtomId.revision),
-	};
-}
-
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
@@ -76,10 +41,10 @@ function makeV0Codec<TNodeChange>(
 				case "MoveIn":
 					return {
 						moveIn: {
-							finalEndpoint: encodeChangeAtomId(
-								revisionTagCodec,
-								effect.finalEndpoint,
-							),
+							finalEndpoint:
+								effect.finalEndpoint === undefined
+									? undefined
+									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
 							id: effect.id,
 						},
 					};
@@ -100,24 +65,24 @@ function makeV0Codec<TNodeChange>(
 								effect.revision === undefined
 									? undefined
 									: revisionTagCodec.encode(effect.revision),
-							detachIdOverride: encodeChangeAtomId(
-								revisionTagCodec,
-								effect.detachIdOverride,
-							),
+							detachIdOverride:
+								effect.detachIdOverride === undefined
+									? undefined
+									: encodeChangeAtomId(revisionTagCodec, effect.detachIdOverride),
 							id: effect.id,
 						},
 					};
 				case "MoveOut":
 					return {
 						moveOut: {
-							finalEndpoint: encodeChangeAtomId(
-								revisionTagCodec,
-								effect.finalEndpoint,
-							),
-							detachIdOverride: encodeChangeAtomId(
-								revisionTagCodec,
-								effect.detachIdOverride,
-							),
+							finalEndpoint:
+								effect.finalEndpoint === undefined
+									? undefined
+									: encodeChangeAtomId(revisionTagCodec, effect.finalEndpoint),
+							detachIdOverride:
+								effect.detachIdOverride === undefined
+									? undefined
+									: encodeChangeAtomId(revisionTagCodec, effect.detachIdOverride),
 							id: effect.id,
 						},
 					};
