@@ -15,14 +15,18 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ContainerSchema,
-	DataObjectClass,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
 	SharedObjectClass,
 } from "./types";
-import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
+import {
+	InternalDataObjectClass,
+	isDataObjectClass,
+	isSharedObjectClass,
+	parseDataObjectsFromSharedObjects,
+} from "./utils";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -123,7 +127,7 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: InternalDataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];

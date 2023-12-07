@@ -12,7 +12,6 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 
@@ -41,7 +40,9 @@ export function createServiceAudience<M extends IMember = IMember>(props: {
 
 // @internal
 export type DataObjectClass<T extends IFluidLoadable> = {
-    readonly factory: IFluidDataStoreFactory;
+    readonly factory: {
+        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+    };
 } & LoadableObjectCtor<T>;
 
 // @internal

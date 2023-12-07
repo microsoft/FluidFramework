@@ -4,14 +4,25 @@
  */
 
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ContainerSchema, DataObjectClass, LoadableObjectClass, SharedObjectClass } from "./types";
+
+export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<T> &
+	Record<"factory", IFluidDataStoreFactory>;
 
 /**
  * Runtime check to determine if a class is a DataObject type
  */
-export const isDataObjectClass = (obj: any): obj is DataObjectClass<any> => {
-	return obj?.factory !== undefined;
+export const isDataObjectClass = (obj: any): obj is InternalDataObjectClass<IFluidLoadable> => {
+	const maybe: Partial<InternalDataObjectClass<IFluidLoadable>> | undefined = obj;
+	return (
+		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
+		maybe?.factory?.IFluidDataStoreFactory === maybe?.factory
+	);
 };
 
 /**
