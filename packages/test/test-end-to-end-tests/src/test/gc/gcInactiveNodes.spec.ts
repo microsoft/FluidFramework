@@ -458,7 +458,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider) =>
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
-							"Inactive error from handle.get should include the tombstone flag",
+							"Inactive error from handle.get should include the inactive flag",
 						);
 					}
 					mockLogger.assertMatch(

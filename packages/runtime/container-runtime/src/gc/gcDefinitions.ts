@@ -89,6 +89,7 @@ export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
+export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
  * @see IGCMetadata.gcFeatureMatrix
@@ -355,6 +356,13 @@ export interface IGCRuntimeOptions {
 	sessionExpiryTimeoutMs?: number;
 
 	/**
+	 * Delay between when Tombstone should run and when the object should be deleted.
+	 * This grace period gives a chance to intervene to recover if needed, before Sweep deletes the object.
+	 * If not present, a default (non-zero) value will be used.
+	 */
+	sweepGracePeriodMs?: number;
+
+	/**
 	 * Allows additional GC options to be passed.
 	 */
 	[key: string]: any;
@@ -392,15 +400,21 @@ export interface IGarbageCollectorConfigs {
 	readonly sessionExpiryTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is ready to be swept. */
 	readonly sweepTimeoutMs: number | undefined;
+	/**
+	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
+	 * Sweep is implemented in an eventually-consistent way so this is acceptable.
+	 */
+	readonly sweepGracePeriodMs: number;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**
-	 * Tracks whether GC should run in tombstone mode. In this mode, sweep ready objects are marked as tombstones.
+	 * Tracks whether GC should run in tombstone mode. In this mode, objects are marked as tombstones as a step along the
+	 * way before they are fully deleted.
 	 * In interactive (non-summarizer) clients, tombstone objects behave as if they are deleted, i.e., access to them
-	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a staging
-	 * step for sweep where accidental sweep ready objects can be recovered.
+	 * is not allowed. However, these objects can be accessed after referencing them first. It is used as a "warning"
+	 * step before sweep, where objects wrongly marked as unreferenced can be recovered.
 	 */
 	readonly tombstoneMode: boolean;
 	/** @see GCFeatureMatrix. */
@@ -425,6 +439,8 @@ export const UnreferencedState = {
 	Active: "Active",
 	/** The node is inactive, i.e., it should not become referenced. */
 	Inactive: "Inactive",
+	/** The node is ready to be tombstoned */
+	TombstoneReady: "TombstoneReady",
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
