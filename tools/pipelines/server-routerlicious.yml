@@ -116,9 +116,6 @@ extends:
   parameters:
     testBuild: ${{ variables.testBuild }}
     pushImage: ${{ variables.pushImage }}
-    releaseImage: true
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
