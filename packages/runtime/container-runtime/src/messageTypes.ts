@@ -11,7 +11,7 @@ import {
 	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
 import { IDataStoreAliasMessage } from "./dataStore";
-import { IGarbageCollectionMessage } from "./gc";
+import { GarbageCollectionMessage } from "./gc";
 import { IChunkedOp } from "./opLifecycle";
 
 /**
@@ -129,7 +129,7 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 >;
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
-	IGarbageCollectionMessage
+	GarbageCollectionMessage
 >;
 
 /**

@@ -296,3 +296,19 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
 }
+
+/**
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownGCMessageType - Typed as never to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ */
+export function compatBehaviorAllowsGCMessageType(
+	_unknownGCMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
+): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
+	return compatBehavior === "Ignore";
+}
