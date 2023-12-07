@@ -107,6 +107,8 @@ variables:
 extends:
   template: templates/build-docker-service.yml
   parameters:
+    testBuild: ${{ variables.testBuild }}
+    pushImage: ${{ variables.pushImage }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}

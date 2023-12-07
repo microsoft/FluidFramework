@@ -89,6 +89,8 @@ variables:
 extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
   parameters:
+    testBuild: ${{ variables.testBuild }}
+    pushImage: ${{ variables.pushImage }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian
