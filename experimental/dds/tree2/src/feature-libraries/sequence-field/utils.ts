@@ -146,6 +146,22 @@ export function getOutputCellId(
 	return getInputCellId(mark, revision, metadata);
 }
 
+export function cellSourcesFromMarks(
+	marks: readonly Mark<unknown>[],
+	revision: RevisionTag | undefined,
+	metadata: RevisionMetadataSource | undefined,
+	contextGetter: typeof getInputCellId | typeof getOutputCellId,
+): Set<RevisionTag | undefined> {
+	const set = new Set<RevisionTag | undefined>();
+	for (const mark of marks) {
+		const cell = contextGetter(mark, revision, undefined);
+		if (cell !== undefined) {
+			set.add(cell.revision);
+		}
+	}
+	return set;
+}
+
 export function getDetachOutputId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
@@ -402,6 +418,10 @@ export function isImpactful(
 		default:
 			unreachableCase(type);
 	}
+}
+
+export function isTombstone<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> & { cellId: CellId } {
+	return mark.type === NoopMarkType && mark.cellId !== undefined;
 }
 
 export function isNoopMark<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> {

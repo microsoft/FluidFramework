@@ -5,13 +5,14 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
+import { IdAllocator, brand, fail } from "../../util";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
+	areEqualChangeAtomIds,
 } from "../../core";
 import {
 	CrossFieldManager,
@@ -34,13 +35,13 @@ import {
 	isNewAttach,
 	getInputCellId,
 	isAttachAndDetachEffect,
-	getOutputCellId,
 	getEndpoint,
 	splitMark,
 	isAttach,
 	getDetachOutputId,
-	isImpactfulCellRename,
 	compareCellsFromSameRevision,
+	cellSourcesFromMarks,
+	isTombstone,
 } from "./utils";
 import {
 	Changeset,
@@ -122,7 +123,8 @@ function rebaseMarkList<TNodeChange>(
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 	nodeExistenceState: NodeExistenceState,
 ): MarkList<TNodeChange> {
-	const rebasedMarks: Mark<TNodeChange>[] = [];
+	const factory = new MarkListFactory<TNodeChange>();
+	// const rebasedMarks: Mark<TNodeChange>[] = [];
 	const queue = new RebaseQueue(
 		baseRevision,
 		baseMarkList,
@@ -132,13 +134,13 @@ function rebaseMarkList<TNodeChange>(
 		moveEffects,
 	);
 
-	// Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
-	// At the time we process an attach we don't know about detaches of later nodes,
-	// so we record marks which should have their lineage updated if we encounter a detach.
-	const rebasedCellBlocks: CellBlockList = [];
+	// // Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
+	// // At the time we process an attach we don't know about detaches of later nodes,
+	// // so we record marks which should have their lineage updated if we encounter a detach.
+	// const rebasedCellBlocks: CellBlockList = [];
 
-	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	const detachBlocks = new Map<RevisionTag, IdRange[]>();
+	// // For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
+	// const detachBlocks = new Map<RevisionTag, IdRange[]>();
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
 		const rebasedMark = rebaseMark(
@@ -151,58 +153,58 @@ function rebaseMarkList<TNodeChange>(
 			nodeExistenceState,
 		);
 
-		// Inverse attaches do not contribute to lineage as they are effectively reinstating
-		// an older detach which cells should already have any necessary lineage for.
-		if (
-			(markEmptiesCells(baseMark) ||
-				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
-			!isInverseAttach(baseMark)
-		) {
-			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
-			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
-			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
-			assert(
-				detachId !== undefined,
-				0x816 /* Mark which empties cells should have a detach ID */,
-			);
-			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
-			const detachBlock = getOrAddEmptyToMap(detachBlocks, detachId.revision);
-			addIdRange(detachBlock, {
-				id: detachId.localId,
-				count: baseMark.count,
-			});
+		// // Inverse attaches do not contribute to lineage as they are effectively reinstating
+		// // an older detach which cells should already have any necessary lineage for.
+		// if (
+		// 	(markEmptiesCells(baseMark) ||
+		// 		isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
+		// 	!isInverseAttach(baseMark)
+		// ) {
+		// 	// Note that we want the revision in the detach ID to be the actual revision, not the intention.
+		// 	// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
+		// 	const detachId = getOutputCellId(baseMark, baseRevision, undefined);
+		// 	assert(
+		// 		detachId !== undefined,
+		// 		0x816 /* Mark which empties cells should have a detach ID */,
+		// 	);
+		// 	assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
+		// 	const detachBlock = getOrAddEmptyToMap(detachBlocks, detachId.revision);
+		// 	addIdRange(detachBlock, {
+		// 		id: detachId.localId,
+		// 		count: baseMark.count,
+		// 	});
 
-			addLineageToRecipients(
-				rebasedCellBlocks,
-				detachId.revision,
-				detachId.localId,
-				baseMark.count,
-				metadata,
-			);
+		// 	addLineageToRecipients(
+		// 		rebasedCellBlocks,
+		// 		detachId.revision,
+		// 		detachId.localId,
+		// 		baseMark.count,
+		// 		metadata,
+		// 	);
 
-			assert(
-				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
-				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
-			);
+		// 	assert(
+		// 		areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
+		// 		0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
+		// 	);
 
-			setMarkAdjacentCells(rebasedMark, detachBlock);
-		}
+		// 	setMarkAdjacentCells(rebasedMark, detachBlock);
+		// }
 
-		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark.cellId, detachBlocks, metadata);
-		}
-		rebasedMarks.push(rebasedMark);
-		updateLineageState(
-			rebasedCellBlocks,
-			detachBlocks,
-			baseMark,
-			baseRevision,
-			rebasedMark,
-			metadata,
-		);
+		// if (areInputCellsEmpty(rebasedMark)) {
+		// 	handleLineage(rebasedMark.cellId, detachBlocks, metadata);
+		// }
+		factory.push(rebasedMark);
+		// updateLineageState(
+		// 	rebasedCellBlocks,
+		// 	detachBlocks,
+		// 	baseMark,
+		// 	baseRevision,
+		// 	rebasedMark,
+		// 	metadata,
+		// );
 	}
 
-	return mergeMarkList(rebasedMarks);
+	return factory.list;
 }
 
 function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
@@ -245,6 +247,8 @@ function generateNoOpWithCellId<T>(
 class RebaseQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
+	private readonly baseMarksCellSources: ReadonlySet<RevisionTag | undefined>;
+	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
@@ -256,6 +260,18 @@ class RebaseQueue<T> {
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
 		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, false, genId);
+		this.baseMarksCellSources = cellSourcesFromMarks(
+			baseMarks,
+			baseRevision,
+			metadata,
+			getInputCellId,
+		);
+		this.newMarksCellSources = cellSourcesFromMarks(
+			newMarks,
+			undefined,
+			metadata,
+			getInputCellId,
+		);
 	}
 
 	public isEmpty(): boolean {
@@ -279,22 +295,52 @@ class RebaseQueue<T> {
 		} else if (newMark === undefined) {
 			return this.dequeueBase();
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			const cmp = compareCellPositions(
-				this.baseMarks.revision,
-				baseMark,
-				newMark,
-				this.metadata,
-			);
-			if (cmp < 0) {
-				return this.dequeueBase(-cmp);
-			} else if (cmp > 0) {
-				const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
-				return {
-					newMark: dequeuedNewMark,
-					baseMark: generateNoOpWithCellId(dequeuedNewMark, undefined, this.metadata),
-				};
-			} else {
+			const baseId = getInputCellId(baseMark, this.baseMarks.revision, this.metadata);
+			const newId = getInputCellId(newMark, undefined, this.metadata);
+			assert(baseId !== undefined && newId !== undefined, "Both marks should have cell IDs");
+			if (areEqualChangeAtomIds(baseId, newId)) {
 				return this.dequeueBoth();
+			} else if (this.newMarksCellSources.has(baseId.revision)) {
+				// If both changeset have tombstones for both revisions then those should have the same ordering.
+				assert(
+					!this.baseMarksCellSources.has(newId.revision),
+					"Inconsistent cell ordering",
+				);
+				// The new changeset has tombstones for this revision, so a tombstone matching `baseId` must occur later in the new changeset.
+				// This means `newMark` comes before that cell and therefore should be returned first.
+				return this.dequeueNew();
+			} else if (this.baseMarksCellSources.has(newId.revision)) {
+				// The new base has tombstones for this revision, so a tombstone matching `newId` must occur later in the new changeset.
+				// This means `baseMark` comes before that cell and therefore should be returned first.
+				return this.dequeueBase();
+			} else {
+				// These tombstones are not ordered relative to each other.
+				// We resort to tie-breaking using the preference (hard-coded to "merge left") of the younger cell.
+				if (newId.revision === undefined) {
+					// An undefined revision must mean that the cell was created on the branch we are rebasing.
+					// Since it is newer than the `baseMark`'s cell, it should come first.
+					return this.dequeueNew();
+				}
+
+				assert(baseId.revision !== undefined, "Base cell should have a revision");
+				const baseRevisionIndex = this.metadata.getIndex(baseId.revision);
+				const newRevisionIndex = this.metadata.getIndex(newId.revision);
+
+				if (newRevisionIndex !== undefined && baseRevisionIndex !== undefined) {
+					return newRevisionIndex > baseRevisionIndex
+						? this.dequeueNew()
+						: this.dequeueBase();
+				}
+
+				if (newRevisionIndex !== undefined) {
+					return this.dequeueNew();
+				}
+
+				if (baseRevisionIndex !== undefined) {
+					return this.dequeueBase();
+				}
+
+				assert(false, "Unexpected cell ordering scenario");
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
@@ -372,9 +418,11 @@ function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
 			fusedMark.changes = movedMark.changes;
 		}
 		return fusedMark;
+	} else if (isTombstone(newMark)) {
+		const fusedMark: Mark<T> = { ...movedMark };
+		fusedMark.cellId = cloneCellId(newMark.cellId);
+		return fusedMark;
 	}
-	// The only case we expect for two marks from the same changeset to overlap is when one is a move source
-	// and the other is a move destination bringing the nodes back into place.
 	assert(false, 0x818 /* Unexpected combination of moved and new marks */);
 }
 

@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTag } from "../../core";
+import { ChangeAtomId, RevisionTag } from "../../core";
 import { IdAllocator } from "../../util";
 import { Mark } from "./types";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
-import { splitMark } from "./utils";
+import { areOverlappingIdRanges, getInputCellId, splitMark } from "./utils";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
