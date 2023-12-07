@@ -16,5 +16,5 @@ export function transformApiNamespace(
 	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
-	return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);
+	return transformApiModuleLike(apiNamespace, config, generateChildContent);
 }

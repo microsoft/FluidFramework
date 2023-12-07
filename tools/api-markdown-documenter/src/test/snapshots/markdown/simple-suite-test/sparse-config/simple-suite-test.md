@@ -70,7 +70,6 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test/testfunction-function) | `ALPHA` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](docs/simple-suite-test/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test/testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |
@@ -79,7 +78,6 @@ const foo = bar;
 
 | Variable | Alerts | Modifiers | Description |
 | --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test/testconst-variable) | `BETA` | `readonly` | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
 
 ### Namespaces

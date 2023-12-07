@@ -59,40 +59,39 @@ import { filterItems } from "../ApiItemTransformUtilities";
  */
 export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
-	childItems: readonly ApiItem[],
 	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const children: SectionNode[] = [];
 
-	const filteredChildren = filterItems(childItems, config);
+	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
-		const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
+		const interfaces = filterByKind(filteredChildren, [ApiItemKind.Interface]).map(
 			(_apiItem) => _apiItem as ApiInterface,
 		);
 
-		const classes = filterByKind(childItems, [ApiItemKind.Class]).map(
+		const classes = filterByKind(filteredChildren, [ApiItemKind.Class]).map(
 			(_apiItem) => _apiItem as ApiClass,
 		);
 
-		const namespaces = filterByKind(childItems, [ApiItemKind.Namespace]).map(
+		const namespaces = filterByKind(filteredChildren, [ApiItemKind.Namespace]).map(
 			(_apiItem) => _apiItem as ApiNamespace,
 		);
 
-		const types = filterByKind(childItems, [ApiItemKind.TypeAlias]).map(
+		const types = filterByKind(filteredChildren, [ApiItemKind.TypeAlias]).map(
 			(_apiItem) => _apiItem as ApiTypeAlias,
 		);
 
-		const functions = filterByKind(childItems, [ApiItemKind.Function]).map(
+		const functions = filterByKind(filteredChildren, [ApiItemKind.Function]).map(
 			(_apiItem) => _apiItem as ApiFunction,
 		);
 
-		const enums = filterByKind(childItems, [ApiItemKind.Enum]).map(
+		const enums = filterByKind(filteredChildren, [ApiItemKind.Enum]).map(
 			(_apiItem) => _apiItem as ApiEnum,
 		);
 
-		const variables = filterByKind(childItems, [ApiItemKind.Variable]).map(
+		const variables = filterByKind(filteredChildren, [ApiItemKind.Variable]).map(
 			(_apiItem) => _apiItem as ApiVariable,
 		);
 
