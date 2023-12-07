@@ -4,7 +4,7 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { decodeChangeAtomIdDefined, encodeChangeAtomId } from "../utils";
+import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
 import { Mutable } from "../../util";
@@ -112,7 +112,7 @@ function makeOptionalFieldCodec(
 				build:
 					encoded.b?.map(([id, set]) => {
 						return {
-							id: decodeChangeAtomIdDefined(revisionTagCodec, id),
+							id: decodeChangeAtomId(revisionTagCodec, id),
 							set,
 						};
 					}) ?? [],

@@ -33,17 +33,3 @@ export function decodeChangeAtomId(
 		revision: revisionTagCodec.decode(changeAtomId.revision),
 	};
 }
-
-export function decodeChangeAtomIdDefined(
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	changeAtomId: EncodedChangeAtomId,
-): ChangeAtomId {
-	if (changeAtomId.revision === undefined) {
-		return { localId: changeAtomId.localId };
-	}
-
-	return {
-		localId: changeAtomId.localId,
-		revision: revisionTagCodec.decode(changeAtomId.revision),
-	};
-}
