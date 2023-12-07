@@ -541,7 +541,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
- * @internal
+ * @alpha
  */
 export interface IHostLoader extends ILoader {
 	/**

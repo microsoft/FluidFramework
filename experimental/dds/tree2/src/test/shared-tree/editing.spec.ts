@@ -12,13 +12,13 @@ import {
 	moveToDetachedField,
 	FieldUpPath,
 	PathVisitor,
-	Delta,
 	DetachedRangeUpPath,
 	RangeUpPath,
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	AnchorNode,
 	EmptyKey,
+	ProtoNodes,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -207,10 +207,7 @@ describe("Editing", () => {
 			insert(tree2, 1, "C");
 			tree3.editor
 				.sequenceField(rootField)
-				.insert(
-					0,
-					cursorForJsonableTreeNode({ type: jsonObject.name, fields: { foo: [] } }),
-				);
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 
 			const aEditor = tree3.editor.sequenceField({ parent: rootNode, field: brand("foo") });
 			aEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }));
@@ -1661,7 +1658,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,
@@ -2209,7 +2206,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,

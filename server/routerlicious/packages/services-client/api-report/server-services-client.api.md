@@ -375,7 +375,7 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     config?: IExternalWriterConfig;
 }
 
-// @internal
+// @alpha
 export interface ISession {
     deltaStreamUrl: string;
     historianUrl: string;

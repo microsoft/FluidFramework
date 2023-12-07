@@ -23,7 +23,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument } from "./ApiItemTransformUtilities";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";
 import { createDocument } from "./Utilities";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
@@ -53,7 +53,7 @@ export function apiItemToDocument(
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	if (apiItem.kind === ApiItemKind.None) {
-		throw new Error(`Encountered API item with a kind of "None".`);
+		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);
 	}
 
 	if (
@@ -62,6 +62,12 @@ export function apiItemToDocument(
 		apiItem.kind === ApiItemKind.EntryPoint
 	) {
 		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+	}
+
+	if (!shouldItemBeIncluded(apiItem, config)) {
+		throw new Error(
+			`Provided API item "${apiItem.displayName}" should not be included in documentation suite per configuration. Cannot generate a document for it.`,
+		);
 	}
 
 	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
@@ -105,7 +111,7 @@ export function apiItemToSections(
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	if (apiItem.kind === ApiItemKind.None) {
-		throw new Error(`Encountered API item with a kind of "None".`);
+		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);
 	}
 
 	if (
@@ -114,6 +120,12 @@ export function apiItemToSections(
 		apiItem.kind === ApiItemKind.EntryPoint
 	) {
 		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+	}
+
+	if (!shouldItemBeIncluded(apiItem, config)) {
+		// If a parent item has requested we render contents for an item not desired by the configuration,
+		// return an empty set of sections.
+		return [];
 	}
 
 	const logger = config.logger;

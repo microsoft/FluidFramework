@@ -12,7 +12,13 @@
 export interface Revertible {
 	/** Indicates the type of edit that produced this revertible. */
 	readonly kind: RevertibleKind;
+	/**
+	 * Information about which client created the edit.
+	 */
 	readonly origin: {
+		/**
+		 * Indicates if the {@link Revertible} is from the local client (true) or a remote client (false).
+		 */
 		readonly isLocal: boolean;
 	};
 	/**
