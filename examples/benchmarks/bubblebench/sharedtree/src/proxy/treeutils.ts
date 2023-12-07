@@ -23,7 +23,7 @@ export const makeScalar = (
 	payload: value,
 });
 
-export function fromJson(idContext: NodeIdContext, value: Serializable<unknown>): ChangeNode {
+export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode {
 	if (typeof value === "object") {
 		if (Array.isArray(value)) {
 			return {

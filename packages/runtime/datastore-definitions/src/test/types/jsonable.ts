@@ -55,8 +55,8 @@ interface IA2 {
 declare const a2: IA2;
 foo(a2);
 
-// text complex indexed interface
-declare const a3: { [key: string]: Jsonable<string> };
+// test complex indexed interface
+declare const a3: { [key: string]: string };
 foo(a3);
 
 // test interface with multiple properties
@@ -100,7 +100,30 @@ const nested: INested = {
 };
 foo(nested);
 
+// test `any` type
+declare const anAny: any;
+foo(anAny);
+
+// test "recursive" type compiles
+// Infinite recursion not supported nor desired but is not prevented
+// and this test exists simply to demonstrate that limitation.
+interface SelfReferencing {
+	me: SelfReferencing;
+}
+declare const selfReferencing: SelfReferencing;
+foo(selfReferencing);
+
 // --- should not work
+
+// test unknown
+declare const aUnknown: unknown;
+// @ts-expect-error should not be jsonable
+foo(aUnknown);
+
+// test interface with unknown
+declare const nestedUnknown: { a: unknown };
+// @ts-expect-error should not be jsonable
+foo(nestedUnknown);
 
 // test interface with method, and member
 interface IA11 {
