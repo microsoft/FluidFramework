@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable prefer-template */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import React, { ReactNode, useEffect, useState } from "react";
 import { TreeView, Tree } from "@fluid-experimental/tree2";
 import { IFluidContainer } from "@fluidframework/fluid-static";

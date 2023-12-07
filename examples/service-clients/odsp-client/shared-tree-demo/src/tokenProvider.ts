@@ -3,67 +3,96 @@
  * Licensed under the MIT License.
  */
 
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 import {
-	IClientConfig,
-	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
-} from "@fluidframework/odsp-doclib-utils";
+	PublicClientApplication,
+	AuthenticationResult,
+	InteractionRequiredAuthError,
+} from "@azure/msal-browser";
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
-import { OdspTestCredentials } from "./clientProps";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { WEBSOCKET_TOKEN, STORAGE_TOKEN } from "./clientProps";
 
-/**
- * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
- */
-export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly creds: OdspTestCredentials;
+export async function fetchTokens(
+	siteUrl: string,
+	clientId: string,
+): Promise<{ storageToken: string; pushToken: string }> {
+	const msalConfig = {
+		auth: {
+			clientId,
+			authority: "https://login.microsoftonline.com/common/",
+		},
+	};
 
-	constructor(credentials: OdspTestCredentials) {
-		this.creds = credentials;
+	const graphScopes = ["FileStorageContainer.Selected"];
+
+	const msalInstance = new PublicClientApplication(msalConfig);
+	const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
+	const storageScope = [`${siteUrl}/Container.Selected`];
+	const response = await msalInstance.loginPopup({ scopes: graphScopes });
+
+	msalInstance.setActiveAccount(response.account);
+
+	try {
+		// Attempt to acquire token silently
+		const storageRequest = {
+			scopes: storageScope,
+		};
+		const storageResult: AuthenticationResult =
+			await msalInstance.acquireTokenSilent(storageRequest);
+
+		const pushRequest = {
+			scopes: pushScope,
+		};
+		const pushResult: AuthenticationResult = await msalInstance.acquireTokenSilent(pushRequest);
+
+		// Return token
+		return {
+			storageToken: storageResult.accessToken,
+			pushToken: pushResult.accessToken,
+		};
+	} catch (error) {
+		if (error instanceof InteractionRequiredAuthError) {
+			msalInstance.setActiveAccount(null);
+			// If silent token acquisition fails, fall back to interactive flow
+			const storageRequest = {
+				scopes: storageScope,
+			};
+			const storageResult: AuthenticationResult =
+				await msalInstance.acquireTokenPopup(storageRequest);
+
+			const pushRequest = {
+				scopes: pushScope,
+			};
+			const pushResult: AuthenticationResult =
+				await msalInstance.acquireTokenSilent(pushRequest);
+
+			// Return token
+			return {
+				storageToken: storageResult.accessToken,
+				pushToken: pushResult.accessToken,
+			};
+		} else {
+			// Handle any other error
+			console.error(error);
+			throw error;
+		}
 	}
+}
+
+export class OdspTestTokenProvider implements IOdspTokenProvider {
+	constructor() {}
 
 	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
-		const tokens = await this.fetchTokens(siteUrl, pushScope);
 		return {
 			fromCache: true,
-			token: tokens.accessToken,
+			token: localStorage.get(WEBSOCKET_TOKEN),
 		};
 	}
 
 	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const sharePointScopes = `${siteUrl}/Container.Selected`;
-		const tokens = await this.fetchTokens(siteUrl, sharePointScopes);
 		return {
 			fromCache: true,
-			token: tokens.accessToken,
+			token: localStorage.get(STORAGE_TOKEN),
 		};
-	}
-
-	private async fetchTokens(siteUrl: string, scope: string) {
-		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
-			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
-		};
-		const credentials: TokenRequestCredentials = {
-			grant_type: "password",
-			username: this.creds.username,
-			password: this.creds.password,
-		};
-		const body = {
-			scope,
-			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
-			...credentials,
-		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
-
-		const parsedResponse = await response.json();
-		const accessToken = parsedResponse.access_token;
-		const refreshToken = parsedResponse.refresh_token;
-
-		return { accessToken, refreshToken };
 	}
 }

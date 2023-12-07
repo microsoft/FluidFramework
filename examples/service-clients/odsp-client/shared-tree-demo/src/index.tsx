@@ -12,8 +12,13 @@ import { treeConfiguration, Letter } from "./schema";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
 import { ReactApp } from "./reactApp";
+import { fetchTokens } from "./tokenProvider";
+import { WEBSOCKET_TOKEN, STORAGE_TOKEN, props } from "./clientProps";
 
 async function start() {
+	const tokens = await fetchTokens(props.siteUrl, props.clientId);
+	localStorage.setItem(STORAGE_TOKEN, tokens.storageToken);
+	localStorage.setItem(WEBSOCKET_TOKEN, tokens.pushToken);
 	// create the root element for React
 	const app = document.createElement("div");
 	app.id = "app";
