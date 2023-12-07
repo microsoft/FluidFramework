@@ -507,10 +507,10 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 					return false;
 				}
 
-				return assert.deepEqual(
-					withoutLineage(change1.change),
-					withoutLineage(change2.change),
-				);
+				const pruned1 = prune(change1.change);
+				const pruned2 = prune(change2.change);
+
+				return assert.deepEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 			},
 		},
 		{
