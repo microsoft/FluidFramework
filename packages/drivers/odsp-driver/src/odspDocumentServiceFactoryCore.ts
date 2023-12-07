@@ -26,7 +26,6 @@ import {
 	IOdspUrlParts,
 	SharingLinkScope,
 	SharingLinkRole,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	IRelaySessionAwareDriverFactory,
@@ -102,7 +101,7 @@ export class OdspDocumentServiceFactoryCore
 		};
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
-		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+		let createShareLinkParam: ISharingLinkKind | undefined;
 		if (odspResolvedUrl.itemId) {
 			fileInfo = {
 				type: "Existing",
@@ -330,9 +329,9 @@ export class OdspDocumentServiceFactoryCore
 function getSharingLinkParams(
 	hostPolicy: HostStoragePolicy,
 	searchParams: URLSearchParams,
-): ShareLinkTypes | ISharingLinkKind | undefined {
+): ISharingLinkKind | undefined {
 	// extract request parameters for creation of sharing link (if provided) if the feature is enabled
-	let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+	let createShareLinkParam: ISharingLinkKind | undefined;
 	if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
 		const createLinkScope = searchParams.get("createLinkScope");
 		const createLinkRole = searchParams.get("createLinkRole");
@@ -343,11 +342,6 @@ function getSharingLinkParams(
 					? { role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
-		}
-	} else if (hostPolicy.enableShareLinkWithCreate) {
-		const createLinkType = searchParams.get("createLinkType");
-		if (createLinkType && ShareLinkTypes[createLinkType]) {
-			createShareLinkParam = ShareLinkTypes[createLinkType || ""];
 		}
 	}
 	return createShareLinkParam;
