@@ -35,6 +35,7 @@ import {
 	runGCKey,
 	runSweepKey,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	gcTestModeKey,
 	nextGCVersion,
 	stableGCVersion,
@@ -823,6 +824,41 @@ describe("Garbage Collection configurations", () => {
 					},
 					(e: IErrorBase) => e.errorType === "usageError",
 					"inactiveTimeout must not be greater than sweepTimeout",
+				);
+			});
+		});
+		describe("sweepGracePeriodMs", () => {
+			const testCases: {
+				option: number | undefined;
+				expectedResult: number;
+			}[] = [
+				{ option: 123, expectedResult: 123 },
+				{ option: 0, expectedResult: 0 },
+				{ option: undefined, expectedResult: defaultSweepGracePeriodMs },
+			];
+			testCases.forEach((testCase) => {
+				it(`Test Case ${JSON.stringify(testCase)}`, () => {
+					gc = createGcWithPrivateMembers(
+						{} /* metadata */,
+						{
+							sweepGracePeriodMs: testCase.option,
+						},
+					);
+					assert.equal(gc.configs.sweepGracePeriodMs, testCase.expectedResult);
+				});
+			});
+			it("sweepGracePeriodMs must be non-negative", () => {
+				assert.throws(
+					() => {
+						gc = createGcWithPrivateMembers(
+							{} /* metadata */,
+							{
+								sweepGracePeriodMs: -1,
+							},
+						);
+					},
+					(e: IErrorBase) => e.errorType === "usageError",
+					"sweepGracePeriodMs must be non-negative",
 				);
 			});
 		});

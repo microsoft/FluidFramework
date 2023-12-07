@@ -16,6 +16,7 @@ import {
 	topDownPath,
 	TaggedChange,
 	DeltaRoot,
+	StoredSchemaCollection,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -24,6 +25,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	FieldEditDescription,
+	FullSchemaPolicy,
 	intoDelta as intoModularDelta,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
@@ -87,11 +89,19 @@ export interface IDefaultEditBuilder {
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
+	 *
+	 * @param shapeInfo - optional shape information used for schema based chunk encoding.
+	 * TODO: The 'shapeInfo' parameter is a temporary solution enabling schema-based chunk encoding within this function.
+	 * This parameter should be removed once the encoded format is eventually separated out.
+	 *
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
+	sequenceField(
+		field: FieldUpPath,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
+	): SequenceFieldEditBuilder;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -249,7 +259,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
+	public sequenceField(
+		field: FieldUpPath,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
+	): SequenceFieldEditBuilder {
 		return {
 			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
 				const content = isReadonlyArray(newContent) ? newContent : [newContent];
@@ -259,7 +272,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const firstId = this.modularBuilder.generateId(length);
-				const build = this.modularBuilder.buildTrees(firstId, content);
+				const build = this.modularBuilder.buildTrees(firstId, content, shapeInfo);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(index, length, firstId),
 				);
