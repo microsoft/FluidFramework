@@ -112,6 +112,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -164,6 +165,7 @@ importers:
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
+      json5: 2.2.3
       jssm: 5.89.2_cwubri23blu7pyccbfqib7pisu
       jssm-viz-cli: 5.89.2
       latest-version: 5.1.0

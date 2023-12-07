@@ -15,88 +15,34 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 	static readonly description = `Updates a project.`;
 
 	static readonly flags = {
-		apiTrimming: Flags.boolean({
-			description: "Enable API trimming in the package.",
-		}),
+		// apiTrimming: Flags.boolean({
+		// 	description: "Enable API trimming in the package.",
+		// }),
 		newTsconfigs: Flags.boolean({
 			description: "Enable new tsconfigs in the package.",
 		}),
 		tscMulti: Flags.boolean({
 			description: "Enable tsc-multi in the package.",
 		}),
+		renameTypes: Flags.boolean({
+			description: "Enable scripts to rename ESM types and rewrite imports.",
+		}),
 		...PackageCommand.flags,
 	};
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { flags } = this;
-		const context = await this.getContext();
-		const repoRoot = context.repo.resolvedRoot;
 
 		if (flags.newTsconfigs) {
 			await this.newTsConfigs(pkg);
 		}
 
 		if (flags.tscMulti) {
-			const pathToMultiConfigCjs = path.resolve(
-				repoRoot,
-				"common/build/build-common/tsc-multi.cjs.json",
-			);
-			const pathToMultiConfigEsm = path.resolve(
-				repoRoot,
-				"common/build/build-common/tsc-multi.esm.json",
-			);
+			await this.tscMulti(pkg);
+		}
 
-			updatePackageJsonFile(pkg.directory, (json) => {
-				if (json.devDependencies !== undefined) {
-					json.devDependencies["tsc-multi"] = "^1.1.0";
-				}
-
-				if (Object.hasOwn(json.scripts, "tsc")) {
-					const relPath = path.relative(pkg.directory, pathToMultiConfigCjs);
-					json.scripts.tsc = `tsc-multi --config ${relPath}`;
-					json.main = "dist/index.cjs";
-				}
-
-				if (Object.hasOwn(json.scripts, "build:esnext")) {
-					const relPath = path.relative(pkg.directory, pathToMultiConfigEsm);
-					json.scripts["build:esnext"] = `tsc-multi --config ${relPath}`;
-					json.module = "lib/index.mjs";
-				}
-
-				const pathToTscMultiTestConfig = path.resolve(
-					repoRoot,
-					"common/build/build-common/tsc-multi.test.json",
-				);
-				const TscMultiTestContent = readFileSync(pathToTscMultiTestConfig, "utf8");
-				if (Object.hasOwn(json.scripts, "build:test")) {
-					json.scripts["build:test"] = `tsc-multi --config ./tsc-multi.test.json`;
-					writeFileSync(
-						path.join(pkg.directory, "tsc-multi.test.json"),
-						TscMultiTestContent,
-					);
-				}
-
-				json.types = "dist/index.d.ts";
-				json.exports = {
-					".": {
-						import: {
-							types: "./lib/index.d.ts",
-							default: "./lib/index.mjs",
-						},
-						require: {
-							types: "./dist/index.d.ts",
-							default: "./dist/index.cjs",
-						},
-					},
-				};
-
-				const tsConfigEsnextPath = path.resolve(pkg.directory, "tsconfig.esnext.json");
-				try {
-					unlinkSync(tsConfigEsnextPath);
-				} catch (error) {
-					this.warning(`Couldn't delete ${tsConfigEsnextPath}: ${error}`);
-				}
-			});
+		if (flags.renameTypes) {
+			await this.renameTypes(pkg);
 		}
 	}
 
@@ -219,5 +165,121 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 			writeFileSync(projectTestTsConfigPath, JSON.stringify(testTsConfig, undefined, 2));
 		}
+	}
+
+	private async tscMulti(pkg: Package): Promise<void> {
+		const context = await this.getContext();
+		const repoRoot = context.repo.resolvedRoot;
+
+		const pathToMultiConfigCjs = path.resolve(
+			repoRoot,
+			"common/build/build-common/tsc-multi.cjs.json",
+		);
+		const pathToMultiConfigEsm = path.resolve(
+			repoRoot,
+			"common/build/build-common/tsc-multi.esm.json",
+		);
+
+		updatePackageJsonFile(pkg.directory, (json) => {
+			if (json.devDependencies !== undefined) {
+				json.devDependencies["tsc-multi"] = "^1.1.0";
+			}
+
+			if (Object.hasOwn(json.scripts, "tsc")) {
+				const relPath = path.relative(pkg.directory, pathToMultiConfigCjs);
+				json.scripts.tsc = `tsc-multi --config ${relPath}`;
+				json.main = "dist/index.cjs";
+			}
+
+			if (Object.hasOwn(json.scripts, "build:esnext")) {
+				const relPath = path.relative(pkg.directory, pathToMultiConfigEsm);
+				json.scripts["build:esnext"] = `tsc-multi --config ${relPath}`;
+				json.module = "lib/index.mjs";
+			}
+
+			const pathToTscMultiTestConfig = path.resolve(
+				repoRoot,
+				"common/build/build-common/tsc-multi.test.json",
+			);
+			const TscMultiTestContent = readFileSync(pathToTscMultiTestConfig, "utf8");
+			if (Object.hasOwn(json.scripts, "build:test")) {
+				json.scripts["build:test"] = `tsc-multi --config ./tsc-multi.test.json`;
+				writeFileSync(path.join(pkg.directory, "tsc-multi.test.json"), TscMultiTestContent);
+			}
+
+			json.types = "dist/index.d.ts";
+			json.exports = {
+				".": {
+					import: {
+						types: "./lib/index.d.mts",
+						default: "./lib/index.mjs",
+					},
+					require: {
+						types: "./dist/index.d.ts",
+						default: "./dist/index.cjs",
+					},
+				},
+			};
+
+			const tsConfigEsnextPath = path.resolve(pkg.directory, "tsconfig.esnext.json");
+			try {
+				unlinkSync(tsConfigEsnextPath);
+			} catch (error) {
+				this.warning(`Couldn't delete ${tsConfigEsnextPath}: ${error}`);
+			}
+		});
+	}
+
+	private async renameTypes(pkg: Package): Promise<void> {
+		const context = await this.getContext();
+		const repoRoot = context.repo.resolvedRoot;
+		const rewriteImportsConfigPath = context.repo.relativeToRepo(
+			path.join(
+				repoRoot,
+				"common/build/build-common/replace-in-file-rewrite-type-imports.cjs",
+			),
+		);
+
+		updatePackageJsonFile(pkg.directory, (packageJson) => {
+			if (packageJson.devDependencies === undefined) {
+				this.warning(`Package has no devDependencies: ${pkg.nameColored}`);
+				return;
+			}
+
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			if ((packageJson.exports as any)?.["."]?.import?.types !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(packageJson.exports as any)["."].import.types = "./lib/index.d.mts";
+			}
+
+			packageJson.scripts[
+				"build:rename-types"
+			] = `renamer lib/** -f ".d.ts" -r ".d.mts" --force`;
+			packageJson.scripts[
+				"build:rewrite-type-imports"
+			] = `replace-in-file --configFile ${rewriteImportsConfigPath}`;
+
+			packageJson.scripts["check:are-the-types-wrong"] = "attw --pack";
+
+			packageJson.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
+			packageJson.devDependencies.renamer = "^4.0.0";
+			packageJson.devDependencies["replace-in-file"] = "^6.3.5";
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const config: any | undefined = packageJson.fluidBuild?.tasks?.["build:docs"];
+
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			if (config?.dependsOn !== undefined) {
+				// (packageJson as any).fluidBuild.tasks["build:docs"].dependsOn = [
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				config.dependsOn = [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext",
+					"build:rename-types",
+					"build:rewrite-type-imports",
+				];
+			}
+		});
 	}
 }
