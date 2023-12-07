@@ -366,6 +366,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
 		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
 		}
 		const commits: GraphCommit<TChange>[] = [];

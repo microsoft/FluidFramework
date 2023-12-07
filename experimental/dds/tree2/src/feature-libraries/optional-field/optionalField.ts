@@ -322,6 +322,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			changeEmptiesSelf ||= src === "self";
 			changeFillsSelf ||= dst === "self";
 
+			/* eslint-disable tsdoc/syntax */
 			/**
 			 * TODO:AB#6319: The targeting choices here are not really semantically right; this can lead to a situation where we put a node
 			 * in a non-empty register.
@@ -347,6 +348,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			 * 1. It has two destinations for the "self" register
 			 * 2. One of those destinations is non-empty, without a corresponding move to empty it.
 			 */
+			/* eslint-enable tsdoc/syntax */
 			const target: "nodeTargeting" | "cellTargeting" =
 				src !== "self" && dst === "self" ? "cellTargeting" : "nodeTargeting";
 			invertedMoves.push([withIntention(dst), withIntention(src), target]);
