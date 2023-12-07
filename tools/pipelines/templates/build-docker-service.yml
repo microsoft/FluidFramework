@@ -411,7 +411,7 @@ extends:
 
         # - task: Docker@1
         #   displayName: Tag image for main/next
-        #   condition: $[ ne(variables.latestContainerTagSuffix, '') ]
+        #   condition: ne(variables.latestContainerTagSuffix, '')
         #   inputs:
         #     command: tag
         #     arguments: '$(buildContainerName):$(containerTagSuffix) $(buildContainerName):$(latestContainerTagSuffix)'
@@ -425,7 +425,7 @@ extends:
               remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(containerTagSuffix)
           - task: 1ES.PushContainerImage@1
             displayName: Docker Push - $(buildContainerName):$(latestContainerTagSuffix)
-            condition: $[ ne(variables.latestContainerTagSuffix, '') ]
+            condition: ne(variables.latestContainerTagSuffix, '')
             inputs:
               image: $(buildContainerName):$(containerTagSuffix)
               remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(latestContainerTagSuffix)
