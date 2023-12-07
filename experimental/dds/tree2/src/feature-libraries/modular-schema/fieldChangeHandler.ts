@@ -10,6 +10,7 @@ import {
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	DeltaDetachedNodeId,
+	EncodedRevisionTag,
 } from "../../core";
 import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
@@ -27,7 +28,10 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
-	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly codecsFactory: (
+		childCodec: IJsonCodec<NodeChangeset>,
+		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,
