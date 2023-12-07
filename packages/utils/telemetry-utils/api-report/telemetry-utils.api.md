@@ -440,6 +440,9 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
 }
 
 // @internal
+export function validatePrecondition(condition: boolean, message: string, props?: ITelemetryBaseProperties): asserts condition;
+
+// @internal
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @internal

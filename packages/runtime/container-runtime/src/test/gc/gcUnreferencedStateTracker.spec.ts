@@ -7,6 +7,26 @@ import { strict as assert } from "assert";
 import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
 import { UnreferencedState, UnreferencedStateTracker } from "../../gc";
 
+/** Schema for steps taken to test unreferenced state progression / tracking */
+type Steps = [
+	{
+		/** Start time (used as both local time and currentReferenceTimestampMs) */
+		time: number;
+		/** Expected initial state */
+		state: UnreferencedState;
+		/** Configured sweepGracePeriodMs - defaults to 10ms for these tests */
+		sweepGracePeriodMs?: number;
+	},
+	...{
+		/** Local time of the next step */
+		time: number;
+		/** If defined, call updateTracking with this as currentReferenceTimestampMs */
+		updateWith?: number;
+		/** Expected new state (after calling updateTracking if applicable) */
+		state: UnreferencedState;
+	}[],
+];
+
 describe("Garbage Collection Tests", () => {
 	let clock: SinonFakeTimers;
 
@@ -28,6 +48,7 @@ describe("Garbage Collection Tests", () => {
 		afterEach(() => {
 			tracker.stopTracking();
 		});
+
 		/**
 		 * During the lifetime of an unreferenced object, its state is tracked and updated in two ways.
 		 * Timers are set to trigger transitioning to the next state, and updateTracking is also called
@@ -35,110 +56,139 @@ describe("Garbage Collection Tests", () => {
 		 * These tests specify how to advance the clock (to hit the timers) and also when to call updateTracking,
 		 * checking that the expected state transitions occur as specified
 		 */
-		function runTestCase(testCase: {
-			start: [number, UnreferencedState];
-			steps: [number, number | undefined, UnreferencedState][];
-		}) {
-			const [startTimestamp, startState] = testCase.start;
+		function runTestCase(allSteps: Steps) {
+			const [start, ...steps] = allSteps;
+			clock.tick(start.time);
+
 			tracker = new UnreferencedStateTracker(
 				0 /* unreferencedTimestampMs */,
 				10 /* inactiveTimeoutMs */,
-				startTimestamp /* currentReferenceTimestampMs */,
+				start.time /* currentReferenceTimestampMs */,
 				20 /* sweepTimeoutMs */,
+				start.sweepGracePeriodMs ?? 10 /* sweepGracePeriodMs */,
 			);
-			assert.equal(tracker.state, startState, `Wrong starting state`);
-			let lastTime = startTimestamp;
-			testCase.steps.forEach(
-				([localTime, currentReferenceTimestampMs, expectedState], index) => {
-					assert(
-						localTime > lastTime,
-						"INVALID TEST CASE: steps must move forward in time, following start",
-					);
-					const delta = localTime - lastTime;
-					clock.tick(delta);
-					lastTime = localTime;
+			assert.equal(tracker.state, start.state, `Wrong starting state`);
+			steps.forEach(({ time: advanceClockTo, updateWith, state: expectedState }, index) => {
+				assert(
+					advanceClockTo > clock.now,
+					"INVALID TEST CASE: steps must move forward in time, following start",
+				);
+				clock.tick(advanceClockTo - clock.now);
 
-					if (currentReferenceTimestampMs !== undefined) {
-						tracker.updateTracking(currentReferenceTimestampMs);
-					}
+				if (updateWith !== undefined) {
+					tracker.updateTracking(updateWith);
+				}
 
-					assert.equal(tracker.state, expectedState, `Wrong state at step ${index}`);
-				},
-			);
+				assert.equal(tracker.state, expectedState, `Wrong state at step ${index + 1}`); // 0-indexed including start
+			});
 		}
 
 		/**
 		 * Test cases to run through above function runTestCase
-		 * Each test case specifies:
 		 *
-		 * `name`: Name of the test
-		 *
-		 * `start`: Starting value for currentReferenceTimestampMs and expected starting state
-		 *
-		 * `steps`: Each step gives:
-		 *
-		 * - The timestamp to advance to
-		 *
-		 * - The currentReferenceTimestampMs to pass to updateTracking (or skip if undefined)
-		 *
-		 * - The expected state at that time (after calling updateTracking if applicable)
-		 *
-		 * In all cases:  unreferencedTimestampMs = 0, inactiveTimeoutMs = 10, sweepTimeoutMs = 20
+		 * In all cases:
+		 * - unreferencedTimestampMs = 0
+		 * - inactiveTimeoutMs = 10
+		 * - sweepTimeoutMs = 20
+		 * - sweepGracePeriodMs defaults to 10 (so sweep at 30)
 		 */
 		const testCases: {
 			name: string;
-			start: [number, UnreferencedState];
-			steps: [number, number | undefined, UnreferencedState][];
+			steps: Steps;
 		}[] = [
 			{
 				name: "No calls to updateTracking",
-				start: [0, "Active"],
 				steps: [
-					[3, undefined, "Active"],
-					[5, undefined, "Active"],
-					[12, undefined, "Inactive"],
-					[15, undefined, "Inactive"],
-					[25, undefined, "SweepReady"],
+					{ time: 0, state: "Active" },
+					{ time: 3, state: "Active" },
+					{ time: 5, state: "Active" },
+					{ time: 12, state: "Inactive" },
+					{ time: 15, state: "Inactive" },
+					{ time: 25, state: "TombstoneReady" },
+					{ time: 35, state: "SweepReady" },
+				],
+			},
+			{
+				name: "No calls to updateTracking - sweepGracePeriodMs 0 (no Tombstone phase)",
+				steps: [
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
+					{ time: 3, state: "Active" },
+					{ time: 5, state: "Active" },
+					{ time: 12, state: "Inactive" },
+					{ time: 19, state: "Inactive" },
+					{ time: 20, state: "SweepReady" },
+					{ time: 21, state: "SweepReady" },
+				],
+			},
+			{
+				name: "Skip to SweepReady",
+				steps: [
+					{ time: 0, state: "Active" },
+					{ time: 5, state: "Active" },
+					{ time: 35, state: "SweepReady" },
+				],
+			},
+			{
+				name: "Skip to SweepReady - sweepGracePeriodMs 0 (no Tombstone phase)",
+				steps: [
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
+					{ time: 5, state: "Active" },
+					{ time: 20, state: "SweepReady" },
+				],
+			},
+			{
+				name: "Skip to SweepReady (via updateTracking) - sweepGracePeriodMs 0 (no Tombstone phase)",
+				steps: [
+					{ time: 0, state: "Active", sweepGracePeriodMs: 0 },
+					{ time: 5, state: "Active" },
+					{ time: 20, updateWith: 20, state: "SweepReady" },
 				],
 			},
 			{
 				name: "Call update, but triggered via timers",
-				start: [0, "Active"],
 				steps: [
-					[3, 2, "Active"],
-					[5, 5, "Active"],
-					[12, 9, "Inactive"], // Timer will have fired even though server time hasn't passed threshold
-					[15, 15, "Inactive"],
-					[25, undefined, "SweepReady"],
+					{ time: 0, state: "Active" },
+					{ time: 3, updateWith: 2, state: "Active" },
+					{ time: 5, updateWith: 5, state: "Active" },
+					{ time: 12, updateWith: 9, state: "Inactive" }, // Timer will have fired even though server time hasn't passed threshold
+					{ time: 17, updateWith: 15, state: "Inactive" }, // No-op, timer already fired
 				],
 			},
 			{
 				name: "currentReferenceTimestampMs jumps ahead",
-				start: [0, "Active"],
 				steps: [
-					[5, undefined, "Active"],
-					[10, undefined, "Inactive"],
-					[11, 20, "SweepReady"], // Shouldn't be physically possible, but supported in API
+					{ time: 0, state: "Active" },
+					{ time: 5, state: "Active" },
+					{ time: 10, state: "Inactive" },
+					{ time: 11, updateWith: 20, state: "TombstoneReady" }, // Shouldn't be physically possible, but supported in API
 				],
 			},
 			{
 				name: "Start Inactive",
-				start: [12, "Inactive"],
 				steps: [
-					[15, undefined, "Inactive"],
-					[20, undefined, "SweepReady"],
+					{ time: 12, state: "Inactive" },
+					{ time: 15, state: "Inactive" },
+					{ time: 20, state: "TombstoneReady" },
+					{ time: 35, state: "SweepReady" },
+				],
+			},
+			{
+				name: "Start TombstoneReady",
+				steps: [
+					{ time: 22, state: "TombstoneReady" },
+					{ time: 25, state: "TombstoneReady" },
+					{ time: 35, state: "SweepReady" },
 				],
 			},
 			{
 				name: "Start SweepReady",
-				start: [22, "SweepReady"],
-				steps: [],
+				steps: [{ time: 32, state: "SweepReady" }],
 			},
 		];
 
 		testCases.forEach((testCase) => {
 			it(testCase.name, () => {
-				runTestCase(testCase);
+				runTestCase(testCase.steps);
 			});
 		});
 
@@ -148,15 +198,26 @@ describe("Garbage Collection Tests", () => {
 				3 /* inactiveTimeoutMs */,
 				11 /* currentReferenceTimestampMs */,
 				7 /* sweepTimeoutMs */,
+				15 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
-			clock.tick(5);
-			assert.equal(tracker.state, UnreferencedState.Inactive, "Should be Inactive 5ms later");
+			clock.tick(2);
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Inactive,
+				"Should be Inactive 2ms later (at 13)",
+			);
 			tracker.updateTracking(17);
 			assert.equal(
 				tracker.state,
+				UnreferencedState.TombstoneReady,
+				"Should be TombstoneReady after currentReferenceTimestampMs=17",
+			);
+			clock.tick(15);
+			assert.equal(
+				tracker.state,
 				UnreferencedState.SweepReady,
-				"Should be SweepReady after currentReferenceTimestampMs=17",
+				"Should be SweepReady 15ms later",
 			);
 		});
 		it("Timers can't be crossed", () => {
@@ -165,6 +226,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
 				12 /* sweepTimeoutMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			tracker.updateTracking(10);
@@ -188,15 +250,15 @@ describe("Garbage Collection Tests", () => {
 				20 /* inactiveTimeoutMs */,
 				5 /* currentReferenceTimestampMs */,
 				undefined /* sweepTimeoutMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)
 			tracker.updateTracking(15); // Simulate processing a more-recent Summary (reference time 15 at T16). Pulls in timer to 21 (5 to go)
-			assert.equal(
-				timerClearSpy.callCount,
-				1,
+			assert(
+				timerClearSpy.callCount > 0,
 				"Expected underlying Timer to clear and reset to support shorter timeout",
 			);
 			clock.tick(5);
@@ -208,6 +270,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
 				undefined /* sweepTimeoutMs */,
+				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
 			clock.tick(5); // at T5, 5 to go
