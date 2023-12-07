@@ -24,9 +24,12 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	FlexTreeTyped,
 	onNextChange,
 	FlexTreeUnknownUnboxed,
+	FlexTreeUnboxField,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	isFlexTreeNode,
 } from "./flexTreeTypes";
 
 export {
@@ -42,5 +45,15 @@ export { getTreeContext, FlexTreeContext, Context } from "./context";
 export { TreeEvent, EditableTreeEvents } from "./treeEvents";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
-import * as InternalEditableTreeTypes from "./internal";
-export { InternalEditableTreeTypes };
+export {
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+} from "./flexTreeTypes";
+
+export { NodeKeys } from "./nodeKeys";

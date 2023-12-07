@@ -30,6 +30,4 @@ export {
 	buildTreeConfiguration,
 } from "./schematizedTree";
 
-export { TypedTreeFactory, TypedTreeOptions, ITree, TreeView } from "./simpleTree";
-
 export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";

@@ -15,11 +15,12 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
 		"build:ci": "npm run build:compile",
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
@@ -28,10 +29,10 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
@@ -64,6 +65,11 @@
 				"...",
 				"typetests:gen"
 			]
+		}
+	},
+	"pnpm": {
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
 		}
 	},
 	"typeValidation": {

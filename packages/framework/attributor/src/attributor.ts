@@ -10,7 +10,7 @@ import { IAudience, IDeltaManager } from "@fluidframework/container-definitions"
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
- * @alpha
+ * @internal
  */
 export interface IAttributor {
 	/**
@@ -37,7 +37,7 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
- * @alpha
+ * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -78,7 +78,7 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
- * @alpha
+ * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	constructor(

@@ -5,6 +5,7 @@
 
 /**
  * Represents the details associated with a {@link NetworkError}.
+ * @internal
  */
 export interface INetworkErrorDetails {
 	/**
@@ -42,12 +43,12 @@ export interface INetworkErrorDetails {
  * over the network. Network communication is subject to a diverse range of errors. {@link NetworkError} helps
  * convey more information than a simple HTTP status code, allowing services to be aware of the context of a
  * network error and making those services more prepared to react to such kinds of errors.
+ * @internal
  */
 export class NetworkError extends Error {
 	/**
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
-	 * @public
 	 */
 	public readonly retryAfter: number;
 
@@ -89,7 +90,6 @@ export class NetworkError extends Error {
 	 * Gets the details associated with this {@link NetworkError}.
 	 * @returns A simple string conveying the message if no other details are included in this {@link NetworkError},
 	 * or an {@link INetworkErrorDetails} object otherwise.
-	 * @public
 	 */
 	public get details(): INetworkErrorDetails | string {
 		if (
@@ -111,7 +111,6 @@ export class NetworkError extends Error {
 
 	/**
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
-	 * @public
 	 */
 	public toJSON(): INetworkErrorDetails & { code: number } {
 		return {
@@ -125,6 +124,9 @@ export class NetworkError extends Error {
 	}
 }
 
+/**
+ * @internal
+ */
 export function isNetworkError(error: unknown): error is NetworkError {
 	return (
 		(error as NetworkError).name === "NetworkError" &&
@@ -142,7 +144,7 @@ export function isNetworkError(error: unknown): error is NetworkError {
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
  * the message, or an {@link INetworkErrorDetails} object.
  * @returns A {@link NetworkError} instance properly configured according to the parameters provided.
- * @public
+ * @internal
  */
 export function createFluidServiceNetworkError(
 	statusCode: number,
@@ -218,7 +220,7 @@ export function createFluidServiceNetworkError(
  * @param statusCode - HTTP status code that describes the error.
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
  * the message, or an {@link INetworkErrorDetails} object.
- * @public
+ * @internal
  */
 export function throwFluidServiceNetworkError(
 	statusCode: number,

@@ -23,9 +23,17 @@ function getCodeVersion() {
 }
 
 // So for test branches, the base version is 0.0.0-xyz-test where xyz is the build number.
-// So if we use the base version we will not get the right back compat testing and thus we want to use the code version
+// So if we use the base version we will not get the right back compat testing and thus we want to use the code version.
+/**
+ * @internal
+ */
 export const codeVersion = resolveVersion(getCodeVersion(), false);
-// Usually this is enough, but it can be bad on test branches which would have a value of 0.0.0-xyz-test.
+
+/**
+ * Usually this is enough, but it can be bad on test branches which would have a value of 0.0.0-xyz-test.
+ *
+ * @internal
+ */
 export const baseVersion = resolveVersion(
 	(nconf.get("fluid:test:baseVersion") as string) ?? pkgVersion,
 	false,
@@ -37,6 +45,8 @@ export const baseVersion = resolveVersion(
  * value needs to be different. I.e. the current head is at 2.0.0-internal.6.2.0, then N-1 is 2.0.0-internal.5.x.y.
  * Otherwise we would be comparing against 0.0.0-xyz-test which N-1 of that is 0.58, which is a very old version we do
  * not want to be testing against.
+ *
+ * @internal
  */
 export function testBaseVersion(
 	value: string | number | undefined,

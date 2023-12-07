@@ -5,35 +5,43 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
-import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
+import {
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	TaggedChange,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
+} from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { cursorForJsonableTreeNode } from "../treeTextCursor";
-import { MarkList, NoopMarkType } from "./format";
+import { MarkList, NoopMarkType } from "./types";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEndpoint,
 	getInputCellId,
 	getOutputCellId,
-	isNewAttach,
 	isAttachAndDetachEffect,
 	getDetachOutputId,
 } from "./utils";
-import { isMoveDestination, isMoveSource } from "./moveEffectTable";
+import { isMoveIn, isMoveOut } from "./moveEffectTable";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
-): Delta.FieldChanges {
-	const local: Delta.Mark[] = [];
-	const global: Delta.DetachedNodeChanges[] = [];
-	const build: Delta.DetachedNodeBuild[] = [];
-	const rename: Delta.DetachedNodeRename[] = [];
+): DeltaFieldChanges {
+	const local: DeltaMark[] = [];
+	const global: DeltaDetachedNodeChanges[] = [];
+	const build: DeltaDetachedNodeBuild[] = [];
+	const rename: DeltaDetachedNodeRename[] = [];
 
 	for (const mark of change) {
-		const deltaMark: Mutable<Delta.Mark> = { count: mark.count };
+		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
 		const inputCellId = getInputCellId(mark, revision, undefined);
 		const changes = mark.changes;
 		if (changes !== undefined) {
@@ -60,7 +68,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 			);
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
-			if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
+			if (isMoveIn(mark.attach) && isMoveOut(mark.detach)) {
 				assert(
 					mark.changes === undefined,
 					0x81f /* AttachAndDetach moves should not have changes */,
@@ -74,15 +82,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
 			);
 			const oldId = nodeIdFromChangeAtom(
-				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
+				isMoveIn(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
-				if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
-					build.push({
-						id: oldId,
-						trees: mark.attach.content.map(cursorForJsonableTreeNode),
-					});
-				}
 				rename.push({
 					count: mark.count,
 					oldId,
@@ -131,8 +133,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					}
 					break;
 				}
-				case "MoveOut":
-				case "ReturnFrom": {
+				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
 					if (inputCellId === undefined) {
@@ -159,16 +160,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						// Nested changes are represented on the node in its starting location
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
-					}
-					if (isNewAttach(mark)) {
-						assert(
-							mark.content !== undefined,
-							0x7dc /* New insert must have content */,
-						);
-						build.push({
-							id: buildId,
-							trees: mark.content.map(cursorForJsonableTreeNode),
-						});
 					}
 					local.push(deltaMark);
 					break;
@@ -197,7 +188,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		}
 		local.pop();
 	}
-	const delta: Mutable<Delta.FieldChanges> = {};
+	const delta: Mutable<DeltaFieldChanges> = {};
 	if (local.length > 0) {
 		delta.local = local;
 	}

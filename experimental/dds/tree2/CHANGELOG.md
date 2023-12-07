@@ -1,5 +1,17 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Rename SchemaCollection.treeSchema to nodeSchema ([#18067](https://github.com/microsoft/FluidFramework/issues/18067)) [be7ee4b383](https://github.com/microsoft/FluidFramework/commits/be7ee4b383c86fbcb60e92b606bbd305d0157acb)
+
+    This breaks all existing documents, as well as any users of SchemaCollection.treeSchema.
+
+-   Remove editable-tree-1 ([#18169](https://github.com/microsoft/FluidFramework/issues/18169)) [f0100204bd](https://github.com/microsoft/FluidFramework/commits/f0100204bd19f8be769a1163a655a185e7c1289e)
+
+    Remove editable-tree-1 and APIs related to it. Users must migrate to editable-tree-2.
+
 ## 2.0.0-internal.7.2.0
 
 ### Minor Changes

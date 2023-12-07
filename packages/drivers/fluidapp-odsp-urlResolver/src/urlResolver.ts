@@ -20,6 +20,9 @@ const fluidOfficeAndOneNoteServers = [
 	"www.onenote.com",
 ];
 
+/**
+ * @internal
+ */
 export class FluidAppOdspUrlResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
 		const reqUrl = new URL(request.url);

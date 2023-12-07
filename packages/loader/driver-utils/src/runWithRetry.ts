@@ -14,7 +14,7 @@ import { NonRetryableError } from ".";
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
- * @public
+ * @internal
  */
 export interface IProgress {
 	/**
@@ -45,7 +45,7 @@ export interface IProgress {
 }
 
 /**
- * @public
+ * @internal
  */
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
@@ -55,7 +55,8 @@ export async function runWithRetry<T>(
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
-	let retryAfterMs = 1000; // has to be positive!
+	// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performance.now();
 	let lastError: any;
@@ -117,12 +118,11 @@ export async function runWithRetry<T>(
 			numRetries++;
 			lastError = err;
 			// Wait for the calculated time before retrying.
-			retryAfterMs = Math.max(getRetryDelayFromError(err) ?? 0, retryAfterMs);
+			retryAfterMs = calculateMaxWaitTime(retryAfterMs, err);
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
 			await delay(retryAfterMs);
-			retryAfterMs = Math.min(retryAfterMs * 2, calculateMaxWaitTime(err));
 		}
 	} while (!success);
 	if (numRetries > 0) {
@@ -144,15 +144,23 @@ const MaxReconnectDelayInMsWhenEndpointIsReachable = 60000;
 const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
 
 /**
- * In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some transient error
- * not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
- * to when endpoint is reachable in which case it is 60s.
- * @param error - error based on which we decide max wait time.
- * @returns Max wait time.
- * @public
+ * Calculates time to wait for after an error based on the error and wait time for previous iteration.
+ * In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some
+ * transient error not related to endpoint, in that case we want to try at faster pace and hence the
+ * max wait is lesser 8s as compared to when endpoint is reachable in which case it is 60s.
+ * @param delayMs - wait time for previous iteration
+ * @param error - error based on which we decide wait time.
+ * @returns Wait time to wait for.
+ * @internal
  */
-export function calculateMaxWaitTime(error: unknown): number {
-	return isFluidError(error) && error.getTelemetryProperties().endpointReached === true
-		? MaxReconnectDelayInMsWhenEndpointIsReachable
-		: MaxReconnectDelayInMsWhenEndpointIsNotReachable;
+export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
+	const retryDelayFromError = getRetryDelayFromError(error);
+	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
+	newDelayMs = Math.min(
+		delayMs,
+		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
+			? MaxReconnectDelayInMsWhenEndpointIsReachable
+			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,
+	);
+	return newDelayMs;
 }

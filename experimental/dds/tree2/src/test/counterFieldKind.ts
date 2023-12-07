@@ -8,17 +8,17 @@ import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
+	Multiplicity,
 	cursorForJsonableTreeNode,
 } from "../feature-libraries";
 // This is imported directly to implement an example of a field kind.
 import {
 	FieldKindWithEditor,
-	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
+import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
 import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
@@ -52,13 +52,13 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.FieldChanges => {
+	intoDelta: ({ change, revision }: TaggedChange<number>): DeltaFieldChanges => {
 		const buildId = makeDetachedNodeId(revision, 424243);
 		return {
 			local: [
 				{
 					count: 1,
-					fields: new Map<FieldKey, Delta.FieldChanges>([
+					fields: new Map<FieldKey, DeltaFieldChanges>([
 						[
 							brand("value"),
 							{
@@ -93,7 +93,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			],
 		};
 	},
-	relevantRemovedTrees: (change) => [],
+	relevantRemovedRoots: (change) => [],
 	isEmpty: (change: number) => change === 0,
 };
 

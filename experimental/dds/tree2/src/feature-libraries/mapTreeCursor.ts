@@ -23,7 +23,7 @@ import {
 } from "./treeCursorUtils";
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in nodes mode for a single MapTree.
+ * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
  */
 export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
 	return stackTreeNodeCursor(adapter, root);

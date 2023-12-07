@@ -7,8 +7,8 @@ export { GarbageCollector } from "./garbageCollection";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
-	disableSweepLogKey,
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
@@ -24,6 +24,8 @@ export {
 	IGCMetadata,
 	IGCResult,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
 	runGCKey,

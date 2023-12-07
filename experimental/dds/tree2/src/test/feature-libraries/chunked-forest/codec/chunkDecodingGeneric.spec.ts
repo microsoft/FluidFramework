@@ -15,12 +15,10 @@ import {
 
 import {
 	EncodedChunkGeneric,
-	unionOptions,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
 import {
 	ChunkDecoder,
-	DiscriminatedUnionDispatcher,
 	StreamCursor,
 	getChecked,
 	readStreamNumber,
@@ -30,6 +28,7 @@ import { ReferenceCountedBase } from "../../../../util";
 import { TreeChunk } from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk";
+import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec";
 
 const Constant = Type.Literal(0);
 const StringShape = Type.String();

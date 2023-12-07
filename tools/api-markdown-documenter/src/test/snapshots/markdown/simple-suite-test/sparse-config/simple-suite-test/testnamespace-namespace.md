@@ -28,9 +28,9 @@ const bar = foo
 
 ### Interfaces
 
-| Interface | Description |
-| --- | --- |
-| [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
+| Interface | Alerts | Description |
+| --- | --- | --- |
+| [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | `ALPHA` | Test interface |
 
 ### Classes
 
@@ -58,9 +58,9 @@ const bar = foo
 
 ### Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Description |
+| --- | --- | --- | --- |
+| [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | `BETA` | `readonly` | Test Constant |
 
 ### Namespaces
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -17,10 +17,14 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
@@ -28,10 +32,10 @@
 		"format": "npm run prettier:fix",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "concurrently npm:test:jest npm:test:mocha",
 		"test:coverage": "npm run test:jest:coverage",
@@ -65,7 +69,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.28.0-210888",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
@@ -84,7 +88,7 @@
 		"@types/chai": "^4.0.0",
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/recharts": "^1.8.24",
@@ -92,6 +96,7 @@
 		"chai": "^4.2.0",
 		"chalk": "^2.4.2",
 		"concurrently": "^8.2.1",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
@@ -121,6 +126,18 @@
 					"dist/main.bundle.js"
 				],
 				"library": "main"
+			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
 			}
 		}
 	},

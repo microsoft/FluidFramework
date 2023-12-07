@@ -23,8 +23,8 @@ export function makeForestSummarizerCodec({
 				version,
 				data,
 			};
-			assert(versionedValidator.check(encoded), "Encoded data should be versioned");
-			assert(formatValidator.check(encoded), "Encoded schema should validate");
+			assert(versionedValidator.check(encoded), 0x837 /* Encoded data should be versioned */);
+			assert(formatValidator.check(encoded), 0x838 /* Encoded schema should validate */);
 			return encoded;
 		},
 		decode: (data: Format): [FieldKey, EncodedChunk][] => {

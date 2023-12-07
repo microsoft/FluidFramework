@@ -14,7 +14,7 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
 import { ReplayController } from '@fluidframework/replay-driver';
 
-// @public (undocumented)
+// @internal (undocumented)
 export class DebuggerUI {
     protected constructor(controller: IDebuggerController, debuggerWindow: Window);
     // (undocumented)
@@ -55,10 +55,10 @@ export class DebuggerUI {
     protected wasVersionSelected: boolean;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
-// @public
+// @internal
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     // (undocumented)
     connectToUi(ui: IDebuggerUI): void;
@@ -123,14 +123,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected static readonly WindowClosedSeq = -1;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export namespace FluidDebugger {
     export function createFromService(documentService: IDocumentService): Promise<IDocumentService>;
     // (undocumented)
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IDebuggerController {
     connectToUi(ui: IDebuggerUI): any;
     onClose(): void;
@@ -140,7 +140,7 @@ export interface IDebuggerController {
     onVersionSelection(version: IVersion): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IDebuggerUI {
     addVersions(version: IVersion[]): void;
     disableNextOpButton(disable: boolean): void;

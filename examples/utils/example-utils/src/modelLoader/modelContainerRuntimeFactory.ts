@@ -13,6 +13,9 @@ import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/cont
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 
+/**
+ * @internal
+ */
 export interface IModelContainerRuntimeEntryPoint<T> {
 	getModel(container: IContainer): Promise<T>;
 }
@@ -20,6 +23,7 @@ export interface IModelContainerRuntimeEntryPoint<T> {
 /**
  * ModelContainerRuntimeFactory is an abstract class that gives a basic structure for container runtime initialization.
  * It also requires a createModel method to returns the expected model type.
+ * @internal
  */
 export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
 	public get IRuntimeFactory() {

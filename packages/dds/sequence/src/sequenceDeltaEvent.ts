@@ -25,7 +25,7 @@ import {
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into any future modifications performed to the underlying sequence and merge tree.
- * @public
+ * @alpha
  */
 export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
@@ -108,7 +108,7 @@ export abstract class SequenceEvent<
  * For group ops, each op will get its own event, and the group op property will be set on the op args.
  *
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
- * @public
+ * @alpha
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
 	/**
@@ -132,7 +132,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
- * @public
+ * @alpha
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	constructor(
@@ -146,7 +146,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 /**
  * A range that has changed corresponding to a segment modification.
- * @public
+ * @alpha
  */
 export interface ISequenceDeltaRange<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,

@@ -10,12 +10,11 @@ import {
 	TreeStatus,
 } from "../feature-libraries";
 import { getOrCreateNodeProxy } from "./proxies";
-import { getEditNode, tryGetEditNode } from "./editNode";
+import { getFlexNode, tryGetFlexNode } from "./flexNode";
 import { TypedNode, TreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * @alpha
  * @privateRemarks
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
@@ -46,7 +45,7 @@ export interface TreeApi {
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
-	 * If `node` is an element in a {@link TreeListNode}, this returns the index of `node` in the list (a `number`).
+	 * If `node` is an element in a {@link (TreeListNode:interface)}, this returns the index of `node` in the list (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	readonly key: (node: TreeNode) => string | number;
@@ -68,20 +67,19 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @alpha
  */
 export const nodeApi: TreeApi = {
 	schema: (node: TreeNode) => {
-		return getEditNode(node).schema;
+		return getFlexNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	): value is TypedNode<TSchema> => {
-		return tryGetEditNode(value)?.is(schema) ?? false;
+		return tryGetFlexNode(value)?.is(schema) ?? false;
 	},
 	parent: (node: TreeNode) => {
-		const editNode = getEditNode(node).parentField.parent.parent;
+		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode !== undefined) {
 			return getOrCreateNodeProxy(editNode);
 		}
@@ -89,7 +87,7 @@ export const nodeApi: TreeApi = {
 		return undefined;
 	},
 	key: (node: TreeNode) => {
-		const editNode = getEditNode(node);
+		const editNode = getFlexNode(node);
 		const parent = nodeApi.parent(node);
 		if (parent !== undefined) {
 			const parentSchema = nodeApi.schema(parent);
@@ -107,9 +105,9 @@ export const nodeApi: TreeApi = {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	) => {
-		return getEditNode(node).on(eventName, listener);
+		return getFlexNode(node).on(eventName, listener);
 	},
 	status: (node: TreeNode) => {
-		return getEditNode(node).treeStatus();
+		return getFlexNode(node).treeStatus();
 	},
 };

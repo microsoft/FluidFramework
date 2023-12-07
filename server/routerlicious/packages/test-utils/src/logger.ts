@@ -8,6 +8,7 @@ import { ILogger } from "@fluidframework/server-services-core";
 
 /**
  * Implementation of debug logger
+ * @internal
  */
 export class DebugLogger implements ILogger {
 	/**

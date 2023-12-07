@@ -15,6 +15,7 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil";
+import { ProtoNodes } from "./delta";
 
 /**
  * Implementation notes:
@@ -76,7 +77,8 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 	};
-	visitFieldMarks(delta, visitor, detachConfig);
+	processBuilds(delta.build, detachConfig, visitor);
+	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
 	const attachConfig: PassConfig = {
@@ -87,8 +89,9 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 	};
-	visitFieldMarks(delta, visitor, attachConfig);
+	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
+	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
 		for (let i = 0; i < count; i += 1) {
 			const offsetId = offsetDetachId(id, i);
@@ -208,7 +211,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: Delta.ProtoNodes, destination: FieldKey): void;
+	create(content: ProtoNodes, destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -315,11 +318,17 @@ interface PassConfig {
 
 type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
 
-function visitFieldMarks(fields: Delta.FieldMap, visitor: DeltaVisitor, config: PassConfig): void {
-	for (const [key, field] of fields) {
-		visitor.enterField(key);
-		config.func(field, visitor, config);
-		visitor.exitField(key);
+function visitFieldMarks(
+	fields: Delta.FieldMap | undefined,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
+	if (fields !== undefined) {
+		for (const [key, field] of fields) {
+			visitor.enterField(key);
+			config.func(field, visitor, config);
+			visitor.exitField(key);
+		}
 	}
 }
 
@@ -347,24 +356,8 @@ function visitNode(
  * (because we want to wait until we are sure content to attach is available as a root)
  */
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	if (delta.build !== undefined) {
-		for (const { id, trees } of delta.build) {
-			for (let i = 0; i < trees.length; i += 1) {
-				const offsettedId = offsetDetachId(id, i);
-				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
-				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
-				if (root === undefined) {
-					root = config.detachedFieldIndex.createEntry(offsettedId);
-					const field = config.detachedFieldIndex.toFieldKey(root);
-					visitor.create([trees[i]], field);
-				}
-			}
-		}
-	}
-	if (delta.destroy !== undefined) {
-		config.rootDestructions.push(...delta.destroy);
-	}
+	processBuilds(delta.build, config, visitor);
+	collectDestroys(delta.destroy, config);
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getEntry(id);
@@ -401,6 +394,37 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				index += mark.count;
 			}
 		}
+	}
+}
+
+function processBuilds(
+	builds: readonly Delta.DetachedNodeBuild[] | undefined,
+	config: PassConfig,
+	visitor: DeltaVisitor,
+) {
+	if (builds !== undefined) {
+		for (const { id, trees } of builds) {
+			for (let i = 0; i < trees.length; i += 1) {
+				const offsettedId = offsetDetachId(id, i);
+				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
+				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
+				if (root === undefined) {
+					root = config.detachedFieldIndex.createEntry(offsettedId);
+					const field = config.detachedFieldIndex.toFieldKey(root);
+					visitor.create([trees[i]], field);
+				}
+			}
+		}
+	}
+}
+
+function collectDestroys(
+	destroys: readonly Delta.DetachedNodeDestruction[] | undefined,
+	config: PassConfig,
+) {
+	if (destroys !== undefined) {
+		config.rootDestructions.push(...destroys);
 	}
 }
 

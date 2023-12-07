@@ -12,6 +12,7 @@ import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService
+ * @internal
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
 	public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
@@ -42,6 +43,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
  * Replay controller object
  * It controls where we start (snapshot, local file, no snapshots)
  * As well as dispatch of ops
+ * @internal
  */
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	/**

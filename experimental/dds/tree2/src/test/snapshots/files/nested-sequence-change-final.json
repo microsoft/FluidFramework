@@ -24,14 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "has-sequence-map.SeqMap"
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 },
@@ -42,14 +40,12 @@
                                       "fieldKind": "Sequence",
                                       "change": [
                                         {
-                                          "type": "Insert",
-                                          "id": 1,
                                           "count": 1,
-                                          "content": [
-                                            {
-                                              "type": "has-sequence-map.SeqMap"
+                                          "effect": {
+                                            "insert": {
+                                              "id": 1
                                             }
-                                          ],
+                                          },
                                           "cellId": {
                                             "localId": 1
                                           }
@@ -61,6 +57,60 @@
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ]
+                            }
+                          ],
+                          [
+                            1,
+                            {
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ]
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",

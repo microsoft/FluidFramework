@@ -14,7 +14,7 @@ import {
 import { ISubscribable } from "../../events";
 import { IDefaultEditBuilder } from "../default-schema";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
-import { FieldGenerator } from "../contextuallyTyped";
+import { FieldGenerator } from "../fieldGenerator";
 import { TreeSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
 import { FlexTreeField } from "./flexTreeTypes";

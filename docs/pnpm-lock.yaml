@@ -7,7 +7,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.10.1
+      '@fluid-tools/api-markdown-documenter': ^0.11.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
       '@rushstack/node-core-library': ^3.59.4
@@ -21,6 +21,7 @@ importers:
       glob: ^7.2.3
       http-server: ^14.1.1
       hugo-extended: ^0.113.0
+      js-yaml: ^4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1
       markdown-magic-package-json: ^2.0.2
@@ -37,7 +38,7 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.10.1
+      '@fluid-tools/api-markdown-documenter': 0.11.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
       '@rushstack/node-core-library': 3.59.4
@@ -51,6 +52,7 @@ importers:
       glob: 7.2.3
       http-server: 14.1.1
       hugo-extended: 0.113.0
+      js-yaml: 4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
       markdown-magic-package-json: 2.0.2
@@ -146,8 +148,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.10.1:
-    resolution: {integrity: sha512-U2vQomHX18SVJvQ/U6xM6z5hCyqL4qxcbB44LwG5u2shIhhrCtVH22//skSPobiNIDgjYmyd5EP+NcLj2pxEig==}
+  /@fluid-tools/api-markdown-documenter/0.11.1:
+    resolution: {integrity: sha512-eOHYkBqsMrWkDj+OLKyBCfRn/Yg99itzTLf9fSxI3SxZyAfix2+VBgHIhZs9D1AGmp3GSjBYHMABuWGIItBfGg==}
     dependencies:
       '@microsoft/api-documenter': 7.23.9
       '@microsoft/api-extractor-model': 7.28.2

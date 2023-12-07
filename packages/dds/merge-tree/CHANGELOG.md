@@ -1,5 +1,13 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Deprecate BaseSegment.ack, Client, CollaborationWindow, compareNumbers, compareStrings, createAnnotateMarkerOp, createAnnotateRangeOp, createInsertOp, createInsertSegmentOp, createRemoveRangeOp, IConsensusInfo, IConsensusValue, IMarkerModifiedAction, IMergeTreeTextHelper, ISegment.ack, LocalClientId, MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, NonCollabClient, SegmentAccumulator, SegmentGroup, SegmentGroupCollection.dequeue, SegmentGroupCollection.enqueue, SegmentGroupCollection.pop, SortedSegmentSet, SortedSegmentSetItem, SortedSet, toRemovalInfo, TreeMaintenanceSequenceNumber, UnassignedSequenceNumber, UniversalSequenceNumber ([#17952](https://github.com/microsoft/FluidFramework/issues/17952)) [b762798c48](https://github.com/microsoft/FluidFramework/commits/b762798c48ec581202fb5335e907637b8482edcc)
+
+    This functionality was not intended for export and will be removed in a future release.
+
 ## 2.0.0-internal.7.2.0
 
 Dependency updates only.

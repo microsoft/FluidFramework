@@ -128,7 +128,7 @@ describe("rebaser", () => {
 						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
 						: tester.main;
 
-				const [result] = rebaseBranch(
+				const { newSourceHead } = rebaseBranch(
 					new DummyChangeRebaser(),
 					tester.branch,
 					base,
@@ -139,7 +139,7 @@ describe("rebaser", () => {
 				const expectedBaseIndex = main.indexOf(expected[0]);
 				assert.notEqual(expectedBaseIndex, -1, "Expected expected base to be in main");
 				const mainBeforeExpected = main.slice(0, expectedBaseIndex);
-				tester.assertParentage(result, ...[...mainBeforeExpected, ...expected]);
+				tester.assertParentage(newSourceHead, ...[...mainBeforeExpected, ...expected]);
 			});
 		}
 

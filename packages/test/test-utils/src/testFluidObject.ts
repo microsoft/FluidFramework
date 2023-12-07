@@ -5,13 +5,7 @@
 
 // eslint-disable-next-line import/no-deprecated
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	FluidObject,
-	IProvideFluidRouter,
-} from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	FluidObjectHandle,
 	FluidDataStoreRuntime,
@@ -31,6 +25,7 @@ import { ITestFluidObject } from "./interfaces";
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
+ * @internal
  */
 export class TestFluidObject implements ITestFluidObject {
 	public get ITestFluidObject() {
@@ -128,6 +123,9 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 }
 
+/**
+ * @internal
+ */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
@@ -159,6 +157,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * `describeCompat` aims to provide:
  * `SharedMap`s always reference the current version of SharedMap.
  * AB#4670 tracks improving this situation.
+ * @internal
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory() {
@@ -202,12 +201,13 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
+				// The provideEntryPoint callback below always returns FluidDataStoreRuntime, so this cast is safe
+				const dataObject = (await rt.entryPoint.get()) as FluidDataStoreRuntime;
 				assert(
-					maybeRouter.IFluidRouter !== undefined,
+					dataObject.request !== undefined,
 					"entryPoint should have been initialized by now",
 				);
-				return maybeRouter.IFluidRouter.request(request);
+				return dataObject.request(request);
 			},
 		);
 

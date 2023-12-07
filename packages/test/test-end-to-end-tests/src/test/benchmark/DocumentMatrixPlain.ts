@@ -9,7 +9,6 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -226,7 +225,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 			this.props.provider.defaultCodeDetails,
 		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
 
 		const matrixHandle = this.mainDataStore._root.get("matrix1");
@@ -285,7 +284,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		const container2 = await loader.resolve(request);
 
 		await this.props.provider.ensureSynchronized();
-		const dataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		const dataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		const matrixHandle = dataStore._root.get(matrixId);
 		assert(matrixHandle !== undefined, "matrix not found");

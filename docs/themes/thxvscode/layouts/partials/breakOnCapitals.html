@@ -1,0 +1,26 @@
+{{/* 
+    Purpose: To insert a zero-width space (U+200B) before each capital letter in a given string. This aids in proper text wrapping, 
+             especially for strings with concatenated words (e.g., camelCase).
+    Inputs: $input: A single input expected, which should be a string.
+    Output: The modified string with zero-width spaces inserted before capital letters, or the original input if it's not a string.
+*/}}
+
+{{ $input := . }}
+{{ if eq (printf "%T" $input) "string" }}
+	{{ $chars := split $input "" }}
+	{{ $current := "" }}
+	{{ range $char := $chars }}
+		{{ if and (ge $char "A") (le $char "Z") }}
+			{{ if gt (len $current) 0 }}
+				&#8203;{{ $current | safeHTML }}
+				{{ $current = "" }}
+			{{ end }}
+		{{ end }}
+		{{ $current = print $current $char }}
+	{{ end }}
+	{{ if gt (len $current) 0 }}
+		&#8203;{{ $current | safeHTML }}
+	{{ end }}
+{{ else }}
+	{{ $input }}
+{{ end }}

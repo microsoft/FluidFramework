@@ -40,6 +40,8 @@ import {
 	UnreferencedState,
 	IGCMetadata,
 	IGarbageCollectorConfigs,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 } from "./gcDefinitions";
 import { cloneGCData, concatGarbageCollectionData, getGCDataFromSnapshot } from "./gcHelpers";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
@@ -305,6 +307,7 @@ export class GarbageCollector implements IGarbageCollector {
 			eventName: "GarbageCollectorLoaded",
 			gcConfigs: JSON.stringify(this.configs),
 			gcOptions: JSON.stringify(createParams.gcOptions),
+			...createParams.createContainerMetadata,
 		});
 	}
 
@@ -415,6 +418,7 @@ export class GarbageCollector implements IGarbageCollector {
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
 						this.configs.sweepTimeoutMs,
+						this.configs.sweepGracePeriodMs,
 					),
 				);
 			}
@@ -520,7 +524,11 @@ export class GarbageCollector implements IGarbageCollector {
 
 				/** GC step */
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
-				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
+				event.end({
+					...gcStats,
+					timestamp: currentReferenceTimestampMs,
+					sweep: this.configs.shouldRunSweep,
+				});
 
 				/** Post-GC steps */
 				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
@@ -541,9 +549,10 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Runs garbage collection. It does the following:
 	 * 1. It generates / analyzes the runtime's reference graph.
-	 * 2. Generates stats for the GC run based on previous / current GC state.
+	 * 2. Generates mark phase stats.
 	 * 3. Runs Mark phase.
 	 * 4. Runs Sweep phase.
+	 * 5. Generates sweep phase stats.
 	 */
 	private async runGC(
 		fullGC: boolean,
@@ -559,13 +568,13 @@ export class GarbageCollector implements IGarbageCollector {
 			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
 			gcResult.referencedNodeIds;
 
-		// 2. Generate stats based on the previous / current GC state.
-		// Must happen before running Mark / Sweep phase because previous GC state will be updated in these stages.
-		const gcStats = this.generateStats(gcResult);
+		// 2. Get the mark phase stats based on the previous / current GC state.
+		// This is done before running mark phase because we need the previous GC state before it is updated.
+		const markPhaseStats = this.getMarkPhaseStats(gcResult);
 
 		// 3. Run the Mark phase.
 		// It will mark nodes as referenced / unreferenced and return a list of node ids that are ready to be swept.
-		const sweepReadyNodeIds = this.runMarkPhase(
+		const { tombstoneReadyNodeIds, sweepReadyNodeIds } = this.runMarkPhase(
 			gcResult,
 			allReferencedNodeIds,
 			currentReferenceTimestampMs,
@@ -575,16 +584,23 @@ export class GarbageCollector implements IGarbageCollector {
 		// It will delete sweep ready nodes and return a list of deleted node ids.
 		const deletedNodeIds = this.runSweepPhase(
 			gcResult,
+			tombstoneReadyNodeIds,
 			sweepReadyNodeIds,
-			currentReferenceTimestampMs,
-			logger,
 		);
 
 		this.gcDataFromLastRun = cloneGCData(
 			gcData,
 			(id: string) => deletedNodeIds.includes(id) /* filter out deleted nodes */,
 		);
-		return gcStats;
+
+		// 5. Get the sweep phase stats.
+		const sweepPhaseStats = this.getSweepPhaseStats(
+			this.configs.shouldRunSweep ? this.deletedNodes : sweepReadyNodeIds,
+			new Set(deletedNodeIds),
+			markPhaseStats,
+		);
+
+		return { ...markPhaseStats, ...sweepPhaseStats };
 	}
 
 	/**
@@ -599,13 +615,13 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @returns A list of sweep ready nodes, i.e., nodes that ready to be deleted.
+	 * @returns The sets of TombstoneReady and SweepReady nodes, i.e., nodes that ready to be tombstoned or deleted.
 	 */
 	private runMarkPhase(
 		gcResult: IGCResult,
 		allReferencedNodeIds: string[],
 		currentReferenceTimestampMs: number,
-	): string[] {
+	): { tombstoneReadyNodeIds: Set<string>; sweepReadyNodeIds: Set<string> } {
 		// 1. Marks all referenced nodes by clearing their unreferenced tracker, if any.
 		for (const nodeId of allReferencedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
@@ -618,7 +634,8 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// 2. Mark unreferenced nodes in this run by starting unreferenced tracking for them.
-		const sweepReadyNodeIds: string[] = [];
+		const tombstoneReadyNodeIds: Set<string> = new Set();
+		const sweepReadyNodeIds: Set<string> = new Set();
 		for (const nodeId of gcResult.deletedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
 			if (nodeStateTracker === undefined) {
@@ -629,6 +646,7 @@ export class GarbageCollector implements IGarbageCollector {
 						this.configs.inactiveTimeoutMs,
 						currentReferenceTimestampMs,
 						this.configs.sweepTimeoutMs,
+						this.configs.sweepGracePeriodMs,
 					),
 				);
 			} else {
@@ -636,9 +654,12 @@ export class GarbageCollector implements IGarbageCollector {
 				// is from the ops seen, this will ensure that we keep updating unreferenced state as time moves forward.
 				nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 
-				// If a node is sweep ready, store it so it can be returned.
+				// If a node is tombstone or sweep ready, store it so it can be returned.
+				if (nodeStateTracker.state === UnreferencedState.TombstoneReady) {
+					tombstoneReadyNodeIds.add(nodeId);
+				}
 				if (nodeStateTracker.state === UnreferencedState.SweepReady) {
-					sweepReadyNodeIds.push(nodeId);
+					sweepReadyNodeIds.add(nodeId);
 				}
 			}
 		}
@@ -646,7 +667,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// 3. Call the runtime to update referenced nodes in this run.
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
-		return sweepReadyNodeIds;
+		return { tombstoneReadyNodeIds, sweepReadyNodeIds };
 	}
 
 	/**
@@ -655,35 +676,20 @@ export class GarbageCollector implements IGarbageCollector {
 	 * 2. Clears tracking for deleted nodes.
 	 *
 	 * @param gcResult - The result of the GC run on the gcData.
+	 * @param tombstoneReadyNodes - List of nodes that are tombstone ready.
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
-	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @param logger - The logger to be used to log any telemetry.
 	 * @returns A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
 		gcResult: IGCResult,
-		sweepReadyNodes: string[],
-		currentReferenceTimestampMs: number,
-		logger: ITelemetryLoggerExt,
+		tombstoneReadyNodes: Set<string>,
+		sweepReadyNodes: Set<string>,
 	): string[] {
-		// Log events for objects that are ready to be deleted by sweep. This will give us data on sweep when
-		// its not enabled.
-		this.telemetryTracker.logSweepEvents(
-			logger,
-			currentReferenceTimestampMs,
-			this.unreferencedNodesState,
-			this.completedRuns,
-			this.getLastSummaryTimestampMs(),
-		);
-
 		/**
-		 * Currently, there are 3 modes for sweep:
-		 * Test mode - Unreferenced nodes are immediately deleted without waiting for them to be sweep ready.
-		 * Tombstone mode - Sweep ready modes are marked as tombstones instead of being deleted.
-		 * Sweep mode - Sweep ready modes are deleted.
+		 * Under "Test Mode", Unreferenced nodes are immediately deleted without waiting for them to be sweep ready.
 		 *
-		 * These modes serve as staging for applications that want to enable sweep by providing an incremental
-		 * way to test and validate sweep works as expected.
+		 * Otherwise, depending on how long it's been since the node was unreferenced, it will either be
+		 * marked as Tombstone, or deleted by Sweep.
 		 */
 		if (this.configs.testMode) {
 			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted.
@@ -692,11 +698,9 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		if (this.configs.tombstoneMode) {
-			this.tombstones = sweepReadyNodes;
-			// If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
-			// involving access to "deleted" data without actually deleting the data from summaries.
+			this.tombstones = Array.from(tombstoneReadyNodes);
+			// If we are running in GC tombstone mode, update tombstoned routes.
 			this.runtime.updateTombstonedRoutes(this.tombstones);
-			return [];
 		}
 
 		if (!this.configs.shouldRunSweep) {
@@ -706,7 +710,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// 1. Call the runtime to delete sweep ready nodes. The runtime returns a list of nodes it deleted.
 		// TODO: GC:Validation - validate that removed routes are not double delete and that the child routes of
 		// removed routes are deleted as well.
-		const deletedNodeIds = this.runtime.deleteSweepReadyNodes(sweepReadyNodes);
+		const deletedNodeIds = this.runtime.deleteSweepReadyNodes(Array.from(sweepReadyNodes));
 
 		// 2. Clear unreferenced state tracking for deleted nodes.
 		for (const nodeId of deletedNodeIds) {
@@ -976,12 +980,12 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Generates the stats of a garbage collection run from the given results of the run.
-	 * @param gcResult - The result of a GC run.
-	 * @returns the GC stats of the GC run.
+	 * Generates the stats of a garbage collection mark phase run.
+	 * @param gcResult - The result of the current GC run.
+	 * @returns the stats of the mark phase run.
 	 */
-	private generateStats(gcResult: IGCResult): IGCStats {
-		const gcStats: IGCStats = {
+	private getMarkPhaseStats(gcResult: IGCResult): IMarkPhaseStats {
+		const markPhaseStats: IMarkPhaseStats = {
 			nodeCount: 0,
 			dataStoreCount: 0,
 			attachmentBlobCount: 0,
@@ -994,35 +998,35 @@ export class GarbageCollector implements IGarbageCollector {
 		};
 
 		const updateNodeStats = (nodeId: string, referenced: boolean) => {
-			gcStats.nodeCount++;
+			markPhaseStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
 			const stateUpdated =
 				this.gcDataFromLastRun === undefined ||
 				this.unreferencedNodesState.has(nodeId) === referenced;
 			if (stateUpdated) {
-				gcStats.updatedNodeCount++;
+				markPhaseStats.updatedNodeCount++;
 			}
 			if (!referenced) {
-				gcStats.unrefNodeCount++;
+				markPhaseStats.unrefNodeCount++;
 			}
 
 			if (this.runtime.getNodeType(nodeId) === GCNodeType.DataStore) {
-				gcStats.dataStoreCount++;
+				markPhaseStats.dataStoreCount++;
 				if (stateUpdated) {
-					gcStats.updatedDataStoreCount++;
+					markPhaseStats.updatedDataStoreCount++;
 				}
 				if (!referenced) {
-					gcStats.unrefDataStoreCount++;
+					markPhaseStats.unrefDataStoreCount++;
 				}
 			}
 			if (this.runtime.getNodeType(nodeId) === GCNodeType.Blob) {
-				gcStats.attachmentBlobCount++;
+				markPhaseStats.attachmentBlobCount++;
 				if (stateUpdated) {
-					gcStats.updatedAttachmentBlobCount++;
+					markPhaseStats.updatedAttachmentBlobCount++;
 				}
 				if (!referenced) {
-					gcStats.unrefAttachmentBlobCount++;
+					markPhaseStats.unrefAttachmentBlobCount++;
 				}
 			}
 		};
@@ -1035,6 +1039,63 @@ export class GarbageCollector implements IGarbageCollector {
 			updateNodeStats(nodeId, false /* referenced */);
 		}
 
-		return gcStats;
+		return markPhaseStats;
+	}
+
+	/**
+	 * Generates the stats of a garbage collection sweep phase run.
+	 * @param allDeletedNodes - All the nodes that have been deleted across all GC runs.
+	 * @param currentDeletedNodes - The nodes that have been deleted in this GC run.
+	 * @param markPhaseStats - The stats of the mark phase run.
+	 * @returns the stats of the sweep phase run.
+	 */
+	private getSweepPhaseStats(
+		allDeletedNodes: Set<string>,
+		currentDeletedNodes: Set<string>,
+		markPhaseStats: IMarkPhaseStats,
+	): ISweepPhaseStats {
+		// Initialize the life time node counts to the mark phase node counts. If sweep is not enabled,
+		// these will be the life time node count for this container.
+		const sweepPhaseStats: ISweepPhaseStats = {
+			lifetimeNodeCount: markPhaseStats.nodeCount,
+			lifetimeDataStoreCount: markPhaseStats.dataStoreCount,
+			lifetimeAttachmentBlobCount: markPhaseStats.attachmentBlobCount,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
+		};
+
+		for (const nodeId of allDeletedNodes) {
+			sweepPhaseStats.deletedNodeCount++;
+			const nodeType = this.runtime.getNodeType(nodeId);
+			if (nodeType === GCNodeType.DataStore) {
+				sweepPhaseStats.deletedDataStoreCount++;
+			} else if (nodeType === GCNodeType.Blob) {
+				sweepPhaseStats.deletedAttachmentBlobCount++;
+			}
+		}
+
+		if (!this.configs.shouldRunSweep) {
+			return sweepPhaseStats;
+		}
+
+		// If sweep is enabled, the counts from the mark phase stats do not include nodes that have been
+		// deleted in previous runs. Add the deleted node counts to life time stats.
+		sweepPhaseStats.lifetimeNodeCount += sweepPhaseStats.deletedNodeCount;
+		sweepPhaseStats.lifetimeDataStoreCount += sweepPhaseStats.deletedDataStoreCount;
+		sweepPhaseStats.lifetimeAttachmentBlobCount += sweepPhaseStats.deletedAttachmentBlobCount;
+
+		// The node deleted in current run are counted twice - once in allDeletedNodes and again in
+		// markPhaseStats. So, remove them from the life time stats.
+		for (const nodeId of currentDeletedNodes) {
+			sweepPhaseStats.lifetimeNodeCount--;
+			const nodeType = this.runtime.getNodeType(nodeId);
+			if (nodeType === GCNodeType.DataStore) {
+				sweepPhaseStats.lifetimeDataStoreCount--;
+			} else if (nodeType === GCNodeType.Blob) {
+				sweepPhaseStats.lifetimeAttachmentBlobCount--;
+			}
+		}
+		return sweepPhaseStats;
 	}
 }

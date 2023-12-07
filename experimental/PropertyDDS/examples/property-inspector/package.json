@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -23,8 +23,8 @@
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prepack": "npm run webpack",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"start": "webpack serve --open",
 		"start:server": "tinylicious",
 		"start:test": "webpack serve --config webpack.test.js",
@@ -79,7 +79,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.28.0-210888",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",

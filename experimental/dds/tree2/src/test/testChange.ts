@@ -10,12 +10,13 @@ import {
 	ChangeRebaser,
 	TaggedChange,
 	AnchorSet,
-	Delta,
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
 	RevisionTag,
 	deltaForSet,
+	DeltaFieldMap,
+	DeltaRoot,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
@@ -57,7 +58,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -164,7 +165,7 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
+function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {
@@ -204,6 +205,7 @@ export const TestChange = {
 	rebase,
 	checkChangeList,
 	toDelta,
+	isEmpty,
 	codec,
 };
 deepFreeze(TestChange);
@@ -275,15 +277,17 @@ export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
 const rootKey: FieldKey = brand("root");
 
 /**
- * This is a hack to encode arbitrary information (the intentions) into a Delta.
+ * This is a hack to encode arbitrary information (the intentions) into a Delta
  * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
-export function asDelta(intentions: number[]): Delta.Root {
+export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
-		: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]);
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(
@@ -296,7 +300,10 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
+}
+
+export function isEmpty(change: TestChange): boolean {
+	return change.intentions.length === 0;
 }

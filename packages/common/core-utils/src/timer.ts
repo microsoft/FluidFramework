@@ -7,7 +7,7 @@ import { assert } from "./assert";
 import { Deferred } from "./promises";
 
 /**
- * @public
+ * @internal
  */
 export interface ITimer {
 	/**
@@ -71,7 +71,7 @@ const maxSetTimeoutMs = 0x7fffffff; // setTimeout limit is MAX_INT32=(2^31-1).
  * @param setTimeoutIdFn - Executed to update the timeout if multiple timeouts are required when
  * timeoutMs greater than maxTimeout
  * @returns The initial timeout
- * @public
+ * @internal
  */
 export function setLongTimeout(
 	timeoutFn: () => void,
@@ -99,7 +99,7 @@ export function setLongTimeout(
  * makes it simpler to keep track of recurring timeouts with the same
  * or similar handlers and timeouts. This class supports long timeouts
  * or timeouts exceeding (2^31)-1 ms or approximately 24.8 days.
- * @public
+ * @internal
  */
 export class Timer implements ITimer {
 	/**
@@ -221,7 +221,7 @@ export class Timer implements ITimer {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IPromiseTimerResult {
 	timerResult: "timeout" | "cancel";
@@ -230,7 +230,7 @@ export interface IPromiseTimerResult {
 /**
  * Timer which offers a promise that fulfills when the timer
  * completes.
- * @public
+ * @internal
  */
 export interface IPromiseTimer extends ITimer {
 	/**
@@ -245,7 +245,7 @@ export interface IPromiseTimer extends ITimer {
  * makes it simpler to keep track of recurring timeouts with the
  * same handlers and timeouts, while also providing a promise that
  * resolves when it times out.
- * @public
+ * @internal
  */
 export class PromiseTimer implements IPromiseTimer {
 	private deferred?: Deferred<IPromiseTimerResult>;

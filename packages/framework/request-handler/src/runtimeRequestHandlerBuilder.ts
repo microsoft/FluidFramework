@@ -14,8 +14,7 @@ import { RuntimeRequestHandler } from "./requestHandlers";
  * The provided handlers sequentially applied until one is able to satisfy the request.
  *
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- *
- * @public
+ * @internal
  */
 export class RuntimeRequestHandlerBuilder {
 	// eslint-disable-next-line import/no-deprecated
@@ -42,8 +41,7 @@ export class RuntimeRequestHandlerBuilder {
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- *
- * @public
+ * @internal
  */
 // eslint-disable-next-line import/no-deprecated
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {

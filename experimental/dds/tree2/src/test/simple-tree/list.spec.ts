@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../domains";
-import { treeViewWithContent } from "../utils";
-import { pretty } from "./utils";
+import { TreeField } from "../../simple-tree";
+import { getOldRoot, pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
 
@@ -57,20 +57,15 @@ describe("List", () => {
 	}
 
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree() {
-		// Consider 'readonlyTreeWithContent' for readonly tests?
-		const view = treeViewWithContent({
-			schema,
-			initialTree: { numbers: { "": [] }, strings: { "": [] } },
-		});
-		return view.root;
+	function createTree(): TreeField<typeof schema.rootFieldSchema> {
+		return getOldRoot(schema, { numbers: [], strings: [] });
 	}
 
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
 		const list = createTree().numbers;
-		list.insertAtStart(items);
+		list.insertAtStart(...items);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -79,7 +74,7 @@ describe("List", () => {
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
 		const list = createTree().strings;
-		list.insertAtStart(items);
+		list.insertAtStart(...items);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -720,7 +715,7 @@ describe("List", () => {
 				(subject as any)[0] = "a";
 			});
 
-			subject.insertAtStart(["a", "b", "c"]);
+			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
 				(subject as any)[0] = "a";
@@ -734,7 +729,7 @@ describe("List", () => {
 				(subject as any).length = 0;
 			});
 
-			subject.insertAtStart(["a", "b", "c"]);
+			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
 				(subject as any).length = 0;

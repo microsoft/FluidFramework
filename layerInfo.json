@@ -135,7 +135,11 @@
 			},
 			"Tests": {
 				"dev": true,
-				"dirs": ["packages/test/", "azure/packages/test/"]
+				"dirs": [
+					"packages/test/",
+					"azure/packages/test/",
+					"packages/service-clients/end-to-end-tests"
+				]
 			},
 			"Test-Utils": {
 				"dev": true,
@@ -159,7 +163,7 @@
 			},
 			"OdspClient": {
 				"dirs": ["packages/service-clients/odsp-client"],
-				"deps": ["AzureClient"]
+				"deps": ["Container-Definitions", "Framework", "Driver"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],

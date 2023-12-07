@@ -20,7 +20,7 @@ export {
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
 export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, Multiplicity, FieldKindWithEditor } from "./fieldKind";
+export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -29,10 +29,10 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
-	RemovedTreesFromChild,
-	RevisionMetadataSource,
-	RevisionIndexer,
+	RebaseRevisionMetadata,
+	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
@@ -43,7 +43,6 @@ export {
 	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeset,
-	RevisionInfo,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
@@ -52,5 +51,8 @@ export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
-	revisionMetadataSourceFromInfo,
+	GlobalEditDescription,
+	FieldEditDescription,
+	rebaseRevisionMetadataFromInfo,
+	intoDelta,
 } from "./modularChangeFamily";

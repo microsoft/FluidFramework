@@ -31,6 +31,7 @@ import { TableDocument } from "../document";
  * @param propertyInterceptionCallback - The interception callback to be called.
  *
  * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.
+ * @internal
  */
 export function createTableWithInterception<T extends ITable>(
 	table: T,
