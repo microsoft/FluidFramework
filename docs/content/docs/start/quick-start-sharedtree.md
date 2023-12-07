@@ -30,7 +30,7 @@ To get started you need the following installed.
 ## Getting started
 
 Open a new command window and navigate to the folder you where you want to install the project, and then clone the
-[Simple Fluid demo repo](https://github.com/microsoft/simple) with the following command. The cloning process
+[Simple Fluid demo](https://github.com/microsoft/FluidDemos/simple) with the following command. The cloning process
 will create a subfolder named FluidHelloWorld with the project files in it.
 
 ```bash

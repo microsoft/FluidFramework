@@ -51,7 +51,7 @@ For information about creating the schema for a list node, see [List schema](#li
 
 The `SharedTree` library can be found in the [fluid-experimental/tree2](https://www.npmjs.com/package/@fluid-experimental/tree2) package.
 
-To get started, run the following from a terminal in your repository:
+To get started, run the following from a terminal in your project folder:
 
 ```bash
 npm install @fluid-experimental/tree2
@@ -67,91 +67,152 @@ The major programming tasks for using `SharedTree`s are:
 
 ### Schema definition
 
-Start by creating a `SchemaBuilder` object. The following is an example. Note that the `scope` property must be some unique string such as a UUID.
+Start by creating a `SchemaFactory` object. The following is an example. Note that the parameter must be some unique string such as a UUID.
 
 ```typescript
-import { ... SchemaBuilder, ... } from '@fluid-experimental/tree2';
+import { ... SchemaFactory, ... } from '@fluid-experimental/tree2';
 
-const sb = new SchemaBuilder({ scope: 'ec1db2e8-0a00-11ee-be56-0242ac120002' });
+const sf = new SchemaFactory('ec1db2e8-0a00-11ee-be56-0242ac120002');
 ```
 
-The `SchemaBuilder` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying branch nodes; `object()`, `list()`, and `map()`. Use the members of the class to build a schema.
+The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying branch nodes; `object()`, `list()`, and `map()`. Use the members of the class to build a schema.
 
 As an example, consider an app that provides a digital board with groups of sticky notes as shown in the following screenshot:
 
 ![A screenshot of a sticky note board app](/images/sticky-note-board-app.png)
 
-The full sample is at: ------------------   LINK TO SAMPLE ------------------. *The code snippets in this article are simplified versions of the code in the sample.*
+The full sample is at: [Shared Tree Demo](https://github.com/microsoft/FluidDemos/shared-tree-demo). *The code snippets in this article are simplified versions of the code in the sample.*
 
 #### Object schema
 
 Use the `object()` method to create a schema for a note. Note the following about this code:
 
--   The `object()`, `list()`, and `map()` methods return an object that defines a schema. Notionally, you can think of this object as datatype. (And there is a way, described later in this article, to convert it into an actual TypeScript type.)
+-   The `object()`, `list()`, and `map()` methods return an object that defines a schema. Notionally, you can think of this object as datatype. (In the next step, you covert it to an actual TypeScript type.)
 -   The first parameter of `object()` is the name of the type.
--   The `id`, `text`, and `author` properties are leaf nodes.
+-   The `id`, `text`, `author`, and `lastChanged` properties are leaf nodes.
 -   The `votes` property is a list node, whose members are all strings. It is defined with an inline call of the `list()` method.
 
 ```typescript
-const noteSchema = sb.object('note', {
-    id: sb.string,
-    text: sb.string,
-    author: sb.string,
-    votes: sb.list(sb.string),      
+const noteSchema = sf.object('Note', {
+    id: sf.string,
+    text: sf.string,
+    author: sf.string,
+    lastChanged: sf.number,
+    votes: sf.list(sf.string),
 });
 ```
 
-Create the schema for a group of notes.
+Create a TypeScript datatype by extending the notional type object. 
 
 ```typescript
-const groupSchema = sb.object('group', {
-    id: sb.string,
-    name: sb.string,
-    notes: sb.list(noteSchema),
+class Note extends noteSchema { /* members of the class defined here */ };
+```
+
+You can also make the call of the `object()` method inline as in the following:
+
+```typescript
+class Note extends sf.object('Note', {
+    id: sf.string,
+    text: sf.string,
+    author: sf.string,
+    lastChanged: sf.number,
+    votes: sf.list(sf.string),
+}) { /* members of the class defined here */  };
+```
+
+For the remainder of this article, we use the inline style.
+
+You can add fields, properties, and methods like any TypeScript class including methods that wrap one or more methods in the `SharedTree` [APIs](#api). For example, the `Node` class can have the following `updateText` method. Since the method writes to shared properties, the changes are reflected on all clients.
+
+```typescript
+public updateText(text: string) {
+    this.lastChanged = new Date().getTime();
+    this.text = text;
+}
+```
+
+You can also add members that affect only the current client; that is, they are not based on DDSes. For example, the sticky note application can be updated to let each user set their own color to any note without changing the color of the note on any other clients. To facilitate this feature, the following members could be added to the `Note` class. Since the `color` property is not a shared object, the changes made by `setColor` only affect the current client.
+
+```typescript
+private color: string = "yellow";
+
+public setColor(newColor: string) {
+    this.color = newColor;
+}
+```
+
+{{< callout note >}}
+
+Do *not* override the constructor of types that you derive from objects returned by the `object()`, `list()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects.
+
+{{< /callout >}}
+
+Create the schema for a group of notes. Note that the `list()` method is called inline, which means that the `Group.notes` property has the notional datatype of a list node. We'll change this to a genuine TypeScript type in the [List schema](#list-schema) section.
+
+```typescript
+class Group extends sf.object('Group', {
+    id: sf.string,
+    name: sf.string,
+    notes: sf.list(Note),
 });
 ```
 
 #### List schema
 
-The app is going to need the type that is returned from `sb.list(noteSchema)` in multiple places, so it can be assigned to a const and the `groupSchema` redefined to use the const as follows:
+The app is going to need the type that is returned from `sf.list(Note)` in multiple places, including outside the context of `SchemaFactory`, so we create a TypeScript type for it as follows. Note that we include a method for adding a new note to the list of notes. The implementation is omitted, but it would wrap the constructor for the `Note` class and one or more methods in the [List node APIs](#list-node-apis).
 
 ```typescript
-const notesListSchema = sb.list(noteSchema);
+class Notes extends sf.list('Notes', Note) {
+    public newNote(author: string) {
+        // implementation omitted.
+    }
+}
+```
 
-const groupSchema = sb.object('group', {
-    id: sb.string,
-    name: sb.string,
-    notes: notesListSchema,
+Now revise the declaration of the `Group` class to use the new type.
+
+```typescript
+class Group extends sf.object('Group', {
+    id: sf.string,
+    name: sf.string,
+    notes: Notes,
 });
 ```
 
 #### Root schema
 
-As you can see from the screenshot, the top level of the root of the app's data can have two kinds of children: notes in groups and notes that are outside of any group. So, the children are defined as a list with two types of items. This is done by passing an array of schema types to the `list()` method.
+As you can see from the screenshot, the top level of the root of the app's data can have two kinds of children: notes in groups and notes that are outside of any group. So, the children are defined as `Items` which is a list with two types of items. This is done by passing an array of schema types to the `list()` method. Methods for adding a new group to the app and a new note that is outside of any group are included.
 
 ```typescript
-const itemsSchema = sb.list([groupSchema, noteSchema]);
+class Items extends sf.list('Items', [Group, Note]) {
+    public newNote(author: string) {
+        // implementation omitted.
+    }
 
-const rootSchema = sb.object('root', {
-    items: itemsSchema,
-});
+    public newGroup(name: string): Group {
+        // implementation omitted.
+    }
+}
 ```
 
-The next step is to create the complete schema with a call of the `SchemaBuilder.intoSchema()` method.
+The root of the schema must itself have a type which is defined as follows:
 
 ```typescript
-const appSchema = sb.intoSchema(rootSchema);
+class App extends sf.object('App', {
+    items: Items,
+}) {}
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the `initialTree` property specifies the initial value of the tree. The value assigned to it must conform to the root schema, so in this example, it has a single `items` property. The value of the `items` property specifies that the items list is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the second parameter returns an object that initializes the tree with an object that must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items list is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
 
 ```typescript
-export const appSchemaConfig = {
-    schema: appSchema,
-    initialTree: {
-        items: {"":[]},
-    },
-};
+export const appTreeConfiguration = new TreeConfiguration(
+    App, // root node
+    () => ({
+        // initial tree
+        items: [],
+    })
+);
 ```
 
 #### Map schema
@@ -159,35 +220,25 @@ export const appSchemaConfig = {
 The sticky notes example doesn't have any map branches, but creating a map schema is like creating a list schema, except that you use the `map()` method. Consider a silent auction app. Users view various items up for auction and place bids for items they want. One way to represent the bids for an item is with a map from user names to bids. The following snippet shows how to create the schema. Note that `map()` doesn't need a parameter to specify the type of keys because it is always string.
 
 ```typescript
-const auctionItemSchema = sb.map(sb.number);
+class AuctionItem extends sf.map('AuctionItem', sf.number) { ... }
 ```
 
 Like `list()`, `map()` can accept an array of types when the values of the map are not all the same type.
 
 ```typescript
-const myMapSchema = sb.map([sb.number, sb.string]);
+class MyMapSchema extends sf.map('MyMap', [sf.number, sf.string]) { ... }
 ```
 
 #### Setting properties as optional
 
-To specify that a property is not required, pass it to the `SchemaBuilder.optional()` method inline. The following example shows a schema with two optional properties.
+To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with two optional properties.
 
 ```typescript
-const proposalSchema = sb.object('proposal', {
-    id: sb.string,
-    text: sb.optional(sb.string),
-    comments: sb.optional(sb.list(commentSchema)),
+class Proposal = sf.object('Proposal', {
+    id: sf.string,
+    text: sf.optional(sf.string),
+    comments: sf.optional(sf.list(Comment)),
 });
-```
-
-#### Turning schema types into actual types
-
-As mentioned above, you can think of the objects returned by the `object()`, `map()`, and `list()` methods as types. But this is true only in code within the context of the `SchemaBuilder` object. There are scenarios in which it would be helpful to have actual TypeScript types that match your schema types in other parts of the app. For example, if your app has a React UI and a `<Group>` component for displaying a group of notes, it would be convenient to define the component's properties with a type just like the `groupSchema`. Fluid Framework provides a generic type called `ProxyNode<T>` that can be used, in conjunction with the `type` and `typeof` keywords, to define a TypeScript datatype that duplicates a schema type. The following is an example:
-
-```typescript
-import { ... ProxyNode, ... } from '@fluid-experimental/tree2';
-
-export type Group = ProxyNode<typeof groupSchema>;
 ```
 
 ### Creation
@@ -204,12 +255,12 @@ const containerSchema: ContainerSchema = {
 const { container, services } = await client.createContainer(containerSchema);
 ```
 
-Apply the schema to the tree by passing the schema configuration object to the `ISharedTree.schematize()` method.
+Apply the schema to the tree by passing the tree configuration object to the `ITree.schematize()` method.
 
 ```typescript
-const stickyNotesTree = container.initialObjects.appData as ISharedTree;
+const stickyNotesTree = container.initialObjects.appData as ITree;
 
-stickyNotesTree.schematize(appSchemaConfig);
+stickyNotesTree.schematize(appTreeConfiguration);
 ```
 
 You can now add child items to the `stickyNotesTree` object using the methods described in [API](#api) below.
@@ -226,7 +277,7 @@ Leaf nodes are read and written exactly the way JavaScript primitive types are b
 myNewsPaperTree.articles[1].headline = "Man bites dog";
 ```
 
-The following examples show how to read from a leaf node. *Note that the datatype of `pointsForDetroitTigers` is `number`, not `sb.number`.* This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
+The following examples show how to read from a leaf node. *Note that the datatype of `pointsForDetroitTigers` is `number`, not `sf.number`.* This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
 
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
@@ -246,13 +297,14 @@ const myItems: List = stickyNotesTree.items;
 
 To write to an object node, you first create an object and then assign it to the node with the assignment operator (`=`). If the object node is a child of a map or list node, use the write [Map node write APIs](#map-node-write-apis) or [List node write APIs](#list-node-write-apis).
 
-You must create the object using `create()` method of schema object. The following shows how to create a note object from the sticky notes example.
+You must create the object using the constructor of the class that you derived from the object returned by `SchemaFactory.object()` method. The following shows how to create a note object from the sticky notes example.
 
 ```typescript
-const babyShowerNote = noteSchema.create({
+const babyShowerNote = new Note({
     id: Guid.create().toString(),
     text: "Baby shower is at 3 PM today.",
     author: "Bob",
+    lastChanged: 19697 // Days since January 1, 1970, the Unix epoch.
     votes: ["0"]
 });
 ```
@@ -299,11 +351,11 @@ Returns an Iterator that contains the key/value pairs in the map node. The pairs
 map(callback: ()=>[]): IterableIterator<[string, T]>
 ```
 
-Returns an array, not a map node or list node, that is a result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
+Returns an array, *not a map node or list node*, that is a result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
 
 ##### Map node write APIs
 
-The write methods for map nodes are also the same as the corresponding methods for JavaScript Map objects.
+The write methods for map nodes are also the same as the corresponding methods for JavaScript `Map` objects.
 
 ```typescript
 set(key: string, value: T)
@@ -311,7 +363,7 @@ set(key: string, value: T)
 
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
--   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `const myMapSchema = sb.map([sb.number, sb.string]);`, then `T` could be `number` or `string`.
+-   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `class MyMap extends sf.map([sf.number, sf.string]);`, then `T` could be `number` or `string`.
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
@@ -332,7 +384,7 @@ The total number of entries in the map node.
 
 ##### List node read APIs
 
-List nodes have all the same non-mutating read methods as the JavaScript [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) type. (For information about the differences between mutating and non-mutating methods, see [Copying methods and mutating methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#copying_methods_and_mutating_methods)). Note that methods which return an array, like `Array.map()`, return a JavaScript array, not a List, when called on a list node.
+List nodes have all the same non-mutating read methods as the JavaScript [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) type. (For information about the differences between mutating and non-mutating methods, see [Copying methods and mutating methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#copying_methods_and_mutating_methods)). Note that methods which return an array, like `Array.map()`, when called on a list node, return a JavaScript array, not an object of the type of the list node. For example, if the type is `Notes` from the sticky notes example, an array is returned, not a `Notes` object.
 
 ##### List node write APIs
 
@@ -340,7 +392,7 @@ The write APIs for list nodes are quite different from JavaScript arrays. There 
 
 ###### Insert methods
 
-List nodes have three methods that insert new items into the node. Note that in all of the following, the `T` can be any type that conforms to the list node's schema. For example, if the schema was defined with `const myListSchema = sb.list([sb.number, sb.string]);`, then `T` could be `number` or `string`.
+List nodes have three methods that insert new items into the node. Note that in all of the following, the `T` can be any type that conforms to the list node's schema. For example, if the schema was defined with `class MyList extends sf.list([sf.number, sf.string]);`, then `T` could be `number` or `string`.
 
 ```typescript
 insertAt(index: number, value: Iterable<T>)
@@ -380,26 +432,26 @@ Removes the item at the given `index`.
 removeRange(start?: number, end?: number)
 ```
 
-Removes the items indicated by the `start` index (inclusive) and `end` index (exclusive). If the end index is omitted, every item from the start index to the end is removed. If the start index is omitted, it defaults to 0. So, calling `removeRange()` removes all the items in the list.
+Removes the items indicated by the `start` index (inclusive) and `end` index (exclusive). If the end index is omitted, every item from the start index to the end of the list is removed. If the start index is omitted, it defaults to 0. So, calling `removeRange()` removes all the items in the list.
 
 ###### Move methods
 
-List nodes have three methods that move items within a list or from one list node to another. When moving from one list node to another, these methods must be called from the destination list node.
+List nodes have three methods that move items within a list or from one list node to another. When moving from one list node to another, these methods must be called from the destination list node. Note that in all of the following, the `T` can be any type that is derived from an object that is returned by a call of `SchemaFactory.list()`, such as the `Notes` and `Items` classes in the sticky notes example. 
 
 ```typescript
-moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
+moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
 Moves the specified items to the start of the list. Specify a `source` list if it is different from the destination list.
 
 ```typescript
-moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
+moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
 Moves the specified items to the end of the list. Specify a `source` list if it is different from the destination list.
 
 ```typescript
-moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
+moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
 Moves the items to the specified `index` in the destination list. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` list if it is different from the destination list. If the items are being moved within the same list, the `index` position is calculated including the items being moved.
@@ -418,7 +470,7 @@ The `Tree` class provides some static utility APIs for working with `ShareTree` 
 Tree.on(node: SharedTreeNode, eventType: string, listener: () => void): () => void
 ```
 
-Assigns the specified `listener` function to the specified `event type` for the specified `node`. The `node` can be any node of the tree. The `[event type]` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
+Assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
 
 -   `event.target`: The node on which the event was triggered.
 -   `event.isLocal`: Specifies whether the change was made on the local client or a remote client.
@@ -428,15 +480,33 @@ The `Tree.on()` method returns a function that unsubscribes the handler from the
 
 ## Type guard
 
+When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the TypeScript `instanceOf` keyword to test for the desired type as in the following examples.
+
 ```typescript
-Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema): boolean
+if (myNode instanceOf sf.number) {
+   // Code here that processes number nodes.
+}
+
+if (myNode instanceOf Note) {
+   // Code here that processes Note nodes.
+}
 ```
 
-Returns `true` if `someNode` is of type `nodeType`. Your code can call this when it has a reference to a node whose exact type isn't known. Here is an example:
+Alternatively, the Tree class provides a method for testing the type of a node:
 
 ```typescript
-if (Tree.is(myNode, sb.number)) {
+Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
+```
+
+Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `list()`. Here are examples:
+
+```typescript
+if (Tree.is(myNode, sf.number)) {
    // Code here that processes number nodes.
+}
+
+if (Tree.is(myNode, Note)) {
+   // Code here that processes Note nodes.
 }
 ```
 
@@ -451,15 +521,15 @@ Tree.key(node: SharedTreeNode): number | string
 Returns the key of the `node`. This is a string in all cases, except a list node, in which case it returns the index of the node.
 
 ```typescript
-Tree.parent(node: SharedTreeNode)
+Tree.parent(node: SharedTreeNode): SharedTreeNode
 ```
 
-Returns the parent node of `node`. The following snippet continues the sticky notes example. Suppose that you have a reference to a note object and you want to delete it if, and only if, it is a member of a list of notes in a group or it is a direct child of the root. You can get the parent node and test what it's type is using the `Tree.is()` method.
+Returns the parent node of `node`. The following snippet continues the sticky notes example. Suppose that you have a reference to a note object and you want to delete it if, and only if, it is a member of a list of notes in a group or it is a direct child of the root. You can get the parent node and test what its type is.
 
 ```typescript
 const parent = Tree.parent(note);
 
-if (Tree.is(parent, notes) || Tree.is(parent, items)) {
+if ((parent instanceOf Notes) || (parent instanceOf Items)) {
     const index = parent.indexOf(note);
     parent.removeAt(index);
 }

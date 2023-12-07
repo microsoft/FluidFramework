@@ -6,7 +6,7 @@ aliases:
   - "/start/tutorial-sharedtree/"
 ---
 
-In this walkthrough, you'll learn about using the Fluid Framework by examining the SharedTree demo application at <https://github.com/microsoft/simple/tree/main>. To get started, go through the [Quick Start]({{< relref "quick-start-sharedtree.md" >}}) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by examining the SharedTree demo application at [Simple Fluid demo](https://github.com/microsoft/FluidDemos/simple. To get started, go through the [Quick Start]({{< relref "quick-start-sharedtree.md" >}}) guide.
 
 {{< callout note >}}
 
@@ -16,7 +16,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 {{< /callout >}}
 
-The Fluid Framework syncs the data across clients so everyone sees the same result. This article walks through the code in the demo app to show how it implements the following steps:
+The Fluid Framework synchronizes the data across clients so everyone sees the same result. This article walks through the code in the demo app to show how it implements the following steps:
 
 1. [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data)
 2. [Creating a Fluid container](#creating-a-fluid-container)
@@ -30,43 +30,53 @@ The first step in any Fluid Framework 2.0 application is to create a schema for 
 The code begins by creating a `SchemaBuilder` object.
 
 ```typescript
-const sb = new SchemaBuilder({ scope: 'd302b84c-75f6-4ecd-9663-524f467013e3' });
+const sf = new SchemaFactory('d302b84c-75f6-4ecd-9663-524f467013e3');
 ```
 
-Then it creates the types for the lists and for their parent object. Note that the parent object is required to have exactly two lists of strings and no other properties.
+Then it creates the type for the lists by extending the type of the object that is returned by `sf.list()`. This code has two purposes:
+
+-   It converts the type returned by `sf.list()` to a real TypeScript type that can be use in contexts other than `SchemaFactory`, such as in the app's React-based view.
+-   It enables us create simplified wrappers around the methods of the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}})..
 
 ```typescript
-export const listOfStrings = sb.list(sb.string);
-export const app = sb.object('app', {
-    left: listOfStrings,
-    right: listOfStrings,
-});
+export class List extends sf.list('List', sf.string) {
+    // Moves the first item in the source list to the start of this list
+    public move(source: List) {
+        if (source.length > 0) this.moveToStart(0, source);
+    }
+
+    // Remove the first item in the list if the list is not empty
+    public remove() {
+        if (this.length > 0) this.removeAt(0);
+    }
+
+    // Add an item to the beginning of the list
+    public insert() {
+        this.insertAtStart('');
+    }
+}
 ```
 
-A schema object is then created with the `SchemaBuilder.intoSchema()` method.
+Next it creates the type for the top node of the tree. Note that this type is required to have exactly two lists of strings and no other properties.
 
 ```typescript
-export const appSchema = sb.intoSchema(app);
+export class App extends sf.object('App', {
+    left: List,
+    right: List,
+}) {}
 ```
 
-Next a schema configuration object is created with the `buildTreeConfiguration()` method. This object will be used when the app's `SharedTree` object is created. Note that the first parameter in `buildTreeConfiguration()` specifies that on application startup, the tree will have two empty lists.
+Next a tree configuration object is created. This object will be used when the app's `SharedTree` object is created. Note that the second parameter of the constructor specifies that on application startup, the tree will have two empty lists.
 
 ```typescript
-export const appSchemaConfig = buildTreeConfiguration({
-    schema: appSchema,
-    initialTree: {
-        left: {"":[]},
-        right: {"":[]}
-    },
-    allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-});
-```
-
-There is one last task. The `listOfStrings` and `app` types are needed in the app's React-based view, but these objects are only types within the context of the `SchemaBuilder` object. To be used in the view, they need to be converted to real TypeScript types. The following lines do that:
-
-```typescript
-export type App = ProxyNode<typeof app>;
-export type ListOfStrings = ProxyNode<typeof listOfStrings>;
+export const treeConfiguration = new TreeConfiguration(
+    App,
+    () =>
+        new App({
+            left: [],
+            right: [],
+        })
+);
 ```
 
 ## Creating a Fluid container
@@ -75,7 +85,6 @@ Application setup begins in the [fluid.ts](https://github.com/microsoft/simple/b
 
 ```typescript
 import { clientProps } from './clientProps';
-   ...
 
 const client = new AzureClient(clientProps);
 ```
@@ -135,15 +144,15 @@ let containerId = location.hash.substring(1);
 const { container } = await loadFluidData(containerId, containerSchema);
 ```
 
-The next task in `main` is to create a `SharedTree` object named `appData` by applying the schema that is created in schema.ts to the tree. This is done by passing the schema configuration object to the `ITree.schematize()` method. See [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data).
+The next task in `main` is to create a `SharedTree` object named `appData` by applying the schema that is created in schema.ts to the tree. This is done by passing the tree configuration object to the `ITree.schematize()` method. See [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data).
 
 ```typescript
 import { ITree } from '@fluid-experimental/tree2';
-import { appSchemaConfig } from './schema';
+import { treeConfiguration } from './schema';
     ...
 
 const appData = (container.initialObjects.appData as ITree).schematize(
-    appSchemaConfig
+    treeConfiguration
 );
 ```
 
@@ -193,19 +202,13 @@ Later in the `main` method, the view is rendered. Note the following about this 
 
 -   `ReactApp` is the top-level React component.
 -   The `data` property of the `ReactApp` component is the `SharedTree` object that is created in the index.tsx file. It will be used by methods in the component to add, remove, and move items from the tree.
--   The `container` property is the Fluid `container` object. It has properties that enable the view to monitor the [connection]({{< relref "build/container-states-events.md#connection-status-states" >}}) and [synchronization]({{< relref "build/container-states-events.md#synchronization-status-states" >}}) status of the container.
--   This code is *before* the code that publishes that the Fluid container, as described near the end of the section [Setting up the application](#setting-up-the-application), for performance reasons. Users can start manipulating the data in the `SharedTree` as soon as view has rendered, without waiting for the container to be published. When the publishing has finished, changes in the data made in the client are synchronized with the Fluid service.
+-   This code is *before* the code that publishes the Fluid container, as described near the end of the section [Setting up the application](#setting-up-the-application), for performance reasons. Users can start manipulating the data in the `SharedTree` as soon as view has rendered, without waiting for the container to be published. When the publishing has finished, changes in the data made in the client are synchronized with the Fluid service.
 
 ```typescript
 import { ReactApp } from './react_app';
     ...
 
-root.render(
-    <ReactApp
-        data={appData}
-        container={container}
-    />
-);
+root.render(<ReactApp data={appData} />);
 ```
 
 ### Creating the components
@@ -222,19 +225,14 @@ The file starts with the following import statements. Note that:
 -   `Tree` is a utility class that provides a method for assigning handlers to change events in the `SharedTree`. For more information, see [Tree utility APIs]({{< relref "data-structures/tree.md#tree-utility-apis" >}}).
 
 ```typescript
-import { TreeView } from '@fluid-experimental/tree2';
-import { App, ListOfStrings } from './schema';
-import { IFluidContainer } from 'fluid-framework';
-import { Tree } from '@fluid-experimental/tree2';
+import { TreeView, Tree } from '@fluid-experimental/tree2';
+import { App, List } from './schema';
 ```
 
 This is followed by the declaration of the `<ReactApp>` component and its props and their data types.
 
 ```typescript
-export function ReactApp(props: {
-    data: TreeView<App>;
-    container: IFluidContainer;
-}): JSX.Element { ... }
+export function ReactApp(props: { data: TreeView<App> }): JSX.Element { ... }
 ```
 
 The first task within the `<ReactApp>` component is to ensure that the view changes whenever the shared tree is changed on any client. Whenever the the React view rerenders, the `data` property of the component is repopulated with the latest data in the tree. Since React rerenders the view whenever the React app's state changes, the app needs to force a change in the state whenever the `SharedTree` object changes. This is accomplished with a custom effect. Note the following about this code:
@@ -248,10 +246,10 @@ The first task within the `<ReactApp>` component is to ensure that the view chan
 ```typescript
 const [invalidations, setInvalidations] = useState(0);
 
-const appRoot = props.data.root;
+const app = props.data.root;
 
 useEffect(() => {
-    const unsubscribe = Tree.on(appRoot, 'afterChange', () => {
+    const unsubscribe = Tree.on(app, 'afterChange', () => {
         setInvalidations(invalidations + Math.random());
     });
     return unsubscribe;
@@ -260,51 +258,51 @@ useEffect(() => {
 
 The final task in the `<ReactApp>` is to layout its children. Note the following about this code:
 
--   Each of the two list nodes in the shared tree is assigned to its own `<ListGroup>` component as the `list` property.
+-   Each of the two list nodes in the shared tree is assigned to its own `<ListGroup>` component as the `target` property.
 -   Each of the list node objects is also assigned to the other `<ListGroup>` component as the `destination` property. This is needed because the Fluid API that moves items from one list node to another must be called on the destination node.
 
 ```typescript
 return (
     <div className="flex flex-col gap-3 items-center justify-center content-center m-6">
         <div className="flex flex-row gap-3 justify-center flex-wrap w-full h-full">
-            <ListGroup list={appRoot.left} destination={appRoot.right} />
-            <ListGroup list={appRoot.right} destination={appRoot.left} />
+            <ListGroup target={app.left} destination={app.right} />
+            <ListGroup target={app.right} destination={app.left} />
         </div>
         <Explanation />
     </div>
 );
 ```
 
-The other Fluid task for the react_app.tsx file, is to link the buttons in the view to the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}}). Note the following about this code:
+The other Fluid task for the react_app.tsx file, is to link the buttons in the view to the `List` types wrappers around the [list node APIs]({{< relref "data-structures/tree.md#list-node-write-apis" >}}). (See [Creating a schema for the shared data](#creating-a-schema-for-the-shared-data).) Note the following about this code:
 
--   The `<InsertButton>` component calls the `insertAtStart()` method of the list node on which it is called to insert an empty string to the beginning of the list.
--   The `<RemoveButton>` component calls the `removeAt()` method of the list node on which it is called to remove the first item in the list.
--   The `list` property of the three components is passed to the component as the `list` property of its parent`<ListGroup>` component.
+-   The `<InsertButton>` component calls the `insert()` method of the list node on which it is called to insert an empty string to the beginning of the list.
+-   The `<RemoveButton>` component calls the `remove()` method of the list node on which it is called to remove the first item in the list.
+-   The `target` property of the three components is passed to the component as the `target` property of its parent`<ListGroup>` component.
 -   The `destination` property of the `<MoveButton>` component is passed to the component as the `destination` property of its parent`<ListGroup>` component. The move APIs of list nodes must be called on the destination node.
 
 ```typescript
-export function InsertButton(props: { list: ListOfStrings }): JSX.Element {
+export function InsertButton(props: { target: List; }): JSX.Element {
     const handleClick = () => {
-        props.list.insertAtStart(['']);
+        // Add an item to the beginning of the list
+        props.target.insert();
     };
 
     return <Button handleClick={handleClick}>Insert</Button>;
 }
 
-export function RemoveButton(props: { list: ListOfStrings }): JSX.Element {
+export function RemoveButton(props: { target: List; }): JSX.Element {
     const handleClick = () => {
-        if (props.list.length > 0) props.list.removeAt(0);
+        // Remove the first item in the list if the list is not empty
+        props.target.remove();
     };
 
     return <Button handleClick={handleClick}>Remove</Button>;
 }
 
-export function MoveButton(props: {
-    list: ListOfStrings;
-    destination: ListOfStrings;
-}): JSX.Element {
+export function MoveButton(props: { target: List; destination: List; }): JSX.Element {
     const handleClick = () => {
-        if (props.list.length > 0) props.destination.moveToStart(0, props.list);
+        // Moves the first item in the list to the start of the destination list
+        props.destination.move(props.target);
     };
 
     return <Button handleClick={handleClick}>Move</Button>;
