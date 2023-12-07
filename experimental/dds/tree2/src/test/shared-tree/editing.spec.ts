@@ -207,10 +207,7 @@ describe("Editing", () => {
 			insert(tree2, 1, "C");
 			tree3.editor
 				.sequenceField(rootField)
-				.insert(
-					0,
-					cursorForJsonableTreeNode({ type: jsonObject.name, fields: { foo: [] } }),
-				);
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 
 			const aEditor = tree3.editor.sequenceField({ parent: rootNode, field: brand("foo") });
 			aEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }));

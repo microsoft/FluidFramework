@@ -43,8 +43,8 @@ import {
 	EncodedFieldChangeMap,
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
+	EncodedRevisionInfo,
 } from "./modularChangeFormat";
-import { EncodedRevisionInfo } from ".";
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,

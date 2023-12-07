@@ -31,6 +31,7 @@
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
 		"changeset": "flub changeset add --releaseGroup client",
+		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",

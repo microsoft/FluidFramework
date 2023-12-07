@@ -25,7 +25,6 @@ import {
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
-	JsonableTree,
 	makeDetachedNodeId,
 	ITreeCursor,
 	emptyDelta,
@@ -33,6 +32,9 @@ import {
 	DeltaFieldChanges,
 	DeltaDetachedNodeBuild,
 	DeltaRoot,
+	ITreeCursorSynchronous,
+	mapCursorField,
+	StoredSchemaCollection,
 } from "../../core";
 import {
 	brand,
@@ -46,9 +48,16 @@ import {
 	isReadonlyArray,
 	Mutable,
 } from "../../util";
-import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { RevisionTagCodec } from "../../shared-tree-core";
+import {
+	EncodedChunk,
+	chunkTree,
+	decode,
+	defaultChunkPolicy,
+	schemaCompressedEncode,
+	uncompressedEncode,
+} from "../chunked-forest";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -63,7 +72,7 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind";
+import { FieldKind, FieldKindWithEditor, FullSchemaPolicy, withEditor } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
@@ -205,7 +214,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const allBuilds: ChangeAtomIdMap<EncodedChunk> = new Map();
 		for (const taggedChange of changes) {
 			const revision = revisionFromTaggedChange(taggedChange);
 			const change = taggedChange.change;
@@ -796,9 +805,12 @@ export function intoDelta(
 	if (change.builds && change.builds.size > 0) {
 		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
+			const cursor = decode(tree).cursor();
+			assert(cursor.getFieldLength() === 1, "each encoded chunk should only contain 1 node.");
+			cursor.enterNode(0);
 			builds.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
-				trees: [cursorForJsonableTreeNode(tree)],
+				trees: [cursor],
 			});
 		});
 		rootDelta.build = builds;
@@ -1060,7 +1072,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
-	builds?: ChangeAtomIdMap<JsonableTree>,
+	builds?: ChangeAtomIdMap<EncodedChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1112,18 +1124,33 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public buildTrees(
 		firstId: ChangesetLocalId,
 		newContent: ITreeCursor | readonly ITreeCursor[],
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): GlobalEditDescription {
 		const content = isReadonlyArray(newContent) ? newContent : [newContent];
 		const length = content.length;
 		if (length === 0) {
 			return { type: "global" };
 		}
-		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const builds: ChangeAtomIdMap<EncodedChunk> = new Map();
 		const innerMap = new Map();
 		builds.set(undefined, innerMap);
 		let id = firstId;
+
+		const fieldCursors = content.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
+		);
+		const nodeCursors = fieldCursors
+			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
+			.flat();
+		const encodedTrees =
+			shapeInfo !== undefined
+				? nodeCursors.map((cursor) =>
+						schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
+				  )
+				: nodeCursors.map(uncompressedEncode);
+
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of content.map(jsonableTreeFromCursor)) {
+		for (const tree of encodedTrees) {
 			assert(!innerMap.has(id), "Unexpected duplicate build ID");
 			innerMap.set(id, tree);
 			id = brand((id as number) + 1);
@@ -1235,7 +1262,7 @@ export interface FieldEditDescription {
  */
 export interface GlobalEditDescription {
 	type: "global";
-	builds?: ChangeAtomIdMap<JsonableTree>;
+	builds?: ChangeAtomIdMap<EncodedChunk>;
 }
 
 /**

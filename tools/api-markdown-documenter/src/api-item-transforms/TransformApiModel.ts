@@ -10,7 +10,7 @@ import {
 	ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration";
-import { doesItemRequireOwnDocument } from "./ApiItemTransformUtilities";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 
@@ -140,7 +140,10 @@ function getDocumentItems(
 
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
-		if (doesItemRequireOwnDocument(childItem, documentBoundaries)) {
+		if (
+			shouldItemBeIncluded(childItem, config) &&
+			doesItemRequireOwnDocument(childItem, documentBoundaries)
+		) {
 			result.push(childItem);
 		}
 		result.push(...getDocumentItems(childItem, config));
