@@ -1471,7 +1471,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		// prevent the overwriting of an interval label, it should remain unchanged
 		// once it has been inserted into the collection.
-		if (props !== undefined && props[reservedRangeLabelsKey] !== undefined) {
+		if (props?.[reservedRangeLabelsKey] !== undefined) {
 			throw new LoggingError(
 				"The label property should not be modified once inserted to the collection",
 			);
