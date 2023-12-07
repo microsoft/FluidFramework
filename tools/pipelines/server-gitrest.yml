@@ -87,7 +87,6 @@ variables:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: true
-- group: container-registry-info
 
 extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
