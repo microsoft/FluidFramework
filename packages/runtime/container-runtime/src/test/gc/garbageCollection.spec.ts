@@ -161,10 +161,7 @@ describe("Garbage Collection Tests", () => {
 			};
 		}
 
-		let garbageCollector: IGarbageCollector;
-
-		// eslint-disable-next-line prefer-const
-		garbageCollector = GarbageCollector.create({
+		return GarbageCollector.create({
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -183,8 +180,6 @@ describe("Garbage Collection Tests", () => {
 			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 		});
-
-		return garbageCollector;
 	}
 	let gc: GcWithPrivates | undefined;
 

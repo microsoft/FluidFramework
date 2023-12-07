@@ -47,6 +47,7 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	UsageError,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -2086,7 +2087,7 @@ export class ContainerRuntime
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never have stashed ops.
-				throw new Error("GC op not expected to be stashed in summarizer");
+				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -3772,7 +3773,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never reconnect.
-				throw new Error("GC op not expected to be resubmitted in summarizer");
+				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a

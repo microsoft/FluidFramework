@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
@@ -184,10 +183,7 @@ describe("Garbage Collection Stats", () => {
 		if (lastGCMessage === undefined) {
 			return;
 		}
-		garbageCollector.processMessage(
-			lastGCMessage as ISequencedDocumentMessage,
-			true /* local */,
-		);
+		garbageCollector.processMessage(lastGCMessage, true /* local */);
 	}
 
 	describe("Mark phase stats", () => {
