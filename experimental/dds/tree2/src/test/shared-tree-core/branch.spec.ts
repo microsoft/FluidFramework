@@ -22,7 +22,7 @@ import {
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { noopValidator } from "../../codec";
-import { testIdCompressor } from "../utils";
+import { createTestUndoRedoStacks, testIdCompressor } from "../utils";
 
 const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, {
 	jsonValidator: noopValidator,
@@ -160,6 +160,7 @@ describe("Branches", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
 		const child = parent.fork();
+		const stacks = createTestUndoRedoStacks(child);
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -173,6 +174,15 @@ describe("Branches", () => {
 		child.rebaseOnto(parent);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
+
+		// It should still be possible to revert the the child branch's revertibles
+		assert.equal(stacks.undoStack.length, 2);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		stacks.undoStack.pop()!.revert();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		stacks.undoStack.pop()!.revert();
+
+		stacks.unsubscribe();
 	});
 
 	it("emit a change event after each change", () => {

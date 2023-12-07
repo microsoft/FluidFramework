@@ -1072,6 +1072,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       express: ^4.17.3
+      fast-redact: ^3.3.0
       ioredis: ^5.2.3
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -1101,6 +1102,7 @@ importers:
       body-parser: 1.20.2
       debug: 4.3.4
       events: 3.3.0
+      fast-redact: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
       nconf: 0.12.0
@@ -11271,6 +11273,11 @@ packages:
   /fast-memoize/2.5.2:
     resolution: {integrity: sha512-Ue0LwpDYErFbmNnZSF0UH6eImUwDmogUO1jyE+JbN2gsQz/jICm1Ve7t9QT0rNSsfJt+Hs4/S3GnsDVjL4HVrw==}
     dev: true
+
+  /fast-redact/3.3.0:
+    resolution: {integrity: sha512-6T5V1QK1u4oF+ATxs1lWUmlEk6P2T9HqJG3e2DnHOdVgZy2rFJBoEnrIedcTXlkAHU/zKC+7KETJ+KGGKwxgMQ==}
+    engines: {node: '>=6'}
+    dev: false
 
   /fast-xml-parser/4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}

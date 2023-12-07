@@ -4,6 +4,7 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
+import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { EncodedRevisionTag, RevisionTag } from "../../core";
 import { Mutable } from "../../util";
@@ -67,12 +68,7 @@ function makeOptionalFieldCodec(
 			if (change.build.length > 0) {
 				const builds: EncodedBuild[] = [];
 				for (const build of change.build) {
-					builds.push([
-						build.id.revision === undefined
-							? { localId: build.id.localId }
-							: { ...build.id, revision: revisionTagCodec.encode(build.id.revision) },
-						build.set,
-					]);
+					builds.push([encodeChangeAtomId(revisionTagCodec, build.id), build.set]);
 				}
 				encoded.b = builds;
 			}
@@ -116,10 +112,7 @@ function makeOptionalFieldCodec(
 				build:
 					encoded.b?.map(([id, set]) => {
 						return {
-							id:
-								id.revision === undefined
-									? { localId: id.localId }
-									: { ...id, revision: revisionTagCodec.decode(id.revision) },
+							id: decodeChangeAtomId(revisionTagCodec, id),
 							set,
 						};
 					}) ?? [],

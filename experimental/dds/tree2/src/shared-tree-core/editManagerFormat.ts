@@ -23,11 +23,12 @@ export interface Commit<TChangeset> {
 	readonly sessionId: SessionId;
 }
 
-export interface EncodedCommit<TChangeset> {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type EncodedCommit<TChangeset> = {
 	readonly revision: EncodedRevisionTag;
 	readonly change: TChangeset;
 	readonly sessionId: SessionId;
-}
+};
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

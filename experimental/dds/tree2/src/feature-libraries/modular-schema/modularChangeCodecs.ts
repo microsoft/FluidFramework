@@ -189,7 +189,7 @@ function makeV0Codec(
 		return nestedMapFromFlatList(list);
 	}
 
-	function encodeRevisionInfos(revisions: RevisionInfo[]): EncodedRevisionInfo[] {
+	function encodeRevisionInfos(revisions: readonly RevisionInfo[]): EncodedRevisionInfo[] {
 		const encodedRevisions = [];
 		for (const revision of revisions) {
 			const encodedRevision: Mutable<EncodedRevisionInfo> = {
@@ -206,7 +206,7 @@ function makeV0Codec(
 		return encodedRevisions;
 	}
 
-	function decodeRevisionInfos(revisions: EncodedRevisionInfo[]): RevisionInfo[] {
+	function decodeRevisionInfos(revisions: readonly EncodedRevisionInfo[]): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
 			const decodedRevision: Mutable<RevisionInfo> = {
@@ -230,9 +230,9 @@ function makeV0Codec(
 				revisions:
 					change.revisions === undefined
 						? change.revisions
-						: (encodeRevisionInfos([
-								...change.revisions,
-						  ]) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
+						: (encodeRevisionInfos(
+								change.revisions,
+						  ) as unknown as readonly RevisionInfo[] & JsonCompatibleReadOnly),
 				changes: encodeFieldChangesForJson(change.fieldChanges),
 				builds: encodeBuilds(change.builds),
 			};

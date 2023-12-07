@@ -4,6 +4,8 @@
  */
 
 import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -46,7 +48,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	rebase(
 		change: TChangeset,
 		base: TaggedChange<TChangeset>,
-		metadata?: RevisionMetadataSource,
+		metadata?: RebaseRevisionMetadata,
 	): TChangeset;
 	/**
 	 * Rebase the provided change over the composition of a set of base changes.
@@ -57,7 +59,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	 * on further refactoring would be nice to remove.
 	 */
 	rebaseComposed(
-		metadata: RevisionMetadataSource,
+		metadata: RebaseRevisionMetadata,
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
