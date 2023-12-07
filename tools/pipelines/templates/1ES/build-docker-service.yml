@@ -308,6 +308,7 @@ extends:
               context: ${{ parameters.buildDirectory }}
               image: $(containerRegistryUrl)/base:$(containerTagSuffix)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
+              useBuildKit: true
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
@@ -408,6 +409,7 @@ extends:
             context: ${{ parameters.buildDirectory }}
             image: $(buildContainerName):$(containerTagSuffix)
             buildArguments: ${{ parameters.additionalBuildArguments }}
+            useBuildKit: true
 
         # - task: Docker@1
         #   displayName: Tag image for main/next
