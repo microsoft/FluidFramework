@@ -592,7 +592,7 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 }
 
 function* relevantRemovedRoots(
-	change: OptionalChangeset,
+	{ change, revision }: TaggedChange<OptionalChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	const alreadyYielded = new RegisterMap<boolean>();
@@ -600,7 +600,7 @@ function* relevantRemovedRoots(
 	for (const [src] of change.moves) {
 		if (src !== "self" && !alreadyYielded.has(src)) {
 			alreadyYielded.set(src, true);
-			yield nodeIdFromChangeAtom(src);
+			yield nodeIdFromChangeAtom(src, revision);
 		}
 	}
 
