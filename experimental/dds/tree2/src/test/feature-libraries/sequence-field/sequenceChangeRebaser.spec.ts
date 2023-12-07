@@ -385,66 +385,66 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	const { numNodes, maxIndex } = state.content;
 	const iterationCap = Math.min(maxIndex, state.content.length);
 
-	// Undo the most recent edit
-	if (state.mostRecentEdit !== undefined) {
-		assert(state.parent?.content !== undefined, "Must have parent state to undo");
-		const undoIntention = mintIntention();
-		const invertedEdit = invert(state.mostRecentEdit.changeset);
-		yield {
-			content: state.parent.content,
-			mostRecentEdit: {
-				changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
-				intention: undoIntention,
-				description: `Undo:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
+	// // Undo the most recent edit
+	// if (state.mostRecentEdit !== undefined) {
+	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
+	// 	const undoIntention = mintIntention();
+	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	yield {
+	// 		content: state.parent.content,
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+	// 			intention: undoIntention,
+	// 			description: `Undo:${state.mostRecentEdit.description}`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
 
 	for (const nodeCount of numNodes) {
 		for (let i = 0; i <= iterationCap; i++) {
 			// Insert nodeCount nodes
-			const insertIntention = mintIntention();
-			yield {
-				content: {
-					length: state.content.length + nodeCount,
-					maxIndex,
-					numNodes,
-				},
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.insert(i, nodeCount),
-						tagFromIntention(insertIntention),
-					),
-					intention: insertIntention,
-					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
-				},
-				parent: state,
-			};
+			// const insertIntention = mintIntention();
+			// yield {
+			// 	content: {
+			// 		length: state.content.length + nodeCount,
+			// 		maxIndex,
+			// 		numNodes,
+			// 	},
+			// 	mostRecentEdit: {
+			// 		changeset: tagChange(
+			// 			Change.insert(i, nodeCount),
+			// 			tagFromIntention(insertIntention),
+			// 		),
+			// 		intention: insertIntention,
+			// 		description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
+			// 	},
+			// 	parent: state,
+			// };
 
-			// Don't generate deletes past the length of the sequence
-			if (i + nodeCount <= state.content.length) {
-				// Delete nodeCount nodes
-				const deleteIntention = mintIntention();
-				yield {
-					content: {
-						length: state.content.length - nodeCount,
-						maxIndex,
-						numNodes,
-					},
-					mostRecentEdit: {
-						changeset: tagChange(
-							Change.delete(i, nodeCount),
-							tagFromIntention(deleteIntention),
-						),
-						intention: deleteIntention,
-						description: `Delete${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}At${i}`,
-					},
-					parent: state,
-				};
-			}
+			// // Don't generate deletes past the length of the sequence
+			// if (i + nodeCount <= state.content.length) {
+			// 	// Delete nodeCount nodes
+			// 	const deleteIntention = mintIntention();
+			// 	yield {
+			// 		content: {
+			// 			length: state.content.length - nodeCount,
+			// 			maxIndex,
+			// 			numNodes,
+			// 		},
+			// 		mostRecentEdit: {
+			// 			changeset: tagChange(
+			// 				Change.delete(i, nodeCount),
+			// 				tagFromIntention(deleteIntention),
+			// 			),
+			// 			intention: deleteIntention,
+			// 			description: `Delete${nodeCount}${
+			// 				nodeCount === 1 ? "Node" : "Nodes"
+			// 			}At${i}`,
+			// 		},
+			// 		parent: state,
+			// 	};
+			// }
 
 			// Only generate moves when we're moving less than the length of the whole sequence
 			if (state.content.length > nodeCount) {
@@ -486,9 +486,9 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	}
 };
 
-describe.skip("SequenceField - State-based Rebaser Axioms", () => {
+describe("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1], maxIndex: 2 } }],
+		[{ content: { length: 4, numNodes: [2], maxIndex: 2 } }],
 		generateChildStates,
 		{
 			rebase,
@@ -516,7 +516,7 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 		{
 			groupSubSuites: false,
 			numberOfEditsToVerifyAssociativity: 3,
-			skipRebaseOverCompose: true,
+			skipRebaseOverCompose: false,
 		},
 	);
 });
