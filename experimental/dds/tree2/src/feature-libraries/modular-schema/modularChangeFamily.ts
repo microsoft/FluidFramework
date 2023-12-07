@@ -35,6 +35,7 @@ import {
 	mapCursorField,
 	StoredSchemaCollection,
 } from "../../core";
+import { RevisionTagCodec } from "../../shared-tree-core";
 import {
 	brand,
 	forEachInNestedMap,
@@ -98,7 +99,11 @@ export class ModularChangeFamily
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		codecOptions: ICodecOptions,
 	) {
-		this.codecs = makeModularChangeCodecFamily(this.fieldKinds, codecOptions);
+		this.codecs = makeModularChangeCodecFamily(
+			this.fieldKinds,
+			new RevisionTagCodec(),
+			codecOptions,
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
