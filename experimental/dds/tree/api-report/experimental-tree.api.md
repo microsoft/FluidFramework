@@ -968,7 +968,7 @@ export enum SharedTreeDiagnosticEvent {
     WriteVersionChanged = "writeVersionChanged"
 }
 
-// @internal
+// @alpha
 export enum SharedTreeEvent {
     EditCommitted = "committedEdit",
     SequencedEditApplied = "sequencedEditApplied"
@@ -1218,7 +1218,7 @@ export type TraitNodeIndex = number & {
     readonly TraitNodeIndex: unique symbol;
 };
 
-// @internal
+// @alpha
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
     constructor(tree: SharedTree);
     apply(...changes: readonly Change[]): EditStatus;
@@ -1233,12 +1233,12 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
     readonly tree: SharedTree;
 }
 
-// @internal
+// @alpha
 export enum TransactionEvent {
     ViewChange = "viewChange"
 }
 
-// @internal
+// @alpha
 export interface TransactionEvents extends IErrorEvent {
     // (undocumented)
     (event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void): any;

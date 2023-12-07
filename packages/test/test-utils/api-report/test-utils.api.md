@@ -164,7 +164,7 @@ export interface IOpProcessingController {
     resumeProcessing(...containers: IContainer[]): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideTestFluidObject {
     // (undocumented)
     readonly ITestFluidObject: ITestFluidObject;
@@ -179,7 +179,7 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
