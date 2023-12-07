@@ -47,7 +47,15 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
+			...tscDependsOn,
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
