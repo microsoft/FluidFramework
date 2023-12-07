@@ -54,6 +54,8 @@ if (!existsSync(`${previousBasePath}/package.json`)) {
 		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
 	);
 }
+//Initialize 
+const alphaFilePath = `${previousBasePath}/dist/${previousPackageName}-alpha.d.ts`;
 
 const currentFile = new Project({
 	skipFileDependencyResolution: true,
@@ -62,16 +64,19 @@ const currentFile = new Project({
 
 const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
 let previousFile: SourceFile;
-if (existsSync(previousTsConfigPath)) {
-	const project = new Project({
-		skipFileDependencyResolution: true,
-		tsConfigFilePath: previousTsConfigPath,
-	});
+const project = new Project({
+	skipFileDependencyResolution: true,
+	tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
+});
+// Check for existence of alpha and add appropriate file
+if (existsSync(alphaFilePath)) {
+	project.addSourceFilesAtPaths(alphaFilePath);
+	previousFile = project.getSourceFileOrThrow("<package-name>-alpha.d.ts");
+// If alpha doesn't exist but index.ts and tsconfig.json do
+} else if(existsSync(previousTsConfigPath)){
 	previousFile = project.getSourceFileOrThrow("index.ts");
-} else {
-	const project = new Project({
-		skipFileDependencyResolution: true,
-	});
+// Fall back to using .d.ts
+}else{
 	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
 	previousFile = project.getSourceFileOrThrow("index.d.ts");
 }
