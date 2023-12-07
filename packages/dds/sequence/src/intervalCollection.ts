@@ -732,17 +732,31 @@ const isSequencePlace = (place: any): place is SequencePlace => {
 
 /**
  * @alpha
+ * Wraps interval endpoints to ensure that both start and end are always defined on interval change.
  */
 export interface Endpoints {
+	/**
+	 * Start position of the interval.
+	 */
 	start: SequencePlace;
+	/**
+	 * End position of the interval.
+	 */
 	end: SequencePlace;
 }
 
 /**
  * @alpha
+ * Arguments to allow modification of interval endpoints, properties, or both on interval change.
  */
 export interface ChangeArgs {
+	/**
+	 * The desired new start and end position of the interval.
+	 */
 	endpoints?: Endpoints;
+	/**
+	 * The desired new properties of the interval.
+	 */
 	props?: PropertySet;
 }
 
@@ -1419,44 +1433,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * @deprecated - call change with the id and an object containing the new props values
 	 */
 	public changeProperties(id: string, props: PropertySet) {
-		if (!this.attached) {
-			throw new LoggingError("Attach must be called before accessing intervals");
-		}
-		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
-		}
-		if (!props) {
-			throw new LoggingError("changeProperties should be called with a property set");
-		}
-		// prevent the overwriting of an interval label, it should remain unchanged
-		// once it has been inserted into the collection.
-		if (props[reservedRangeLabelsKey] !== undefined) {
-			throw new LoggingError(
-				"The label property should not be modified once inserted to the collection",
-			);
-		}
-
-		const interval = this.getIntervalById(id);
-		if (interval) {
-			const deltaProps = interval.addProperties(
-				props,
-				true,
-				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
-			);
-			const serializedInterval: ISerializedInterval = interval.serialize();
-
-			// Emit a change op that will only change properties. Add the ID to
-			// the property bag provided by the caller.
-			serializedInterval.start = undefined as any;
-			serializedInterval.end = undefined as any;
-
-			serializedInterval.properties = props;
-			serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.emit("propertyChanged", interval, deltaProps, true, undefined);
-		}
+		this.change(id, { props });
 	}
 
 	/**
@@ -1513,13 +1490,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
-			}
-			if (!newInterval) {
-				return undefined;
-			}
-			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
-				setSlideOnRemove(newInterval.start);
-				setSlideOnRemove(newInterval.end);
+				if (!newInterval) {
+					return undefined;
+				}
+				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+					setSlideOnRemove(newInterval.start);
+					setSlideOnRemove(newInterval.end);
+				}
 			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
@@ -1539,9 +1516,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			this.addPendingChange(id, serializedInterval);
 			if (deltaProps !== undefined) {
-				this.emit("propertyChanged", newInterval, deltaProps, true, undefined);
+				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 			}
-			if (serializedInterval.start !== undefined && serializedInterval.end !== undefined) {
+			if (
+				serializedInterval.start !== undefined &&
+				serializedInterval.end !== undefined &&
+				newInterval
+			) {
 				this.emitChange(newInterval, interval, true, false);
 			}
 			return newInterval;

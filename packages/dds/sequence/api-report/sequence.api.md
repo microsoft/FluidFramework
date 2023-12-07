@@ -65,11 +65,9 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 // @internal
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-// @alpha (undocumented)
+// @alpha
 export interface ChangeArgs {
-    // (undocumented)
     endpoints?: Endpoints;
-    // (undocumented)
     props?: PropertySet;
 }
 
@@ -97,11 +95,9 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 // @internal
 export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
-// @alpha (undocumented)
+// @alpha
 export interface Endpoints {
-    // (undocumented)
     end: SequencePlace;
-    // (undocumented)
     start: SequencePlace;
 }
 
