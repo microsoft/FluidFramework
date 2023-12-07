@@ -18,7 +18,7 @@ export const props: OdspTestCredentials = {
 };
 
 const connectionConfig: OdspConnectionConfig = {
-	tokenProvider: new OdspTestTokenProvider(),
+	tokenProvider: new OdspTestTokenProvider(props.clientId),
 	siteUrl: props.siteUrl,
 	driveId: props.driveId,
 };
@@ -26,7 +26,3 @@ const connectionConfig: OdspConnectionConfig = {
 export const clientProps: OdspClientProps = {
 	connection: connectionConfig,
 };
-
-export const STORAGE_TOKEN = "STORAGE_TOKEN";
-
-export const WEBSOCKET_TOKEN = "WEBSOCKET_TOKEN";

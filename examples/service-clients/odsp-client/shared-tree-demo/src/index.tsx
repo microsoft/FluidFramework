@@ -12,14 +12,8 @@ import { treeConfiguration, Letter } from "./schema";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
 import { ReactApp } from "./reactApp";
-import { fetchTokens } from "./tokenProvider";
-import { WEBSOCKET_TOKEN, STORAGE_TOKEN, props } from "./clientProps";
 
 async function start() {
-	const tokens = await fetchTokens(props.siteUrl, props.clientId);
-	localStorage.setItem(STORAGE_TOKEN, tokens.storageToken);
-	localStorage.setItem(WEBSOCKET_TOKEN, tokens.pushToken);
-	// create the root element for React
 	const app = document.createElement("div");
 	app.id = "app";
 	document.body.appendChild(app);
@@ -86,6 +80,18 @@ async function start() {
 					id++;
 				}
 			});
+
+		// Update the application state or components without forcing a full page reload
+		ReactDOM.render(
+			<ReactApp
+				data={appData}
+				container={container}
+				canvasSize={canvasSize}
+				cellSize={cellSize}
+			/>,
+			app,
+		);
+
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
 		itemId = await container.attach();
