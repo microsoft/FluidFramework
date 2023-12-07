@@ -67,13 +67,13 @@ export interface IFileEntry {
 // @internal (undocumented)
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
-// @internal
+// @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorType;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
@@ -200,10 +200,10 @@ export interface ISocketStorageDiscovery {
 // @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @internal @deprecated
+// @alpha @deprecated
 export enum OdspErrorType {
     blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",

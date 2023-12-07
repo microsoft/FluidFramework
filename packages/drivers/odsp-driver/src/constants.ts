@@ -4,7 +4,7 @@
  */
 
 /**
- * @internal
+ * @alpha
  */
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 

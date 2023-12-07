@@ -207,7 +207,7 @@ export function isSpoUrl(url: string): boolean;
 // @alpha
 export const locatorQueryParamName = "nav";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
 // @alpha (undocumented)
