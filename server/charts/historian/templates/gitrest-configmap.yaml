@@ -23,6 +23,10 @@ data:
                 "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
             }
         },
+        "config": {
+            "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+        },
         "requestSizeLimit": "1gb",
         "storageDir": {
             "baseDir": "/home/node/documents",

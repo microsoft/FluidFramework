@@ -23,6 +23,10 @@ data:
                 "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
             }
         },
+        "config": {
+            "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.historian.config.secretNamesToRedactInConfigDump }}
+        },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
         "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},

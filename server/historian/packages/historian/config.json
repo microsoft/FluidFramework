@@ -6,6 +6,17 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"riddler": "http://riddler:5000",
 	"alfred": "http://alfred:3000",
 	"requestSizeLimit": "1gb",
