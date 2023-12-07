@@ -16,8 +16,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
