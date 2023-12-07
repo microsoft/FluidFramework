@@ -452,6 +452,7 @@ export interface FieldAnchor {
 interface FieldChanges<TTree = ProtoNode> {
     // @deprecated
     readonly build?: readonly DetachedNodeBuild<TTree>[];
+    // @deprecated
     readonly destroy?: readonly DetachedNodeDestruction[];
     readonly global?: readonly DetachedNodeChanges<TTree>[];
     readonly local?: readonly Mark<TTree>[];
@@ -1585,6 +1586,7 @@ export enum RevertResult {
 // @alpha
 interface Root<TTree = ProtoNode> {
     readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly destroy?: readonly DetachedNodeDestruction[];
     readonly fields?: FieldMap<TTree>;
 }
 

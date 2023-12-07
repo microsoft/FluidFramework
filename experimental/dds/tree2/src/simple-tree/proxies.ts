@@ -1095,8 +1095,6 @@ function extractContentIfProxy<T>(input: T): {
 	}
 
 	const classKind = content instanceof NodeBase ? getNodeKind(content) : undefined;
-	// TODO: This checking could be made stronger by using `class-tree/Tree.schema(content).kind`
-	// to get the type when `content` is a proxy. At the moment, importing `Tree.schema` causes a cycle.
 	let type: "object" | "list" | "map" | "leaf";
 	if (isFluidHandle(content)) {
 		type = "leaf";

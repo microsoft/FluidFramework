@@ -442,7 +442,21 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("build-rename-destroy", () => {
+	it("destroy (root level)", () => {
+		const index = makeDetachedFieldIndex("");
+		const id = { minor: 42 };
+		index.createEntry(id, 2);
+		const delta: Delta.Root = {
+			destroy: [{ id, count: 2 }],
+		};
+		const expected: VisitScript = [
+			["destroy", field0, 1],
+			["destroy", field1, 1],
+		];
+		testVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
+	it("build-rename-destroy (field level)", () => {
 		const index = makeDetachedFieldIndex("");
 		const buildId = { minor: 42 };
 		const detachId = { minor: 43 };

@@ -27,7 +27,7 @@ export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
 
-// @internal
+// @alpha
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @alpha
@@ -251,10 +251,10 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidHandle: keyof IProvideFluidHandle;
 
-// @internal
+// @alpha
 export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
@@ -266,10 +266,10 @@ export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvide
     readonly isAttached: boolean;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
-// @internal
+// @alpha
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -279,10 +279,10 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
-// @internal
+// @alpha
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
     handle: IFluidHandle;
@@ -334,19 +334,19 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
     readonly IFluidHandle: IFluidHandle;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidHandleContext {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
     readonly IFluidLoadable: IFluidLoadable;

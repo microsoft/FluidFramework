@@ -11,7 +11,7 @@ import {
 } from "./persisted-types";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IIdCompressorCore {
 	/**
@@ -101,7 +101,7 @@ export interface IIdCompressorCore {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- * @internal
+ * @alpha
  */
 export interface IIdCompressor {
 	localSessionId: SessionId;
