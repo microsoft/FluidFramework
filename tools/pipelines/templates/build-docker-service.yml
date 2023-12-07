@@ -145,7 +145,7 @@ extends:
             value: $(buildContainerName):$(containerTagSuffix)
         - ${{ else }}:
           - name: containerRegistry
-            value: ${{ parameters.containerRegistryServiceConnectionName }}
+            value: $(containerRegistryConnection)
           - name: containerTag
             value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
           - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
