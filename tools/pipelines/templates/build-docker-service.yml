@@ -404,11 +404,11 @@ extends:
 
         # Build
         - task: 1ES.BuildContainerImage@1
-          displayName: Docker Build - $(buildContainerName)
+          displayName: Docker Build - $(containerTag)
           inputs:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
-            image: $(buildContainerName):$(containerTagSuffix)
+            image: $(containerTag)
             buildArguments: ${{ parameters.additionalBuildArguments }}
             useBuildKit: true
             enableNetwork: true
@@ -423,16 +423,15 @@ extends:
         # Push
         - ${{ if eq(parameters.pushImage, true) }}:
           - task: 1ES.PushContainerImage@1
-            displayName: Docker Push - $(buildContainerName):$(containerTagSuffix)
+            displayName: Docker Push - $(containerTag)
             inputs:
-              image: $(buildContainerName):$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(containerTagSuffix)
+              image: $(containerTag)
           - task: 1ES.PushContainerImage@1
-            displayName: Docker Push - $(buildContainerName):$(latestContainerTagSuffix)
-            condition: ne(variables.latestContainerTagSuffix, '')
+            displayName: Docker Push - $(latestContainerTag)
+            condition: ne(variables.latestContainerTag, '')
             inputs:
-              image: $(buildContainerName):$(containerTagSuffix)
-              remoteImage: $(containerRegistryConnection)/$(buildContainerName):$(latestContainerTagSuffix)
+              image: $(containerTag)
+              remoteImage: $(latestContainerTag)
 
         templateContext:
           outputs:
