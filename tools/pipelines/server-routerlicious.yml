@@ -103,6 +103,13 @@ variables:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: false
+# Note: we tried to centralize the use of the 'container-registry-info' variable group (i.e. put it inside the shared
+# build-docker-service.yml template) but ran into issues because if it exists in the stage-level variables of the template
+# instead of in the root-level variables of a pipeline, then the value for the ACR service connection name (which comes
+# from the variable group) that gets passed to a Docker@1 task seems to not be available before ADO performs checks for
+# that task, including that the specified service connection exists and the pipeline is authorized to use it. So ADO ends
+# uplooking for a service connection named "$(containerRegistryConnection)" instead of the actual value after replacement.
+- group: container-registry-info
 
 extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
