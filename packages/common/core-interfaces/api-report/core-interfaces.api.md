@@ -22,15 +22,15 @@ export const FluidErrorTypes: {
 // @internal (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
-// @alpha
+// @beta
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
 
-// @alpha
+// @beta
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
-// @alpha
+// @beta
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
@@ -251,10 +251,10 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export const IFluidHandle: keyof IProvideFluidHandle;
 
-// @alpha
+// @beta
 export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
@@ -279,10 +279,10 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
-// @alpha
+// @beta
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
     handle: IFluidHandle;
@@ -343,7 +343,7 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
     readonly IFluidHandle: IFluidHandle;
@@ -355,7 +355,7 @@ export interface IProvideFluidHandleContext {
     readonly IFluidHandleContext: IFluidHandleContext;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
     readonly IFluidLoadable: IFluidLoadable;
@@ -511,7 +511,7 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 // @alpha @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @alpha @deprecated
+// @beta @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @alpha

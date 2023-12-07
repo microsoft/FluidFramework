@@ -135,7 +135,9 @@ export function withEditor<
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta TreeSchema
+ * @beta
  */
 export interface FullSchemaPolicy {
 	/**

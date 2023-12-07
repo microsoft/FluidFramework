@@ -11,7 +11,9 @@ import { FlexTreeObjectNode } from "./flexTreeTypes";
  * A node key can be assigned to a node and allows that node to be easily retrieved from the tree at a later time. (see `nodeKey.map`).
  * @remarks {@link LocalNodeKey}s are put on {@link FlexTreeObjectNode}s via a special field.
  * A node with a node key in its schema must always have a node key.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeContext
+ * @beta
  */
 export interface NodeKeys {
 	/**

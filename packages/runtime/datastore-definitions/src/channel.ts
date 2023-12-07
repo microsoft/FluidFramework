@@ -15,7 +15,9 @@ import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITree
+ * @beta
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -118,7 +120,9 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IDeltaConnection
+ * @beta
  */
 export interface IDeltaHandler {
 	/**
@@ -166,7 +170,9 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannelServices
+ * @beta
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -202,7 +208,9 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannelServices
+ * @beta
  */
 export interface IChannelStorageService {
 	/**
@@ -223,7 +231,9 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;

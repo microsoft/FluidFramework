@@ -5,7 +5,9 @@
 
 /**
  * Represents the attributes of a channel/DDS.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface IChannelAttributes {
 	/**

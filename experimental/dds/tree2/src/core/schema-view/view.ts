@@ -44,7 +44,9 @@ export enum AllowedUpdateType {
 }
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta Adapters
+ * @beta
  */
 export interface TreeAdapter {
 	readonly output: TreeNodeSchemaIdentifier;
@@ -59,7 +61,9 @@ export interface TreeAdapter {
  *
  * TODO: Support more kinds of adapters
  * TODO: support efficient lookup of adapters
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta TreeSchema
+ * @beta
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];

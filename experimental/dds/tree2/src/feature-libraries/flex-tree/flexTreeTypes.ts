@@ -41,7 +41,9 @@ export function isFlexTreeNode(t: unknown): t is FlexTreeNode {
 }
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeEntity
+ * @beta
  */
 export enum FlexTreeEntityKind {
 	Node,
@@ -57,8 +59,7 @@ export const boxedIterator = Symbol();
  * Part of a tree.
  * Iterates over children.
  *
- * @privateRemarks
- * This exists mainly as a place to share common members between nodes and fields.
+ * @privateRemarks This exists mainly as a place to share common members between nodes and fields.
  * It is not expected to be useful or common to write code which handles this type directly.
  * If this assumption turns out to be false, and generically processing `UntypedEntity`s is useful,
  * then this interface should probably be extended with some down casting functionality (like `is`).
@@ -66,8 +67,8 @@ export const boxedIterator = Symbol();
  * TODO:
  * Design and document iterator invalidation rules and ordering rules.
  * Providing a custom iterator type with place anchor semantics would be a good approach.
- *
- * @alpha
+ * used by fluid-experimental/tree2 beta FlexTreeNode
+ * @beta
  */
 export interface FlexTreeEntity<out TSchema = unknown> {
 	/**
@@ -145,8 +146,9 @@ export const onNextChange = Symbol("onNextChange");
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta SchemaFactory
+ * @beta
  */
 export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
@@ -223,8 +225,9 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
  * Down-casting (via {@link FlexTreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeNode
+ * @beta
  */
 export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
@@ -478,8 +481,9 @@ export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> exten
  * The name "Record" is avoided (in favor of Object) here because it has less precise connotations for most TypeScript developers.
  * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
  * putting its semantics half way between this library's "Object" schema and {@link FlexTreeMapNode}.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta NodeKeys
+ * @beta
  */
 export interface FlexTreeObjectNode extends FlexTreeNode {
 	readonly schema: ObjectNodeSchema;

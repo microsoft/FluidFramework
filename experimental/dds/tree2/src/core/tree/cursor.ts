@@ -28,8 +28,6 @@ export function isCursor(data: unknown): data is ITreeCursor {
 
 /**
  * A stateful low-level interface for reading tree data.
- * @alpha
- *
  * @remarks Cursor exists so that specialized data formats can be viewed through
  * a common abstraction. This allows performance optimizations to be done based
  * on data.
@@ -38,6 +36,9 @@ export function isCursor(data: unknown): data is ITreeCursor {
  * traversal over the contents of a tree. Note that unlike a database cursor,
  * tree cursors may be invalidated after any edit to the tree. For a cursor-like
  * structure that also remains valid across edits, see {@link AnchorNode}.
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITreeCursorSynchronous
+ * @beta
  */
 export interface ITreeCursor {
 	/**
@@ -284,7 +285,9 @@ export interface ITreeCursor {
  * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
  * `{ parent: theNodeAboveTheMovedNode, rootFieldOverride: Foo, indexOffset: 5 }`.
  * See {@link prefixPath} and {@link prefixFieldPath} for how to apply the prefix to the paths.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITreeCursor
+ * @beta
  */
 export interface PathRootPrefix {
 	/**
@@ -309,7 +312,9 @@ export interface PathRootPrefix {
 }
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITreeCursor
+ * @beta
  */
 export const enum CursorLocationType {
 	/**
@@ -327,7 +332,9 @@ export const enum CursorLocationType {
 
 /**
  * {@link ITreeCursor} that is never pending.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ProtoNode
+ * @beta
  */
 export interface ITreeCursorSynchronous extends ITreeCursor {
 	readonly pending: false;

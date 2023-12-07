@@ -182,7 +182,7 @@ export interface IEnvelope {
     contents: any;
 }
 
-// @alpha
+// @beta
 export interface IExperimentalIncrementalSummaryContext {
     latestSummarySequenceNumber: number;
     summaryPath: string;
@@ -295,7 +295,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }
 
-// @alpha
+// @beta
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -425,7 +425,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @alpha
+// @beta
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -439,13 +439,13 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @alpha
+// @beta
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @alpha
+// @beta
 export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyType;
     serialize(): string;
@@ -496,12 +496,12 @@ export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
 };
 
-// @alpha
+// @beta
 export type SessionSpaceCompressedId = number & {
     readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
 };
 
-// @alpha
+// @beta
 export type StableId = string & {
     readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
 };

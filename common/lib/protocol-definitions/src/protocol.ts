@@ -93,7 +93,9 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta ISequencedDocumentMessage
+ * @beta
  */
 export interface ITrace {
 	/**
@@ -189,7 +191,9 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta ISequencedDocumentMessage
+ * @beta
  */
 export interface IBranchOrigin {
 	/**
@@ -210,7 +214,9 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IDeltaHandler
+ * @beta
  */
 export interface ISequencedDocumentMessage {
 	/**

@@ -25,7 +25,9 @@ import { NodeKeys, SimpleNodeKeys } from "./nodeKeys";
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeEntity
+ * @beta
  */
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	/**

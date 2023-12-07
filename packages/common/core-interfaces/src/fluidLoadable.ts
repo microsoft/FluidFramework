@@ -6,19 +6,23 @@
 import { IFluidHandle } from "./handles";
 
 /**
- * @alpha
+ * @beta
  */
 export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/core-interfaces beta IFluidLoadable
+ * @beta
  */
 export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
  * A shared FluidObject has a URL from which it can be referenced
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/core-interfaces beta IFluidHandle
+ * @beta
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject

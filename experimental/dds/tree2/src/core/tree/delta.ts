@@ -100,7 +100,9 @@ export interface Root<TTree = ProtoNode> {
  * Ownership and lifetime of data referenced by this cursor is unclear,
  * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
  * Cursors can be one supported way to input data, but aren't a good storage format.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ProtoNodes
+ * @beta
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
@@ -112,7 +114,9 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
  * like using a cursor over all the content (starting in fields mode).
  * Long term something like TreeChunk should probably be used here.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta PathVisitor
+ * @beta
  */
 export type ProtoNodes = readonly ProtoNode[];
 

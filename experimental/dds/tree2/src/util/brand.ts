@@ -40,7 +40,9 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * which is the common use-case for branding.
  *
  * @sealed
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta LocalNodeKey
+ * @beta
  */
 export abstract class BrandedType<out ValueType, Name extends string> {
 	protected _typeCheck?: Covariant<ValueType>;

@@ -81,7 +81,9 @@ export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta TreeValue
+ * @beta
  */
 export type _InlineTrick = 0;
 

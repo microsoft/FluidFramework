@@ -15,7 +15,9 @@ import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbage
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/runtime-definitions beta ISummaryTreeWithStats
+ * @beta
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -31,7 +33,9 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -81,7 +85,9 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -330,7 +336,9 @@ export const channelsTreeName = ".channels";
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface ITelemetryContext {
 	/**

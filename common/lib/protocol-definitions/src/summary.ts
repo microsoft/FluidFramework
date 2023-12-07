@@ -8,7 +8,9 @@
  *
  * @remarks
  * If any particular node is an {@link ISummaryTree}, it can contain additional `SummaryObject`s as its children.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta ISummaryTree
+ * @beta
  */
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
@@ -43,30 +45,38 @@ export namespace SummaryType {
 
 	/**
 	 * Represents a sub-tree in the summary.
-	 * @alpha
-	 */
+     * @privateRemarks
+     * used by fluidframework/protocol-definitions beta ISummaryTree
+     * @beta
+     */
 	export const Tree: Tree = 1 as const;
 
 	/**
 	 * Represents a blob of data that is added to the summary.
 	 * Such as the user data that is added to the DDS or metadata added by runtime
 	 * such as data store / channel attributes.
-	 * @alpha
-	 */
+     * @privateRemarks
+     * used by fluidframework/protocol-definitions beta ISummaryBlob
+     * @beta
+     */
 	export const Blob: Blob = 2 as const;
 
 	/**
 	 * Path to a summary tree object from the last successful summary.
-	 * @alpha
-	 */
+     * @privateRemarks
+     * used by fluidframework/protocol-definitions beta ISummaryHandle
+     * @beta
+     */
 	export const Handle: Handle = 3 as const;
 
 	/**
 	 * Unique identifier to larger blobs uploaded outside of the summary.
 	 * Ex. DDS has large images or video that will be uploaded by the BlobManager and
 	 * receive an Id that can be used in the summary.
-	 * @alpha
-	 */
+     * @privateRemarks
+     * used by fluidframework/protocol-definitions beta ISummaryAttachment
+     * @beta
+     */
 	export const Attachment: Attachment = 4 as const;
 }
 
@@ -86,7 +96,9 @@ export type SummaryType =
  * @remarks
  * Summary handles are often used to point to summary tree objects contained within older summaries, thus avoiding
  * the need to re-send the entire subtree if summary object has not changed.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta ISummaryHandle
+ * @beta
  */
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
@@ -98,7 +110,9 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta SummaryObject
+ * @beta
  */
 export interface ISummaryHandle {
 	type: SummaryType.Handle;
@@ -124,7 +138,9 @@ export interface ISummaryHandle {
  * @example
  * "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta SummaryObject
+ * @beta
  */
 export interface ISummaryBlob {
 	type: SummaryType.Blob;
@@ -142,7 +158,9 @@ export interface ISummaryBlob {
  *
  * @example
  * "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/protocol-definitions beta SummaryObject
+ * @beta
  */
 export interface ISummaryAttachment {
 	type: SummaryType.Attachment;
@@ -152,7 +170,9 @@ export interface ISummaryAttachment {
 /**
  * Tree Node data structure with children that are nodes of SummaryObject type:
  * Blob, Handle, Attachment or another Tree.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/runtime-definitions beta ISummaryTreeWithStats
+ * @beta
  */
 export interface ISummaryTree {
 	type: SummaryType.Tree;

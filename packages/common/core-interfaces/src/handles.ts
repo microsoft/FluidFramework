@@ -49,12 +49,14 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/core-interfaces beta IFluidHandle
+ * @beta
  */
 export interface IProvideFluidHandle {
 	readonly IFluidHandle: IFluidHandle;
@@ -62,7 +64,9 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta TreeValue
+ * @beta
  */
 export interface IFluidHandle<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?

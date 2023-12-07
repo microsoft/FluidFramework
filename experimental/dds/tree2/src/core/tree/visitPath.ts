@@ -16,8 +16,9 @@ import { ProtoNodes } from "./delta";
  *
  * For any of these events, the paths are guaranteed to be valid at the time of the event,
  * and it is valid to read from the Forest at that path.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta EditableTreeEvents
+ * @beta
  */
 export interface PathVisitor {
 	/**

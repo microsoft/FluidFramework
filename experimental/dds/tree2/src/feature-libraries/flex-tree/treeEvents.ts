@@ -20,8 +20,9 @@ import { FlexTreeNode } from "./flexTreeTypes";
 
 /**
  * An event raised on a {@link FlexTreeNode}.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta EditableTreeEvents
+ * @beta
  */
 export interface TreeEvent {
 	/**
@@ -40,8 +41,9 @@ export interface TreeEvent {
  * - Include sub-deltas in events.
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeNode
+ * @beta
  */
 export interface EditableTreeEvents {
 	/**

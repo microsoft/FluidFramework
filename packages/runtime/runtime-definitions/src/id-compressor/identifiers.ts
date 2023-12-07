@@ -7,7 +7,9 @@
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to
  * the scope of the session (i.e. compressor) that produced them.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta LocalNodeKey
+ * @beta
  */
 export type SessionSpaceCompressedId = number & {
 	readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
@@ -28,7 +30,9 @@ export type OpSpaceCompressedId = number & {
  * A 128-bit Universally Unique IDentifier. Represented here
  * with a string of the form xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,
  * where x is a lowercase hex digit.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta StableNodeKey
+ * @beta
  */
 export type StableId = string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a" };
 

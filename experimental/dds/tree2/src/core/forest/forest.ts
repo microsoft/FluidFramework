@@ -31,7 +31,9 @@ import type { IEditableForest } from "./editableForest";
  * Events for {@link IForestSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeContext
+ * @beta
  */
 export interface ForestEvents {
 	/**

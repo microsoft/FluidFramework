@@ -30,7 +30,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -42,7 +42,7 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @alpha
+// @beta
 export interface IChannelAttributes {
     readonly packageVersion?: string;
     readonly snapshotFormatVersion: string;
@@ -57,7 +57,7 @@ export interface IChannelFactory {
     readonly type: string;
 }
 
-// @alpha
+// @beta
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -65,14 +65,14 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @alpha
+// @beta
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @alpha
+// @beta
 export interface IDeltaConnection {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
@@ -82,7 +82,7 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @alpha
+// @beta
 export interface IDeltaHandler {
     applyStashedOp(message: any): unknown;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;

@@ -30,7 +30,9 @@ import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ObjectNodeSchema
+ * @beta
  */
 export interface Fields {
 	readonly [key: string]: TreeFieldSchema;
@@ -61,7 +63,9 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ObjectNodeSchema
+ * @beta
  */
 export abstract class TreeNodeSchemaBase<
 	const out Name extends string = string,
@@ -138,7 +142,9 @@ export class LeafNodeSchema<
 }
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeObjectNode
+ * @beta
  */
 export class ObjectNodeSchema<
 	const out Name extends string = string,
@@ -270,7 +276,9 @@ function normalizeField<T extends TreeFieldSchema | undefined>(t: T): NormalizeF
 export const Any = "Any" as const;
 /**
  * Allow any node (as long as it meets the schema for its own type).
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta AllowedTypeSet
+ * @beta
  */
 export type Any = typeof Any;
 
@@ -319,7 +327,9 @@ export type MapFieldSchema = TreeFieldSchema<
  * @typeParam TTypes - The types allowed by the field.
  *
  * @sealed
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeField
+ * @beta
  */
 export class TreeFieldSchema<
 	out TKind extends FieldKind = FieldKind,
@@ -461,7 +471,9 @@ export class TreeFieldSchema<
  * @remarks
  * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeNodeSchemaIdentifier}.
  * See {@link AllowedTypes} for a compile time optimized version.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta TreeFieldSchema
+ * @beta
  */
 export type AllowedTypeSet = Any | ReadonlySet<TreeNodeSchema>;
 
@@ -505,8 +517,9 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * @remarks
  * The type of the rootFieldSchema is used to implement SchemaAware APIs.
  * Cases that do not require being compile time schema aware can omit the explicit type for it.
- *
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeContext
+ * @beta
  */
 
 export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
@@ -535,11 +548,10 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema>
 
 /**
  * Schema data that can be be used to view a document.
- * @alpha
- *
- * @privateRemarks
- * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
+ * @privateRemarks It is convenient that this can be used as a StoredSchemaCollection with no conversion.
  * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
+ * used by fluid-experimental/tree2 beta TreeSchema
+ * @beta
  */
 
 export interface SchemaCollection extends StoredSchemaCollection {

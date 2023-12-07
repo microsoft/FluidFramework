@@ -31,7 +31,9 @@ export const gcDeletedBlobKey = "__deletedNodes";
 /**
  * Garbage collection data returned by nodes in a Container.
  * Used for running GC in the Container.
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/datastore-definitions beta IChannel
+ * @beta
  */
 export interface IGarbageCollectionData {
 	/**

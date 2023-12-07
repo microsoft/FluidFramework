@@ -25,7 +25,9 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
  * {@inheritDoc TelemetryBaseEventPropertyType}
  *
  * @deprecated Renamed to {@link TelemetryBaseEventPropertyType}
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/runtime-definitions beta ITelemetryContext
+ * @beta
  */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 

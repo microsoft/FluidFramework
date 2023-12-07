@@ -27,7 +27,7 @@
  *
  * This pattern enables discovery, and delegation in a standard way which is central
  * to FluidObject pattern.
- * @alpha
+ * @beta
  */
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
 	? never
@@ -70,7 +70,9 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
  *
  * You can inspect multiple types via a intersection. For example:
  * `FluidObject<IFoo & IBar>`
- * @alpha
+ * @privateRemarks
+ * used by fluidframework/core-interfaces beta IFluidHandle
+ * @beta
  */
 export type FluidObject<T = unknown> = {
 	[P in FluidObjectProviderKeys<T>]?: T[P];
@@ -83,6 +85,6 @@ export type FluidObject<T = unknown> = {
  * See {@link FluidObject}
  *
  * For example `FluidObjectKeys<IFoo & IBar>` would result in `"IFoo" | "IBar"`
- * @alpha
+ * @beta
  */
 export type FluidObjectKeys<T> = keyof FluidObject<T>;

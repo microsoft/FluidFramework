@@ -8,7 +8,9 @@ import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-store
 import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITreeCursor
+ * @beta
  */
 export type TreeType = TreeNodeSchemaIdentifier;
 
@@ -116,7 +118,9 @@ export interface FieldKind {
 
 /**
  * Value that may be stored on a leaf node.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta FlexTreeNode
+ * @beta
  */
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 	{
@@ -131,7 +135,9 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 /**
  * Value stored on a node.
- * @alpha
+ * @privateRemarks
+ * used by fluid-experimental/tree2 beta ITreeCursor
+ * @beta
  */
 export type Value = undefined | TreeValue;
 
