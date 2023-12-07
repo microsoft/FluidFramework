@@ -339,6 +339,18 @@ extends:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
 
+                  # Copy files so all artifacts we publish end up under the same parent folder.
+                  # The sourceFolder should be wherever the tinylicious log ends up in, after executing tests above.
+                  - task: CopyFiles@2
+                    displayName: Copy tinylicious.log to artifact staging directory
+                    inputs:
+                      sourceFolder: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/tinyliciousLog
+                      contents: 'tinylicious.log'
+
+                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
+                  # that is now part of templateContext.outputs below.
+
                   # Test - Upload coverage results
                   # Some webpacked file using externals introduce file name with quotes in them
                   # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
@@ -368,9 +380,6 @@ extends:
                           reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                           failIfCoverageEmpty: true
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-
-                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                  # that is now part of templateContext.outputs below.
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/1ES/include-process-test-results.yml@self
@@ -402,6 +411,15 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:collect'
+
+                  # Copy files so all artifacts we publish end up under the same parent folder.
+                  # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
+                  - task: CopyFiles@2
+                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    inputs:
+                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+
 
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -456,8 +474,16 @@ extends:
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
 
-              # At this point we want to publish the artifact with the _api-extractor-temp folder,
-              # but as part of 1ES migration that's now part of templateContext.outputs below.
+                  # Copy files so all artifacts we publish end up under the same parent folder.
+                  # The sourceFolder should be wherever the 'npm run ci:build:docs' task places its output.
+                  - task: CopyFiles@2
+                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    inputs:
+                      sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+
+                  # At this point we want to publish the artifact with the _api-extractor-temp folder,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
               - ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
@@ -498,12 +524,13 @@ extends:
               - ${{ parameters.additionalBuildSteps }}
 
             templateContext:
+              outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
                 - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - Tinylicious Log
                       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                      targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+                      targetPath: '$(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log'
                       artifactName: tinyliciousLog_attempt-$(System.JobAttempt)
                       sbomEnabled: false
                       publishLocation: pipeline
@@ -521,20 +548,23 @@ extends:
                       targetPath: $(Build.ArtifactStagingDirectory)/test-files
                       artifactName: test-files
                       publishLocation: pipeline
+                      sbomEnabled: false
 
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-                      targetPath: ${{ parameters.buildDirectory }}/artifacts/bundleAnalysis
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactname: bundleAnalysis
-                      publishLocation: Container
+                      sbomEnabled: false
+                      publishLocation: pipeline
 
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
-                      targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
                       artifactName: _api-extractor-temp
+                      sbomEnabled: false
                       publishLocation: pipeline
 
           # Job - Component detection
