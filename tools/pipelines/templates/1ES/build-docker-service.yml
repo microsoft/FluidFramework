@@ -309,6 +309,7 @@ extends:
               image: $(containerRegistryUrl)/base:$(containerTagSuffix)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
               useBuildKit: true
+              enableNetwork: true
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
@@ -410,6 +411,7 @@ extends:
             image: $(buildContainerName):$(containerTagSuffix)
             buildArguments: ${{ parameters.additionalBuildArguments }}
             useBuildKit: true
+            enableNetwork: true
 
         # - task: Docker@1
         #   displayName: Tag image for main/next
