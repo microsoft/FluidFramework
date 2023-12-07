@@ -1,8 +1,8 @@
 {
 	"metadata": {
 		"toolPackage": "@microsoft/api-extractor",
-		"toolVersion": "7.28.3",
-		"schemaVersion": 1009,
+		"toolVersion": "7.38.3",
+		"schemaVersion": 1011,
 		"oldestForwardsCompatibleVersion": 1001,
 		"tsdocConfig": {
 			"$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
@@ -172,7 +172,101 @@
 			"name": "",
 			"preserveMemberOrder": false,
 			"members": [
-				// Add members here as needed for your test case
+				{
+					"kind": "Namespace",
+					"canonicalReference": "package-b!TestNamespace:namespace",
+					"docComment": "/**\n * Test namespace\n *\n * @public\n */\n",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare namespace TestNamespace "
+						}
+					],
+					"fileUrlPath": "dist/index.d.ts",
+					"releaseTag": "Public",
+					"name": "TestNamespace",
+					"preserveMemberOrder": false,
+					"members": [
+						{
+							"kind": "Variable",
+							"canonicalReference": "package-b!TestNamespace.bar:var",
+							"docComment": "/**\n * @beta\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "bar = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"bar\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Beta",
+							"name": "bar",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						},
+						{
+							"kind": "Variable",
+							"canonicalReference": "package-b!TestNamespace.baz:var",
+							"docComment": "/**\n * @alpha\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "baz = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"baz\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Alpha",
+							"name": "baz",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						},
+						{
+							"kind": "Variable",
+							"canonicalReference": "package-b!TestNamespace.foo:var",
+							"docComment": "/**\n * @public\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "foo = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"foo\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Public",
+							"name": "foo",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						}
+					]
+				}
 			]
 		}
 	]
