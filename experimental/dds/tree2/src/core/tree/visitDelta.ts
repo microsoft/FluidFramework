@@ -15,6 +15,7 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil";
+import { ProtoNodes } from "./delta";
 
 /**
  * Implementation notes:
@@ -210,7 +211,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: Delta.ProtoNodes, destination: FieldKey): void;
+	create(content: ProtoNodes, destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.

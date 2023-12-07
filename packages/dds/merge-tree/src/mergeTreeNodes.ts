@@ -29,7 +29,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
- * @internal
+ * @alpha
  */
 export interface IMergeNodeCommon {
 	/**
@@ -95,7 +95,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
- * @internal
+ * @alpha
  */
 export interface IRemovalInfo {
 	/**
@@ -132,7 +132,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @internal
+ * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
@@ -247,7 +247,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -359,7 +359,7 @@ export interface SearchResult {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @internal
+ * @alpha
  */
 export interface SegmentGroup {
 	segments: ISegment[];
@@ -369,7 +369,7 @@ export interface SegmentGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
@@ -433,7 +433,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
@@ -628,14 +628,14 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition {
 	public static readonly type = "Marker";
@@ -740,7 +740,7 @@ export class IncrementalMapState<TContext> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @internal
+ * @alpha
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;

@@ -6,6 +6,17 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"requestSizeLimit": "1gb",
 	"storageDir": {
 		"baseDir": "/home/node/documents",

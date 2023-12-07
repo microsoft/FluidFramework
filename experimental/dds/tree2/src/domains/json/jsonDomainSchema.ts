@@ -36,20 +36,14 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
 }
 
-/**
- */
 export const jsonObject = builder.mapRecursive(
 	"object",
 	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
-/**
- */
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
 	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
-/**
- */
 export const jsonSchema = builder.intoLibrary();

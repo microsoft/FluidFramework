@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
 	TreeFieldStoredSchema,
@@ -37,10 +36,7 @@ export interface SchemaEvents {
  * TODO: could implement more fine grained dependency tracking.
  * @alpha
  */
-export interface StoredSchemaRepository
-	extends Dependee,
-		ISubscribable<SchemaEvents>,
-		TreeStoredSchema {
+export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
@@ -52,12 +48,9 @@ export interface StoredSchemaRepository
  * StoredSchemaRepository for in memory use:
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
-export class InMemoryStoredSchemaRepository
-	extends SimpleDependee
-	implements StoredSchemaRepository
-{
+export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 	protected readonly data: MutableSchemaData;
-	private readonly events = createEmitter<SchemaEvents>();
+	protected readonly events = createEmitter<SchemaEvents>();
 
 	/**
 	 * For now, the schema are just scored in maps.
@@ -72,7 +65,6 @@ export class InMemoryStoredSchemaRepository
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
 	public constructor(data?: TreeStoredSchema) {
-		super("StoredSchemaRepository");
 		this.data = cloneSchemaData(data ?? defaultSchemaData);
 	}
 
@@ -97,7 +89,6 @@ export class InMemoryStoredSchemaRepository
 		for (const [name, schema] of newSchema.nodeSchema) {
 			this.data.nodeSchema.set(name, schema);
 		}
-		this.invalidateDependents();
 		this.events.emit("afterSchemaChange", newSchema);
 	}
 }

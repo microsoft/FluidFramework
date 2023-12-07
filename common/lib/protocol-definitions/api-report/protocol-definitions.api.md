@@ -109,7 +109,7 @@ export interface IConnect {
     versions: string[];
 }
 
-// @internal
+// @alpha
 export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
@@ -175,7 +175,7 @@ export interface INackContent {
     type: NackErrorType;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProcessMessageResult {
     // (undocumented)
     immediateNoOp?: boolean;
@@ -201,7 +201,7 @@ export interface IProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @internal
+// @alpha
 export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off"> {
     // (undocumented)
     off: IQuorum["on"];
@@ -242,7 +242,7 @@ export interface IQuorumClientsEvents {
 // @internal @deprecated
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
-// @internal
+// @alpha
 export interface IQuorumProposals {
     // (undocumented)
     get(key: string): unknown;
@@ -565,7 +565,7 @@ export enum SignalType {
 // @alpha
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @internal
+// @alpha
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @alpha

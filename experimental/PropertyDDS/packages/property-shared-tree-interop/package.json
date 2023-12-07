@@ -42,7 +42,7 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
 		"jest": "^29.6.2",

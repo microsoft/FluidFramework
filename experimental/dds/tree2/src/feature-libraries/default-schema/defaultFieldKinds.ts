@@ -5,15 +5,15 @@
 
 import {
 	FieldKindIdentifier,
-	Delta,
 	ITreeCursor,
 	forbiddenFieldKindIdentifier,
 	ChangesetLocalId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
 } from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
-	Multiplicity,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
@@ -28,6 +28,7 @@ import {
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -40,8 +41,8 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): Delta.FieldChanges => ({}),
-	relevantRemovedRoots: (change): Iterable<Delta.DetachedNodeId> => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
+	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 };
 
