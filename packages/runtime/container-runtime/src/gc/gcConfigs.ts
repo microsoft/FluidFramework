@@ -30,6 +30,7 @@ import {
 	stableGCVersion,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
+	gcDisableThrowOnTombstoneLoadOptionName,
 	defaultSweepGracePeriodMs,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
@@ -182,7 +183,7 @@ export function generateGCConfigs(
 
 	const throwOnTombstoneLoadConfig =
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
-		!createParams.gcOptions.disableGCThrowOnTombstoneLoad;
+		!createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName];
 	const throwOnTombstoneLoad =
 		throwOnTombstoneLoadConfig &&
 		tombstoneEnforcementAllowed &&

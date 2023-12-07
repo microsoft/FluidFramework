@@ -439,7 +439,6 @@ export interface IGCMetadata {
 export interface IGCRuntimeOptions {
     [key: string]: any;
     disableGC?: boolean;
-    disableGCThrowOnTombstoneLoad?: boolean;
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;

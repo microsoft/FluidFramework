@@ -12,6 +12,7 @@ export {
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,

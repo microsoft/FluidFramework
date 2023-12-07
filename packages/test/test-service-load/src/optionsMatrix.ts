@@ -63,7 +63,6 @@ export const generateLoaderOptions = (
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGCThrowOnTombstoneLoad: [false], // Don't want coverage here - this option will be removed soon
 	disableGC: booleanCases,
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,

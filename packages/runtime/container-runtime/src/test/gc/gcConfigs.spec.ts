@@ -43,6 +43,7 @@ import {
 	gcTombstoneGenerationOptionName,
 	gcSweepGenerationOptionName,
 	throwOnTombstoneLoadOverrideKey,
+	gcDisableThrowOnTombstoneLoadOptionName,
 	GCVersion,
 	runSessionExpiryKey,
 } from "../../gc";
@@ -889,23 +890,23 @@ describe("Garbage Collection configurations", () => {
 	});
 
 	describe("throwOnTombstoneLoad", () => {
-		it("disableGCThrowOnTombstoneLoad true", () => {
+		it("gcDisableThrowOnTombstoneLoad true", () => {
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0 },
-				{ disableGCThrowOnTombstoneLoad: true },
+				{ [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
-		it("disableGCThrowOnTombstoneLoad false", () => {
+		it("gcDisableThrowOnTombstoneLoad false", () => {
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0 },
-				{ disableGCThrowOnTombstoneLoad: false },
+				{ [gcDisableThrowOnTombstoneLoadOptionName]: false },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
-		it("disableGCThrowOnTombstoneLoad undefined", () => {
+		it("gcDisableThrowOnTombstoneLoad undefined", () => {
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0 },
 				undefined /* gcOptions */,
@@ -926,7 +927,7 @@ describe("Garbage Collection configurations", () => {
 			injectedSettings[throwOnTombstoneLoadOverrideKey] = true;
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0 },
-				{ disableGCThrowOnTombstoneLoad: true },
+				{ [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
@@ -935,7 +936,7 @@ describe("Garbage Collection configurations", () => {
 			injectedSettings[throwOnTombstoneLoadOverrideKey] = false;
 			gc = createGcWithPrivateMembers(
 				{ gcFeature: 0 },
-				{ disableGCThrowOnTombstoneLoad: false },
+				{ [gcDisableThrowOnTombstoneLoadOptionName]: false },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
