@@ -83,6 +83,15 @@ parameters:
   type: string
   default: ""
 
+# If the build is running for a test branch
+- name: testBuild
+  type: boolean
+  default: false
+
+- name: pushImage
+  type: boolean
+  default: false
+
 trigger: none
 
 resources:
@@ -122,20 +131,20 @@ extends:
       dependsOn: [] # this stage doesn't depend on preceding stage
       variables:
         - group: container-registry-info
-        - ${{ if eq(variables.testBuild, true) }}:
+        - ${{ if eq(parameters.testBuild, true) }}:
           - name: buildContainerName
             value: test/${{ parameters.containerName }}
-        - ${{ if eq(variables.testBuild, false) }}:
+        - ${{ else }}:
           - name: buildContainerName
             value: build/${{ parameters.containerName }}
         - name: baseContainerTag
           value: base:$(containerTagSuffix)
-        - ${{ if eq(variables.pushImage, false) }}:
+        - ${{ if eq(parameters.pushImage, false) }}:
           - name: containerRegistry
             value:
           - name: containerTag
             value: $(buildContainerName):$(containerTagSuffix)
-        - ${{ if eq(variables.pushImage, true) }}:
+        - ${{ else }}:
           - name: containerRegistry
             value: $[variables.containerRegistryConnection]
           - name: containerTag
