@@ -261,6 +261,7 @@ export interface IGarbageCollectionMessage {
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
+ *
  */
 export interface IGarbageCollectionRuntime {
 	/** Before GC runs, called to notify the runtime to update any pending GC state. */
@@ -497,15 +498,4 @@ export interface IGCResult {
 	referencedNodeIds: string[];
 	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
 	deletedNodeIds: string[];
-}
-
-/**
- * The list of nodes that are ready to swept. It is returned as a result of GC mark phase.
- * @internal
- */
-export interface ISweepReadyNodes {
-	dataStoreIds: string[];
-	subDataStoreIds: string[];
-	blobIds: string[];
-	otherIds: string[];
 }

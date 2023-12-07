@@ -43,8 +43,11 @@ export enum ContainerMessageType {
 	 */
 	IdAllocation = "idAllocation",
 
-	/** Garbage collection specific op. */
-	GC = "garbageCollection",
+	/**
+	 * Garbage collection specific op. This is sent by the summarizer client when GC runs. It used to synchronize GC
+	 * state across all clients.
+	 */
+	GC = "GC",
 }
 
 /**

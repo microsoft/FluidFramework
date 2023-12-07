@@ -773,10 +773,12 @@ export class DataStores implements IDisposable {
 
 			const dataStoreContext = this.contexts.get(dataStoreId);
 			if (dataStoreContext === undefined) {
-				// This should eventually be converted to an assert once we validate that this never happen.
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedDataStoreNotFound",
-					dataStoreId,
+					...tagCodeArtifacts({ dataStoreId }),
+					details: {
+						alreadyDeleted: this.isDataStoreDeleted(dataStoreId),
+					},
 				});
 				continue;
 			}
