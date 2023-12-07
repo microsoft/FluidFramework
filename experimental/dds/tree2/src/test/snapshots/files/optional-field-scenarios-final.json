@@ -17,6 +17,7 @@
                   "trunk": [
                     {
                       "change": {
+                        "maxId": 1,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
@@ -30,13 +31,6 @@
                                       "fieldKey": "root 1 child",
                                       "fieldKind": "Optional",
                                       "change": {
-                                        "b": [
-                                          [
-                                            {
-                                              "localId": 1
-                                            }
-                                          ]
-                                        ],
                                         "m": [
                                           [
                                             {
@@ -47,7 +41,7 @@
                                           ]
                                         ],
                                         "d": {
-                                          "localId": 2
+                                          "localId": 0
                                         }
                                       }
                                     }
@@ -93,22 +87,16 @@
                     },
                     {
                       "change": {
+                        "maxId": 3,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "b": [
-                                [
-                                  {
-                                    "localId": 4
-                                  }
-                                ]
-                              ],
                               "m": [
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   0,
                                   true
@@ -116,7 +104,7 @@
                                 [
                                   0,
                                   {
-                                    "localId": 5
+                                    "localId": 2
                                   },
                                   false
                                 ]
@@ -126,7 +114,7 @@
                         ],
                         "builds": [
                           [
-                            4,
+                            3,
                             {
                               "version": 1,
                               "identifiers": [],
@@ -167,22 +155,16 @@
                     },
                     {
                       "change": {
+                        "maxId": 5,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "b": [
-                                [
-                                  {
-                                    "localId": 4
-                                  }
-                                ]
-                              ],
                               "m": [
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   0,
                                   true
@@ -190,7 +172,7 @@
                                 [
                                   0,
                                   {
-                                    "localId": 5
+                                    "localId": 2
                                   },
                                   false
                                 ]
@@ -198,7 +180,7 @@
                               "c": [
                                 [
                                   {
-                                    "localId": 5,
+                                    "localId": 2,
                                     "revision": "beefbeef-beef-4000-8000-000000000007"
                                   },
                                   {
@@ -207,13 +189,6 @@
                                         "fieldKey": "root 1 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 1
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
@@ -225,7 +200,7 @@
                                             [
                                               0,
                                               {
-                                                "localId": 2
+                                                "localId": 0
                                               },
                                               false
                                             ]
@@ -237,7 +212,7 @@
                                 ],
                                 [
                                   {
-                                    "localId": 4
+                                    "localId": 3
                                   },
                                   {
                                     "fieldChanges": [
@@ -245,24 +220,17 @@
                                         "fieldKey": "root 3 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 7
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
-                                                "localId": 7
+                                                "localId": 5
                                               },
                                               0,
                                               true
                                             ]
                                           ],
                                           "d": {
-                                            "localId": 8
+                                            "localId": 4
                                           }
                                         }
                                       }
@@ -302,7 +270,7 @@
                             }
                           ],
                           [
-                            4,
+                            3,
                             {
                               "version": 1,
                               "identifiers": [],
@@ -328,7 +296,7 @@
                             }
                           ],
                           [
-                            7,
+                            5,
                             {
                               "version": 1,
                               "identifiers": [],
@@ -362,6 +330,7 @@
                     },
                     {
                       "change": {
+                        "maxId": 5,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
@@ -376,13 +345,6 @@
                                         "fieldKey": "root 3 child",
                                         "fieldKind": "Optional",
                                         "change": {
-                                          "b": [
-                                            [
-                                              {
-                                                "localId": 1
-                                              }
-                                            ]
-                                          ],
                                           "m": [
                                             [
                                               {
@@ -394,7 +356,7 @@
                                             [
                                               0,
                                               {
-                                                "localId": 2
+                                                "localId": 0
                                               },
                                               false
                                             ]
@@ -820,27 +782,27 @@
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      4,
+                      3,
                       9
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      7,
+                      5,
                       10
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      2,
+                      0,
                       12
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      5,
+                      2,
                       15
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
-                      2,
+                      0,
                       6
                     ],
                     [
@@ -850,7 +812,7 @@
                     ],
                     [
                       "beefbeef-beef-4000-8000-000000000007",
-                      5,
+                      2,
                       14
                     ]
                   ],

@@ -96,7 +96,6 @@ const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Del
 const tag = mintRevisionTag();
 const change1: TaggedChange<OptionalChangeset> = tagChange(
 	{
-		build: [{ localId: brand(41) }],
 		moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 		childChanges: [[{ localId: brand(41) }, nodeChange1]],
 		reservedDetachId: { localId: brand(1) },
@@ -144,7 +143,6 @@ describe("optionalField", () => {
 				detach: brand(43),
 			});
 			const expected: OptionalChangeset = {
-				build: [{ localId: brand(42) }],
 				moves: [[{ localId: brand(42) }, "self", "nodeTargeting"]],
 				childChanges: [],
 				reservedDetachId: { localId: brand(43) },
@@ -168,10 +166,6 @@ describe("optionalField", () => {
 			);
 
 			const change1And2: OptionalChangeset = {
-				build: [
-					{ localId: brand(41), revision: change1.revision },
-					{ localId: brand(42), revision: change2.revision },
-				],
 				moves: [
 					[
 						{ localId: brand(41), revision: change1.revision },
@@ -189,7 +183,6 @@ describe("optionalField", () => {
 
 		it("can compose child changes", () => {
 			const expected: OptionalChangeset = {
-				build: [{ localId: brand(41), revision: change1.revision }],
 				moves: [
 					[{ localId: brand(41), revision: change1.revision }, "self", "nodeTargeting"],
 				],
@@ -224,7 +217,6 @@ describe("optionalField", () => {
 			};
 
 			const expected: OptionalChangeset = {
-				build: [],
 				moves: [
 					["self", { localId: brand(41), revision: change1.revision }, "cellTargeting"],
 				],
@@ -266,12 +258,10 @@ describe("optionalField", () => {
 
 			it("can rebase child change", () => {
 				const baseChange: OptionalChangeset = {
-					build: [],
 					moves: [],
 					childChanges: [["self", nodeChange1]],
 				};
 				const changeToRebase: OptionalChangeset = {
-					build: [],
 					moves: [],
 					childChanges: [["self", nodeChange2]],
 				};
@@ -286,7 +276,6 @@ describe("optionalField", () => {
 				};
 
 				const expected: OptionalChangeset = {
-					build: [],
 					moves: [],
 					childChanges: [["self", arbitraryChildChange]],
 				};
@@ -357,7 +346,6 @@ describe("optionalField", () => {
 
 			it("can rebase child change (field change ↷ field change)", () => {
 				const baseChange: OptionalChangeset = {
-					build: [],
 					moves: [["self", { localId: brand(0) }, "cellTargeting"]],
 					childChanges: [["self", nodeChange1]],
 				};
@@ -366,7 +354,6 @@ describe("optionalField", () => {
 				// Note: this sort of change (has field changes as well as nested child changes)
 				// can only be created for production codepaths using transactions.
 				const changeToRebase: OptionalChangeset = {
-					build: [{ localId: brand(41) }],
 					moves: [
 						[{ localId: brand(41) }, "self", "nodeTargeting"],
 						["self", { localId: brand(1) }, "cellTargeting"],
@@ -384,7 +371,6 @@ describe("optionalField", () => {
 				};
 
 				const expected: OptionalChangeset = {
-					build: [{ localId: brand(41) }],
 					moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 					childChanges: [
 						[
@@ -565,7 +551,7 @@ describe("optionalField", () => {
 			it("a tree that remains untouched", () => {
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedRoots(
-						{ build: [], moves: [], childChanges: [] },
+						{ moves: [], childChanges: [] },
 						noTreesDelegate,
 					),
 				);

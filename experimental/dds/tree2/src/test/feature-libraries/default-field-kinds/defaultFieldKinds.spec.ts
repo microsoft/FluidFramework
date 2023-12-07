@@ -50,7 +50,6 @@ describe("defaultFieldKinds", () => {
 	describe("valueFieldEditor.set", () => {
 		it("valueFieldEditor.set", () => {
 			const expected: OptionalChangeset = {
-				build: [{ localId: brand(41) }],
 				moves: [
 					[{ localId: brand(41) }, "self", "nodeTargeting"],
 					["self", { localId: brand(1) }, "cellTargeting"],
@@ -75,17 +74,14 @@ describe("defaultFieldKinds", () => {
 			valueChangeHandler;
 
 		const childChange1: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", nodeChange1]],
 		};
 		const childChange2: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", nodeChange2]],
 		};
 		const childChange3: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", arbitraryChildChange]],
 		};
@@ -100,7 +96,6 @@ describe("defaultFieldKinds", () => {
 		);
 
 		const change1WithChildChange: OptionalChangeset = {
-			build: [{ localId: brand(41) }],
 			moves: [
 				[{ localId: brand(41) }, "self", "nodeTargeting"],
 				["self", { localId: brand(1) }, "cellTargeting"],
@@ -112,10 +107,6 @@ describe("defaultFieldKinds", () => {
 		 * Represents the outcome of composing change1 and change2.
 		 */
 		const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
-			build: [
-				{ localId: brand(41), revision: change1.revision },
-				{ localId: brand(42), revision: change2.revision },
-			],
 			moves: [
 				[
 					{ localId: brand(41), revision: change1.revision },
@@ -149,7 +140,6 @@ describe("defaultFieldKinds", () => {
 			it("a field change and a child change", () => {
 				const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
 				const expected: OptionalChangeset = {
-					build: [{ localId: brand(41), revision: change1.revision }],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },
@@ -185,7 +175,6 @@ describe("defaultFieldKinds", () => {
 					defaultRevisionMetadataFromChanges([change1]),
 				);
 				const expected2: OptionalChangeset = {
-					build: [{ localId: brand(41), revision: change1.revision }],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },
@@ -237,7 +226,6 @@ describe("defaultFieldKinds", () => {
 			assertEqual(
 				makeAnonChange(inverted),
 				makeAnonChange({
-					build: [],
 					moves: [
 						[
 							{ localId: brand(1), revision: taggedChange.revision },

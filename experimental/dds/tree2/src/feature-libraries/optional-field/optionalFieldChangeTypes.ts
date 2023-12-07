@@ -25,11 +25,6 @@ export type RegisterId = ChangeAtomId | "self";
  */
 export interface OptionalChangeset {
 	/**
-	 * Detached trees to build.
-	 */
-	build: ChangeAtomId[];
-
-	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.
 	 *
 	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".

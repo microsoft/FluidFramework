@@ -18,6 +18,7 @@ import {
 	TaggedChange,
 	DeltaRoot,
 	StoredSchemaCollection,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -179,13 +180,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
-				const id = this.modularBuilder.generateId();
+				const detachId = this.modularBuilder.generateId();
+				let fillId: ChangesetLocalId | undefined;
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
 				if (newContent !== undefined) {
-					const fillId = this.modularBuilder.generateId();
-					const detachId = this.modularBuilder.generateId();
-
+					fillId = this.modularBuilder.generateId();
 					const build = this.modularBuilder.buildTrees(fillId, [newContent]);
 					edits.push(build);
 
@@ -194,7 +194,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						detach: detachId,
 					});
 				} else {
-					optionalChange = optional.changeHandler.editor.clear(wasEmpty, id);
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detachId);
 				}
 
 				const change: FieldChangeset = brand(optionalChange);
@@ -205,11 +205,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					change,
 				};
 				edits.push(edit);
-				if (newContent !== undefined) {
-				}
 
-				// TODO: What's the deal with this maxId
-				this.modularBuilder.submitChanges(edits);
+				this.modularBuilder.submitChanges(
+					edits,
+					newContent === undefined ? detachId : fillId,
+				);
 			},
 		};
 	}

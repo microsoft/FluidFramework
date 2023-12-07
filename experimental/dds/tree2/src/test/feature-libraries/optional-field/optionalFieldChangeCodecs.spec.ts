@@ -33,7 +33,6 @@ const childCodec1: IJsonCodec<NodeChangeset> = {
 };
 
 const change1: OptionalChangeset = {
-	build: [{ localId: brand(41) }],
 	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 	childChanges: [],
 	reservedDetachId: { localId: brand(1) },
@@ -50,13 +49,11 @@ const change2Inverted: OptionalChangeset = {
 		["self", { localId: brand(42) }, "cellTargeting"],
 	],
 	childChanges: [],
-	build: [],
 };
 
 const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
 
 const change1WithChildChange: OptionalChangeset = {
-	build: [{ localId: brand(41) }],
 	moves: [
 		[{ localId: brand(41) }, "self", "nodeTargeting"],
 		["self", { localId: brand(1) }, "cellTargeting"],

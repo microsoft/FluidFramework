@@ -107,10 +107,6 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		for (const build of change.build ?? []) {
-			ingest(build.localId);
-		}
-
 		for (const [src, dst] of change.moves) {
 			if (src !== "self") {
 				ingest(src.localId);
