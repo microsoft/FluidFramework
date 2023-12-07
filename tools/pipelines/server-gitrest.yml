@@ -80,6 +80,10 @@ pr:
     - tools/pipelines/templates/1ES/include-install-pnpm.yml
     - tools/pipelines/templates/1ES/include-use-node-version.yml
 
+# Some variables are used by templates with template-expression syntax ( '${{ }}' ) which gets processed at parse/compile
+# time. For that to work, those variables must be defined before the templates that use them are are included/extended.
+# Thus we have to define some variables at the pipeline level because that's the only way to make them available at
+# compile time.
 variables:
 - template: /tools/pipelines/templates/1ES/include-vars.yml@self
   parameters:
@@ -87,6 +91,7 @@ variables:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: true
+- group: container-registry-info
 
 extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
