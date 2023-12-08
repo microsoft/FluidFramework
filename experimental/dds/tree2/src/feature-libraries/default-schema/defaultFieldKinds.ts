@@ -14,7 +14,6 @@ import {
 import { fail } from "../../util";
 import {
 	FieldKind,
-	Multiplicity,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
@@ -29,6 +28,7 @@ import {
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
