@@ -576,113 +576,6 @@
                           [
                             "com.fluidframework.leaf.number",
                             true,
-                            42,
-                            []
-                          ]
-                        ]
-                      }
-                    ],
-                    [
-                      "repair-9",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "optional-field.TestNode",
-                            false,
-                            []
-                          ]
-                        ]
-                      }
-                    ],
-                    [
-                      "repair-10",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            43,
-                            []
-                          ]
-                        ]
-                      }
-                    ],
-                    [
-                      "repair-11",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            44,
-                            []
-                          ]
-                        ]
-                      }
-                    ],
-                    [
-                      "repair-12",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
-                          }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
                             40,
                             []
                           ]
@@ -690,7 +583,7 @@
                       }
                     ],
                     [
-                      "repair-14",
+                      "repair-10",
                       {
                         "version": 1,
                         "identifiers": [],
@@ -724,7 +617,7 @@
                       }
                     ],
                     [
-                      "repair-15",
+                      "repair-11",
                       {
                         "version": 1,
                         "identifiers": [],
@@ -777,28 +670,13 @@
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      1,
+                      0,
                       8
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000b",
-                      3,
-                      9
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000b",
-                      5,
-                      10
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000b",
-                      0,
-                      12
-                    ],
-                    [
-                      "beefbeef-beef-4000-8000-00000000000b",
                       2,
-                      15
+                      11
                     ],
                     [
                       "beefbeef-beef-4000-8000-00000000000c",
@@ -806,17 +684,12 @@
                       6
                     ],
                     [
-                      "beefbeef-beef-4000-8000-00000000000c",
-                      1,
-                      11
-                    ],
-                    [
                       "beefbeef-beef-4000-8000-000000000007",
                       2,
-                      14
+                      10
                     ]
                   ],
-                  "maxId": 15
+                  "maxId": 11
                 },
                 "encoding": "utf-8"
               }
