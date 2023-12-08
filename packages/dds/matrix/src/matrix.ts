@@ -243,7 +243,7 @@ export class SharedMatrix<T = any>
 		return this.cols.getLength();
 	}
 
-	public get isSetCellConflictResolutionPolicyFWW() {
+	public isSetCellConflictResolutionPolicyFWW() {
 		return this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1 || this.userSwitchedSetCellPolicy;
 	}
 
