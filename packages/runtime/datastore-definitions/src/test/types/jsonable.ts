@@ -55,9 +55,25 @@ interface IA2 {
 declare const a2: IA2;
 foo(a2);
 
-// test complex indexed interface
+// test complex indexed type
 declare const a3: { [key: string]: string };
 foo(a3);
+
+// test "unknown" cannonical Json content
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+declare const json: Json;
+foo(json);
+
+// test "unknown" Jsonable content
+declare const unknownJsonable: Jsonable<unknown>;
+foo(unknownJsonable);
+
+// test "unknown" cannonical Json content in an interface
+interface A4 {
+	payload: Json;
+}
+declare const a4: A4;
+foo(a4);
 
 // test interface with multiple properties
 interface A5 {
@@ -196,6 +212,14 @@ const isym: ISymbol = {
 // @ts-expect-error should not be jsonable
 foo(isym);
 
+// *disabled* test that array-like types are fully arrays
+// Jsonable allows ArrayLike to be an object as base JsonableTypeWith<never>
+// uses ArrayLike to avoid TypeOnly type test limitation. If that is addressed
+// then this test should be enabled.
+declare const mayNotBeArray: ArrayLike<number>;
+// @disable ts-expect-error should not be jsonable
+foo(mayNotBeArray);
+
 /**
  * TypeAliasOf creates a type equivalent version of an interface.
  * @remarks
@@ -253,6 +277,8 @@ foo<unknown>(a2);
 // no error for _type_ to Jsonable<unknown>
 foo<unknown>(a3);
 // @ts-expect-error interfaces are not assignable to Jsonable<unknown>
+foo<unknown>(a4);
+// @ts-expect-error interfaces are not assignable to Jsonable<unknown>
 foo<unknown>(a5);
 // @ts-expect-error interfaces are not assignable to Jsonable<unknown>
 foo<unknown>(a6);
@@ -270,6 +296,7 @@ foo<unknown>(selfReferencing);
 foo<unknown>(a as Jsonable<typeof a>);
 foo<unknown>(a2 as Jsonable<typeof a2>);
 foo<unknown>(a3 as Jsonable<typeof a3>);
+foo<unknown>(a4 as Jsonable<typeof a4>);
 foo<unknown>(a5 as Jsonable<typeof a5>);
 foo<unknown>(a6 as Jsonable<typeof a6>);
 foo<unknown>(a7 as Jsonable<typeof a7>);

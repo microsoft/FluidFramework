@@ -31,7 +31,8 @@ export type JsonableTypeWith<T> =
  *
  * @privateRemarks
  * Internal type testing for compatibility uses TypeOnly filter which cannot handle recursive "pure" types.
- * This interface along with ArrayLike above avoids pure type recursion issues.
+ * This interface along with ArrayLike above avoids pure type recursion issues, but introduces a limitation on
+ * the ability of {@link Jsonable} to detect array-like types that are not handled naively ({@link JSON.stringify}).
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
  * @alpha
  */
@@ -65,6 +66,8 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  *
  * - prototypes and non-enumerable properties are lost.
  *
+ * - `ArrayLike` types that are not arrays and are serialized as `{ length: number }`.
+ *
  * Also, `Jsonable<T>` does not prevent the construction of circular references.
  *
  * Using `Jsonable<unknown>` or `Jsonable<any>` is a type alias for
@@ -93,7 +96,13 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 	? /* primitive types => */ T
 	: // eslint-disable-next-line @typescript-eslint/ban-types
 	/* test for not a function */ Extract<T, Function> extends never
-	? /* not a function => */ {
-			[K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
-	  }
+	? /* not a function =>  => test for object */ T extends object
+		? /* object => test for array */ T extends (infer U)[] // prefer ArrayLike test to catch non-array array-like types
+			? /* array => */ Jsonable<U, TReplaced>[]
+			: /* property bag => */ {
+					[K in keyof T]: Extract<K, symbol> extends never
+						? Jsonable<T[K], TReplaced>
+						: never;
+			  }
+		: /* not an object => */ never
 	: /* function => */ never;
