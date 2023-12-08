@@ -341,7 +341,10 @@ extends:
               displayName: Pack
               inputs:
                 command: run
-                arguments: '-v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+                imageName: $(baseContainerTag)
+                containerCommand: pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack
+                volumes:
+                  $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -360,7 +363,8 @@ extends:
                   flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
                   flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
-          # Note: The publishing steps have been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template
+          # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
+          # now part of templateContext.outputs below.
 
           # Lint
           - ${{ if eq(parameters.lint, true) }}:
@@ -368,7 +372,10 @@ extends:
               displayName: npm run lint
               inputs:
                 command: run
-                arguments: '-t $(baseContainerTag) npm run lint'
+                imageName: $(baseContainerTag)
+                containerCommand: npm run lint
+                volumes:
+                  $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
@@ -379,7 +386,11 @@ extends:
                 displayName: npm run ci:test:coverage
                 inputs:
                   command: run
-                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
+                  imageName: $(baseContainerTag)
+                  containerCommand: npm run ci:test:coverage
+                  volumes:
+                    $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc
+                  arguments: '--user root'
 
               - task: PublishCodeCoverageResults@1
                 displayName: Publish Code Coverage
@@ -395,7 +406,11 @@ extends:
                 displayName: npm run ${{ parameters.test }}
                 inputs:
                   command: run
-                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
+                  imageName: $(baseContainerTag)
+                  containerCommand: npm run ${{ parameters.test }}
+                  volumes:
+                    $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc
+                  arguments: '--user root'
 
             # Test - Upload Results
             - task: PublishTestResults@2
@@ -413,9 +428,15 @@ extends:
               displayName: npm run ci:build:docs
               inputs:
                 command: run
-                arguments: '--user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
+                imageName: $(baseContainerTag)
+                containerCommand: npm run ci:build:docs
+                volumes:
+                  $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp
+                arguments: '--user root'
 
-          # Note: The doc publishing step has been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template
+          # At this point we want to publish the artifact with docs, but as part of 1ES migration that's now part of
+          # templateContext.outputs below.
+
 
         # Build final image
         - task: 1ES.BuildContainerImage@1
@@ -427,6 +448,7 @@ extends:
             useBuildKit: true
             enableNetwork: true
 
+        # TODO: move the image pushes to templateContext.outputs?
         # Push
         - ${{ if eq(parameters.shouldPushDockerImage, true) }}:
           - task: 1ES.PushContainerImage@1
@@ -447,6 +469,7 @@ extends:
             # specified as a runtime variable (variables from variable groups apparently are never available "statically"
             # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
             - serviceConnection: $(containerRegistryConnection)
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
           - ${{ if eq(parameters.pack, true) }}:
             - output: pipelineArtifact
@@ -460,6 +483,7 @@ extends:
               targetPath: '$(Build.ArtifactStagingDirectory)/_api-extractor-temp'
               artifactName: _api-extractor-temp
               publishLocation: 'pipeline'
+              sbomEnabled: false
 
     # Publish stage
     - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
