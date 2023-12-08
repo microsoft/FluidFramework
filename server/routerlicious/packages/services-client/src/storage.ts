@@ -36,7 +36,10 @@ export interface IPatchRefParamsExternal extends git.IPatchRefParams {
 	config?: IExternalWriterConfig;
 }
 
-interface IExternalWriterConfig {
+/**
+ * @internal
+ */
+export interface IExternalWriterConfig {
 	enabled: boolean;
 }
 

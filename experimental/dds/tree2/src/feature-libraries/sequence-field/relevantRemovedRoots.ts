@@ -15,14 +15,16 @@ import {
 	isAttachAndDetachEffect,
 } from "./utils";
 
-export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
+export type RelevantRemovedRootsFromTChild<TChild> = (
+	child: TChild,
+) => Iterable<Delta.DetachedNodeId>;
 
-export function* relevantRemovedTrees<TChild>(
+export function* relevantRemovedRoots<TChild>(
 	changeset: Changeset<TChild>,
-	removedTreesFromChild: RemovedTreesFromTChild<TChild>,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromTChild<TChild>,
 ): Iterable<Delta.DetachedNodeId> {
 	for (const mark of changeset) {
-		if (refersToRelevantRemovedTrees(mark)) {
+		if (refersToRelevantRemovedRoots(mark)) {
 			assert(
 				mark.cellId !== undefined,
 				0x81d /* marks referring to removed trees must have an assigned cell ID */,
@@ -33,12 +35,12 @@ export function* relevantRemovedTrees<TChild>(
 			}
 		}
 		if (mark.changes !== undefined) {
-			yield* removedTreesFromChild(mark.changes);
+			yield* relevantRemovedRootsFromChild(mark.changes);
 		}
 	}
 }
 
-function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
+function refersToRelevantRemovedRoots<TChild>(mark: Mark<TChild>): boolean {
 	if (mark.cellId !== undefined) {
 		const effect = isAttachAndDetachEffect(mark) ? mark.attach : mark;
 		if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {

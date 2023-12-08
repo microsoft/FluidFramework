@@ -29,7 +29,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -109,7 +109,7 @@ class TestDataObject1 extends DataObject {
 	}
 }
 
-describeNoCompat("Summaries", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -403,7 +403,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Summaries", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -462,7 +462,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
+describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	beforeEach(() => {

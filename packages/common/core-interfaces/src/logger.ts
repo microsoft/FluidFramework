@@ -25,7 +25,7 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
  * {@inheritDoc TelemetryBaseEventPropertyType}
  *
  * @deprecated Renamed to {@link TelemetryBaseEventPropertyType}
- * @internal
+ * @alpha
  */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
@@ -35,7 +35,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  *
  * This indicates that the value should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
- * @internal
+ * @alpha
  */
 export interface Tagged<V, T extends string = string> {
 	value: V;
@@ -55,7 +55,7 @@ export interface ITaggedTelemetryPropertyType {
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
- * @internal
+ * @alpha
  */
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
@@ -63,7 +63,7 @@ export type ITelemetryBaseProperties = ITelemetryProperties;
  * {@inheritDoc ITelemetryBaseProperties}
  *
  * @deprecated Renamed to {@link ITelemetryBaseProperties}
- * @internal
+ * @alpha
  */
 export interface ITelemetryProperties {
 	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
@@ -74,7 +74,7 @@ export interface ITelemetryProperties {
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
- * @internal
+ * @alpha
  */
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
@@ -83,7 +83,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 /**
  * Specify levels of the logs.
- * @internal
+ * @alpha
  */
 export const LogLevel = {
 	verbose: 10, // To log any verbose event for example when you are debugging something.
@@ -93,14 +93,14 @@ export const LogLevel = {
 
 /**
  * Specify a level to the log to filter out logs based on the level.
- * @internal
+ * @alpha
  */
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
- * @internal
+ * @alpha
  */
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;

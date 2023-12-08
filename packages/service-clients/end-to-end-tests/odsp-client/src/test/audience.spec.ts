@@ -11,7 +11,7 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createOdspClient, OdspTestCredentials } from "./OdspClientFactory";
 import { waitForMember } from "./utils";
 

@@ -14,7 +14,7 @@ import {
 	TreeConfiguration,
 } from "@fluid-experimental/tree2";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -89,7 +89,7 @@ class ChildDataObject extends DataObject {
 	}
 }
 
-describeNoCompat("Storing handles detached", (getTestObjectProvider) => {
+describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

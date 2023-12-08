@@ -446,8 +446,8 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
 	});
 
-	it("relevantRemovedTrees", () => {
-		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+	it("relevantRemovedRoots", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
 			[
 				{
 					index: 0,

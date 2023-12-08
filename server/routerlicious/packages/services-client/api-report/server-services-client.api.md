@@ -215,8 +215,6 @@ export interface IAlfredTenant {
 
 // @internal
 export interface ICreateRefParamsExternal extends resources.ICreateRefParams {
-    // Warning: (ae-forgotten-export) The symbol "IExternalWriterConfig" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     config?: IExternalWriterConfig;
 }
@@ -233,6 +231,12 @@ export interface ICredentials {
 export interface IEmbeddedSummaryHandle extends ISummaryHandle {
     // (undocumented)
     embedded: boolean;
+}
+
+// @internal (undocumented)
+export interface IExternalWriterConfig {
+    // (undocumented)
+    enabled: boolean;
 }
 
 // @internal

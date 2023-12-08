@@ -10,7 +10,6 @@ import { TreeListNodeBase, TreeNodeUnion, Unhydrated } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
  */
 export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
 	extends TreeListNodeBase<
@@ -20,7 +19,7 @@ export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
 	> {}
 
 /**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link NodeBase} which implements 'readonly T[]' and the list mutation APIs.
  * @beta
  */
 export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
@@ -31,14 +30,14 @@ export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllo
 	> {}
 
 /**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
+ * A {@link NodeBase} which implements 'readonly T[]' and the list mutation APIs.
  * @beta
  */
 export const TreeListNode = {
 	/**
 	 * Wrap an iterable of items to inserted as consecutive items in a list.
 	 * @remarks
-	 * The object returned by this function can be inserted into a {@link TreeListNodeOld}.
+	 * The object returned by this function can be inserted into a {@link (TreeListNode:interface)}.
 	 * Its contents will be inserted consecutively in the corresponding location in the list.
 	 * @example
 	 * ```ts

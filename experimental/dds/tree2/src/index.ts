@@ -120,17 +120,7 @@ export {
 	HasListeners,
 } from "./events";
 
-export {
-	cursorToJsonObject,
-	singleJsonCursor,
-	jsonArray,
-	jsonObject,
-	jsonSchema,
-	nodeKeyField,
-	nodeKeySchema,
-	leaf,
-	SchemaBuilder,
-} from "./domains";
+export { leaf } from "./domains";
 
 export {
 	FieldKind,
@@ -226,25 +216,7 @@ export {
 	stackTreeFieldCursor,
 } from "./feature-libraries";
 
-export {
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
-	TreeListNode,
-	TreeListNodeOld,
-	TreeMapNode,
-	TreeObjectNode,
-	Tree as TreeOld,
-	TreeApi as TreeApiOld,
-	TreeNode,
-	TreeObjectFactory,
-	FactoryTreeSchema,
-	TreeMapNodeBase,
-	Unhydrated,
-	IterableTreeListContent,
-} from "./simple-tree";
+export { TreeListNode, TreeMapNodeBase, Unhydrated, IterableTreeListContent } from "./simple-tree";
 
 export {
 	ISharedTree,
@@ -260,12 +232,8 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
-	TypedTreeFactory,
-	TypedTreeOptions,
-	ITree as ITreeOld,
 	SharedTreeContentSnapshot,
 	FlexTreeView,
-	TreeView as TreeViewOld,
 	ITreeViewFork,
 	buildTreeConfiguration,
 } from "./shared-tree";

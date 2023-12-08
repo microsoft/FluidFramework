@@ -14,7 +14,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -29,7 +29,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) => {
+describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	let settings = {};
 	const gcOptions: IGCRuntimeOptions = {

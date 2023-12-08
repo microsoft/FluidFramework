@@ -19,8 +19,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -194,7 +193,7 @@ async function validateDataStoreReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
+describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectProvider) => {
 	// If deleteContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteContent: boolean = false) => {
@@ -378,7 +377,7 @@ async function validateBlobsReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeNoCompat("GC delete attachment blobs in test mode", (getTestObjectProvider) => {
+describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestObjectProvider) => {
 	// If deleteContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteContent: boolean = false) => {

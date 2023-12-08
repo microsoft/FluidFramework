@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { brand, fail, isReadonlyArray } from "../util";
 import {
 	AllowedTypes,
@@ -33,17 +33,19 @@ import {
 	typeNameSymbol,
 	isFluidHandle,
 } from "../feature-libraries";
-import { EmptyKey, FieldKey } from "../core";
+import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
-import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
-import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
+// eslint-disable-next-line import/no-internal-modules
+import { NodeBase, NodeKind } from "../class-tree/schemaTypes";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+import { TreeField, TypedNode, TreeMapNode, TreeObjectNode, TreeNode, Unhydrated } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 import { InsertableTreeNodeUnion, InsertableTypedNode } from "./insertable";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree";
+import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -282,7 +284,7 @@ function contextualizeInsertedListContent(
 		| IterableTreeListContent<InsertableTreeNodeUnion<AllowedTypes>>
 	)[],
 ): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
-	return extractContentArray(
+	return extractFactoryContent(
 		content.flatMap((c) =>
 			c instanceof IterableTreeListContent ? Array.from(c) : c,
 		) as ContextuallyTypedNodeData[],
@@ -806,7 +808,7 @@ function createMapProxy<TSchema extends MapNodeSchema>(
 }
 
 /**
- * Create a proxy to a {@link TreeObjectNode} that is backed by a raw object node (see {@link createRawObjectNode}).
+ * Create a proxy to a {@link TreeObjectNode} that is backed by a raw object node (see {@link createRawNode}).
  * @param schema - the schema of the object node
  * @param content - the content to be stored in the raw node.
  * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
@@ -815,21 +817,65 @@ function createMapProxy<TSchema extends MapNodeSchema>(
  * @param customTargetObject - Target object of the proxy.
  * If not provided `{}` is used for the target.
  * @remarks
- * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawObjectNode}.
- * Most if its properties and methods will error if read/called.
+ * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawNode}.
+ * Most of its properties and methods will error if read/called.
  */
-export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
+export function createRawNodeProxy<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	content: InsertableTypedNode<TSchema>,
 	allowAdditionalProperties: boolean,
 	target?: object,
-): Unhydrated<TreeObjectNode<TSchema>> {
+): Unhydrated<TreeObjectNode<TSchema>>;
+export function createRawNodeProxy<TSchema extends FieldNodeSchema>(
+	schema: TSchema,
+	content: InsertableTypedNode<TSchema>,
+	allowAdditionalProperties: boolean,
+	target?: object,
+): Unhydrated<TreeListNodeOld<TSchema["info"]["allowedTypes"]>>;
+export function createRawNodeProxy<TSchema extends MapNodeSchema>(
+	schema: TSchema,
+	content: InsertableTypedNode<TSchema>,
+	allowAdditionalProperties: boolean,
+	target?: object,
+): Unhydrated<TreeMapNode<TSchema>>;
+export function createRawNodeProxy<TSchema extends TreeNodeSchema>(
+	schema: TSchema,
+	content: InsertableTypedNode<TSchema>,
+	allowAdditionalProperties: boolean,
+	target?: object,
+): Unhydrated<TreeNode> {
 	// Shallow copy the content and then add the type name symbol to it.
-	const contentCopy = { ...content };
-	Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
-	const proxy = createObjectProxy(schema, allowAdditionalProperties, target);
-	const editNode = createRawObjectNode(schema, contentCopy);
+	let editNode: RawTreeNode<TSchema, InsertableTypedNode<TreeNodeSchema>>;
+	let proxy: TreeNode;
+	if (schema instanceof ObjectNodeSchema) {
+		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		editNode = createRawNode(schema, contentCopy);
+		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
+	} else if (schema instanceof FieldNodeSchema) {
+		// simple-tree uses field nodes exclusively to represent lists
+		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		editNode = createRawNode(schema, contentCopy);
+		proxy = createListProxy(allowAdditionalProperties, target);
+	} else if (schema instanceof MapNodeSchema) {
+		const contentCopy = copyContent(schema.name, content as InsertableTypedNode<typeof schema>);
+		editNode = createRawNode(schema, contentCopy);
+		proxy = createMapProxy(allowAdditionalProperties, target);
+	} else {
+		fail("Unrecognized content schema");
+	}
+
 	return setEditNode(proxy, editNode);
+}
+
+function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
+	const copy =
+		content instanceof Map
+			? (new Map(content) as T)
+			: Array.isArray(content)
+			? (content.slice() as T)
+			: { ...content };
+
+	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }
 
 type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
@@ -851,6 +897,8 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
 /**
  * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
  * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
+ * @param content - the content being inserted which may be, and/or may contain, factory-created content
+ * @param insertedAtIndex - if the content being inserted is list content, this must be the index in the list at which the content is being inserted
  * @returns the result of the content replacement and a {@link ExtractedFactoryContent.hydrateProxies} function which must be invoked if present.
  * @remarks
  * This functions works recursively.
@@ -872,22 +920,52 @@ interface ExtractedFactoryContent<T extends InsertableTypedNode<TreeNodeSchema>>
  * ```
  */
 export function extractFactoryContent<
+	T extends InsertableTypedNode<FieldNodeSchema> | Unhydrated<FieldNodeSchema>,
+>(input: T, insertedAtIndex: number): ExtractedFactoryContent<T>;
+export function extractFactoryContent<
 	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
->(content: T): ExtractedFactoryContent<T> {
-	if (isFluidHandle(content)) {
-		return { content, hydrateProxies: noopHydrator };
-	} else if (isReadonlyArray(content)) {
-		return extractContentArray(content) as ExtractedFactoryContent<T>;
-	} else if (content instanceof Map) {
-		return extractContentMap(content);
-	} else if (content !== null && typeof content === "object") {
-		return extractContentObject(content);
-	} else {
+>(input: T): ExtractedFactoryContent<T>;
+export function extractFactoryContent<
+	T extends InsertableTypedNode<TreeNodeSchema> | Unhydrated<TreeNodeSchema>,
+>(input: T, insertedAtIndex = 0): ExtractedFactoryContent<T> {
+	const { content, type, fromFactory } = extractContentIfProxy(input);
+	let extractedContent: ExtractedFactoryContent<unknown>;
+	switch (type) {
+		case "object":
+			extractedContent = extractContentObject(content as object);
+			break;
+		case "list":
+			extractedContent = extractContentArray(
+				content as readonly unknown[],
+				insertedAtIndex,
+			) as ExtractedFactoryContent<T>;
+			break;
+		case "map":
+			extractedContent = extractContentMap(
+				content as ReadonlyMap<string, unknown>,
+			) as ExtractedFactoryContent<T>;
+			break;
+		case "leaf":
+			extractedContent = {
+				content,
+				hydrateProxies: noopHydrator,
+			};
+			break;
+		default:
+			unreachableCase(type);
+	}
+	if (fromFactory) {
 		return {
-			content, // `content` is a primitive or `undefined`
-			hydrateProxies: noopHydrator,
+			content: extractedContent.content as T,
+			hydrateProxies: (editNode) => {
+				// This makes the input proxy usable and updates the proxy cache
+				setEditNode(input as TreeNode, editNode ?? fail("Expected edit node"));
+				extractedContent.hydrateProxies(editNode);
+			},
 		};
 	}
+
+	return extractedContent as ExtractedFactoryContent<T>;
 }
 
 /**
@@ -895,13 +973,16 @@ export function extractFactoryContent<
  */
 function extractContentArray<T extends InsertableTypedNode<TreeNodeSchema>>(
 	input: readonly T[],
-	insertedAtIndex = 0,
+	insertedAtIndex: number,
 ): ExtractedFactoryContent<T[]> {
 	const output: T[] = [];
+	if (typeNameSymbol in input) {
+		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
+	}
 	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
 	for (let i = 0; i < input.length; i++) {
-		const { content, hydrateProxies } = extractFactoryContent(input[i]);
-		output.push(content);
+		const { content: childContent, hydrateProxies } = extractFactoryContent(input[i]);
+		output.push(childContent);
 		// The conditional here is an optimization so that primitive items don't incur boxed reads for hydration
 		if (hydrateProxies !== noopHydrator) {
 			hydrators.push([i, hydrateProxies]);
@@ -930,21 +1011,24 @@ function extractContentArray<T extends InsertableTypedNode<TreeNodeSchema>>(
 	};
 }
 
-function extractContentMap<T extends Map<string, InsertableTypedNode<TreeNodeSchema>>>(
+function extractContentMap<T extends InsertableTypedNode<MapNodeSchema>>(
 	input: T,
 ): ExtractedFactoryContent<T> {
-	const output = new Map() as T;
+	const output = new Map();
+	if (typeNameSymbol in input) {
+		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
+	}
 	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
 	for (const [key, value] of input) {
-		const { content, hydrateProxies } = extractFactoryContent(value);
-		output.set(key, content);
+		const { content: childContent, hydrateProxies } = extractFactoryContent(value);
+		output.set(key, childContent);
 		// The conditional here is an optimization so that primitive values don't incur boxed reads for hydration
 		if (hydrateProxies !== noopHydrator) {
 			hydrators.push([key, hydrateProxies]);
 		}
 	}
 	return {
-		content: output,
+		content: output as unknown as T,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(
 				editNode !== undefined,
@@ -960,29 +1044,13 @@ function extractContentMap<T extends Map<string, InsertableTypedNode<TreeNodeSch
 
 function extractContentObject<T extends object>(input: T): ExtractedFactoryContent<T> {
 	const output: Record<string, unknown> = {};
-	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
-	let unproxiedInput = input;
-	const rawEditNode = tryGetEditNode(input);
-	if (rawEditNode !== undefined) {
-		const factoryContent = extractRawNodeContent(rawEditNode);
-		if (factoryContent === undefined) {
-			// We were passed a proxy, but that proxy doesn't have any raw content.
-			throw new Error("Cannot insert a node that is already in the tree");
-		}
-		// `content` is a factory-created object
-		const typeName =
-			(factoryContent as { [typeNameSymbol]?: string })[typeNameSymbol] ??
-			fail("Expected schema type name to be set on factory object content");
-
-		// Copy the type name from the factory content to the output object.
-		// This ensures that all objects from factories can be checked for their nominal type if necessary.
-		Object.defineProperty(output, typeNameSymbol, { value: typeName });
-		unproxiedInput = factoryContent as T;
+	if (typeNameSymbol in input) {
+		Object.defineProperty(output, typeNameSymbol, { value: input[typeNameSymbol] });
 	}
-
-	for (const [key, value] of Object.entries(unproxiedInput)) {
-		const { content, hydrateProxies } = extractFactoryContent(value);
-		output[key] = content;
+	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
+	for (const [key, value] of Object.entries(input)) {
+		const { content: childContent, hydrateProxies } = extractFactoryContent(value);
+		output[key] = childContent;
 		hydrators.push([key, hydrateProxies]);
 	}
 
@@ -993,13 +1061,6 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 				editNode !== undefined,
 				0x7fa /* Expected edit node to be defined when hydrating object */,
 			);
-			if (rawEditNode !== undefined) {
-				// This makes the input proxy usable and updates the proxy cache
-				setEditNode(
-					input as TreeObjectNode<ObjectNodeSchema>,
-					editNode as FlexTreeObjectNode,
-				);
-			}
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				0x7fb /* Expected object node when hydrating object content */,
@@ -1009,6 +1070,45 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 			);
 		},
 	};
+}
+
+/**
+ * If `input` is a factory-created proxy, this will return the content stored in that proxy and forward the `typeNameSymbol` on the proxy to `object`.
+ * Otherwise, it will just return `input`.
+ */
+function extractContentIfProxy<T>(input: T): {
+	content: T;
+	type: "object" | "list" | "map" | "leaf";
+	fromFactory: boolean;
+} {
+	let content = input;
+	let fromFactory = false;
+	const rawEditNode = tryGetEditNode(input);
+	if (rawEditNode !== undefined) {
+		const factoryContent = extractRawNodeContent(rawEditNode);
+		if (factoryContent === undefined) {
+			// We were passed a proxy, but that proxy doesn't have any raw content.
+			throw new Error("Cannot insert a node that is already in the tree");
+		}
+		content = factoryContent as T;
+		fromFactory = true;
+	}
+
+	const classKind = content instanceof NodeBase ? getNodeKind(content) : undefined;
+	let type: "object" | "list" | "map" | "leaf";
+	if (isFluidHandle(content)) {
+		type = "leaf";
+	} else if (classKind === NodeKind.List || isReadonlyArray(content)) {
+		type = "list";
+	} else if (classKind === NodeKind.Map || content instanceof Map) {
+		type = "map";
+	} else if (classKind === NodeKind.Object || (content !== null && typeof content === "object")) {
+		type = "object";
+	} else {
+		type = "leaf";
+	}
+
+	return { content, type, fromFactory };
 }
 
 function getListChildNode(
@@ -1061,4 +1161,9 @@ function modifyChildren<T extends FlexTreeNode>(
 	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
 	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
 	offNextChange();
+}
+
+// TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
+function getNodeKind(node: NodeBase): NodeKind | undefined {
+	return getClassSchema(getEditNode(node as TreeNode).schema)?.kind;
 }

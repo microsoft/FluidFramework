@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware, typeNameSymbol, SchemaBuilder, leaf } from "../../../";
+import { SchemaBuilder, leaf } from "../../../domains";
+import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 

@@ -11,13 +11,17 @@ import {
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	FluidObject,
+	IRequest,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";

@@ -4,9 +4,16 @@
  */
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { SchemaAware, SchemaBuilder, FlexTreeTyped, leaf } from "@fluid-experimental/tree2";
+import {
+	SchemaAware,
+	SchemaBuilderBase,
+	FlexTreeTyped,
+	leaf,
+	FieldKinds,
+	TreeFieldSchema,
+} from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "bubble-bench" });
+const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
 
 export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
 	x: leaf.number,
@@ -19,10 +26,10 @@ export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
 export const clientSchema = builder.object("BubbleBenchAppStateClient-1.0.0", {
 	clientId: leaf.string,
 	color: leaf.string,
-	bubbles: builder.sequence(bubbleSchema),
+	bubbles: TreeFieldSchema.create(FieldKinds.sequence, [bubbleSchema]),
 });
 
-export const rootAppStateSchema = SchemaBuilder.sequence(clientSchema);
+export const rootAppStateSchema = TreeFieldSchema.create(FieldKinds.sequence, [clientSchema]);
 
 export const appSchemaData = builder.intoSchema(rootAppStateSchema);
 

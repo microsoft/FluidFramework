@@ -28,7 +28,6 @@ const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 
 /**
  * Types allowed as roots of Json content.
- * @alpha
  */
 export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
 
@@ -38,7 +37,6 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 }
 
 /**
- * @alpha
  */
 export const jsonObject = builder.mapRecursive(
 	"object",
@@ -46,7 +44,6 @@ export const jsonObject = builder.mapRecursive(
 );
 
 /**
- * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
@@ -54,6 +51,5 @@ export const jsonArray = builder.fieldNodeRecursive(
 );
 
 /**
- * @alpha
  */
 export const jsonSchema = builder.intoLibrary();

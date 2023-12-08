@@ -18,7 +18,6 @@ import { SchemaBuilder } from "./schemaBuilder";
 const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
 
 /**
- * @alpha
  */
 export const recursiveObject = builder.objectRecursive("object", {
 	recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
@@ -29,7 +28,6 @@ const recursiveReference = () => recursiveObject2;
 builder.fixRecursiveReference(recursiveReference);
 
 /**
- * @alpha
  */
 export const recursiveObject2 = builder.object("object2", {
 	recursive: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
@@ -44,7 +42,6 @@ type _1 = requireTrue<
 	>
 >;
 /**
- * @alpha
  */
 export const library = builder.intoLibrary();
 

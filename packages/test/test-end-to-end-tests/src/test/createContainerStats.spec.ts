@@ -19,9 +19,9 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

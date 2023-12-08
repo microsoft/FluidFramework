@@ -20,7 +20,7 @@ import {
 	createSummarizer,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -46,7 +46,7 @@ import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestS
  * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
+describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(

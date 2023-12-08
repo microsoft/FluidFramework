@@ -9,10 +9,11 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
-import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
+import { SchemaBuilder, leaf } from "../../../domains";
 import { flexTreeViewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
+import { AllowedUpdateType } from "../../../core";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({

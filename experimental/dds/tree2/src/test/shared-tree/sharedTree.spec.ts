@@ -105,12 +105,12 @@ describe("SharedTree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = tree.schematizeOld({
+			const view = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
 			});
-			assert.equal(view.root, 10);
+			assert.equal(view.editableTree.content, 10);
 		});
 
 		it("noop upgrade", () => {

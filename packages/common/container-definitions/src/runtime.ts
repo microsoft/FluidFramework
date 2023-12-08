@@ -26,7 +26,7 @@ import { IFluidCodeDetails } from "./fluidPackage";
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
- * @internal
+ * @alpha
  */
 export enum AttachState {
 	/**
@@ -50,7 +50,7 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
- * @internal
+ * @alpha
  */
 export interface IRuntime extends IDisposable {
 	/**
@@ -107,7 +107,7 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @internal
+ * @alpha
  */
 export interface IBatchMessage {
 	contents?: string;
@@ -120,7 +120,7 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
- * @internal
+ * @alpha
  */
 export interface IContainerContext {
 	readonly options: ILoaderOptions;
@@ -201,12 +201,12 @@ export interface IContainerContext {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -217,7 +217,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @internal
+ * @alpha
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -232,7 +232,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
- * @internal
+ * @alpha
  */
 export interface IGetPendingLocalStateProps {
 	/**

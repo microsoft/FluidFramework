@@ -17,7 +17,7 @@ import {
 	summarizeNow,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -30,7 +30,7 @@ const groupedBatchingContainerConfig: ITestContainerConfig = {
 	runtimeOptions: { enableGroupedBatching: true },
 };
 
-describeFullCompat("SharedString", (getTestObjectProvider) => {
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -125,7 +125,7 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
+describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

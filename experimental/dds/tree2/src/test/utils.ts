@@ -29,7 +29,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	ISharedTree,
 	ITreeCheckout,

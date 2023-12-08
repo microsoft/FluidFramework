@@ -27,21 +27,24 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IRequest,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
@@ -172,7 +175,7 @@ async function loadOffline(
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -1672,7 +1675,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("stashed ops", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);

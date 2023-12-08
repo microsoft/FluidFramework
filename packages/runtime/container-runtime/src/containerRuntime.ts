@@ -211,7 +211,7 @@ function compatBehaviorAllowsMessageType(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -233,7 +233,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -296,21 +296,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
@@ -347,7 +347,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -364,7 +364,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @internal
+ * @alpha
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -382,7 +382,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
- * @internal
+ * @alpha
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -514,7 +514,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
- * @internal
+ * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -710,7 +710,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
- * @internal
+ * @alpha
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
