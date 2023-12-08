@@ -6,7 +6,7 @@
 import { readJsonSync } from "fs-extra";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Node, Project, SourceFile } from "ts-morph";
+import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
@@ -71,9 +71,6 @@ const project = new Project({
 if (existsSync(alphaFilePath)) {
 	project.addSourceFilesAtPaths(alphaFilePath);
 	previousFile = project.getSourceFileOrThrow("<package-name>-alpha.d.ts");
-	// If alpha doesn't exist but index.ts and tsconfig.json do
-} else if (existsSync(previousTsConfigPath)) {
-	previousFile = project.getSourceFileOrThrow("index.ts");
 	// Fall back to using .d.ts
 } else {
 	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
@@ -85,20 +82,12 @@ if (existsSync(alphaFilePath)) {
  * @param file
  * @returns Map<string, TypeData> mapping between item and its type
  */
-function typeDataFromFile(file: SourceFile, isAlpha: boolean): Map<string, TypeData> {
+function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
 
 	for (const declarations of exportedDeclarations.values()) {
 		for (const dec of declarations) {
-			// Check for @alpha tag in block comment if it's an alpha file.
-			if (isAlpha && Node.isJSDocable(dec)) {
-				const docs = dec.getJsDocs();
-				const hasAlphaTaga = docs.some((doc) =>
-					doc.getTags().some((tag) => tag.getTagName() === "alpha"),
-				);
-				if (!hasAlphaTaga) continue;
-			}
 			getNodeTypeData(dec).forEach((td) => {
 				const fullName = getFullTypeName(td);
 				if (typeData.has(fullName)) {
@@ -112,13 +101,8 @@ function typeDataFromFile(file: SourceFile, isAlpha: boolean): Map<string, TypeD
 	return typeData;
 }
 
-const currentTypeMap = typeDataFromFile(
-	currentFile,
-	currentFile.getFilePath().endsWith("alpha.d.ts"),
-);
-const previousData = [
-	...typeDataFromFile(previousFile, previousFile.getFilePath().endsWith("alpha.d.ts")).values(),
-];
+const currentTypeMap = typeDataFromFile(currentFile);
+const previousData = [...typeDataFromFile(previousFile).values()];
 
 function compareString(a: string, b: string): number {
 	return a > b ? 1 : a < b ? -1 : 0;
@@ -143,13 +127,11 @@ import type * as current from "../../index";
 
 for (const oldTypeData of previousData) {
 	// Check if the type is from an alpha file
-	const isAlpha = oldTypeData.node.getSourceFile().getFilePath().endsWith("alpha.d.ts");
 
 	const oldType: TestCaseTypeData = {
 		prefix: "old",
 		...oldTypeData,
 		removed: false,
-		isAlpha,
 	};
 	const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
 	// if the current package is missing a type, we will use the old type data.
@@ -163,13 +145,11 @@ for (const oldTypeData of previousData) {
 					...oldTypeData,
 					kind: `Removed${oldTypeData.kind}`,
 					removed: true,
-					isAlpha,
 			  }
 			: {
 					prefix: "current",
 					...currentTypeData,
 					removed: false,
-					isAlpha,
 			  };
 
 	// look for settings not under version, then fall back to version for back compat

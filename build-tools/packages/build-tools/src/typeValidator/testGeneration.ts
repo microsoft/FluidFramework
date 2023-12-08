@@ -8,7 +8,6 @@ import { TypeData, toTypeString } from "./typeData";
 export interface TestCaseTypeData extends TypeData {
 	prefix: "old" | "current";
 	removed: boolean;
-	isAlpha: boolean;
 }
 
 export function buildTestCase(
@@ -30,7 +29,7 @@ export function buildTestCase(
 	testString.push(`declare function ${useSig}(`);
 	testString.push(`    use: ${toTypeString(useType.prefix, useType)}): void;`);
 	testString.push(`${useSig}(`);
-	if (!isCompatible || (getAsType.isAlpha && useType.isAlpha)) {
+	if (!isCompatible || (getAsType && useType)) {
 		testString.push(expectErrorString);
 	}
 	testString.push(`    ${getSig}());`);
