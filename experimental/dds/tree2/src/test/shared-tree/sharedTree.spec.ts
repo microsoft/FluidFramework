@@ -364,8 +364,11 @@ describe("SharedTree", () => {
 		// Ensure all trees are now caught up
 		await provider.ensureSynchronized();
 
+		const test = await provider.createTree();
+		const testSummary = test.getAttachSummary();
+		await provider.ensureSynchronized();
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const tree4 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
+		const tree4 = assertSchema(test, stringSequenceRootSchema);
 
 		// Ensure tree4 has a chance to process trailing ops.
 		await provider.ensureSynchronized();

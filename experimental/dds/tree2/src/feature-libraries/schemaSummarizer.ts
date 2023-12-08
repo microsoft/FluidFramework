@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -16,7 +16,8 @@ import {
 	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
 import {
 	TreeFieldStoredSchema,
@@ -30,8 +31,6 @@ import {
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -46,8 +45,8 @@ const schemaStringKey = "SchemaString";
 export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
-	private schemaBlobCache: IFluidHandle<ArrayBufferLike> | undefined;
 	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
+	private schemaChanged = false;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -57,7 +56,7 @@ export class SchemaSummarizer implements Summarizable {
 		this.codec = makeSchemaCodec(options);
 		this.schema.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
-			this.schemaBlobCache = undefined;
+			this.schemaChanged = true;
 		});
 	}
 
@@ -67,31 +66,15 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-		latestSequenceNumber?: number,
 	): ISummaryTreeWithStats {
 		// Currently no Fluid handles are used, so just use JSON.stringify.
 		const dataString = JSON.stringify(this.codec.encode(this.schema));
-		const builder = new SummaryTreeBuilder();
-		if (incrementalSummaryContext !== undefined) {
-			assert(incrementalSummaryContext !== undefined, "");
-			assert(latestSequenceNumber !== undefined, "");
-			if (latestSequenceNumber <= incrementalSummaryContext.latestSummarySequenceNumber) {
-				// This is an example assert that detects that the system behaving incorrectly.
-				assert(
-					latestSequenceNumber <= incrementalSummaryContext.summarySequenceNumber,
-					"Ops processed beyond the summarySequenceNumber!",
-				);
-				builder.addHandle(
-					schemaStringKey,
-					SummaryType.Blob,
-					`${incrementalSummaryContext.summaryPath}/indexes/Schema/${schemaStringKey}`,
-				);
-			}
-		} else {
-			builder.addBlob(schemaStringKey, dataString);
-		}
-
-		return builder.getSummaryTree();
+		this.schemaChanged = false;
+		return createSchemaSummary(
+			incrementalSummaryContext?.summaryPath,
+			this.schemaChanged,
+			dataString,
+		);
 	}
 
 	public async summarize(
@@ -99,15 +82,16 @@ export class SchemaSummarizer implements Summarizable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
-		if (this.schemaBlobCache === undefined) {
-			// Currently no Fluid handles are used, so just use JSON.stringify.
-			const schemaText = JSON.stringify(this.codec.encode(this.schema));
-
-			// For now we are not chunking the the schema, but still put it in a reusable blob:
-			this.schemaBlobCache = await this.runtime.uploadBlob(IsoBuffer.from(schemaText));
-		}
-		return createSingleBlobSummary(schemaBlobKey, stringify(this.schemaBlobCache));
+		// Currently no Fluid handles are used, so just use JSON.stringify.
+		const dataString = JSON.stringify(this.codec.encode(this.schema));
+		this.schemaChanged = false;
+		return createSchemaSummary(
+			incrementalSummaryContext?.summaryPath,
+			this.schemaChanged,
+			dataString,
+		);
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -124,20 +108,7 @@ export class SchemaSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		const [hasString, hasBlob] = await Promise.all([
-			services.contains(schemaStringKey),
-			services.contains(schemaBlobKey),
-		]);
-		assert(hasString || hasBlob, 0x3d8 /* Schema is required in summary */);
-		let schemaBuffer: ArrayBufferLike;
-		if (hasBlob) {
-			const handleBuffer = await services.readBlob(schemaBlobKey);
-			const handleString = bufferToString(handleBuffer, "utf-8");
-			const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
-			schemaBuffer = await handle.get();
-		} else {
-			schemaBuffer = await services.readBlob(schemaStringKey);
-		}
+		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
 
 		// After the awaits, validate that the schema is in a clean state.
 		// This detects any schema that could have been accidentally added through
@@ -263,4 +234,22 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
  */
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
 	return encodeRepo(schema);
+}
+
+function createSchemaSummary(
+	summaryPath: string | undefined,
+	schemaChanged: boolean,
+	data: string,
+): ISummaryTreeWithStats {
+	const builder = new SummaryTreeBuilder();
+	if (schemaChanged === false && summaryPath !== undefined) {
+		builder.addHandle(
+			schemaStringKey,
+			SummaryType.Blob,
+			`${summaryPath}/indexes/Schema/${schemaStringKey}`,
+		);
+	} else {
+		builder.addBlob(schemaStringKey, data);
+	}
+	return builder.getSummaryTree();
 }

@@ -53,8 +53,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
-	private schemaSequenceNumber: number = 0; // unsure if 0 is the lowest it should start at
-
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
@@ -159,7 +157,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					undefined,
 					telemetryContext,
 					incrementalSummaryContext,
-					this.schemaSequenceNumber,
 				),
 			);
 		}
@@ -220,9 +217,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const contents: unknown = this.serializer.decode(message.contents);
 		const { commit, sessionId } = this.messageCodec.decode(contents);
-		if (message.type === "SchemaOp") {
-			this.schemaSequenceNumber = message.sequenceNumber;
-		}
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
@@ -305,7 +299,6 @@ export interface Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-		latestSequenceNumber?: number,
 	): ISummaryTreeWithStats;
 
 	/**
