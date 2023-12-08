@@ -297,7 +297,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.Map<${string}>`,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	>;
 
 	/**
@@ -317,7 +318,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
@@ -327,7 +329,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${string}`,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -345,7 +348,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				`${TScope}.${string}`,
 				NodeKind.Map,
 				TreeMapNode<T>,
-				ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
+				ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				true
 			>;
 		}
 		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true);
@@ -359,7 +363,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	> {
 		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes, true) {
 			public constructor(
@@ -391,7 +396,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.Map,
 			TreeMapNode<T>,
-			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
+			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			true
 		>;
 	}
 
@@ -487,8 +493,18 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Define a {@link TreeNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 *
+	 * @remarks
+	 * This is not intended to be used directly, use the overload of `list` which takes a name instead.
+	 * This is only public to work around a compiler limitation.
+	 *
+	 * @privateRemarks
+	 * TODO: this should be made private or protected.
+	 * Doing so breaks due to:
+	 * `src/class-tree/schemaFactoryRecursive.ts:43:9 - error TS2310: Type 'List' recursively references itself as a base type.`
+	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
-	protected namedList<
+	public namedList<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
