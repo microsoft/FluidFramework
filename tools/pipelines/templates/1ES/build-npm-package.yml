@@ -222,35 +222,35 @@ extends:
                       releaseBuild=$(releaseBuildVar)
 
                     Override Parameters:
+                      packageTypesOverride=${{ parameters.packageTypesOverride }}
                       publishOverride=${{ parameters.publishOverride }}
                       releaseBuildOverride=${{ parameters.releaseBuildOverride }}
-                      packageTypesOverride=${{ parameters.packageTypesOverride }}
 
                     Tasks Parameters:
-                      BuildDir=${{ parameters.buildDirectory }}
                       Build=${{ parameters.taskBuild }}
+                      BuildDir=${{ parameters.buildDirectory }}
+                      BuildDoc=${{ parameters.taskBuildDocs }}
                       Lint=${{ parameters.taskLint }}
                       LintName: ${{ parameters.taskLintName }}
-                      Test=${{ convertToJson(parameters.taskTest) }}
-                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
-                      BuildDoc=${{ parameters.taskBuildDocs }}
                       PublishDocs=${{ parameters.publishDocs }}
+                      Test=${{ convertToJson(parameters.taskTest) }}
                       TestCoverage=$(testCoverage)
+                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
                       absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
+                      canRelease=${{ parameters.canRelease }}
                       interdependencyRange='${{ parameters.interdependencyRange }}'
                       packageTypesOverride='${{ parameters.packageTypesOverride }}'
-                      canRelease=${{ parameters.canRelease }}
                       publish=${{ parameters.publish }}
 
                     Computed variables:
-                      shouldPublish=$(shouldPublish)
                       pnpmStorePath=$(pnpmStorePath)
                       release=$(release)"
+                      shouldPublish=$(shouldPublish)
 
                     # Target Branch variable (PR policy related)
                     if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then

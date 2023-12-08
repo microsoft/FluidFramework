@@ -199,27 +199,27 @@ extends:
                 releaseBuild=$(releaseBuildVar)
 
               Tasks Parameters:
-                lint=${{ parameters.lint }}
-                test=${{ parameters.test }}
-                pack=${{ parameters.pack }}
                 docs=${{ parameters.docs }}
+                lint=${{ parameters.lint }}
+                pack=${{ parameters.pack }}
+                test=${{ parameters.test }}
 
               Other parameters:
-                shouldPushDockerImage=${{ parameters.shouldPushDockerImage }}
-                shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
-                shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
-                testBuild=${{ parameters.testBuild }}
-                interdependencyRange='${{ parameters.interdependencyRange }}'
-                containerBaseDir=${{ parameters.containerBaseDir }}
+                additionalBuildArguments=${{ parameters.additionalBuildArguments }}
                 buildNumberInPatch=${{ parameters.buildNumberInPatch }}
-                setVersion=${{ parameters.setVersion }}
-                releaseKind=${{ parameters.releaseKind }}
-                tagName=${{ parameters.tagName }}
-                isReleaseGroup=${{ parameters.isReleaseGroup }}
                 buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
+                containerBaseDir=${{ parameters.containerBaseDir }}
+                interdependencyRange='${{ parameters.interdependencyRange }}'
+                isReleaseGroup=${{ parameters.isReleaseGroup }}
                 packageManager=${{ parameters.packageManager }}
                 packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
-                additionalBuildArguments=${{ parameters.additionalBuildArguments }}
+                releaseKind=${{ parameters.releaseKind }}
+                setVersion=${{ parameters.setVersion }}
+                shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
+                shouldPushDockerImage=${{ parameters.shouldPushDockerImage }}
+                shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
+                tagName=${{ parameters.tagName }}
+                testBuild=${{ parameters.testBuild }}
 
               Runtime variables:
                 baseContainerTag=$(baseContainerTag)
