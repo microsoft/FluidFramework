@@ -243,8 +243,8 @@ export class SharedMatrix<T = any>
 		return this.cols.getLength();
 	}
 
-	public isSetCellConflictResolutionPolicyFWW() {
-		return this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1;
+	public get isSetCellConflictResolutionPolicyFWW() {
+		return this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1 || this.userSwitchedSetCellPolicy;
 	}
 
 	public getCell(row: number, col: number): MatrixItem<T> {
