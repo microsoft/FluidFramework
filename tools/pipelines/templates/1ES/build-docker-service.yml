@@ -206,7 +206,7 @@ extends:
                 Test=${{ parameters.test }}
 
               Other parameters:
-                pushImage=${{ parameters.shouldPushDockerImage }}
+                shouldPushDockerImage=${{ parameters.shouldPushDockerImage }}
                 testBuild=${{ parameters.testBuild }}
                 shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
