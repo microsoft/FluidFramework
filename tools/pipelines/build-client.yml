@@ -123,6 +123,8 @@ variables:
 extends:
   template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
   parameters:
+    canRelease: ${{ variables.canRelease }}
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}

@@ -130,6 +130,14 @@ parameters:
     type: boolean
     default: false
 
+######################################################################################
+# Had to move these from variables to parameters as part of moving to 1ES templates
+  - name: canRelease
+    type: boolean
+  - name: publish
+    type: boolean
+######################################################################################
+
 resources:
   repositories:
     - repository: m365Pipelines
@@ -236,14 +244,12 @@ extends:
                     Publish Parameters:
                       interdependencyRange='${{ parameters.interdependencyRange }}'
                       packageTypesOverride='${{ parameters.packageTypesOverride }}'
+                      canRelease=${{ parameters.canRelease }}
+                      publish=${{ parameters.publish }}
 
                     Computed variables:
-                      shouldPublish=${{ variables.shouldPublish }}
-                      componentDetection=${{ variables.componentDetection }}
-                      publish=${{ variables.publish }}
-                      canRelease=${{ variables.canRelease }}
-                      pnpmStorePath=${{ variables.pnpmStorePath }}
-
+                      shouldPublish=$(shouldPublish)
+                      pnpmStorePath=$(pnpmStorePath)
                       release=$(release)"
 
                     # Target Branch variable (PR policy related)
@@ -253,7 +259,7 @@ extends:
 
                     # Error checking
                     if [[ "$(release)" == "release" ]]; then
-                      if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                      if [[ "${{ parameters.canRelease }}" == "False" ]]; then
                         echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
                         exit -1;
                       fi
@@ -285,7 +291,7 @@ extends:
                     fi
 
                     if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                      if [[ "${{ variables.publish }}" != "True" ]]; then
+                      if [[ "${{ parameters.publish }}" != "True" ]]; then
                         echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                         exit -1;
                       fi
@@ -563,7 +569,7 @@ extends:
                       publishLocation: pipeline
 
           # Job - Component detection
-          - ${{ if eq(variables.componentDetection, true) }}:
+          - ${{ if eq(parameters.publish, true) }}:
               - job: CG
                 displayName: Component Detection
                 pool: Small-1ES
@@ -582,7 +588,7 @@ extends:
                       alertWarningLevel: High
 
       # Publish stage
-      - ${{ if eq(variables.publish, true) }}:
+      - ${{ if eq(parameters.publish, true) }}:
         - template: include-publish-npm-package.yml
           parameters:
             tagName: ${{ parameters.tagName }}
