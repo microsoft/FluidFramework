@@ -72,6 +72,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedEnumDeclaration_ShareLinkTypes": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
