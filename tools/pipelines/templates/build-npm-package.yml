@@ -170,12 +170,7 @@ extends:
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
-        variables:
-          - template: /tools/pipelines/templates/1ES/include-vars.yml@self
-            parameters:
-              publishOverride: '${{ parameters.publishOverride }}'
-              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-              buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+
         jobs:
           # Job - Build
           - job: build
