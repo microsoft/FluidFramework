@@ -14,7 +14,8 @@ import { ISegment } from "./mergeTreeNodes";
 export type MergeTreeDeltaOperationType =
 	| typeof MergeTreeDeltaType.ANNOTATE
 	| typeof MergeTreeDeltaType.INSERT
-	| typeof MergeTreeDeltaType.REMOVE;
+	| typeof MergeTreeDeltaType.REMOVE
+	| typeof MergeTreeDeltaType.OBLITERATE;
 
 /**
  * Enum-like constant defining the types of "maintenance" events on a merge tree.
@@ -115,7 +116,6 @@ export interface IMergeTreeClientSequenceArgs {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type MergeTreeDeltaCallback = (
@@ -131,7 +131,6 @@ export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type MergeTreeMaintenanceCallback = (

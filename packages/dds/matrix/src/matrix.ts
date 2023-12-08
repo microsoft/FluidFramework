@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -27,6 +25,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
@@ -505,6 +504,7 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		pos: number,
 		referenceSequenceNumber: number,

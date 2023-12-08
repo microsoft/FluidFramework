@@ -38,6 +38,7 @@ export function makeOperationGenerator(
 	const {
 		startPosition,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -173,6 +174,7 @@ export function makeOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
@@ -194,8 +196,6 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
-		// intervalCollection.spec.ts--search for 4477.
 		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
 		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
@@ -203,7 +203,7 @@ describe("IntervalCollection fuzz testing", () => {
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
 			1, 2, 4, 9, 10, 11, 12, 14, 16, 19, 21, 23, 24, 26, 27, 32, 33, 39, 40, 43, 44, 45, 46,
-			47, 48, 50, 51, 53, 55, 62, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
+			47, 48, 50, 51, 53, 55, 62, 63, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -240,8 +240,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
-		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
+		// 0x54e: See AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {

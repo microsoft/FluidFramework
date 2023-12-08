@@ -9,12 +9,8 @@ import {
 	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
-	IRequest,
-	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -140,15 +136,4 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }

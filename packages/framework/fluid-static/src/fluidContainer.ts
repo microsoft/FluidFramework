@@ -234,7 +234,7 @@ export function createFluidContainer<
  * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
  * @internal
  */
-export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {

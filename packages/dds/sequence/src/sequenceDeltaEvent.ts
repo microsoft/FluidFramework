@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -16,6 +15,7 @@ import {
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
 	PropertySet,
+	// eslint-disable-next-line import/no-deprecated
 	SortedSegmentSet,
 } from "@fluidframework/merge-tree";
 
@@ -31,12 +31,14 @@ export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	public readonly deltaOperation: TOperation;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
 	constructor(
 		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
 	) {
 		assert(
@@ -45,7 +47,9 @@ export abstract class SequenceEvent<
 		);
 		this.deltaOperation = deltaArgs.operation;
 
+		// eslint-disable-next-line import/no-deprecated
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
+			// eslint-disable-next-line import/no-deprecated
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
 			this.deltaArgs.deltaSegments.forEach((delta) => {
 				const newRange: ISequenceDeltaRange<TOperation> = {
@@ -119,6 +123,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);
@@ -138,6 +143,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);

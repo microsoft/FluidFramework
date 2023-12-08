@@ -9,8 +9,6 @@ import {
 	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
@@ -31,8 +29,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**
 	 * This is your FluidDataStoreRuntime object
@@ -59,13 +56,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	public get id() {
 		return this.runtime.id;
-	}
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
-		return this;
 	}
 	public get IFluidLoadable() {
 		return this;

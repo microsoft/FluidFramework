@@ -6,7 +6,7 @@
 import { UsageError } from "@fluidframework/telemetry-utils";
 
 export interface ListNode<T> {
-	readonly list: List<T> | undefined;
+	readonly list: DoublyLinkedList<T> | undefined;
 	readonly data: T;
 	readonly next: ListNode<T> | undefined;
 	readonly prev: ListNode<T> | undefined;
@@ -21,8 +21,8 @@ class HeadNode<T> {
 	public _next: HeadNode<T> | DataNode<T> = this;
 	public _prev: HeadNode<T> | DataNode<T> = this;
 	public headNode: HeadNode<T> = this;
-	private readonly _list?: List<T>;
-	constructor(list: List<T> | undefined) {
+	private readonly _list?: DoublyLinkedList<T>;
+	constructor(list: DoublyLinkedList<T> | undefined) {
 		if (list) {
 			this._list = list;
 		}
@@ -78,14 +78,16 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	return newRange;
 }
 
-export class List<T>
+export class DoublyLinkedList<T>
 	implements
 		Iterable<ListNode<T>>,
 		Partial<ListNodeRange<T>>,
 		// try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
-	find(predicate: (value: ListNode<T>, obj: List<T>) => unknown): ListNode<T> | undefined {
+	find(
+		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => unknown,
+	): ListNode<T> | undefined {
 		let found: ListNode<T> | undefined;
 		walkList(this, (node) => {
 			if (predicate(node, this)) {
@@ -132,17 +134,28 @@ export class List<T>
 		return insertAfter(start, items);
 	}
 
+	/**
+	 * Remove and return the first element
+	 */
 	shift(): ListNode<T> | undefined {
 		return this.remove(this.first);
 	}
 
+	/**
+	 * Insert `items` at start of list
+	 */
 	unshift(...items: T[]): ListNodeRange<T> {
 		this._len += items.length;
 		return insertAfter(this.headNode, items);
 	}
 
-	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): List<T> {
-		const newList = new List<T>();
+	/**
+	 * Remove nodes starting at `start` until either the `end` node is reached
+	 * or until `count` nodes have been removed. Returns the removed nodes as
+	 * a separate linked list
+	 */
+	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): DoublyLinkedList<T> {
+		const newList = new DoublyLinkedList<T>();
 		walkList(
 			this,
 			(node) => {
@@ -225,7 +238,7 @@ export class List<T>
 }
 
 export function walkList<T>(
-	list: List<T>,
+	list: DoublyLinkedList<T>,
 	visitor: (node: ListNode<T>) => boolean | void,
 	start?: ListNode<T>,
 	forward: boolean = true,
