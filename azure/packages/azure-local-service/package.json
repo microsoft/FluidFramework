@@ -25,7 +25,6 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -40,6 +39,7 @@
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
 		"stop": "forever stop dist/index.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
+		"test:are-the-types-wrong": "attw --pack",
 		"tsc": "tsc"
 	},
 	"dependencies": {
