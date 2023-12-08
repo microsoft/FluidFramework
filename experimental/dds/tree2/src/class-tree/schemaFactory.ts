@@ -238,7 +238,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.Object,
 		ObjectFromSchemaRecord<T>,
-		InsertableObjectFromSchemaRecord<T>
+		InsertableObjectFromSchemaRecord<T>,
+		true
 	> {
 		const allowAdditionalProperties = true;
 		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
@@ -262,7 +263,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.Object,
 			ObjectFromSchemaRecord<T>,
-			InsertableObjectFromSchemaRecord<T>
+			InsertableObjectFromSchemaRecord<T>,
+			true
 		>;
 	}
 
