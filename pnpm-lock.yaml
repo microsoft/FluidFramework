@@ -3488,6 +3488,7 @@ importers:
 
   examples/service-clients/odsp-client/shared-tree-demo:
     specifiers:
+      '@azure/msal-browser': ^2.34.0
       '@fluid-experimental/odsp-client': workspace:~
       '@fluid-experimental/tree2': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -3526,6 +3527,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@azure/msal-browser': 2.38.3
       '@fluid-experimental/odsp-client': link:../../../../packages/service-clients/odsp-client
       '@fluid-experimental/tree2': link:../../../../experimental/dds/tree2
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
@@ -12106,6 +12108,19 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       tslib: 2.6.2
+    dev: false
+
+  /@azure/msal-browser/2.38.3:
+    resolution: {integrity: sha512-2WuLFnWWPR1IdvhhysT18cBbkXx1z0YIchVss5AwVA95g7CU5CpT3d+5BcgVGNXDXbUU7/5p0xYHV99V5z8C/A==}
+    engines: {node: '>=0.8.0'}
+    deprecated: A newer major version of this library is available. Please upgrade to the latest available version.
+    dependencies:
+      '@azure/msal-common': 13.3.1
+    dev: false
+
+  /@azure/msal-common/13.3.1:
+    resolution: {integrity: sha512-Lrk1ozoAtaP/cp53May3v6HtcFSVxdFrg2Pa/1xu5oIvsIwhxW6zSPibKefCOVgd5osgykMi5jjcZHv8XkzZEQ==}
+    engines: {node: '>=0.8.0'}
     dev: false
 
   /@azure/opentelemetry-instrumentation-azure-sdk/1.0.0-beta.5:
