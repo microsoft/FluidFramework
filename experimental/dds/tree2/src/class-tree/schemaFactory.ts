@@ -63,6 +63,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public readonly identifier: UnbrandedName<T>;
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T["info"];
+	public readonly implicitlyConstructable = true as const;
 	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
 		return data;
 	}
@@ -173,16 +174,30 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
 	 * More specific schema extend this class.
 	 */
-	private nodeSchema<Name extends TName | string, TKind extends NodeKind, T>(
+	private nodeSchema<
+		const Name extends TName | string,
+		const TKind extends NodeKind,
+		T,
+		const TImplicitlyConstructable extends boolean,
+	>(
 		name: Name,
 		kind: TKind,
 		t: T,
-	): TreeNodeSchemaClass<`${TScope}.${Name}`, TKind, NodeBase, FlexTreeNode | unknown> {
+		implicitlyConstructable: TImplicitlyConstructable,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		TKind,
+		NodeBase,
+		FlexTreeNode | unknown,
+		TImplicitlyConstructable
+	> {
 		const identifier = this.scoped(name);
 		class schema extends NodeBase {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
+			public static readonly implicitlyConstructable: TImplicitlyConstructable =
+				implicitlyConstructable;
 			/**
 			 * This constructor only does validation of the input, and should be passed the argument from the derived type unchanged.
 			 * It is up to the derived type to actually do something with this value.
@@ -226,7 +241,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		InsertableObjectFromSchemaRecord<T>
 	> {
 		const allowAdditionalProperties = true;
-		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
+		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 				if (isFlexTreeNode(input)) {
@@ -344,7 +359,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		TreeMapNode<T>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
-		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes) {
+		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes, true) {
 			public constructor(
 				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			) {
@@ -415,7 +430,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.List<${string}>`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	>;
 
 	/**
@@ -435,7 +451,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${Name}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
@@ -445,21 +462,23 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		`${TScope}.${string}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		true
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedList(fullName, nameOrAllowedTypes as T, false),
+				this.namedList(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.List,
 				TreeListNode<T>,
-				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				true
 			>;
 		}
-		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true);
+		return this.namedList(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
@@ -467,19 +486,30 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 */
-	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
+	protected namedList<
+		Name extends TName | string,
+		const T extends ImplicitAllowedTypes,
+		const ImplicitlyConstructable extends boolean,
+	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
+		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.List,
 		TreeListNode<T>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable
 	> {
 		// This class returns a proxy from its constructor to handle numeric indexing.
 		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		class schema extends this.nodeSchema(name, NodeKind.List, allowedTypes) {
+		class schema extends this.nodeSchema(
+			name,
+			NodeKind.List,
+			allowedTypes,
+			implicitlyConstructable,
+		) {
 			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
 			public get length(): number {
 				return getSequenceField(this as unknown as TreeListNode).length;
@@ -511,7 +541,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			`${TScope}.${Name}`,
 			NodeKind.List,
 			TreeListNode<T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable
 		>;
 	}
 
@@ -533,7 +564,12 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * The command `TypeScript: Restart TS Server` should fix it.
 	 * Sometimes this does not work: closing all open files except the schema before running the command can help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
-	 * Intellisense has also shown problems when schema files with recursive types are part of a cyclic file dependency. Splitting the schema into its own file with minimal dependencies can help with this.
+	 *
+	 * Intellisense has also shown problems when schema files with recursive types are part of a cyclic file dependency.
+	 * Splitting the schema into its own file with minimal dependencies can help with this.
+	 *
+	 * Ensure `"noImplicitAny": true` is set in the `tsconfig.json`.
+	 * Without it recursive types that are not working properly can infer `any` and give very non-type-safe results instead of erroring.
 	 *
 	 * @example
 	 * ```typescript
