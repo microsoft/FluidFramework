@@ -26,6 +26,7 @@ interface PackageMetadata extends Record<string, string | boolean | undefined> {
 	hasDocsFluidBuildTasks?: boolean;
 	hasExportsField?: boolean;
 	hasTscMultiDep?: boolean;
+  hasRenameTypesScript?: boolean;
 	runsTests?: boolean;
 	usesNewTsConfigs?: boolean;
 	usesTscMulti?: boolean;
@@ -88,6 +89,7 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 			),
 			hasExportsField: Object.hasOwn(packageJson, "exports"),
 			hasTscMultiDep: Object.hasOwn(packageJson.devDependencies ?? {}, "tsc-multi"),
+      hasRenameTypesScript: pkg.getScript("build:rename-types") !== undefined,
 			runsTests: pkg.getScript("test") !== undefined,
 			usesTscMulti: pkg.getScript("tsc")?.includes("tsc-multi"),
 			usesNewTsConfigs,
