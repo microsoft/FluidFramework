@@ -5,7 +5,6 @@
 
 import {
 	FieldKindIdentifier,
-	ITreeCursor,
 	forbiddenFieldKindIdentifier,
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
@@ -14,7 +13,6 @@ import {
 import { fail } from "../../util";
 import {
 	FieldKind,
-	Multiplicity,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
@@ -29,6 +27,7 @@ import {
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -53,13 +52,7 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param changeId - the ID associated with the replacement of the current content.
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
-	set(
-		newContent: ITreeCursor,
-		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
-		},
-	): OptionalChangeset;
+	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -79,13 +72,8 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (
-		newContent: ITreeCursor,
-		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
-		},
-	): OptionalChangeset => optionalFieldEditor.set(newContent, false, ids),
+	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

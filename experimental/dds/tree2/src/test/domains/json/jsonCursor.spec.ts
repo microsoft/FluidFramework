@@ -19,8 +19,8 @@ const testCases: readonly [string, readonly JsonCompatible[]][] = [
 	// ["non-finite", [NaN, -Infinity, +Infinity]],
 	// ["minus zero", [-0]],
 	["string", ["", '\\"\b\f\n\r\t', "😀"]],
-	["object", [{}, { one: "field" }, { nested: { depth: 1 } }]],
-	["array", [[], ["oneItem"], [["nested depth 1"]]]],
+	["object", [{}, { one: "field" }, { nested: { depth: 1 } }, { emptyArray: [] }]],
+	["array", [[], [[]], ["oneItem"], [["nested depth 1"]]]],
 	[
 		"composite",
 		[
