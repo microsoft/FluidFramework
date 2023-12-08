@@ -4,14 +4,16 @@
  */
 
 const chalk = require("chalk");
-const versions = require('../data/versions.json');
+const versions = require("../data/versions.json");
 const { renderApiDocumentation } = require("./render-api-documentation");
 
 const renderMultiVersion = process.argv[2];
 
-docVersions = renderMultiVersion ? versions.params.previousVersions : versions.params.currentVersion;
+docVersions = renderMultiVersion
+	? versions.params.currentVersion.concat(versions.params.previousVersions)
+	: versions.params.currentVersion;
 
-docVersions.forEach(version => {
+docVersions.forEach((version) => {
 	renderApiDocumentation(version).then(
 		() => {
 			console.log(chalk.green("API docs written!"));

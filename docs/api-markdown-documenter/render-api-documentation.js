@@ -22,7 +22,13 @@ const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./cu
 const { createHugoFrontMatter } = require("./front-matter");
 
 async function renderApiDocumentation(version) {
-	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", version, "_build");
+	const apiReportsDirectoryPath = path.resolve(
+		__dirname,
+		"..",
+		"_api-extractor-temp",
+		version,
+		"_build",
+	);
 	const apiDocsDirectoryPath = path.resolve(__dirname, "..", "content", "docs", "apis", version);
 
 	// Delete existing documentation output
@@ -54,7 +60,7 @@ async function renderApiDocumentation(version) {
 			ApiItemKind.Namespace,
 		],
 		newlineKind: "lf",
-		uriRoot: "/docs/apis/"+version,
+		uriRoot: "/docs/apis/" + version,
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,

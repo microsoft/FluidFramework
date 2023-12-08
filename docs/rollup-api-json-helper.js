@@ -5,18 +5,20 @@
 
 const chalk = require("chalk");
 const path = require("path");
-const versions = require('./data/versions.json');
-const { main } = require('./rollup-api-json');
+const versions = require("./data/versions.json");
+const { main } = require("./rollup-api-json");
 const { rimraf } = require("rimraf");
 
 const renderMultiVersion = process.argv[2];
 
-docVersions = renderMultiVersion ? versions.params.previousVersions : versions.params.currentVersion;
+docVersions = renderMultiVersion
+	? versions.params.currentVersion.concat(versions.params.previousVersions)
+	: versions.params.currentVersion;
 
-docVersions.forEach(version => {
+docVersions.forEach((version) => {
 	const targetPath = path.resolve(".", "_api-extractor-temp", version);
 	// change to empty string since current build:docs doesn't append version number to _api-extractor-temp
-	version = (version === versions.params.currentVersion[0]) ? "" : "-" + version
+	version = version === versions.params.currentVersion[0] ? "" : "-" + version;
 	const originalPath = path.resolve("..", "_api-extractor-temp" + version, "doc-models");
 
 	rimraf(targetPath);
@@ -31,5 +33,4 @@ docVersions.forEach(version => {
 			process.exit(1);
 		},
 	);
-	
 });

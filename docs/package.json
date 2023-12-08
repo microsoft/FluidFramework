@@ -22,7 +22,7 @@
 		"build:md-magic": "concurrently npm:build:md-magic:code npm:build:md-magic:website",
 		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
 		"build:md-magic:website": "markdown-magic",
-		"build:multi-version": "npm run build:api && npm run build:api:multi-version && npm run build:md-magic && npm run hugo",
+		"build:multi-version": "npm run build:api:multi-version && npm run build:md-magic && npm run hugo",
 		"build:repo-docs": "npm run build:md-magic:code",
 		"build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo",
 		"ci:build": "npm run download && npm run build",
