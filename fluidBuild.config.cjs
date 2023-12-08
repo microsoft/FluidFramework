@@ -72,6 +72,7 @@ module.exports = {
 		},
 		"depcruise": [],
 		"check:release-tags": ["tsc"],
+		"check:are-the-types-wrong": ["build"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],

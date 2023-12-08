@@ -38,7 +38,10 @@ import {
 describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	const settings = {};
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+	const gcOptions: IGCRuntimeOptions = {
+		inactiveTimeoutMs: 0,
+		sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
+	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {

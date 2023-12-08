@@ -69,6 +69,7 @@ import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -157,6 +158,17 @@ describe("SharedTree", () => {
 			});
 			// Initial tree should not be applied
 			assert.equal(schematized.editableTree.content, undefined);
+		});
+
+		// TODO: ensure unhydrated initialTree input is correctly hydrated.
+		it.skip("unhydrated tree input", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const unhydratedInitialTree = new Foo({});
+			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			assert(view.root === unhydratedInitialTree);
 		});
 	});
 

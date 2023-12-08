@@ -13,6 +13,7 @@ import {
 	TaggedChange,
 } from "../../core";
 import { fail, IdAllocator } from "../../util";
+import { Multiplicity } from "../multiplicity";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -23,7 +24,7 @@ import {
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler";
-import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
+import { FieldKindWithEditor } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 import { NodeChangeset } from "./modularChangeTypes";
@@ -221,7 +222,7 @@ export function newGenericChangeset(): GenericChangeset {
 }
 
 function* relevantRemovedRoots(
-	change: GenericChangeset,
+	{ change }: TaggedChange<GenericChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {

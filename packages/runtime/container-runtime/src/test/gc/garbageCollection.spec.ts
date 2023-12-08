@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ConfigTypes } from "@fluidframework/core-interfaces";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
 	tagCodeArtifacts,
@@ -48,6 +47,9 @@ import {
 	IGarbageCollectionSnapshotData,
 	IGCStats,
 	IGCRuntimeOptions,
+	UnreferencedStateTracker,
+	UnreferencedState,
+	defaultSweepGracePeriodMs,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
@@ -70,11 +72,13 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
 	readonly tombstones: string[];
 	readonly deletedNodes: Set<string>;
+	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 };
 
 describe("Garbage Collection Tests", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
+	const defaultSweepTimeoutMs =
+		defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
@@ -245,10 +249,11 @@ describe("Garbage Collection Tests", () => {
 
 		const summarizerContainerTests = (
 			timeout: number,
-			mode: "inactive" | "sweep",
+			mode: "inactive" | "tombstone" | "sweep",
 			revivedEventName: string,
 			changedEventName: string,
 			loadedEventName: string,
+			sweepGracePeriodMsOverride?: number,
 		) => {
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
@@ -262,12 +267,21 @@ describe("Garbage Collection Tests", () => {
 				);
 			}
 
+			const sweepGracePeriodMs = sweepGracePeriodMsOverride ?? defaultSweepGracePeriodMs;
+
 			const createGCOverride = (
 				baseSnapshot?: ISnapshotTree,
 				gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
 			) => {
-				return createGarbageCollector({ baseSnapshot }, gcBlobsMap, {
-					sweepTimeoutMs: mode === "sweep" ? timeout : undefined,
+				const sweepTimeoutMs =
+					mode === "tombstone"
+						? timeout
+						: mode === "sweep"
+						? timeout - sweepGracePeriodMs
+						: undefined;
+				const gcOptions = { sweepGracePeriodMs };
+				return createGarbageCollector({ baseSnapshot, gcOptions }, gcBlobsMap, {
+					sweepTimeoutMs,
 				});
 			};
 
@@ -702,9 +716,30 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		describe("SweepReady events (summarizer container)", () => {
+		describe("TombstoneReady events (summarizer container)", () => {
 			summarizerContainerTests(
-				sweepTimeoutMs,
+				defaultSweepTimeoutMs,
+				"tombstone",
+				"GarbageCollector:TombstoneReadyObject_Revived",
+				"GarbageCollector:TombstoneReadyObject_Changed",
+				"GarbageCollector:TombstoneReadyObject_Loaded",
+			);
+		});
+
+		describe("SweepReady events - No sweepGracePeriodMs (summarizer container)", () => {
+			summarizerContainerTests(
+				defaultSweepTimeoutMs,
+				"sweep", // Jump straight to SweepReady given 0 delay
+				"GarbageCollector:SweepReadyObject_Revived",
+				"GarbageCollector:SweepReadyObject_Changed",
+				"GarbageCollector:SweepReadyObject_Loaded",
+				0 /* sweepGracePeriodMsOverride */,
+			);
+		});
+
+		describe("SweepReady events - with sweepGracePeriodMs delay (summarizer container)", () => {
+			summarizerContainerTests(
+				defaultSweepTimeoutMs + defaultSweepGracePeriodMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
@@ -849,12 +884,30 @@ describe("Garbage Collection Tests", () => {
 			});
 		});
 
-		it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
+		it("Unreferenced nodes transition through Inactive, TombstoneReady and SweepReady states", async () => {
 			const inactiveTimeoutMs = 500;
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 
-			const garbageCollector = createGarbageCollector({});
+			const garbageCollector = createGarbageCollector({}) as GcWithPrivates;
+
+			function validateUnreferencedStates(
+				expectedUnreferencedStates: Record<number, UnreferencedState>,
+			) {
+				// Base assumption is that all 6 nodes are still referenced (no state tracker aka 'undefined')
+				// Then update this with the given expected unreferenced states
+				const expectedStates = Object.assign(
+					[undefined, undefined, undefined, undefined, undefined, undefined],
+					expectedUnreferencedStates,
+				);
+				for (const [id, state] of expectedStates.entries()) {
+					assert.equal(
+						garbageCollector.unreferencedNodesState.get(nodes[id])?.state,
+						state,
+						`node ${id} should be ${state ?? "referenced"}`,
+					);
+				}
+			}
 
 			// Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
 			defaultGCData.gcNodes[nodes[1]] = [];
@@ -862,63 +915,18 @@ describe("Garbage Collection Tests", () => {
 
 			// Advance the clock to trigger inactive timeout and validate that we get inactive events.
 			clock.tick(inactiveTimeoutMs + 1);
-			await mockNodeChangesAndRunGC(garbageCollector);
-			mockLogger.assertMatch(
-				[
-					{
-						eventName: "GarbageCollector:InactiveObject_Loaded",
-						timeout: inactiveTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[2] }),
-					},
-					{
-						eventName: "GarbageCollector:InactiveObject_Changed",
-						timeout: inactiveTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[2] }),
-					},
-					{
-						eventName: "GarbageCollector:InactiveObject_Loaded",
-						timeout: inactiveTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[3] }),
-					},
-					{
-						eventName: "GarbageCollector:InactiveObject_Changed",
-						timeout: inactiveTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[3] }),
-					},
-				],
-				"inactive events not generated as expected",
-				true /* inlineDetailsProp */,
-			);
+			await garbageCollector.collectGarbage({});
+			validateUnreferencedStates({ 2: "Inactive", 3: "Inactive" });
 
-			// Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
-			clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
-			await mockNodeChangesAndRunGC(garbageCollector);
-			mockLogger.assertMatch(
-				[
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[2] }),
-					},
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[2] }),
-					},
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Loaded",
-						timeout: sweepTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[3] }),
-					},
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs,
-						...tagCodeArtifacts({ id: nodes[3] }),
-					},
-				],
-				"sweep ready events not generated as expected",
-				true /* inlineDetailsProp */,
-			);
+			// Advance the clock to trigger sweepTimeoutMs and validate that we get tombstone ready events.
+			clock.tick(defaultSweepTimeoutMs - inactiveTimeoutMs);
+			await garbageCollector.collectGarbage({});
+			validateUnreferencedStates({ 2: "TombstoneReady", 3: "TombstoneReady" });
+
+			// Advance the clock the sweep delay and validate that we get sweep ready events.
+			clock.tick(defaultSweepGracePeriodMs);
+			await garbageCollector.collectGarbage({});
+			validateUnreferencedStates({ 2: "SweepReady", 3: "SweepReady" });
 		});
 	});
 
@@ -1627,7 +1635,7 @@ describe("Garbage Collection Tests", () => {
 		// This means this node should time out as soon as its data is loaded.
 		const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
 			gcData: { gcNodes: { "/": [] } },
-			unrefTimestamp: Date.now() - sweepTimeoutMs * 100,
+			unrefTimestamp: Date.now() - defaultSweepTimeoutMs * 100,
 		};
 		const node3Snapshot = getDummySnapshotTree();
 		const gcBlobId = "node3GCDetails";
@@ -1647,7 +1655,7 @@ describe("Garbage Collection Tests", () => {
 			[attributesBlobId, {}],
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
-			sweepTimeoutMs,
+			sweepTimeoutMs: defaultSweepTimeoutMs,
 		}) as GcWithPrivates;
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
@@ -1696,7 +1704,10 @@ describe("Garbage Collection Tests", () => {
 					deletedAttachmentBlobCount: 0,
 				};
 
-				const gcOptions: IGCRuntimeOptions = sweepEnabled ? { gcSweepGeneration: 1 } : {};
+				const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
+				const gcOptions: IGCRuntimeOptions = sweepEnabled
+					? { gcSweepGeneration: 1, sweepGracePeriodMs }
+					: { sweepGracePeriodMs };
 				garbageCollector = createGarbageCollector({ gcOptions });
 			});
 
@@ -1795,7 +1806,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// Advance the clock past sweep timeout so that unreferenced nodes are deleted.
-				clock.tick(sweepTimeoutMs + 1);
+				clock.tick(defaultSweepTimeoutMs + 1);
 
 				// There should be 2 deleted nodes and data stores. There shouldn't be any nodes whose
 				// reference state updated.
@@ -1822,7 +1833,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// Advance the clock past sweep timeout so that unreferenced nodes are deleted.
-				clock.tick(sweepTimeoutMs + 1);
+				clock.tick(defaultSweepTimeoutMs + 1);
 
 				// There should be 2 deleted nodes and data stores. There shouldn't be any nodes whose
 				// reference state updated.
@@ -1857,7 +1868,7 @@ describe("Garbage Collection Tests", () => {
 				assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 2");
 
 				// Advance the clock past sweep timeout again so that unreferenced node is deleted.
-				clock.tick(sweepTimeoutMs + 1);
+				clock.tick(defaultSweepTimeoutMs + 1);
 
 				// No nodes are updated since the last run.
 				// There should be 1 more deleted node / data store.
