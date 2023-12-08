@@ -431,6 +431,16 @@ extends:
                 mergeTestResults: true
               condition: succeededOrFailed()
 
+            # The auto-injected CredScan task is running into Access denied issues on some files here and fails the pipeline.
+            # Making sure they're readable by everyone.
+            - task: Bash@3
+              displayName: Update permissions on test results files
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(hostPathToTestResultsArtifact)
+                script: |
+                  chmod -R +r .
+
           # Docs
           - ${{ if eq(parameters.docs, true) }}:
             - task: Docker@1
