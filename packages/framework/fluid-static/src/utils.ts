@@ -12,10 +12,10 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ContainerSchema, DataObjectClass, LoadableObjectClass, SharedObjectClass } from "./types";
 
 /**
- * An internal type used by the internal type guard isDataObjectClass to cast a 
- * DataObjectClass to a type that is strongly coupled to IFluidDataStoreFactory. 
+ * An internal type used by the internal type guard isDataObjectClass to cast a
+ * DataObjectClass to a type that is strongly coupled to IFluidDataStoreFactory.
  * Unlike the external and exported type DataObjectClass  which is
- *  weakly coupled to the IFluidDataStoreFactory to prevent leaking internals. 
+ * weakly coupled to the IFluidDataStoreFactory to prevent leaking internals.
  */
 export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<T> &
 	Record<"factory", IFluidDataStoreFactory>;
