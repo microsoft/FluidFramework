@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ISummaryTree, MessageType, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
@@ -77,12 +77,6 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider) 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
 			const dataStoreB = await createNewDataStore();
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-
-			containerRuntime.on("op", (op) => {
-				if (op.type === MessageType.Summarize) {
-					console.log("Got summarize op");
-				}
-			});
 
 			// Validate that the new data store does not have unreferenced timestamp.
 			await provider.ensureSynchronized();
