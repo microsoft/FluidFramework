@@ -61,13 +61,8 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, disableDatastoreSweepKey, sendGCUnexpectedUsageEvent } from "./gc";
-import {
-	summarizerClientType,
-	IContainerRuntimeMetadata,
-	nonDataStorePaths,
-	rootHasIsolatedChannels,
-} from "./summary";
+import { GCNodeType, disableDatastoreSweepKey } from "./gc";
+import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -282,6 +277,18 @@ export class DataStores implements IDisposable {
 
 		const context = this.contexts.get(aliasMessage.internalId);
 		if (context === undefined) {
+			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+			// corruption in case a deleted data store accidentally submitted a signal.
+			if (
+				this.checkAndLogIfDeleted(
+					aliasMessage.internalId,
+					"Changed",
+					"processAliasMessageCore",
+				)
+			) {
+				return false;
+			}
+
 			this.mc.logger.sendErrorEvent({
 				eventName: "AliasFluidDataStoreNotFound",
 				fluidDataStoreId: aliasMessage.internalId,
@@ -382,18 +389,42 @@ export class DataStores implements IDisposable {
 
 	public resubmitDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case the data store that submitted the op is deleted.
+		if (
+			context === undefined &&
+			this.checkAndLogIfDeleted(envelope.address, "Changed", "resubmitDataStoreOp")
+		) {
+			return;
+		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
 		context.reSubmit(envelope.contents, localOpMetadata);
 	}
 
 	public rollbackDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case the data store that submitted the op is deleted.
+		if (
+			context === undefined &&
+			this.checkAndLogIfDeleted(envelope.address, "Changed", "rollbackDataStoreOp")
+		) {
+			return;
+		}
 		assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
 		context.rollback(envelope.contents, localOpMetadata);
 	}
 
 	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
 		const context = this.contexts.get(envelope.address);
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case the data store that stashed the op is deleted.
+		if (
+			context === undefined &&
+			this.checkAndLogIfDeleted(envelope.address, "Changed", "applyStashedOp")
+		) {
+			return undefined;
+		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
 		return context.applyStashedOp(envelope.contents);
 	}
@@ -410,8 +441,14 @@ export class DataStores implements IDisposable {
 		localMessageMetadata: unknown,
 	) {
 		const envelope = message.contents as IEnvelope;
+
+		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+		// corruption in case a deleted data store accidentally submitted an op.
+		if (this.checkAndLogIfDeleted(envelope.address, "Changed", "processFluidDataStoreOp")) {
+			return;
+		}
+
 		const transformed = { ...message, contents: envelope.contents };
-		this.validateNotDeleted(envelope.address);
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
@@ -430,7 +467,14 @@ export class DataStores implements IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
-		this.validateNotDeleted(id, headerData);
+		if (this.checkAndLogIfDeleted(id, "Requested", "getDataStore", requestHeaderData)) {
+			// The requested data store has been deleted by gc. Create a 404 response exception.
+			const request: IRequest = { url: id };
+			throw responseToException(
+				createResponseError(404, "DataStore was deleted", request),
+				request,
+			);
+		}
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
@@ -448,8 +492,10 @@ export class DataStores implements IDisposable {
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext | undefined> {
-		// If the data store has been deleted, return undefined.
-		if (this.checkIfDeleted(id, requestHeaderData)) {
+		// If the data store has been deleted, log an error and return undefined.
+		if (
+			this.checkAndLogIfDeleted(id, "Requested", "getDataStoreIfAvailable", requestHeaderData)
+		) {
 			return undefined;
 		}
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
@@ -461,13 +507,18 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * Checks if the data store has been deleted by GC.
-	 * @param id - data store id
-	 * @param request - the request information to log if the validation detects the data store has been deleted
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 * Checks if the data store has been deleted by GC. If so, log an error.
+	 * @param id - The data store's id.
+	 * @param callSite - The function name this is called from.
+	 * @param requestHeaderData - The request header information to log if the data store is deleted.
 	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
-	private checkIfDeleted(id: string, requestHeaderData?: RuntimeHeaderData) {
+	private checkAndLogIfDeleted(
+		id: string,
+		deletedLogSuffix: string,
+		callSite: string,
+		requestHeaderData?: RuntimeHeaderData,
+	) {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
 			return false;
@@ -476,41 +527,24 @@ export class DataStores implements IDisposable {
 			!this.contexts.has(id),
 			0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
 		);
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Deleted_DataStore_Requested",
-				category: "error",
-				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-				id,
-				headers: JSON.stringify(requestHeaderData),
-				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-			},
-			undefined /* packagePath */,
-		);
+		this.mc.logger.sendErrorEvent({
+			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
+			...tagCodeArtifacts({ id }),
+			callSite,
+			headers: JSON.stringify(requestHeaderData),
+		});
 		return true;
 	}
 
-	/**
-	 * Validate that the data store had not been deleted by GC.
-	 * @param id - data store id
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
-	 */
-	private validateNotDeleted(id: string, requestHeaderData?: RuntimeHeaderData) {
-		if (this.checkIfDeleted(id, requestHeaderData)) {
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const request: IRequest = { url: id };
-			throw responseToException(
-				createResponseError(404, "DataStore was deleted", request),
-				request,
-			);
-		}
-	}
-
 	public processSignal(fluidDataStoreId: string, message: IInboundSignalMessage, local: boolean) {
-		this.validateNotDeleted(fluidDataStoreId);
 		const context = this.contexts.get(fluidDataStoreId);
 		if (!context) {
+			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
+			// corruption in case a deleted data store accidentally submitted a signal.
+			if (this.checkAndLogIfDeleted(fluidDataStoreId, "Changed", "processSignal")) {
+				return;
+			}
+
 			// Attach message may not have been processed yet
 			assert(!local, 0x163 /* "Missing datastore for local signal" */);
 			this.mc.logger.sendTelemetryEvent({
