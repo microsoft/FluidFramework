@@ -199,22 +199,32 @@ extends:
                 releaseBuild=$(releaseBuildVar)
 
               Tasks Parameters:
-                Lint=${{ parameters.lint }}
-                Test=${{ parameters.test }}
+                lint=${{ parameters.lint }}
+                test=${{ parameters.test }}
+                pack=${{ parameters.pack }}
+                docs=${{ parameters.docs }}
 
               Other parameters:
                 shouldPushDockerImage=${{ parameters.shouldPushDockerImage }}
-                testBuild=${{ parameters.testBuild }}
                 shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
+                testBuild=${{ parameters.testBuild }}
+                interdependencyRange='${{ parameters.interdependencyRange }}'
+                containerBaseDir=${{ parameters.containerBaseDir }}
+                buildNumberInPatch=${{ parameters.buildNumberInPatch }}
+                setVersion=${{ parameters.setVersion }}
+                releaseKind=${{ parameters.releaseKind }}
+                tagName=${{ parameters.tagName }}
+                isReleaseGroup=${{ parameters.isReleaseGroup }}
+                buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
+                packageManager=${{ parameters.packageManager }}
+                packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
+                additionalBuildArguments=${{ parameters.additionalBuildArguments }}
 
-              Computed variables:
+              Runtime variables:
                 shouldPublish=$(shouldPublish)
                 canRelease=$(canRelease)
-                interdependencyRange='${{ parameters.interdependencyRange }}'
-
                 release=$(release)
-
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
                 containerRegistryConnection=$(containerRegistryConnection)
