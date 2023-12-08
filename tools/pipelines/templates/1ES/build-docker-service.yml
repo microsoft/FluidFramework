@@ -147,16 +147,14 @@ extends:
         - ${{ else }}:
           - name: buildContainerName
             value: build/${{ parameters.containerName }}
+        - name: containerTagSuffix
+          value: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
         - name: baseContainerTag
           value: base:$(containerTagSuffix)
         - ${{ if eq(parameters.shouldPushDockerImage, false) }}:
-          - name: containerRegistry
-            value:
           - name: containerTag
             value: $(buildContainerName):$(containerTagSuffix)
         - ${{ else }}:
-          - name: containerRegistry
-            value: $(containerRegistryConnection)
           - name: containerTag
             value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
           - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
@@ -184,7 +182,6 @@ extends:
           buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
           testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
-          containerTagSuffix: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
         steps:
         # Setup
         - checkout: self
@@ -224,7 +221,6 @@ extends:
 
                 containerTagSuffix=$(containerTagSuffix)
                 containerRegistryUrl=$(containerRegistryUrl)
-                containerRegistry=$(containerRegistry)
                 containerRegistryConnection=$(containerRegistryConnection)
                 containerTag=$(containerTag)
                 buildContainerName=$(buildContainerName)
@@ -467,7 +463,7 @@ extends:
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - template: /tools/pipelines/templates/1ES/include-publish-docker-service.yml@self
         parameters:
-          containerRegistry: $(containerRegistry)
+          containerRegistry: $(containerRegistryConnection)
           containerTag: $(containerTag)
           containerRegistryUrl: $(containerRegistryUrl)
           containerName: ${{ parameters.containerName }}
