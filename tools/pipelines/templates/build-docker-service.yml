@@ -213,7 +213,6 @@ extends:
 
               Computed variables:
                 shouldPublish=$(shouldPublish)
-                componentDetection=$(componentDetection)
                 canRelease=$(canRelease)
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
