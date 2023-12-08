@@ -5,15 +5,24 @@
 
 import * as http from "http";
 
+/**
+ * @internal
+ */
 export type RequestListener = (
 	request: http.IncomingMessage,
 	response: http.ServerResponse,
 ) => void;
 
+/**
+ * @internal
+ */
 export interface IWebServerFactory {
 	create(requestListener?: RequestListener): IWebServer;
 }
 
+/**
+ * @alpha
+ */
 export interface IWebSocket {
 	id: string;
 
@@ -28,6 +37,9 @@ export interface IWebSocket {
 	disconnect(close?: boolean): void;
 }
 
+/**
+ * @internal
+ */
 export interface IWebServer {
 	/**
 	 * Web socket interface
@@ -45,12 +57,18 @@ export interface IWebServer {
 	close(): Promise<void>;
 }
 
+/**
+ * @alpha
+ */
 export interface IWebSocketServer {
 	on(event: string, listener: (...args: any[]) => void);
 
 	close(): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface IHttpServer {
 	listen(port: any): void;
 

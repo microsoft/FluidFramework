@@ -69,8 +69,30 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldMap<TTree>;
-
+export interface Root<TTree = ProtoNode> {
+	/**
+	 * Changes to apply to the root fields.
+	 */
+	readonly fields?: FieldMap<TTree>;
+	/**
+	 * New detached nodes to be constructed.
+	 * The ordering has no significance.
+	 *
+	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
+	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
+	 * then the build should be listed under ID A.
+	 */
+	readonly build?: readonly DetachedNodeBuild<TTree>[];
+	/**
+	 * New detached nodes to be destroyed.
+	 * The ordering has no significance.
+	 *
+	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
+	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,
+	 * then the destruction should be listed under ID B.
+	 */
+	readonly destroy?: readonly DetachedNodeDestruction[];
+}
 /**
  * The default representation for inserted content.
  *
@@ -148,7 +170,10 @@ export interface DetachedNodeChanges<TTree = ProtoNode> {
 }
 
 /**
- * Represents the creation of detached nodes
+ * Represents the creation of detached nodes.
+ *
+ * Tree creation is idempotent: if a tree with the same ID already exists,
+ * then this build is ignored in favor of the existing tree.
  * @alpha
  */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
@@ -200,14 +225,20 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * New detached nodes to be constructed.
 	 * The ordering has no significance.
 	 *
+	 * @deprecated - Builds should be set at the root.
+	 * TODO:6308 migrate all reader/writers away from this and remove it.
+	 *
 	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
 	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
 	 * then the build should be listed under ID A.
 	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
 	/**
-	 * New detached nodes to be constructed.
+	 * New detached nodes to be destroyed.
 	 * The ordering has no significance.
+	 *
+	 * @deprecated - Destroys should be set at the root.
+	 * TODO:6308 migrate all reader/writers away from this and remove it.
 	 *
 	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
 	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,

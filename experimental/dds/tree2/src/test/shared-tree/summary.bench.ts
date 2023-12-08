@@ -25,7 +25,7 @@ import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTre
 
 // number of nodes in test for wide trees
 const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
-	[1, 1000, 2500],
+	[1, 1000, 3000],
 	[10, 1000, 10000],
 	[100, 1000, 500000],
 ];
@@ -123,7 +123,7 @@ describe("Summary benchmarks", () => {
 function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.schematize({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
+	tree.schematizeInternal({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

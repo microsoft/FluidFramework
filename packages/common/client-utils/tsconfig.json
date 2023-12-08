@@ -9,9 +9,5 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"baseUrl": ".",
-		"paths": {
-			"perf_hooks": ["types/perf_hooks.d.ts"],
-		},
-		"types": ["events"],
 	},
 }

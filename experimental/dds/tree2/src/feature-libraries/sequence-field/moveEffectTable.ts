@@ -4,12 +4,12 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag } from "../../core";
+import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveSource } from "./format";
-import { areEqualCellIds, cloneMark, isTransientEffect, splitMark } from "./utils";
-import { MoveDestination, MoveMarkEffect } from "./helperTypes";
+import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
+import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
+import { MoveMarkEffect } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -21,17 +21,12 @@ export interface MoveEffect<T> {
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: TaggedChange<T>;
 
 	/**
 	 * A mark which should be moved to the same position as this mark.
 	 */
 	movedMark?: Mark<T>;
-
-	/**
-	 * Represents the new value for the `isSrcConflicted` or `isDstConflicted` field of this mark.
-	 */
-	pairedMarkStatus?: PairedMarkUpdate;
 
 	/**
 	 * The ID of the new endpoint associated with this mark.
@@ -52,28 +47,13 @@ export enum MoveEnd {
 	Dest,
 }
 
-export enum PairedMarkUpdate {
-	/**
-	 * Indicates that the mark's matching mark is now inactive.
-	 */
-	Deactivated,
-	/**
-	 * Indicates that the mark's matching mark is now active.
-	 */
-	Reactivated,
-}
-
 export interface MovePartition<TNodeChange> {
 	id: MoveId;
 
 	// Undefined means the partition is the same size as the input.
 	count?: number;
 	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TNodeChange;
-	/**
-	 * When set, updates the mark's paired mark status.
-	 */
-	pairedMarkStatus?: PairedMarkUpdate;
+	modifyAfter?: TaggedChange<TNodeChange>;
 }
 
 export function setMoveEffect<T>(
@@ -106,26 +86,15 @@ export function getMoveEffect<T>(
 export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
 
 export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
-	return isMoveSource(effect) || isMoveDestination(effect);
+	return isMoveOut(effect) || isMoveIn(effect);
 }
 
-export function isMoveSource(effect: MarkEffect): effect is MoveSource {
-	switch (effect.type) {
-		case "MoveOut":
-		case "ReturnFrom":
-			return true;
-		default:
-			return false;
-	}
+export function isMoveOut(effect: MarkEffect): effect is MoveOut {
+	return effect.type === "MoveOut";
 }
 
-export function isMoveDestination(effect: MarkEffect): effect is MoveDestination {
-	switch (effect.type) {
-		case "MoveIn":
-			return true;
-		default:
-			return false;
-	}
+export function isMoveIn(effect: MarkEffect): effect is MoveIn {
+	return effect.type === "MoveIn";
 }
 
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
@@ -135,7 +104,7 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 
 	const adjusted = { ...effect, basis: newBasis };
 	const basisShift = newBasis - effect.basis;
-	assert(basisShift > 0, "Expected basis shift to be positive");
+	assert(basisShift > 0, 0x812 /* Expected basis shift to be positive */);
 
 	if (effect.endpoint !== undefined) {
 		adjusted.endpoint = {
@@ -153,7 +122,7 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 }
 
 function applyMoveEffectsToDest(
-	markEffect: MoveDestination,
+	markEffect: MoveIn,
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
@@ -167,40 +136,14 @@ function applyMoveEffectsToDest(
 		effects,
 		consumeEffects,
 	);
-	updateDestPairedMarkStatus(markEffect, count, revision, effects, consumeEffects);
-}
-
-/**
- * Applies any pending PairedMarkUpdate to `markEffect`.
- */
-function updateDestPairedMarkStatus(
-	markEffect: MoveDestination,
-	count: number,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
-	consumeEffect: boolean,
-) {
-	const statusUpdate = getPairedMarkStatus(
-		effects,
-		CrossFieldTarget.Destination,
-		markEffect.revision ?? revision,
-		markEffect.id,
-		count,
-		consumeEffect,
-	);
-	if (statusUpdate === PairedMarkUpdate.Deactivated) {
-		markEffect.isSrcConflicted = true;
-	} else if (statusUpdate === PairedMarkUpdate.Reactivated) {
-		delete markEffect.isSrcConflicted;
-	}
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: CellMark<MoveSource, T>,
+	mark: CellMark<MoveOut, T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T> {
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
@@ -231,43 +174,13 @@ function applyMoveEffectsToSource<T>(
 }
 
 function applySourceEffects(
-	markEffect: MoveSource,
+	markEffect: MoveOut,
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
 	consumeEffects: boolean,
 ) {
 	updateEndpoint(markEffect, count, CrossFieldTarget.Source, revision, effects, consumeEffects);
-	updateSourcePairedMarkStatus(markEffect, count, revision, effects, consumeEffects);
-}
-
-function updateSourcePairedMarkStatus(
-	markEffect: MoveSource,
-	count: number,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
-	consumeEffects: boolean,
-) {
-	const statusUpdate = getPairedMarkStatus(
-		effects,
-		CrossFieldTarget.Source,
-		markEffect.revision ?? revision,
-		markEffect.id,
-		count,
-		consumeEffects,
-	);
-
-	if (statusUpdate !== undefined) {
-		assert(
-			markEffect.type === "ReturnFrom",
-			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
-		);
-		if (statusUpdate === PairedMarkUpdate.Deactivated) {
-			markEffect.isDstConflicted = true;
-		} else {
-			delete markEffect.isDstConflicted;
-		}
-	}
 }
 
 function updateEndpoint(
@@ -302,11 +215,11 @@ export function applyMoveEffectsToMark<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T>[] {
-	if (isTransientEffect(mark)) {
-		if (isMoveDestination(mark.attach)) {
-			if (isMoveSource(mark.detach)) {
+	if (isAttachAndDetachEffect(mark)) {
+		if (isMoveIn(mark.attach)) {
+			if (isMoveOut(mark.detach)) {
 				// Move effects should not be applied to intermediate move locations.
 				return [mark];
 			}
@@ -321,7 +234,7 @@ export function applyMoveEffectsToMark<T>(
 
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				const updatedAttach = firstMark.attach as MoveDestination;
+				const updatedAttach = firstMark.attach as MoveIn;
 				applyMoveEffectsToDest(
 					updatedAttach,
 					firstMark.count,
@@ -360,7 +273,7 @@ export function applyMoveEffectsToMark<T>(
 			}
 		}
 
-		if (isMoveSource(mark.detach)) {
+		if (isMoveOut(mark.detach)) {
 			const detachRevision = mark.detach.revision ?? revision;
 			const effect = getMoveEffect(
 				effects,
@@ -373,7 +286,7 @@ export function applyMoveEffectsToMark<T>(
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
 				applySourceEffects(
-					firstMark.detach as MoveSource,
+					firstMark.detach as MoveOut,
 					firstMark.count,
 					detachRevision,
 					effects,
@@ -391,7 +304,7 @@ export function applyMoveEffectsToMark<T>(
 				if (newFirstChanges !== undefined) {
 					assert(
 						composeChildren !== undefined,
-						"Must provide a change composer if modifying moves",
+						0x813 /* Must provide a change composer if modifying moves */,
 					);
 					firstMark.changes = composeChildren(firstMark.changes, newFirstChanges);
 				}
@@ -410,7 +323,7 @@ export function applyMoveEffectsToMark<T>(
 
 			const newMark = cloneMark(mark);
 			applySourceEffects(
-				newMark.detach as MoveSource,
+				newMark.detach as MoveOut,
 				mark.count,
 				detachRevision,
 				effects,
@@ -428,7 +341,7 @@ export function applyMoveEffectsToMark<T>(
 			if (newChanges !== undefined) {
 				assert(
 					composeChildren !== undefined,
-					"Must provide a change composer if modifying moves",
+					0x814 /* Must provide a change composer if modifying moves */,
 				);
 				newMark.changes = composeChildren(mark.changes, newChanges);
 			}
@@ -438,8 +351,7 @@ export function applyMoveEffectsToMark<T>(
 	} else if (isMoveMark(mark)) {
 		const type = mark.type;
 		switch (type) {
-			case "MoveOut":
-			case "ReturnFrom": {
+			case "MoveOut": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
@@ -529,7 +441,7 @@ export function getModifyAfter<T>(
 	id: MoveId,
 	count: number,
 	consumeEffect: boolean = true,
-): T | undefined {
+): TaggedChange<T> | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 
@@ -546,32 +458,6 @@ export function getModifyAfter<T>(
 	return undefined;
 }
 
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function getPairedMarkStatus(
-	moveEffects: MoveEffectTable<unknown>,
-	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	id: MoveId,
-	count: number,
-	consumeEffect: boolean = true,
-): PairedMarkUpdate | undefined {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x6ef /* Expected effect to cover entire mark */);
-	if (effect.value?.pairedMarkStatus !== undefined) {
-		if (consumeEffect) {
-			const newEffect = { ...effect.value };
-			delete newEffect.pairedMarkStatus;
-			setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
-		}
-		return effect.value.pairedMarkStatus;
-	}
-
-	return undefined;
-}
-
 function getEndpoint(
 	moveEffects: MoveEffectTable<unknown>,
 	target: CrossFieldTarget,
@@ -581,7 +467,7 @@ function getEndpoint(
 	consumeEffect: boolean = true,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, "Expected effect to cover entire mark");
+	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
 	if (effect.value?.endpoint === undefined) {
 		return undefined;
 	}

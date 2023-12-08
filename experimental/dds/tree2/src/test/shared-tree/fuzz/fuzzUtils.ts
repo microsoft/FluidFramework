@@ -14,7 +14,7 @@ import {
 	Revertible,
 	TreeNavigationResult,
 } from "../../../core";
-import { FieldKinds, TreeFieldSchema, ObjectNodeTyped } from "../../../feature-libraries";
+import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../feature-libraries";
 import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
@@ -37,7 +37,7 @@ export const fuzzNode = builder.objectRecursive("node", {
 
 export type FuzzNodeSchema = typeof fuzzNode;
 
-export type FuzzNode = ObjectNodeTyped<FuzzNodeSchema>;
+export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
 
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 

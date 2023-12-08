@@ -11,6 +11,9 @@ import { TemplateSchema } from "./templateSchema";
 import { TemplateValidator } from "./templateValidator";
 import { Utils } from "./utils";
 
+/**
+ * @internal
+ */
 const { TraversalContext } = Utils;
 
 export {

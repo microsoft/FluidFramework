@@ -100,7 +100,7 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
- * @public
+ * @alpha
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**
@@ -109,13 +109,10 @@ export class SequenceInterval implements ISerializableInterval {
 	public properties: PropertySet;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
 
-	/**
-	 * @internal
-	 */
+	/***/
 	public get stickiness(): IntervalStickiness {
 		const startSegment = this.start.getSegment();
 		const endSegment = this.end.getSegment();
@@ -156,7 +153,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * Subscribes to position change events on this interval if there are no current listeners.
-	 * @internal
 	 */
 	public addPositionChangeListeners(
 		beforePositionChange: () => void,
@@ -177,7 +173,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * Removes the currently subscribed position change listeners.
-	 * @internal
 	 */
 	public removePositionChangeListeners(): void {
 		if (this.callbacks) {
@@ -189,7 +184,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
-	 * @internal
 	 */
 	public serialize(): ISerializedInterval {
 		const startPosition = this.client.localReferencePositionToPosition(this.start);
@@ -299,7 +293,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @internal
 	 */
 	public union(b: SequenceInterval) {
 		const newStart = minReferencePosition(this.start, b.start);
@@ -334,7 +327,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -357,7 +349,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @internal
 	 */
 	public modify(
 		label: string,
@@ -637,7 +628,7 @@ export function createSequenceInterval(
 
 /**
  * @deprecated The methods within have substitutions
- * @public
+ * @internal
  */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	create: createSequenceInterval,

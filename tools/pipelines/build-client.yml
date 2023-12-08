@@ -50,11 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
 
 trigger:
   branches:
@@ -65,6 +60,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -96,6 +92,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -122,20 +119,22 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
     tagName: client
+    isReleaseGroup: true
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    taskLint: false
+    taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskBuildDocs: true
     publishDocs: true
-    telemetry: true
+    # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
+    # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
+    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
     - webpack
     - ci:test:mocha
@@ -148,6 +147,10 @@ extends:
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
     - test:copyresults
+    # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
+    # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
+    # packages twice.
+    - check:are-the-types-wrong
     testResultDirs:
     - nyc/azure
     - nyc/examples
@@ -155,11 +158,6 @@ extends:
     - nyc/packages
     checks:
     - checks
-    - syncpack:deps
-    - syncpack:versions
-    - check:versions
-    - generate:packageList
-    - prettier
     additionalBuildSteps:
     - task: Bash@3
       displayName: Inject devtools telemetry logger token

@@ -35,7 +35,7 @@
 	 * Configures how the .d.ts rollup file will be generated.
 	 */
 	"dtsRollup": {
-		"enabled": false,
+		"enabled": true,
 		"alphaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-alpha.d.ts",
 		"betaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-beta.d.ts",
 		"publicTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-public.d.ts",
@@ -152,6 +152,12 @@
 			},
 			// Require explicit release tags for all API members.
 			"ae-missing-release-tag": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+
+			// Require documentation on all package-exported API items.
+			"ae-undocumented": {
 				"logLevel": "error",
 				"addToApiReportFile": false
 			},

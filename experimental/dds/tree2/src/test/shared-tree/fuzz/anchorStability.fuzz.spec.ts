@@ -73,17 +73,15 @@ const initialTreeJson = cursorsFromContextualData(
  */
 describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
-	const runsPerBatch = 20;
+	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// TODO: Add deletes once anchors are stable across removal and reinsertion
-		// TODO: Add moves once we have a generator for them
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
-			// When adding deletes/moves, also consider turning on optional/value fields
-			// (as of now, they're off as "set" can delete nodes which causes the same problems as above)
+			delete: 2,
+			move: 2,
 			fieldSelection: {
-				optional: 0,
-				required: 0,
+				optional: 1,
+				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
@@ -139,18 +137,16 @@ describe("Fuzz - anchor stability", () => {
 		});
 	});
 	describe("Anchors are stable", () => {
-		// TODO: Add deletes once anchors are stable across removal
-		// TODO: Add moves once we have a generator for them
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 2,
+			delete: 2,
+			move: 2,
 			undo: 1,
 			redo: 1,
 			synchronizeTrees: 1,
-			// When adding deletes/moves, also consider turning on optional/value fields
-			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
 			fieldSelection: {
-				optional: 0,
-				required: 0,
+				optional: 1,
+				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
@@ -176,7 +172,7 @@ describe("Fuzz - anchor stability", () => {
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client, config.initialTree)
 					.checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;

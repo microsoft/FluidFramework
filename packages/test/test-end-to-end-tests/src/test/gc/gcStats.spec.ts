@@ -9,10 +9,10 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
+import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -25,7 +25,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
  * nodes, data stores, blobs, etc.
  */
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container: IContainer;
 	let containerRuntime: ContainerRuntime;
@@ -67,10 +67,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			this.skip();
 		}
 		container = await provider.makeTestContainer(defaultGCConfig);
-		mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+		mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(container);
 	});
+
+	async function createNewDataStore() {
+		const newDataStore = await containerRuntime.createDataStore(TestDataObjectType);
+		return (await newDataStore.entryPoint.get()) as ITestDataObject;
+	}
 
 	/**
 	 * There are 9 GC nodes in total in these tests:
@@ -80,14 +85,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	 * 2 attachment blobs.
 	 */
 	it("can correctly generate GC stats without unreferenced nodes", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -98,6 +97,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -133,14 +138,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are unreferenced", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -151,6 +150,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -233,14 +238,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are re-referenced", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = await createNewDataStore();
+		const dataStore2 = await createNewDataStore();
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -251,6 +250,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 2,
+			lifetimeNodeCount: 9,
+			lifetimeDataStoreCount: 3,
+			lifetimeAttachmentBlobCount: 2,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -307,14 +312,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const dataStore1 = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
-			const dataStore2 = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStore1 = await createNewDataStore();
+			const dataStore2 = await createNewDataStore();
 			const expectedGCStats: IGCStats = {
 				nodeCount: 7,
 				unrefNodeCount: 0,
@@ -325,6 +324,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 				attachmentBlobCount: 0,
 				unrefAttachmentBlobCount: 0,
 				updatedAttachmentBlobCount: 0,
+				lifetimeNodeCount: 7,
+				lifetimeDataStoreCount: 3,
+				lifetimeAttachmentBlobCount: 0,
+				deletedNodeCount: 0,
+				deletedDataStoreCount: 0,
+				deletedAttachmentBlobCount: 0,
 			};
 
 			// Add both data store handles in default data store to mark them referenced.

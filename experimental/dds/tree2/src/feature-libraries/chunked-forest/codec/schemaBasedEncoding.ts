@@ -11,9 +11,9 @@ import {
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
-import { fieldKinds } from "../../default-field-kinds";
+import { Multiplicity } from "../../multiplicity";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
@@ -31,6 +31,7 @@ import { NodeShape } from "./nodeShape";
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
+ * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
@@ -46,15 +47,9 @@ export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPol
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
+		policy.fieldKinds,
 	);
 	return cache;
-}
-
-export function getFieldKind(fieldSchema: TreeFieldStoredSchema): FieldKind {
-	// TODO:
-	// This module currently is assuming use of defaultFieldKinds.
-	// The field kinds should instead come from a view schema registry thats provided somewhere.
-	return fieldKinds.get(fieldSchema.kind.identifier) ?? fail("missing field kind");
 }
 
 /**
@@ -65,7 +60,7 @@ export function fieldShaper(
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
-	const kind = getFieldKind(field);
+	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary

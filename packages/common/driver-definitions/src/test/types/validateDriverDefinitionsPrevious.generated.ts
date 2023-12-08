@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_DriverError():
     TypeOnly<old.DriverError>;
 declare function use_current_TypeAliasDeclaration_DriverError(
-    use: TypeOnly<current.DriverError>);
+    use: TypeOnly<current.DriverError>): void;
 use_current_TypeAliasDeclaration_DriverError(
     get_old_TypeAliasDeclaration_DriverError());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_DriverError(
 declare function get_current_TypeAliasDeclaration_DriverError():
     TypeOnly<current.DriverError>;
 declare function use_old_TypeAliasDeclaration_DriverError(
-    use: TypeOnly<old.DriverError>);
+    use: TypeOnly<old.DriverError>): void;
 use_old_TypeAliasDeclaration_DriverError(
     get_current_TypeAliasDeclaration_DriverError());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_DriverError(
 declare function get_old_EnumDeclaration_DriverErrorType():
     TypeOnly<old.DriverErrorType>;
 declare function use_current_EnumDeclaration_DriverErrorType(
-    use: TypeOnly<current.DriverErrorType>);
+    use: TypeOnly<current.DriverErrorType>): void;
 use_current_EnumDeclaration_DriverErrorType(
     get_old_EnumDeclaration_DriverErrorType());
 
@@ -65,7 +65,7 @@ use_current_EnumDeclaration_DriverErrorType(
 declare function get_current_EnumDeclaration_DriverErrorType():
     TypeOnly<current.DriverErrorType>;
 declare function use_old_EnumDeclaration_DriverErrorType(
-    use: TypeOnly<old.DriverErrorType>);
+    use: TypeOnly<old.DriverErrorType>): void;
 use_old_EnumDeclaration_DriverErrorType(
     get_current_EnumDeclaration_DriverErrorType());
 
@@ -77,7 +77,7 @@ use_old_EnumDeclaration_DriverErrorType(
 declare function get_old_VariableDeclaration_DriverErrorTypes():
     TypeOnly<typeof old.DriverErrorTypes>;
 declare function use_current_VariableDeclaration_DriverErrorTypes(
-    use: TypeOnly<typeof current.DriverErrorTypes>);
+    use: TypeOnly<typeof current.DriverErrorTypes>): void;
 use_current_VariableDeclaration_DriverErrorTypes(
     get_old_VariableDeclaration_DriverErrorTypes());
 
@@ -89,7 +89,7 @@ use_current_VariableDeclaration_DriverErrorTypes(
 declare function get_current_VariableDeclaration_DriverErrorTypes():
     TypeOnly<typeof current.DriverErrorTypes>;
 declare function use_old_VariableDeclaration_DriverErrorTypes(
-    use: TypeOnly<typeof old.DriverErrorTypes>);
+    use: TypeOnly<typeof old.DriverErrorTypes>): void;
 use_old_VariableDeclaration_DriverErrorTypes(
     get_current_VariableDeclaration_DriverErrorTypes());
 
@@ -101,7 +101,7 @@ use_old_VariableDeclaration_DriverErrorTypes(
 declare function get_old_TypeAliasDeclaration_DriverErrorTypes():
     TypeOnly<old.DriverErrorTypes>;
 declare function use_current_TypeAliasDeclaration_DriverErrorTypes(
-    use: TypeOnly<current.DriverErrorTypes>);
+    use: TypeOnly<current.DriverErrorTypes>): void;
 use_current_TypeAliasDeclaration_DriverErrorTypes(
     get_old_TypeAliasDeclaration_DriverErrorTypes());
 
@@ -113,7 +113,7 @@ use_current_TypeAliasDeclaration_DriverErrorTypes(
 declare function get_current_TypeAliasDeclaration_DriverErrorTypes():
     TypeOnly<current.DriverErrorTypes>;
 declare function use_old_TypeAliasDeclaration_DriverErrorTypes(
-    use: TypeOnly<old.DriverErrorTypes>);
+    use: TypeOnly<old.DriverErrorTypes>): void;
 use_old_TypeAliasDeclaration_DriverErrorTypes(
     get_current_TypeAliasDeclaration_DriverErrorTypes());
 
@@ -125,7 +125,7 @@ use_old_TypeAliasDeclaration_DriverErrorTypes(
 declare function get_old_EnumDeclaration_DriverHeader():
     TypeOnly<old.DriverHeader>;
 declare function use_current_EnumDeclaration_DriverHeader(
-    use: TypeOnly<current.DriverHeader>);
+    use: TypeOnly<current.DriverHeader>): void;
 use_current_EnumDeclaration_DriverHeader(
     get_old_EnumDeclaration_DriverHeader());
 
@@ -137,7 +137,7 @@ use_current_EnumDeclaration_DriverHeader(
 declare function get_current_EnumDeclaration_DriverHeader():
     TypeOnly<current.DriverHeader>;
 declare function use_old_EnumDeclaration_DriverHeader(
-    use: TypeOnly<old.DriverHeader>);
+    use: TypeOnly<old.DriverHeader>): void;
 use_old_EnumDeclaration_DriverHeader(
     get_current_EnumDeclaration_DriverHeader());
 
@@ -149,7 +149,7 @@ use_old_EnumDeclaration_DriverHeader(
 declare function get_old_InterfaceDeclaration_DriverPreCheckInfo():
     TypeOnly<old.DriverPreCheckInfo>;
 declare function use_current_InterfaceDeclaration_DriverPreCheckInfo(
-    use: TypeOnly<current.DriverPreCheckInfo>);
+    use: TypeOnly<current.DriverPreCheckInfo>): void;
 use_current_InterfaceDeclaration_DriverPreCheckInfo(
     get_old_InterfaceDeclaration_DriverPreCheckInfo());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_DriverPreCheckInfo(
 declare function get_current_InterfaceDeclaration_DriverPreCheckInfo():
     TypeOnly<current.DriverPreCheckInfo>;
 declare function use_old_InterfaceDeclaration_DriverPreCheckInfo(
-    use: TypeOnly<old.DriverPreCheckInfo>);
+    use: TypeOnly<old.DriverPreCheckInfo>): void;
 use_old_InterfaceDeclaration_DriverPreCheckInfo(
     get_current_InterfaceDeclaration_DriverPreCheckInfo());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_DriverPreCheckInfo(
 declare function get_old_EnumDeclaration_FetchSource():
     TypeOnly<old.FetchSource>;
 declare function use_current_EnumDeclaration_FetchSource(
-    use: TypeOnly<current.FetchSource>);
+    use: TypeOnly<current.FetchSource>): void;
 use_current_EnumDeclaration_FetchSource(
     get_old_EnumDeclaration_FetchSource());
 
@@ -185,7 +185,7 @@ use_current_EnumDeclaration_FetchSource(
 declare function get_current_EnumDeclaration_FetchSource():
     TypeOnly<current.FetchSource>;
 declare function use_old_EnumDeclaration_FetchSource(
-    use: TypeOnly<old.FetchSource>);
+    use: TypeOnly<old.FetchSource>): void;
 use_old_EnumDeclaration_FetchSource(
     get_current_EnumDeclaration_FetchSource());
 
@@ -197,7 +197,7 @@ use_old_EnumDeclaration_FetchSource(
 declare function get_old_TypeAliasDeclaration_FiveDaysMs():
     TypeOnly<old.FiveDaysMs>;
 declare function use_current_TypeAliasDeclaration_FiveDaysMs(
-    use: TypeOnly<current.FiveDaysMs>);
+    use: TypeOnly<current.FiveDaysMs>): void;
 use_current_TypeAliasDeclaration_FiveDaysMs(
     get_old_TypeAliasDeclaration_FiveDaysMs());
 
@@ -209,7 +209,7 @@ use_current_TypeAliasDeclaration_FiveDaysMs(
 declare function get_current_TypeAliasDeclaration_FiveDaysMs():
     TypeOnly<current.FiveDaysMs>;
 declare function use_old_TypeAliasDeclaration_FiveDaysMs(
-    use: TypeOnly<old.FiveDaysMs>);
+    use: TypeOnly<old.FiveDaysMs>): void;
 use_old_TypeAliasDeclaration_FiveDaysMs(
     get_current_TypeAliasDeclaration_FiveDaysMs());
 
@@ -221,7 +221,7 @@ use_old_TypeAliasDeclaration_FiveDaysMs(
 declare function get_old_InterfaceDeclaration_IAnyDriverError():
     TypeOnly<old.IAnyDriverError>;
 declare function use_current_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<current.IAnyDriverError>);
+    use: TypeOnly<current.IAnyDriverError>): void;
 use_current_InterfaceDeclaration_IAnyDriverError(
     get_old_InterfaceDeclaration_IAnyDriverError());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IAnyDriverError(
 declare function get_current_InterfaceDeclaration_IAnyDriverError():
     TypeOnly<current.IAnyDriverError>;
 declare function use_old_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<old.IAnyDriverError>);
+    use: TypeOnly<old.IAnyDriverError>): void;
 use_old_InterfaceDeclaration_IAnyDriverError(
     get_current_InterfaceDeclaration_IAnyDriverError());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IAnyDriverError(
 declare function get_old_InterfaceDeclaration_IAuthorizationError():
     TypeOnly<old.IAuthorizationError>;
 declare function use_current_InterfaceDeclaration_IAuthorizationError(
-    use: TypeOnly<current.IAuthorizationError>);
+    use: TypeOnly<current.IAuthorizationError>): void;
 use_current_InterfaceDeclaration_IAuthorizationError(
     get_old_InterfaceDeclaration_IAuthorizationError());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IAuthorizationError(
 declare function get_current_InterfaceDeclaration_IAuthorizationError():
     TypeOnly<current.IAuthorizationError>;
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
-    use: TypeOnly<old.IAuthorizationError>);
+    use: TypeOnly<old.IAuthorizationError>): void;
 use_old_InterfaceDeclaration_IAuthorizationError(
     get_current_InterfaceDeclaration_IAuthorizationError());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IAuthorizationError(
 declare function get_old_InterfaceDeclaration_IContainerPackageInfo():
     TypeOnly<old.IContainerPackageInfo>;
 declare function use_current_InterfaceDeclaration_IContainerPackageInfo(
-    use: TypeOnly<current.IContainerPackageInfo>);
+    use: TypeOnly<current.IContainerPackageInfo>): void;
 use_current_InterfaceDeclaration_IContainerPackageInfo(
     get_old_InterfaceDeclaration_IContainerPackageInfo());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IContainerPackageInfo(
 declare function get_current_InterfaceDeclaration_IContainerPackageInfo():
     TypeOnly<current.IContainerPackageInfo>;
 declare function use_old_InterfaceDeclaration_IContainerPackageInfo(
-    use: TypeOnly<old.IContainerPackageInfo>);
+    use: TypeOnly<old.IContainerPackageInfo>): void;
 use_old_InterfaceDeclaration_IContainerPackageInfo(
     get_current_InterfaceDeclaration_IContainerPackageInfo());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IContainerPackageInfo(
 declare function get_old_InterfaceDeclaration_IDeltaStorageService():
     TypeOnly<old.IDeltaStorageService>;
 declare function use_current_InterfaceDeclaration_IDeltaStorageService(
-    use: TypeOnly<current.IDeltaStorageService>);
+    use: TypeOnly<current.IDeltaStorageService>): void;
 use_current_InterfaceDeclaration_IDeltaStorageService(
     get_old_InterfaceDeclaration_IDeltaStorageService());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_IDeltaStorageService(
 declare function get_current_InterfaceDeclaration_IDeltaStorageService():
     TypeOnly<current.IDeltaStorageService>;
 declare function use_old_InterfaceDeclaration_IDeltaStorageService(
-    use: TypeOnly<old.IDeltaStorageService>);
+    use: TypeOnly<old.IDeltaStorageService>): void;
 use_old_InterfaceDeclaration_IDeltaStorageService(
     get_current_InterfaceDeclaration_IDeltaStorageService());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_IDeltaStorageService(
 declare function get_old_InterfaceDeclaration_IDeltasFetchResult():
     TypeOnly<old.IDeltasFetchResult>;
 declare function use_current_InterfaceDeclaration_IDeltasFetchResult(
-    use: TypeOnly<current.IDeltasFetchResult>);
+    use: TypeOnly<current.IDeltasFetchResult>): void;
 use_current_InterfaceDeclaration_IDeltasFetchResult(
     get_old_InterfaceDeclaration_IDeltasFetchResult());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_IDeltasFetchResult(
 declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
     TypeOnly<current.IDeltasFetchResult>;
 declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
-    use: TypeOnly<old.IDeltasFetchResult>);
+    use: TypeOnly<old.IDeltasFetchResult>): void;
 use_old_InterfaceDeclaration_IDeltasFetchResult(
     get_current_InterfaceDeclaration_IDeltasFetchResult());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_IDeltasFetchResult(
 declare function get_old_InterfaceDeclaration_IDocumentDeltaConnection():
     TypeOnly<old.IDocumentDeltaConnection>;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaConnection(
-    use: TypeOnly<current.IDocumentDeltaConnection>);
+    use: TypeOnly<current.IDocumentDeltaConnection>): void;
 use_current_InterfaceDeclaration_IDocumentDeltaConnection(
     get_old_InterfaceDeclaration_IDocumentDeltaConnection());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_IDocumentDeltaConnection(
 declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
     TypeOnly<current.IDocumentDeltaConnection>;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
-    use: TypeOnly<old.IDocumentDeltaConnection>);
+    use: TypeOnly<old.IDocumentDeltaConnection>): void;
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_IDocumentDeltaConnection(
 declare function get_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents():
     TypeOnly<old.IDocumentDeltaConnectionEvents>;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
-    use: TypeOnly<current.IDocumentDeltaConnectionEvents>);
+    use: TypeOnly<current.IDocumentDeltaConnectionEvents>): void;
 use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
     get_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
 declare function get_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents():
     TypeOnly<current.IDocumentDeltaConnectionEvents>;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
-    use: TypeOnly<old.IDocumentDeltaConnectionEvents>);
+    use: TypeOnly<old.IDocumentDeltaConnectionEvents>): void;
 use_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
     get_current_InterfaceDeclaration_IDocumentDeltaConnectionEvents());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_IDocumentDeltaConnectionEvents(
 declare function get_old_InterfaceDeclaration_IDocumentDeltaStorageService():
     TypeOnly<old.IDocumentDeltaStorageService>;
 declare function use_current_InterfaceDeclaration_IDocumentDeltaStorageService(
-    use: TypeOnly<current.IDocumentDeltaStorageService>);
+    use: TypeOnly<current.IDocumentDeltaStorageService>): void;
 use_current_InterfaceDeclaration_IDocumentDeltaStorageService(
     get_old_InterfaceDeclaration_IDocumentDeltaStorageService());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IDocumentDeltaStorageService(
 declare function get_current_InterfaceDeclaration_IDocumentDeltaStorageService():
     TypeOnly<current.IDocumentDeltaStorageService>;
 declare function use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
-    use: TypeOnly<old.IDocumentDeltaStorageService>);
+    use: TypeOnly<old.IDocumentDeltaStorageService>): void;
 use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
     get_current_InterfaceDeclaration_IDocumentDeltaStorageService());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IDocumentDeltaStorageService(
 declare function get_old_InterfaceDeclaration_IDocumentService():
     TypeOnly<old.IDocumentService>;
 declare function use_current_InterfaceDeclaration_IDocumentService(
-    use: TypeOnly<current.IDocumentService>);
+    use: TypeOnly<current.IDocumentService>): void;
 use_current_InterfaceDeclaration_IDocumentService(
     get_old_InterfaceDeclaration_IDocumentService());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_IDocumentService(
 declare function get_current_InterfaceDeclaration_IDocumentService():
     TypeOnly<current.IDocumentService>;
 declare function use_old_InterfaceDeclaration_IDocumentService(
-    use: TypeOnly<old.IDocumentService>);
+    use: TypeOnly<old.IDocumentService>): void;
 use_old_InterfaceDeclaration_IDocumentService(
     get_current_InterfaceDeclaration_IDocumentService());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_IDocumentService(
 declare function get_old_InterfaceDeclaration_IDocumentServiceFactory():
     TypeOnly<old.IDocumentServiceFactory>;
 declare function use_current_InterfaceDeclaration_IDocumentServiceFactory(
-    use: TypeOnly<current.IDocumentServiceFactory>);
+    use: TypeOnly<current.IDocumentServiceFactory>): void;
 use_current_InterfaceDeclaration_IDocumentServiceFactory(
     get_old_InterfaceDeclaration_IDocumentServiceFactory());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_IDocumentServiceFactory(
 declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
     TypeOnly<current.IDocumentServiceFactory>;
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
-    use: TypeOnly<old.IDocumentServiceFactory>);
+    use: TypeOnly<old.IDocumentServiceFactory>): void;
 use_old_InterfaceDeclaration_IDocumentServiceFactory(
     get_current_InterfaceDeclaration_IDocumentServiceFactory());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_IDocumentServiceFactory(
 declare function get_old_InterfaceDeclaration_IDocumentServicePolicies():
     TypeOnly<old.IDocumentServicePolicies>;
 declare function use_current_InterfaceDeclaration_IDocumentServicePolicies(
-    use: TypeOnly<current.IDocumentServicePolicies>);
+    use: TypeOnly<current.IDocumentServicePolicies>): void;
 use_current_InterfaceDeclaration_IDocumentServicePolicies(
     get_old_InterfaceDeclaration_IDocumentServicePolicies());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_IDocumentServicePolicies(
 declare function get_current_InterfaceDeclaration_IDocumentServicePolicies():
     TypeOnly<current.IDocumentServicePolicies>;
 declare function use_old_InterfaceDeclaration_IDocumentServicePolicies(
-    use: TypeOnly<old.IDocumentServicePolicies>);
+    use: TypeOnly<old.IDocumentServicePolicies>): void;
 use_old_InterfaceDeclaration_IDocumentServicePolicies(
     get_current_InterfaceDeclaration_IDocumentServicePolicies());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_IDocumentServicePolicies(
 declare function get_old_InterfaceDeclaration_IDocumentStorageService():
     TypeOnly<old.IDocumentStorageService>;
 declare function use_current_InterfaceDeclaration_IDocumentStorageService(
-    use: TypeOnly<current.IDocumentStorageService>);
+    use: TypeOnly<current.IDocumentStorageService>): void;
 use_current_InterfaceDeclaration_IDocumentStorageService(
     get_old_InterfaceDeclaration_IDocumentStorageService());
 
@@ -497,7 +497,7 @@ use_current_InterfaceDeclaration_IDocumentStorageService(
 declare function get_current_InterfaceDeclaration_IDocumentStorageService():
     TypeOnly<current.IDocumentStorageService>;
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
-    use: TypeOnly<old.IDocumentStorageService>);
+    use: TypeOnly<old.IDocumentStorageService>): void;
 use_old_InterfaceDeclaration_IDocumentStorageService(
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
@@ -509,7 +509,7 @@ use_old_InterfaceDeclaration_IDocumentStorageService(
 declare function get_old_InterfaceDeclaration_IDocumentStorageServicePolicies():
     TypeOnly<old.IDocumentStorageServicePolicies>;
 declare function use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
-    use: TypeOnly<current.IDocumentStorageServicePolicies>);
+    use: TypeOnly<current.IDocumentStorageServicePolicies>): void;
 use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
     get_old_InterfaceDeclaration_IDocumentStorageServicePolicies());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_IDocumentStorageServicePolicies(
 declare function get_current_InterfaceDeclaration_IDocumentStorageServicePolicies():
     TypeOnly<current.IDocumentStorageServicePolicies>;
 declare function use_old_InterfaceDeclaration_IDocumentStorageServicePolicies(
-    use: TypeOnly<old.IDocumentStorageServicePolicies>);
+    use: TypeOnly<old.IDocumentStorageServicePolicies>): void;
 use_old_InterfaceDeclaration_IDocumentStorageServicePolicies(
     get_current_InterfaceDeclaration_IDocumentStorageServicePolicies());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_IDocumentStorageServicePolicies(
 declare function get_old_InterfaceDeclaration_IDriverBasicError():
     TypeOnly<old.IDriverBasicError>;
 declare function use_current_InterfaceDeclaration_IDriverBasicError(
-    use: TypeOnly<current.IDriverBasicError>);
+    use: TypeOnly<current.IDriverBasicError>): void;
 use_current_InterfaceDeclaration_IDriverBasicError(
     get_old_InterfaceDeclaration_IDriverBasicError());
 
@@ -545,7 +545,7 @@ use_current_InterfaceDeclaration_IDriverBasicError(
 declare function get_current_InterfaceDeclaration_IDriverBasicError():
     TypeOnly<current.IDriverBasicError>;
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
-    use: TypeOnly<old.IDriverBasicError>);
+    use: TypeOnly<old.IDriverBasicError>): void;
 use_old_InterfaceDeclaration_IDriverBasicError(
     get_current_InterfaceDeclaration_IDriverBasicError());
 
@@ -557,7 +557,7 @@ use_old_InterfaceDeclaration_IDriverBasicError(
 declare function get_old_InterfaceDeclaration_IDriverErrorBase():
     TypeOnly<old.IDriverErrorBase>;
 declare function use_current_InterfaceDeclaration_IDriverErrorBase(
-    use: TypeOnly<current.IDriverErrorBase>);
+    use: TypeOnly<current.IDriverErrorBase>): void;
 use_current_InterfaceDeclaration_IDriverErrorBase(
     get_old_InterfaceDeclaration_IDriverErrorBase());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_IDriverErrorBase(
 declare function get_current_InterfaceDeclaration_IDriverErrorBase():
     TypeOnly<current.IDriverErrorBase>;
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
-    use: TypeOnly<old.IDriverErrorBase>);
+    use: TypeOnly<old.IDriverErrorBase>): void;
 use_old_InterfaceDeclaration_IDriverErrorBase(
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_IDriverErrorBase(
 declare function get_old_InterfaceDeclaration_IDriverHeader():
     TypeOnly<old.IDriverHeader>;
 declare function use_current_InterfaceDeclaration_IDriverHeader(
-    use: TypeOnly<current.IDriverHeader>);
+    use: TypeOnly<current.IDriverHeader>): void;
 use_current_InterfaceDeclaration_IDriverHeader(
     get_old_InterfaceDeclaration_IDriverHeader());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_IDriverHeader(
 declare function get_current_InterfaceDeclaration_IDriverHeader():
     TypeOnly<current.IDriverHeader>;
 declare function use_old_InterfaceDeclaration_IDriverHeader(
-    use: TypeOnly<old.IDriverHeader>);
+    use: TypeOnly<old.IDriverHeader>): void;
 use_old_InterfaceDeclaration_IDriverHeader(
     get_current_InterfaceDeclaration_IDriverHeader());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_IDriverHeader(
 declare function get_old_InterfaceDeclaration_IGenericNetworkError():
     TypeOnly<old.IGenericNetworkError>;
 declare function use_current_InterfaceDeclaration_IGenericNetworkError(
-    use: TypeOnly<current.IGenericNetworkError>);
+    use: TypeOnly<current.IGenericNetworkError>): void;
 use_current_InterfaceDeclaration_IGenericNetworkError(
     get_old_InterfaceDeclaration_IGenericNetworkError());
 
@@ -617,7 +617,7 @@ use_current_InterfaceDeclaration_IGenericNetworkError(
 declare function get_current_InterfaceDeclaration_IGenericNetworkError():
     TypeOnly<current.IGenericNetworkError>;
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
-    use: TypeOnly<old.IGenericNetworkError>);
+    use: TypeOnly<old.IGenericNetworkError>): void;
 use_old_InterfaceDeclaration_IGenericNetworkError(
     get_current_InterfaceDeclaration_IGenericNetworkError());
 
@@ -629,7 +629,7 @@ use_old_InterfaceDeclaration_IGenericNetworkError(
 declare function get_old_InterfaceDeclaration_ILocationRedirectionError():
     TypeOnly<old.ILocationRedirectionError>;
 declare function use_current_InterfaceDeclaration_ILocationRedirectionError(
-    use: TypeOnly<current.ILocationRedirectionError>);
+    use: TypeOnly<current.ILocationRedirectionError>): void;
 use_current_InterfaceDeclaration_ILocationRedirectionError(
     get_old_InterfaceDeclaration_ILocationRedirectionError());
 
@@ -641,7 +641,7 @@ use_current_InterfaceDeclaration_ILocationRedirectionError(
 declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
     TypeOnly<current.ILocationRedirectionError>;
 declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
-    use: TypeOnly<old.ILocationRedirectionError>);
+    use: TypeOnly<old.ILocationRedirectionError>): void;
 use_old_InterfaceDeclaration_ILocationRedirectionError(
     get_current_InterfaceDeclaration_ILocationRedirectionError());
 
@@ -653,7 +653,7 @@ use_old_InterfaceDeclaration_ILocationRedirectionError(
 declare function get_old_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<old.IResolvedUrl>;
 declare function use_current_InterfaceDeclaration_IResolvedUrl(
-    use: TypeOnly<current.IResolvedUrl>);
+    use: TypeOnly<current.IResolvedUrl>): void;
 use_current_InterfaceDeclaration_IResolvedUrl(
     get_old_InterfaceDeclaration_IResolvedUrl());
 
@@ -665,7 +665,7 @@ use_current_InterfaceDeclaration_IResolvedUrl(
 declare function get_current_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<current.IResolvedUrl>;
 declare function use_old_InterfaceDeclaration_IResolvedUrl(
-    use: TypeOnly<old.IResolvedUrl>);
+    use: TypeOnly<old.IResolvedUrl>): void;
 use_old_InterfaceDeclaration_IResolvedUrl(
     get_current_InterfaceDeclaration_IResolvedUrl());
 
@@ -677,7 +677,7 @@ use_old_InterfaceDeclaration_IResolvedUrl(
 declare function get_old_InterfaceDeclaration_IStream():
     TypeOnly<old.IStream<any>>;
 declare function use_current_InterfaceDeclaration_IStream(
-    use: TypeOnly<current.IStream<any>>);
+    use: TypeOnly<current.IStream<any>>): void;
 use_current_InterfaceDeclaration_IStream(
     get_old_InterfaceDeclaration_IStream());
 
@@ -689,7 +689,7 @@ use_current_InterfaceDeclaration_IStream(
 declare function get_current_InterfaceDeclaration_IStream():
     TypeOnly<current.IStream<any>>;
 declare function use_old_InterfaceDeclaration_IStream(
-    use: TypeOnly<old.IStream<any>>);
+    use: TypeOnly<old.IStream<any>>): void;
 use_old_InterfaceDeclaration_IStream(
     get_current_InterfaceDeclaration_IStream());
 
@@ -701,7 +701,7 @@ use_old_InterfaceDeclaration_IStream(
 declare function get_old_TypeAliasDeclaration_IStreamResult():
     TypeOnly<old.IStreamResult<any>>;
 declare function use_current_TypeAliasDeclaration_IStreamResult(
-    use: TypeOnly<current.IStreamResult<any>>);
+    use: TypeOnly<current.IStreamResult<any>>): void;
 use_current_TypeAliasDeclaration_IStreamResult(
     get_old_TypeAliasDeclaration_IStreamResult());
 
@@ -713,7 +713,7 @@ use_current_TypeAliasDeclaration_IStreamResult(
 declare function get_current_TypeAliasDeclaration_IStreamResult():
     TypeOnly<current.IStreamResult<any>>;
 declare function use_old_TypeAliasDeclaration_IStreamResult(
-    use: TypeOnly<old.IStreamResult<any>>);
+    use: TypeOnly<old.IStreamResult<any>>): void;
 use_old_TypeAliasDeclaration_IStreamResult(
     get_current_TypeAliasDeclaration_IStreamResult());
 
@@ -725,7 +725,7 @@ use_old_TypeAliasDeclaration_IStreamResult(
 declare function get_old_InterfaceDeclaration_ISummaryContext():
     TypeOnly<old.ISummaryContext>;
 declare function use_current_InterfaceDeclaration_ISummaryContext(
-    use: TypeOnly<current.ISummaryContext>);
+    use: TypeOnly<current.ISummaryContext>): void;
 use_current_InterfaceDeclaration_ISummaryContext(
     get_old_InterfaceDeclaration_ISummaryContext());
 
@@ -737,7 +737,7 @@ use_current_InterfaceDeclaration_ISummaryContext(
 declare function get_current_InterfaceDeclaration_ISummaryContext():
     TypeOnly<current.ISummaryContext>;
 declare function use_old_InterfaceDeclaration_ISummaryContext(
-    use: TypeOnly<old.ISummaryContext>);
+    use: TypeOnly<old.ISummaryContext>): void;
 use_old_InterfaceDeclaration_ISummaryContext(
     get_current_InterfaceDeclaration_ISummaryContext());
 
@@ -749,7 +749,7 @@ use_old_InterfaceDeclaration_ISummaryContext(
 declare function get_old_InterfaceDeclaration_IThrottlingWarning():
     TypeOnly<old.IThrottlingWarning>;
 declare function use_current_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<current.IThrottlingWarning>);
+    use: TypeOnly<current.IThrottlingWarning>): void;
 use_current_InterfaceDeclaration_IThrottlingWarning(
     get_old_InterfaceDeclaration_IThrottlingWarning());
 
@@ -761,7 +761,7 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
     TypeOnly<current.IThrottlingWarning>;
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<old.IThrottlingWarning>);
+    use: TypeOnly<old.IThrottlingWarning>): void;
 use_old_InterfaceDeclaration_IThrottlingWarning(
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
@@ -773,7 +773,7 @@ use_old_InterfaceDeclaration_IThrottlingWarning(
 declare function get_old_InterfaceDeclaration_IUrlResolver():
     TypeOnly<old.IUrlResolver>;
 declare function use_current_InterfaceDeclaration_IUrlResolver(
-    use: TypeOnly<current.IUrlResolver>);
+    use: TypeOnly<current.IUrlResolver>): void;
 use_current_InterfaceDeclaration_IUrlResolver(
     get_old_InterfaceDeclaration_IUrlResolver());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_IUrlResolver(
 declare function get_current_InterfaceDeclaration_IUrlResolver():
     TypeOnly<current.IUrlResolver>;
 declare function use_old_InterfaceDeclaration_IUrlResolver(
-    use: TypeOnly<old.IUrlResolver>);
+    use: TypeOnly<old.IUrlResolver>): void;
 use_old_InterfaceDeclaration_IUrlResolver(
     get_current_InterfaceDeclaration_IUrlResolver());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_IUrlResolver(
 declare function get_old_EnumDeclaration_LoaderCachingPolicy():
     TypeOnly<old.LoaderCachingPolicy>;
 declare function use_current_EnumDeclaration_LoaderCachingPolicy(
-    use: TypeOnly<current.LoaderCachingPolicy>);
+    use: TypeOnly<current.LoaderCachingPolicy>): void;
 use_current_EnumDeclaration_LoaderCachingPolicy(
     get_old_EnumDeclaration_LoaderCachingPolicy());
 
@@ -809,6 +809,6 @@ use_current_EnumDeclaration_LoaderCachingPolicy(
 declare function get_current_EnumDeclaration_LoaderCachingPolicy():
     TypeOnly<current.LoaderCachingPolicy>;
 declare function use_old_EnumDeclaration_LoaderCachingPolicy(
-    use: TypeOnly<old.LoaderCachingPolicy>);
+    use: TypeOnly<old.LoaderCachingPolicy>): void;
 use_old_EnumDeclaration_LoaderCachingPolicy(
     get_current_EnumDeclaration_LoaderCachingPolicy());

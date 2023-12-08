@@ -26,6 +26,7 @@ import { PresenceManager } from "./presence";
  * CodeMirrorComponent builds a Fluid collaborative code editor on top of the open source code editor CodeMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
+ * @internal
  */
 export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
@@ -84,6 +85,9 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 	}
 }
 
+/**
+ * @internal
+ */
 export class SmdeFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/codemirror";
 	public readonly type = SmdeFactory.type;

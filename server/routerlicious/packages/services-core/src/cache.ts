@@ -5,6 +5,7 @@
 
 /**
  * Interface for a page object cache
+ * @internal
  */
 export interface ICache {
 	/**

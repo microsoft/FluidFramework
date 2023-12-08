@@ -213,7 +213,7 @@ function compatBehaviorAllowsMessageType(
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -235,7 +235,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -298,21 +298,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @public
+ * @alpha
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
@@ -320,7 +320,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
- * @public
+ * @internal
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -349,7 +349,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -366,7 +366,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @public
+ * @alpha
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -384,7 +384,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
- * @public
+ * @alpha
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -466,7 +466,7 @@ export interface IContainerRuntimeOptions {
 
 /**
  * Accepted header keys for requests coming to the runtime.
- * @public
+ * @internal
  */
 export enum RuntimeHeaders {
 	/** True to wait for a data store to be created and loaded before returning it. */
@@ -476,23 +476,23 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
- * @public
+ * @internal
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 /**
  * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @public
+ * @internal
  */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /**
  * Tombstone error responses will have this header set to true
- * @public
+ * @internal
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @public
+ * @internal
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -516,7 +516,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
- * @public
+ * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -585,7 +585,7 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated use ContainerRuntimeMessageType instead
- * @public
+ * @internal
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -599,7 +599,7 @@ export enum RuntimeMessage {
 
 /**
  * @deprecated please use version in driver-utils
- * @public
+ * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -609,7 +609,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
  * special-case for document dirty state.  Ultimately we should have no special-cases from the
  * ContainerRuntime's perspective.
- * @public
+ * @internal
  */
 export const agentSchedulerId = "_scheduler";
 
@@ -718,7 +718,7 @@ export async function TEST_requestSummarizer(loader: ILoader, url: string): Prom
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
- * @public
+ * @alpha
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
@@ -963,6 +963,7 @@ export class ContainerRuntime
 	}
 
 	public readonly options: ILoaderOptions;
+	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1214,9 +1215,7 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
-	/**
-	 * @internal
-	 */
+	/***/
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
@@ -2582,7 +2581,6 @@ export class ContainerRuntime
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
-	 * @internal
 	 */
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
@@ -2603,7 +2601,9 @@ export class ContainerRuntime
 	private canSendOps() {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
+		return (
+			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+		);
 	}
 
 	/**
@@ -3963,7 +3963,11 @@ export class ContainerRuntime
 			},
 			async (event) => {
 				this.verifyNotClosed();
-				const waitBlobsToAttach = props?.notifyImminentClosure;
+				// in case imminentClosure is set to true by future code, we don't
+				// try to change its value
+				if (!this.imminentClosure) {
+					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
+				}
 				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
@@ -3972,7 +3976,7 @@ export class ContainerRuntime
 				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 				// to close current batch.
 				this.flush();
-				const pendingAttachmentBlobs = waitBlobsToAttach
+				const pendingAttachmentBlobs = this.imminentClosure
 					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();

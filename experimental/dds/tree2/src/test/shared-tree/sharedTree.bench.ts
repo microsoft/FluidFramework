@@ -19,10 +19,10 @@ import {
 	insert,
 	TestTreeProviderLite,
 	toJsonableTree,
-	viewWithContent,
+	flexTreeViewWithContent,
 	checkoutWithContent,
 } from "../utils";
-import { ITreeView } from "../../shared-tree";
+import { FlexTreeView } from "../../shared-tree";
 import { rootFieldKey } from "../../core";
 import {
 	deepPath,
@@ -141,12 +141,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = viewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -156,7 +156,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -167,7 +167,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = viewWithContent(
+					tree = flexTreeViewWithContent(
 						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
 					);
 				},
@@ -181,12 +181,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("EditableTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
+			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = viewWithContent(makeDeepContent(numberOfNodes));
+					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepEditableTree(tree);
@@ -196,7 +196,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
+			let tree: FlexTreeView<typeof wideSchema.rootFieldSchema>;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
@@ -207,7 +207,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = viewWithContent({
+					tree = flexTreeViewWithContent({
 						initialTree: { foo: numbers },
 						schema: wideSchema,
 					});

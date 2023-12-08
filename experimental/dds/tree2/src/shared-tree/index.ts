@@ -26,8 +26,7 @@ export {
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
+	buildTreeConfiguration,
 } from "./schematizedTree";
 
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
-
-export { ITreeView, TreeView, ITreeViewFork } from "./treeView";
+export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";

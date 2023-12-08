@@ -310,6 +310,7 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
 
 /**
  * A database factory for testing that stores data in the browsers session storage
+ * @internal
  */
 export class LocalSessionStorageDbFactory implements ITestDbFactory {
 	public readonly testDatabase: IDb = new LocalSessionStorageDb();

@@ -4,10 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
+import {
+	makeAnonChange,
+	FieldKey,
+	tagChange,
+	mintRevisionTag,
+	deltaForSet,
+	RevisionTag,
+	TaggedChange,
+	RevisionMetadataSource,
+} from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
+import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
+import { deepFreeze } from "./utils";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -66,7 +78,7 @@ describe("TestChange", () => {
 			[
 				fooField,
 				deltaForSet(
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: brand("test"),
 						value: "2|3",
 					}),
@@ -89,5 +101,65 @@ describe("TestChange", () => {
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
+	});
+});
+
+type TestChangeTestState = FieldStateTree<number[], TestChange>;
+
+function rebaseComposed(
+	metadata: RevisionMetadataSource,
+	change: TestChange,
+	...baseChanges: TaggedChange<TestChange>[]
+): TestChange {
+	baseChanges.forEach((base) => deepFreeze(base));
+	deepFreeze(change);
+
+	const composed = TestChange.compose(baseChanges);
+	const rebaseResult = TestChange.rebase(change, composed);
+	assert(rebaseResult !== undefined, "Shouldn't get undefined.");
+	return rebaseResult;
+}
+
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
+	state: TestChangeTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<TestChangeTestState> {
+	const context = state.content;
+	const intention = mintIntention();
+	const change = TestChange.mint(context, intention);
+	yield {
+		content: change.outputContext,
+		mostRecentEdit: {
+			changeset: tagChange(change, tagFromIntention(intention)),
+			description: JSON.stringify(intention),
+			intention,
+		},
+		parent: state,
+	};
+};
+
+describe("TestChange - Rebaser Axioms", () => {
+	describe("Exhaustive suite", () => {
+		runExhaustiveComposeRebaseSuite(
+			[{ content: [] }],
+			generateChildStates,
+			{
+				rebase: (change, base) => {
+					return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+				},
+				compose: (changes) => {
+					return TestChange.compose(changes);
+				},
+				invert: (change) => {
+					return TestChange.invert(change.change);
+				},
+				rebaseComposed,
+			},
+			{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
+		);
 	});
 });

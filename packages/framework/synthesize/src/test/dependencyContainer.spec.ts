@@ -18,7 +18,7 @@ import {
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { LazyPromise } from "@fluidframework/core-utils";
-import { DependencyContainer } from "..";
+import { DependencyContainer } from "../index";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer";
 import { AsyncFluidObjectProvider, FluidObjectProvider, FluidObjectSymbolProvider } from "../types";
 

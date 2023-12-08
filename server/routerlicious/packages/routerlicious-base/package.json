@@ -15,14 +15,14 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "mocha --recursive \"dist/test/**/*.spec.js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
@@ -128,6 +128,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_RiddlerResources": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

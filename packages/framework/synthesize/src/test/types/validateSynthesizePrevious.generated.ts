@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_AsyncFluidObjectProvider():
     TypeOnly<old.AsyncFluidObjectProvider<any,any>>;
 declare function use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<current.AsyncFluidObjectProvider<any,any>>);
+    use: TypeOnly<current.AsyncFluidObjectProvider<any,any>>): void;
 use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_old_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
 declare function get_current_TypeAliasDeclaration_AsyncFluidObjectProvider():
     TypeOnly<current.AsyncFluidObjectProvider<any,any>>;
 declare function use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<old.AsyncFluidObjectProvider<any,any>>);
+    use: TypeOnly<old.AsyncFluidObjectProvider<any,any>>): void;
 use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_current_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
 declare function get_old_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider():
     TypeOnly<old.AsyncOptionalFluidObjectProvider<any>>;
 declare function use_current_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
-    use: TypeOnly<current.AsyncOptionalFluidObjectProvider<any>>);
+    use: TypeOnly<current.AsyncOptionalFluidObjectProvider<any>>): void;
 use_current_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
     get_old_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider());
 
@@ -65,7 +65,7 @@ use_current_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
 declare function get_current_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider():
     TypeOnly<current.AsyncOptionalFluidObjectProvider<any>>;
 declare function use_old_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
-    use: TypeOnly<old.AsyncOptionalFluidObjectProvider<any>>);
+    use: TypeOnly<old.AsyncOptionalFluidObjectProvider<any>>): void;
 use_old_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
     get_current_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider());
 
@@ -77,7 +77,7 @@ use_old_TypeAliasDeclaration_AsyncOptionalFluidObjectProvider(
 declare function get_old_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider():
     TypeOnly<old.AsyncRequiredFluidObjectProvider<any>>;
 declare function use_current_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
-    use: TypeOnly<current.AsyncRequiredFluidObjectProvider<any>>);
+    use: TypeOnly<current.AsyncRequiredFluidObjectProvider<any>>): void;
 use_current_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
     get_old_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
 declare function get_current_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider():
     TypeOnly<current.AsyncRequiredFluidObjectProvider<any>>;
 declare function use_old_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
-    use: TypeOnly<old.AsyncRequiredFluidObjectProvider<any>>);
+    use: TypeOnly<old.AsyncRequiredFluidObjectProvider<any>>): void;
 use_old_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
     get_current_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_AsyncRequiredFluidObjectProvider(
 declare function get_old_ClassDeclaration_DependencyContainer():
     TypeOnly<old.DependencyContainer<any>>;
 declare function use_current_ClassDeclaration_DependencyContainer(
-    use: TypeOnly<current.DependencyContainer<any>>);
+    use: TypeOnly<current.DependencyContainer<any>>): void;
 use_current_ClassDeclaration_DependencyContainer(
     get_old_ClassDeclaration_DependencyContainer());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_DependencyContainer(
 declare function get_current_ClassDeclaration_DependencyContainer():
     TypeOnly<current.DependencyContainer<any>>;
 declare function use_old_ClassDeclaration_DependencyContainer(
-    use: TypeOnly<old.DependencyContainer<any>>);
+    use: TypeOnly<old.DependencyContainer<any>>): void;
 use_old_ClassDeclaration_DependencyContainer(
     get_current_ClassDeclaration_DependencyContainer());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_DependencyContainer(
 declare function get_old_TypeAliasDeclaration_FluidObjectProvider():
     TypeOnly<old.FluidObjectProvider<any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectProvider(
-    use: TypeOnly<current.FluidObjectProvider<any>>);
+    use: TypeOnly<current.FluidObjectProvider<any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectProvider(
     get_old_TypeAliasDeclaration_FluidObjectProvider());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_FluidObjectProvider(
 declare function get_current_TypeAliasDeclaration_FluidObjectProvider():
     TypeOnly<current.FluidObjectProvider<any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectProvider(
-    use: TypeOnly<old.FluidObjectProvider<any>>);
+    use: TypeOnly<old.FluidObjectProvider<any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectProvider(
     get_current_TypeAliasDeclaration_FluidObjectProvider());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_FluidObjectProvider(
 declare function get_old_TypeAliasDeclaration_FluidObjectSymbolProvider():
     TypeOnly<old.FluidObjectSymbolProvider<any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectSymbolProvider(
-    use: TypeOnly<current.FluidObjectSymbolProvider<any>>);
+    use: TypeOnly<current.FluidObjectSymbolProvider<any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectSymbolProvider(
     get_old_TypeAliasDeclaration_FluidObjectSymbolProvider());
 
@@ -161,7 +161,7 @@ use_current_TypeAliasDeclaration_FluidObjectSymbolProvider(
 declare function get_current_TypeAliasDeclaration_FluidObjectSymbolProvider():
     TypeOnly<current.FluidObjectSymbolProvider<any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectSymbolProvider(
-    use: TypeOnly<old.FluidObjectSymbolProvider<any>>);
+    use: TypeOnly<old.FluidObjectSymbolProvider<any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectSymbolProvider(
     get_current_TypeAliasDeclaration_FluidObjectSymbolProvider());
 
@@ -173,7 +173,7 @@ use_old_TypeAliasDeclaration_FluidObjectSymbolProvider(
 declare function get_old_VariableDeclaration_IFluidDependencySynthesizer():
     TypeOnly<typeof old.IFluidDependencySynthesizer>;
 declare function use_current_VariableDeclaration_IFluidDependencySynthesizer(
-    use: TypeOnly<typeof current.IFluidDependencySynthesizer>);
+    use: TypeOnly<typeof current.IFluidDependencySynthesizer>): void;
 use_current_VariableDeclaration_IFluidDependencySynthesizer(
     get_old_VariableDeclaration_IFluidDependencySynthesizer());
 
@@ -185,7 +185,7 @@ use_current_VariableDeclaration_IFluidDependencySynthesizer(
 declare function get_current_VariableDeclaration_IFluidDependencySynthesizer():
     TypeOnly<typeof current.IFluidDependencySynthesizer>;
 declare function use_old_VariableDeclaration_IFluidDependencySynthesizer(
-    use: TypeOnly<typeof old.IFluidDependencySynthesizer>);
+    use: TypeOnly<typeof old.IFluidDependencySynthesizer>): void;
 use_old_VariableDeclaration_IFluidDependencySynthesizer(
     get_current_VariableDeclaration_IFluidDependencySynthesizer());
 
@@ -197,7 +197,7 @@ use_old_VariableDeclaration_IFluidDependencySynthesizer(
 declare function get_old_InterfaceDeclaration_IFluidDependencySynthesizer():
     TypeOnly<old.IFluidDependencySynthesizer>;
 declare function use_current_InterfaceDeclaration_IFluidDependencySynthesizer(
-    use: TypeOnly<current.IFluidDependencySynthesizer>);
+    use: TypeOnly<current.IFluidDependencySynthesizer>): void;
 use_current_InterfaceDeclaration_IFluidDependencySynthesizer(
     get_old_InterfaceDeclaration_IFluidDependencySynthesizer());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IFluidDependencySynthesizer(
 declare function get_current_InterfaceDeclaration_IFluidDependencySynthesizer():
     TypeOnly<current.IFluidDependencySynthesizer>;
 declare function use_old_InterfaceDeclaration_IFluidDependencySynthesizer(
-    use: TypeOnly<old.IFluidDependencySynthesizer>);
+    use: TypeOnly<old.IFluidDependencySynthesizer>): void;
 use_old_InterfaceDeclaration_IFluidDependencySynthesizer(
     get_current_InterfaceDeclaration_IFluidDependencySynthesizer());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IFluidDependencySynthesizer(
 declare function get_old_InterfaceDeclaration_IProvideFluidDependencySynthesizer():
     TypeOnly<old.IProvideFluidDependencySynthesizer>;
 declare function use_current_InterfaceDeclaration_IProvideFluidDependencySynthesizer(
-    use: TypeOnly<current.IProvideFluidDependencySynthesizer>);
+    use: TypeOnly<current.IProvideFluidDependencySynthesizer>): void;
 use_current_InterfaceDeclaration_IProvideFluidDependencySynthesizer(
     get_old_InterfaceDeclaration_IProvideFluidDependencySynthesizer());
 
@@ -233,6 +233,6 @@ use_current_InterfaceDeclaration_IProvideFluidDependencySynthesizer(
 declare function get_current_InterfaceDeclaration_IProvideFluidDependencySynthesizer():
     TypeOnly<current.IProvideFluidDependencySynthesizer>;
 declare function use_old_InterfaceDeclaration_IProvideFluidDependencySynthesizer(
-    use: TypeOnly<old.IProvideFluidDependencySynthesizer>);
+    use: TypeOnly<old.IProvideFluidDependencySynthesizer>): void;
 use_old_InterfaceDeclaration_IProvideFluidDependencySynthesizer(
     get_current_InterfaceDeclaration_IProvideFluidDependencySynthesizer());

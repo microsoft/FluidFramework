@@ -16,6 +16,7 @@
 @fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
+@fluid-experimental/odsp-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
@@ -38,6 +39,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
+@fluid-experimental/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler

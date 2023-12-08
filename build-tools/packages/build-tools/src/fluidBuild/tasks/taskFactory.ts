@@ -17,7 +17,7 @@ import {
 	DepCruiseTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { TscTask } from "./leaf/tscTask";
+import { TscMultiTask, TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { GroupTask } from "./groupTask";
 import { Task } from "./task";
@@ -28,6 +28,7 @@ const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
 	"tsc": TscTask,
+	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,

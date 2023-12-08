@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { Brand, brandedStringType, generateStableId } from "../../util";
+import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -21,7 +21,8 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
-export const RevisionTagSchema = brandedStringType<StableId>();
+export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
+export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
@@ -49,6 +50,21 @@ export interface ChangeAtomId {
 	 */
 	readonly localId: ChangesetLocalId;
 }
+
+export interface EncodedChangeAtomId {
+	readonly revision?: EncodedRevisionTag;
+	readonly localId: ChangesetLocalId;
+}
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
 /**
  * @returns true iff `a` and `b` are the same.

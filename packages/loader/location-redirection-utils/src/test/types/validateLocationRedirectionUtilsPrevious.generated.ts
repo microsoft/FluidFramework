@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_FunctionDeclaration_isLocationRedirectionError():
     TypeOnly<typeof old.isLocationRedirectionError>;
 declare function use_current_FunctionDeclaration_isLocationRedirectionError(
-    use: TypeOnly<typeof current.isLocationRedirectionError>);
+    use: TypeOnly<typeof current.isLocationRedirectionError>): void;
 use_current_FunctionDeclaration_isLocationRedirectionError(
     get_old_FunctionDeclaration_isLocationRedirectionError());
 
@@ -41,7 +41,7 @@ use_current_FunctionDeclaration_isLocationRedirectionError(
 declare function get_current_FunctionDeclaration_isLocationRedirectionError():
     TypeOnly<typeof current.isLocationRedirectionError>;
 declare function use_old_FunctionDeclaration_isLocationRedirectionError(
-    use: TypeOnly<typeof old.isLocationRedirectionError>);
+    use: TypeOnly<typeof old.isLocationRedirectionError>): void;
 use_old_FunctionDeclaration_isLocationRedirectionError(
     get_current_FunctionDeclaration_isLocationRedirectionError());
 
@@ -53,7 +53,7 @@ use_old_FunctionDeclaration_isLocationRedirectionError(
 declare function get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling():
     TypeOnly<typeof old.resolveWithLocationRedirectionHandling>;
 declare function use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
-    use: TypeOnly<typeof current.resolveWithLocationRedirectionHandling>);
+    use: TypeOnly<typeof current.resolveWithLocationRedirectionHandling>): void;
 use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
     get_old_FunctionDeclaration_resolveWithLocationRedirectionHandling());
 
@@ -65,6 +65,6 @@ use_current_FunctionDeclaration_resolveWithLocationRedirectionHandling(
 declare function get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling():
     TypeOnly<typeof current.resolveWithLocationRedirectionHandling>;
 declare function use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
-    use: TypeOnly<typeof old.resolveWithLocationRedirectionHandling>);
+    use: TypeOnly<typeof old.resolveWithLocationRedirectionHandling>): void;
 use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
     get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling());

@@ -23,12 +23,12 @@ const all = [handle, nullSchema, ...primitives] as const;
 const library = builder.intoLibrary();
 
 /**
- * Schema for the built-in {@link Leaf} node types.
+ * Built-in {@link LeafNodeSchema}.
  * @alpha
  */
 export const leaf = {
 	/**
-	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `number`.
+	 * {@link LeafNodeSchema} for holding a JavaScript `number`.
 	 *
 	 * @remarks
 	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
@@ -44,12 +44,12 @@ export const leaf = {
 	number,
 
 	/**
-	 * {@link TreeNodeSchema} for a {@link Leaf} holding a boolean.
+	 * {@link LeafNodeSchema} for holding a boolean.
 	 */
 	boolean,
 
 	/**
-	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `string`.
+	 * {@link LeafNodeSchema} for holding a JavaScript `string`.
 	 *
 	 * @remarks
 	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
@@ -64,34 +64,34 @@ export const leaf = {
 	string,
 
 	/**
-	 * {@link TreeNodeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link LeafNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
 	handle,
 
 	/**
-	 * JavaScript `null`.
+	 * {@link LeafNodeSchema} for JavaScript `null`.
 	 *
 	 * @remarks
 	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
-	 * This {@link Leaf} node provide the option to include nulls in trees when desired.
+	 * This {@link LeafNodeSchema} node provides the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
 	null: nullSchema,
 
 	/**
-	 * The set of leaf schema which correspond to JavaScript primitive (non-object) types.
+	 * The set of {@link LeafNodeSchema} which correspond to JavaScript primitive (non-object) types.
 	 */
 	primitives,
 
 	/**
-	 * Types allowed as roots of Json content.
+	 * All {@link LeafNodeSchema} defined in this library..
 	 */
 	all,
 
 	/**
-	 * {@link SchemaLibrary} of the Leaf Schema types.
+	 * {@link SchemaLibrary} of the {@link LeafNodeSchema}.
 	 *
-	 * @remarks
+	 * @privateRemarks
 	 * This is included by default in schema produced with {@link SchemaBuilder}.
 	 */
 	library,

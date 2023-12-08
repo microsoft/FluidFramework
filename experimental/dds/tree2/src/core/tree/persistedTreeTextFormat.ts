@@ -79,7 +79,7 @@ interface EncodedGenericTreeNode<TChild>
 	extends EncodedGenericFieldsNode<TChild>,
 		EncodedNodeData {}
 const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Intersect([EncodedGenericFieldsNode(tChild), EncodedNodeData], {
+	Type.Composite([EncodedGenericFieldsNode(tChild), EncodedNodeData], {
 		additionalProperties: false,
 	});
 

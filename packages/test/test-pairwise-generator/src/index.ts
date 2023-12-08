@@ -5,15 +5,24 @@
 
 import random from "random-js";
 
-// converts all properties of an object to arrays of the
-// properties potential values. This will be used by generatePairwiseOptions
-// to compute original objects that contain pairwise combinations
-// of all property values
+/**
+ * Converts all properties of an object to arrays of the
+ * properties potential values. This will be used by generatePairwiseOptions
+ * to compute original objects that contain pairwise combinations of all property values
+ * @internal
+ */
 export type OptionsMatrix<T extends Record<string, any>> = Required<{
 	[K in keyof T]: readonly T[K][];
 }>;
 
+/**
+ * @internal
+ */
 export const booleanCases: readonly boolean[] = [true, false];
+
+/**
+ * @internal
+ */
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
 type PartialWithKeyCount<T extends Record<string, any>> = Partial<T> & {
@@ -69,6 +78,9 @@ function applyPairToPartial<T extends Record<string, any>>(
 	}
 }
 
+/**
+ * @internal
+ */
 export function generatePairwiseOptions<T extends Record<string, any>>(
 	optionsMatrix: OptionsMatrix<T>,
 	randomSeed: number = 0x35843,

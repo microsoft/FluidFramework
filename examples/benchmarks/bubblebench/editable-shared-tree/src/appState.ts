@@ -16,7 +16,9 @@ export class AppState implements IAppState {
 		numBubbles: number,
 	) {
 		clientsSequence.insertAtEnd([this.createInitialClientNode(numBubbles)]);
-		const lastCLient = clientsSequence.boxedAt(clientsSequence.length - 1);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const lastCLient = clientsSequence.boxedAt(clientsSequence.length - 1)!;
+
 		this.localClient = new ClientWrapper(lastCLient);
 
 		console.log(

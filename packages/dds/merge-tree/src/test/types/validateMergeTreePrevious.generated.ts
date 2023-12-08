@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_AttributionPolicy():
     TypeOnly<old.AttributionPolicy>;
 declare function use_current_InterfaceDeclaration_AttributionPolicy(
-    use: TypeOnly<current.AttributionPolicy>);
+    use: TypeOnly<current.AttributionPolicy>): void;
 use_current_InterfaceDeclaration_AttributionPolicy(
     get_old_InterfaceDeclaration_AttributionPolicy());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_AttributionPolicy(
 declare function get_current_InterfaceDeclaration_AttributionPolicy():
     TypeOnly<current.AttributionPolicy>;
 declare function use_old_InterfaceDeclaration_AttributionPolicy(
-    use: TypeOnly<old.AttributionPolicy>);
+    use: TypeOnly<old.AttributionPolicy>): void;
 use_old_InterfaceDeclaration_AttributionPolicy(
     get_current_InterfaceDeclaration_AttributionPolicy());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_AttributionPolicy(
 declare function get_old_ClassDeclaration_BaseSegment():
     TypeOnly<old.BaseSegment>;
 declare function use_current_ClassDeclaration_BaseSegment(
-    use: TypeOnly<current.BaseSegment>);
+    use: TypeOnly<current.BaseSegment>): void;
 use_current_ClassDeclaration_BaseSegment(
     get_old_ClassDeclaration_BaseSegment());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_BaseSegment(
 declare function get_current_ClassDeclaration_BaseSegment():
     TypeOnly<current.BaseSegment>;
 declare function use_old_ClassDeclaration_BaseSegment(
-    use: TypeOnly<old.BaseSegment>);
+    use: TypeOnly<old.BaseSegment>): void;
 use_old_ClassDeclaration_BaseSegment(
     get_current_ClassDeclaration_BaseSegment());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_BaseSegment(
 declare function get_old_ClassDeclaration_Client():
     TypeOnly<old.Client>;
 declare function use_current_ClassDeclaration_Client(
-    use: TypeOnly<current.Client>);
+    use: TypeOnly<current.Client>): void;
 use_current_ClassDeclaration_Client(
     get_old_ClassDeclaration_Client());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_Client(
 declare function get_current_ClassDeclaration_Client():
     TypeOnly<current.Client>;
 declare function use_old_ClassDeclaration_Client(
-    use: TypeOnly<old.Client>);
+    use: TypeOnly<old.Client>): void;
 use_old_ClassDeclaration_Client(
     get_current_ClassDeclaration_Client());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_Client(
 declare function get_old_ClassDeclaration_CollaborationWindow():
     TypeOnly<old.CollaborationWindow>;
 declare function use_current_ClassDeclaration_CollaborationWindow(
-    use: TypeOnly<current.CollaborationWindow>);
+    use: TypeOnly<current.CollaborationWindow>): void;
 use_current_ClassDeclaration_CollaborationWindow(
     get_old_ClassDeclaration_CollaborationWindow());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_CollaborationWindow(
 declare function get_current_ClassDeclaration_CollaborationWindow():
     TypeOnly<current.CollaborationWindow>;
 declare function use_old_ClassDeclaration_CollaborationWindow(
-    use: TypeOnly<old.CollaborationWindow>);
+    use: TypeOnly<old.CollaborationWindow>): void;
 use_old_ClassDeclaration_CollaborationWindow(
     get_current_ClassDeclaration_CollaborationWindow());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_CollaborationWindow(
 declare function get_old_TypeAliasDeclaration_ConflictAction():
     TypeOnly<old.ConflictAction<any,any>>;
 declare function use_current_TypeAliasDeclaration_ConflictAction(
-    use: TypeOnly<current.ConflictAction<any,any>>);
+    use: TypeOnly<current.ConflictAction<any,any>>): void;
 use_current_TypeAliasDeclaration_ConflictAction(
     get_old_TypeAliasDeclaration_ConflictAction());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_ConflictAction(
 declare function get_current_TypeAliasDeclaration_ConflictAction():
     TypeOnly<current.ConflictAction<any,any>>;
 declare function use_old_TypeAliasDeclaration_ConflictAction(
-    use: TypeOnly<old.ConflictAction<any,any>>);
+    use: TypeOnly<old.ConflictAction<any,any>>): void;
 use_old_TypeAliasDeclaration_ConflictAction(
     get_current_TypeAliasDeclaration_ConflictAction());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_ConflictAction(
 declare function get_old_VariableDeclaration_DetachedReferencePosition():
     TypeOnly<typeof old.DetachedReferencePosition>;
 declare function use_current_VariableDeclaration_DetachedReferencePosition(
-    use: TypeOnly<typeof current.DetachedReferencePosition>);
+    use: TypeOnly<typeof current.DetachedReferencePosition>): void;
 use_current_VariableDeclaration_DetachedReferencePosition(
     get_old_VariableDeclaration_DetachedReferencePosition());
 
@@ -161,7 +161,7 @@ use_current_VariableDeclaration_DetachedReferencePosition(
 declare function get_current_VariableDeclaration_DetachedReferencePosition():
     TypeOnly<typeof current.DetachedReferencePosition>;
 declare function use_old_VariableDeclaration_DetachedReferencePosition(
-    use: TypeOnly<typeof old.DetachedReferencePosition>);
+    use: TypeOnly<typeof old.DetachedReferencePosition>): void;
 use_old_VariableDeclaration_DetachedReferencePosition(
     get_current_VariableDeclaration_DetachedReferencePosition());
 
@@ -173,7 +173,7 @@ use_old_VariableDeclaration_DetachedReferencePosition(
 declare function get_old_InterfaceDeclaration_Dictionary():
     TypeOnly<old.Dictionary<any,any>>;
 declare function use_current_InterfaceDeclaration_Dictionary(
-    use: TypeOnly<current.Dictionary<any,any>>);
+    use: TypeOnly<current.Dictionary<any,any>>): void;
 use_current_InterfaceDeclaration_Dictionary(
     get_old_InterfaceDeclaration_Dictionary());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_Dictionary(
 declare function get_current_InterfaceDeclaration_Dictionary():
     TypeOnly<current.Dictionary<any,any>>;
 declare function use_old_InterfaceDeclaration_Dictionary(
-    use: TypeOnly<old.Dictionary<any,any>>);
+    use: TypeOnly<old.Dictionary<any,any>>): void;
 use_old_InterfaceDeclaration_Dictionary(
     get_current_InterfaceDeclaration_Dictionary());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_Dictionary(
 declare function get_old_InterfaceDeclaration_IAttributionCollection():
     TypeOnly<old.IAttributionCollection<any>>;
 declare function use_current_InterfaceDeclaration_IAttributionCollection(
-    use: TypeOnly<current.IAttributionCollection<any>>);
+    use: TypeOnly<current.IAttributionCollection<any>>): void;
 use_current_InterfaceDeclaration_IAttributionCollection(
     get_old_InterfaceDeclaration_IAttributionCollection());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IAttributionCollection(
 declare function get_current_InterfaceDeclaration_IAttributionCollection():
     TypeOnly<current.IAttributionCollection<any>>;
 declare function use_old_InterfaceDeclaration_IAttributionCollection(
-    use: TypeOnly<old.IAttributionCollection<any>>);
+    use: TypeOnly<old.IAttributionCollection<any>>): void;
 use_old_InterfaceDeclaration_IAttributionCollection(
     get_current_InterfaceDeclaration_IAttributionCollection());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IAttributionCollection(
 declare function get_old_InterfaceDeclaration_IAttributionCollectionSerializer():
     TypeOnly<old.IAttributionCollectionSerializer>;
 declare function use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
-    use: TypeOnly<current.IAttributionCollectionSerializer>);
+    use: TypeOnly<current.IAttributionCollectionSerializer>): void;
 use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
     get_old_InterfaceDeclaration_IAttributionCollectionSerializer());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
 declare function get_current_InterfaceDeclaration_IAttributionCollectionSerializer():
     TypeOnly<current.IAttributionCollectionSerializer>;
 declare function use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
-    use: TypeOnly<old.IAttributionCollectionSerializer>);
+    use: TypeOnly<old.IAttributionCollectionSerializer>): void;
 use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
     get_current_InterfaceDeclaration_IAttributionCollectionSerializer());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
 declare function get_old_InterfaceDeclaration_IAttributionCollectionSpec():
     TypeOnly<old.IAttributionCollectionSpec<any>>;
 declare function use_current_InterfaceDeclaration_IAttributionCollectionSpec(
-    use: TypeOnly<current.IAttributionCollectionSpec<any>>);
+    use: TypeOnly<current.IAttributionCollectionSpec<any>>): void;
 use_current_InterfaceDeclaration_IAttributionCollectionSpec(
     get_old_InterfaceDeclaration_IAttributionCollectionSpec());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IAttributionCollectionSpec(
 declare function get_current_InterfaceDeclaration_IAttributionCollectionSpec():
     TypeOnly<current.IAttributionCollectionSpec<any>>;
 declare function use_old_InterfaceDeclaration_IAttributionCollectionSpec(
-    use: TypeOnly<old.IAttributionCollectionSpec<any>>);
+    use: TypeOnly<old.IAttributionCollectionSpec<any>>): void;
 use_old_InterfaceDeclaration_IAttributionCollectionSpec(
     get_current_InterfaceDeclaration_IAttributionCollectionSpec());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IAttributionCollectionSpec(
 declare function get_old_InterfaceDeclaration_ICombiningOp():
     TypeOnly<old.ICombiningOp>;
 declare function use_current_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<current.ICombiningOp>);
+    use: TypeOnly<current.ICombiningOp>): void;
 use_current_InterfaceDeclaration_ICombiningOp(
     get_old_InterfaceDeclaration_ICombiningOp());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_ICombiningOp(
 declare function get_current_InterfaceDeclaration_ICombiningOp():
     TypeOnly<current.ICombiningOp>;
 declare function use_old_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<old.ICombiningOp>);
+    use: TypeOnly<old.ICombiningOp>): void;
 use_old_InterfaceDeclaration_ICombiningOp(
     get_current_InterfaceDeclaration_ICombiningOp());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_ICombiningOp(
 declare function get_old_InterfaceDeclaration_IConsensusInfo():
     TypeOnly<old.IConsensusInfo>;
 declare function use_current_InterfaceDeclaration_IConsensusInfo(
-    use: TypeOnly<current.IConsensusInfo>);
+    use: TypeOnly<current.IConsensusInfo>): void;
 use_current_InterfaceDeclaration_IConsensusInfo(
     get_old_InterfaceDeclaration_IConsensusInfo());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_IConsensusInfo(
 declare function get_current_InterfaceDeclaration_IConsensusInfo():
     TypeOnly<current.IConsensusInfo>;
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
-    use: TypeOnly<old.IConsensusInfo>);
+    use: TypeOnly<old.IConsensusInfo>): void;
 use_old_InterfaceDeclaration_IConsensusInfo(
     get_current_InterfaceDeclaration_IConsensusInfo());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_IConsensusInfo(
 declare function get_old_InterfaceDeclaration_IConsensusValue():
     TypeOnly<old.IConsensusValue>;
 declare function use_current_InterfaceDeclaration_IConsensusValue(
-    use: TypeOnly<current.IConsensusValue>);
+    use: TypeOnly<current.IConsensusValue>): void;
 use_current_InterfaceDeclaration_IConsensusValue(
     get_old_InterfaceDeclaration_IConsensusValue());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_IConsensusValue(
 declare function get_current_InterfaceDeclaration_IConsensusValue():
     TypeOnly<current.IConsensusValue>;
 declare function use_old_InterfaceDeclaration_IConsensusValue(
-    use: TypeOnly<old.IConsensusValue>);
+    use: TypeOnly<old.IConsensusValue>): void;
 use_old_InterfaceDeclaration_IConsensusValue(
     get_current_InterfaceDeclaration_IConsensusValue());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_IConsensusValue(
 declare function get_old_InterfaceDeclaration_IIntegerRange():
     TypeOnly<old.IIntegerRange>;
 declare function use_current_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<current.IIntegerRange>);
+    use: TypeOnly<current.IIntegerRange>): void;
 use_current_InterfaceDeclaration_IIntegerRange(
     get_old_InterfaceDeclaration_IIntegerRange());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_IIntegerRange(
 declare function get_current_InterfaceDeclaration_IIntegerRange():
     TypeOnly<current.IIntegerRange>;
 declare function use_old_InterfaceDeclaration_IIntegerRange(
-    use: TypeOnly<old.IIntegerRange>);
+    use: TypeOnly<old.IIntegerRange>): void;
 use_old_InterfaceDeclaration_IIntegerRange(
     get_current_InterfaceDeclaration_IIntegerRange());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_IIntegerRange(
 declare function get_old_InterfaceDeclaration_IJSONMarkerSegment():
     TypeOnly<old.IJSONMarkerSegment>;
 declare function use_current_InterfaceDeclaration_IJSONMarkerSegment(
-    use: TypeOnly<current.IJSONMarkerSegment>);
+    use: TypeOnly<current.IJSONMarkerSegment>): void;
 use_current_InterfaceDeclaration_IJSONMarkerSegment(
     get_old_InterfaceDeclaration_IJSONMarkerSegment());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_IJSONMarkerSegment(
 declare function get_current_InterfaceDeclaration_IJSONMarkerSegment():
     TypeOnly<current.IJSONMarkerSegment>;
 declare function use_old_InterfaceDeclaration_IJSONMarkerSegment(
-    use: TypeOnly<old.IJSONMarkerSegment>);
+    use: TypeOnly<old.IJSONMarkerSegment>): void;
 use_old_InterfaceDeclaration_IJSONMarkerSegment(
     get_current_InterfaceDeclaration_IJSONMarkerSegment());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_IJSONMarkerSegment(
 declare function get_old_InterfaceDeclaration_IJSONSegment():
     TypeOnly<old.IJSONSegment>;
 declare function use_current_InterfaceDeclaration_IJSONSegment(
-    use: TypeOnly<current.IJSONSegment>);
+    use: TypeOnly<current.IJSONSegment>): void;
 use_current_InterfaceDeclaration_IJSONSegment(
     get_old_InterfaceDeclaration_IJSONSegment());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IJSONSegment(
 declare function get_current_InterfaceDeclaration_IJSONSegment():
     TypeOnly<current.IJSONSegment>;
 declare function use_old_InterfaceDeclaration_IJSONSegment(
-    use: TypeOnly<old.IJSONSegment>);
+    use: TypeOnly<old.IJSONSegment>): void;
 use_old_InterfaceDeclaration_IJSONSegment(
     get_current_InterfaceDeclaration_IJSONSegment());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IJSONSegment(
 declare function get_old_InterfaceDeclaration_IJSONTextSegment():
     TypeOnly<old.IJSONTextSegment>;
 declare function use_current_InterfaceDeclaration_IJSONTextSegment(
-    use: TypeOnly<current.IJSONTextSegment>);
+    use: TypeOnly<current.IJSONTextSegment>): void;
 use_current_InterfaceDeclaration_IJSONTextSegment(
     get_old_InterfaceDeclaration_IJSONTextSegment());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_IJSONTextSegment(
 declare function get_current_InterfaceDeclaration_IJSONTextSegment():
     TypeOnly<current.IJSONTextSegment>;
 declare function use_old_InterfaceDeclaration_IJSONTextSegment(
-    use: TypeOnly<old.IJSONTextSegment>);
+    use: TypeOnly<old.IJSONTextSegment>): void;
 use_old_InterfaceDeclaration_IJSONTextSegment(
     get_current_InterfaceDeclaration_IJSONTextSegment());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_IJSONTextSegment(
 declare function get_old_InterfaceDeclaration_IMarkerDef():
     TypeOnly<old.IMarkerDef>;
 declare function use_current_InterfaceDeclaration_IMarkerDef(
-    use: TypeOnly<current.IMarkerDef>);
+    use: TypeOnly<current.IMarkerDef>): void;
 use_current_InterfaceDeclaration_IMarkerDef(
     get_old_InterfaceDeclaration_IMarkerDef());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_IMarkerDef(
 declare function get_current_InterfaceDeclaration_IMarkerDef():
     TypeOnly<current.IMarkerDef>;
 declare function use_old_InterfaceDeclaration_IMarkerDef(
-    use: TypeOnly<old.IMarkerDef>);
+    use: TypeOnly<old.IMarkerDef>): void;
 use_old_InterfaceDeclaration_IMarkerDef(
     get_current_InterfaceDeclaration_IMarkerDef());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_IMarkerDef(
 declare function get_old_InterfaceDeclaration_IMarkerModifiedAction():
     TypeOnly<old.IMarkerModifiedAction>;
 declare function use_current_InterfaceDeclaration_IMarkerModifiedAction(
-    use: TypeOnly<current.IMarkerModifiedAction>);
+    use: TypeOnly<current.IMarkerModifiedAction>): void;
 use_current_InterfaceDeclaration_IMarkerModifiedAction(
     get_old_InterfaceDeclaration_IMarkerModifiedAction());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_IMarkerModifiedAction(
 declare function get_current_InterfaceDeclaration_IMarkerModifiedAction():
     TypeOnly<current.IMarkerModifiedAction>;
 declare function use_old_InterfaceDeclaration_IMarkerModifiedAction(
-    use: TypeOnly<old.IMarkerModifiedAction>);
+    use: TypeOnly<old.IMarkerModifiedAction>): void;
 use_old_InterfaceDeclaration_IMarkerModifiedAction(
     get_current_InterfaceDeclaration_IMarkerModifiedAction());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_IMarkerModifiedAction(
 declare function get_old_InterfaceDeclaration_IMergeNodeCommon():
     TypeOnly<old.IMergeNodeCommon>;
 declare function use_current_InterfaceDeclaration_IMergeNodeCommon(
-    use: TypeOnly<current.IMergeNodeCommon>);
+    use: TypeOnly<current.IMergeNodeCommon>): void;
 use_current_InterfaceDeclaration_IMergeNodeCommon(
     get_old_InterfaceDeclaration_IMergeNodeCommon());
 
@@ -497,7 +497,7 @@ use_current_InterfaceDeclaration_IMergeNodeCommon(
 declare function get_current_InterfaceDeclaration_IMergeNodeCommon():
     TypeOnly<current.IMergeNodeCommon>;
 declare function use_old_InterfaceDeclaration_IMergeNodeCommon(
-    use: TypeOnly<old.IMergeNodeCommon>);
+    use: TypeOnly<old.IMergeNodeCommon>): void;
 use_old_InterfaceDeclaration_IMergeNodeCommon(
     get_current_InterfaceDeclaration_IMergeNodeCommon());
 
@@ -509,7 +509,7 @@ use_old_InterfaceDeclaration_IMergeNodeCommon(
 declare function get_old_InterfaceDeclaration_IMergeTreeAnnotateMsg():
     TypeOnly<old.IMergeTreeAnnotateMsg>;
 declare function use_current_InterfaceDeclaration_IMergeTreeAnnotateMsg(
-    use: TypeOnly<current.IMergeTreeAnnotateMsg>);
+    use: TypeOnly<current.IMergeTreeAnnotateMsg>): void;
 use_current_InterfaceDeclaration_IMergeTreeAnnotateMsg(
     get_old_InterfaceDeclaration_IMergeTreeAnnotateMsg());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_IMergeTreeAnnotateMsg(
 declare function get_current_InterfaceDeclaration_IMergeTreeAnnotateMsg():
     TypeOnly<current.IMergeTreeAnnotateMsg>;
 declare function use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
-    use: TypeOnly<old.IMergeTreeAnnotateMsg>);
+    use: TypeOnly<old.IMergeTreeAnnotateMsg>): void;
 use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
     get_current_InterfaceDeclaration_IMergeTreeAnnotateMsg());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_IMergeTreeAnnotateMsg(
 declare function get_old_InterfaceDeclaration_IMergeTreeAttributionOptions():
     TypeOnly<old.IMergeTreeAttributionOptions>;
 declare function use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
-    use: TypeOnly<current.IMergeTreeAttributionOptions>);
+    use: TypeOnly<current.IMergeTreeAttributionOptions>): void;
 use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
     get_old_InterfaceDeclaration_IMergeTreeAttributionOptions());
 
@@ -545,7 +545,7 @@ use_current_InterfaceDeclaration_IMergeTreeAttributionOptions(
 declare function get_current_InterfaceDeclaration_IMergeTreeAttributionOptions():
     TypeOnly<current.IMergeTreeAttributionOptions>;
 declare function use_old_InterfaceDeclaration_IMergeTreeAttributionOptions(
-    use: TypeOnly<old.IMergeTreeAttributionOptions>);
+    use: TypeOnly<old.IMergeTreeAttributionOptions>): void;
 use_old_InterfaceDeclaration_IMergeTreeAttributionOptions(
     get_current_InterfaceDeclaration_IMergeTreeAttributionOptions());
 
@@ -557,7 +557,7 @@ use_old_InterfaceDeclaration_IMergeTreeAttributionOptions(
 declare function get_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs():
     TypeOnly<old.IMergeTreeClientSequenceArgs>;
 declare function use_current_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
-    use: TypeOnly<current.IMergeTreeClientSequenceArgs>);
+    use: TypeOnly<current.IMergeTreeClientSequenceArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
     get_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
 declare function get_current_InterfaceDeclaration_IMergeTreeClientSequenceArgs():
     TypeOnly<current.IMergeTreeClientSequenceArgs>;
 declare function use_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
-    use: TypeOnly<old.IMergeTreeClientSequenceArgs>);
+    use: TypeOnly<old.IMergeTreeClientSequenceArgs>): void;
 use_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
     get_current_InterfaceDeclaration_IMergeTreeClientSequenceArgs());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_IMergeTreeClientSequenceArgs(
 declare function get_old_InterfaceDeclaration_IMergeTreeDelta():
     TypeOnly<old.IMergeTreeDelta>;
 declare function use_current_InterfaceDeclaration_IMergeTreeDelta(
-    use: TypeOnly<current.IMergeTreeDelta>);
+    use: TypeOnly<current.IMergeTreeDelta>): void;
 use_current_InterfaceDeclaration_IMergeTreeDelta(
     get_old_InterfaceDeclaration_IMergeTreeDelta());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_IMergeTreeDelta(
 declare function get_current_InterfaceDeclaration_IMergeTreeDelta():
     TypeOnly<current.IMergeTreeDelta>;
 declare function use_old_InterfaceDeclaration_IMergeTreeDelta(
-    use: TypeOnly<old.IMergeTreeDelta>);
+    use: TypeOnly<old.IMergeTreeDelta>): void;
 use_old_InterfaceDeclaration_IMergeTreeDelta(
     get_current_InterfaceDeclaration_IMergeTreeDelta());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_IMergeTreeDelta(
 declare function get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
     TypeOnly<old.IMergeTreeDeltaCallbackArgs>;
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
-    use: TypeOnly<current.IMergeTreeDeltaCallbackArgs>);
+    use: TypeOnly<current.IMergeTreeDeltaCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
@@ -617,7 +617,7 @@ use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
 declare function get_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
     TypeOnly<current.IMergeTreeDeltaCallbackArgs>;
 declare function use_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
-    use: TypeOnly<old.IMergeTreeDeltaCallbackArgs>);
+    use: TypeOnly<old.IMergeTreeDeltaCallbackArgs>): void;
 use_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     get_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
@@ -629,7 +629,7 @@ use_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
 declare function get_old_TypeAliasDeclaration_IMergeTreeDeltaOp():
     TypeOnly<old.IMergeTreeDeltaOp>;
 declare function use_current_TypeAliasDeclaration_IMergeTreeDeltaOp(
-    use: TypeOnly<current.IMergeTreeDeltaOp>);
+    use: TypeOnly<current.IMergeTreeDeltaOp>): void;
 use_current_TypeAliasDeclaration_IMergeTreeDeltaOp(
     get_old_TypeAliasDeclaration_IMergeTreeDeltaOp());
 
@@ -641,7 +641,7 @@ use_current_TypeAliasDeclaration_IMergeTreeDeltaOp(
 declare function get_current_TypeAliasDeclaration_IMergeTreeDeltaOp():
     TypeOnly<current.IMergeTreeDeltaOp>;
 declare function use_old_TypeAliasDeclaration_IMergeTreeDeltaOp(
-    use: TypeOnly<old.IMergeTreeDeltaOp>);
+    use: TypeOnly<old.IMergeTreeDeltaOp>): void;
 use_old_TypeAliasDeclaration_IMergeTreeDeltaOp(
     get_current_TypeAliasDeclaration_IMergeTreeDeltaOp());
 
@@ -653,7 +653,7 @@ use_old_TypeAliasDeclaration_IMergeTreeDeltaOp(
 declare function get_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs():
     TypeOnly<old.IMergeTreeDeltaOpArgs>;
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
-    use: TypeOnly<current.IMergeTreeDeltaOpArgs>);
+    use: TypeOnly<current.IMergeTreeDeltaOpArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
     get_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs());
 
@@ -665,7 +665,7 @@ use_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
 declare function get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs():
     TypeOnly<current.IMergeTreeDeltaOpArgs>;
 declare function use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
-    use: TypeOnly<old.IMergeTreeDeltaOpArgs>);
+    use: TypeOnly<old.IMergeTreeDeltaOpArgs>): void;
 use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
     get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs());
 
@@ -677,7 +677,7 @@ use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
 declare function get_old_InterfaceDeclaration_IMergeTreeGroupMsg():
     TypeOnly<old.IMergeTreeGroupMsg>;
 declare function use_current_InterfaceDeclaration_IMergeTreeGroupMsg(
-    use: TypeOnly<current.IMergeTreeGroupMsg>);
+    use: TypeOnly<current.IMergeTreeGroupMsg>): void;
 use_current_InterfaceDeclaration_IMergeTreeGroupMsg(
     get_old_InterfaceDeclaration_IMergeTreeGroupMsg());
 
@@ -689,7 +689,7 @@ use_current_InterfaceDeclaration_IMergeTreeGroupMsg(
 declare function get_current_InterfaceDeclaration_IMergeTreeGroupMsg():
     TypeOnly<current.IMergeTreeGroupMsg>;
 declare function use_old_InterfaceDeclaration_IMergeTreeGroupMsg(
-    use: TypeOnly<old.IMergeTreeGroupMsg>);
+    use: TypeOnly<old.IMergeTreeGroupMsg>): void;
 use_old_InterfaceDeclaration_IMergeTreeGroupMsg(
     get_current_InterfaceDeclaration_IMergeTreeGroupMsg());
 
@@ -701,7 +701,7 @@ use_old_InterfaceDeclaration_IMergeTreeGroupMsg(
 declare function get_old_InterfaceDeclaration_IMergeTreeInsertMsg():
     TypeOnly<old.IMergeTreeInsertMsg>;
 declare function use_current_InterfaceDeclaration_IMergeTreeInsertMsg(
-    use: TypeOnly<current.IMergeTreeInsertMsg>);
+    use: TypeOnly<current.IMergeTreeInsertMsg>): void;
 use_current_InterfaceDeclaration_IMergeTreeInsertMsg(
     get_old_InterfaceDeclaration_IMergeTreeInsertMsg());
 
@@ -713,7 +713,7 @@ use_current_InterfaceDeclaration_IMergeTreeInsertMsg(
 declare function get_current_InterfaceDeclaration_IMergeTreeInsertMsg():
     TypeOnly<current.IMergeTreeInsertMsg>;
 declare function use_old_InterfaceDeclaration_IMergeTreeInsertMsg(
-    use: TypeOnly<old.IMergeTreeInsertMsg>);
+    use: TypeOnly<old.IMergeTreeInsertMsg>): void;
 use_old_InterfaceDeclaration_IMergeTreeInsertMsg(
     get_current_InterfaceDeclaration_IMergeTreeInsertMsg());
 
@@ -725,7 +725,7 @@ use_old_InterfaceDeclaration_IMergeTreeInsertMsg(
 declare function get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs():
     TypeOnly<old.IMergeTreeMaintenanceCallbackArgs>;
 declare function use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
-    use: TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>);
+    use: TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
@@ -737,7 +737,7 @@ use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
 declare function get_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs():
     TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>;
 declare function use_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
-    use: TypeOnly<old.IMergeTreeMaintenanceCallbackArgs>);
+    use: TypeOnly<old.IMergeTreeMaintenanceCallbackArgs>): void;
 use_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     get_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
@@ -749,7 +749,7 @@ use_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
 declare function get_old_TypeAliasDeclaration_IMergeTreeOp():
     TypeOnly<old.IMergeTreeOp>;
 declare function use_current_TypeAliasDeclaration_IMergeTreeOp(
-    use: TypeOnly<current.IMergeTreeOp>);
+    use: TypeOnly<current.IMergeTreeOp>): void;
 use_current_TypeAliasDeclaration_IMergeTreeOp(
     get_old_TypeAliasDeclaration_IMergeTreeOp());
 
@@ -761,7 +761,7 @@ use_current_TypeAliasDeclaration_IMergeTreeOp(
 declare function get_current_TypeAliasDeclaration_IMergeTreeOp():
     TypeOnly<current.IMergeTreeOp>;
 declare function use_old_TypeAliasDeclaration_IMergeTreeOp(
-    use: TypeOnly<old.IMergeTreeOp>);
+    use: TypeOnly<old.IMergeTreeOp>): void;
 use_old_TypeAliasDeclaration_IMergeTreeOp(
     get_current_TypeAliasDeclaration_IMergeTreeOp());
 
@@ -773,7 +773,7 @@ use_old_TypeAliasDeclaration_IMergeTreeOp(
 declare function get_old_InterfaceDeclaration_IMergeTreeOptions():
     TypeOnly<old.IMergeTreeOptions>;
 declare function use_current_InterfaceDeclaration_IMergeTreeOptions(
-    use: TypeOnly<current.IMergeTreeOptions>);
+    use: TypeOnly<current.IMergeTreeOptions>): void;
 use_current_InterfaceDeclaration_IMergeTreeOptions(
     get_old_InterfaceDeclaration_IMergeTreeOptions());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_IMergeTreeOptions(
 declare function get_current_InterfaceDeclaration_IMergeTreeOptions():
     TypeOnly<current.IMergeTreeOptions>;
 declare function use_old_InterfaceDeclaration_IMergeTreeOptions(
-    use: TypeOnly<old.IMergeTreeOptions>);
+    use: TypeOnly<old.IMergeTreeOptions>): void;
 use_old_InterfaceDeclaration_IMergeTreeOptions(
     get_current_InterfaceDeclaration_IMergeTreeOptions());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_IMergeTreeOptions(
 declare function get_old_InterfaceDeclaration_IMergeTreeRemoveMsg():
     TypeOnly<old.IMergeTreeRemoveMsg>;
 declare function use_current_InterfaceDeclaration_IMergeTreeRemoveMsg(
-    use: TypeOnly<current.IMergeTreeRemoveMsg>);
+    use: TypeOnly<current.IMergeTreeRemoveMsg>): void;
 use_current_InterfaceDeclaration_IMergeTreeRemoveMsg(
     get_old_InterfaceDeclaration_IMergeTreeRemoveMsg());
 
@@ -809,7 +809,7 @@ use_current_InterfaceDeclaration_IMergeTreeRemoveMsg(
 declare function get_current_InterfaceDeclaration_IMergeTreeRemoveMsg():
     TypeOnly<current.IMergeTreeRemoveMsg>;
 declare function use_old_InterfaceDeclaration_IMergeTreeRemoveMsg(
-    use: TypeOnly<old.IMergeTreeRemoveMsg>);
+    use: TypeOnly<old.IMergeTreeRemoveMsg>): void;
 use_old_InterfaceDeclaration_IMergeTreeRemoveMsg(
     get_current_InterfaceDeclaration_IMergeTreeRemoveMsg());
 
@@ -821,7 +821,7 @@ use_old_InterfaceDeclaration_IMergeTreeRemoveMsg(
 declare function get_old_InterfaceDeclaration_IMergeTreeSegmentDelta():
     TypeOnly<old.IMergeTreeSegmentDelta>;
 declare function use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
-    use: TypeOnly<current.IMergeTreeSegmentDelta>);
+    use: TypeOnly<current.IMergeTreeSegmentDelta>): void;
 use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
     get_old_InterfaceDeclaration_IMergeTreeSegmentDelta());
 
@@ -833,7 +833,7 @@ use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
 declare function get_current_InterfaceDeclaration_IMergeTreeSegmentDelta():
     TypeOnly<current.IMergeTreeSegmentDelta>;
 declare function use_old_InterfaceDeclaration_IMergeTreeSegmentDelta(
-    use: TypeOnly<old.IMergeTreeSegmentDelta>);
+    use: TypeOnly<old.IMergeTreeSegmentDelta>): void;
 use_old_InterfaceDeclaration_IMergeTreeSegmentDelta(
     get_current_InterfaceDeclaration_IMergeTreeSegmentDelta());
 
@@ -845,7 +845,7 @@ use_old_InterfaceDeclaration_IMergeTreeSegmentDelta(
 declare function get_old_InterfaceDeclaration_IMergeTreeTextHelper():
     TypeOnly<old.IMergeTreeTextHelper>;
 declare function use_current_InterfaceDeclaration_IMergeTreeTextHelper(
-    use: TypeOnly<current.IMergeTreeTextHelper>);
+    use: TypeOnly<current.IMergeTreeTextHelper>): void;
 use_current_InterfaceDeclaration_IMergeTreeTextHelper(
     get_old_InterfaceDeclaration_IMergeTreeTextHelper());
 
@@ -857,7 +857,7 @@ use_current_InterfaceDeclaration_IMergeTreeTextHelper(
 declare function get_current_InterfaceDeclaration_IMergeTreeTextHelper():
     TypeOnly<current.IMergeTreeTextHelper>;
 declare function use_old_InterfaceDeclaration_IMergeTreeTextHelper(
-    use: TypeOnly<old.IMergeTreeTextHelper>);
+    use: TypeOnly<old.IMergeTreeTextHelper>): void;
 use_old_InterfaceDeclaration_IMergeTreeTextHelper(
     get_current_InterfaceDeclaration_IMergeTreeTextHelper());
 
@@ -869,7 +869,7 @@ use_old_InterfaceDeclaration_IMergeTreeTextHelper(
 declare function get_old_InterfaceDeclaration_IRBAugmentation():
     TypeOnly<old.IRBAugmentation<any,any>>;
 declare function use_current_InterfaceDeclaration_IRBAugmentation(
-    use: TypeOnly<current.IRBAugmentation<any,any>>);
+    use: TypeOnly<current.IRBAugmentation<any,any>>): void;
 use_current_InterfaceDeclaration_IRBAugmentation(
     get_old_InterfaceDeclaration_IRBAugmentation());
 
@@ -881,7 +881,7 @@ use_current_InterfaceDeclaration_IRBAugmentation(
 declare function get_current_InterfaceDeclaration_IRBAugmentation():
     TypeOnly<current.IRBAugmentation<any,any>>;
 declare function use_old_InterfaceDeclaration_IRBAugmentation(
-    use: TypeOnly<old.IRBAugmentation<any,any>>);
+    use: TypeOnly<old.IRBAugmentation<any,any>>): void;
 use_old_InterfaceDeclaration_IRBAugmentation(
     get_current_InterfaceDeclaration_IRBAugmentation());
 
@@ -893,7 +893,7 @@ use_old_InterfaceDeclaration_IRBAugmentation(
 declare function get_old_InterfaceDeclaration_IRBMatcher():
     TypeOnly<old.IRBMatcher<any,any>>;
 declare function use_current_InterfaceDeclaration_IRBMatcher(
-    use: TypeOnly<current.IRBMatcher<any,any>>);
+    use: TypeOnly<current.IRBMatcher<any,any>>): void;
 use_current_InterfaceDeclaration_IRBMatcher(
     get_old_InterfaceDeclaration_IRBMatcher());
 
@@ -905,7 +905,7 @@ use_current_InterfaceDeclaration_IRBMatcher(
 declare function get_current_InterfaceDeclaration_IRBMatcher():
     TypeOnly<current.IRBMatcher<any,any>>;
 declare function use_old_InterfaceDeclaration_IRBMatcher(
-    use: TypeOnly<old.IRBMatcher<any,any>>);
+    use: TypeOnly<old.IRBMatcher<any,any>>): void;
 use_old_InterfaceDeclaration_IRBMatcher(
     get_current_InterfaceDeclaration_IRBMatcher());
 
@@ -917,7 +917,7 @@ use_old_InterfaceDeclaration_IRBMatcher(
 declare function get_old_InterfaceDeclaration_IRelativePosition():
     TypeOnly<old.IRelativePosition>;
 declare function use_current_InterfaceDeclaration_IRelativePosition(
-    use: TypeOnly<current.IRelativePosition>);
+    use: TypeOnly<current.IRelativePosition>): void;
 use_current_InterfaceDeclaration_IRelativePosition(
     get_old_InterfaceDeclaration_IRelativePosition());
 
@@ -929,7 +929,7 @@ use_current_InterfaceDeclaration_IRelativePosition(
 declare function get_current_InterfaceDeclaration_IRelativePosition():
     TypeOnly<current.IRelativePosition>;
 declare function use_old_InterfaceDeclaration_IRelativePosition(
-    use: TypeOnly<old.IRelativePosition>);
+    use: TypeOnly<old.IRelativePosition>): void;
 use_old_InterfaceDeclaration_IRelativePosition(
     get_current_InterfaceDeclaration_IRelativePosition());
 
@@ -941,7 +941,7 @@ use_old_InterfaceDeclaration_IRelativePosition(
 declare function get_old_InterfaceDeclaration_IRemovalInfo():
     TypeOnly<old.IRemovalInfo>;
 declare function use_current_InterfaceDeclaration_IRemovalInfo(
-    use: TypeOnly<current.IRemovalInfo>);
+    use: TypeOnly<current.IRemovalInfo>): void;
 use_current_InterfaceDeclaration_IRemovalInfo(
     get_old_InterfaceDeclaration_IRemovalInfo());
 
@@ -953,7 +953,7 @@ use_current_InterfaceDeclaration_IRemovalInfo(
 declare function get_current_InterfaceDeclaration_IRemovalInfo():
     TypeOnly<current.IRemovalInfo>;
 declare function use_old_InterfaceDeclaration_IRemovalInfo(
-    use: TypeOnly<old.IRemovalInfo>);
+    use: TypeOnly<old.IRemovalInfo>): void;
 use_old_InterfaceDeclaration_IRemovalInfo(
     get_current_InterfaceDeclaration_IRemovalInfo());
 
@@ -965,7 +965,7 @@ use_old_InterfaceDeclaration_IRemovalInfo(
 declare function get_old_InterfaceDeclaration_ISegment():
     TypeOnly<old.ISegment>;
 declare function use_current_InterfaceDeclaration_ISegment(
-    use: TypeOnly<current.ISegment>);
+    use: TypeOnly<current.ISegment>): void;
 use_current_InterfaceDeclaration_ISegment(
     get_old_InterfaceDeclaration_ISegment());
 
@@ -977,7 +977,7 @@ use_current_InterfaceDeclaration_ISegment(
 declare function get_current_InterfaceDeclaration_ISegment():
     TypeOnly<current.ISegment>;
 declare function use_old_InterfaceDeclaration_ISegment(
-    use: TypeOnly<old.ISegment>);
+    use: TypeOnly<old.ISegment>): void;
 use_old_InterfaceDeclaration_ISegment(
     get_current_InterfaceDeclaration_ISegment());
 
@@ -989,7 +989,7 @@ use_old_InterfaceDeclaration_ISegment(
 declare function get_old_InterfaceDeclaration_ISegmentAction():
     TypeOnly<old.ISegmentAction<any>>;
 declare function use_current_InterfaceDeclaration_ISegmentAction(
-    use: TypeOnly<current.ISegmentAction<any>>);
+    use: TypeOnly<current.ISegmentAction<any>>): void;
 use_current_InterfaceDeclaration_ISegmentAction(
     get_old_InterfaceDeclaration_ISegmentAction());
 
@@ -1001,7 +1001,7 @@ use_current_InterfaceDeclaration_ISegmentAction(
 declare function get_current_InterfaceDeclaration_ISegmentAction():
     TypeOnly<current.ISegmentAction<any>>;
 declare function use_old_InterfaceDeclaration_ISegmentAction(
-    use: TypeOnly<old.ISegmentAction<any>>);
+    use: TypeOnly<old.ISegmentAction<any>>): void;
 use_old_InterfaceDeclaration_ISegmentAction(
     get_current_InterfaceDeclaration_ISegmentAction());
 
@@ -1013,7 +1013,7 @@ use_old_InterfaceDeclaration_ISegmentAction(
 declare function get_old_InterfaceDeclaration_ITrackingGroup():
     TypeOnly<old.ITrackingGroup>;
 declare function use_current_InterfaceDeclaration_ITrackingGroup(
-    use: TypeOnly<current.ITrackingGroup>);
+    use: TypeOnly<current.ITrackingGroup>): void;
 use_current_InterfaceDeclaration_ITrackingGroup(
     get_old_InterfaceDeclaration_ITrackingGroup());
 
@@ -1025,7 +1025,7 @@ use_current_InterfaceDeclaration_ITrackingGroup(
 declare function get_current_InterfaceDeclaration_ITrackingGroup():
     TypeOnly<current.ITrackingGroup>;
 declare function use_old_InterfaceDeclaration_ITrackingGroup(
-    use: TypeOnly<old.ITrackingGroup>);
+    use: TypeOnly<old.ITrackingGroup>): void;
 use_old_InterfaceDeclaration_ITrackingGroup(
     get_current_InterfaceDeclaration_ITrackingGroup());
 
@@ -1037,7 +1037,7 @@ use_old_InterfaceDeclaration_ITrackingGroup(
 declare function get_old_InterfaceDeclaration_KeyComparer():
     TypeOnly<old.KeyComparer<any>>;
 declare function use_current_InterfaceDeclaration_KeyComparer(
-    use: TypeOnly<current.KeyComparer<any>>);
+    use: TypeOnly<current.KeyComparer<any>>): void;
 use_current_InterfaceDeclaration_KeyComparer(
     get_old_InterfaceDeclaration_KeyComparer());
 
@@ -1049,7 +1049,7 @@ use_current_InterfaceDeclaration_KeyComparer(
 declare function get_current_InterfaceDeclaration_KeyComparer():
     TypeOnly<current.KeyComparer<any>>;
 declare function use_old_InterfaceDeclaration_KeyComparer(
-    use: TypeOnly<old.KeyComparer<any>>);
+    use: TypeOnly<old.KeyComparer<any>>): void;
 use_old_InterfaceDeclaration_KeyComparer(
     get_current_InterfaceDeclaration_KeyComparer());
 
@@ -1061,7 +1061,7 @@ use_old_InterfaceDeclaration_KeyComparer(
 declare function get_old_VariableDeclaration_LocalClientId():
     TypeOnly<typeof old.LocalClientId>;
 declare function use_current_VariableDeclaration_LocalClientId(
-    use: TypeOnly<typeof current.LocalClientId>);
+    use: TypeOnly<typeof current.LocalClientId>): void;
 use_current_VariableDeclaration_LocalClientId(
     get_old_VariableDeclaration_LocalClientId());
 
@@ -1073,7 +1073,7 @@ use_current_VariableDeclaration_LocalClientId(
 declare function get_current_VariableDeclaration_LocalClientId():
     TypeOnly<typeof current.LocalClientId>;
 declare function use_old_VariableDeclaration_LocalClientId(
-    use: TypeOnly<typeof old.LocalClientId>);
+    use: TypeOnly<typeof old.LocalClientId>): void;
 use_old_VariableDeclaration_LocalClientId(
     get_current_VariableDeclaration_LocalClientId());
 
@@ -1085,7 +1085,7 @@ use_old_VariableDeclaration_LocalClientId(
 declare function get_old_ClassDeclaration_LocalReferenceCollection():
     TypeOnly<old.LocalReferenceCollection>;
 declare function use_current_ClassDeclaration_LocalReferenceCollection(
-    use: TypeOnly<current.LocalReferenceCollection>);
+    use: TypeOnly<current.LocalReferenceCollection>): void;
 use_current_ClassDeclaration_LocalReferenceCollection(
     get_old_ClassDeclaration_LocalReferenceCollection());
 
@@ -1097,7 +1097,7 @@ use_current_ClassDeclaration_LocalReferenceCollection(
 declare function get_current_ClassDeclaration_LocalReferenceCollection():
     TypeOnly<current.LocalReferenceCollection>;
 declare function use_old_ClassDeclaration_LocalReferenceCollection(
-    use: TypeOnly<old.LocalReferenceCollection>);
+    use: TypeOnly<old.LocalReferenceCollection>): void;
 use_old_ClassDeclaration_LocalReferenceCollection(
     get_current_ClassDeclaration_LocalReferenceCollection());
 
@@ -1109,7 +1109,7 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 declare function get_old_InterfaceDeclaration_LocalReferencePosition():
     TypeOnly<old.LocalReferencePosition>;
 declare function use_current_InterfaceDeclaration_LocalReferencePosition(
-    use: TypeOnly<current.LocalReferencePosition>);
+    use: TypeOnly<current.LocalReferencePosition>): void;
 use_current_InterfaceDeclaration_LocalReferencePosition(
     get_old_InterfaceDeclaration_LocalReferencePosition());
 
@@ -1121,7 +1121,7 @@ use_current_InterfaceDeclaration_LocalReferencePosition(
 declare function get_current_InterfaceDeclaration_LocalReferencePosition():
     TypeOnly<current.LocalReferencePosition>;
 declare function use_old_InterfaceDeclaration_LocalReferencePosition(
-    use: TypeOnly<old.LocalReferencePosition>);
+    use: TypeOnly<old.LocalReferencePosition>): void;
 use_old_InterfaceDeclaration_LocalReferencePosition(
     get_current_InterfaceDeclaration_LocalReferencePosition());
 
@@ -1133,7 +1133,7 @@ use_old_InterfaceDeclaration_LocalReferencePosition(
 declare function get_old_InterfaceDeclaration_MapLike():
     TypeOnly<old.MapLike<any>>;
 declare function use_current_InterfaceDeclaration_MapLike(
-    use: TypeOnly<current.MapLike<any>>);
+    use: TypeOnly<current.MapLike<any>>): void;
 use_current_InterfaceDeclaration_MapLike(
     get_old_InterfaceDeclaration_MapLike());
 
@@ -1145,7 +1145,7 @@ use_current_InterfaceDeclaration_MapLike(
 declare function get_current_InterfaceDeclaration_MapLike():
     TypeOnly<current.MapLike<any>>;
 declare function use_old_InterfaceDeclaration_MapLike(
-    use: TypeOnly<old.MapLike<any>>);
+    use: TypeOnly<old.MapLike<any>>): void;
 use_old_InterfaceDeclaration_MapLike(
     get_current_InterfaceDeclaration_MapLike());
 
@@ -1157,7 +1157,7 @@ use_old_InterfaceDeclaration_MapLike(
 declare function get_old_ClassDeclaration_Marker():
     TypeOnly<old.Marker>;
 declare function use_current_ClassDeclaration_Marker(
-    use: TypeOnly<current.Marker>);
+    use: TypeOnly<current.Marker>): void;
 use_current_ClassDeclaration_Marker(
     get_old_ClassDeclaration_Marker());
 
@@ -1169,7 +1169,7 @@ use_current_ClassDeclaration_Marker(
 declare function get_current_ClassDeclaration_Marker():
     TypeOnly<current.Marker>;
 declare function use_old_ClassDeclaration_Marker(
-    use: TypeOnly<old.Marker>);
+    use: TypeOnly<old.Marker>): void;
 use_old_ClassDeclaration_Marker(
     get_current_ClassDeclaration_Marker());
 
@@ -1181,7 +1181,7 @@ use_old_ClassDeclaration_Marker(
 declare function get_old_ClassDeclaration_MergeNode():
     TypeOnly<old.MergeNode>;
 declare function use_current_ClassDeclaration_MergeNode(
-    use: TypeOnly<current.MergeNode>);
+    use: TypeOnly<current.MergeNode>): void;
 use_current_ClassDeclaration_MergeNode(
     get_old_ClassDeclaration_MergeNode());
 
@@ -1193,7 +1193,7 @@ use_current_ClassDeclaration_MergeNode(
 declare function get_current_ClassDeclaration_MergeNode():
     TypeOnly<current.MergeNode>;
 declare function use_old_ClassDeclaration_MergeNode(
-    use: TypeOnly<old.MergeNode>);
+    use: TypeOnly<old.MergeNode>): void;
 use_old_ClassDeclaration_MergeNode(
     get_current_ClassDeclaration_MergeNode());
 
@@ -1205,7 +1205,7 @@ use_old_ClassDeclaration_MergeNode(
 declare function get_old_TypeAliasDeclaration_MergeTreeDeltaCallback():
     TypeOnly<old.MergeTreeDeltaCallback>;
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaCallback(
-    use: TypeOnly<current.MergeTreeDeltaCallback>);
+    use: TypeOnly<current.MergeTreeDeltaCallback>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaCallback(
     get_old_TypeAliasDeclaration_MergeTreeDeltaCallback());
 
@@ -1217,7 +1217,7 @@ use_current_TypeAliasDeclaration_MergeTreeDeltaCallback(
 declare function get_current_TypeAliasDeclaration_MergeTreeDeltaCallback():
     TypeOnly<current.MergeTreeDeltaCallback>;
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaCallback(
-    use: TypeOnly<old.MergeTreeDeltaCallback>);
+    use: TypeOnly<old.MergeTreeDeltaCallback>): void;
 use_old_TypeAliasDeclaration_MergeTreeDeltaCallback(
     get_current_TypeAliasDeclaration_MergeTreeDeltaCallback());
 
@@ -1229,7 +1229,7 @@ use_old_TypeAliasDeclaration_MergeTreeDeltaCallback(
 declare function get_old_TypeAliasDeclaration_MergeTreeDeltaOperationType():
     TypeOnly<old.MergeTreeDeltaOperationType>;
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaOperationType(
-    use: TypeOnly<current.MergeTreeDeltaOperationType>);
+    use: TypeOnly<current.MergeTreeDeltaOperationType>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaOperationType(
     get_old_TypeAliasDeclaration_MergeTreeDeltaOperationType());
 
@@ -1241,7 +1241,7 @@ use_current_TypeAliasDeclaration_MergeTreeDeltaOperationType(
 declare function get_current_TypeAliasDeclaration_MergeTreeDeltaOperationType():
     TypeOnly<current.MergeTreeDeltaOperationType>;
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaOperationType(
-    use: TypeOnly<old.MergeTreeDeltaOperationType>);
+    use: TypeOnly<old.MergeTreeDeltaOperationType>): void;
 use_old_TypeAliasDeclaration_MergeTreeDeltaOperationType(
     get_current_TypeAliasDeclaration_MergeTreeDeltaOperationType());
 
@@ -1253,7 +1253,7 @@ use_old_TypeAliasDeclaration_MergeTreeDeltaOperationType(
 declare function get_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes():
     TypeOnly<old.MergeTreeDeltaOperationTypes>;
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
-    use: TypeOnly<current.MergeTreeDeltaOperationTypes>);
+    use: TypeOnly<current.MergeTreeDeltaOperationTypes>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     get_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes());
 
@@ -1265,7 +1265,7 @@ use_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
 declare function get_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes():
     TypeOnly<current.MergeTreeDeltaOperationTypes>;
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
-    use: TypeOnly<old.MergeTreeDeltaOperationTypes>);
+    use: TypeOnly<old.MergeTreeDeltaOperationTypes>): void;
 use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
     get_current_TypeAliasDeclaration_MergeTreeDeltaOperationTypes());
 
@@ -1277,7 +1277,7 @@ use_old_TypeAliasDeclaration_MergeTreeDeltaOperationTypes(
 declare function get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible():
     TypeOnly<old.MergeTreeDeltaRevertible>;
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
-    use: TypeOnly<current.MergeTreeDeltaRevertible>);
+    use: TypeOnly<current.MergeTreeDeltaRevertible>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
     get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible());
 
@@ -1289,7 +1289,7 @@ use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
 declare function get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible():
     TypeOnly<current.MergeTreeDeltaRevertible>;
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
-    use: TypeOnly<old.MergeTreeDeltaRevertible>);
+    use: TypeOnly<old.MergeTreeDeltaRevertible>): void;
 use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
     get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible());
 
@@ -1301,7 +1301,7 @@ use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
 declare function get_old_VariableDeclaration_MergeTreeDeltaType():
     TypeOnly<typeof old.MergeTreeDeltaType>;
 declare function use_current_VariableDeclaration_MergeTreeDeltaType(
-    use: TypeOnly<typeof current.MergeTreeDeltaType>);
+    use: TypeOnly<typeof current.MergeTreeDeltaType>): void;
 use_current_VariableDeclaration_MergeTreeDeltaType(
     get_old_VariableDeclaration_MergeTreeDeltaType());
 
@@ -1313,7 +1313,7 @@ use_current_VariableDeclaration_MergeTreeDeltaType(
 declare function get_current_VariableDeclaration_MergeTreeDeltaType():
     TypeOnly<typeof current.MergeTreeDeltaType>;
 declare function use_old_VariableDeclaration_MergeTreeDeltaType(
-    use: TypeOnly<typeof old.MergeTreeDeltaType>);
+    use: TypeOnly<typeof old.MergeTreeDeltaType>): void;
 use_old_VariableDeclaration_MergeTreeDeltaType(
     get_current_VariableDeclaration_MergeTreeDeltaType());
 
@@ -1325,7 +1325,7 @@ use_old_VariableDeclaration_MergeTreeDeltaType(
 declare function get_old_TypeAliasDeclaration_MergeTreeDeltaType():
     TypeOnly<old.MergeTreeDeltaType>;
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaType(
-    use: TypeOnly<current.MergeTreeDeltaType>);
+    use: TypeOnly<current.MergeTreeDeltaType>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaType(
     get_old_TypeAliasDeclaration_MergeTreeDeltaType());
 
@@ -1337,7 +1337,7 @@ use_current_TypeAliasDeclaration_MergeTreeDeltaType(
 declare function get_current_TypeAliasDeclaration_MergeTreeDeltaType():
     TypeOnly<current.MergeTreeDeltaType>;
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaType(
-    use: TypeOnly<old.MergeTreeDeltaType>);
+    use: TypeOnly<old.MergeTreeDeltaType>): void;
 use_old_TypeAliasDeclaration_MergeTreeDeltaType(
     get_current_TypeAliasDeclaration_MergeTreeDeltaType());
 
@@ -1349,7 +1349,7 @@ use_old_TypeAliasDeclaration_MergeTreeDeltaType(
 declare function get_old_TypeAliasDeclaration_MergeTreeMaintenanceCallback():
     TypeOnly<old.MergeTreeMaintenanceCallback>;
 declare function use_current_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
-    use: TypeOnly<current.MergeTreeMaintenanceCallback>);
+    use: TypeOnly<current.MergeTreeMaintenanceCallback>): void;
 use_current_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
     get_old_TypeAliasDeclaration_MergeTreeMaintenanceCallback());
 
@@ -1361,7 +1361,7 @@ use_current_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
 declare function get_current_TypeAliasDeclaration_MergeTreeMaintenanceCallback():
     TypeOnly<current.MergeTreeMaintenanceCallback>;
 declare function use_old_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
-    use: TypeOnly<old.MergeTreeMaintenanceCallback>);
+    use: TypeOnly<old.MergeTreeMaintenanceCallback>): void;
 use_old_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
     get_current_TypeAliasDeclaration_MergeTreeMaintenanceCallback());
 
@@ -1373,7 +1373,7 @@ use_old_TypeAliasDeclaration_MergeTreeMaintenanceCallback(
 declare function get_old_VariableDeclaration_MergeTreeMaintenanceType():
     TypeOnly<typeof old.MergeTreeMaintenanceType>;
 declare function use_current_VariableDeclaration_MergeTreeMaintenanceType(
-    use: TypeOnly<typeof current.MergeTreeMaintenanceType>);
+    use: TypeOnly<typeof current.MergeTreeMaintenanceType>): void;
 use_current_VariableDeclaration_MergeTreeMaintenanceType(
     get_old_VariableDeclaration_MergeTreeMaintenanceType());
 
@@ -1385,7 +1385,7 @@ use_current_VariableDeclaration_MergeTreeMaintenanceType(
 declare function get_current_VariableDeclaration_MergeTreeMaintenanceType():
     TypeOnly<typeof current.MergeTreeMaintenanceType>;
 declare function use_old_VariableDeclaration_MergeTreeMaintenanceType(
-    use: TypeOnly<typeof old.MergeTreeMaintenanceType>);
+    use: TypeOnly<typeof old.MergeTreeMaintenanceType>): void;
 use_old_VariableDeclaration_MergeTreeMaintenanceType(
     get_current_VariableDeclaration_MergeTreeMaintenanceType());
 
@@ -1397,7 +1397,7 @@ use_old_VariableDeclaration_MergeTreeMaintenanceType(
 declare function get_old_TypeAliasDeclaration_MergeTreeMaintenanceType():
     TypeOnly<old.MergeTreeMaintenanceType>;
 declare function use_current_TypeAliasDeclaration_MergeTreeMaintenanceType(
-    use: TypeOnly<current.MergeTreeMaintenanceType>);
+    use: TypeOnly<current.MergeTreeMaintenanceType>): void;
 use_current_TypeAliasDeclaration_MergeTreeMaintenanceType(
     get_old_TypeAliasDeclaration_MergeTreeMaintenanceType());
 
@@ -1409,7 +1409,7 @@ use_current_TypeAliasDeclaration_MergeTreeMaintenanceType(
 declare function get_current_TypeAliasDeclaration_MergeTreeMaintenanceType():
     TypeOnly<current.MergeTreeMaintenanceType>;
 declare function use_old_TypeAliasDeclaration_MergeTreeMaintenanceType(
-    use: TypeOnly<old.MergeTreeMaintenanceType>);
+    use: TypeOnly<old.MergeTreeMaintenanceType>): void;
 use_old_TypeAliasDeclaration_MergeTreeMaintenanceType(
     get_current_TypeAliasDeclaration_MergeTreeMaintenanceType());
 
@@ -1421,7 +1421,7 @@ use_old_TypeAliasDeclaration_MergeTreeMaintenanceType(
 declare function get_old_InterfaceDeclaration_MergeTreeRevertibleDriver():
     TypeOnly<old.MergeTreeRevertibleDriver>;
 declare function use_current_InterfaceDeclaration_MergeTreeRevertibleDriver(
-    use: TypeOnly<current.MergeTreeRevertibleDriver>);
+    use: TypeOnly<current.MergeTreeRevertibleDriver>): void;
 use_current_InterfaceDeclaration_MergeTreeRevertibleDriver(
     get_old_InterfaceDeclaration_MergeTreeRevertibleDriver());
 
@@ -1433,7 +1433,7 @@ use_current_InterfaceDeclaration_MergeTreeRevertibleDriver(
 declare function get_current_InterfaceDeclaration_MergeTreeRevertibleDriver():
     TypeOnly<current.MergeTreeRevertibleDriver>;
 declare function use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
-    use: TypeOnly<old.MergeTreeRevertibleDriver>);
+    use: TypeOnly<old.MergeTreeRevertibleDriver>): void;
 use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
     get_current_InterfaceDeclaration_MergeTreeRevertibleDriver());
 
@@ -1445,7 +1445,7 @@ use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
 declare function get_old_VariableDeclaration_NonCollabClient():
     TypeOnly<typeof old.NonCollabClient>;
 declare function use_current_VariableDeclaration_NonCollabClient(
-    use: TypeOnly<typeof current.NonCollabClient>);
+    use: TypeOnly<typeof current.NonCollabClient>): void;
 use_current_VariableDeclaration_NonCollabClient(
     get_old_VariableDeclaration_NonCollabClient());
 
@@ -1457,7 +1457,7 @@ use_current_VariableDeclaration_NonCollabClient(
 declare function get_current_VariableDeclaration_NonCollabClient():
     TypeOnly<typeof current.NonCollabClient>;
 declare function use_old_VariableDeclaration_NonCollabClient(
-    use: TypeOnly<typeof old.NonCollabClient>);
+    use: TypeOnly<typeof old.NonCollabClient>): void;
 use_old_VariableDeclaration_NonCollabClient(
     get_current_VariableDeclaration_NonCollabClient());
 
@@ -1469,7 +1469,7 @@ use_old_VariableDeclaration_NonCollabClient(
 declare function get_old_ClassDeclaration_PropertiesManager():
     TypeOnly<old.PropertiesManager>;
 declare function use_current_ClassDeclaration_PropertiesManager(
-    use: TypeOnly<current.PropertiesManager>);
+    use: TypeOnly<current.PropertiesManager>): void;
 use_current_ClassDeclaration_PropertiesManager(
     get_old_ClassDeclaration_PropertiesManager());
 
@@ -1481,7 +1481,7 @@ use_current_ClassDeclaration_PropertiesManager(
 declare function get_current_ClassDeclaration_PropertiesManager():
     TypeOnly<current.PropertiesManager>;
 declare function use_old_ClassDeclaration_PropertiesManager(
-    use: TypeOnly<old.PropertiesManager>);
+    use: TypeOnly<old.PropertiesManager>): void;
 use_old_ClassDeclaration_PropertiesManager(
     get_current_ClassDeclaration_PropertiesManager());
 
@@ -1493,7 +1493,7 @@ use_old_ClassDeclaration_PropertiesManager(
 declare function get_old_EnumDeclaration_PropertiesRollback():
     TypeOnly<old.PropertiesRollback>;
 declare function use_current_EnumDeclaration_PropertiesRollback(
-    use: TypeOnly<current.PropertiesRollback>);
+    use: TypeOnly<current.PropertiesRollback>): void;
 use_current_EnumDeclaration_PropertiesRollback(
     get_old_EnumDeclaration_PropertiesRollback());
 
@@ -1505,7 +1505,7 @@ use_current_EnumDeclaration_PropertiesRollback(
 declare function get_current_EnumDeclaration_PropertiesRollback():
     TypeOnly<current.PropertiesRollback>;
 declare function use_old_EnumDeclaration_PropertiesRollback(
-    use: TypeOnly<old.PropertiesRollback>);
+    use: TypeOnly<old.PropertiesRollback>): void;
 use_old_EnumDeclaration_PropertiesRollback(
     get_current_EnumDeclaration_PropertiesRollback());
 
@@ -1517,7 +1517,7 @@ use_old_EnumDeclaration_PropertiesRollback(
 declare function get_old_InterfaceDeclaration_Property():
     TypeOnly<old.Property<any,any>>;
 declare function use_current_InterfaceDeclaration_Property(
-    use: TypeOnly<current.Property<any,any>>);
+    use: TypeOnly<current.Property<any,any>>): void;
 use_current_InterfaceDeclaration_Property(
     get_old_InterfaceDeclaration_Property());
 
@@ -1529,7 +1529,7 @@ use_current_InterfaceDeclaration_Property(
 declare function get_current_InterfaceDeclaration_Property():
     TypeOnly<current.Property<any,any>>;
 declare function use_old_InterfaceDeclaration_Property(
-    use: TypeOnly<old.Property<any,any>>);
+    use: TypeOnly<old.Property<any,any>>): void;
 use_old_InterfaceDeclaration_Property(
     get_current_InterfaceDeclaration_Property());
 
@@ -1541,7 +1541,7 @@ use_old_InterfaceDeclaration_Property(
 declare function get_old_InterfaceDeclaration_PropertyAction():
     TypeOnly<old.PropertyAction<any,any>>;
 declare function use_current_InterfaceDeclaration_PropertyAction(
-    use: TypeOnly<current.PropertyAction<any,any>>);
+    use: TypeOnly<current.PropertyAction<any,any>>): void;
 use_current_InterfaceDeclaration_PropertyAction(
     get_old_InterfaceDeclaration_PropertyAction());
 
@@ -1553,7 +1553,7 @@ use_current_InterfaceDeclaration_PropertyAction(
 declare function get_current_InterfaceDeclaration_PropertyAction():
     TypeOnly<current.PropertyAction<any,any>>;
 declare function use_old_InterfaceDeclaration_PropertyAction(
-    use: TypeOnly<old.PropertyAction<any,any>>);
+    use: TypeOnly<old.PropertyAction<any,any>>): void;
 use_old_InterfaceDeclaration_PropertyAction(
     get_current_InterfaceDeclaration_PropertyAction());
 
@@ -1565,7 +1565,7 @@ use_old_InterfaceDeclaration_PropertyAction(
 declare function get_old_TypeAliasDeclaration_PropertySet():
     TypeOnly<old.PropertySet>;
 declare function use_current_TypeAliasDeclaration_PropertySet(
-    use: TypeOnly<current.PropertySet>);
+    use: TypeOnly<current.PropertySet>): void;
 use_current_TypeAliasDeclaration_PropertySet(
     get_old_TypeAliasDeclaration_PropertySet());
 
@@ -1577,7 +1577,7 @@ use_current_TypeAliasDeclaration_PropertySet(
 declare function get_current_TypeAliasDeclaration_PropertySet():
     TypeOnly<current.PropertySet>;
 declare function use_old_TypeAliasDeclaration_PropertySet(
-    use: TypeOnly<old.PropertySet>);
+    use: TypeOnly<old.PropertySet>): void;
 use_old_TypeAliasDeclaration_PropertySet(
     get_current_TypeAliasDeclaration_PropertySet());
 
@@ -1589,7 +1589,7 @@ use_old_TypeAliasDeclaration_PropertySet(
 declare function get_old_InterfaceDeclaration_QProperty():
     TypeOnly<old.QProperty<any,any>>;
 declare function use_current_InterfaceDeclaration_QProperty(
-    use: TypeOnly<current.QProperty<any,any>>);
+    use: TypeOnly<current.QProperty<any,any>>): void;
 use_current_InterfaceDeclaration_QProperty(
     get_old_InterfaceDeclaration_QProperty());
 
@@ -1601,7 +1601,7 @@ use_current_InterfaceDeclaration_QProperty(
 declare function get_current_InterfaceDeclaration_QProperty():
     TypeOnly<current.QProperty<any,any>>;
 declare function use_old_InterfaceDeclaration_QProperty(
-    use: TypeOnly<old.QProperty<any,any>>);
+    use: TypeOnly<old.QProperty<any,any>>): void;
 use_old_InterfaceDeclaration_QProperty(
     get_current_InterfaceDeclaration_QProperty());
 
@@ -1613,7 +1613,7 @@ use_old_InterfaceDeclaration_QProperty(
 declare function get_old_VariableDeclaration_RBColor():
     TypeOnly<typeof old.RBColor>;
 declare function use_current_VariableDeclaration_RBColor(
-    use: TypeOnly<typeof current.RBColor>);
+    use: TypeOnly<typeof current.RBColor>): void;
 use_current_VariableDeclaration_RBColor(
     get_old_VariableDeclaration_RBColor());
 
@@ -1625,7 +1625,7 @@ use_current_VariableDeclaration_RBColor(
 declare function get_current_VariableDeclaration_RBColor():
     TypeOnly<typeof current.RBColor>;
 declare function use_old_VariableDeclaration_RBColor(
-    use: TypeOnly<typeof old.RBColor>);
+    use: TypeOnly<typeof old.RBColor>): void;
 use_old_VariableDeclaration_RBColor(
     get_current_VariableDeclaration_RBColor());
 
@@ -1637,7 +1637,7 @@ use_old_VariableDeclaration_RBColor(
 declare function get_old_TypeAliasDeclaration_RBColor():
     TypeOnly<old.RBColor>;
 declare function use_current_TypeAliasDeclaration_RBColor(
-    use: TypeOnly<current.RBColor>);
+    use: TypeOnly<current.RBColor>): void;
 use_current_TypeAliasDeclaration_RBColor(
     get_old_TypeAliasDeclaration_RBColor());
 
@@ -1649,7 +1649,7 @@ use_current_TypeAliasDeclaration_RBColor(
 declare function get_current_TypeAliasDeclaration_RBColor():
     TypeOnly<current.RBColor>;
 declare function use_old_TypeAliasDeclaration_RBColor(
-    use: TypeOnly<old.RBColor>);
+    use: TypeOnly<old.RBColor>): void;
 use_old_TypeAliasDeclaration_RBColor(
     get_current_TypeAliasDeclaration_RBColor());
 
@@ -1661,7 +1661,7 @@ use_old_TypeAliasDeclaration_RBColor(
 declare function get_old_InterfaceDeclaration_RBNode():
     TypeOnly<old.RBNode<any,any>>;
 declare function use_current_InterfaceDeclaration_RBNode(
-    use: TypeOnly<current.RBNode<any,any>>);
+    use: TypeOnly<current.RBNode<any,any>>): void;
 use_current_InterfaceDeclaration_RBNode(
     get_old_InterfaceDeclaration_RBNode());
 
@@ -1673,7 +1673,7 @@ use_current_InterfaceDeclaration_RBNode(
 declare function get_current_InterfaceDeclaration_RBNode():
     TypeOnly<current.RBNode<any,any>>;
 declare function use_old_InterfaceDeclaration_RBNode(
-    use: TypeOnly<old.RBNode<any,any>>);
+    use: TypeOnly<old.RBNode<any,any>>): void;
 use_old_InterfaceDeclaration_RBNode(
     get_current_InterfaceDeclaration_RBNode());
 
@@ -1685,7 +1685,7 @@ use_old_InterfaceDeclaration_RBNode(
 declare function get_old_InterfaceDeclaration_RBNodeActions():
     TypeOnly<old.RBNodeActions<any,any>>;
 declare function use_current_InterfaceDeclaration_RBNodeActions(
-    use: TypeOnly<current.RBNodeActions<any,any>>);
+    use: TypeOnly<current.RBNodeActions<any,any>>): void;
 use_current_InterfaceDeclaration_RBNodeActions(
     get_old_InterfaceDeclaration_RBNodeActions());
 
@@ -1697,7 +1697,7 @@ use_current_InterfaceDeclaration_RBNodeActions(
 declare function get_current_InterfaceDeclaration_RBNodeActions():
     TypeOnly<current.RBNodeActions<any,any>>;
 declare function use_old_InterfaceDeclaration_RBNodeActions(
-    use: TypeOnly<old.RBNodeActions<any,any>>);
+    use: TypeOnly<old.RBNodeActions<any,any>>): void;
 use_old_InterfaceDeclaration_RBNodeActions(
     get_current_InterfaceDeclaration_RBNodeActions());
 
@@ -1709,7 +1709,7 @@ use_old_InterfaceDeclaration_RBNodeActions(
 declare function get_old_TypeAliasDeclaration_RangeStackMap():
     TypeOnly<old.RangeStackMap>;
 declare function use_current_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<current.RangeStackMap>);
+    use: TypeOnly<current.RangeStackMap>): void;
 use_current_TypeAliasDeclaration_RangeStackMap(
     get_old_TypeAliasDeclaration_RangeStackMap());
 
@@ -1721,7 +1721,7 @@ use_current_TypeAliasDeclaration_RangeStackMap(
 declare function get_current_TypeAliasDeclaration_RangeStackMap():
     TypeOnly<current.RangeStackMap>;
 declare function use_old_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<old.RangeStackMap>);
+    use: TypeOnly<old.RangeStackMap>): void;
 use_old_TypeAliasDeclaration_RangeStackMap(
     get_current_TypeAliasDeclaration_RangeStackMap());
 
@@ -1733,7 +1733,7 @@ use_old_TypeAliasDeclaration_RangeStackMap(
 declare function get_old_ClassDeclaration_RedBlackTree():
     TypeOnly<old.RedBlackTree<any,any>>;
 declare function use_current_ClassDeclaration_RedBlackTree(
-    use: TypeOnly<current.RedBlackTree<any,any>>);
+    use: TypeOnly<current.RedBlackTree<any,any>>): void;
 use_current_ClassDeclaration_RedBlackTree(
     get_old_ClassDeclaration_RedBlackTree());
 
@@ -1745,7 +1745,7 @@ use_current_ClassDeclaration_RedBlackTree(
 declare function get_current_ClassDeclaration_RedBlackTree():
     TypeOnly<current.RedBlackTree<any,any>>;
 declare function use_old_ClassDeclaration_RedBlackTree(
-    use: TypeOnly<old.RedBlackTree<any,any>>);
+    use: TypeOnly<old.RedBlackTree<any,any>>): void;
 use_old_ClassDeclaration_RedBlackTree(
     get_current_ClassDeclaration_RedBlackTree());
 
@@ -1757,7 +1757,7 @@ use_old_ClassDeclaration_RedBlackTree(
 declare function get_old_InterfaceDeclaration_ReferencePosition():
     TypeOnly<old.ReferencePosition>;
 declare function use_current_InterfaceDeclaration_ReferencePosition(
-    use: TypeOnly<current.ReferencePosition>);
+    use: TypeOnly<current.ReferencePosition>): void;
 use_current_InterfaceDeclaration_ReferencePosition(
     get_old_InterfaceDeclaration_ReferencePosition());
 
@@ -1769,7 +1769,7 @@ use_current_InterfaceDeclaration_ReferencePosition(
 declare function get_current_InterfaceDeclaration_ReferencePosition():
     TypeOnly<current.ReferencePosition>;
 declare function use_old_InterfaceDeclaration_ReferencePosition(
-    use: TypeOnly<old.ReferencePosition>);
+    use: TypeOnly<old.ReferencePosition>): void;
 use_old_InterfaceDeclaration_ReferencePosition(
     get_current_InterfaceDeclaration_ReferencePosition());
 
@@ -1781,7 +1781,7 @@ use_old_InterfaceDeclaration_ReferencePosition(
 declare function get_old_EnumDeclaration_ReferenceType():
     TypeOnly<old.ReferenceType>;
 declare function use_current_EnumDeclaration_ReferenceType(
-    use: TypeOnly<current.ReferenceType>);
+    use: TypeOnly<current.ReferenceType>): void;
 use_current_EnumDeclaration_ReferenceType(
     get_old_EnumDeclaration_ReferenceType());
 
@@ -1793,7 +1793,7 @@ use_current_EnumDeclaration_ReferenceType(
 declare function get_current_EnumDeclaration_ReferenceType():
     TypeOnly<current.ReferenceType>;
 declare function use_old_EnumDeclaration_ReferenceType(
-    use: TypeOnly<old.ReferenceType>);
+    use: TypeOnly<old.ReferenceType>): void;
 use_old_EnumDeclaration_ReferenceType(
     get_current_EnumDeclaration_ReferenceType());
 
@@ -1805,7 +1805,7 @@ use_old_EnumDeclaration_ReferenceType(
 declare function get_old_InterfaceDeclaration_SegmentAccumulator():
     TypeOnly<old.SegmentAccumulator>;
 declare function use_current_InterfaceDeclaration_SegmentAccumulator(
-    use: TypeOnly<current.SegmentAccumulator>);
+    use: TypeOnly<current.SegmentAccumulator>): void;
 use_current_InterfaceDeclaration_SegmentAccumulator(
     get_old_InterfaceDeclaration_SegmentAccumulator());
 
@@ -1817,7 +1817,7 @@ use_current_InterfaceDeclaration_SegmentAccumulator(
 declare function get_current_InterfaceDeclaration_SegmentAccumulator():
     TypeOnly<current.SegmentAccumulator>;
 declare function use_old_InterfaceDeclaration_SegmentAccumulator(
-    use: TypeOnly<old.SegmentAccumulator>);
+    use: TypeOnly<old.SegmentAccumulator>): void;
 use_old_InterfaceDeclaration_SegmentAccumulator(
     get_current_InterfaceDeclaration_SegmentAccumulator());
 
@@ -1829,7 +1829,7 @@ use_old_InterfaceDeclaration_SegmentAccumulator(
 declare function get_old_InterfaceDeclaration_SegmentGroup():
     TypeOnly<old.SegmentGroup>;
 declare function use_current_InterfaceDeclaration_SegmentGroup(
-    use: TypeOnly<current.SegmentGroup>);
+    use: TypeOnly<current.SegmentGroup>): void;
 use_current_InterfaceDeclaration_SegmentGroup(
     get_old_InterfaceDeclaration_SegmentGroup());
 
@@ -1841,7 +1841,7 @@ use_current_InterfaceDeclaration_SegmentGroup(
 declare function get_current_InterfaceDeclaration_SegmentGroup():
     TypeOnly<current.SegmentGroup>;
 declare function use_old_InterfaceDeclaration_SegmentGroup(
-    use: TypeOnly<old.SegmentGroup>);
+    use: TypeOnly<old.SegmentGroup>): void;
 use_old_InterfaceDeclaration_SegmentGroup(
     get_current_InterfaceDeclaration_SegmentGroup());
 
@@ -1853,7 +1853,7 @@ use_old_InterfaceDeclaration_SegmentGroup(
 declare function get_old_ClassDeclaration_SegmentGroupCollection():
     TypeOnly<old.SegmentGroupCollection>;
 declare function use_current_ClassDeclaration_SegmentGroupCollection(
-    use: TypeOnly<current.SegmentGroupCollection>);
+    use: TypeOnly<current.SegmentGroupCollection>): void;
 use_current_ClassDeclaration_SegmentGroupCollection(
     get_old_ClassDeclaration_SegmentGroupCollection());
 
@@ -1865,7 +1865,7 @@ use_current_ClassDeclaration_SegmentGroupCollection(
 declare function get_current_ClassDeclaration_SegmentGroupCollection():
     TypeOnly<current.SegmentGroupCollection>;
 declare function use_old_ClassDeclaration_SegmentGroupCollection(
-    use: TypeOnly<old.SegmentGroupCollection>);
+    use: TypeOnly<old.SegmentGroupCollection>): void;
 use_old_ClassDeclaration_SegmentGroupCollection(
     get_current_ClassDeclaration_SegmentGroupCollection());
 
@@ -1877,7 +1877,7 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 declare function get_old_InterfaceDeclaration_SequenceOffsets():
     TypeOnly<old.SequenceOffsets>;
 declare function use_current_InterfaceDeclaration_SequenceOffsets(
-    use: TypeOnly<current.SequenceOffsets>);
+    use: TypeOnly<current.SequenceOffsets>): void;
 use_current_InterfaceDeclaration_SequenceOffsets(
     get_old_InterfaceDeclaration_SequenceOffsets());
 
@@ -1889,7 +1889,7 @@ use_current_InterfaceDeclaration_SequenceOffsets(
 declare function get_current_InterfaceDeclaration_SequenceOffsets():
     TypeOnly<current.SequenceOffsets>;
 declare function use_old_InterfaceDeclaration_SequenceOffsets(
-    use: TypeOnly<old.SequenceOffsets>);
+    use: TypeOnly<old.SequenceOffsets>): void;
 use_old_InterfaceDeclaration_SequenceOffsets(
     get_current_InterfaceDeclaration_SequenceOffsets());
 
@@ -1901,7 +1901,7 @@ use_old_InterfaceDeclaration_SequenceOffsets(
 declare function get_old_InterfaceDeclaration_SerializedAttributionCollection():
     TypeOnly<old.SerializedAttributionCollection>;
 declare function use_current_InterfaceDeclaration_SerializedAttributionCollection(
-    use: TypeOnly<current.SerializedAttributionCollection>);
+    use: TypeOnly<current.SerializedAttributionCollection>): void;
 use_current_InterfaceDeclaration_SerializedAttributionCollection(
     get_old_InterfaceDeclaration_SerializedAttributionCollection());
 
@@ -1913,7 +1913,7 @@ use_current_InterfaceDeclaration_SerializedAttributionCollection(
 declare function get_current_InterfaceDeclaration_SerializedAttributionCollection():
     TypeOnly<current.SerializedAttributionCollection>;
 declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
-    use: TypeOnly<old.SerializedAttributionCollection>);
+    use: TypeOnly<old.SerializedAttributionCollection>): void;
 use_old_InterfaceDeclaration_SerializedAttributionCollection(
     get_current_InterfaceDeclaration_SerializedAttributionCollection());
 
@@ -1925,7 +1925,7 @@ use_old_InterfaceDeclaration_SerializedAttributionCollection(
 declare function get_old_VariableDeclaration_SlidingPreference():
     TypeOnly<typeof old.SlidingPreference>;
 declare function use_current_VariableDeclaration_SlidingPreference(
-    use: TypeOnly<typeof current.SlidingPreference>);
+    use: TypeOnly<typeof current.SlidingPreference>): void;
 use_current_VariableDeclaration_SlidingPreference(
     get_old_VariableDeclaration_SlidingPreference());
 
@@ -1937,7 +1937,7 @@ use_current_VariableDeclaration_SlidingPreference(
 declare function get_current_VariableDeclaration_SlidingPreference():
     TypeOnly<typeof current.SlidingPreference>;
 declare function use_old_VariableDeclaration_SlidingPreference(
-    use: TypeOnly<typeof old.SlidingPreference>);
+    use: TypeOnly<typeof old.SlidingPreference>): void;
 use_old_VariableDeclaration_SlidingPreference(
     get_current_VariableDeclaration_SlidingPreference());
 
@@ -1949,7 +1949,7 @@ use_old_VariableDeclaration_SlidingPreference(
 declare function get_old_TypeAliasDeclaration_SlidingPreference():
     TypeOnly<old.SlidingPreference>;
 declare function use_current_TypeAliasDeclaration_SlidingPreference(
-    use: TypeOnly<current.SlidingPreference>);
+    use: TypeOnly<current.SlidingPreference>): void;
 use_current_TypeAliasDeclaration_SlidingPreference(
     get_old_TypeAliasDeclaration_SlidingPreference());
 
@@ -1961,7 +1961,7 @@ use_current_TypeAliasDeclaration_SlidingPreference(
 declare function get_current_TypeAliasDeclaration_SlidingPreference():
     TypeOnly<current.SlidingPreference>;
 declare function use_old_TypeAliasDeclaration_SlidingPreference(
-    use: TypeOnly<old.SlidingPreference>);
+    use: TypeOnly<old.SlidingPreference>): void;
 use_old_TypeAliasDeclaration_SlidingPreference(
     get_current_TypeAliasDeclaration_SlidingPreference());
 
@@ -1973,7 +1973,7 @@ use_old_TypeAliasDeclaration_SlidingPreference(
 declare function get_old_InterfaceDeclaration_SortedDictionary():
     TypeOnly<old.SortedDictionary<any,any>>;
 declare function use_current_InterfaceDeclaration_SortedDictionary(
-    use: TypeOnly<current.SortedDictionary<any,any>>);
+    use: TypeOnly<current.SortedDictionary<any,any>>): void;
 use_current_InterfaceDeclaration_SortedDictionary(
     get_old_InterfaceDeclaration_SortedDictionary());
 
@@ -1985,7 +1985,7 @@ use_current_InterfaceDeclaration_SortedDictionary(
 declare function get_current_InterfaceDeclaration_SortedDictionary():
     TypeOnly<current.SortedDictionary<any,any>>;
 declare function use_old_InterfaceDeclaration_SortedDictionary(
-    use: TypeOnly<old.SortedDictionary<any,any>>);
+    use: TypeOnly<old.SortedDictionary<any,any>>): void;
 use_old_InterfaceDeclaration_SortedDictionary(
     get_current_InterfaceDeclaration_SortedDictionary());
 
@@ -1997,7 +1997,7 @@ use_old_InterfaceDeclaration_SortedDictionary(
 declare function get_old_ClassDeclaration_SortedSegmentSet():
     TypeOnly<old.SortedSegmentSet>;
 declare function use_current_ClassDeclaration_SortedSegmentSet(
-    use: TypeOnly<current.SortedSegmentSet>);
+    use: TypeOnly<current.SortedSegmentSet>): void;
 use_current_ClassDeclaration_SortedSegmentSet(
     get_old_ClassDeclaration_SortedSegmentSet());
 
@@ -2009,7 +2009,7 @@ use_current_ClassDeclaration_SortedSegmentSet(
 declare function get_current_ClassDeclaration_SortedSegmentSet():
     TypeOnly<current.SortedSegmentSet>;
 declare function use_old_ClassDeclaration_SortedSegmentSet(
-    use: TypeOnly<old.SortedSegmentSet>);
+    use: TypeOnly<old.SortedSegmentSet>): void;
 use_old_ClassDeclaration_SortedSegmentSet(
     get_current_ClassDeclaration_SortedSegmentSet());
 
@@ -2021,7 +2021,7 @@ use_old_ClassDeclaration_SortedSegmentSet(
 declare function get_old_TypeAliasDeclaration_SortedSegmentSetItem():
     TypeOnly<old.SortedSegmentSetItem>;
 declare function use_current_TypeAliasDeclaration_SortedSegmentSetItem(
-    use: TypeOnly<current.SortedSegmentSetItem>);
+    use: TypeOnly<current.SortedSegmentSetItem>): void;
 use_current_TypeAliasDeclaration_SortedSegmentSetItem(
     get_old_TypeAliasDeclaration_SortedSegmentSetItem());
 
@@ -2033,7 +2033,7 @@ use_current_TypeAliasDeclaration_SortedSegmentSetItem(
 declare function get_current_TypeAliasDeclaration_SortedSegmentSetItem():
     TypeOnly<current.SortedSegmentSetItem>;
 declare function use_old_TypeAliasDeclaration_SortedSegmentSetItem(
-    use: TypeOnly<old.SortedSegmentSetItem>);
+    use: TypeOnly<old.SortedSegmentSetItem>): void;
 use_old_TypeAliasDeclaration_SortedSegmentSetItem(
     get_current_TypeAliasDeclaration_SortedSegmentSetItem());
 
@@ -2045,7 +2045,7 @@ use_old_TypeAliasDeclaration_SortedSegmentSetItem(
 declare function get_old_ClassDeclaration_SortedSet():
     TypeOnly<old.SortedSet<any,any>>;
 declare function use_current_ClassDeclaration_SortedSet(
-    use: TypeOnly<current.SortedSet<any,any>>);
+    use: TypeOnly<current.SortedSet<any,any>>): void;
 use_current_ClassDeclaration_SortedSet(
     get_old_ClassDeclaration_SortedSet());
 
@@ -2057,7 +2057,7 @@ use_current_ClassDeclaration_SortedSet(
 declare function get_current_ClassDeclaration_SortedSet():
     TypeOnly<current.SortedSet<any,any>>;
 declare function use_old_ClassDeclaration_SortedSet(
-    use: TypeOnly<old.SortedSet<any,any>>);
+    use: TypeOnly<old.SortedSet<any,any>>): void;
 use_old_ClassDeclaration_SortedSet(
     get_current_ClassDeclaration_SortedSet());
 
@@ -2069,7 +2069,7 @@ use_old_ClassDeclaration_SortedSet(
 declare function get_old_ClassDeclaration_Stack():
     TypeOnly<old.Stack<any>>;
 declare function use_current_ClassDeclaration_Stack(
-    use: TypeOnly<current.Stack<any>>);
+    use: TypeOnly<current.Stack<any>>): void;
 use_current_ClassDeclaration_Stack(
     get_old_ClassDeclaration_Stack());
 
@@ -2081,7 +2081,7 @@ use_current_ClassDeclaration_Stack(
 declare function get_current_ClassDeclaration_Stack():
     TypeOnly<current.Stack<any>>;
 declare function use_old_ClassDeclaration_Stack(
-    use: TypeOnly<old.Stack<any>>);
+    use: TypeOnly<old.Stack<any>>): void;
 use_old_ClassDeclaration_Stack(
     get_current_ClassDeclaration_Stack());
 
@@ -2093,7 +2093,7 @@ use_old_ClassDeclaration_Stack(
 declare function get_old_ClassDeclaration_TextSegment():
     TypeOnly<old.TextSegment>;
 declare function use_current_ClassDeclaration_TextSegment(
-    use: TypeOnly<current.TextSegment>);
+    use: TypeOnly<current.TextSegment>): void;
 use_current_ClassDeclaration_TextSegment(
     get_old_ClassDeclaration_TextSegment());
 
@@ -2105,7 +2105,7 @@ use_current_ClassDeclaration_TextSegment(
 declare function get_current_ClassDeclaration_TextSegment():
     TypeOnly<current.TextSegment>;
 declare function use_old_ClassDeclaration_TextSegment(
-    use: TypeOnly<old.TextSegment>);
+    use: TypeOnly<old.TextSegment>): void;
 use_old_ClassDeclaration_TextSegment(
     get_current_ClassDeclaration_TextSegment());
 
@@ -2117,7 +2117,7 @@ use_old_ClassDeclaration_TextSegment(
 declare function get_old_TypeAliasDeclaration_Trackable():
     TypeOnly<old.Trackable>;
 declare function use_current_TypeAliasDeclaration_Trackable(
-    use: TypeOnly<current.Trackable>);
+    use: TypeOnly<current.Trackable>): void;
 use_current_TypeAliasDeclaration_Trackable(
     get_old_TypeAliasDeclaration_Trackable());
 
@@ -2129,7 +2129,7 @@ use_current_TypeAliasDeclaration_Trackable(
 declare function get_current_TypeAliasDeclaration_Trackable():
     TypeOnly<current.Trackable>;
 declare function use_old_TypeAliasDeclaration_Trackable(
-    use: TypeOnly<old.Trackable>);
+    use: TypeOnly<old.Trackable>): void;
 use_old_TypeAliasDeclaration_Trackable(
     get_current_TypeAliasDeclaration_Trackable());
 
@@ -2141,7 +2141,7 @@ use_old_TypeAliasDeclaration_Trackable(
 declare function get_old_ClassDeclaration_TrackingGroup():
     TypeOnly<old.TrackingGroup>;
 declare function use_current_ClassDeclaration_TrackingGroup(
-    use: TypeOnly<current.TrackingGroup>);
+    use: TypeOnly<current.TrackingGroup>): void;
 use_current_ClassDeclaration_TrackingGroup(
     get_old_ClassDeclaration_TrackingGroup());
 
@@ -2153,7 +2153,7 @@ use_current_ClassDeclaration_TrackingGroup(
 declare function get_current_ClassDeclaration_TrackingGroup():
     TypeOnly<current.TrackingGroup>;
 declare function use_old_ClassDeclaration_TrackingGroup(
-    use: TypeOnly<old.TrackingGroup>);
+    use: TypeOnly<old.TrackingGroup>): void;
 use_old_ClassDeclaration_TrackingGroup(
     get_current_ClassDeclaration_TrackingGroup());
 
@@ -2165,7 +2165,7 @@ use_old_ClassDeclaration_TrackingGroup(
 declare function get_old_ClassDeclaration_TrackingGroupCollection():
     TypeOnly<old.TrackingGroupCollection>;
 declare function use_current_ClassDeclaration_TrackingGroupCollection(
-    use: TypeOnly<current.TrackingGroupCollection>);
+    use: TypeOnly<current.TrackingGroupCollection>): void;
 use_current_ClassDeclaration_TrackingGroupCollection(
     get_old_ClassDeclaration_TrackingGroupCollection());
 
@@ -2177,7 +2177,7 @@ use_current_ClassDeclaration_TrackingGroupCollection(
 declare function get_current_ClassDeclaration_TrackingGroupCollection():
     TypeOnly<current.TrackingGroupCollection>;
 declare function use_old_ClassDeclaration_TrackingGroupCollection(
-    use: TypeOnly<old.TrackingGroupCollection>);
+    use: TypeOnly<old.TrackingGroupCollection>): void;
 use_old_ClassDeclaration_TrackingGroupCollection(
     get_current_ClassDeclaration_TrackingGroupCollection());
 
@@ -2189,7 +2189,7 @@ use_old_ClassDeclaration_TrackingGroupCollection(
 declare function get_old_VariableDeclaration_TreeMaintenanceSequenceNumber():
     TypeOnly<typeof old.TreeMaintenanceSequenceNumber>;
 declare function use_current_VariableDeclaration_TreeMaintenanceSequenceNumber(
-    use: TypeOnly<typeof current.TreeMaintenanceSequenceNumber>);
+    use: TypeOnly<typeof current.TreeMaintenanceSequenceNumber>): void;
 use_current_VariableDeclaration_TreeMaintenanceSequenceNumber(
     get_old_VariableDeclaration_TreeMaintenanceSequenceNumber());
 
@@ -2201,7 +2201,7 @@ use_current_VariableDeclaration_TreeMaintenanceSequenceNumber(
 declare function get_current_VariableDeclaration_TreeMaintenanceSequenceNumber():
     TypeOnly<typeof current.TreeMaintenanceSequenceNumber>;
 declare function use_old_VariableDeclaration_TreeMaintenanceSequenceNumber(
-    use: TypeOnly<typeof old.TreeMaintenanceSequenceNumber>);
+    use: TypeOnly<typeof old.TreeMaintenanceSequenceNumber>): void;
 use_old_VariableDeclaration_TreeMaintenanceSequenceNumber(
     get_current_VariableDeclaration_TreeMaintenanceSequenceNumber());
 
@@ -2213,7 +2213,7 @@ use_old_VariableDeclaration_TreeMaintenanceSequenceNumber(
 declare function get_old_VariableDeclaration_UnassignedSequenceNumber():
     TypeOnly<typeof old.UnassignedSequenceNumber>;
 declare function use_current_VariableDeclaration_UnassignedSequenceNumber(
-    use: TypeOnly<typeof current.UnassignedSequenceNumber>);
+    use: TypeOnly<typeof current.UnassignedSequenceNumber>): void;
 use_current_VariableDeclaration_UnassignedSequenceNumber(
     get_old_VariableDeclaration_UnassignedSequenceNumber());
 
@@ -2225,7 +2225,7 @@ use_current_VariableDeclaration_UnassignedSequenceNumber(
 declare function get_current_VariableDeclaration_UnassignedSequenceNumber():
     TypeOnly<typeof current.UnassignedSequenceNumber>;
 declare function use_old_VariableDeclaration_UnassignedSequenceNumber(
-    use: TypeOnly<typeof old.UnassignedSequenceNumber>);
+    use: TypeOnly<typeof old.UnassignedSequenceNumber>): void;
 use_old_VariableDeclaration_UnassignedSequenceNumber(
     get_current_VariableDeclaration_UnassignedSequenceNumber());
 
@@ -2237,7 +2237,7 @@ use_old_VariableDeclaration_UnassignedSequenceNumber(
 declare function get_old_VariableDeclaration_UniversalSequenceNumber():
     TypeOnly<typeof old.UniversalSequenceNumber>;
 declare function use_current_VariableDeclaration_UniversalSequenceNumber(
-    use: TypeOnly<typeof current.UniversalSequenceNumber>);
+    use: TypeOnly<typeof current.UniversalSequenceNumber>): void;
 use_current_VariableDeclaration_UniversalSequenceNumber(
     get_old_VariableDeclaration_UniversalSequenceNumber());
 
@@ -2249,7 +2249,7 @@ use_current_VariableDeclaration_UniversalSequenceNumber(
 declare function get_current_VariableDeclaration_UniversalSequenceNumber():
     TypeOnly<typeof current.UniversalSequenceNumber>;
 declare function use_old_VariableDeclaration_UniversalSequenceNumber(
-    use: TypeOnly<typeof old.UniversalSequenceNumber>);
+    use: TypeOnly<typeof old.UniversalSequenceNumber>): void;
 use_old_VariableDeclaration_UniversalSequenceNumber(
     get_current_VariableDeclaration_UniversalSequenceNumber());
 
@@ -2261,7 +2261,7 @@ use_old_VariableDeclaration_UniversalSequenceNumber(
 declare function get_old_FunctionDeclaration_addProperties():
     TypeOnly<typeof old.addProperties>;
 declare function use_current_FunctionDeclaration_addProperties(
-    use: TypeOnly<typeof current.addProperties>);
+    use: TypeOnly<typeof current.addProperties>): void;
 use_current_FunctionDeclaration_addProperties(
     get_old_FunctionDeclaration_addProperties());
 
@@ -2273,7 +2273,7 @@ use_current_FunctionDeclaration_addProperties(
 declare function get_current_FunctionDeclaration_addProperties():
     TypeOnly<typeof current.addProperties>;
 declare function use_old_FunctionDeclaration_addProperties(
-    use: TypeOnly<typeof old.addProperties>);
+    use: TypeOnly<typeof old.addProperties>): void;
 use_old_FunctionDeclaration_addProperties(
     get_current_FunctionDeclaration_addProperties());
 
@@ -2285,7 +2285,7 @@ use_old_FunctionDeclaration_addProperties(
 declare function get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
     TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>;
 declare function use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>);
+    use: TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>): void;
 use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
     get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
 
@@ -2297,7 +2297,7 @@ use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
 declare function get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
     TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>;
 declare function use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>);
+    use: TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>): void;
 use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
     get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
 
@@ -2309,7 +2309,7 @@ use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
 declare function get_old_FunctionDeclaration_clone():
     TypeOnly<typeof old.clone>;
 declare function use_current_FunctionDeclaration_clone(
-    use: TypeOnly<typeof current.clone>);
+    use: TypeOnly<typeof current.clone>): void;
 use_current_FunctionDeclaration_clone(
     get_old_FunctionDeclaration_clone());
 
@@ -2321,7 +2321,7 @@ use_current_FunctionDeclaration_clone(
 declare function get_current_FunctionDeclaration_clone():
     TypeOnly<typeof current.clone>;
 declare function use_old_FunctionDeclaration_clone(
-    use: TypeOnly<typeof old.clone>);
+    use: TypeOnly<typeof old.clone>): void;
 use_old_FunctionDeclaration_clone(
     get_current_FunctionDeclaration_clone());
 
@@ -2333,7 +2333,7 @@ use_old_FunctionDeclaration_clone(
 declare function get_old_FunctionDeclaration_combine():
     TypeOnly<typeof old.combine>;
 declare function use_current_FunctionDeclaration_combine(
-    use: TypeOnly<typeof current.combine>);
+    use: TypeOnly<typeof current.combine>): void;
 use_current_FunctionDeclaration_combine(
     get_old_FunctionDeclaration_combine());
 
@@ -2345,7 +2345,7 @@ use_current_FunctionDeclaration_combine(
 declare function get_current_FunctionDeclaration_combine():
     TypeOnly<typeof current.combine>;
 declare function use_old_FunctionDeclaration_combine(
-    use: TypeOnly<typeof old.combine>);
+    use: TypeOnly<typeof old.combine>): void;
 use_old_FunctionDeclaration_combine(
     get_current_FunctionDeclaration_combine());
 
@@ -2357,7 +2357,7 @@ use_old_FunctionDeclaration_combine(
 declare function get_old_VariableDeclaration_compareNumbers():
     TypeOnly<typeof old.compareNumbers>;
 declare function use_current_VariableDeclaration_compareNumbers(
-    use: TypeOnly<typeof current.compareNumbers>);
+    use: TypeOnly<typeof current.compareNumbers>): void;
 use_current_VariableDeclaration_compareNumbers(
     get_old_VariableDeclaration_compareNumbers());
 
@@ -2369,7 +2369,7 @@ use_current_VariableDeclaration_compareNumbers(
 declare function get_current_VariableDeclaration_compareNumbers():
     TypeOnly<typeof current.compareNumbers>;
 declare function use_old_VariableDeclaration_compareNumbers(
-    use: TypeOnly<typeof old.compareNumbers>);
+    use: TypeOnly<typeof old.compareNumbers>): void;
 use_old_VariableDeclaration_compareNumbers(
     get_current_VariableDeclaration_compareNumbers());
 
@@ -2381,7 +2381,7 @@ use_old_VariableDeclaration_compareNumbers(
 declare function get_old_FunctionDeclaration_compareReferencePositions():
     TypeOnly<typeof old.compareReferencePositions>;
 declare function use_current_FunctionDeclaration_compareReferencePositions(
-    use: TypeOnly<typeof current.compareReferencePositions>);
+    use: TypeOnly<typeof current.compareReferencePositions>): void;
 use_current_FunctionDeclaration_compareReferencePositions(
     get_old_FunctionDeclaration_compareReferencePositions());
 
@@ -2393,7 +2393,7 @@ use_current_FunctionDeclaration_compareReferencePositions(
 declare function get_current_FunctionDeclaration_compareReferencePositions():
     TypeOnly<typeof current.compareReferencePositions>;
 declare function use_old_FunctionDeclaration_compareReferencePositions(
-    use: TypeOnly<typeof old.compareReferencePositions>);
+    use: TypeOnly<typeof old.compareReferencePositions>): void;
 use_old_FunctionDeclaration_compareReferencePositions(
     get_current_FunctionDeclaration_compareReferencePositions());
 
@@ -2405,7 +2405,7 @@ use_old_FunctionDeclaration_compareReferencePositions(
 declare function get_old_VariableDeclaration_compareStrings():
     TypeOnly<typeof old.compareStrings>;
 declare function use_current_VariableDeclaration_compareStrings(
-    use: TypeOnly<typeof current.compareStrings>);
+    use: TypeOnly<typeof current.compareStrings>): void;
 use_current_VariableDeclaration_compareStrings(
     get_old_VariableDeclaration_compareStrings());
 
@@ -2417,7 +2417,7 @@ use_current_VariableDeclaration_compareStrings(
 declare function get_current_VariableDeclaration_compareStrings():
     TypeOnly<typeof current.compareStrings>;
 declare function use_old_VariableDeclaration_compareStrings(
-    use: TypeOnly<typeof old.compareStrings>);
+    use: TypeOnly<typeof old.compareStrings>): void;
 use_old_VariableDeclaration_compareStrings(
     get_current_VariableDeclaration_compareStrings());
 
@@ -2429,7 +2429,7 @@ use_old_VariableDeclaration_compareStrings(
 declare function get_old_FunctionDeclaration_createAnnotateMarkerOp():
     TypeOnly<typeof old.createAnnotateMarkerOp>;
 declare function use_current_FunctionDeclaration_createAnnotateMarkerOp(
-    use: TypeOnly<typeof current.createAnnotateMarkerOp>);
+    use: TypeOnly<typeof current.createAnnotateMarkerOp>): void;
 use_current_FunctionDeclaration_createAnnotateMarkerOp(
     get_old_FunctionDeclaration_createAnnotateMarkerOp());
 
@@ -2441,7 +2441,7 @@ use_current_FunctionDeclaration_createAnnotateMarkerOp(
 declare function get_current_FunctionDeclaration_createAnnotateMarkerOp():
     TypeOnly<typeof current.createAnnotateMarkerOp>;
 declare function use_old_FunctionDeclaration_createAnnotateMarkerOp(
-    use: TypeOnly<typeof old.createAnnotateMarkerOp>);
+    use: TypeOnly<typeof old.createAnnotateMarkerOp>): void;
 use_old_FunctionDeclaration_createAnnotateMarkerOp(
     get_current_FunctionDeclaration_createAnnotateMarkerOp());
 
@@ -2453,7 +2453,7 @@ use_old_FunctionDeclaration_createAnnotateMarkerOp(
 declare function get_old_FunctionDeclaration_createAnnotateRangeOp():
     TypeOnly<typeof old.createAnnotateRangeOp>;
 declare function use_current_FunctionDeclaration_createAnnotateRangeOp(
-    use: TypeOnly<typeof current.createAnnotateRangeOp>);
+    use: TypeOnly<typeof current.createAnnotateRangeOp>): void;
 use_current_FunctionDeclaration_createAnnotateRangeOp(
     get_old_FunctionDeclaration_createAnnotateRangeOp());
 
@@ -2465,7 +2465,7 @@ use_current_FunctionDeclaration_createAnnotateRangeOp(
 declare function get_current_FunctionDeclaration_createAnnotateRangeOp():
     TypeOnly<typeof current.createAnnotateRangeOp>;
 declare function use_old_FunctionDeclaration_createAnnotateRangeOp(
-    use: TypeOnly<typeof old.createAnnotateRangeOp>);
+    use: TypeOnly<typeof old.createAnnotateRangeOp>): void;
 use_old_FunctionDeclaration_createAnnotateRangeOp(
     get_current_FunctionDeclaration_createAnnotateRangeOp());
 
@@ -2477,7 +2477,7 @@ use_old_FunctionDeclaration_createAnnotateRangeOp(
 declare function get_old_FunctionDeclaration_createDetachedLocalReferencePosition():
     TypeOnly<typeof old.createDetachedLocalReferencePosition>;
 declare function use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
-    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>);
+    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>): void;
 use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
     get_old_FunctionDeclaration_createDetachedLocalReferencePosition());
 
@@ -2489,7 +2489,7 @@ use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
 declare function get_current_FunctionDeclaration_createDetachedLocalReferencePosition():
     TypeOnly<typeof current.createDetachedLocalReferencePosition>;
 declare function use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
-    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>);
+    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>): void;
 use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
     get_current_FunctionDeclaration_createDetachedLocalReferencePosition());
 
@@ -2501,7 +2501,7 @@ use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
 declare function get_old_FunctionDeclaration_createGroupOp():
     TypeOnly<typeof old.createGroupOp>;
 declare function use_current_FunctionDeclaration_createGroupOp(
-    use: TypeOnly<typeof current.createGroupOp>);
+    use: TypeOnly<typeof current.createGroupOp>): void;
 use_current_FunctionDeclaration_createGroupOp(
     get_old_FunctionDeclaration_createGroupOp());
 
@@ -2513,7 +2513,7 @@ use_current_FunctionDeclaration_createGroupOp(
 declare function get_current_FunctionDeclaration_createGroupOp():
     TypeOnly<typeof current.createGroupOp>;
 declare function use_old_FunctionDeclaration_createGroupOp(
-    use: TypeOnly<typeof old.createGroupOp>);
+    use: TypeOnly<typeof old.createGroupOp>): void;
 use_old_FunctionDeclaration_createGroupOp(
     get_current_FunctionDeclaration_createGroupOp());
 
@@ -2525,7 +2525,7 @@ use_old_FunctionDeclaration_createGroupOp(
 declare function get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy():
     TypeOnly<typeof old.createInsertOnlyAttributionPolicy>;
 declare function use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>);
+    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>): void;
 use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
     get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy());
 
@@ -2537,7 +2537,7 @@ use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
 declare function get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy():
     TypeOnly<typeof current.createInsertOnlyAttributionPolicy>;
 declare function use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>);
+    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>): void;
 use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
     get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy());
 
@@ -2549,7 +2549,7 @@ use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
 declare function get_old_FunctionDeclaration_createInsertOp():
     TypeOnly<typeof old.createInsertOp>;
 declare function use_current_FunctionDeclaration_createInsertOp(
-    use: TypeOnly<typeof current.createInsertOp>);
+    use: TypeOnly<typeof current.createInsertOp>): void;
 use_current_FunctionDeclaration_createInsertOp(
     get_old_FunctionDeclaration_createInsertOp());
 
@@ -2561,7 +2561,7 @@ use_current_FunctionDeclaration_createInsertOp(
 declare function get_current_FunctionDeclaration_createInsertOp():
     TypeOnly<typeof current.createInsertOp>;
 declare function use_old_FunctionDeclaration_createInsertOp(
-    use: TypeOnly<typeof old.createInsertOp>);
+    use: TypeOnly<typeof old.createInsertOp>): void;
 use_old_FunctionDeclaration_createInsertOp(
     get_current_FunctionDeclaration_createInsertOp());
 
@@ -2573,7 +2573,7 @@ use_old_FunctionDeclaration_createInsertOp(
 declare function get_old_FunctionDeclaration_createInsertSegmentOp():
     TypeOnly<typeof old.createInsertSegmentOp>;
 declare function use_current_FunctionDeclaration_createInsertSegmentOp(
-    use: TypeOnly<typeof current.createInsertSegmentOp>);
+    use: TypeOnly<typeof current.createInsertSegmentOp>): void;
 use_current_FunctionDeclaration_createInsertSegmentOp(
     get_old_FunctionDeclaration_createInsertSegmentOp());
 
@@ -2585,7 +2585,7 @@ use_current_FunctionDeclaration_createInsertSegmentOp(
 declare function get_current_FunctionDeclaration_createInsertSegmentOp():
     TypeOnly<typeof current.createInsertSegmentOp>;
 declare function use_old_FunctionDeclaration_createInsertSegmentOp(
-    use: TypeOnly<typeof old.createInsertSegmentOp>);
+    use: TypeOnly<typeof old.createInsertSegmentOp>): void;
 use_old_FunctionDeclaration_createInsertSegmentOp(
     get_current_FunctionDeclaration_createInsertSegmentOp());
 
@@ -2597,7 +2597,7 @@ use_old_FunctionDeclaration_createInsertSegmentOp(
 declare function get_old_FunctionDeclaration_createMap():
     TypeOnly<typeof old.createMap>;
 declare function use_current_FunctionDeclaration_createMap(
-    use: TypeOnly<typeof current.createMap>);
+    use: TypeOnly<typeof current.createMap>): void;
 use_current_FunctionDeclaration_createMap(
     get_old_FunctionDeclaration_createMap());
 
@@ -2609,7 +2609,7 @@ use_current_FunctionDeclaration_createMap(
 declare function get_current_FunctionDeclaration_createMap():
     TypeOnly<typeof current.createMap>;
 declare function use_old_FunctionDeclaration_createMap(
-    use: TypeOnly<typeof old.createMap>);
+    use: TypeOnly<typeof old.createMap>): void;
 use_old_FunctionDeclaration_createMap(
     get_current_FunctionDeclaration_createMap());
 
@@ -2621,7 +2621,7 @@ use_old_FunctionDeclaration_createMap(
 declare function get_old_FunctionDeclaration_createRemoveRangeOp():
     TypeOnly<typeof old.createRemoveRangeOp>;
 declare function use_current_FunctionDeclaration_createRemoveRangeOp(
-    use: TypeOnly<typeof current.createRemoveRangeOp>);
+    use: TypeOnly<typeof current.createRemoveRangeOp>): void;
 use_current_FunctionDeclaration_createRemoveRangeOp(
     get_old_FunctionDeclaration_createRemoveRangeOp());
 
@@ -2633,7 +2633,7 @@ use_current_FunctionDeclaration_createRemoveRangeOp(
 declare function get_current_FunctionDeclaration_createRemoveRangeOp():
     TypeOnly<typeof current.createRemoveRangeOp>;
 declare function use_old_FunctionDeclaration_createRemoveRangeOp(
-    use: TypeOnly<typeof old.createRemoveRangeOp>);
+    use: TypeOnly<typeof old.createRemoveRangeOp>): void;
 use_old_FunctionDeclaration_createRemoveRangeOp(
     get_current_FunctionDeclaration_createRemoveRangeOp());
 
@@ -2645,7 +2645,7 @@ use_old_FunctionDeclaration_createRemoveRangeOp(
 declare function get_old_FunctionDeclaration_debugMarkerToString():
     TypeOnly<typeof old.debugMarkerToString>;
 declare function use_current_FunctionDeclaration_debugMarkerToString(
-    use: TypeOnly<typeof current.debugMarkerToString>);
+    use: TypeOnly<typeof current.debugMarkerToString>): void;
 use_current_FunctionDeclaration_debugMarkerToString(
     get_old_FunctionDeclaration_debugMarkerToString());
 
@@ -2657,7 +2657,7 @@ use_current_FunctionDeclaration_debugMarkerToString(
 declare function get_current_FunctionDeclaration_debugMarkerToString():
     TypeOnly<typeof current.debugMarkerToString>;
 declare function use_old_FunctionDeclaration_debugMarkerToString(
-    use: TypeOnly<typeof old.debugMarkerToString>);
+    use: TypeOnly<typeof old.debugMarkerToString>): void;
 use_old_FunctionDeclaration_debugMarkerToString(
     get_current_FunctionDeclaration_debugMarkerToString());
 
@@ -2669,7 +2669,7 @@ use_old_FunctionDeclaration_debugMarkerToString(
 declare function get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible():
     TypeOnly<typeof old.discardMergeTreeDeltaRevertible>;
 declare function use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof current.discardMergeTreeDeltaRevertible>);
+    use: TypeOnly<typeof current.discardMergeTreeDeltaRevertible>): void;
 use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
     get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible());
 
@@ -2681,7 +2681,7 @@ use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
 declare function get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible():
     TypeOnly<typeof current.discardMergeTreeDeltaRevertible>;
 declare function use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof old.discardMergeTreeDeltaRevertible>);
+    use: TypeOnly<typeof old.discardMergeTreeDeltaRevertible>): void;
 use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
     get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible());
 
@@ -2693,7 +2693,7 @@ use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
 declare function get_old_FunctionDeclaration_extend():
     TypeOnly<typeof old.extend>;
 declare function use_current_FunctionDeclaration_extend(
-    use: TypeOnly<typeof current.extend>);
+    use: TypeOnly<typeof current.extend>): void;
 use_current_FunctionDeclaration_extend(
     get_old_FunctionDeclaration_extend());
 
@@ -2705,7 +2705,7 @@ use_current_FunctionDeclaration_extend(
 declare function get_current_FunctionDeclaration_extend():
     TypeOnly<typeof current.extend>;
 declare function use_old_FunctionDeclaration_extend(
-    use: TypeOnly<typeof old.extend>);
+    use: TypeOnly<typeof old.extend>): void;
 use_old_FunctionDeclaration_extend(
     get_current_FunctionDeclaration_extend());
 
@@ -2717,7 +2717,7 @@ use_old_FunctionDeclaration_extend(
 declare function get_old_FunctionDeclaration_extendIfUndefined():
     TypeOnly<typeof old.extendIfUndefined>;
 declare function use_current_FunctionDeclaration_extendIfUndefined(
-    use: TypeOnly<typeof current.extendIfUndefined>);
+    use: TypeOnly<typeof current.extendIfUndefined>): void;
 use_current_FunctionDeclaration_extendIfUndefined(
     get_old_FunctionDeclaration_extendIfUndefined());
 
@@ -2729,7 +2729,7 @@ use_current_FunctionDeclaration_extendIfUndefined(
 declare function get_current_FunctionDeclaration_extendIfUndefined():
     TypeOnly<typeof current.extendIfUndefined>;
 declare function use_old_FunctionDeclaration_extendIfUndefined(
-    use: TypeOnly<typeof old.extendIfUndefined>);
+    use: TypeOnly<typeof old.extendIfUndefined>): void;
 use_old_FunctionDeclaration_extendIfUndefined(
     get_current_FunctionDeclaration_extendIfUndefined());
 
@@ -2741,7 +2741,7 @@ use_old_FunctionDeclaration_extendIfUndefined(
 declare function get_old_FunctionDeclaration_getSlideToSegoff():
     TypeOnly<typeof old.getSlideToSegoff>;
 declare function use_current_FunctionDeclaration_getSlideToSegoff(
-    use: TypeOnly<typeof current.getSlideToSegoff>);
+    use: TypeOnly<typeof current.getSlideToSegoff>): void;
 use_current_FunctionDeclaration_getSlideToSegoff(
     get_old_FunctionDeclaration_getSlideToSegoff());
 
@@ -2753,7 +2753,7 @@ use_current_FunctionDeclaration_getSlideToSegoff(
 declare function get_current_FunctionDeclaration_getSlideToSegoff():
     TypeOnly<typeof current.getSlideToSegoff>;
 declare function use_old_FunctionDeclaration_getSlideToSegoff(
-    use: TypeOnly<typeof old.getSlideToSegoff>);
+    use: TypeOnly<typeof old.getSlideToSegoff>): void;
 use_old_FunctionDeclaration_getSlideToSegoff(
     get_current_FunctionDeclaration_getSlideToSegoff());
 
@@ -2765,7 +2765,7 @@ use_old_FunctionDeclaration_getSlideToSegoff(
 declare function get_old_FunctionDeclaration_internedSpaces():
     TypeOnly<typeof old.internedSpaces>;
 declare function use_current_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof current.internedSpaces>);
+    use: TypeOnly<typeof current.internedSpaces>): void;
 use_current_FunctionDeclaration_internedSpaces(
     get_old_FunctionDeclaration_internedSpaces());
 
@@ -2777,7 +2777,7 @@ use_current_FunctionDeclaration_internedSpaces(
 declare function get_current_FunctionDeclaration_internedSpaces():
     TypeOnly<typeof current.internedSpaces>;
 declare function use_old_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof old.internedSpaces>);
+    use: TypeOnly<typeof old.internedSpaces>): void;
 use_old_FunctionDeclaration_internedSpaces(
     get_current_FunctionDeclaration_internedSpaces());
 
@@ -2789,7 +2789,7 @@ use_old_FunctionDeclaration_internedSpaces(
 declare function get_old_FunctionDeclaration_isMergeTreeDeltaRevertible():
     TypeOnly<typeof old.isMergeTreeDeltaRevertible>;
 declare function use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof current.isMergeTreeDeltaRevertible>);
+    use: TypeOnly<typeof current.isMergeTreeDeltaRevertible>): void;
 use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
     get_old_FunctionDeclaration_isMergeTreeDeltaRevertible());
 
@@ -2801,7 +2801,7 @@ use_current_FunctionDeclaration_isMergeTreeDeltaRevertible(
 declare function get_current_FunctionDeclaration_isMergeTreeDeltaRevertible():
     TypeOnly<typeof current.isMergeTreeDeltaRevertible>;
 declare function use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof old.isMergeTreeDeltaRevertible>);
+    use: TypeOnly<typeof old.isMergeTreeDeltaRevertible>): void;
 use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
     get_current_FunctionDeclaration_isMergeTreeDeltaRevertible());
 
@@ -2813,7 +2813,7 @@ use_old_FunctionDeclaration_isMergeTreeDeltaRevertible(
 declare function get_old_FunctionDeclaration_matchProperties():
     TypeOnly<typeof old.matchProperties>;
 declare function use_current_FunctionDeclaration_matchProperties(
-    use: TypeOnly<typeof current.matchProperties>);
+    use: TypeOnly<typeof current.matchProperties>): void;
 use_current_FunctionDeclaration_matchProperties(
     get_old_FunctionDeclaration_matchProperties());
 
@@ -2825,7 +2825,7 @@ use_current_FunctionDeclaration_matchProperties(
 declare function get_current_FunctionDeclaration_matchProperties():
     TypeOnly<typeof current.matchProperties>;
 declare function use_old_FunctionDeclaration_matchProperties(
-    use: TypeOnly<typeof old.matchProperties>);
+    use: TypeOnly<typeof old.matchProperties>): void;
 use_old_FunctionDeclaration_matchProperties(
     get_current_FunctionDeclaration_matchProperties());
 
@@ -2837,7 +2837,7 @@ use_old_FunctionDeclaration_matchProperties(
 declare function get_old_FunctionDeclaration_maxReferencePosition():
     TypeOnly<typeof old.maxReferencePosition>;
 declare function use_current_FunctionDeclaration_maxReferencePosition(
-    use: TypeOnly<typeof current.maxReferencePosition>);
+    use: TypeOnly<typeof current.maxReferencePosition>): void;
 use_current_FunctionDeclaration_maxReferencePosition(
     get_old_FunctionDeclaration_maxReferencePosition());
 
@@ -2849,7 +2849,7 @@ use_current_FunctionDeclaration_maxReferencePosition(
 declare function get_current_FunctionDeclaration_maxReferencePosition():
     TypeOnly<typeof current.maxReferencePosition>;
 declare function use_old_FunctionDeclaration_maxReferencePosition(
-    use: TypeOnly<typeof old.maxReferencePosition>);
+    use: TypeOnly<typeof old.maxReferencePosition>): void;
 use_old_FunctionDeclaration_maxReferencePosition(
     get_current_FunctionDeclaration_maxReferencePosition());
 
@@ -2861,7 +2861,7 @@ use_old_FunctionDeclaration_maxReferencePosition(
 declare function get_old_FunctionDeclaration_minReferencePosition():
     TypeOnly<typeof old.minReferencePosition>;
 declare function use_current_FunctionDeclaration_minReferencePosition(
-    use: TypeOnly<typeof current.minReferencePosition>);
+    use: TypeOnly<typeof current.minReferencePosition>): void;
 use_current_FunctionDeclaration_minReferencePosition(
     get_old_FunctionDeclaration_minReferencePosition());
 
@@ -2873,7 +2873,7 @@ use_current_FunctionDeclaration_minReferencePosition(
 declare function get_current_FunctionDeclaration_minReferencePosition():
     TypeOnly<typeof current.minReferencePosition>;
 declare function use_old_FunctionDeclaration_minReferencePosition(
-    use: TypeOnly<typeof old.minReferencePosition>);
+    use: TypeOnly<typeof old.minReferencePosition>): void;
 use_old_FunctionDeclaration_minReferencePosition(
     get_current_FunctionDeclaration_minReferencePosition());
 
@@ -2885,7 +2885,7 @@ use_old_FunctionDeclaration_minReferencePosition(
 declare function get_old_VariableDeclaration_refGetRangeLabels():
     TypeOnly<typeof old.refGetRangeLabels>;
 declare function use_current_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof current.refGetRangeLabels>);
+    use: TypeOnly<typeof current.refGetRangeLabels>): void;
 use_current_VariableDeclaration_refGetRangeLabels(
     get_old_VariableDeclaration_refGetRangeLabels());
 
@@ -2897,7 +2897,7 @@ use_current_VariableDeclaration_refGetRangeLabels(
 declare function get_current_VariableDeclaration_refGetRangeLabels():
     TypeOnly<typeof current.refGetRangeLabels>;
 declare function use_old_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof old.refGetRangeLabels>);
+    use: TypeOnly<typeof old.refGetRangeLabels>): void;
 use_old_VariableDeclaration_refGetRangeLabels(
     get_current_VariableDeclaration_refGetRangeLabels());
 
@@ -2909,7 +2909,7 @@ use_old_VariableDeclaration_refGetRangeLabels(
 declare function get_old_VariableDeclaration_refGetTileLabels():
     TypeOnly<typeof old.refGetTileLabels>;
 declare function use_current_VariableDeclaration_refGetTileLabels(
-    use: TypeOnly<typeof current.refGetTileLabels>);
+    use: TypeOnly<typeof current.refGetTileLabels>): void;
 use_current_VariableDeclaration_refGetTileLabels(
     get_old_VariableDeclaration_refGetTileLabels());
 
@@ -2921,7 +2921,7 @@ use_current_VariableDeclaration_refGetTileLabels(
 declare function get_current_VariableDeclaration_refGetTileLabels():
     TypeOnly<typeof current.refGetTileLabels>;
 declare function use_old_VariableDeclaration_refGetTileLabels(
-    use: TypeOnly<typeof old.refGetTileLabels>);
+    use: TypeOnly<typeof old.refGetTileLabels>): void;
 use_old_VariableDeclaration_refGetTileLabels(
     get_current_VariableDeclaration_refGetTileLabels());
 
@@ -2933,7 +2933,7 @@ use_old_VariableDeclaration_refGetTileLabels(
 declare function get_old_FunctionDeclaration_refHasRangeLabel():
     TypeOnly<typeof old.refHasRangeLabel>;
 declare function use_current_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof current.refHasRangeLabel>);
+    use: TypeOnly<typeof current.refHasRangeLabel>): void;
 use_current_FunctionDeclaration_refHasRangeLabel(
     get_old_FunctionDeclaration_refHasRangeLabel());
 
@@ -2945,7 +2945,7 @@ use_current_FunctionDeclaration_refHasRangeLabel(
 declare function get_current_FunctionDeclaration_refHasRangeLabel():
     TypeOnly<typeof current.refHasRangeLabel>;
 declare function use_old_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof old.refHasRangeLabel>);
+    use: TypeOnly<typeof old.refHasRangeLabel>): void;
 use_old_FunctionDeclaration_refHasRangeLabel(
     get_current_FunctionDeclaration_refHasRangeLabel());
 
@@ -2957,7 +2957,7 @@ use_old_FunctionDeclaration_refHasRangeLabel(
 declare function get_old_FunctionDeclaration_refHasRangeLabels():
     TypeOnly<typeof old.refHasRangeLabels>;
 declare function use_current_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof current.refHasRangeLabels>);
+    use: TypeOnly<typeof current.refHasRangeLabels>): void;
 use_current_FunctionDeclaration_refHasRangeLabels(
     get_old_FunctionDeclaration_refHasRangeLabels());
 
@@ -2969,7 +2969,7 @@ use_current_FunctionDeclaration_refHasRangeLabels(
 declare function get_current_FunctionDeclaration_refHasRangeLabels():
     TypeOnly<typeof current.refHasRangeLabels>;
 declare function use_old_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof old.refHasRangeLabels>);
+    use: TypeOnly<typeof old.refHasRangeLabels>): void;
 use_old_FunctionDeclaration_refHasRangeLabels(
     get_current_FunctionDeclaration_refHasRangeLabels());
 
@@ -2981,7 +2981,7 @@ use_old_FunctionDeclaration_refHasRangeLabels(
 declare function get_old_FunctionDeclaration_refHasTileLabel():
     TypeOnly<typeof old.refHasTileLabel>;
 declare function use_current_FunctionDeclaration_refHasTileLabel(
-    use: TypeOnly<typeof current.refHasTileLabel>);
+    use: TypeOnly<typeof current.refHasTileLabel>): void;
 use_current_FunctionDeclaration_refHasTileLabel(
     get_old_FunctionDeclaration_refHasTileLabel());
 
@@ -2993,7 +2993,7 @@ use_current_FunctionDeclaration_refHasTileLabel(
 declare function get_current_FunctionDeclaration_refHasTileLabel():
     TypeOnly<typeof current.refHasTileLabel>;
 declare function use_old_FunctionDeclaration_refHasTileLabel(
-    use: TypeOnly<typeof old.refHasTileLabel>);
+    use: TypeOnly<typeof old.refHasTileLabel>): void;
 use_old_FunctionDeclaration_refHasTileLabel(
     get_current_FunctionDeclaration_refHasTileLabel());
 
@@ -3005,7 +3005,7 @@ use_old_FunctionDeclaration_refHasTileLabel(
 declare function get_old_FunctionDeclaration_refHasTileLabels():
     TypeOnly<typeof old.refHasTileLabels>;
 declare function use_current_FunctionDeclaration_refHasTileLabels(
-    use: TypeOnly<typeof current.refHasTileLabels>);
+    use: TypeOnly<typeof current.refHasTileLabels>): void;
 use_current_FunctionDeclaration_refHasTileLabels(
     get_old_FunctionDeclaration_refHasTileLabels());
 
@@ -3017,7 +3017,7 @@ use_current_FunctionDeclaration_refHasTileLabels(
 declare function get_current_FunctionDeclaration_refHasTileLabels():
     TypeOnly<typeof current.refHasTileLabels>;
 declare function use_old_FunctionDeclaration_refHasTileLabels(
-    use: TypeOnly<typeof old.refHasTileLabels>);
+    use: TypeOnly<typeof old.refHasTileLabels>): void;
 use_old_FunctionDeclaration_refHasTileLabels(
     get_current_FunctionDeclaration_refHasTileLabels());
 
@@ -3029,7 +3029,7 @@ use_old_FunctionDeclaration_refHasTileLabels(
 declare function get_old_FunctionDeclaration_refTypeIncludesFlag():
     TypeOnly<typeof old.refTypeIncludesFlag>;
 declare function use_current_FunctionDeclaration_refTypeIncludesFlag(
-    use: TypeOnly<typeof current.refTypeIncludesFlag>);
+    use: TypeOnly<typeof current.refTypeIncludesFlag>): void;
 use_current_FunctionDeclaration_refTypeIncludesFlag(
     get_old_FunctionDeclaration_refTypeIncludesFlag());
 
@@ -3041,7 +3041,7 @@ use_current_FunctionDeclaration_refTypeIncludesFlag(
 declare function get_current_FunctionDeclaration_refTypeIncludesFlag():
     TypeOnly<typeof current.refTypeIncludesFlag>;
 declare function use_old_FunctionDeclaration_refTypeIncludesFlag(
-    use: TypeOnly<typeof old.refTypeIncludesFlag>);
+    use: TypeOnly<typeof old.refTypeIncludesFlag>): void;
 use_old_FunctionDeclaration_refTypeIncludesFlag(
     get_current_FunctionDeclaration_refTypeIncludesFlag());
 
@@ -3053,7 +3053,7 @@ use_old_FunctionDeclaration_refTypeIncludesFlag(
 declare function get_old_VariableDeclaration_reservedMarkerIdKey():
     TypeOnly<typeof old.reservedMarkerIdKey>;
 declare function use_current_VariableDeclaration_reservedMarkerIdKey(
-    use: TypeOnly<typeof current.reservedMarkerIdKey>);
+    use: TypeOnly<typeof current.reservedMarkerIdKey>): void;
 use_current_VariableDeclaration_reservedMarkerIdKey(
     get_old_VariableDeclaration_reservedMarkerIdKey());
 
@@ -3065,7 +3065,7 @@ use_current_VariableDeclaration_reservedMarkerIdKey(
 declare function get_current_VariableDeclaration_reservedMarkerIdKey():
     TypeOnly<typeof current.reservedMarkerIdKey>;
 declare function use_old_VariableDeclaration_reservedMarkerIdKey(
-    use: TypeOnly<typeof old.reservedMarkerIdKey>);
+    use: TypeOnly<typeof old.reservedMarkerIdKey>): void;
 use_old_VariableDeclaration_reservedMarkerIdKey(
     get_current_VariableDeclaration_reservedMarkerIdKey());
 
@@ -3077,7 +3077,7 @@ use_old_VariableDeclaration_reservedMarkerIdKey(
 declare function get_old_VariableDeclaration_reservedMarkerSimpleTypeKey():
     TypeOnly<typeof old.reservedMarkerSimpleTypeKey>;
 declare function use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    use: TypeOnly<typeof current.reservedMarkerSimpleTypeKey>);
+    use: TypeOnly<typeof current.reservedMarkerSimpleTypeKey>): void;
 use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
     get_old_VariableDeclaration_reservedMarkerSimpleTypeKey());
 
@@ -3089,7 +3089,7 @@ use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
 declare function get_current_VariableDeclaration_reservedMarkerSimpleTypeKey():
     TypeOnly<typeof current.reservedMarkerSimpleTypeKey>;
 declare function use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    use: TypeOnly<typeof old.reservedMarkerSimpleTypeKey>);
+    use: TypeOnly<typeof old.reservedMarkerSimpleTypeKey>): void;
 use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
     get_current_VariableDeclaration_reservedMarkerSimpleTypeKey());
 
@@ -3101,7 +3101,7 @@ use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
 declare function get_old_VariableDeclaration_reservedRangeLabelsKey():
     TypeOnly<typeof old.reservedRangeLabelsKey>;
 declare function use_current_VariableDeclaration_reservedRangeLabelsKey(
-    use: TypeOnly<typeof current.reservedRangeLabelsKey>);
+    use: TypeOnly<typeof current.reservedRangeLabelsKey>): void;
 use_current_VariableDeclaration_reservedRangeLabelsKey(
     get_old_VariableDeclaration_reservedRangeLabelsKey());
 
@@ -3113,7 +3113,7 @@ use_current_VariableDeclaration_reservedRangeLabelsKey(
 declare function get_current_VariableDeclaration_reservedRangeLabelsKey():
     TypeOnly<typeof current.reservedRangeLabelsKey>;
 declare function use_old_VariableDeclaration_reservedRangeLabelsKey(
-    use: TypeOnly<typeof old.reservedRangeLabelsKey>);
+    use: TypeOnly<typeof old.reservedRangeLabelsKey>): void;
 use_old_VariableDeclaration_reservedRangeLabelsKey(
     get_current_VariableDeclaration_reservedRangeLabelsKey());
 
@@ -3125,7 +3125,7 @@ use_old_VariableDeclaration_reservedRangeLabelsKey(
 declare function get_old_VariableDeclaration_reservedTileLabelsKey():
     TypeOnly<typeof old.reservedTileLabelsKey>;
 declare function use_current_VariableDeclaration_reservedTileLabelsKey(
-    use: TypeOnly<typeof current.reservedTileLabelsKey>);
+    use: TypeOnly<typeof current.reservedTileLabelsKey>): void;
 use_current_VariableDeclaration_reservedTileLabelsKey(
     get_old_VariableDeclaration_reservedTileLabelsKey());
 
@@ -3137,7 +3137,7 @@ use_current_VariableDeclaration_reservedTileLabelsKey(
 declare function get_current_VariableDeclaration_reservedTileLabelsKey():
     TypeOnly<typeof current.reservedTileLabelsKey>;
 declare function use_old_VariableDeclaration_reservedTileLabelsKey(
-    use: TypeOnly<typeof old.reservedTileLabelsKey>);
+    use: TypeOnly<typeof old.reservedTileLabelsKey>): void;
 use_old_VariableDeclaration_reservedTileLabelsKey(
     get_current_VariableDeclaration_reservedTileLabelsKey());
 
@@ -3149,7 +3149,7 @@ use_old_VariableDeclaration_reservedTileLabelsKey(
 declare function get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
     TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>;
 declare function use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>);
+    use: TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>): void;
 use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
     get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
 
@@ -3161,7 +3161,7 @@ use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
 declare function get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
     TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>;
 declare function use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>);
+    use: TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>): void;
 use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
     get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
 
@@ -3173,7 +3173,7 @@ use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
 declare function get_old_FunctionDeclaration_toRemovalInfo():
     TypeOnly<typeof old.toRemovalInfo>;
 declare function use_current_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof current.toRemovalInfo>);
+    use: TypeOnly<typeof current.toRemovalInfo>): void;
 use_current_FunctionDeclaration_toRemovalInfo(
     get_old_FunctionDeclaration_toRemovalInfo());
 
@@ -3185,6 +3185,6 @@ use_current_FunctionDeclaration_toRemovalInfo(
 declare function get_current_FunctionDeclaration_toRemovalInfo():
     TypeOnly<typeof current.toRemovalInfo>;
 declare function use_old_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof old.toRemovalInfo>);
+    use: TypeOnly<typeof old.toRemovalInfo>): void;
 use_old_FunctionDeclaration_toRemovalInfo(
     get_current_FunctionDeclaration_toRemovalInfo());

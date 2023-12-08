@@ -17,9 +17,7 @@ import {
 	rebaseChange,
 	RevisionTag,
 	SessionId,
-	SimpleDependee,
 } from "../core";
-import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
 	Commit,
@@ -37,27 +35,16 @@ const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
 
-export interface EditManagerEvents<TChangeset> {
-	/**
-	 * Fired every time that a new commit is added to the trunk
-	 * @param newHead - the new head of the trunk
-	 */
-	newTrunkHead(newHead: GraphCommit<TChangeset>): void;
-}
-
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
  */
 // TODO: Try to reduce this to a single type parameter
 export class EditManager<
-		TEditor extends ChangeFamilyEditor,
-		TChangeset,
-		TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
-	>
-	extends SimpleDependee
-	implements ISubscribable<EditManagerEvents<TChangeset>>
-{
+	TEditor extends ChangeFamilyEditor,
+	TChangeset,
+	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
+> {
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -110,21 +97,18 @@ export class EditManager<
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
+	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
+	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
+	 */
+	private _oldestRevertibleSequenceId?: SequenceId;
+
+	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
 	 * This makes it possible to model the trunk in the same way as any other branch (it branches off of a base commit)
 	 * which allows it to use branching APIs to interact with the other branches.
 	 * Each time trunk eviction occurs, the most recent evicted commit becomes the new `trunkBase`.
 	 */
 	private trunkBase: GraphCommit<TChangeset>;
-
-	private readonly events = createEmitter<EditManagerEvents<TChangeset>>();
-
-	public on<K extends keyof EditManagerEvents<TChangeset>>(
-		eventName: K,
-		listener: EditManagerEvents<TChangeset>[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -135,7 +119,6 @@ export class EditManager<
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 	) {
-		super("EditManager");
 		this.trunkBase = {
 			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			change: changeFamily.rebaser.compose([]),
@@ -143,6 +126,8 @@ export class EditManager<
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
 		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
 		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+
+		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -185,7 +170,7 @@ export class EditManager<
 		// Record the sequence id of the branch's base commit on the trunk
 		const trunkBase = { sequenceId: trackBranch(branch) };
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("change", (args) => {
+		const offRebase = branch.on("afterChange", (args) => {
 			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
 				untrackBranch(branch, trunkBase.sequenceId);
 				trunkBase.sequenceId = trackBranch(branch);
@@ -199,6 +184,46 @@ export class EditManager<
 			offRebase();
 			offDispose();
 		});
+	}
+
+	/**
+	 * Returns the sequence id of the oldest sequenced revertible commit on the local branch.
+	 *
+	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
+	 * this should be tested and revisited once branches are supported
+	 */
+	private getOldestRevertibleSequenceId(): SequenceId | undefined {
+		if (this._oldestRevertibleSequenceId === undefined) {
+			let oldest: SequenceId | undefined;
+			for (const revision of this.localBranch.revertibleCommits()) {
+				if (oldest === undefined) {
+					oldest = this.trunkMetadata.get(revision)?.sequenceId;
+				} else {
+					const current = this.trunkMetadata.get(revision)?.sequenceId;
+					if (current !== undefined) {
+						oldest = minSequenceId(oldest, current);
+					}
+				}
+			}
+			this._oldestRevertibleSequenceId = oldest;
+		}
+
+		return this._oldestRevertibleSequenceId;
+	}
+
+	private onRevertibleDisposed(): (revision: RevisionTag) => void {
+		return (revision: RevisionTag) => {
+			const metadata = this.trunkMetadata.get(revision);
+
+			// if this revision hasn't been sequenced, it won't be evicted
+			if (metadata !== undefined) {
+				const { sequenceId: id } = metadata;
+				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
+				if (id === this._oldestRevertibleSequenceId) {
+					this._oldestRevertibleSequenceId = undefined;
+				}
+			}
+		};
 	}
 
 	/**
@@ -238,6 +263,19 @@ export class EditManager<
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
 			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
+		}
+
+		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
+		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
+		if (oldestRevertibleSequenceId !== undefined) {
+			// use a smaller sequence number so that the oldest revertible is not trimmed
+			const sequenceIdBeforeOldestRevertible: SequenceId = {
+				sequenceNumber: brand(oldestRevertibleSequenceId.sequenceNumber - 1),
+			};
+			trunkTailSequenceId = minSequenceId(
+				trunkTailSequenceId,
+				sequenceIdBeforeOldestRevertible,
+			);
 		}
 
 		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(trunkTailSequenceId);
@@ -538,7 +576,6 @@ export class EditManager<
 		const trunkHead = this.trunk.getHead();
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });
-		this.events.emit("newTrunkHead", trunkHead);
 	}
 
 	/**

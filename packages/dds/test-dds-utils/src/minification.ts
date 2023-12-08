@@ -31,6 +31,8 @@ import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./
  * 	 }
  * }
  * ```
+ *
+ * @internal
  */
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 

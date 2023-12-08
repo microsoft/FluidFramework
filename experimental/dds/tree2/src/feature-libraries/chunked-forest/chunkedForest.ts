@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	SimpleDependee,
-	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
 	IEditableForest,
 	TreeNavigationResult,
@@ -15,7 +13,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Delta,
 	UpPath,
 	Anchor,
 	FieldAnchor,
@@ -27,6 +24,8 @@ import {
 	PlaceIndex,
 	Range,
 	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
+	ProtoNodes,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -35,7 +34,7 @@ import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
 import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
-	return new BasicChunk(brand("above root placeholder"), new Map());
+	return new BasicChunk(aboveRootPlaceholder, new Map());
 }
 
 interface StackNode {
@@ -48,9 +47,7 @@ interface StackNode {
  *
  * This implementation focuses on performance.
  */
-class ChunkedForest extends SimpleDependee implements IEditableForest {
-	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-
+export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly events = createEmitter<ForestEvents>();
@@ -66,9 +63,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		public readonly schema: StoredSchemaRepository,
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
-	) {
-		super("object-forest.ChunkedForest");
-	}
+	) {}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
@@ -122,20 +117,16 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
-				this.forest.invalidateDependents();
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
-				this.forest.invalidateDependents();
+			create(content: ProtoNodes, destination: FieldKey): void {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				this.forest.invalidateDependents();
 				this.attachEdit(source, count, destination);
 			},
 			detach(source: Range, destination: FieldKey): void {
-				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -198,7 +189,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					newContentSource !== oldContentDestination,
 					0x7b0 /* Replace detached source field and detached destination field must be different */,
 				);
-				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},

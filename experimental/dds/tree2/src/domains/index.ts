@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	SchemaBuilder,
-	FactoryObjectNodeSchema,
-	FactoryObjectNodeSchemaRecursive,
-} from "./schemaBuilder";
-
+export { SchemaBuilder } from "./schemaBuilder";
 export {
 	cursorToJsonObject,
 	jsonArray,
@@ -21,6 +16,3 @@ export {
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey";
 
 export { leaf } from "./leafDomain";
-
-import * as testRecursiveDomain from "./testRecursiveDomain";
-export { testRecursiveDomain };

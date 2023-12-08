@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_RuntimeRequestHandler():
     TypeOnly<old.RuntimeRequestHandler>;
 declare function use_current_TypeAliasDeclaration_RuntimeRequestHandler(
-    use: TypeOnly<current.RuntimeRequestHandler>);
+    use: TypeOnly<current.RuntimeRequestHandler>): void;
 use_current_TypeAliasDeclaration_RuntimeRequestHandler(
     get_old_TypeAliasDeclaration_RuntimeRequestHandler());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_RuntimeRequestHandler(
 declare function get_current_TypeAliasDeclaration_RuntimeRequestHandler():
     TypeOnly<current.RuntimeRequestHandler>;
 declare function use_old_TypeAliasDeclaration_RuntimeRequestHandler(
-    use: TypeOnly<old.RuntimeRequestHandler>);
+    use: TypeOnly<old.RuntimeRequestHandler>): void;
 use_old_TypeAliasDeclaration_RuntimeRequestHandler(
     get_current_TypeAliasDeclaration_RuntimeRequestHandler());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_RuntimeRequestHandler(
 declare function get_old_ClassDeclaration_RuntimeRequestHandlerBuilder():
     TypeOnly<old.RuntimeRequestHandlerBuilder>;
 declare function use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<current.RuntimeRequestHandlerBuilder>);
+    use: TypeOnly<current.RuntimeRequestHandlerBuilder>): void;
 use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
     get_old_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
 declare function get_current_ClassDeclaration_RuntimeRequestHandlerBuilder():
     TypeOnly<current.RuntimeRequestHandlerBuilder>;
 declare function use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<old.RuntimeRequestHandlerBuilder>);
+    use: TypeOnly<old.RuntimeRequestHandlerBuilder>): void;
 use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
     get_current_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
 declare function get_old_FunctionDeclaration_buildRuntimeRequestHandler():
     TypeOnly<typeof old.buildRuntimeRequestHandler>;
 declare function use_current_FunctionDeclaration_buildRuntimeRequestHandler(
-    use: TypeOnly<typeof current.buildRuntimeRequestHandler>);
+    use: TypeOnly<typeof current.buildRuntimeRequestHandler>): void;
 use_current_FunctionDeclaration_buildRuntimeRequestHandler(
     get_old_FunctionDeclaration_buildRuntimeRequestHandler());
 
@@ -89,7 +89,7 @@ use_current_FunctionDeclaration_buildRuntimeRequestHandler(
 declare function get_current_FunctionDeclaration_buildRuntimeRequestHandler():
     TypeOnly<typeof current.buildRuntimeRequestHandler>;
 declare function use_old_FunctionDeclaration_buildRuntimeRequestHandler(
-    use: TypeOnly<typeof old.buildRuntimeRequestHandler>);
+    use: TypeOnly<typeof old.buildRuntimeRequestHandler>): void;
 use_old_FunctionDeclaration_buildRuntimeRequestHandler(
     get_current_FunctionDeclaration_buildRuntimeRequestHandler());
 
@@ -101,7 +101,7 @@ use_old_FunctionDeclaration_buildRuntimeRequestHandler(
 declare function get_old_VariableDeclaration_createFluidObjectResponse():
     TypeOnly<typeof old.createFluidObjectResponse>;
 declare function use_current_VariableDeclaration_createFluidObjectResponse(
-    use: TypeOnly<typeof current.createFluidObjectResponse>);
+    use: TypeOnly<typeof current.createFluidObjectResponse>): void;
 use_current_VariableDeclaration_createFluidObjectResponse(
     get_old_VariableDeclaration_createFluidObjectResponse());
 
@@ -113,7 +113,7 @@ use_current_VariableDeclaration_createFluidObjectResponse(
 declare function get_current_VariableDeclaration_createFluidObjectResponse():
     TypeOnly<typeof current.createFluidObjectResponse>;
 declare function use_old_VariableDeclaration_createFluidObjectResponse(
-    use: TypeOnly<typeof old.createFluidObjectResponse>);
+    use: TypeOnly<typeof old.createFluidObjectResponse>): void;
 use_old_VariableDeclaration_createFluidObjectResponse(
     get_current_VariableDeclaration_createFluidObjectResponse());
 
@@ -125,7 +125,7 @@ use_old_VariableDeclaration_createFluidObjectResponse(
 declare function get_old_FunctionDeclaration_handleFromLegacyUri():
     TypeOnly<typeof old.handleFromLegacyUri>;
 declare function use_current_FunctionDeclaration_handleFromLegacyUri(
-    use: TypeOnly<typeof current.handleFromLegacyUri>);
+    use: TypeOnly<typeof current.handleFromLegacyUri>): void;
 use_current_FunctionDeclaration_handleFromLegacyUri(
     get_old_FunctionDeclaration_handleFromLegacyUri());
 
@@ -137,7 +137,7 @@ use_current_FunctionDeclaration_handleFromLegacyUri(
 declare function get_current_FunctionDeclaration_handleFromLegacyUri():
     TypeOnly<typeof current.handleFromLegacyUri>;
 declare function use_old_FunctionDeclaration_handleFromLegacyUri(
-    use: TypeOnly<typeof old.handleFromLegacyUri>);
+    use: TypeOnly<typeof old.handleFromLegacyUri>): void;
 use_old_FunctionDeclaration_handleFromLegacyUri(
     get_current_FunctionDeclaration_handleFromLegacyUri());
 
@@ -149,7 +149,7 @@ use_old_FunctionDeclaration_handleFromLegacyUri(
 declare function get_old_VariableDeclaration_rootDataStoreRequestHandler():
     TypeOnly<typeof old.rootDataStoreRequestHandler>;
 declare function use_current_VariableDeclaration_rootDataStoreRequestHandler(
-    use: TypeOnly<typeof current.rootDataStoreRequestHandler>);
+    use: TypeOnly<typeof current.rootDataStoreRequestHandler>): void;
 use_current_VariableDeclaration_rootDataStoreRequestHandler(
     get_old_VariableDeclaration_rootDataStoreRequestHandler());
 
@@ -161,6 +161,6 @@ use_current_VariableDeclaration_rootDataStoreRequestHandler(
 declare function get_current_VariableDeclaration_rootDataStoreRequestHandler():
     TypeOnly<typeof current.rootDataStoreRequestHandler>;
 declare function use_old_VariableDeclaration_rootDataStoreRequestHandler(
-    use: TypeOnly<typeof old.rootDataStoreRequestHandler>);
+    use: TypeOnly<typeof old.rootDataStoreRequestHandler>): void;
 use_old_VariableDeclaration_rootDataStoreRequestHandler(
     get_current_VariableDeclaration_rootDataStoreRequestHandler());

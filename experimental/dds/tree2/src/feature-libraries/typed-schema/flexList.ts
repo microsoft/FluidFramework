@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ArrayToUnion } from "./typeUtils";
+
 /** A symbol used to identify a `MarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");
 
@@ -45,7 +47,7 @@ export function markEager<T>(t: T): T {
  * To force a `"function"` item to be treated as an eager item, call `markEager` before putting it in the list.
  * This is necessary e.g. when the eager list items are function types and the lazy items are functions that _return_ function types.
  * `FlexList`s are processed by `normalizeFlexList` and `normalizeFlexListEager`.
- * @alpha
+ * @beta
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
@@ -80,7 +82,7 @@ export function normalizeFlexListEager<List extends FlexList>(
  * An "eager" or "lazy" Item in a `FlexList`.
  * Lazy items are wrapped in a function to allow referring to themselves before they are declared.
  * This makes recursive and co-recursive items possible.
- * @alpha
+ * @beta
  */
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -92,7 +94,8 @@ export type NormalizedFlexList<Item> = readonly Item[];
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
- * @alpha
+ * Get the `Item` type from a `LazyItem<Item>`.
+ * @beta
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result
 	? Result
@@ -109,11 +112,16 @@ type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? Lis
 
 /**
  * Normalize FlexList type to a non-lazy array.
- * @alpha
  */
 export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true
 	? ConstantFlexListToNonLazyArray<List>
 	: NormalizedFlexList<ExtractListItemType<List>>;
+
+/**
+ * Normalize FlexList type to a union.
+ * @beta
+ */
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 /**
  * Normalize FlexList type to a non-lazy array.
@@ -135,8 +143,6 @@ export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends
  * Type operations designed to work on tuples can often behave very badly on regular arrays.
  * For example recursive patterns for processing them often just return the base case,
  * losing all the type information.
- *
- * @alpha
  */
 // This works by determining if the length is `number` (and not a specific number).
 export type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"]

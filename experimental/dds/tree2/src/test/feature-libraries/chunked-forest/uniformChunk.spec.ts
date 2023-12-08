@@ -19,8 +19,8 @@ import { sum } from "../../domains/json/benchmarks";
 import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
-	singleMapTreeCursor,
-	singleTextCursor,
+	cursorForMapTreeNode,
+	cursorForJsonableTreeNode,
 	TreeChunk,
 } from "../../../feature-libraries";
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData";
@@ -91,7 +91,7 @@ describe("uniformChunk", () => {
 			factory: (data: TreeChunk) => {
 				const cursor = data.cursor();
 				cursor.enterNode(0);
-				return singleTextCursor(jsonableTreeFromCursor(cursor));
+				return cursorForJsonableTreeNode(jsonableTreeFromCursor(cursor));
 			},
 		},
 		{
@@ -99,7 +99,7 @@ describe("uniformChunk", () => {
 			factory: (data: TreeChunk) => {
 				const cursor = data.cursor();
 				cursor.enterNode(0);
-				return singleMapTreeCursor(mapTreeFromCursor(cursor));
+				return cursorForMapTreeNode(mapTreeFromCursor(cursor));
 			},
 		},
 		{

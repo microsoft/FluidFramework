@@ -29,6 +29,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
+ * @alpha
  */
 export interface IMergeNodeCommon {
 	/**
@@ -94,6 +95,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @alpha
  */
 export interface IRemovalInfo {
 	/**
@@ -115,6 +117,7 @@ export interface IRemovalInfo {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
@@ -129,6 +132,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	readonly type: string;
@@ -156,9 +160,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * `attribution === undefined` until ack.
 	 *
 	 * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-	 *
-	 * @alpha
-	 *
 	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
@@ -174,8 +175,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 */
 	propertyManager?: PropertiesManager;
 	/**
-	 * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+	 * Local seq at which this segment was inserted.
+	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
+	 *
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -183,7 +187,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
 	 * will be updated to the seq at which that client removed this segment.
 	 *
-	 * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
+	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
@@ -234,12 +239,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMarkerModifiedAction {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(marker: Marker): void;
 }
 
+/**
+ * @alpha
+ */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -350,6 +359,7 @@ export interface SearchResult {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export interface SegmentGroup {
 	segments: ISegment[];
@@ -358,6 +368,9 @@ export interface SegmentGroup {
 	refSeq: number;
 }
 
+/**
+ * @alpha
+ */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
@@ -419,6 +432,9 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
+/**
+ * @alpha
+ */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
@@ -426,9 +442,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public removedClientIds?: number[];
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-	/**
-	 * @alpha
-	 */
+	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 	public propertyManager?: PropertiesManager;
 	public properties?: PropertySet;
@@ -604,13 +618,25 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
+/**
+ * @internal
+ */
 export const reservedMarkerIdKey = "markerId";
+/**
+ * @internal
+ */
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
+/**
+ * @alpha
+ */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
+/**
+ * @alpha
+ */
 export class Marker extends BaseSegment implements ReferencePosition {
 	public static readonly type = "Marker";
 	public static is(segment: ISegment): segment is Marker {
@@ -714,16 +740,84 @@ export class IncrementalMapState<TContext> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
-	// Lowest-numbered segment in window; no client can reference a state before this one
+
+	/**
+	 * Lowest-numbered segment in window; no client can reference a state before this one
+	 */
 	minSeq = 0;
-	// Highest-numbered segment in window and current
-	// reference segment for this client
+	/**
+	 * Highest-numbered segment in window and current reference sequence number for this client.
+	 */
 	currentSeq = 0;
 
+	/**
+	 * Highest-numbered localSeq used for a pending segment.
+	 * Semantically, `localSeq`s provide an ordering on in-flight merge-tree operations:
+	 * for operations stamped with localSeqs `a` and `b`, `a < b` if and only if `a` was submitted before `b`.
+	 *
+	 * @remarks - This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
+	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
+	 *
+	 * It's useful to stamp ops with such an incrementing counter because it enables reasoning about which segments existed from
+	 * the perspective of the local client at a given point in 'un-acked' time, which is necessary to support the reconnect flow.
+	 *
+	 * For example, imagine a client with initial state "123456" submits some ops to create the text "123456ABC".
+	 * If they insert the "C" first, then "B", then "A", their local segment state might look like this:
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 * (note that {@link ISegment.localSeq} tracks the localSeq at which a segment was inserted)
+	 *
+	 * Suppose the client then disconnects and reconnects before any of its insertions are acked. The reconnect flow will necessitate
+	 * that the client regenerates and resubmits ops based on its current segment state as well as the original op that was sent.
+	 *
+	 * It will generate the ops
+	 * 1. \{ pos: 6, text: "C" \}
+	 * 2. \{ pos: 6, text: "B" \}
+	 * 3. \{ pos: 6, text: "A" \}
+	 *
+	 * since when submitting the first op, remote clients don't know that this client is about to submit the "A" and "B".
+	 *
+	 * On the other hand, imagine if the client had originally submitted the ops in the order "A", "B", "C"
+	 * such that the segments' local state was instead:
+	 *
+	 * ```js
+	 * [
+	 *     { seq: 0, text: "1234" },
+	 *     { seq: 5, text: "56" },
+	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "A" },
+	 *     { localSeq: 2, seq: UnassignedSequenceNumber, text: "B" },
+	 *     { localSeq: 3, seq: UnassignedSequenceNumber, text: "C" },
+	 * ]
+	 * ```
+	 *
+	 * The resubmitted ops should instead be:
+	 * 1. \{ pos: 6, text: "A" \}
+	 * 2. \{ pos: 7, text: "B" \}
+	 * 3. \{ pos: 8, text: "C" \}
+	 *
+	 * since remote clients will have seen the "A" when processing the "B" as well as both the "A" and "B" when processing the "C".
+	 * As can be seen, the list of resubmitted ops is different in the two cases despite the merge-tree's segment state only differing
+	 * in `localSeq`.
+	 *
+	 * This example is a bit simplified from the general scenario: since no remote clients modified the merge-tree while the client
+	 * was disconnected, the resubmitted ops end up matching the original ops exactly.
+	 * However, this is not generally true: the production reconnect code takes into account visibility of segments based on both acked
+	 * and local information as appropriate.
+	 * Nonetheless, this simple scenario is enough to understand why it's useful to be able to determine if a segment should be visible
+	 * from a given (seq, localSeq) perspective.
+	 */
 	localSeq = 0;
 
 	loadFrom(a: CollaborationWindow) {
@@ -736,17 +830,20 @@ export class CollaborationWindow {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export const compareNumbers = (a: number, b: number) => a - b;
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
 /**
  * @deprecated This functionality is deprecated and will be removed in a future release.
+ * @internal
  */
 export function internedSpaces(n: number) {
 	if (indentStrings[n] === undefined) {
@@ -760,6 +857,7 @@ export function internedSpaces(n: number) {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IConsensusInfo {
 	marker: Marker;
@@ -768,6 +866,7 @@ export interface IConsensusInfo {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface SegmentAccumulator {
 	segments: ISegment[];
@@ -780,6 +879,9 @@ export interface MinListener {
 	onMinGE(minSeq: number): void;
 }
 
+/**
+ * @internal
+ */
 export function debugMarkerToString(marker: Marker): string {
 	let bbuf = "";
 	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {

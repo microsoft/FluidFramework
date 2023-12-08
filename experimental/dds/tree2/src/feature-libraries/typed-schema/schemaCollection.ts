@@ -5,14 +5,18 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
-import { Multiplicity } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
+import { Multiplicity } from "../multiplicity";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
+	MapNodeSchema,
+	LeafNodeSchema,
+	FieldNodeSchema,
+	ObjectNodeSchema,
 } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
@@ -155,25 +159,35 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.nodeSchema) {
-		for (const [key, field] of tree.objectNodeFields) {
-			const description = () =>
-				`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
-			validateField(lintConfiguration, collection, field, description, errors);
-			validateObjectNodeFieldName(key, description, errors);
-		}
-		if (tree.mapFields !== undefined) {
+		if (tree instanceof MapNodeSchema) {
 			validateField(
 				lintConfiguration,
 				collection,
-				tree.mapFields,
+				tree.info,
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.mapFields.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
+			if ((tree.info.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind with multiplicity "Single". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
+		} else if (tree instanceof LeafNodeSchema) {
+			// No validation for now.
+		} else if (tree instanceof FieldNodeSchema) {
+			const description = () =>
+				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
+			validateField(lintConfiguration, collection, tree.info, description, errors);
+		} else if (tree instanceof ObjectNodeSchema) {
+			for (const [key, field] of tree.objectNodeFields) {
+				const description = () =>
+					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
+				validateField(lintConfiguration, collection, field, description, errors);
+				validateObjectNodeFieldName(key, description, errors);
+			}
+		} else {
+			// TODO: there should be a common fallback that works for cases without a specialized implementation.
+			fail("unrecognized node kind");
 		}
 	}
 
@@ -268,9 +282,9 @@ export function validateObjectNodeFieldName(
 	describeField: () => string,
 	errors: string[],
 ): void {
-	// TODO: support custom field keys.
+	// TODO: Remove conflicts between possible field keys and editable-tree API members.
 	const suggestion =
-		"Pick a different field name to avoid property name collisions in the tree API. In the future, it will be possible to pick a separate field name for use in identifiers in the the API (to fix errors like this one) while keeping the field key (used everywhere else, including in persisted data) for compatibility but this is not implemented yet.";
+		"Pick a different field name to avoid property name collisions in the implementation. In the future this list of reserved names will be removed.";
 
 	if (bannedFieldNames.has(name)) {
 		errors.push(

@@ -5,7 +5,7 @@
 
 import { TreeStoredSchema, TreeNodeSchemaIdentifier, TreeFieldStoredSchema } from "../core";
 import { fail } from "../util";
-import { defaultSchemaPolicy } from "./default-field-kinds";
+import { defaultSchemaPolicy } from "./default-schema";
 import {
 	TreeSchema,
 	TreeNodeSchema,
@@ -13,6 +13,9 @@ import {
 	TreeFieldSchema,
 	AllowedTypes,
 	Any,
+	LeafNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
 } from "./typed-schema";
 
 /**
@@ -30,19 +33,20 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema
 		if (innerSchema.leafValue !== undefined) {
 			map.set(
 				identifier,
-				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
-					leafValue: innerSchema.leafValue,
-				}),
+				LeafNodeSchema.create(
+					{ name: "intoTypedSchema" },
+					identifier,
+					innerSchema.leafValue,
+				),
 			);
 		} else if (innerSchema.mapFields !== undefined) {
 			map.set(
 				identifier,
-				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
-					mapFields: fieldSchemaFromStoredSchema(
-						innerSchema.mapFields,
-						map,
-					) as MapFieldSchema,
-				}),
+				MapNodeSchema.create(
+					{ name: "intoTypedSchema" },
+					identifier,
+					fieldSchemaFromStoredSchema(innerSchema.mapFields, map) as MapFieldSchema,
+				),
 			);
 		} else {
 			const fields = new Map<string, TreeFieldSchema>();
@@ -52,9 +56,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema
 			const fieldsObject = mapToObject(fields);
 			map.set(
 				identifier,
-				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
-					objectNodeFields: fieldsObject,
-				}),
+				ObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
 			);
 		}
 	}

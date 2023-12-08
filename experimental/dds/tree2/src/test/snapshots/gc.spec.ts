@@ -10,13 +10,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTree, ITreeView, SharedTree, SharedTreeFactory } from "../../shared-tree";
+import { SharedTree, SharedTreeFactory } from "../../shared-tree";
 import { typeboxValidator } from "../../external-utilities";
-import { SchemaBuilder } from "../../domains";
-import { AllowedUpdateType } from "../../core";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
-const builder = new SchemaBuilder({ scope: "test" });
-const someType = builder.object("foo", {
+const builder = new SchemaFactory("test");
+class SomeType extends builder.object("foo", {
 	handles: builder.list(builder.handle),
 	nested: builder.optional(
 		builder.object("bar", {
@@ -24,21 +23,13 @@ const someType = builder.object("foo", {
 		}),
 	),
 	bump: builder.optional(builder.number),
-});
+}) {}
 
-const schema = builder.intoSchema(SchemaBuilder.required(someType));
-
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematize({
-		initialTree: {
-			handles: [],
-			nested: undefined,
-			bump: undefined,
-		} as any,
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
-}
+const config = new TreeConfiguration(SomeType, () => ({
+	handles: [],
+	nested: undefined,
+	bump: undefined,
+}));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -78,7 +69,7 @@ describe("Garbage Collection", () => {
 			this.tree1 = createConnectedTree("tree1", this.containerRuntimeFactory);
 			this.tree2 = createConnectedTree("tree2", this.containerRuntimeFactory);
 
-			this.tree1View = getNewTreeView(this.tree1).root;
+			this.tree1View = this.tree1.schematize(config).root;
 		}
 
 		public get sharedObject() {
@@ -93,7 +84,7 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			this.tree1View.handles.insertAtEnd([subtree1.handle, subtree2.handle]);
+			this.tree1View.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
 			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();

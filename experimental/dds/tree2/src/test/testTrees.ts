@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { ITreeCursorSynchronous, JsonableTree } from "../core";
 import {
 	Any,
@@ -12,16 +13,17 @@ import {
 	TreeFieldSchema,
 	FullSchemaPolicy,
 	Multiplicity,
-	SchemaAware,
 	SchemaLibrary,
 	TreeNodeSchema,
 	TreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
 } from "../feature-libraries";
 import { TreeContent } from "../shared-tree";
 import { leaf, SchemaBuilder } from "../domains";
@@ -37,7 +39,7 @@ function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
-	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
+	data: AllowedTypesToFlexInsertableTree<[T]>,
 ): TestTree {
 	const fieldSchema = TreeFieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
@@ -47,7 +49,7 @@ function testField<T extends TreeFieldSchema>(
 	name: string,
 	schemaLibrary: SchemaLibrary,
 	rootField: T,
-	data: SchemaAware.TypedField<T, SchemaAware.ApiMode.Flexible>,
+	data: InsertableFlexField<T>,
 ): TestTree {
 	const schema = new SchemaBuilder({
 		scope: name,
@@ -83,7 +85,7 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
 		initialTree: cursorsToFieldContent(
-			test.treeFactory().map(singleTextCursor),
+			test.treeFactory().map(cursorForJsonableTreeNode),
 			test.schemaData.rootFieldSchema,
 		),
 	};
@@ -119,10 +121,7 @@ export const anyFields = builder.object("anyFields", {
 
 export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
 
-type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	[typeof numericMap]
->;
+type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
 export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
@@ -137,15 +136,10 @@ export const testTrees: readonly TestTree[] = [
 	testTree("null", library, leaf.null, null),
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, leaf.number, 5),
+	testTree("handle", library, leaf.handle, new MockHandle(5)),
 	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),
-	testTree("true boolean", library, leaf.boolean, {
-		[typeNameSymbol]: leaf.boolean.name,
-		[valueSymbol]: true,
-	}),
-	testTree("false boolean", library, leaf.boolean, {
-		[typeNameSymbol]: leaf.boolean.name,
-		[valueSymbol]: false,
-	}),
+	testTree("true boolean", library, leaf.boolean, true),
+	testTree("false boolean", library, leaf.boolean, false),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {
 		field: {},
 	}),

@@ -18,6 +18,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
+/**
+ * @internal
+ */
 export interface IScribeProtocolState {
 	sequenceNumber: number;
 	minimumSequenceNumber: number;
@@ -26,6 +29,9 @@ export interface IScribeProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
+/**
+ * @internal
+ */
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
 	readonly attributes: IDocumentAttributes;
@@ -40,6 +46,7 @@ export interface IProtocolHandler {
 
 /**
  * Handles protocol specific ops.
+ * @internal
  */
 export class ProtocolOpHandler implements IProtocolHandler {
 	private readonly _quorum: Quorum;

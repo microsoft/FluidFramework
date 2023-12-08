@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	prefixPath,
 	prefixFieldPath,
 	Any,
@@ -194,7 +194,7 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
 ): void {
 	function dataFromJsonableTree(data: JsonableTree): TData {
 		// Use text cursor to provide input data
-		return dataFromCursor(singleTextCursor(data));
+		return dataFromCursor(cursorForJsonableTreeNode(data));
 	}
 
 	testTreeCursor<TData, TCursor>({

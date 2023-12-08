@@ -15,9 +15,8 @@ import {
 	getPrimaryField,
 	FieldKey,
 	leaf,
-	EmptyKey,
 	schemaIsFieldNode,
-	oneFromSet,
+	schemaIsLeaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
@@ -58,14 +57,11 @@ describe("schema converter", () => {
 						brand(`converted.${typeName}`),
 					);
 					assert(primitiveSchema !== undefined);
-					schemaIsFieldNode(primitiveSchema);
+					assert(schemaIsFieldNode(primitiveSchema));
 
-					const innerTypes =
-						primitiveSchema.objectNodeFields.get(EmptyKey)?.allowedTypeSet ??
-						fail("missing schema");
-					assert(innerTypes !== Any);
-					const innerSchema = oneFromSet(innerTypes) ?? fail("unexpected polymorphism");
-					assert(innerSchema.leafValue !== undefined);
+					const innerSchema =
+						primitiveSchema.info.monomorphicChildType ?? fail("missing schema");
+					assert(schemaIsLeaf(innerSchema));
 				}
 				assert(
 					fullSchemaData.nodeSchema.get(brand(`converted.map<${typeName}>`)) !==
@@ -463,9 +459,7 @@ describe("schema converter", () => {
 			);
 			assert(enumSchema && schemaIsFieldNode(enumSchema));
 			assert(
-				(enumSchema.objectNodeFields.get(EmptyKey) ?? fail("missing schema")).equals(
-					TreeFieldSchema.create(FieldKinds.required, [leaf.number]),
-				),
+				enumSchema.info.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
 			);
 
 			const arrayOfEnums = fullSchemaData.nodeSchema.get(

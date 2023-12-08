@@ -7,7 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { singleTextCursor } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
@@ -56,8 +56,8 @@ function initializeTestTree(
 	tree: ISharedTree,
 	state: JsonableTree = initialTestJsonTree,
 ): ITreeCheckout {
-	const writeCursor = singleTextCursor(state);
-	return tree.schematize({
+	const writeCursor = cursorForJsonableTreeNode(state);
+	return tree.schematizeInternal({
 		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
@@ -147,7 +147,7 @@ function insertNodesWithIndividualTransactions(
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
-		const writeCursor = singleTextCursor(jsonNode);
+		const writeCursor = cursorForJsonableTreeNode(jsonNode);
 		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 		field.insert(0, writeCursor);
 		tree.transaction.commit();
@@ -167,7 +167,7 @@ function insertNodesWithSingleTransaction(
 	};
 	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 	for (let i = 0; i < count; i++) {
-		field.insert(0, singleTextCursor(jsonNode));
+		field.insert(0, cursorForJsonableTreeNode(jsonNode));
 	}
 	tree.transaction.commit();
 }
@@ -222,7 +222,7 @@ function editNodesWithIndividualTransactions(
 		editor.delete(i, 1);
 		editor.insert(
 			i,
-			singleTextCursor({
+			cursorForJsonableTreeNode({
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
@@ -250,7 +250,7 @@ function editNodesWithSingleTransaction(
 		editor.delete(i, 1);
 		editor.insert(
 			i,
-			singleTextCursor({
+			cursorForJsonableTreeNode({
 				type: childSchema.name,
 				value: editPayload,
 				fields: {

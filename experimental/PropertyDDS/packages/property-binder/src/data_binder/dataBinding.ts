@@ -96,9 +96,8 @@ export interface CallbackOptions {
  * to get the expected behaviors.
  * In addition, {@link DataBinding.registerOnPath} can be used to register for more granular events regarding
  * insert, modify and delete for subpaths rooted at the associated property.
- *
- * @public
  * @alias DataBinding
+ * @internal
  */
 export class DataBinding {
 	static __absolutePathInternalBinding: boolean;
@@ -137,7 +136,6 @@ export class DataBinding {
 	 * the DataBinding was activated using {@link DataBinder.activateDataBinding}.
 	 *
 	 * @returns The userData, or undefined if it wasn't specified during activation.
-	 * @public
 	 */
 	getUserData(): any | undefined {
 		return this._activationInfo.userData;
@@ -179,7 +177,6 @@ export class DataBinding {
 	 * Returns the property for which this DataBinding was instantiated.
 	 *
 	 * @returns The corresponding property.
-	 * @public
 	 */
 	getProperty(): BaseProperty | undefined {
 		return this._property;
@@ -190,7 +187,6 @@ export class DataBinding {
 	 * registered with the DataBinder using {@link DataBinder.activateDataBinding}.
 	 *
 	 * @returns The binding type of this DataBinding.
-	 * @public
 	 */
 	getDataBindingType(): string {
 		return this._activationInfo.bindingType;
@@ -200,7 +196,6 @@ export class DataBinding {
 	 * Returns the DataBinder instance associated with this DataBinding.
 	 *
 	 * @returns The DataBinder instance.
-	 * @public
 	 */
 	getDataBinder(): DataBinder {
 		return this._activationInfo.dataBinder;
@@ -1929,7 +1924,6 @@ export class DataBinding {
 	 * the property found via path, and a key / index if it gets triggered for one of the collection events.
 	 * @param in_options  Additional user specified options on how the callback should be
 	 * registered.
-	 * @public
 	 */
 	static registerOnProperty(
 		in_path: string,
@@ -1974,7 +1968,6 @@ export class DataBinding {
 	 * @param in_callback The function to call when the property behind the relative path changes.
 	 * @param in_options Additional user specified options on how the callback should be
 	 * registered.
-	 * @public
 	 */
 	static registerOnPath(
 		in_path: Array<string> | string,
@@ -1996,8 +1989,6 @@ export class DataBinding {
 	 * @param in_callback The function to call, when the property behind the relative path changes.
 	 * @param in_options Additional user specified options on how the callback should be
 	 * registered.
-	 *
-	 * @public
 	 */
 	static registerOnValues(
 		in_path: string,
@@ -2096,7 +2087,7 @@ export class DataBinding {
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns A function that registers the decorated callback using registerOnValues.
- * @public
+ * @internal
  */
 export const onValuesChanged = function (
 	_in_path: string,
@@ -2119,7 +2110,7 @@ export const onValuesChanged = function (
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns  function that registers the decorated callback using registerOnProperty.
- * @public
+ * @internal
  */
 export const onPropertyChanged = function (
 	_in_path: string,
@@ -2144,7 +2135,7 @@ export const onPropertyChanged = function (
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns A function that registers the decorated callback using registerOnPath.
- * @public
+ * @internal
  */
 export const onPathChanged = function (
 	_in_path: Array<string> | string,

@@ -21,7 +21,7 @@ import { revertSharedStringRevertibles, SharedStringRevertible } from "../../rev
 import { SharedStringFactory } from "../../sequenceFactory";
 import { SharedString } from "../../sharedString";
 import { Side } from "../../intervalCollection";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];

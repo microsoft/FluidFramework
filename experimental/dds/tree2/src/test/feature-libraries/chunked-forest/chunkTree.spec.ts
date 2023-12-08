@@ -9,8 +9,9 @@ import { jsonObject, leaf, SchemaBuilder } from "../../../domains";
 import {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	TreeChunk,
+	cursorForJsonableTreeField,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
@@ -36,7 +37,6 @@ import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChun
 import { brand } from "../../../util";
 import {
 	assertChunkCursorEquals,
-	fieldCursorFromJsonableTrees,
 	jsonableTreesFromFieldCursor,
 	numberSequenceField,
 } from "./fieldCursorTestUtilities";
@@ -68,7 +68,7 @@ describe("chunkTree", () => {
 				const chunk = tree.dataFactory();
 				const shape = chunk.shape.treeShape;
 				for (let index = 0; index < chunk.topLevelLength; index++) {
-					const src = singleTextCursor(tree.reference[index]);
+					const src = cursorForJsonableTreeNode(tree.reference[index]);
 					insertValues(src, shape, values);
 				}
 				assert.deepEqual(values, chunk.values);
@@ -79,7 +79,7 @@ describe("chunkTree", () => {
 	describe("uniformChunkFromCursor", () => {
 		it("maxTopLevelLength and skipLastNavigation are respected", () => {
 			const uniformPolygon = polygonTree.dataFactory();
-			const polygonReference = singleTextCursor(polygonTree.reference);
+			const polygonReference = cursorForJsonableTreeNode(polygonTree.reference);
 			const [key, pointShape, pointCount] = uniformPolygon.shape.treeShape.fieldsArray[0];
 			polygonReference.enterField(key);
 			polygonReference.firstNode();
@@ -105,7 +105,7 @@ describe("chunkTree", () => {
 		});
 
 		it("stops if type changes", () => {
-			const cursor = fieldCursorFromJsonableTrees([
+			const cursor = cursorForJsonableTreeField([
 				{ type: leaf.null.name },
 				{ type: leaf.null.name },
 				{ type: jsonObject.name },
@@ -130,7 +130,7 @@ describe("chunkTree", () => {
 
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
-			const cursor = singleTextCursor({ type: leaf.null.name });
+			const cursor = cursorForJsonableTreeNode({ type: leaf.null.name });
 			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, true);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
@@ -144,7 +144,7 @@ describe("chunkTree", () => {
 		});
 
 		it("full field basic chunk without skipLastNavigation", () => {
-			const cursor = fieldCursorFromJsonableTrees([{ type: leaf.null.name }]);
+			const cursor = cursorForJsonableTreeField([{ type: leaf.null.name }]);
 			cursor.firstNode();
 			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, false);
 			assert.equal(chunks.length, 1);
@@ -154,7 +154,7 @@ describe("chunkTree", () => {
 		});
 
 		it("basic chunks for part of field", () => {
-			const cursor = fieldCursorFromJsonableTrees([
+			const cursor = cursorForJsonableTreeField([
 				{ type: leaf.null.name },
 				{ type: leaf.null.name },
 				{ type: leaf.null.name },
@@ -177,7 +177,7 @@ describe("chunkTree", () => {
 				shapeFromSchema: () => polymorphic,
 			};
 
-			const cursor = fieldCursorFromJsonableTrees(numberSequenceField(4));
+			const cursor = cursorForJsonableTreeField(numberSequenceField(4));
 			cursor.firstNode();
 			const chunks = chunkRange(cursor, policy, 3, false);
 			assert.equal(chunks.length, 2);
@@ -226,7 +226,7 @@ describe("chunkTree", () => {
 						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
-					const cursor = fieldCursorFromJsonableTrees(field);
+					const cursor = cursorForJsonableTreeField(field);
 					cursor.firstNode();
 					const chunks = chunkRange(cursor, policy, fieldLength, true);
 					assert.equal(cursor.fieldIndex, fieldLength - 1);

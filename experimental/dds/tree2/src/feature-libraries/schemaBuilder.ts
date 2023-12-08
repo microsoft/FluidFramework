@@ -5,8 +5,8 @@
 
 import { ValueSchema } from "../core";
 import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase";
-import { FieldKinds } from "./default-field-kinds";
-import { TreeNodeSchema } from "./typed-schema";
+import { FieldKinds } from "./default-schema";
+import { LeafNodeSchema } from "./typed-schema";
 
 /**
  * Extends {@link SchemaBuilderBase} with functionality only used to create built in special libraries.
@@ -36,8 +36,8 @@ export class SchemaBuilderInternal<
 	public leaf<Name extends string, const T extends ValueSchema>(
 		name: Name,
 		t: T,
-	): TreeNodeSchema<`${TScope}.${Name}`, { leafValue: T }> {
-		const schema = TreeNodeSchema.create(this, this.scoped(name), { leafValue: t });
+	): LeafNodeSchema<`${TScope}.${Name}`, T> {
+		const schema = LeafNodeSchema.create(this, this.scoped(name), t);
 		this.addNodeSchema(schema);
 		return schema;
 	}

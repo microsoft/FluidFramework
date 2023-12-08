@@ -6,7 +6,7 @@ import {
 	AllowedUpdateType,
 	fail,
 	ISharedTree,
-	ITreeView,
+	FlexTreeView,
 	SharedTreeFactory,
 } from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -17,10 +17,13 @@ import { appSchemaData, rootAppStateSchema } from "./schema";
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
-	private view: ITreeView<typeof rootAppStateSchema> | undefined;
+	private view: FlexTreeView<typeof rootAppStateSchema> | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
@@ -72,7 +75,7 @@ export class Bubblebench extends DataObject {
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		this.view = tree.schematize({
+		this.view = tree.schematizeInternal({
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [],
 			schema: appSchemaData,
@@ -83,7 +86,7 @@ export class Bubblebench extends DataObject {
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has complected.
 	 */
-	private get tree(): ITreeView<typeof rootAppStateSchema> {
+	private get tree(): FlexTreeView<typeof rootAppStateSchema> {
 		return this.view ?? fail("not initialized");
 	}
 
@@ -99,6 +102,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

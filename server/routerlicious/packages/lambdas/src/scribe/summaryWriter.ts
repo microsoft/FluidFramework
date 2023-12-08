@@ -45,6 +45,7 @@ import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryWriter
+ * @internal
  */
 export class SummaryWriter implements ISummaryWriter {
 	private readonly lumberProperties: Record<string, any>;

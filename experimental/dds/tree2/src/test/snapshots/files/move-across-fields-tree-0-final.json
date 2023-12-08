@@ -24,49 +24,77 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
                                 "count": 1,
-                                "content": [
-                                  {
-                                    "type": "Node",
-                                    "fields": {
-                                      "foo": [
-                                        {
-                                          "type": "Node",
-                                          "value": "a"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "b"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "c"
-                                        }
-                                      ],
-                                      "bar": [
-                                        {
-                                          "type": "Node",
-                                          "value": "d"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "e"
-                                        },
-                                        {
-                                          "type": "Node",
-                                          "value": "f"
-                                        }
-                                      ]
-                                    }
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
                                   }
-                                ],
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
                               }
                             ]
                           }
+                        ],
+                        "builds": [
+                          [
+                            0,
+                            {
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "Node",
+                                  false,
+                                  [
+                                    "foo",
+                                    [
+                                      "Node",
+                                      true,
+                                      "a",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "b",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "c",
+                                      []
+                                    ],
+                                    "bar",
+                                    [
+                                      "Node",
+                                      true,
+                                      "d",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "e",
+                                      [],
+                                      "Node",
+                                      true,
+                                      "f",
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",
@@ -93,9 +121,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveOut",
-                                          "id": 0,
-                                          "count": 2
+                                          "count": 2,
+                                          "effect": {
+                                            "moveOut": {
+                                              "id": 0
+                                            }
+                                          }
                                         }
                                       ]
                                     },
@@ -107,9 +138,12 @@
                                           "count": 1
                                         },
                                         {
-                                          "type": "MoveIn",
-                                          "id": 0,
                                           "count": 2,
+                                          "effect": {
+                                            "moveIn": {
+                                              "id": 0
+                                            }
+                                          },
                                           "cellId": {
                                             "localId": 0
                                           }
@@ -189,46 +223,68 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "rootFieldKey",
                       {
-                        "type": "Node",
-                        "fields": {
-                          "foo": [
-                            {
-                              "type": "Node",
-                              "value": "a"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
                             }
-                          ],
-                          "bar": [
-                            {
-                              "type": "Node",
-                              "value": "d"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "b"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "c"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "e"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "f"
-                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "Node",
+                            false,
+                            [
+                              "foo",
+                              [
+                                "Node",
+                                true,
+                                "a",
+                                []
+                              ],
+                              "bar",
+                              [
+                                "Node",
+                                true,
+                                "d",
+                                [],
+                                "Node",
+                                true,
+                                "b",
+                                [],
+                                "Node",
+                                true,
+                                "c",
+                                [],
+                                "Node",
+                                true,
+                                "e",
+                                [],
+                                "Node",
+                                true,
+                                "f",
+                                []
+                              ]
+                            ]
                           ]
-                        }
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }

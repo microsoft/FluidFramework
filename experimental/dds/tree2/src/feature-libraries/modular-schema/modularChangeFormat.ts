@@ -102,7 +102,7 @@ export const EncodedNodeChangeset = Type.Object(
  */
 export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
-const EncodedRevisionInfo = Type.Object(
+export const EncodedRevisionInfo = Type.Object(
 	{
 		revision: Type.Readonly(RevisionTagSchema),
 		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
@@ -110,11 +110,23 @@ const EncodedRevisionInfo = Type.Object(
 	noAdditionalProps,
 );
 
+export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
+
+// TODO:YA6307 adopt more efficient encoding, likely based on contiguous runs of IDs
+export const EncodedBuilds = Type.Array(
+	Type.Union([
+		Type.Tuple([ChangesetLocalIdSchema, Type.Any()]),
+		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, Type.Any()]),
+	]),
+);
+export type EncodedBuilds = Static<typeof EncodedBuilds>;
+
 export const EncodedModularChangeset = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		builds: Type.Optional(EncodedBuilds),
 	},
 	noAdditionalProps,
 );

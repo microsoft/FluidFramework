@@ -5,12 +5,10 @@
 
 import { strict as assert } from "assert";
 import {
-	Delta,
 	FieldKey,
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
@@ -19,19 +17,27 @@ import {
 	UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
+	ChangesetLocalId,
+	DeltaRoot,
 } from "../../../core";
 import { leaf, jsonObject } from "../../../domains";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	ModularChangeset,
 	buildForest,
-	singleTextCursor,
+	cursorForJsonableTreeField,
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	intoDelta,
 	jsonableTreeFromCursor,
+	schemaCompressedEncode,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
+import { testTrees } from "../../testTrees";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const family = defaultChangeFamily;
@@ -89,9 +95,8 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX = { type: leaf.string.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
 
-function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
+function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 	assert.equal(actual.length, expected.length);
 	for (let i = 0; i < actual.length; ++i) {
 		assertDeltaEqual(actual[i], expected[i]);
@@ -105,20 +110,20 @@ function initializeEditableForest(data?: JsonableTree): {
 	forest: IForestSubscription;
 	builder: DefaultEditBuilder;
 	changes: TaggedChange<DefaultChangeset>[];
-	deltas: Delta.Root[];
+	deltas: DeltaRoot[];
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [singleTextCursor(data)]);
+		initializeForest(forest, [cursorForJsonableTreeNode(data)]);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
-	const deltas: Delta.Root[] = [];
+	const deltas: DeltaRoot[] = [];
 	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
-		const delta = defaultChangeFamily.intoDelta(taggedChange);
+		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
 		applyDelta(delta, forest, detachedFieldIndex);
 		currentRevision = mintRevisionTag();
@@ -159,7 +164,7 @@ describe("DefaultEditBuilder", () => {
 		const fooEditor = builder.sequenceField(fooPath);
 		fooEditor.delete(0, 1);
 		assert.equal(deltas.length, 1);
-		fooEditor.insert(0, singleTextCursor({ type: leaf.number.name, value: 42 }));
+		fooEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 42 }));
 		expectForest(forest, {
 			type: jsonObject.name,
 			fields: {
@@ -175,7 +180,9 @@ describe("DefaultEditBuilder", () => {
 	describe("Value Field Edits", () => {
 		it("Can overwrite a populated root field", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
-			builder.valueField({ parent: undefined, field: rootKey }).set(singleTextCursor(nodeX));
+			builder
+				.valueField({ parent: undefined, field: rootKey })
+				.set(cursorForJsonableTreeNode(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -195,7 +202,9 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.valueField({ parent: root_foo2, field: fooKey }).set(singleTextCursor(nodeX));
+			builder
+				.valueField({ parent: root_foo2, field: fooKey })
+				.set(cursorForJsonableTreeNode(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -220,7 +229,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest({ type: jsonObject.name });
 			builder
 				.optionalField({ parent: undefined, field: rootKey })
-				.set(singleTextCursor(nodeX), false);
+				.set(cursorForJsonableTreeNode(nodeX), false);
 			expectForest(forest, nodeX);
 		});
 
@@ -242,7 +251,7 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder
 				.optionalField({ parent: root_foo2, field: fooKey })
-				.set(singleTextCursor(nodeX), false);
+				.set(cursorForJsonableTreeNode(nodeX), false);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -265,7 +274,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest();
 			builder
 				.optionalField({ parent: undefined, field: rootKey })
-				.set(singleTextCursor(nodeX), true);
+				.set(cursorForJsonableTreeNode(nodeX), true);
 			expectForest(forest, nodeX);
 		});
 
@@ -282,7 +291,7 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder
 				.optionalField({ parent: root_foo2, field: fooKey })
-				.set(singleTextCursor(nodeX), true);
+				.set(cursorForJsonableTreeNode(nodeX), true);
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -302,7 +311,7 @@ describe("DefaultEditBuilder", () => {
 			const { builder, forest } = initializeEditableForest();
 			builder
 				.sequenceField({ parent: undefined, field: rootKey })
-				.insert(0, singleTextCursor(nodeX));
+				.insert(0, cursorForJsonableTreeNode(nodeX));
 			expectForest(forest, nodeX);
 		});
 
@@ -330,7 +339,7 @@ describe("DefaultEditBuilder", () => {
 			});
 			builder
 				.sequenceField({ parent: root_foo2, field: fooKey })
-				.insert(5, singleTextCursor(nodeX));
+				.insert(5, cursorForJsonableTreeNode(nodeX));
 			const expected = {
 				type: jsonObject.name,
 				fields: {
@@ -354,6 +363,43 @@ describe("DefaultEditBuilder", () => {
 				},
 			};
 			expectForest(forest, expected);
+		});
+
+		describe("encodes insert ops using schema based encoding", () => {
+			for (const { name, treeFactory, schemaData } of testTrees) {
+				it(name, () => {
+					const tree = treeFactory();
+					const changes: ModularChangeset[] = [];
+					const changeReceiver = (change: ModularChangeset) => changes.push(change);
+					const builder = new DefaultEditBuilder(defaultChangeFamily, changeReceiver);
+					builder
+						.sequenceField(
+							{ parent: undefined, field: rootKey },
+							{
+								schema: schemaData,
+								policy: defaultSchemaPolicy,
+							},
+						)
+						.insert(
+							0,
+							tree.map((node) => cursorForJsonableTreeNode(node)),
+						);
+
+					for (let index = 0; index < tree.length; index++) {
+						const treeField = tree.length === 1 ? tree : [tree[index]];
+						const expectedOp = schemaCompressedEncode(
+							schemaData,
+							defaultSchemaPolicy,
+							cursorForJsonableTreeField(treeField),
+						);
+
+						const changesetId: ChangesetLocalId = brand(index);
+						const encodedOp = changes[0].builds?.get(undefined)?.get(changesetId);
+
+						assert.deepEqual(encodedOp, expectedOp);
+					}
+				});
+			}
 		});
 
 		it("Can delete a root node", () => {

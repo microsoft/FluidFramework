@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_ConsensusCallback():
     TypeOnly<old.ConsensusCallback<any>>;
 declare function use_current_TypeAliasDeclaration_ConsensusCallback(
-    use: TypeOnly<current.ConsensusCallback<any>>);
+    use: TypeOnly<current.ConsensusCallback<any>>): void;
 use_current_TypeAliasDeclaration_ConsensusCallback(
     get_old_TypeAliasDeclaration_ConsensusCallback());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_ConsensusCallback(
 declare function get_current_TypeAliasDeclaration_ConsensusCallback():
     TypeOnly<current.ConsensusCallback<any>>;
 declare function use_old_TypeAliasDeclaration_ConsensusCallback(
-    use: TypeOnly<old.ConsensusCallback<any>>);
+    use: TypeOnly<old.ConsensusCallback<any>>): void;
 use_old_TypeAliasDeclaration_ConsensusCallback(
     get_current_TypeAliasDeclaration_ConsensusCallback());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_ConsensusCallback(
 declare function get_old_ClassDeclaration_ConsensusOrderedCollection():
     TypeOnly<old.ConsensusOrderedCollection>;
 declare function use_current_ClassDeclaration_ConsensusOrderedCollection(
-    use: TypeOnly<current.ConsensusOrderedCollection>);
+    use: TypeOnly<current.ConsensusOrderedCollection>): void;
 use_current_ClassDeclaration_ConsensusOrderedCollection(
     get_old_ClassDeclaration_ConsensusOrderedCollection());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_ConsensusOrderedCollection(
 declare function get_current_ClassDeclaration_ConsensusOrderedCollection():
     TypeOnly<current.ConsensusOrderedCollection>;
 declare function use_old_ClassDeclaration_ConsensusOrderedCollection(
-    use: TypeOnly<old.ConsensusOrderedCollection>);
+    use: TypeOnly<old.ConsensusOrderedCollection>): void;
 use_old_ClassDeclaration_ConsensusOrderedCollection(
     get_current_ClassDeclaration_ConsensusOrderedCollection());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_ConsensusOrderedCollection(
 declare function get_old_ClassDeclaration_ConsensusQueue():
     TypeOnly<old.ConsensusQueue>;
 declare function use_current_ClassDeclaration_ConsensusQueue(
-    use: TypeOnly<current.ConsensusQueue>);
+    use: TypeOnly<current.ConsensusQueue>): void;
 use_current_ClassDeclaration_ConsensusQueue(
     get_old_ClassDeclaration_ConsensusQueue());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_ConsensusQueue(
 declare function get_current_ClassDeclaration_ConsensusQueue():
     TypeOnly<current.ConsensusQueue>;
 declare function use_old_ClassDeclaration_ConsensusQueue(
-    use: TypeOnly<old.ConsensusQueue>);
+    use: TypeOnly<old.ConsensusQueue>): void;
 use_old_ClassDeclaration_ConsensusQueue(
     get_current_ClassDeclaration_ConsensusQueue());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_ConsensusQueue(
 declare function get_old_EnumDeclaration_ConsensusResult():
     TypeOnly<old.ConsensusResult>;
 declare function use_current_EnumDeclaration_ConsensusResult(
-    use: TypeOnly<current.ConsensusResult>);
+    use: TypeOnly<current.ConsensusResult>): void;
 use_current_EnumDeclaration_ConsensusResult(
     get_old_EnumDeclaration_ConsensusResult());
 
@@ -113,7 +113,7 @@ use_current_EnumDeclaration_ConsensusResult(
 declare function get_current_EnumDeclaration_ConsensusResult():
     TypeOnly<current.ConsensusResult>;
 declare function use_old_EnumDeclaration_ConsensusResult(
-    use: TypeOnly<old.ConsensusResult>);
+    use: TypeOnly<old.ConsensusResult>): void;
 use_old_EnumDeclaration_ConsensusResult(
     get_current_EnumDeclaration_ConsensusResult());
 
@@ -125,7 +125,7 @@ use_old_EnumDeclaration_ConsensusResult(
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollection():
     TypeOnly<old.IConsensusOrderedCollection>;
 declare function use_current_InterfaceDeclaration_IConsensusOrderedCollection(
-    use: TypeOnly<current.IConsensusOrderedCollection>);
+    use: TypeOnly<current.IConsensusOrderedCollection>): void;
 use_current_InterfaceDeclaration_IConsensusOrderedCollection(
     get_old_InterfaceDeclaration_IConsensusOrderedCollection());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollection(
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollection():
     TypeOnly<current.IConsensusOrderedCollection>;
 declare function use_old_InterfaceDeclaration_IConsensusOrderedCollection(
-    use: TypeOnly<old.IConsensusOrderedCollection>);
+    use: TypeOnly<old.IConsensusOrderedCollection>): void;
 use_old_InterfaceDeclaration_IConsensusOrderedCollection(
     get_current_InterfaceDeclaration_IConsensusOrderedCollection());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollection(
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents():
     TypeOnly<old.IConsensusOrderedCollectionEvents<any>>;
 declare function use_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
-    use: TypeOnly<current.IConsensusOrderedCollectionEvents<any>>);
+    use: TypeOnly<current.IConsensusOrderedCollectionEvents<any>>): void;
 use_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
     get_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents():
     TypeOnly<current.IConsensusOrderedCollectionEvents<any>>;
 declare function use_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
-    use: TypeOnly<old.IConsensusOrderedCollectionEvents<any>>);
+    use: TypeOnly<old.IConsensusOrderedCollectionEvents<any>>): void;
 use_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
     get_current_InterfaceDeclaration_IConsensusOrderedCollectionEvents());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollectionEvents(
 declare function get_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory():
     TypeOnly<old.IConsensusOrderedCollectionFactory>;
 declare function use_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
-    use: TypeOnly<current.IConsensusOrderedCollectionFactory>);
+    use: TypeOnly<current.IConsensusOrderedCollectionFactory>): void;
 use_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
     get_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
 declare function get_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory():
     TypeOnly<current.IConsensusOrderedCollectionFactory>;
 declare function use_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
-    use: TypeOnly<old.IConsensusOrderedCollectionFactory>);
+    use: TypeOnly<old.IConsensusOrderedCollectionFactory>): void;
 use_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
     get_current_InterfaceDeclaration_IConsensusOrderedCollectionFactory());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IConsensusOrderedCollectionFactory(
 declare function get_old_InterfaceDeclaration_IOrderedCollection():
     TypeOnly<old.IOrderedCollection>;
 declare function use_current_InterfaceDeclaration_IOrderedCollection(
-    use: TypeOnly<current.IOrderedCollection>);
+    use: TypeOnly<current.IOrderedCollection>): void;
 use_current_InterfaceDeclaration_IOrderedCollection(
     get_old_InterfaceDeclaration_IOrderedCollection());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IOrderedCollection(
 declare function get_current_InterfaceDeclaration_IOrderedCollection():
     TypeOnly<current.IOrderedCollection>;
 declare function use_old_InterfaceDeclaration_IOrderedCollection(
-    use: TypeOnly<old.IOrderedCollection>);
+    use: TypeOnly<old.IOrderedCollection>): void;
 use_old_InterfaceDeclaration_IOrderedCollection(
     get_current_InterfaceDeclaration_IOrderedCollection());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IOrderedCollection(
 declare function get_old_InterfaceDeclaration_ISnapshotable():
     TypeOnly<old.ISnapshotable<any>>;
 declare function use_current_InterfaceDeclaration_ISnapshotable(
-    use: TypeOnly<current.ISnapshotable<any>>);
+    use: TypeOnly<current.ISnapshotable<any>>): void;
 use_current_InterfaceDeclaration_ISnapshotable(
     get_old_InterfaceDeclaration_ISnapshotable());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_ISnapshotable(
 declare function get_current_InterfaceDeclaration_ISnapshotable():
     TypeOnly<current.ISnapshotable<any>>;
 declare function use_old_InterfaceDeclaration_ISnapshotable(
-    use: TypeOnly<old.ISnapshotable<any>>);
+    use: TypeOnly<old.ISnapshotable<any>>): void;
 use_old_InterfaceDeclaration_ISnapshotable(
     get_current_InterfaceDeclaration_ISnapshotable());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_ISnapshotable(
 declare function get_old_FunctionDeclaration_acquireAndComplete():
     TypeOnly<typeof old.acquireAndComplete>;
 declare function use_current_FunctionDeclaration_acquireAndComplete(
-    use: TypeOnly<typeof current.acquireAndComplete>);
+    use: TypeOnly<typeof current.acquireAndComplete>): void;
 use_current_FunctionDeclaration_acquireAndComplete(
     get_old_FunctionDeclaration_acquireAndComplete());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_acquireAndComplete(
 declare function get_current_FunctionDeclaration_acquireAndComplete():
     TypeOnly<typeof current.acquireAndComplete>;
 declare function use_old_FunctionDeclaration_acquireAndComplete(
-    use: TypeOnly<typeof old.acquireAndComplete>);
+    use: TypeOnly<typeof old.acquireAndComplete>): void;
 use_old_FunctionDeclaration_acquireAndComplete(
     get_current_FunctionDeclaration_acquireAndComplete());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_acquireAndComplete(
 declare function get_old_FunctionDeclaration_waitAcquireAndComplete():
     TypeOnly<typeof old.waitAcquireAndComplete>;
 declare function use_current_FunctionDeclaration_waitAcquireAndComplete(
-    use: TypeOnly<typeof current.waitAcquireAndComplete>);
+    use: TypeOnly<typeof current.waitAcquireAndComplete>): void;
 use_current_FunctionDeclaration_waitAcquireAndComplete(
     get_old_FunctionDeclaration_waitAcquireAndComplete());
 
@@ -281,6 +281,6 @@ use_current_FunctionDeclaration_waitAcquireAndComplete(
 declare function get_current_FunctionDeclaration_waitAcquireAndComplete():
     TypeOnly<typeof current.waitAcquireAndComplete>;
 declare function use_old_FunctionDeclaration_waitAcquireAndComplete(
-    use: TypeOnly<typeof old.waitAcquireAndComplete>);
+    use: TypeOnly<typeof old.waitAcquireAndComplete>): void;
 use_old_FunctionDeclaration_waitAcquireAndComplete(
     get_current_FunctionDeclaration_waitAcquireAndComplete());

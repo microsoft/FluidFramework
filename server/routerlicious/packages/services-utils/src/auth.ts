@@ -37,6 +37,7 @@ import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
  * Validates a JWT token to authorize routerlicious.
  * @returns decoded claims.
  * @throws {@link NetworkError} if claims are invalid.
+ * @internal
  */
 export function validateTokenClaims(
 	token: string,
@@ -67,6 +68,7 @@ export function validateTokenClaims(
 /**
  * Generates a document creation JWT token, this token doesn't provide any sort of authorization to the user.
  * But it can be used by other services to validate the document creator identity upon creating a document.
+ * @internal
  */
 export function getCreationToken(
 	token: string,
@@ -85,6 +87,7 @@ export function getCreationToken(
 /**
  * Generates a JWT token to authorize routerlicious. This function uses a large auth library (jsonwebtoken)
  * and should only be used in server context.
+ * @internal
  */
 // TODO: We should use this library in all server code rather than using jsonwebtoken directly.
 export function generateToken(
@@ -117,6 +120,9 @@ export function generateToken(
 	return sign(claims, key, { jwtid: uuid() });
 }
 
+/**
+ * @internal
+ */
 export function generateUser(): IUser {
 	const randomUser = {
 		id: uuid(),
@@ -137,6 +143,9 @@ interface IVerifyTokenOptions {
 	revokedTokenChecker: IRevokedTokenChecker | undefined;
 }
 
+/**
+ * @internal
+ */
 export function respondWithNetworkError(response: Response, error: NetworkError): Response {
 	return response.status(error.code).json(error.details);
 }
@@ -156,6 +165,18 @@ function getTokenFromRequest(request: Request): string {
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
 
+// Used to sanitize Redis error object and remove sensitive information
+function sanitizeError(error: any) {
+	if (error?.command?.args) {
+		error.command.args = ["REDACTED"];
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return error;
+}
+
+/**
+ * @internal
+ */
 export async function verifyToken(
 	tenantId: string,
 	documentId: string,
@@ -198,7 +219,11 @@ export async function verifyToken(
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const cachedToken = await options.tokenCache.get(token).catch((error) => {
-				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
+				Lumberjack.error(
+					"Unable to retrieve cached JWT",
+					logProperties,
+					sanitizeError(error),
+				);
 				return false;
 			});
 
@@ -224,7 +249,7 @@ export async function verifyToken(
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
 				)
 				.catch((error) => {
-					Lumberjack.error("Unable to cache JWT", logProperties, error);
+					Lumberjack.error("Unable to cache JWT", logProperties, sanitizeError(error));
 				});
 		}
 	} catch (error) {
@@ -243,6 +268,7 @@ export async function verifyToken(
 
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
+ * @internal
  */
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
@@ -313,6 +339,9 @@ export function verifyStorageToken(
 	};
 }
 
+/**
+ * @internal
+ */
 export function validateTokenScopeClaims(expectedScopes: string): RequestHandler {
 	return async (request, response, next) => {
 		let token: string = "";
@@ -359,6 +388,9 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 	};
 }
 
+/**
+ * @internal
+ */
 export function getParam(params: Params, key: string) {
 	return Array.isArray(params) ? undefined : params[key];
 }

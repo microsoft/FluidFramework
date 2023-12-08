@@ -18,8 +18,12 @@ import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunke
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedChunk, version } from "../../../../feature-libraries/chunked-forest/codec/format";
 import { JsonableTree } from "../../../../core";
-import { assertChunkCursorEquals, fieldCursorFromJsonableTrees } from "../fieldCursorTestUtilities";
-import { singleTextCursor } from "../../../../feature-libraries";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities";
+import {
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+	isFluidHandle,
+} from "../../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 
@@ -29,7 +33,7 @@ export function checkNodeEncode(
 	tree: JsonableTree,
 ): BufferFormat {
 	const buffer: BufferFormat = [shape.shape];
-	const cursor = singleTextCursor(tree);
+	const cursor = cursorForJsonableTreeNode(tree);
 	shape.encodeNode(cursor, cache, buffer);
 
 	// Check round-trip
@@ -44,7 +48,7 @@ export function checkFieldEncode(
 	tree: JsonableTree[],
 ): BufferFormat {
 	const buffer: BufferFormat = [shape.shape];
-	const cursor = fieldCursorFromJsonableTrees(tree);
+	const cursor = cursorForJsonableTreeField(tree);
 	shape.encodeField(cursor, cache, buffer);
 
 	// Check round-trip
@@ -78,6 +82,14 @@ function testDecode(
 	// Check decode
 	const result = decode(chunk);
 	assertChunkCursorEquals(result, tree);
+
+	// handles can't be roundtripped through JSON. the FluidSerializer can't be
+	// used to roundtrip handles in this case either, as doing so changes the
+	// contents of the handle compared to the original object. avoid the below
+	// roundtripping in that case.
+	if (chunk.data.some(isFluidHandle)) {
+		return chunk;
+	}
 
 	// Confirm JSON compatibility
 	{

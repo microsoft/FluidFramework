@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools",
-	"version": "2.0.0-internal.7.3.0",
+	"version": "2.0.0-internal.7.4.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,22 +15,26 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
 		"tsc": "tsc",
@@ -60,22 +64,24 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/devtools-core": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.7.2.0",
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.28.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.37.0",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",
 		"c8": "^7.7.1",
 		"chai": "^4.2.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
@@ -90,6 +96,14 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			},
 			"tsc": [
 				"...",
 				"typetests:gen"

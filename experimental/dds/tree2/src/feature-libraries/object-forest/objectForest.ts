@@ -5,8 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	SimpleDependee,
-	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
 	IEditableForest,
 	ITreeSubscriptionCursorState,
@@ -15,7 +13,6 @@ import {
 	FieldKey,
 	DetachedField,
 	AnchorSet,
-	Delta,
 	UpPath,
 	Anchor,
 	ITreeCursor,
@@ -32,6 +29,8 @@ import {
 	PlaceIndex,
 	Value,
 	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
+	ProtoNodes,
 } from "../../core";
 import {
 	brand,
@@ -41,12 +40,12 @@ import {
 	assertNonNegativeSafeInteger,
 } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
-import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
 
 function makeRoot(): MapTree {
 	return {
-		type: brand("above root placeholder"),
+		type: aboveRootPlaceholder,
 		fields: new Map(),
 	};
 }
@@ -57,9 +56,7 @@ function makeRoot(): MapTree {
  * This implementation focuses on correctness and simplicity, not performance.
  * It does not use compressed chunks: instead nodes are implemented using objects.
  */
-class ObjectForest extends SimpleDependee implements IEditableForest {
-	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-
+export class ObjectForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	public readonly roots: MapTree = makeRoot();
@@ -69,9 +66,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
-		super("object-forest.ObjectForest");
-	}
+	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
@@ -89,7 +84,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			// they are assumed to be copy on write. See TODO on NodeData.
 			forest.roots.fields.set(
 				key,
-				value.map((v) => mapTreeFromCursor(singleMapTreeCursor(v))),
+				value.map((v) => mapTreeFromCursor(cursorForMapTreeNode(v))),
 			);
 		}
 		return forest;
@@ -132,19 +127,15 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
-				this.forest.invalidateDependents();
 				this.forest.delete(detachedField);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
-				this.forest.invalidateDependents();
+			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.add(content, destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				this.forest.invalidateDependents();
 				this.attachEdit(source, count, destination);
 			},
 			detach(source: Range, destination: FieldKey): void {
-				this.forest.invalidateDependents();
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -213,7 +204,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					newContentSource !== oldContentDestination,
 					0x7ba /* Replace detached source field and detached destination field must be different */,
 				);
-				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
@@ -323,7 +313,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
-		return singleMapTreeCursor(this.roots);
+		return cursorForMapTreeNode(this.roots);
 	}
 }
 
@@ -462,7 +452,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		);
 		this.clear();
 		this.state = ITreeSubscriptionCursorState.Current;
-		this.innerCursor = singleMapTreeCursor(this.forest.roots);
+		this.innerCursor = cursorForMapTreeNode(this.forest.roots);
 		this.forest.currentCursors.add(this);
 	}
 

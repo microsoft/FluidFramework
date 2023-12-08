@@ -17,6 +17,7 @@ import {
 	AllowedTypes,
 	Any,
 	FieldKinds,
+	LeafNodeSchema,
 	TreeFieldSchema,
 	TreeNodeSchema,
 } from "../../feature-libraries";
@@ -27,7 +28,7 @@ import {
 	SchemaBuilderBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase";
-import { ValueSchema } from "../../core";
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
 import { SchemaBuilder } from "../../domains";
 
 describe("SchemaBuilderBase", () => {
@@ -120,9 +121,11 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
 
 		// eslint-disable-next-line no-constant-condition
@@ -155,9 +158,11 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
-			leafValue: ValueSchema.String,
-		});
+		const treeSchema = LeafNodeSchema.create(
+			{ name: "test" },
+			brand<TreeNodeSchemaIdentifier>("foo"),
+			ValueSchema.String,
+		);
 
 		assert(
 			TreeFieldSchema.create(FieldKinds.optional, [treeSchema]).equals(

@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	ChangeAtomIdMap,
+	ChangesetLocalId,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core";
 import { Brand } from "../../util";
-
-/**
- * @alpha
- */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
-	/**
-	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
-	 * The value corresponds to the `revision` of the original changeset being rolled back.
-	 */
-	readonly rollbackOf?: RevisionTag;
-}
+import { EncodedChunk } from "../chunked-forest";
 
 /**
  * @alpha
@@ -35,6 +31,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
+	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+	readonly builds?: ChangeAtomIdMap<EncodedChunk>;
 }
 
 /**

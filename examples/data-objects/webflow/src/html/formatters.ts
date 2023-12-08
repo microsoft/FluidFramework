@@ -235,6 +235,9 @@ class TextFormatter extends Formatter<ITextState> {
 	}
 }
 
+/**
+ * @internal
+ */
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());

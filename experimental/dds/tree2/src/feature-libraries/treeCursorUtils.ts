@@ -14,6 +14,9 @@ import {
 	FieldUpPath,
 	PathRootPrefix,
 	CursorMarker,
+	DetachedField,
+	rootField,
+	detachedFieldAsKey,
 } from "../core";
 import { fail } from "../util";
 
@@ -43,21 +46,36 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 /**
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
- * @returns an {@link ITreeCursorSynchronous} for a single root.
+ * @returns an {@link ITreeCursorSynchronous} for a single root in `nodes` mode.
  * @alpha
- *
- * @privateRemarks
- * A version of this API which produces field cursors should be provided.
  */
-export function singleStackTreeCursor<TNode>(
-	root: TNode,
+export function stackTreeNodeCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
+	root: TNode,
 ): CursorWithNode<TNode> {
 	return new StackCursor(adapter, [], [], [root], 0);
 }
 
 /**
- * Provides functionality to allow a {@link singleStackTreeCursor} to implement a cursor.
+ * Create a cursor, in `fields` mode at the `detachedField` under the provided `root`.
+ *
+ * @returns an {@link ITreeCursorSynchronous} for `detachedField` of `root` in `fields` mode.
+ * @alpha
+ */
+export function stackTreeFieldCursor<TNode>(
+	adapter: CursorAdapter<TNode>,
+	root: TNode,
+	detachedField: DetachedField = rootField,
+): CursorWithNode<TNode> {
+	const cursor = stackTreeNodeCursor(adapter, root);
+	// Because the root node in `stackTreeNodeCursor` is treated as the above detached fields node,
+	// using it then just entering the correct field doesn't mess up the paths reported by the cursor.
+	cursor.enterField(detachedFieldAsKey(detachedField));
+	return cursor;
+}
+
+/**
+ * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
  * @alpha
  */
 export interface CursorAdapter<TNode> {

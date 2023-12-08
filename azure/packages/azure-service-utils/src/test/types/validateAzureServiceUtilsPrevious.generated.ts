@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IUser():
     TypeOnly<old.IUser>;
 declare function use_current_InterfaceDeclaration_IUser(
-    use: TypeOnly<current.IUser>);
+    use: TypeOnly<current.IUser>): void;
 use_current_InterfaceDeclaration_IUser(
     get_old_InterfaceDeclaration_IUser());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IUser(
 declare function get_current_InterfaceDeclaration_IUser():
     TypeOnly<current.IUser>;
 declare function use_old_InterfaceDeclaration_IUser(
-    use: TypeOnly<old.IUser>);
+    use: TypeOnly<old.IUser>): void;
 use_old_InterfaceDeclaration_IUser(
     get_current_InterfaceDeclaration_IUser());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IUser(
 declare function get_old_EnumDeclaration_ScopeType():
     TypeOnly<old.ScopeType>;
 declare function use_current_EnumDeclaration_ScopeType(
-    use: TypeOnly<current.ScopeType>);
+    use: TypeOnly<current.ScopeType>): void;
 use_current_EnumDeclaration_ScopeType(
     get_old_EnumDeclaration_ScopeType());
 
@@ -65,7 +65,7 @@ use_current_EnumDeclaration_ScopeType(
 declare function get_current_EnumDeclaration_ScopeType():
     TypeOnly<current.ScopeType>;
 declare function use_old_EnumDeclaration_ScopeType(
-    use: TypeOnly<old.ScopeType>);
+    use: TypeOnly<old.ScopeType>): void;
 use_old_EnumDeclaration_ScopeType(
     get_current_EnumDeclaration_ScopeType());
 
@@ -77,7 +77,7 @@ use_old_EnumDeclaration_ScopeType(
 declare function get_old_FunctionDeclaration_generateToken():
     TypeOnly<typeof old.generateToken>;
 declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>);
+    use: TypeOnly<typeof current.generateToken>): void;
 use_current_FunctionDeclaration_generateToken(
     get_old_FunctionDeclaration_generateToken());
 
@@ -89,6 +89,6 @@ use_current_FunctionDeclaration_generateToken(
 declare function get_current_FunctionDeclaration_generateToken():
     TypeOnly<typeof current.generateToken>;
 declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>);
+    use: TypeOnly<typeof old.generateToken>): void;
 use_old_FunctionDeclaration_generateToken(
     get_current_FunctionDeclaration_generateToken());

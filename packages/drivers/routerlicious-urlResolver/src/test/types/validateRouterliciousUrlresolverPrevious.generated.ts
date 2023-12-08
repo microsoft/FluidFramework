@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IAlfredUser():
     TypeOnly<old.IAlfredUser>;
 declare function use_current_InterfaceDeclaration_IAlfredUser(
-    use: TypeOnly<current.IAlfredUser>);
+    use: TypeOnly<current.IAlfredUser>): void;
 use_current_InterfaceDeclaration_IAlfredUser(
     get_old_InterfaceDeclaration_IAlfredUser());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IAlfredUser(
 declare function get_current_InterfaceDeclaration_IAlfredUser():
     TypeOnly<current.IAlfredUser>;
 declare function use_old_InterfaceDeclaration_IAlfredUser(
-    use: TypeOnly<old.IAlfredUser>);
+    use: TypeOnly<old.IAlfredUser>): void;
 use_old_InterfaceDeclaration_IAlfredUser(
     get_current_InterfaceDeclaration_IAlfredUser());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IAlfredUser(
 declare function get_old_InterfaceDeclaration_IConfig():
     TypeOnly<old.IConfig>;
 declare function use_current_InterfaceDeclaration_IConfig(
-    use: TypeOnly<current.IConfig>);
+    use: TypeOnly<current.IConfig>): void;
 use_current_InterfaceDeclaration_IConfig(
     get_old_InterfaceDeclaration_IConfig());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IConfig(
 declare function get_current_InterfaceDeclaration_IConfig():
     TypeOnly<current.IConfig>;
 declare function use_old_InterfaceDeclaration_IConfig(
-    use: TypeOnly<old.IConfig>);
+    use: TypeOnly<old.IConfig>): void;
 use_old_InterfaceDeclaration_IConfig(
     get_current_InterfaceDeclaration_IConfig());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IConfig(
 declare function get_old_ClassDeclaration_RouterliciousUrlResolver():
     TypeOnly<old.RouterliciousUrlResolver>;
 declare function use_current_ClassDeclaration_RouterliciousUrlResolver(
-    use: TypeOnly<current.RouterliciousUrlResolver>);
+    use: TypeOnly<current.RouterliciousUrlResolver>): void;
 use_current_ClassDeclaration_RouterliciousUrlResolver(
     get_old_ClassDeclaration_RouterliciousUrlResolver());
 
@@ -89,6 +89,6 @@ use_current_ClassDeclaration_RouterliciousUrlResolver(
 declare function get_current_ClassDeclaration_RouterliciousUrlResolver():
     TypeOnly<current.RouterliciousUrlResolver>;
 declare function use_old_ClassDeclaration_RouterliciousUrlResolver(
-    use: TypeOnly<old.RouterliciousUrlResolver>);
+    use: TypeOnly<old.RouterliciousUrlResolver>): void;
 use_old_ClassDeclaration_RouterliciousUrlResolver(
     get_current_ClassDeclaration_RouterliciousUrlResolver());

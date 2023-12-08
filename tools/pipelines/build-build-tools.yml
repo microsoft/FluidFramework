@@ -46,6 +46,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -68,6 +69,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -89,6 +91,7 @@ extends:
     packageManager: pnpm
     buildDirectory: build-tools
     tagName: build-tools
+    isReleaseGroup: true
     taskBuild: build
     taskBuildDocs: false
     tasktest:

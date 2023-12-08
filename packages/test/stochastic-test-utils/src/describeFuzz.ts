@@ -12,11 +12,17 @@ function createFuzzSuite(
 	};
 }
 
+/**
+ * @internal
+ */
 export type DescribeFuzzSuite = (
 	name: string,
 	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
 ) => Mocha.Suite | void;
 
+/**
+ * @internal
+ */
 export interface FuzzSuiteArguments {
 	/**
 	 * The number of tests this suite should produce up to a constant factor.
@@ -32,16 +38,28 @@ export interface FuzzSuiteArguments {
 	isStress: boolean;
 }
 
+/**
+ * @internal
+ */
 export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
 
+/**
+ * @internal
+ */
 export interface FuzzDescribeOptions {
 	defaultTestCount?: number;
 }
 
+/**
+ * @internal
+ */
 export const defaultOptions: Required<FuzzDescribeOptions> = {
 	defaultTestCount: 1,
 };
 
+/**
+ * @internal
+ */
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
 	const options = { ...defaultOptions, ...optionsArg };
 	const testCountFromEnv =
@@ -62,5 +80,7 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
  * Like `Mocha.describe`, but enables injection of suite size at runtime.
  * The test creation callback receives a `testCount` parameter which it should use to support
  * this functionality.
+ *
+ * @internal
  */
 export const describeFuzz: DescribeFuzz = createFuzzDescribe();

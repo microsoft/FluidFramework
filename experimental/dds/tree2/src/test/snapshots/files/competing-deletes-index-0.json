@@ -23,9 +23,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
-                                "id": 0
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                }
                               }
                             ]
                           }
@@ -44,17 +47,20 @@
                             "change": [
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-000000000007",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-000000000007"
                                 }
                               }
                             ]
@@ -74,17 +80,20 @@
                             "change": [
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-000000000007",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-000000000008"
                                 }
                               }
                             ]
@@ -111,8 +120,11 @@
                                   "change": [
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }
@@ -138,8 +150,11 @@
                                   "change": [
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }
@@ -252,34 +267,73 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "rootFieldKey",
                       {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 1
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 2
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 3
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.number",
+                            true,
+                            1,
+                            [],
+                            "com.fluidframework.leaf.number",
+                            true,
+                            2,
+                            [],
+                            "com.fluidframework.leaf.number",
+                            true,
+                            3,
+                            []
+                          ]
+                        ]
                       }
-                    ]
-                  ],
-                  [
-                    "repair-4",
+                    ],
                     [
+                      "repair-6",
                       {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 0
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.number",
+                            true,
+                            0,
+                            []
+                          ]
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
@@ -297,12 +351,12 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000007",
+                      "beefbeef-beef-4000-8000-000000000009",
                       0,
-                      4
+                      6
                     ]
                   ],
-                  "maxId": 4
+                  "maxId": 6
                 },
                 "encoding": "utf-8"
               }

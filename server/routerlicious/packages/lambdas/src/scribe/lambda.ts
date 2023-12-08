@@ -50,6 +50,9 @@ import {
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 
+/**
+ * @internal
+ */
 export class ScribeLambda implements IPartitionLambda {
 	// Value of the last processed Kafka offset
 	private lastOffset: number;
@@ -114,6 +117,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
+		private readonly localCheckpointEnabled: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -486,6 +490,9 @@ export class ScribeLambda implements IPartitionLambda {
 			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
 			clientCount: checkpoint.protocolState.members.length,
 			clients: getClientIds(checkpoint.protocolState, 5),
+			localCheckpointEnabled: this.localCheckpointEnabled,
+			globalCheckpointOnly: this.globalCheckpointOnly,
+			localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
 		};
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
@@ -873,6 +880,9 @@ export class ScribeLambda implements IPartitionLambda {
 							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
 						clientCount: checkpoint.protocolState.members.length,
 						clients: getClientIds(checkpoint.protocolState, 5),
+						localCheckpointEnabled: this.localCheckpointEnabled,
+						globalCheckpointOnly: this.globalCheckpointOnly,
+						localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
 					};
 					Lumberjack.info(checkpointResult, lumberjackProperties);
 				}

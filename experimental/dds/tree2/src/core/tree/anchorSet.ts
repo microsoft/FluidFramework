@@ -90,12 +90,20 @@ export interface AnchorEvents {
 	afterDestroy(anchor: AnchorNode): void;
 
 	/**
-	 * What children the node has is changing.
+	 * One or more of the children of this node is just about to change.
 	 *
 	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to which nodes are in this node's fields.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
 	 */
 	childrenChanging(anchor: AnchorNode): void;
+
+	/**
+	 * One or more of the children of this node has just changed.
+	 *
+	 * @remarks
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
+	 */
+	childrenChanged(anchor: AnchorNode): void;
 
 	/**
 	 * Before a change in this subtree happens.
@@ -655,6 +663,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 			},
+			notifyChildrenChanged(): void {
+				this.maybeWithNode(
+					(p) => p.events.emit("childrenChanged", p),
+					() => {},
+				);
+			},
 			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(
 					this.parentField !== undefined,
@@ -705,6 +719,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
 				this.attachEdit(source, count, destination);
+				this.notifyChildrenChanged();
 			},
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(
@@ -773,6 +788,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			detach(source: Range, destination: FieldKey): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(source, destination);
+				this.notifyChildrenChanged();
 			},
 			detachEdit(source: Range, destination: FieldKey): void {
 				assert(
@@ -867,6 +883,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.notifyChildrenChanging();
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
+				this.notifyChildrenChanged();
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.anchorSet.removeChildren(

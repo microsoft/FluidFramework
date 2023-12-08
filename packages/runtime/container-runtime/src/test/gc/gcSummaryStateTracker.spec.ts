@@ -313,6 +313,12 @@ describe("GCSummaryStateTracker tests", () => {
 			attachmentBlobCount: 0,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 0,
+			lifetimeNodeCount: 0,
+			lifetimeDataStoreCount: 0,
+			lifetimeAttachmentBlobCount: 0,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		const summaryStateTracker = new GCSummaryStateTracker(
