@@ -9,7 +9,6 @@ import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldKindWithEditor,
-	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema";
@@ -17,6 +16,7 @@ import { Mutable, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
+import { Multiplicity } from "../../../feature-libraries";
 
 /**
  * Picks the last value written.

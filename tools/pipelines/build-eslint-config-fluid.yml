@@ -84,4 +84,5 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
-    taskTest: [] # no 
+    taskTest:
+      - test

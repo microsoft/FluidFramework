@@ -4,9 +4,13 @@
  */
 
 import { AllowedTypes } from "../feature-libraries";
-import { type ImplicitAllowedTypes, type TreeNodeFromImplicitAllowedTypes } from "../class-tree";
+import {
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+} from "../class-tree";
 import { InsertableTreeNodeUnion } from "./insertable";
-import { TreeListNodeBase, TreeNodeUnion, Unhydrated } from "./types";
+import { TreeListNodeBase, TreeNodeUnion } from "./types";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
@@ -22,10 +26,10 @@ export interface TreeListNodeOld<out TTypes extends AllowedTypes = AllowedTypes>
  * A {@link NodeBase} which implements 'readonly T[]' and the list mutation APIs.
  * @beta
  */
-export interface TreeListNode<TTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+export interface TreeListNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeListNodeBase<
-		TreeNodeFromImplicitAllowedTypes<TTypes>,
-		Unhydrated<TreeNodeFromImplicitAllowedTypes<TTypes>>, // TODO: insertion type.
+		TreeNodeFromImplicitAllowedTypes<T>,
+		InsertableTreeNodeFromImplicitAllowedTypes<T>,
 		TreeListNode
 	> {}
 
@@ -55,15 +59,22 @@ const create = Symbol("Create IterableTreeListContent");
 /**
  * Used to insert iterable content into a {@link (TreeListNode:interface)}.
  * Use {@link (TreeListNode:variable).inline} to create an instance of this type.
- * @privateRemarks
- * TODO: Figure out how to link {@link TreeListNode.inline} above such that it works with API-Extractor.
  * @beta
  */
 export class IterableTreeListContent<T> implements Iterable<T> {
 	private constructor(private readonly content: Iterable<T>) {}
+
+	/**
+	 * Package internal construction API.
+	 * Use {@link (TreeListNode:variable).inline} to create an instance of this type instead.
+	 */
 	public static [create]<T>(content: Iterable<T>): IterableTreeListContent<T> {
 		return new IterableTreeListContent(content);
 	}
+
+	/**
+	 * Iterates over content for nodes to insert.
+	 */
 	public [Symbol.iterator](): Iterator<T> {
 		return this.content[Symbol.iterator]();
 	}

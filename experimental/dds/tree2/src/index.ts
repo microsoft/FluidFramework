@@ -4,13 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
 	EmptyKey,
 	FieldKey,
 	TreeType,
@@ -266,6 +259,8 @@ export {
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
 	NodeFromSchema,
+	TreeMapNode,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,

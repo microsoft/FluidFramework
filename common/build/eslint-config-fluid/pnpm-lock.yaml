@@ -25,6 +25,8 @@ importers:
       eslint-plugin-unicorn: ~48.0.1
       eslint-plugin-unused-imports: ~3.0.0
       mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.1.0
+      mocha-multi-reporters: ^1.5.1
       prettier: ~3.0.3
       rimraf: ^4.4.1
       sort-json: ^2.0.1
@@ -54,6 +56,8 @@ importers:
       concurrently: 8.2.1
       eslint: 8.49.0
       mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
       sort-json: 2.0.1
@@ -305,13 +309,13 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.10.3
     dev: true
 
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.10.3
     dev: true
 
   /@types/glob/7.2.0:
@@ -2599,6 +2603,28 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dev: false
+
+  /mocha-json-output-reporter/2.1.0_mocha@10.2.0:
+    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
+    peerDependencies:
+      mocha: ^10.0.0
+      moment: ^2.21.0
+    dependencies:
+      mocha: 10.2.0
+    dev: true
+
+  /mocha-multi-reporters/1.5.1_mocha@10.2.0:
+    resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      mocha: '>=3.1.2'
+    dependencies:
+      debug: 4.3.4
+      lodash: 4.17.21
+      mocha: 10.2.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /mocha/10.2.0:
     resolution: {integrity: sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg==}

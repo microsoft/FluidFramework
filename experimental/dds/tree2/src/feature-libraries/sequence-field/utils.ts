@@ -41,6 +41,7 @@ import {
 	AttachAndDetach,
 	MarkEffect,
 	InverseAttachFields,
+	IdRange,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -441,6 +442,42 @@ export function areOverlappingIdRanges(
 	const lastId1 = (id1 as number) + count1 - 1;
 	const lastId2 = (id2 as number) + count2 - 1;
 	return (id2 <= id1 && id1 <= lastId2) || (id1 <= id2 && id2 <= lastId1);
+}
+
+export function compareCellsFromSameRevision(
+	cell1: CellId,
+	count1: number,
+	cell2: CellId,
+	count2: number,
+): number | undefined {
+	assert(cell1.revision === cell2.revision, "Expected cells to have the same revision");
+	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
+		return cell1.localId - cell2.localId;
+	}
+
+	// Both cells should have the same `adjacentCells`.
+	const adjacentCells = cell1.adjacentCells;
+	if (adjacentCells !== undefined) {
+		return (
+			getPositionAmongAdjacentCells(adjacentCells, cell1.localId) -
+			getPositionAmongAdjacentCells(adjacentCells, cell2.localId)
+		);
+	}
+
+	return undefined;
+}
+
+function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
+	let priorCells = 0;
+	for (const range of adjacentCells) {
+		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
+			return priorCells + (id - range.id);
+		}
+
+		priorCells += range.count;
+	}
+
+	fail("Could not find id in adjacentCells");
 }
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
