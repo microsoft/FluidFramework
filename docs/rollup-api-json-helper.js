@@ -4,21 +4,12 @@
  */
 
 const chalk = require("chalk");
-const yaml = require('js-yaml');
-const fs   = require('fs');
 const path = require("path");
+const versions = require('./data/versions.json');
 const { main } = require('./rollup-api-json');
 const { rimraf } = require("rimraf");
 
 const renderMultiVersion = process.argv[2];
-
-let versions;
-
-try {
-	versions = yaml.load(fs.readFileSync('./data/versions.yaml', 'utf8'));
-  } catch (e) {
-	console.log(e);
-}
 
 docVersions = renderMultiVersion ? versions.params.previousVersions : versions.params.currentVersion;
 
