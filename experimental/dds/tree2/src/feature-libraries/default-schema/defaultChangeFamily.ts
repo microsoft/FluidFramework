@@ -72,12 +72,16 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
 }
 
 /**
- * Returns the set of detached trees that should be in memory for the given change to be applied.
- * A detached tree is relevant if it is being restored or being edited (or both).
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
  *
- * May be conservative by returning more detached trees than strictly necessary.
+ * May be conservative by returning more removed roots than strictly necessary.
  *
- * Will never return IDs for currently attached trees, even if they are removed.
+ * Will never return IDs for non-root trees, even if they are removed.
  *
  * @param change - The change to be applied.
  */
