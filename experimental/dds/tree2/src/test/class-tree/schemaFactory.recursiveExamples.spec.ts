@@ -99,7 +99,7 @@ describe("Recursive Class based end to end example", () => {
 		{
 			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
 			const _check: T = new MapRecursive(undefined);
-			// Only explicitly constructed recursive lists are currently allowed:
+			// Only explicitly constructed recursive maps are currently allowed:
 			type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
 		}
 
