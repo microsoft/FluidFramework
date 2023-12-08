@@ -5,9 +5,16 @@
 
 import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ITree, SchemaFactoryRecursive, TreeConfiguration, TreeView } from "../../class-tree";
+import {
+	ITree,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	SchemaFactoryRecursive,
+	TreeConfiguration,
+	TreeView,
+} from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
 import { ListRecursive, MapRecursive } from "./testRecursiveSchema";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {
@@ -54,19 +61,27 @@ describe("Recursive Class based end to end example", () => {
 			assert.deepEqual(data, []);
 		}
 
-		// Raw data
-		// {
-		// 	const view: TreeView<ListRecursive> = tree.schematize(
-		// 		new TreeConfiguration(ListRecursive,() => new ListRecursive({ x: [new ListRecursive({ x: [] })] }))),
-		// 	);
-		// 	const data = [...view.root];
-		// 	assert.deepEqual(data, []);
+		// Nested
+		{
+			const view: TreeView<ListRecursive> = tree.schematize(
+				new TreeConfiguration(
+					ListRecursive,
+					() => new ListRecursive({ x: [new ListRecursive({ x: [] })] }),
+				),
+			);
+			const data = [...view.root];
+			assert.deepEqual(data, []);
 
-		// 	type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof ListRecursive>;
-		// 	// const _check: T = [];
+			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof ListRecursive>;
+			// @ts-expect-error ListRecursive should not be implicitly constructable (for now).
+			const _check: T = [];
+			// Only explicitly constructed recursive lists are currently allowed:
+			type _check = requireTrue<areSafelyAssignable<T, ListRecursive>>;
 
-		// 	// view.root[5][5][5][5].insertAtEnd([[], [[]]]);
-		// }
+			view.root.insertAtEnd(new ListRecursive({ x: [] }));
+
+			view.root[1].insertAtEnd(new ListRecursive({ x: [] }));
+		}
 	});
 
 	// it("maps", () => {
