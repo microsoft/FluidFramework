@@ -3,70 +3,64 @@
  * Licensed under the MIT License.
  */
 
-import { PublicClientApplication, AuthenticationResult } from "@azure/msal-browser";
+import { PublicClientApplication } from "@azure/msal-browser";
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 
 export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly clientId: string;
+	private readonly msalInstance: PublicClientApplication;
 	constructor(clientId: string) {
-		this.clientId = clientId;
+		const msalConfig = {
+			auth: {
+				clientId,
+				authority: "https://login.microsoftonline.com/common/",
+			},
+		};
+		this.msalInstance = new PublicClientApplication(msalConfig);
 	}
 
 	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const token = await this.fetchTokens(siteUrl);
+		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
+		const token = await this.fetchTokens(pushScope);
 		return {
 			fromCache: true,
-			token: token.pushToken,
+			token,
 		};
 	}
 
 	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const token = await this.fetchTokens(siteUrl);
+		const storageScope = [`${siteUrl}/Container.Selected`];
+
+		const token = await this.fetchTokens(storageScope);
+
 		return {
 			fromCache: true,
-			token: token.storageToken,
+			token,
 		};
 	}
 
-	private async fetchTokens(
-		siteUrl: string,
-	): Promise<{ storageToken: string; pushToken: string }> {
-		const msalConfig = {
-			auth: {
-				clientId: this.clientId,
-				authority: "https://login.microsoftonline.com/common/",
-			},
-		};
+	private async fetchTokens(scope: string[]): Promise<string> {
+		const accounts = this.msalInstance.getAllAccounts();
+		let response;
 
-		const msalInstance = new PublicClientApplication(msalConfig);
-		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
-		const storageScope = [`${siteUrl}/Container.Selected`];
-
-		const accounts = msalInstance.getAllAccounts();
 		if (accounts.length === 0) {
-			await msalInstance.loginRedirect();
+			try {
+				// This will only work if loginPopup is synchronous, otherwise, you may need to handle the response in a different way
+				response = await this.msalInstance.loginPopup({
+					scopes: ["FileStorageContainer.Selected"],
+				});
+			} catch (error) {
+				throw new Error(`MSAL error: ${error}`);
+			}
+		} else {
+			response = { account: accounts[0] };
 		}
 
+		this.msalInstance.setActiveAccount(response.account);
+
 		try {
-			// Attempt to acquire token silently
-			const storageRequest = {
-				scopes: storageScope,
-			};
-			const storageResult: AuthenticationResult =
-				await msalInstance.acquireTokenSilent(storageRequest);
-
-			const pushRequest = {
-				scopes: pushScope,
-			};
-			const pushResult: AuthenticationResult =
-				await msalInstance.acquireTokenSilent(pushRequest);
-
-			// Return token
-			return {
-				storageToken: storageResult.accessToken,
-				pushToken: pushResult.accessToken,
-			};
+			const result = await this.msalInstance.acquireTokenSilent({ scopes: scope });
+			return result.accessToken;
 		} catch (error) {
 			throw new Error(`MSAL error: ${error}`);
 		}

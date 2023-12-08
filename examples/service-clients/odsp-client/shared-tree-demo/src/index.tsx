@@ -13,15 +13,15 @@ import { treeConfiguration, Letter } from "./schema";
 import "./output.css";
 import { ReactApp } from "./reactApp";
 
-async function start() {
+async function start(): Promise<void> {
 	const app = document.createElement("div");
 	app.id = "app";
-	document.body.appendChild(app);
+	document.body.append(app);
 
 	// Get the root item id from the URL
 	// If there is no item id, then the app will make
 	// a new container.
-	let itemId = location.hash.substring(1);
+	let itemId: string = location.hash.slice(1);
 	const createNew = itemId.length === 0;
 	let container: IFluidContainer;
 
@@ -54,32 +54,27 @@ async function start() {
 	if (createNew) {
 		const used: { x: number; y: number }[] = [];
 		let id = 0;
-		"HELLOWORLD"
-			.repeat(500)
-			.split("")
-			.map((character) => {
-				const x = Math.round(
-					Math.floor((Math.random() * (canvasSize.x * cellSize.x)) / cellSize.x) *
-						cellSize.x,
+		[..."HELLOWORLD".repeat(500)].map((character) => {
+			const x = Math.round(
+				Math.floor((Math.random() * (canvasSize.x * cellSize.x)) / cellSize.x) * cellSize.x,
+			);
+			const y = Math.round(
+				Math.floor((Math.random() * (canvasSize.y * cellSize.y)) / cellSize.y) * cellSize.y,
+			);
+			if (!used.some((element) => element.x === x && element.y === y)) {
+				const pos = { x, y };
+				used.push(pos);
+				appData.root.letters.insertAtEnd(
+					// TODO: error when not adding wrapping [] is inscrutable
+					new Letter({
+						position: pos,
+						character,
+						id: id.toString(),
+					}),
 				);
-				const y = Math.round(
-					Math.floor((Math.random() * (canvasSize.y * cellSize.y)) / cellSize.y) *
-						cellSize.y,
-				);
-				if (!used.find((element) => element.x === x && element.y === y)) {
-					const pos = { x, y };
-					used.push(pos);
-					appData.root.letters.insertAtEnd(
-						// TODO: error when not adding wrapping [] is inscrutable
-						new Letter({
-							position: pos,
-							character,
-							id: id.toString(),
-						}),
-					);
-					id++;
-				}
-			});
+				id++;
+			}
+		});
 
 		// Update the application state or components without forcing a full page reload
 		ReactDOM.render(
@@ -97,8 +92,10 @@ async function start() {
 		itemId = await container.attach();
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
+		// eslint-disable-next-line require-atomic-updates
 		location.hash = itemId;
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 start().catch(console.error);

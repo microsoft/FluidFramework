@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable prefer-template */
+
 import React, { ReactNode, useEffect, useState } from "react";
 import { TreeView, Tree } from "@fluid-experimental/tree2";
 import { IFluidContainer } from "@fluidframework/fluid-static";
@@ -41,8 +42,8 @@ function CanvasLetter(props: {
 		<div
 			className="transition-all hover:scale-110 text-center cursor-pointer select-none absolute text-xl"
 			style={style}
-			onClick={() => {
-				const index = props.app.letters.indexOf(props.letter);
+			onClick={(): void => {
+				const index: number = props.app.letters.indexOf(props.letter);
 				if (index !== -1) props.app.word.moveToEnd(index, props.app.letters);
 			}}
 		>
@@ -74,7 +75,7 @@ function TopLetter(props: { app: App; letter: Letter }): JSX.Element {
 	return (
 		<div
 			className={classes}
-			onClick={() => {
+			onClick={(): void => {
 				const index = props.app.word.indexOf(props.letter);
 				if (index !== -1) props.app.letters.moveToEnd(index, props.app.word);
 			}}
@@ -98,7 +99,7 @@ function Canvas(props: {
 		<div
 			className="relative w-full h-full self-center bg-transparent"
 			style={style}
-			onClick={(e: React.MouseEvent) => {
+			onClick={(e: React.MouseEvent): void => {
 				e.preventDefault();
 			}}
 		>
