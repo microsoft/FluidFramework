@@ -268,6 +268,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private globalCheckpointOnly: boolean;
 
+	private readonly localCheckpointEnabled: boolean;
+
 	private recievedNoClientOp: boolean = false;
 
 	private closed: boolean = false;
@@ -361,9 +363,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.checkpointService,
 		);
 
-		this.globalCheckpointOnly = this.checkpointService?.getLocalCheckpointEnabled()
-			? false
-			: true;
+		this.localCheckpointEnabled = this.checkpointService?.getLocalCheckpointEnabled() ?? false;
+
+		this.globalCheckpointOnly = this.localCheckpointEnabled ? false : true;
 
 		// start the activity idle timer when created
 		this.setActivityIdleTimer();
@@ -646,12 +648,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		if (this.lastMessageType === MessageType.ClientJoin) {
 			this.recievedNoClientOp = false;
-			if (this.checkpointService?.getLocalCheckpointEnabled()) {
+			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = false;
 			}
 		} else if (this.lastMessageType === MessageType.NoClient) {
 			this.recievedNoClientOp = true;
-			if (this.checkpointService?.getLocalCheckpointEnabled()) {
+			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = true;
 			}
 		}
@@ -1983,11 +1985,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
-					localCheckpointEnabled: this.checkpointService?.getLocalCheckpointEnabled(),
+					localCheckpointEnabled: this.localCheckpointEnabled,
 					globalCheckpointOnly: this.globalCheckpointOnly,
-					localCheckpoint:
-						this.checkpointService?.getLocalCheckpointEnabled() &&
-						!this.globalCheckpointOnly,
+					localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
 					sessionEndCheckpoint: checkpointParams.reason === CheckpointReason.NoClients,
 					recievedNoClientOp: this.recievedNoClientOp,
 				};
