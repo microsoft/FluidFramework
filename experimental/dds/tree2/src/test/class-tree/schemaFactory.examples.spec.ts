@@ -48,7 +48,6 @@ class Note extends schema.object("Note", {
 	}
 }
 
-type XX = typeof Note.implicitlyConstructable;
 
 class NodeMap extends schema.map("NoteMap", Note) {}
 class NodeList extends schema.list("NoteList", Note) {}
@@ -113,6 +112,7 @@ describe("Class based end to end example", () => {
 		setup(theTree);
 	});
 
+	// Confirm that the alternative syntax for the config from the example above (config2) actually works.
 	it("config2", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
