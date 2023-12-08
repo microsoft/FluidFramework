@@ -12,7 +12,7 @@ import {
 	tagChange,
 	TaggedChange,
 } from "../../core";
-import { asMutable, fail, fakeIdAllocator, IdAllocator } from "../../util";
+import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./types";
 import { MarkListFactory } from "./markListFactory";
@@ -692,9 +692,6 @@ function compareCellPositions(
 	return (baseRevisionIndex ?? -Infinity) > newRevisionIndex ? -Infinity : Infinity;
 }
 
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function setModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
@@ -706,7 +703,6 @@ function setModifyAfter<T>(
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	let newEffect: MoveEffect<T>;
-	assert(effect.length === count, 0x6ec /* Expected effect to cover entire mark */);
 	if (effect.value !== undefined) {
 		const nodeChange =
 			effect.value.modifyAfter !== undefined
@@ -725,13 +721,26 @@ function setModifyAfter<T>(
 function setEndpoint(
 	moveEffects: MoveEffectTable<unknown>,
 	target: CrossFieldTarget,
-	{ revision, localId: id }: ChangeAtomId,
+	id: ChangeAtomId,
 	count: number,
 	endpoint: ChangeAtomId,
 ) {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x80b /* Expected effect to cover entire mark */);
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
+	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
-	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
+	const remainingCount = count - effect.length;
+	if (remainingCount > 0) {
+		setEndpoint(
+			moveEffects,
+			target,
+			offsetChangeAtomId(id, effect.length),
+			remainingCount,
+			offsetChangeAtomId(endpoint, effect.length),
+		);
+	}
+}
+
+function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+	return { ...id, localId: brand(id.localId + offset) };
 }
