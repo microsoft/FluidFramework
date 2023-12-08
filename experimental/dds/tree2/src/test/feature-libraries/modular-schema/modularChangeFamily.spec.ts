@@ -14,6 +14,10 @@ import {
 	FieldChange,
 	ModularChangeset,
 	FieldKindWithEditor,
+	chunkTree,
+	defaultChunkPolicy,
+	uncompressedEncode,
+	EncodedChunk,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -27,6 +31,7 @@ import {
 	assertIsRevisionTag,
 	deltaForSet,
 	revisionMetadataSourceFromInfo,
+	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
 } from "../../../core";
@@ -74,7 +79,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		relevantRemovedRootsFromChild(change),
+		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -333,11 +338,15 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+				builds: new Map([
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(1))]])],
+				]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+				builds: new Map([
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(2))]])],
+				]),
 			};
 			assert.deepEqual(
 				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
@@ -535,8 +544,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1]])],
-						[tag3, new Map([[brand(0), node1]])],
+						[undefined, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
 					]),
 				},
 				tag1,
@@ -546,8 +555,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), node1]])],
-						[tag3, new Map([[brand(2), node1]])],
+						[undefined, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -561,13 +570,13 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), node1]])],
-					[tag2, new Map([[brand(2), node1]])],
+					[tag1, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+					[tag2, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					[
 						tag3,
 						new Map([
-							[brand(0), node1],
-							[brand(2), node1],
+							[brand(0), encodedChunkFromCursor(node1)],
+							[brand(2), encodedChunkFromCursor(node1)],
 						]),
 					],
 				]),
@@ -734,3 +743,7 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(changes, [expectedChange]);
 	});
 });
+
+function encodedChunkFromCursor(cursor: ITreeCursorSynchronous): EncodedChunk {
+	return uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
+}

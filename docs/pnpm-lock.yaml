@@ -7,7 +7,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.11.1
+      '@fluid-tools/api-markdown-documenter': ^0.11.3
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
       '@rushstack/node-core-library': ^3.59.4
@@ -38,7 +38,7 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.11.1
+      '@fluid-tools/api-markdown-documenter': 0.11.3
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
       '@rushstack/node-core-library': 3.59.4
@@ -148,8 +148,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.11.1:
-    resolution: {integrity: sha512-eOHYkBqsMrWkDj+OLKyBCfRn/Yg99itzTLf9fSxI3SxZyAfix2+VBgHIhZs9D1AGmp3GSjBYHMABuWGIItBfGg==}
+  /@fluid-tools/api-markdown-documenter/0.11.3:
+    resolution: {integrity: sha512-UVNsqcpy0NUpkYEX9B331FNexFNTk0rPv+AjE9mal2eTjLTALcs1+54XfN6aB4HZ/1LpiObO0NyVkGA5LYZEhg==}
     dependencies:
       '@microsoft/api-documenter': 7.23.9
       '@microsoft/api-extractor-model': 7.28.2
@@ -6132,16 +6132,14 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0
+      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-      chalk: 2.4.2
+      chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2_bfrwj6ys6wock6p526xv5vf35u
       markdown-magic-template: 1.0.1_bfrwj6ys6wock6p526xv5vf35u
       yargs: 17.7.2
     transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
+      - '@types/node'
       - markdown-magic
       - supports-color
-      - typescript
     dev: false

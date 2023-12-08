@@ -468,6 +468,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 
+		// It's possible that the target branch already contained some of the commits that
+		// were on this branch. When that's the case, we adopt the commit objects from the target branch.
+		// Because of that, we need to make sure that any revertibles that were based on the old commit objects
+		// now point to the new object that were adopted from the target branch.
+		for (const targetCommit of targetCommits) {
+			this.updateRevertibleCommit(targetCommit);
+		}
+
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
 			type: "replace",

@@ -4,7 +4,6 @@
  */
 
 import { Static, ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import { EncodedJsonableTree } from "../../core";
 import { EncodedChangeAtomId } from "../modular-schema";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -14,7 +13,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Literal(0)]);
 export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
-export const EncodedBuild = Type.Tuple([EncodedChangeAtomId, EncodedJsonableTree]);
+export const EncodedBuild = Type.Tuple([EncodedChangeAtomId]);
 export type EncodedBuild = Static<typeof EncodedBuild>;
 
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
