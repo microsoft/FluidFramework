@@ -56,6 +56,7 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 			response = { account: accounts[0] };
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 		this.msalInstance.setActiveAccount(response.account);
 
 		try {
