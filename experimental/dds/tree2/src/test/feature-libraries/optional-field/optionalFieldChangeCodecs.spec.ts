@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild } from "../fieldKindTestUtils";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 
 const nodeChange1 = changesetForChild("nodeChange1");
@@ -33,13 +33,12 @@ const childCodec1: IJsonCodec<NodeChangeset> = {
 };
 
 const change1: OptionalChangeset = {
-	build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
 	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
 	childChanges: [],
 	reservedDetachId: { localId: brand(1) },
 };
 
-const change2: OptionalChangeset = optionalFieldEditor.set(testTreeCursor("tree2"), false, {
+const change2: OptionalChangeset = optionalFieldEditor.set(false, {
 	fill: brand(42),
 	detach: brand(2),
 });
@@ -50,13 +49,11 @@ const change2Inverted: OptionalChangeset = {
 		["self", { localId: brand(42) }, "cellTargeting"],
 	],
 	childChanges: [],
-	build: [],
 };
 
 const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
 
 const change1WithChildChange: OptionalChangeset = {
-	build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
 	moves: [
 		[{ localId: brand(41) }, "self", "nodeTargeting"],
 		["self", { localId: brand(1) }, "cellTargeting"],
