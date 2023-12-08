@@ -17,7 +17,7 @@ import {
 } from "../feature-libraries";
 import { leaf } from "../domains";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core";
-import { TreeListNode, TreeMapNodeBase } from "../simple-tree";
+import { TreeListNode } from "../simple-tree";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
@@ -41,6 +41,7 @@ import {
 	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
+	TreeMapNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -278,7 +279,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.Map<${string}>`,
 		NodeKind.Map,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
+		TreeMapNode<T>,
 		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
@@ -298,8 +299,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNode<T>,
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
@@ -308,8 +309,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		NodeKind.Map,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNode<T>,
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -326,8 +327,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
 				NodeKind.Map,
-				TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
-				ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+				TreeMapNode<T>,
+				ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 			>;
 		}
 		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true);
@@ -340,11 +341,13 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
-		TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+		TreeMapNode<T>,
+		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 	> {
 		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes) {
-			public constructor(input: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) {
+			public constructor(
+				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			) {
 				super(input);
 				if (isFlexTreeNode(input)) {
 					return createNodeProxy(
@@ -370,8 +373,8 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 		return schema as TreeNodeSchemaClass<
 			`${TScope}.${Name}`,
 			NodeKind.Map,
-			TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>>,
-			ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>
+			TreeMapNode<T>,
+			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
 		>;
 	}
 
@@ -528,9 +531,9 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 *
 	 * Also be aware that code which relies on this tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
 	 * The command `TypeScript: Restart TS Server` should fix it.
-	 * Sometimes this does not work: the exact cause has not been confirmed but if you have the file open multiple times (for example in both sides of a window split into two columns): closing the extra copy may help.
-	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
+	 * Sometimes this does not work: closing all open files except the schema before running the command can help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
+	 * Intellisense has also shown problems problems when schema files with recursive types are part of a cyclic file dependency. Splitting the schema into its own file with minimal dependencies can help with this.
 	 *
 	 * @example
 	 * ```typescript
