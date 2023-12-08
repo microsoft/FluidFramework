@@ -4,15 +4,15 @@
  */
 import * as Path from "node:path";
 
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { getQualifiedApiItemName } from "../utilities";
+import { getQualifiedApiItemName, getReleaseTag } from "../utilities";
 import {
-	ApiItemTransformationConfiguration,
-	DocumentBoundaries,
-	HierarchyBoundaries,
+	type ApiItemTransformationConfiguration,
+	type DocumentBoundaries,
+	type HierarchyBoundaries,
 } from "./configuration";
 
 /**
@@ -458,4 +458,99 @@ function doesItemGenerateHierarchy(
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
 	return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
+}
+
+/**
+ * Determines whether or not the specified API item should have documentation generated for it.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ *
+ * @remarks
+ *
+ * If an item does not have its own release tag, it will inherit its release scope from its nearest ancestor.
+ *
+ * Items without an associated release tag (directly or in their ancestry) will always be included as a precaution.
+ *
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @example Hierarchical inheritance
+ *
+ * Items with tagged ancestors inherit their release scope when one is not specified.
+ * This includes class/interface members...
+ *
+ * ```typescript
+ * // @public
+ * export interface Foo {
+ * 	// `@public` inherited from the interface
+ * 	bar: string;
+ * }
+ * ```
+ *
+ * This also includes scopes like namespaces, which can add further hierarchy...
+ *
+ * ```typescript
+ * // @public
+ * export namespace Foo {
+ * 	// `@public` inherited from the namespace
+ * 	export interface Bar {
+ * 		// `@public` inherited from the namespace
+ * 		baz: string;
+ * 	}
+ * }
+ * ```
+ *
+ * @public
+ */
+export function shouldItemBeIncluded(
+	apiItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): boolean {
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
+		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
+		const parent = getFilteredParent(apiItem);
+		if (parent === undefined) {
+			// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
+			// or not it is intended to be included in the generated documentation suite.
+			// To be safe, log a warning but return true.
+			config.logger.warning("Encountered an API item with no release tag in ancestry.");
+			return true;
+		}
+
+		return shouldItemBeIncluded(parent, config);
+	}
+
+	return releaseTag >= (config.minimumReleaseLevel as ReleaseTag);
+}
+
+/**
+ * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
+ */
+export function filterItems(
+	apiItems: readonly ApiItem[],
+	config: Required<ApiItemTransformationConfiguration>,
+): ApiItem[] {
+	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
+}
+
+/**
+ * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
+ * This is determined based on its release tag (or inherited release scope) compared to
+ * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * @remarks See {@link shouldItemBeIncluded} for more details.
+ * @param apiItem - The API item being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+export function filterChildMembers(
+	apiItem: ApiItem,
+	config: Required<ApiItemTransformationConfiguration>,
+): ApiItem[] {
+	return filterItems(apiItem.members, config);
 }

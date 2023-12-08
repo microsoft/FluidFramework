@@ -223,7 +223,7 @@ export class TestDb implements IDb {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITestDbFactory extends IDbFactory {
 	readonly testDatabase: IDb;

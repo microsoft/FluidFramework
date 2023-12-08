@@ -4,7 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { Delta, FieldKey, MapTree, TreeNodeSchemaIdentifier } from "../../core";
+import {
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaRoot,
+	FieldKey,
+	MapTree,
+	TreeNodeSchemaIdentifier,
+} from "../../core";
 import { mapTreeFromCursor, cursorForMapTreeNode, mapRootChanges } from "../../feature-libraries";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -14,12 +21,12 @@ const emptyMap = new Map();
 const nodeX = { type, value: "X", fields: emptyMap };
 const nodeXCursor = cursorForMapTreeNode(nodeX);
 const fooField = brand<FieldKey>("foo");
-const detachId: Delta.DetachedNodeId = { minor: 43 };
+const detachId: DeltaDetachedNodeId = { minor: 43 };
 
 describe("DeltaUtils", () => {
 	describe("mapFieldMarks", () => {
 		it("maps delta content", () => {
-			const nestedCursorInsert = new Map<FieldKey, Delta.FieldChanges>([
+			const nestedCursorInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
 					{
@@ -34,9 +41,9 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const input: Delta.Root = {
+			const input: DeltaRoot = {
 				build: [{ id: detachId, trees: [nodeXCursor] }],
-				fields: new Map<FieldKey, Delta.FieldChanges>([
+				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
 						{
@@ -54,7 +61,7 @@ describe("DeltaUtils", () => {
 			};
 			deepFreeze(input);
 			const actual = mapRootChanges(input, mapTreeFromCursor);
-			const nestedMapTreeInsert = new Map<FieldKey, Delta.FieldChanges<MapTree>>([
+			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges<MapTree>>([
 				[
 					fooField,
 					{
@@ -69,9 +76,9 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const expected: Delta.Root<MapTree> = {
+			const expected: DeltaRoot<MapTree> = {
 				build: [{ id: detachId, trees: [nodeX] }],
-				fields: new Map<FieldKey, Delta.FieldChanges<MapTree>>([
+				fields: new Map<FieldKey, DeltaFieldChanges<MapTree>>([
 					[
 						fooField,
 						{

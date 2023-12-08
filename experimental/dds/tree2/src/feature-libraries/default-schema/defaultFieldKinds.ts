@@ -5,15 +5,14 @@
 
 import {
 	FieldKindIdentifier,
-	Delta,
-	ITreeCursor,
 	forbiddenFieldKindIdentifier,
 	ChangesetLocalId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
 } from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
-	Multiplicity,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
@@ -28,6 +27,7 @@ import {
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -40,8 +40,8 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): Delta.FieldChanges => ({}),
-	relevantRemovedRoots: (change): Iterable<Delta.DetachedNodeId> => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
+	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 };
 
@@ -52,13 +52,7 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param changeId - the ID associated with the replacement of the current content.
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
-	set(
-		newContent: ITreeCursor,
-		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
-		},
-	): OptionalChangeset;
+	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -78,13 +72,8 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (
-		newContent: ITreeCursor,
-		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
-		},
-	): OptionalChangeset => optionalFieldEditor.set(newContent, false, ids),
+	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

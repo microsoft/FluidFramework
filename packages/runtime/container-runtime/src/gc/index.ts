@@ -7,11 +7,12 @@ export { GarbageCollector } from "./garbageCollection";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
-	gcThrowOnTombstoneLoadOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,

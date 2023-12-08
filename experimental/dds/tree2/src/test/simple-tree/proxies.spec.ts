@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../domains";
-import { TypedNode, TreeRoot, Tree, TreeListNode } from "../../simple-tree";
+import { TypedNode, Tree, TreeListNode, TreeField } from "../../simple-tree";
 import { typeNameSymbol } from "../../feature-libraries";
 import { getOldRoot, pretty } from "./utils";
 
@@ -567,7 +567,7 @@ describe("SharedTreeList", () => {
 
 			/** This function returns a union of both listA and listB, which exercises more interesting compile type-checking cases */
 			function getEitherList(
-				root: TreeRoot<typeof schema>,
+				root: TreeField<typeof schema.rootFieldSchema>,
 				list: "a" | "b",
 			): TypedNode<typeof listA> | TypedNode<typeof listB> {
 				return list === "a" ? root.listA : root.listB;

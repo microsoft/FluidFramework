@@ -29,7 +29,6 @@ import {
 	getOffsetInCellRange,
 	compareLineages,
 	withNodeChange,
-	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
 	isNewAttach,
@@ -41,6 +40,7 @@ import {
 	isAttach,
 	getDetachOutputId,
 	isImpactfulCellRename,
+	compareCellsFromSameRevision,
 } from "./utils";
 import {
 	Changeset,
@@ -516,9 +516,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 	}
 }
 
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function sendMarkToDest<T>(
 	mark: Mark<T>,
@@ -925,16 +922,9 @@ function compareCellPositions(
 	assert(newId !== undefined, "newMark should have cell ID");
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
-		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
-			return baseId.localId - newId.localId;
-		}
-
-		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
-		if (adjacentCells !== undefined) {
-			return (
-				getPositionAmongAdjacentCells(adjacentCells, baseId.localId) -
-				getPositionAmongAdjacentCells(adjacentCells, newId.localId)
-			);
+		const cmp = compareCellsFromSameRevision(baseId, baseMark.count, newId, newMark.count);
+		if (cmp !== undefined) {
+			return cmp;
 		}
 	}
 
@@ -991,17 +981,4 @@ function compareCellPositions(
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	return -Infinity;
-}
-
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
-	}
-
-	fail("Could not find id in adjacentCells");
 }

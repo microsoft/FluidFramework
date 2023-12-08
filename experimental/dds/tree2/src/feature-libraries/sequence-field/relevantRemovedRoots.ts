@@ -4,19 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Delta, TaggedChange, offsetDetachId } from "../../core";
+import { DeltaDetachedNodeId, TaggedChange, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset, Mark } from "./types";
 import { isInsert, isDetachOfRemovedNodes, isAttachAndDetachEffect } from "./utils";
 
 export type RelevantRemovedRootsFromTChild<TChild> = (
 	child: TChild,
-) => Iterable<Delta.DetachedNodeId>;
+) => Iterable<DeltaDetachedNodeId>;
 
 export function* relevantRemovedRoots<TChild>(
 	{ change, revision }: TaggedChange<Changeset<TChild>>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromTChild<TChild>,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	for (const mark of change) {
 		if (refersToRelevantRemovedRoots(mark)) {
 			assert(

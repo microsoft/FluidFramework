@@ -31,9 +31,12 @@ async function renderApiDocumentation() {
 	await fs.emptyDir(apiDocsDirectoryPath);
 
 	// Process API reports
+	console.log("Loading API model...");
 	console.group();
 
 	const apiModel = await loadModel(apiReportsDirectoryPath);
+
+	console.groupEnd();
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -41,8 +44,6 @@ async function renderApiDocumentation() {
 		[DocumentationNodeType.Table]: renderTableNode,
 		[alertNodeType]: renderAlertNode,
 	};
-
-	console.groupEnd();
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,

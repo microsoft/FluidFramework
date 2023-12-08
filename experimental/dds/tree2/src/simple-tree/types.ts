@@ -17,7 +17,6 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
-	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
 import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
@@ -301,7 +300,7 @@ export type TreeField<
 > = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
- * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
+ * Helper for implementing {@link TreeField}.
  */
 export type TreeFieldInner<
 	Kind extends FieldKind,
@@ -346,12 +345,3 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 	? TreeObjectNode<TSchema>
 	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>
 	  unknown;
-
-/**
- * The root type (the type of the entire tree) for a given schema collection.
- * */
-export type TreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
-	infer TRootFieldSchema
->
-	? TreeField<TRootFieldSchema>
-	: never;

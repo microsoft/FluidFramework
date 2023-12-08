@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, RevisionMetadataSource } from "../../core";
+import {
+	TaggedChange,
+	RevisionTag,
+	RevisionMetadataSource,
+	DeltaFieldMap,
+	DeltaFieldChanges,
+	DeltaDetachedNodeId,
+	EncodedRevisionTag,
+} from "../../core";
 import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
@@ -20,13 +28,16 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
-	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly codecsFactory: (
+		childCodec: IJsonCodec<NodeChangeset>,
+		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.FieldChanges;
+	): DeltaFieldChanges;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:
@@ -46,7 +57,7 @@ export interface FieldChangeHandler<
 	readonly relevantRemovedRoots: (
 		change: TaggedChange<TChangeset>,
 		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-	) => Iterable<Delta.DetachedNodeId>;
+	) => Iterable<DeltaDetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -155,7 +166,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
+export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 
 /**
  * @alpha
@@ -198,9 +209,7 @@ export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefi
  *
  * @alpha
  */
-export type RelevantRemovedRootsFromChild = (
-	child: NodeChangeset,
-) => Iterable<Delta.DetachedNodeId>;
+export type RelevantRemovedRootsFromChild = (child: NodeChangeset) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getBaseRevisions: () => RevisionTag[];
