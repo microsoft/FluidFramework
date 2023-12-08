@@ -447,9 +447,9 @@ export function buildOdspShareLinkReqParams(shareLinkType: ISharingLinkKind | un
 	if (!shareLinkType) {
 		return;
 	}
-	const scope = (shareLinkType as ISharingLinkKind).scope;
+	const scope = shareLinkType.scope;
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
-	const role = (shareLinkType as ISharingLinkKind).role;
+	const role = shareLinkType.role;
 	shareLinkRequestParams = role
 		? `${shareLinkRequestParams}&createLinkRole=${role}`
 		: shareLinkRequestParams;
