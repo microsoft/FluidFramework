@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeListNode, Unhydrated } from "../simple-tree";
+import { TreeListNode } from "../simple-tree";
 import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries";
 import {
 	ImplicitAllowedTypes,
@@ -65,35 +65,22 @@ export class SchemaFactoryRecursive<
 	 * For unknown reasons, recursive maps work better (compile in more cases)
 	 * if their constructor does not take in the desired type.
 	 *
-	 * This version of `map` leverages this fact, and has a create static function which can be used instead:
-	 * ```typescript
-	 * MyRecursiveMap.create(theMap);
-	 * ```
+	 * This version of `map` leverages this fact and takes in undefined instead.
+	 * Unfortunately this means all maps created this way must be created empty then filled later.
+	 * @privateRemarks
+	 * TODO:
+	 * Figure out a way to make recursive prefilled maps work.
 	 */
 	public mapRecursive<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.map(name, allowedTypes) {
-			/**
-			 * Create an {@link Unhydrated} node.
-			 * This is the same as using the constructor, except
-			 */
-			public static create(
-				map?: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			) {
-				return new this(map);
-			}
-
-			public constructor(
-				data?:
-					| ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
-					| FlexTreeNode,
-			) {
+		class MapSchema extends this.namedMap(name, allowedTypes, true, false) {
+			public constructor(data?: undefined | FlexTreeNode) {
 				if (isFlexTreeNode(data)) {
 					super(data as any);
 				} else {
-					super(data ?? new Map());
+					super(new Map());
 				}
 			}
 		}
@@ -102,102 +89,9 @@ export class SchemaFactoryRecursive<
 			`${TScope}.${Name}`,
 			NodeKind.Map,
 			TreeMapNode<T>,
-			undefined
-		> & { create: typeof MapSchema.create } & (new () => Unhydrated<TreeMapNode<T>>);
-	}
-
-	/**
-	 * For unknown reasons, recursive maps work better (compile in more cases)
-	 * if their constructor does not take in the desired type.
-	 *
-	 * This version of `map` leverages this fact, and has a create static function which can be used instead:
-	 * ```typescript
-	 * MyRecursiveMap.create(theMap);
-	 * ```
-	 */
-	public mapRecursive2<Name extends TName, const T extends ImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	) {
-		class MapSchema extends this.map(name, allowedTypes) {
-			/**
-			 * Create an {@link Unhydrated} node.
-			 * This is the same as using the constructor, except
-			 */
-			public static create(
-				map?: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			) {
-				return new this(map);
-			}
-
-			public constructor(
-				data?:
-					| ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					super(data as any);
-				} else {
-					super(data ?? new Map());
-				}
-			}
-		}
-
-		return MapSchema as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
-			NodeKind.Map,
-			Mappy<T>,
-			undefined
-		> & { create: typeof MapSchema.create } & (new () => Unhydrated<Mappy<T>>);
-	}
-
-	/**
-	 * For unknown reasons, recursive maps work better (compile in more cases)
-	 * if their constructor does not take in the desired type.
-	 *
-	 * This version of `map` leverages this fact, and has a create static function which can be used instead:
-	 * ```typescript
-	 * MyRecursiveMap.create(theMap);
-	 * ```
-	 */
-	public mapRecursive3<Name extends TName, const T extends ImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	) {
-		class MapSchema extends this.map(name, allowedTypes) {
-			/**
-			 * Create an {@link Unhydrated} node.
-			 * This is the same as using the constructor, except
-			 */
-			public static create(map?: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) {
-				return new this(map);
-			}
-
-			/**
-			 * @sealed
-			 */
-			public constructor(
-				data?: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>> | FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					super(data as any);
-				} else {
-					super(data ?? (new Map() as any));
-				}
-			}
-		}
-
-		return MapSchema as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
-			NodeKind.Map,
-			Mappy2<T>,
-			undefined
-		> & {
-			create<T2>(
-				this: new (data: undefined) => T2,
-				map?: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-			): T2;
-		}; //  & (new () => Unhydrated<Mappy2<T>>);
+			undefined,
+			false
+		>;
 	}
 }
 

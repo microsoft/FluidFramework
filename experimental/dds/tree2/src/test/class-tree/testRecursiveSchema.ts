@@ -41,6 +41,6 @@ export class ListRecursive extends sf.listRecursive("List", [ListRefWrapped]) {}
 
 const MapRef2 = () => MapRecursive;
 sf.fixRecursiveReference(MapRef2);
-export class MapRecursive extends sf.mapRecursive3("Map", [MapRef2]) {}
+export class MapRecursive extends sf.mapRecursive("Map", [MapRef2]) {}
 
 // #endregion

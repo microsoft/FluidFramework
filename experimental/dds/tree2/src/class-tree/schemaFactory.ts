@@ -343,6 +343,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 						fullName as TName,
 						nameOrAllowedTypes as T,
 						false,
+						true,
 					) as TreeNodeSchema,
 			) as TreeNodeSchemaClass<
 				`${TScope}.${string}`,
@@ -352,21 +353,34 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				true
 			>;
 		}
-		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true);
+		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
-	private namedMap<Name extends TName | string, const T extends ImplicitAllowedTypes>(
+	/**
+	 * See note on `namedList`.
+	 */
+	public namedMap<
+		Name extends TName | string,
+		const T extends ImplicitAllowedTypes,
+		const ImplicitlyConstructable extends boolean,
+	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
+		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaClass<
 		`${TScope}.${Name}`,
 		NodeKind.Map,
 		TreeMapNode<T>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		ImplicitlyConstructable
 	> {
-		class schema extends this.nodeSchema(name, NodeKind.Map, allowedTypes, true) {
+		class schema extends this.nodeSchema(
+			name,
+			NodeKind.Map,
+			allowedTypes,
+			implicitlyConstructable,
+		) {
 			public constructor(
 				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			) {
@@ -397,7 +411,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 			NodeKind.Map,
 			TreeMapNode<T>,
 			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			true
+			ImplicitlyConstructable
 		>;
 	}
 
@@ -579,7 +593,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 	 *
 	 * Also be aware that code which relies on this tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
-	 * The command `TypeScript: Restart TS Server` should fix it.
+	 * Running the command `TypeScript: Restart TS Server` with the schema file focused should fix it.
 	 * Sometimes this does not work: closing all open files except the schema before running the command can help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
 	 *
