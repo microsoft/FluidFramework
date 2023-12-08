@@ -20,7 +20,12 @@ import {
 } from "../feature-libraries";
 import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
-import { extractFactoryContent, getClassSchema, simpleSchemaSymbol } from "../simple-tree/proxies";
+import {
+	InsertableContent,
+	extractFactoryContent,
+	getClassSchema,
+	simpleSchemaSymbol,
+} from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
 import { cursorFromNodeData } from "../simple-tree/toMapTree";
@@ -47,7 +52,7 @@ export function cursorFromUnhydratedRoot(
 	schema: TreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree);
+	const data = extractFactoryContent(tree as InsertableContent);
 	return (
 		cursorFromNodeData(data.content, { schema }, schema.rootFieldSchema.types) ??
 		fail("failed to decode tree")

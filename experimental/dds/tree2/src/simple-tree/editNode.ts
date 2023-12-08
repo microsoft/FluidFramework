@@ -53,7 +53,7 @@ export function getEditNode(target: TreeNode): FlexTreeNode {
 /**
  * Retrieves the edit node associated with the given target via {@link setEditNode}, if any.
  */
-export function tryGetEditNode(target: unknown): FlexTreeNode | undefined {
+export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
 	if (typeof target === "object" && target !== null) {
 		return editNodeMap.get(target as TreeNode);
 	}
@@ -72,7 +72,7 @@ export function tryGetEditNodeTarget(editNode: FlexTreeNode): TreeNode | undefin
  * @returns The target object
  * @remarks
  * This creates a 1:1 mapping between the target and tree node.
- * Either can be retrieved from the other via {@link getEditNode}/{@link tryGetEditNode} or {@link tryGetEditNodeTarget}.
+ * Either can be retrieved from the other via {@link getEditNode}/{@link tryGetFlexNode} or {@link tryGetEditNodeTarget}.
  * If the given target is already mapped to an edit node, the existing mapping will be overwritten.
  * If the given edit node is already mapped to a different target, this function will fail.
  */

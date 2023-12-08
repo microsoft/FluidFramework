@@ -231,7 +231,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
 	? InsertableTypedNode<FlexListToUnion<TSchema>>
-	: unknown;
+	: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
