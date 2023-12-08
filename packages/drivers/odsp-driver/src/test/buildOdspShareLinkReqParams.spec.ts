@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	SharingLinkRole,
-	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
+import { SharingLinkRole, SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
 import { buildOdspShareLinkReqParams } from "../odspUtils";
 
 describe("buildOdspShareLinkReqParams", () => {
@@ -26,7 +23,6 @@ describe("buildOdspShareLinkReqParams", () => {
 			`createLinkScope=${SharingLinkScope.organization}&createLinkRole=${SharingLinkRole.view}`,
 		);
 	});
-
 
 	it("Should return undefined when the input is undefined", async () => {
 		const result = buildOdspShareLinkReqParams(undefined);

@@ -127,7 +127,7 @@ export async function createNewFluidFile(
 
 /**
  * If user requested creation of a sharing link along with the creation of the file by providing
- * createLinkScope in the request parameters then extract and save the sharing link information from 
+ * createLinkScope in the request parameters then extract and save the sharing link information from
  * the response if it is available.
  * In case there was an error in creation of the sharing link, error is provided back in the response,
  * and does not impact the creation of file in ODSP.
