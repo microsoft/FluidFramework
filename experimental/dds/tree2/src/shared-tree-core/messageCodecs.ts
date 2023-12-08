@@ -30,8 +30,8 @@ export function makeMessageCodec<TChangeset>(
 				const { revision, originatorId, changeset } = encoded as unknown as Message;
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision),
-						change: changesetCodec.decode(changeset),
+						revision: revisionTagCodec.decode(revision, originatorId),
+						change: changesetCodec.decode(changeset, originatorId),
 					},
 					sessionId: originatorId,
 				};

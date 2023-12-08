@@ -27,8 +27,8 @@ export function makeEditManagerCodec<TChangeset>(
 
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(commit: T) => ({
 		...commit,
-		revision: revisionTagCodec.decode(commit.revision),
-		change: changeCodec.json.decode(commit.change),
+		revision: revisionTagCodec.decode(commit.revision, commit.sessionId),
+		change: changeCodec.json.decode(commit.change, commit.sessionId),
 	});
 
 	return {
@@ -52,7 +52,7 @@ export function makeEditManagerCodec<TChangeset>(
 						sessionId,
 						{
 							...branch,
-							base: revisionTagCodec.decode(branch.base),
+							base: revisionTagCodec.decode(branch.base, sessionId),
 							commits: branch.commits.map(decodeCommit),
 						},
 					]),

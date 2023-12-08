@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { decodeChangeAtomId, encodeChangeAtomId } from "../utils";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
@@ -40,14 +41,17 @@ function makeRegisterIdCodec(
 
 			return encodedRegisterId;
 		},
-		decode: (registerId: EncodedRegisterId) => {
+		decode: (registerId: EncodedRegisterId, originatorId: SessionId) => {
 			if (registerId === 0) {
 				return "self";
 			}
 
 			const decodedRegisterId: Mutable<RegisterId> = { localId: registerId.localId };
 			if (registerId.revision !== undefined) {
-				decodedRegisterId.revision = revisionTagCodec.decode(registerId.revision);
+				decodedRegisterId.revision = revisionTagCodec.decode(
+					registerId.revision,
+					originatorId,
+				);
 			}
 
 			return decodedRegisterId;
@@ -98,13 +102,13 @@ function makeOptionalFieldCodec(
 			return encoded;
 		},
 
-		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
+		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, originatorId: SessionId) => {
 			const moves: OptionalChangeset["moves"] =
 				encoded.m?.map(
 					([src, dst, type]) =>
 						[
-							registerIdCodec.decode(src),
-							registerIdCodec.decode(dst),
+							registerIdCodec.decode(src, originatorId),
+							registerIdCodec.decode(dst, originatorId),
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
@@ -112,20 +116,20 @@ function makeOptionalFieldCodec(
 				build:
 					encoded.b?.map(([id, set]) => {
 						return {
-							id: decodeChangeAtomId(revisionTagCodec, id),
+							id: decodeChangeAtomId(revisionTagCodec, originatorId, id),
 							set,
 						};
 					}) ?? [],
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id),
-						childCodec.decode(encodedChange),
+						registerIdCodec.decode(id, originatorId),
+						childCodec.decode(encodedChange, originatorId),
 					]) ?? [],
 			};
 
 			if (encoded.d !== undefined) {
-				decoded.reservedDetachId = registerIdCodec.decode(encoded.d);
+				decoded.reservedDetachId = registerIdCodec.decode(encoded.d, originatorId);
 			}
 			return decoded;
 		},

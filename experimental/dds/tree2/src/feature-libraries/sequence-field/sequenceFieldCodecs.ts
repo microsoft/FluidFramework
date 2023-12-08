@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util";
@@ -100,39 +101,43 @@ function makeV0Codec<TNodeChange>(
 					unreachableCase(type);
 			}
 		},
-		decode(encoded: Encoded.MarkEffect): MarkEffect {
-			return decoderLibrary.dispatch(encoded);
+		decode(encoded: Encoded.MarkEffect, originatorId: SessionId): MarkEffect {
+			return decoderLibrary.dispatch(encoded, originatorId);
 		},
 	};
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [],
+		/* args */ [originatorId: SessionId],
 		MarkEffect
 	>({
-		moveIn(encoded: Encoded.MoveIn): MoveIn {
+		moveIn(encoded: Encoded.MoveIn, originatorId: SessionId): MoveIn {
 			const { id, finalEndpoint } = encoded;
 			const mark: MoveIn = {
 				type: "MoveIn",
 				id,
 			};
 			if (finalEndpoint !== undefined) {
-				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
+				mark.finalEndpoint = decodeChangeAtomId(
+					revisionTagCodec,
+					originatorId,
+					finalEndpoint,
+				);
 			}
 			return mark;
 		},
-		insert(encoded: Encoded.Insert): Insert {
+		insert(encoded: Encoded.Insert, originatorId: SessionId): Insert {
 			const { id, revision } = encoded;
 			const mark: Insert = {
 				type: "Insert",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			return mark;
 		},
-		delete(encoded: Encoded.Delete): Delete {
+		delete(encoded: Encoded.Delete, originatorId: SessionId): Delete {
 			const { id, revision, detachIdOverride } = encoded;
 			const mark: Delete = {
 				type: "Delete",
@@ -142,29 +147,44 @@ function makeV0Codec<TNodeChange>(
 				mark.revision = revisionTagCodec.decode(revision);
 			}
 			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = decodeChangeAtomId(revisionTagCodec, detachIdOverride);
+				mark.detachIdOverride = decodeChangeAtomId(
+					revisionTagCodec,
+					originatorId,
+					detachIdOverride,
+				);
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut): MoveOut {
+		moveOut(encoded: Encoded.MoveOut, originatorId: SessionId): MoveOut {
 			const { id, finalEndpoint, detachIdOverride } = encoded;
 			const mark: MoveOut = {
 				type: "MoveOut",
 				id,
 			};
 			if (finalEndpoint !== undefined) {
-				mark.finalEndpoint = decodeChangeAtomId(revisionTagCodec, finalEndpoint);
+				mark.finalEndpoint = decodeChangeAtomId(
+					revisionTagCodec,
+					originatorId,
+					finalEndpoint,
+				);
 			}
 			if (detachIdOverride !== undefined) {
-				mark.detachIdOverride = decodeChangeAtomId(revisionTagCodec, detachIdOverride);
+				mark.detachIdOverride = decodeChangeAtomId(
+					revisionTagCodec,
+					originatorId,
+					detachIdOverride,
+				);
 			}
 			return mark;
 		},
-		attachAndDetach(encoded: Encoded.AttachAndDetach): AttachAndDetach {
+		attachAndDetach(
+			encoded: Encoded.AttachAndDetach,
+			originatorId: SessionId,
+		): AttachAndDetach {
 			return {
 				type: "AttachAndDetach",
-				attach: decoderLibrary.dispatch(encoded.attach) as Attach,
-				detach: decoderLibrary.dispatch(encoded.detach) as Detach,
+				attach: decoderLibrary.dispatch(encoded.attach, originatorId) as Attach,
+				detach: decoderLibrary.dispatch(encoded.detach, originatorId) as Detach,
 			};
 		},
 	});
@@ -185,7 +205,10 @@ function makeV0Codec<TNodeChange>(
 			};
 			return encoded;
 		},
-		decode: ({ localId, adjacentCells, lineage, revision }: Encoded.CellId): CellId => {
+		decode: (
+			{ localId, adjacentCells, lineage, revision }: Encoded.CellId,
+			originatorId: SessionId,
+		): CellId => {
 			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
@@ -193,7 +216,7 @@ function makeV0Codec<TNodeChange>(
 				localId,
 			};
 			if (revision !== undefined) {
-				decoded.revision = revisionTagCodec.decode(revision);
+				decoded.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
@@ -204,7 +227,7 @@ function makeV0Codec<TNodeChange>(
 			if (lineage !== undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-shadow
 				decoded.lineage = lineage.map(([revision, id, count, offset]) => ({
-					revision: revisionTagCodec.decode(revision),
+					revision: revisionTagCodec.decode(revision, originatorId),
 					id,
 					count,
 					offset,
@@ -242,7 +265,10 @@ function makeV0Codec<TNodeChange>(
 			}
 			return jsonMarks;
 		},
-		decode: (changeset: Encoded.Changeset<NodeChangeSchema>): Changeset<TNodeChange> => {
+		decode: (
+			changeset: Encoded.Changeset<NodeChangeSchema>,
+			originatorId: SessionId,
+		): Changeset<TNodeChange> => {
 			const marks: Changeset<TNodeChange> = [];
 			for (const mark of changeset) {
 				const decodedMark: Mark<TNodeChange> = {
@@ -250,13 +276,13 @@ function makeV0Codec<TNodeChange>(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect));
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, originatorId));
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId);
+					decodedMark.cellId = cellIdCodec.decode(mark.cellId, originatorId);
 				}
 				if (mark.changes !== undefined) {
-					decodedMark.changes = childCodec.decode(mark.changes);
+					decodedMark.changes = childCodec.decode(mark.changes, originatorId);
 				}
 				marks.push(decodedMark);
 			}

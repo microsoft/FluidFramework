@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
@@ -27,7 +28,7 @@ export interface IDecoder<TDecoded, TEncoded> {
 	/**
 	 * Decodes `obj` from some encoded format.
 	 */
-	decode(obj: TEncoded): TDecoded;
+	decode(obj: TEncoded, originatorId?: SessionId): TDecoded;
 }
 
 /**
@@ -189,10 +190,10 @@ class DefaultBinaryCodec<TDecoded> implements IBinaryCodec<TDecoded> {
 		return IsoBuffer.from(json);
 	}
 
-	public decode(change: IsoBuffer): TDecoded {
+	public decode(change: IsoBuffer, originatorId: SessionId): TDecoded {
 		const json = bufferToString(change, "utf8");
 		const jsonable = JSON.parse(json);
-		return this.jsonCodec.decode(jsonable);
+		return this.jsonCodec.decode(jsonable, originatorId);
 	}
 }
 
@@ -327,11 +328,11 @@ export function withSchemaValidation<
 			}
 			return encoded;
 		},
-		decode: (encoded: TEncodedFormat) => {
+		decode: (encoded: TEncodedFormat, originatorId: SessionId) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
-			return codec.decode(encoded) as unknown as TInMemoryFormat;
+			return codec.decode(encoded, originatorId) as unknown as TInMemoryFormat;
 		},
 	};
 }

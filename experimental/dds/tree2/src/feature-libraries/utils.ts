@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { IJsonCodec } from "../codec";
 import { RevisionTag, EncodedRevisionTag, ChangeAtomId, EncodedChangeAtomId } from "../core";
 
@@ -22,6 +23,7 @@ export function encodeChangeAtomId(
 
 export function decodeChangeAtomId(
 	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	originatorId: SessionId,
 	changeAtomId: EncodedChangeAtomId,
 ): ChangeAtomId {
 	if (changeAtomId.revision === undefined) {
@@ -30,6 +32,6 @@ export function decodeChangeAtomId(
 
 	return {
 		localId: changeAtomId.localId,
-		revision: revisionTagCodec.decode(changeAtomId.revision),
+		revision: revisionTagCodec.decode(changeAtomId.revision, originatorId),
 	};
 }

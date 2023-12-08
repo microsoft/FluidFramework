@@ -871,7 +871,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = jsonCodec.decode(encoded);
+									const decoded = jsonCodec.decode(
+										encoded,
+										testIdCompressor.localSessionId,
+									);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -884,7 +887,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 				for (const [name, data] of encodingTestData.successes) {
 					it(name, () => {
 						const encoded = codec.binary.encode(data);
-						const decoded = codec.binary.decode(encoded);
+						const decoded = codec.binary.decode(
+							encoded,
+							testIdCompressor.localSessionId,
+						);
 						assertEquivalent(decoded, data);
 					});
 				}

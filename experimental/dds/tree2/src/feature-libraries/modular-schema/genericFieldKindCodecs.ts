@@ -8,6 +8,7 @@ import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { SessionId } from "@fluidframework/runtime-definitions";
 
 export function makeGenericChangeCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
@@ -26,11 +27,11 @@ function makeV0Codec(
 			}));
 			return encoded;
 		},
-		decode: (encoded: EncodedGenericChangeset): GenericChangeset => {
+		decode: (encoded: EncodedGenericChangeset, originatorId: SessionId): GenericChangeset => {
 			return encoded.map(
 				({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
 					index,
-					nodeChange: childCodec.decode(nodeChange),
+					nodeChange: childCodec.decode(nodeChange, originatorId),
 				}),
 			);
 		},

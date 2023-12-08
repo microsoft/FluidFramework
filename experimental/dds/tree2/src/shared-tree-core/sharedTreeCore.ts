@@ -19,7 +19,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core";
-import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
+import { brand, JsonCompatibleReadOnly } from "../util";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager";

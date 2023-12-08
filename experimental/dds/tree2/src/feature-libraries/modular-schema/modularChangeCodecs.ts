@@ -5,6 +5,7 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
+import { SessionId } from "@fluidframework/runtime-definitions";
 import {
 	ChangesetLocalId,
 	EncodedRevisionTag,
@@ -129,14 +130,17 @@ function makeV0Codec(
 		return encodedChange;
 	}
 
-	function decodeFieldChangesFromJson(encodedChange: EncodedFieldChangeMap): FieldChangeMap {
+	function decodeFieldChangesFromJson(
+		encodedChange: EncodedFieldChangeMap,
+		originatorId?: SessionId,
+	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
-			const fieldChangeset = codec.json.decode(field.change);
+			const fieldChangeset = codec.json.decode(field.change, originatorId);
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
 
@@ -149,12 +153,15 @@ function makeV0Codec(
 		return decodedFields;
 	}
 
-	function decodeNodeChangesetFromJson(encodedChange: EncodedNodeChangeset): NodeChangeset {
+	function decodeNodeChangesetFromJson(
+		encodedChange: EncodedNodeChangeset,
+		originatorId: SessionId,
+	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges);
+			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges, originatorId);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -206,11 +213,14 @@ function makeV0Codec(
 		return encodedRevisions;
 	}
 
-	function decodeRevisionInfos(revisions: readonly EncodedRevisionInfo[]): RevisionInfo[] {
+	function decodeRevisionInfos(
+		revisions: readonly EncodedRevisionInfo[],
+		originatorId?: SessionId,
+	): RevisionInfo[] {
 		const decodedRevisions = [];
 		for (const revision of revisions) {
 			const decodedRevision: Mutable<RevisionInfo> = {
-				revision: revisionTagCodec.decode(revision.revision),
+				revision: revisionTagCodec.decode(revision.revision, originatorId),
 			};
 
 			if (revision.rollbackOf !== undefined) {
@@ -237,16 +247,16 @@ function makeV0Codec(
 				builds: encodeBuilds(change.builds),
 			};
 		},
-		decode: (change) => {
+		decode: (change, originatorId) => {
 			const encodedChange = change as unknown as EncodedModularChangeset;
 			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes),
+				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, originatorId),
 			};
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeBuilds(encodedChange.builds);
 			}
 			if (encodedChange.revisions !== undefined) {
-				decoded.revisions = decodeRevisionInfos(encodedChange.revisions);
+				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, originatorId);
 			}
 			if (encodedChange.maxId !== undefined) {
 				decoded.maxId = encodedChange.maxId;
