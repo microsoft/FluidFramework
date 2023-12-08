@@ -34,6 +34,7 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorField,
 	StoredSchemaCollection,
+	DeltaDetachedNodeId,
 } from "../../core";
 import { RevisionTagCodec } from "../../shared-tree-core";
 import {
@@ -797,7 +798,7 @@ export class ModularChangeFamily
 export function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, revision, fieldKinds);
 }
 
@@ -805,11 +806,11 @@ function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	revision: RevisionTag | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Iterable<Delta.DetachedNodeId> {
+): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
 		const fieldRevision = fieldChange.revision ?? revision;
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-		const delegate = function* (node: NodeChangeset): Iterable<Delta.DetachedNodeId> {
+		const delegate = function* (node: NodeChangeset): Iterable<DeltaDetachedNodeId> {
 			if (node.fieldChanges !== undefined) {
 				yield* relevantRemovedRootsFromFields(node.fieldChanges, fieldRevision, fieldKinds);
 			}

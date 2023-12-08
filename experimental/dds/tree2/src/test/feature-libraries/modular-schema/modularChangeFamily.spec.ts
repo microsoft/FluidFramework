@@ -36,6 +36,7 @@ import {
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
+	DeltaDetachedNodeId,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily } from "../../../codec";
@@ -705,7 +706,7 @@ describe("ModularChangeFamily", () => {
 	describe("relevantRemovedRoots", () => {
 		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
 		interface HasRemovedRootsRefs {
-			shallow: Delta.DetachedNodeId[];
+			shallow: DeltaDetachedNodeId[];
 			nested: HasRemovedRootsRefs[];
 		}
 		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
@@ -740,7 +741,7 @@ describe("ModularChangeFamily", () => {
 
 		function relevantRemovedRoots(
 			input: TaggedChange<ModularChangeset>,
-		): Delta.DetachedNodeId[] {
+		): DeltaDetachedNodeId[] {
 			deepFreeze(input);
 			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
 		}
