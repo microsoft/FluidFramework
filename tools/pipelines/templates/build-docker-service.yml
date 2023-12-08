@@ -325,6 +325,7 @@ extends:
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
               useBuildKit: true
               enableNetwork: true
+              enableCache: true
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
@@ -452,6 +453,7 @@ extends:
             buildArguments: ${{ parameters.additionalBuildArguments }}
             useBuildKit: true
             enableNetwork: true
+            enableCache: true
 
         # TODO: move the image pushes to templateContext.outputs?
         # Push
