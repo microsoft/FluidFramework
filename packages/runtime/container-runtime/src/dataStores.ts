@@ -775,7 +775,7 @@ export class DataStores implements IDisposable {
 			if (dataStoreContext === undefined) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedDataStoreNotFound",
-					...tagCodeArtifacts({ dataStoreId }),
+					...tagCodeArtifacts({ id: dataStoreId }),
 					details: {
 						alreadyDeleted: this.isDataStoreDeleted(dataStoreId),
 					},
@@ -790,7 +790,7 @@ export class DataStores implements IDisposable {
 			// Delete the summarizer node of the sweep ready data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
-		return sweepReadyDataStoreRoutes;
+		return Array.from(sweepReadyDataStoreRoutes);
 	}
 
 	/**

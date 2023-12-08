@@ -746,7 +746,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 
 		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
-		return sweepReadyBlobRoutes;
+		return Array.from(sweepReadyBlobRoutes);
 	}
 
 	/**

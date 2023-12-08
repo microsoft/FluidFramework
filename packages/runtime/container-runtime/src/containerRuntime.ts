@@ -2641,7 +2641,7 @@ export class ContainerRuntime
 	}
 
 	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
-		// Certain container runtime messages should not mark the container dirty such as the old build-in
+		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
 			case ContainerMessageType.Attach: {
@@ -3774,7 +3774,6 @@ export class ContainerRuntime
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never reconnect.
 				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
-				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version

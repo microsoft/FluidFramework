@@ -223,13 +223,28 @@ export const GCNodeType = {
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
+ * The type of a garbage collection message.
+ * @internal
+ */
+export const GarbageCollectionMessageType = {
+	/** Message sent directing GC to delete the given nodes */
+	Sweep: "Sweep",
+} as const;
+
+/**
+ * @internal
+ */
+export type GarbageCollectionMessageType =
+	(typeof GarbageCollectionMessageType)[keyof typeof GarbageCollectionMessageType];
+
+/**
  * The garbage collection sweep message.
  * @internal
  */
 export interface ISweepMessage {
 	type: "Sweep";
 	// The ids of nodes that are deleted.
-	contents: { deletedNodeIds: string[] };
+	deletedNodeIds: string[];
 }
 
 /**
@@ -239,14 +254,7 @@ export interface ISweepMessage {
 export type GarbageCollectionMessage = ISweepMessage;
 
 /**
- * The type of a garbage collection message.
- * @internal
- */
-export type GarbageCollectionMessageType = GarbageCollectionMessage["type"];
-
-/**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
- *
  */
 export interface IGarbageCollectionRuntime {
 	/** Before GC runs, called to notify the runtime to update any pending GC state. */
