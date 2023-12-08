@@ -32,7 +32,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export enum DataStoreMessageType {
     // (undocumented)
     Attach = "attach",
@@ -40,7 +40,7 @@ export enum DataStoreMessageType {
     ChannelOp = "op"
 }
 
-// @internal
+// @alpha
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
@@ -148,7 +148,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     protected readonly value: T | Promise<T>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ISharedObjectRegistry {
     // (undocumented)
     get(name: string): IChannelFactory | undefined;

@@ -109,7 +109,7 @@ export interface IConnect {
     versions: string[];
 }
 
-// @internal
+// @alpha
 export interface IConnected {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;

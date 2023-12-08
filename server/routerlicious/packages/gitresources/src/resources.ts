@@ -133,7 +133,7 @@ export interface IRef {
 
 /**
  * Required params to create ref
- * @internal
+ * @alpha
  */
 export interface ICreateRefParams {
 	ref: string;
@@ -142,7 +142,7 @@ export interface ICreateRefParams {
 
 /**
  * Required params to patch ref
- * @internal
+ * @alpha
  */
 export interface IPatchRefParams {
 	sha: string;

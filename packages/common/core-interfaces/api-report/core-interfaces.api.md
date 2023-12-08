@@ -4,7 +4,7 @@
 
 ```ts
 
-// @internal
+// @alpha
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @alpha
@@ -33,7 +33,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @alpha
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @internal
+// @alpha
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
@@ -421,13 +421,13 @@ export interface ITelemetryBaseLogger {
 // @alpha
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
     // (undocumented)
     eventName: string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -435,7 +435,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
@@ -443,7 +443,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @internal @deprecated
+// @alpha @deprecated
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;
@@ -493,7 +493,7 @@ export interface Tagged<V, T extends string = string> {
 // @internal
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
-// @internal @deprecated
+// @alpha @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @alpha @deprecated

@@ -320,7 +320,7 @@ export class Queue<T> implements IStream<T> {
     read(): Promise<IStreamResult<T>>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class RateLimiter {
     constructor(maxRequests: number);
     // (undocumented)
