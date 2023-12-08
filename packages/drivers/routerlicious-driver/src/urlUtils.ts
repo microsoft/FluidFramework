@@ -7,7 +7,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import URLParse from "url-parse";
 import { ISession } from "@fluidframework/server-services-client";
 
-export const parseFluidUrl = (fluidUrl: string): URLParse<Record<string, string | undefined>> => {
+export const parseFluidUrl = (fluidUrl: string): URLParse => {
 	return new URLParse(fluidUrl, true);
 };
 
