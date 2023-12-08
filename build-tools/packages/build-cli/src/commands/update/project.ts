@@ -38,10 +38,18 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		}
 
 		if (flags.tscMulti) {
+			if (pkg.getScript("build:esnext") === undefined) {
+				this.warning(`${pkg.nameColored} has no build:esnext script; skipping.`);
+				return;
+			}
 			await this.tscMulti(pkg);
 		}
 
 		if (flags.renameTypes) {
+			if (pkg.getScript("build:esnext") === undefined) {
+				this.warning(`${pkg.nameColored} has no build:esnext script; skipping.`);
+				return;
+			}
 			await this.renameTypes(pkg);
 		}
 	}
@@ -231,14 +239,15 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 	}
 
 	private async renameTypes(pkg: Package): Promise<void> {
-		const context = await this.getContext();
-		const repoRoot = context.repo.resolvedRoot;
-		const rewriteImportsConfigPath = context.repo.relativeToRepo(
-			path.join(
-				repoRoot,
-				"common/build/build-common/replace-in-file-rewrite-type-imports.cjs",
-			),
-		);
+		// const context = await this.getContext();
+		// const repoRoot = context.repo.resolvedRoot;
+		// const rewriteImportsConfigPath = path.relative(
+		// 	pkg.directory,
+		// 	path.resolve(
+		// 		repoRoot,
+		// 		"common/build/build-common/replace-in-file-rewrite-type-imports.cjs",
+		// 	),
+		// );
 
 		updatePackageJsonFile(pkg.directory, (packageJson) => {
 			if (packageJson.devDependencies === undefined) {
@@ -254,32 +263,32 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 			packageJson.scripts[
 				"build:rename-types"
-			] = `renamer lib/** -f ".d.ts" -r ".d.mts" --force`;
-			packageJson.scripts[
-				"build:rewrite-type-imports"
-			] = `replace-in-file --configFile ${rewriteImportsConfigPath}`;
+			] = `renamer "lib/**" -f .d.ts -r .d.mts --force`;
+			// packageJson.scripts[
+			// 	"build:rewrite-type-imports"
+			// ] = `replace-in-file --configFile ${rewriteImportsConfigPath}`;
 
 			packageJson.scripts["check:are-the-types-wrong"] = "attw --pack";
 
 			packageJson.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
 			packageJson.devDependencies.renamer = "^4.0.0";
-			packageJson.devDependencies["replace-in-file"] = "^6.3.5";
+			// packageJson.devDependencies["replace-in-file"] = "^6.3.5";
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const config: any | undefined = packageJson.fluidBuild?.tasks?.["build:docs"];
+			// const config: any | undefined = packageJson.fluidBuild?.tasks?.["build:docs"];
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			if (config?.dependsOn !== undefined) {
-				// (packageJson as any).fluidBuild.tasks["build:docs"].dependsOn = [
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				config.dependsOn = [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext",
-					"build:rename-types",
-					"build:rewrite-type-imports",
-				];
-			}
+			// if (config?.dependsOn !== undefined) {
+			// 	// (packageJson as any).fluidBuild.tasks["build:docs"].dependsOn = [
+			// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			// 	config.dependsOn = [
+			// 		"...",
+			// 		"api-extractor:commonjs",
+			// 		"api-extractor:esnext",
+			// 		"build:rename-types",
+			// 		"build:rewrite-type-imports",
+			// 	];
+			// }
 		});
 	}
 }
