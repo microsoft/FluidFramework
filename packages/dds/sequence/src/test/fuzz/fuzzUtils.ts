@@ -71,7 +71,7 @@ export interface ChangeInterval extends IntervalCollectionSpec {
 	id: string;
 	startSide: Side;
 	endSide: Side;
-	properties: PropertySet;
+	properties: PropertySet | undefined;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {

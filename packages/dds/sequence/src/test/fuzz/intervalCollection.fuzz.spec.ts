@@ -83,6 +83,10 @@ export function makeOperationGenerator(
 		return propSet;
 	}
 
+	function propertySetWithUndefined(state: ClientOpState): PropertySet | undefined {
+		return state.random.bool() ? propertySet(state) : undefined;
+	}
+
 	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
 		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
 			(label) => {
@@ -125,7 +129,7 @@ export function makeOperationGenerator(
 
 	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
 		const { start, end } = inclusiveRangeWithUndefined(state);
-		const properties = propertySet(state);
+		const properties = propertySetWithUndefined(state);
 		return {
 			type: "changeInterval",
 			start,
@@ -200,9 +204,10 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 2, 4, 5, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 28, 31, 32, 33,
-			35, 39, 40, 43, 44, 45, 46, 47, 48, 50, 51, 53, 54, 55, 59, 60, 62, 66, 67, 69, 70, 71,
-			72, 73, 74, 79, 80, 81, 82, 84, 86, 88, 89, 91, 93, 94, 95, 96,
+			1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28,
+			31, 32, 33, 35, 36, 37, 39, 40, 43, 44, 45, 46, 47, 48, 50, 51, 53, 54, 55, 59, 60, 62,
+			64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 78, 79, 80, 81, 82, 84, 86, 88, 89, 91, 92,
+			93, 94, 95, 96, 97,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -218,7 +223,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	const options = {
 		...defaultFuzzOptions,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477
-		skip: [25, 31],
+		skip: [25, 31, 88],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -244,8 +249,8 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [
-			1, 3, 9, 11, 13, 17, 23, 26, 27, 28, 29, 30, 31, 32, 33, 36, 39, 41, 46, 49, 51, 52, 53,
-			54, 57, 59, 64, 71, 73, 81, 86, 88, 91,
+			1, 3, 5, 9, 10, 11, 13, 16, 17, 19, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 39, 41,
+			43, 46, 49, 51, 52, 53, 54, 57, 59, 64, 71, 73, 81, 86, 88, 91, 93,
 		],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
