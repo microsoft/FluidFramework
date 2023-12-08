@@ -2,7 +2,6 @@
 	"targets": [
 		{
 			"extname": ".cjs",
-			"rewriteDtsImports": true,
 			"module": "Node16",
 			"moduleResolution": "Node16"
 		}
