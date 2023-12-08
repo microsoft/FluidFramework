@@ -76,6 +76,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly tombstones: string[];
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
+	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 };
 
 describe("Garbage Collection Tests", () => {
@@ -1677,23 +1678,18 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("Future GC op type compatibility", () => {
+		const gcMessageFromFuture: Record<string, unknown> = {
+			type: "FUTURE_MESSAGE",
+			hello: "HELLO",
+		};
+
 		let garbageCollector: IGarbageCollector;
 		beforeEach(async () => {
 			garbageCollector = createGarbageCollector({ gcOptions: { gcSweepGeneration: 1 } });
 		});
 
 		it("can submit GC op compat behavior", async () => {
-			type GarbageCollectorWithSubmit = Omit<GarbageCollector, "submitMessage"> & {
-				submitMessage(message: ContainerRuntimeGCMessage): void;
-			};
-			const gcWithSubmit = garbageCollector as GarbageCollectorWithSubmit;
-			const gcMessage: Omit<GarbageCollectionMessage, "type" | "deletedNodeIds"> & {
-				type: string;
-				hello: string;
-			} = {
-				type: "NEW",
-				hello: "Hello",
-			};
+			const gcWithPrivates = garbageCollector as GcWithPrivates;
 			const containerRuntimeGCMessage: Omit<
 				ContainerRuntimeGCMessage,
 				"type" | "contents"
@@ -1702,13 +1698,13 @@ describe("Garbage Collection Tests", () => {
 				contents: any;
 			} = {
 				type: ContainerMessageType.GC,
-				contents: gcMessage,
+				contents: gcMessageFromFuture,
 				compatDetails: { behavior: "Ignore" },
 			};
 
 			assert.doesNotThrow(
 				() =>
-					gcWithSubmit.submitMessage(
+					gcWithPrivates.submitMessage(
 						containerRuntimeGCMessage as ContainerRuntimeGCMessage,
 					),
 				"Cannot submit GC message with compatDetails",
@@ -1716,13 +1712,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			const gcMessageFromFuture: Omit<GarbageCollectionMessage, "type" | "deletedNodeIds"> & {
-				type: string;
-				hello: string;
-			} = {
-				type: "FROM_THE_FUTURE",
-				hello: "Hello",
-			};
 			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
@@ -1732,13 +1721,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-			const gcMessageFromFuture: Omit<GarbageCollectionMessage, "type" | "deletedNodeIds"> & {
-				type: string;
-				hello: string;
-			} = {
-				type: "FROM_THE_FUTURE",
-				hello: "Hello",
-			};
 			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
@@ -1752,13 +1734,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("process remote op with unrecognized type and no compat behavior", async () => {
-			const gcMessageFromFuture: Omit<GarbageCollectionMessage, "type" | "deletedNodeIds"> & {
-				type: string;
-				hello: string;
-			} = {
-				type: "FROM_THE_FUTURE",
-				hello: "Hello",
-			};
 			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,

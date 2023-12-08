@@ -176,10 +176,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	const getContainersClosePromise = async (containers: IContainer[]) => {
 		const closePromises: Promise<void>[] = [];
 		for (const container of containers) {
-			const promise = timeoutPromise((resolve) => {
+			const promise = timeoutPromise((resolve, reject) => {
 				const listener = (error: IErrorBase | undefined) => {
-					assert(error !== undefined, `Expecting an error!`);
-					assert(error.message.startsWith("DataStore was deleted:"));
+					if (!error?.message.startsWith("DataStore was deleted:")) {
+						reject(error);
+					}
 					container.off("closed", listener);
 					resolve();
 				};

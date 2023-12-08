@@ -226,9 +226,9 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		// Summarize and validate that the data store is still deleted.
-		const summaryTree5 = (await summarizeNow(remoteSummarizer)).summaryTree;
+		summaryTree = (await summarizeNow(remoteSummarizer)).summaryTree;
 		assert(
-			!(await isDataStoreInSummaryTree(summaryTree5, dataStoreId)),
+			!(await isDataStoreInSummaryTree(summaryTree, dataStoreId)),
 			"Data Store should not be in the summary!",
 		);
 	});
