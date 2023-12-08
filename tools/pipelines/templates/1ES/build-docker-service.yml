@@ -179,8 +179,6 @@ extends:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
         variables:
-          buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
-          testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
@@ -304,10 +302,12 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
-        - ${{ if eq(variables.buildBase, true) }}:
-          # Build - Base
+        # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
+        # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
+        # which aren't available at compile-time, for expression-syntax conditionals that are evaluated at compile-time.
+        - ${{ if ne(parameters.tagName, 'gitssh') }}:
+          # Build base image where we can run pack/lint/test/docs tasks
           - task: 1ES.BuildContainerImage@1
-            displayName: Docker Build - base
             inputs:
               dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
               context: ${{ parameters.buildDirectory }}
@@ -362,16 +362,9 @@ extends:
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
-            # Test - No coverage
-            - ${{ if ne(variables.testCoverage, true) }}:
-              - task: Docker@1
-                displayName: npm run ${{ parameters.test }}
-                inputs:
-                  command: run
-                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
 
             # Test - With coverage
-            - ${{ if eq(variables.testCoverage, true) }}:
+            - ${{ if and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}:
               - task: Docker@1
                 displayName: npm run ci:test:coverage
                 inputs:
@@ -386,6 +379,13 @@ extends:
                   reportDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
                   failIfCoverageEmpty: true
                 condition: succeededOrFailed()
+            # Test - No coverage
+            - ${{ else }}:
+              - task: Docker@1
+                displayName: npm run ${{ parameters.test }}
+                inputs:
+                  command: run
+                  arguments: '--user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
 
             # Test - Upload Results
             - task: PublishTestResults@2
@@ -407,9 +407,8 @@ extends:
 
           # Note: The doc publishing step has been moved to the output section at the bottom of this file after converting to the Microsoft 1ES pipeline template
 
-        # Build
+        # Build final image
         - task: 1ES.BuildContainerImage@1
-          displayName: Docker Build - $(containerTag)
           inputs:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
@@ -439,13 +438,13 @@ extends:
             # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
             - serviceConnection: $(containerRegistryConnection)
           outputs:
-          - ${{ if and(eq(variables.buildBase, true), eq(parameters.pack, true)) }}:
+          - ${{ if eq(parameters.pack, true) }}:
             - output: pipelineArtifact
               displayName: 'Publish Artifact - pack'
               targetPath: '$(Build.ArtifactStagingDirectory)/pack'
               artifactName: pack
               publishLocation: 'pipeline'
-          - ${{ if and(eq(variables.buildBase, true), eq(parameters.docs, true)) }}:
+          - ${{ if eq(parameters.docs, true) }}:
             - output: pipelineArtifact
               displayName: 'Docs: Publish Artifact'
               targetPath: '$(Build.ArtifactStagingDirectory)/_api-extractor-temp'
