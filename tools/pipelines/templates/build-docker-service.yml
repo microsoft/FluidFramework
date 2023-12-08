@@ -180,6 +180,9 @@ extends:
         displayName: Build Container - ${{ parameters.containerName }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
+          hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
+          hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
+          hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
         steps:
         # Setup
         - checkout: self
@@ -329,14 +332,17 @@ extends:
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
-            # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
-            # we won't be able to write to them from outside the container when generating the lists of packages below.
+            # Need to create folders that we will mount as volumes on the container (so it can place output we then publish
+            # as artifacts) before we run it. If the container creates them the permissions will be wrong and we won't
+            # be able to write to them from outside the container when generating the lists of packages below, or 1es tasks
+            # like credential scanning will not have enough permissions to do their job.
             - task: Bash@3
-              displayName: Create folder for pack artifact
+              displayName: Create folders for artifacts from container
               inputs:
                 targetType: 'inline'
                 script: |
-                  mkdir -p $(Build.ArtifactStagingDirectory)/pack
+                  mkdir -p $(hostPathToPackArtifact)
+                  mkdir -p $(hostPathToTestResultsArtifact)
 
             - task: Docker@1
               displayName: Pack
@@ -346,7 +352,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack
                 volumes:
-                  $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
 
             # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
             # inside the Docker container is proving problematic.
@@ -378,7 +384,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: npm run lint
                 volumes:
-                  $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack
+                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
 
           # Test
           - ${{ if ne(parameters.test, '') }}:
@@ -393,15 +399,15 @@ extends:
                   imageName: $(baseContainerTag)
                   containerCommand: npm run ci:test:coverage
                   volumes:
-                    $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc
+                    $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
                   arguments: '--user root'
 
               - task: PublishCodeCoverageResults@1
                 displayName: Publish Code Coverage
                 inputs:
                   codeCoverageTool: Cobertura
-                  summaryFileLocation: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-                  reportDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+                  summaryFileLocation: '$(hostPathToTestResultsArtifact)/**/report/cobertura-coverage.xml'
+                  reportDirectory: '$(hostPathToTestResultsArtifact)/**/report'
                   failIfCoverageEmpty: true
                 condition: succeededOrFailed()
             # Test - No coverage
@@ -414,7 +420,7 @@ extends:
                   imageName: $(baseContainerTag)
                   containerCommand: npm run ${{ parameters.test }}
                   volumes:
-                    $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc
+                    $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
                   arguments: '--user root'
 
             # Test - Upload Results
@@ -423,7 +429,7 @@ extends:
               inputs:
                 testResultsFormat: 'JUnit'
                 testResultsFiles: '**/*junit-report.xml'
-                searchFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
+                searchFolder: $(hostPathToTestResultsArtifact)
                 mergeTestResults: true
               condition: succeededOrFailed()
 
@@ -437,7 +443,7 @@ extends:
                 imageName: $(baseContainerTag)
                 containerCommand: npm run ci:build:docs
                 volumes:
-                  $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp
+                  $(hostPathToApiExtractorArtifact):/usr/src/server/_api-extractor-temp
                 arguments: '--user root'
 
           # At this point we want to publish the artifact with docs, but as part of 1ES migration that's now part of
@@ -491,13 +497,13 @@ extends:
           - ${{ if eq(parameters.pack, true) }}:
             - output: pipelineArtifact
               displayName: 'Publish Artifact - pack'
-              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              targetPath: '$(hostPathToPackArtifact)'
               artifactName: pack
               publishLocation: 'pipeline'
           - ${{ if eq(parameters.docs, true) }}:
             - output: pipelineArtifact
               displayName: 'Docs: Publish Artifact'
-              targetPath: '$(Build.ArtifactStagingDirectory)/_api-extractor-temp'
+              targetPath: '$(hostPathToApiExtractorArtifact)'
               artifactName: _api-extractor-temp
               publishLocation: 'pipeline'
               sbomEnabled: false
