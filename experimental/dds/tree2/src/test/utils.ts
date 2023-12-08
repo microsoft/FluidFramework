@@ -114,8 +114,6 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
-// eslint-disable-next-line import/no-internal-modules
-import { WrapperTreeView } from "../shared-tree/sharedTree";
 
 // Testing utilities
 
@@ -639,22 +637,6 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	);
 }
 
-export function treeViewWithContent<TRoot extends TreeFieldSchema>(
-	content: TreeContent<TRoot>,
-	args?: {
-		events?: ISubscribable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
-	},
-): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
-	const view: WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> = new WrapperTreeView(
-		flexTreeViewWithContent(content, args),
-	);
-	return view;
-}
-
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
 	initializeForest(
@@ -668,7 +650,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function treeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;

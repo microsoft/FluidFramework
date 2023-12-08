@@ -12,7 +12,6 @@ export {
 	TreeNodeUnion,
 	TreeMapNode,
 	TreeObjectNode,
-	TreeRoot,
 	TreeNode,
 	Unhydrated,
 	TreeListNodeBase,

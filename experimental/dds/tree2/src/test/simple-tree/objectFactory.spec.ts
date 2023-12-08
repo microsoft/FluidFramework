@@ -9,7 +9,6 @@ import { typeNameSymbol } from "../../feature-libraries";
 import { Tree as SimpleTree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies";
-import { treeViewWithContent } from "../utils";
 import { getOldRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
@@ -205,28 +204,28 @@ describe("SharedTreeObject factories", () => {
 		// be the same as the one that is about to be hydrated for the same underlying edit node, and thus hydration
 		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
 		// TODO: remove any cast when `viewWithContent` is properly typed with proxy types
-		const view = treeViewWithContent({ schema, initialTree: initialTree as any });
+		const root = getOldRoot(schema, initialTree);
 		function readData() {
-			const objectContent = view.root.child.content;
+			const objectContent = root.child.content;
 			assert(objectContent !== undefined);
-			const listContent = view.root.grand.child.list[view.root.grand.child.list.length - 1];
+			const listContent = root.grand.child.list[root.grand.child.list.length - 1];
 			assert(listContent !== undefined);
-			const mapContent = view.root.grand.child.map.get("a");
+			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
 		}
-		SimpleTree.on(view.root, "beforeChange", () => {
+		SimpleTree.on(root, "beforeChange", () => {
 			readData();
 		});
-		SimpleTree.on(view.root, "afterChange", () => {
+		SimpleTree.on(root, "afterChange", () => {
 			readData();
 		});
-		view.events.on("afterBatch", () => {
-			readData();
-		});
+
 		const content = { content: 3 };
-		view.root.child = childA.create(content);
-		view.root.grand.child.list.insertAtEnd(childA.create(content));
-		view.root.grand.child.map.set("a", childA.create(content));
+		root.child = childA.create(content);
+		root.grand.child.list.insertAtEnd(childA.create(content));
+		readData();
+		root.grand.child.map.set("a", childA.create(content));
+		readData();
 	});
 
 	it("hydration is not attempted on objects which are not proxies", () => {

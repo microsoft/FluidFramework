@@ -118,13 +118,13 @@ describe("SharedTree", () => {
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematizeOld({
+			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
 			});
 			// And does not add initial tree:
-			assert.equal(schematized.root, undefined);
+			assert.equal(schematized.editableTree.content, undefined);
 		});
 
 		it("incompatible upgrade errors", () => {
@@ -142,13 +142,13 @@ describe("SharedTree", () => {
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
 			tree.storedSchema.update(schema);
-			const schematized = tree.schematizeOld({
+			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied
-			assert.equal(schematized.root, undefined);
+			assert.equal(schematized.editableTree.content, undefined);
 		});
 	});
 
@@ -221,7 +221,7 @@ describe("SharedTree", () => {
 		);
 	});
 
-	it("editable-tree-2-end-to-end", () => {
+	it("flex-tree-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
 		const schema = builder.intoSchema(leaf.number);
 		const factory = new SharedTreeFactory({
@@ -870,31 +870,36 @@ describe("SharedTree", () => {
 					const content = {
 						schema,
 						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: [["a"]] as any,
+						initialTree: [["a"]],
 					} satisfies InitializeAndSchematizeConfiguration;
-					const tree1 = provider.trees[0].schematizeOld(content);
+					const tree1 = provider.trees[0].schematizeInternal(content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-						createTestUndoRedoStacks(tree1.events);
-					const tree2 = provider.trees[1].schematizeOld(content);
+						createTestUndoRedoStacks(tree1.checkout.events);
+					const tree2 = provider.trees[1].schematizeInternal(content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-						createTestUndoRedoStacks(tree2.events);
+						createTestUndoRedoStacks(tree2.checkout.events);
 
 					provider.processMessages();
 
 					// Validate insertion
-					validateTreeContent(tree2.view.checkout, content);
+					validateTreeContent(tree2.checkout, content);
 
 					// edit subtree
-					tree2.root[0].insertAtEnd("b");
+					const outerList = tree2.editableTree.content.content;
+					const innerList = (outerList.at(0) ?? assert.fail()).content;
+					innerList.insertAtEnd("b");
 					provider.processMessages();
-					assert.deepEqual(tree1.root, [["a", "b"]]);
-					assert.deepEqual(tree2.root, [["a", "b"]]);
+					assert.deepEqual(tree1.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+						"b",
+					]);
+					assert.deepEqual(innerList.asArray, ["a", "b"]);
 
 					// delete subtree
-					tree1.root.removeAt(0);
+					tree1.editableTree.content.content.removeAt(0);
 					provider.processMessages();
-					assert.deepEqual(tree1.root, []);
-					assert.deepEqual(tree2.root, []);
+					assert.deepEqual(tree1.editableTree.content.content.asArray, []);
+					assert.deepEqual(tree2.editableTree.content.content.asArray, []);
 
 					if (scenario === "restore then change") {
 						undoStack1.pop()?.revert();
@@ -906,8 +911,12 @@ describe("SharedTree", () => {
 
 					provider.processMessages();
 					// check the undo happened
-					assert.deepEqual(tree1.root, [["a"]]);
-					assert.deepEqual(tree2.root, [["a"]]);
+					assert.deepEqual(tree1.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+					]);
+					assert.deepEqual(tree2.editableTree.content.content.at(0)?.content.asArray, [
+						"a",
+					]);
 
 					unsubscribe1();
 					unsubscribe2();
