@@ -4,14 +4,9 @@
  */
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { Brand, brandedNumberType } from "../util";
-import {
-	SessionId,
-	SessionIdSchema,
-	RevisionTag,
-	RevisionTagSchema,
-	EncodedRevisionTag,
-} from "../core";
+import { SessionIdSchema, RevisionTag, RevisionTagSchema, EncodedRevisionTag } from "../core";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
 import { mintRevisionTag } from "../../core";
@@ -16,19 +17,19 @@ const tags = Array.from({ length: 3 }, mintRevisionTag);
 const trunkCommits: SummaryData<TestChange>["trunk"] = [
 	{
 		revision: tags[0],
-		sessionId: "1",
+		sessionId: "1" as SessionId,
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
 	},
 	{
 		revision: tags[1],
-		sessionId: "2",
+		sessionId: "2" as SessionId,
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
 	},
 	{
 		revision: tags[2],
-		sessionId: "1",
+		sessionId: "1" as SessionId,
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
 	},

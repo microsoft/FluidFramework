@@ -99,7 +99,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = generateStableId();
+		assert(
+			runtime.idCompressor !== undefined,
+			"IdCompressor must be enabled to use SharedTree",
+		);
+		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			const { type } = args;

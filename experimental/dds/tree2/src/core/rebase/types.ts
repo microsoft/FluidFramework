@@ -5,13 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { OpSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
+import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
  */
-export type SessionId = string;
 export const SessionIdSchema = brandedStringType<SessionId>();
 
 /**
@@ -20,6 +19,11 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * @alpha
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
+/*
+export type RevisionTag = SessionSpaceCompressedId;
+export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag">;
+export const RevisionTagSchema = brandedNumberType<EncodedRevisionTag>();
+*/
 export type RevisionTag = StableId;
 export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
 export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();

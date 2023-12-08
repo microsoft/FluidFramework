@@ -5,6 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/core-utils";
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	assertIsRevisionTag,
@@ -16,7 +17,6 @@ import {
 	mintCommit,
 	rebaseChange,
 	RevisionTag,
-	SessionId,
 } from "../core";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
@@ -116,7 +116,6 @@ export class EditManager<
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
-		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 	) {
 		this.trunkBase = {

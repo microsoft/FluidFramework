@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily } from "../../codec";
 import { mintRevisionTag } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
@@ -44,14 +45,14 @@ const testCases = useDeterministicStableId(() => {
 			[
 				"Message with commit 1",
 				{
-					sessionId: "session1",
+					sessionId: "session1" as SessionId,
 					commit: commit1,
 				},
 			],
 			[
 				"Message with commit 2",
 				{
-					sessionId: "session1",
+					sessionId: "session1" as SessionId,
 					commit: commit2,
 				},
 			],

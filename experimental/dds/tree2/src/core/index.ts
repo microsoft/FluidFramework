@@ -160,7 +160,6 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	tagRollbackInverse,
-	SessionId,
 	SessionIdSchema,
 	mintCommit,
 	mintRevisionTag,
