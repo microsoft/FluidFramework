@@ -36,6 +36,8 @@ export const nextGCVersion: GCVersion = 4;
  *
  * If unset, GC Tombstone phase will operate as otherwise configured
  * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
+ *
+ * @deprecated use gcGenerationOptionName
  */
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 
@@ -52,9 +54,18 @@ export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
  * If 0 is passed in, Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
  * If any other number is passed in, Sweep will be enabled only for documents with the same value persisted.
  *
- * @deprecated use gcTombstoneGenerationOptionName + SweepEnabled GC Option
+ * @deprecated use gcGenerationOptionName + SweepEnabled GC Option
  */
 export const gcSweepGenerationOptionName = "gcSweepGeneration";
+
+/**
+ * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
+ * This covers disabling Tombstone Enforcement and disabling Sweep.
+ *
+ * If unset altogether, Tombstone Enforcement + Sweep will be disabled (no user impact regardless of GC status).
+ * Otherwise, these will be enabled only for documents with the same value persisted as is passed into this session.
+ */
+export const gcGenerationOptionName = "gcGeneration";
 
 /** Config key to turn GC on / off. */
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -345,9 +356,11 @@ export interface IGCRuntimeOptions {
 	disableGC?: boolean;
 
 	/**
-	 * Flag that if true, will enable the full sweep phase of garbage collection.
+	 * Flag that if true, will enable the full sweep phase of garbage collection,
+	 * where Tombstoned objects are permanently deleted from the container.
 	 *
-	 * Current default behavior is for Sweep Phase to not actually delete unreferenced objects.
+	 * Current default behavior is for Sweep Phase not to delete Tombstoned objects,
+	 * but merely to prevent them from being loaded.
 	 */
 	enableGCSweep?: true;
 
