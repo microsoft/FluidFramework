@@ -197,7 +197,6 @@ extends:
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
-                sourceBranch=${{ variables['Build.SourceBranch'] }}
 
               Tasks Parameters:
                 Lint=${{ parameters.lint }}
