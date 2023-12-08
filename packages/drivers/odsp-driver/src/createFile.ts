@@ -59,7 +59,6 @@ export async function createNewFluidFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -98,7 +97,6 @@ export async function createNewFluidFile(
 			newFileInfo.createLinkType,
 			content,
 			enableSingleRequestForShareLinkWithCreate,
-			enableShareLinkWithCreate,
 		);
 	}
 
@@ -140,7 +138,6 @@ function extractShareLinkData(
 	requestedSharingLinkKind: ISharingLinkKind | undefined,
 	response: ICreateFileResponse,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
 	if (!requestedSharingLinkKind) {
 		return;

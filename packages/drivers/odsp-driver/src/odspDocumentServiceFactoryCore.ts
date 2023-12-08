@@ -154,7 +154,6 @@ export class OdspDocumentServiceFactoryCore
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,
-				enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
 				enableSingleRequestForShareLinkWithCreate:
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
@@ -195,7 +194,6 @@ export class OdspDocumentServiceFactoryCore
 								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-							this.hostPolicy.enableShareLinkWithCreate,
 					  )
 					: await module.createNewContainerOnExistingFile(
 							getStorageToken,
