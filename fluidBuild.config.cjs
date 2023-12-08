@@ -23,7 +23,13 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: [
+				"commonjs",
+				"build:esnext",
+				"build:test",
+				"build:copy",
+				"build:rename-types",
+			],
 			script: false,
 		},
 		"commonjs": {
@@ -58,10 +64,11 @@ module.exports = {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
-		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
-		"build:docs": [...tscDependsOn, "tsc"],
-		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": ["api-extractor:commonjs", "build:esnext"],
+		"build:rename-types": ["build:esnext", "api-extractor:esnext"],
+		"build:docs": ["tsc"],
+		"ci:build:docs": ["tsc"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -315,6 +322,7 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
+				["renamer", "renamer"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

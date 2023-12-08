@@ -136,6 +136,10 @@ extends:
     # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
     telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
+    # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
+    # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
+    # packages twice.
+    - check:are-the-types-wrong
     - webpack
     - ci:test:mocha
     - ci:test:jest
@@ -147,10 +151,6 @@ extends:
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
     - test:copyresults
-    # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
-    # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
-    # packages twice.
-    - check:are-the-types-wrong
     testResultDirs:
     - nyc/azure
     - nyc/examples
