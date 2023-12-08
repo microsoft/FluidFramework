@@ -20,7 +20,11 @@ export class MarkQueue<T> {
 		private readonly moveEffects: MoveEffectTable<T>,
 		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		private readonly composeChanges?: (
+			a: T | undefined,
+			b: T | undefined,
+			bRevision: RevisionTag | undefined,
+		) => T | undefined,
 	) {
 		this.list = list;
 	}

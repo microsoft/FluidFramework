@@ -21,7 +21,7 @@ export interface MoveEffect<T> {
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: [T, RevisionTag | undefined];
 
 	/**
 	 * A mark which should be moved to the same position as this mark.
@@ -53,7 +53,7 @@ export interface MovePartition<TNodeChange> {
 	// Undefined means the partition is the same size as the input.
 	count?: number;
 	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TNodeChange;
+	modifyAfter?: [TNodeChange, RevisionTag | undefined];
 }
 
 export function setMoveEffect<T>(
@@ -143,7 +143,11 @@ function applyMoveEffectsToSource<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (
+		a: T | undefined,
+		b: T | undefined,
+		bRevision: RevisionTag | undefined,
+	) => T | undefined,
 ): Mark<T> {
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
@@ -158,7 +162,7 @@ function applyMoveEffectsToSource<T>(
 			composeChildren !== undefined,
 			0x569 /* Must provide a change composer if modifying moves */,
 		);
-		nodeChange = composeChildren(mark.changes, modifyAfter);
+		nodeChange = composeChildren(mark.changes, modifyAfter[0], modifyAfter[1]);
 	}
 
 	const newMark = cloneMark(mark);
@@ -215,7 +219,11 @@ export function applyMoveEffectsToMark<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (
+		a: T | undefined,
+		b: T | undefined,
+		bRevision: RevisionTag | undefined,
+	) => T | undefined,
 ): Mark<T>[] {
 	if (isAttachAndDetachEffect(mark)) {
 		if (isMoveIn(mark.attach)) {
@@ -306,7 +314,11 @@ export function applyMoveEffectsToMark<T>(
 						composeChildren !== undefined,
 						0x813 /* Must provide a change composer if modifying moves */,
 					);
-					firstMark.changes = composeChildren(firstMark.changes, newFirstChanges);
+					firstMark.changes = composeChildren(
+						firstMark.changes,
+						newFirstChanges[0],
+						newFirstChanges[1],
+					);
 				}
 
 				return [
@@ -343,7 +355,7 @@ export function applyMoveEffectsToMark<T>(
 					composeChildren !== undefined,
 					0x814 /* Must provide a change composer if modifying moves */,
 				);
-				newMark.changes = composeChildren(mark.changes, newChanges);
+				newMark.changes = composeChildren(mark.changes, newChanges[0], newChanges[1]);
 			}
 
 			return [newMark];
@@ -441,7 +453,7 @@ export function getModifyAfter<T>(
 	id: MoveId,
 	count: number,
 	consumeEffect: boolean = true,
-): T | undefined {
+): [T, RevisionTag | undefined] | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 

@@ -115,7 +115,7 @@ function composeMarkLists<TNodeChange>(
 		genId,
 		moveEffects,
 		revisionMetadata,
-		(a, b) => composeChildChanges(a, b, newRev, composeChild),
+		(a, b, bRevision) => composeChildChanges(a, b, bRevision, composeChild),
 	);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
@@ -292,7 +292,13 @@ function composeMarks<TNodeChange>(
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
 		if (isMoveIn(baseMark) && nodeChange !== undefined) {
-			setModifyAfter(moveEffects, getEndpoint(baseMark, undefined), nodeChange, composeChild);
+			setModifyAfter(
+				moveEffects,
+				getEndpoint(baseMark, undefined),
+				nodeChange,
+				newRev,
+				composeChild,
+			);
 			return baseMark;
 		}
 		return withNodeChange(baseMark, nodeChange);
@@ -305,7 +311,13 @@ function composeMarks<TNodeChange>(
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
 
 		if (isMoveIn(attach) && nodeChange !== undefined) {
-			setModifyAfter(moveEffects, getEndpoint(attach, undefined), nodeChange, composeChild);
+			setModifyAfter(
+				moveEffects,
+				getEndpoint(attach, undefined),
+				nodeChange,
+				newRev,
+				composeChild,
+			);
 
 			localNodeChange = undefined;
 		}
@@ -371,7 +383,12 @@ function composeMarks<TNodeChange>(
 				count: baseMark.count,
 				revision: baseMark.revision,
 				id: baseMark.id,
-				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+				changes: composeChildChanges(
+					nodeChange,
+					nodeChanges?.[0],
+					nodeChanges?.[1],
+					composeChild,
+				),
 			};
 		}
 		const length = baseMark.count;
@@ -466,8 +483,8 @@ function amendComposeI<TNodeChange>(
 				if (modifyAfter !== undefined) {
 					const changes = composeChildChanges(
 						mark.changes,
-						modifyAfter,
-						undefined,
+						modifyAfter[0],
+						modifyAfter[1],
 						composeChild,
 					);
 					mark = createNoopMark(mark.count, changes);
@@ -496,7 +513,11 @@ export class ComposeQueue<T> {
 		genId: IdAllocator,
 		moveEffects: MoveEffectTable<T>,
 		private readonly revisionMetadata: RevisionMetadataSource,
-		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+		composeChanges?: (
+			a: T | undefined,
+			b: T | undefined,
+			bRevision: RevisionTag | undefined,
+		) => T | undefined,
 	) {
 		this.baseMarks = new MarkQueue(
 			baseMarks,
@@ -697,6 +718,7 @@ function setModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
 	{ revision, localId: id }: ChangeAtomId,
 	modifyAfter: T,
+	modifyRevision: RevisionTag | undefined,
 	composeChanges: NodeChangeComposer<T>,
 ) {
 	const target = CrossFieldTarget.Source;
@@ -707,13 +729,13 @@ function setModifyAfter<T>(
 		const nodeChange =
 			effect.value.modifyAfter !== undefined
 				? composeChanges([
-						makeAnonChange(effect.value.modifyAfter),
-						tagChange(modifyAfter, revision),
+						tagChange(effect.value.modifyAfter[0], effect.value.modifyAfter[1]),
+						tagChange(modifyAfter, modifyRevision),
 				  ])
 				: modifyAfter;
-		newEffect = { ...effect.value, modifyAfter: nodeChange };
+		newEffect = { ...effect.value, modifyAfter: [nodeChange, undefined] };
 	} else {
-		newEffect = { modifyAfter };
+		newEffect = { modifyAfter: [modifyAfter, modifyRevision] };
 	}
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
