@@ -113,9 +113,10 @@ export abstract class PackageCommand<
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
 		const { verbose } = this.flags;
+		const { suppressLogging } = this;
 
 		function updateStatus(): void {
-			if (!verbose) {
+			if (!verbose && !suppressLogging) {
 				ux.action.start(
 					"Processing Packages...",
 					`${finished}/${packages.length}: ${started - finished} pending. Errors: ${
