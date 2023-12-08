@@ -60,7 +60,7 @@ async function renderApiDocumentation(version) {
 			ApiItemKind.Namespace,
 		],
 		newlineKind: "lf",
-		uriRoot: "/docs/apis/" + version,
+		uriRoot: `/docs/apis/${version}`,
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,

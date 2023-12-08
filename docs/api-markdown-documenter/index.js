@@ -13,15 +13,21 @@ docVersions = renderMultiVersion
 	? versions.params.currentVersion.concat(versions.params.previousVersions)
 	: versions.params.currentVersion;
 
+const apiDocRenders = [];
+
 docVersions.forEach((version) => {
-	renderApiDocumentation(version).then(
-		() => {
-			console.log(chalk.green("API docs written!"));
-			process.exit(0);
-		},
-		(error) => {
-			console.error("API docs could not be written due to an error:", error);
-			process.exit(1);
-		},
+	apiDocRenders.push(
+		renderApiDocumentation(version).then(
+			() => {
+				console.log(chalk.green("API docs written!"));
+				process.exit(0);
+			},
+			(error) => {
+				console.error("API docs could not be written due to an error:", error);
+				process.exit(1);
+			},
+		),
 	);
 });
+
+Promise.all(apiDocRenders);
