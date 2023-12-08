@@ -4,7 +4,7 @@
  */
 
 import { IJsonCodec, ICodecOptions, ICodecFamily, makeCodecFamily } from "../codec";
-import { FieldKindIdentifier } from "../core";
+import { EncodedRevisionTag, FieldKindIdentifier, RevisionTag } from "../core";
 import { Mutable } from "../util";
 import {
 	FieldKindWithEditor,
@@ -32,10 +32,13 @@ export interface EncodedSharedTreeChange {
 
 export function makeSharedTreeChangeCodec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<SharedTreeChange> {
 	const schemaChangeCodec = makeSchemaChangeCodec({ jsonValidator: validator });
-	const modularChangeCodec = makeModularChangeCodec(fieldKinds, { jsonValidator: validator });
+	const modularChangeCodec = makeModularChangeCodec(fieldKinds, revisionTagCodec, {
+		jsonValidator: validator,
+	});
 	return {
 		encode: (change) => {
 			const changes: Mutable<EncodedSharedTreeChange["encodedChanges"]> = [];
@@ -77,7 +80,8 @@ export function makeSharedTreeChangeCodec(
 
 export function makeSharedTreeChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
 	options: ICodecOptions,
 ): ICodecFamily<SharedTreeChange> {
-	return makeCodecFamily([[0, makeSharedTreeChangeCodec(fieldKinds, options)]]);
+	return makeCodecFamily([[0, makeSharedTreeChangeCodec(fieldKinds, revisionTagCodec, options)]]);
 }
