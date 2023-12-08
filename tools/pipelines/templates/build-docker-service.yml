@@ -400,7 +400,6 @@ extends:
                   containerCommand: npm run ci:test:coverage
                   volumes:
                     $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
-                  arguments: '--user root'
 
               - task: PublishCodeCoverageResults@1
                 displayName: Publish Code Coverage
@@ -421,7 +420,6 @@ extends:
                   containerCommand: npm run ${{ parameters.test }}
                   volumes:
                     $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
-                  arguments: '--user root'
 
             # Test - Upload Results
             - task: PublishTestResults@2
