@@ -45,7 +45,7 @@ Adding custom constructors to the schema classes is likely to break them, though
 ### Insertable content
 
 Currently the type allowed within InsertableContent comes from `InsertableTypedNode`.
-This type includes `NodeBuilderData<T>`, which directly comes from the constructor for the class.
+This type includes `NodeBuilderData<T>`, which extracts the type from the constructor's parameter.
 This allows changing what types can be used to build a node in a single place, however the logic to process that data is not part of the class currently.
 This means that changing the types can easily lead to cases where runtime behavior of parsing or hydrating the `InsertableTypedNode` might not align with the types.
 Directing the logic back into the schema for implementation would make extending the set of node kinds and adjusting constructor parameters much more encapsulated.
@@ -54,7 +54,7 @@ Directing the logic back into the schema for implementation would make extending
 
 There is currently no good API to dump tree content or compare it which includes all persisted data (including types).
 Related to this there is also no good way to round trip a tree through an external system.
-The lower level APIs have solutions, but there currently aren't any for the simple/class tree later.
+The lower-level APIs have solutions, but there currently aren't any for the simple/class tree layer.
 
 ### Recursive types are still very sketchy
 

@@ -533,7 +533,7 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 	 * The command `TypeScript: Restart TS Server` should fix it.
 	 * Sometimes this does not work: closing all open files except the schema before running the command can help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
-	 * Intellisense has also shown problems problems when schema files with recursive types are part of a cyclic file dependency. Splitting the schema into its own file with minimal dependencies can help with this.
+	 * Intellisense has also shown problems when schema files with recursive types are part of a cyclic file dependency. Splitting the schema into its own file with minimal dependencies can help with this.
 	 *
 	 * @example
 	 * ```typescript
