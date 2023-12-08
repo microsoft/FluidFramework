@@ -42,10 +42,12 @@ export const nextGCVersion: GCVersion = 4;
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable throwing an error when tombstone
- * object is loaded (requested).
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable throwing an error when tombstone
+ * object is loaded (requested), merely logging a message instead.
+ *
+ * By default, attempting to load a Tombstoned object will result in an error.
  */
-export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
+export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
  * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
