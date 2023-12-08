@@ -14,6 +14,7 @@ import {
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
+	TaggedChange,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -1115,5 +1116,20 @@ describe("SequenceField - Compose", () => {
 
 		assert.deepEqual(composedAC, expected);
 		assert.deepEqual(composedCA, expected);
+	});
+
+	it("effect management for [move, modify, move]", () => {
+		const changes = TestChange.mint([], 42);
+		const [mo, mi] = Mark.move(1, brand(0));
+		const move = tagChange([mo, mi], tag1);
+		const modify = tagChange([Mark.modify(changes)], tag2);
+		const moveBack = tagChange([mi, mo], tag3);
+		const childComposer = (childChanges: TaggedChange<TestChange>[]): TestChange => {
+			assert.equal(childChanges.length, 1);
+			assert.deepEqual(childChanges[0].change, changes);
+			assert.equal(childChanges[0].revision, tag2);
+			return TestChange.compose(childChanges);
+		};
+		compose([move, modify, moveBack], undefined, childComposer);
 	});
 });

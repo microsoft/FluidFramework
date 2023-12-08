@@ -46,7 +46,10 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+	const gcOptions: IGCRuntimeOptions = {
+		inactiveTimeoutMs: 0,
+		sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
+	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {

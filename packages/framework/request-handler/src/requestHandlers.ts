@@ -23,7 +23,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
+ * @alpha
  */
 export type RuntimeRequestHandler = (
 	request: RequestParser,

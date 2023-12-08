@@ -114,7 +114,6 @@ export {
 	CrossFieldManager,
 	CrossFieldTarget,
 	FieldKind,
-	Multiplicity,
 	FullSchemaPolicy,
 	allowsRepoSuperset,
 	GenericChangeset,
@@ -125,6 +124,8 @@ export {
 	FieldKindWithEditor,
 	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
+
+export { Multiplicity } from "./multiplicity";
 
 export {
 	TreeNodeSchema,

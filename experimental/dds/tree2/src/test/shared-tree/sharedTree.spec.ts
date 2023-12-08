@@ -17,6 +17,14 @@ import {
 	boxedIterator,
 	TreeSchema,
 } from "../../feature-libraries";
+import {
+	ChunkedForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/chunked-forest/chunkedForest";
+import {
+	ObjectForest,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/object-forest/objectForest";
 import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
 	SharedTreeTestFactory,
@@ -61,6 +69,7 @@ import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -149,6 +158,17 @@ describe("SharedTree", () => {
 			});
 			// Initial tree should not be applied
 			assert.equal(schematized.editableTree.content, undefined);
+		});
+
+		// TODO: ensure unhydrated initialTree input is correctly hydrated.
+		it.skip("unhydrated tree input", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const unhydratedInitialTree = new Foo({});
+			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			assert(view.root === unhydratedInitialTree);
 		});
 	});
 
@@ -1370,7 +1390,7 @@ describe("SharedTree", () => {
 					jsonValidator: typeboxValidator,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Reference uses ObjectForest", () => {
@@ -1381,7 +1401,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest instanceof ObjectForest, true);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1392,7 +1412,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Optimized,
 				}),
 			);
-			assert.equal(trees[0].view.forest.computationName, "object-forest.ChunkedForest");
+			assert.equal(trees[0].view.forest instanceof ChunkedForest, true);
 		});
 	});
 });
