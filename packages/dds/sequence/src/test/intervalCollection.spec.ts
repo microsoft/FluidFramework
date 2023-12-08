@@ -215,12 +215,45 @@ describe("SharedString interval collections", () => {
 				});
 				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
 			});
+			it("changes endpoints and properties with new signature on a remote sharedString", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+
+				const collection2 = sharedString2.getIntervalCollection("test");
+				collection.change(id, { start: 1, end: 4, props: { a: 2 } });
+				containerRuntimeFactory.processAllMessages();
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assertIntervalEquals(sharedString2, collection2.getIntervalById(id), {
+					start: 1,
+					end: 4,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
+				assert.equal(collection2.getIntervalById(id)?.properties.a, 2);
+			});
 			it("passes empty property set to change", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "hello world");
 				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
 
 				collection.change(id, { props: {} });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
+			it("passes undefined endpoints and properties to change", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { start: undefined, end: undefined, props: undefined });
 
 				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
 					start: 0,

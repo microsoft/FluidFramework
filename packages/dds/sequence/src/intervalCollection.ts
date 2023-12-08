@@ -1498,11 +1498,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 			}
-			if (
-				serializedInterval.start !== undefined &&
-				serializedInterval.end !== undefined &&
-				newInterval
-			) {
+			if (newInterval) {
 				this.emitChange(newInterval, interval, true, false);
 			}
 			return newInterval;
