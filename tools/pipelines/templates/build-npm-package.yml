@@ -170,7 +170,12 @@ extends:
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
-
+        variables:
+          - template: /tools/pipelines/templates/1ES/include-vars.yml@self
+            parameters:
+              publishOverride: '${{ parameters.publishOverride }}'
+              releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+              buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
         jobs:
           # Job - Build
           - job: build
@@ -181,11 +186,6 @@ extends:
               # basic ANSI color support though, so force that in the pipeline
               - name: FORCE_COLOR
                 value: 1
-              - template: /tools/pipelines/templates/1ES/include-vars.yml@self
-                parameters:
-                  publishOverride: '${{ parameters.publishOverride }}'
-                  releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-                  buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
               - group: ado-feeds
               - name: testCoverage
                 value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
