@@ -222,14 +222,15 @@ extends:
                 additionalBuildArguments=${{ parameters.additionalBuildArguments }}
 
               Runtime variables:
-                shouldPublish=$(shouldPublish)
-                canRelease=$(canRelease)
-                release=$(release)
-                containerTagSuffix=$(containerTagSuffix)
-                containerRegistryUrl=$(containerRegistryUrl)
-                containerRegistryConnection=$(containerRegistryConnection)
-                containerTag=$(containerTag)
+                baseContainerTag=$(baseContainerTag)
                 buildContainerName=$(buildContainerName)
+                canRelease=$(canRelease)
+                containerRegistryConnection=$(containerRegistryConnection)
+                containerRegistryUrl=$(containerRegistryUrl)
+                containerTag=$(containerTag)
+                containerTagSuffix=$(containerTagSuffix)
+                release=$(release)
+                shouldPublish=$(shouldPublish)
               "
 
               if [[ "$(release)" == "release" ]]; then
@@ -320,7 +321,7 @@ extends:
             inputs:
               dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
               context: ${{ parameters.buildDirectory }}
-              image: $(containerRegistryUrl)/base:$(containerTagSuffix)
+              image: $(baseContainerTag)
               buildArguments: --target base ${{ parameters.additionalBuildArguments }}
               useBuildKit: true
               enableNetwork: true
