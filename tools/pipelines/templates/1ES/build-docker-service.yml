@@ -88,7 +88,18 @@ parameters:
   type: boolean
   default: false
 
-- name: pushImage
+# Whether the docker image should be pushed to our internal Azure Container Registry
+- name: shouldPushDockerImage
+  type: boolean
+  default: false
+
+# Whether the docker image should be released officially
+- name: shouldReleaseDockerImage
+  type: boolean
+  default: false
+
+# Whether npm packages should be published
+- name: shouldPublishNpmPackages
   type: boolean
   default: false
 
@@ -138,7 +149,7 @@ extends:
             value: build/${{ parameters.containerName }}
         - name: baseContainerTag
           value: base:$(containerTagSuffix)
-        - ${{ if eq(parameters.pushImage, false) }}:
+        - ${{ if eq(parameters.shouldPushDockerImage, false) }}:
           - name: containerRegistry
             value:
           - name: containerTag
@@ -198,17 +209,17 @@ extends:
                 Test=${{ parameters.test }}
 
               Other parameters:
-                pushImage=${{ parameters.pushImage }}
+                pushImage=${{ parameters.shouldPushDockerImage }}
                 testBuild=${{ parameters.testBuild }}
+                shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
+                shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
 
               Computed variables:
                 shouldPublish=$(shouldPublish)
                 componentDetection=$(componentDetection)
-                publish=$(publish)
                 canRelease=$(canRelease)
                 interdependencyRange='${{ parameters.interdependencyRange }}'
 
-                releaseImage=$(releaseImage)
                 release=$(release)
 
                 containerTagSuffix=$(containerTagSuffix)
@@ -245,7 +256,7 @@ extends:
               fi
 
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ parameters.pushImage }}" != "True" ]]; then
+                if [[ "${{ parameters.shouldPushDockerImage }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
                   exit -1;
                 fi
@@ -260,11 +271,11 @@ extends:
         - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
 
         # Component detection
-        - ${{ if eq(variables.componentDetection, true) }}:
+        - ${{ if eq(parameters.shouldPublishNpmPackages, true) }}:
           - template: /tools/pipelines/templates/1ES/include-generate-notice-steps.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
-              requireNotice: ${{ eq(variables.releaseImage, true) }}
+              requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
@@ -412,15 +423,8 @@ extends:
             useBuildKit: true
             enableNetwork: true
 
-        # - task: Docker@1
-        #   displayName: Tag image for main/next
-        #   condition: ne(variables.latestContainerTagSuffix, '')
-        #   inputs:
-        #     command: tag
-        #     arguments: '$(buildContainerName):$(containerTagSuffix) $(buildContainerName):$(latestContainerTagSuffix)'
-
         # Push
-        - ${{ if eq(parameters.pushImage, true) }}:
+        - ${{ if eq(parameters.shouldPushDockerImage, true) }}:
           - task: 1ES.PushContainerImage@1
             displayName: Docker Push - $(containerTag)
             inputs:
@@ -433,7 +437,7 @@ extends:
               remoteImage: $(latestContainerTag)
 
         templateContext:
-          ${{ if eq(parameters.pushImage, true) }}:
+          ${{ if eq(parameters.shouldPushDockerImage, true) }}:
             authenticatedContainerRegistries:
             # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
             # specified as a runtime variable (variables from variable groups apparently are never available "statically"
@@ -454,13 +458,13 @@ extends:
               publishLocation: 'pipeline'
 
     # Publish stage
-    - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
+    - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
       - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
-    - ${{ if eq(variables.releaseImage, true) }}:
+    - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - template: /tools/pipelines/templates/1ES/include-publish-docker-service.yml@self
         parameters:
           containerRegistry: $(containerRegistry)

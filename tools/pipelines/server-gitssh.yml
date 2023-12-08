@@ -83,7 +83,9 @@ extends:
   template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
   parameters:
     testBuild: ${{ variables.testBuild }}
-    pushImage: ${{ variables.pushImage }}
+    shouldPushDockerImage: ${{ variables.pushImage }}
+    shouldReleaseDockerImage: ${{ variables.releaseImage }}
+    shouldPublishNpmPackages: ${{ variables.publish }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
