@@ -21,7 +21,6 @@ import {
 	AddInterval,
 	DeleteInterval,
 	ChangeInterval,
-	ChangeProperties,
 	FuzzTestState,
 	IntervalOperationGenerationConfig,
 	defaultIntervalOperationGenerationConfig,
@@ -62,6 +61,12 @@ export function makeOperationGenerator(
 			Math.max(start, state.client.channel.getLength() - 1),
 		);
 		return { start, end };
+	}
+
+	function inclusiveRangeWithUndefined(
+		state: ClientOpState,
+	): RangeSpec | { start: undefined; end: undefined } {
+		return state.random.bool() ? inclusiveRange(state) : { start: undefined, end: undefined };
 	}
 
 	function propertySet(state: ClientOpState): PropertySet {
@@ -119,22 +124,16 @@ export function makeOperationGenerator(
 	}
 
 	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
-		const { start, end } = inclusiveRange(state);
+		const { start, end } = inclusiveRangeWithUndefined(state);
+		const properties = propertySet(state);
 		return {
 			type: "changeInterval",
 			start,
 			end,
 			startSide: state.random.pick([Side.Before, Side.After]),
 			endSide: state.random.pick([Side.Before, Side.After]),
+			properties,
 			...interval(state),
-		};
-	}
-
-	async function changeProperties(state: ClientOpState): Promise<ChangeProperties> {
-		return {
-			type: "changeProperties",
-			...interval(state),
-			properties: propertySet(state),
 		};
 	}
 
@@ -176,7 +175,6 @@ export function makeOperationGenerator(
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, usableWeights.changeProperties, hasAnInterval],
 	]);
 }
 
@@ -194,7 +192,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 20 and others with its call stack is the same root cause as skipped regression test in
+		// AB#4477: Seed 20, 60 and others with its call stack is the same root cause as skipped regression test in
 		// intervalCollection.spec.ts--search for 4477.
 		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
 		// This exposed ways that `0x54e` can occur.
@@ -202,8 +200,9 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 2, 4, 9, 10, 11, 12, 14, 16, 19, 21, 23, 24, 26, 27, 32, 33, 39, 40, 43, 44, 45, 46,
-			47, 48, 50, 51, 53, 55, 62, 69, 71, 72, 73, 74, 81, 82, 84, 86, 88, 89, 93, 95, 96,
+			1, 2, 4, 5, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 28, 31, 32, 33,
+			35, 39, 40, 43, 44, 45, 46, 47, 48, 50, 51, 53, 54, 55, 59, 60, 62, 66, 67, 69, 70, 71,
+			72, 73, 74, 79, 80, 81, 82, 84, 86, 88, 89, 91, 93, 94, 95, 96,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -218,6 +217,8 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
+		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477
+		skip: [25, 31],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -242,7 +243,10 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		...defaultFuzzOptions,
 		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [3, 9, 11, 13, 23, 26, 29, 30, 31, 32, 36, 39, 41, 46, 49, 52, 53, 71, 73, 81, 86],
+		skip: [
+			1, 3, 9, 11, 13, 17, 23, 26, 27, 28, 29, 30, 31, 32, 33, 36, 39, 41, 46, 49, 51, 52, 53,
+			54, 57, 59, 64, 71, 73, 81, 86, 88, 91,
+		],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,

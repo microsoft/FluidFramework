@@ -1473,9 +1473,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
-				if (!newInterval) {
-					return undefined;
-				}
 				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
 					setSlideOnRemove(newInterval.start);
 					setSlideOnRemove(newInterval.end);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -63,22 +64,19 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	endSide: Side;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
+export interface ChangeInterval extends IntervalCollectionSpec {
 	type: "changeInterval";
+	start: number | undefined;
+	end: number | undefined;
 	id: string;
 	startSide: Side;
 	endSide: Side;
+	properties: PropertySet;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {
 	type: "deleteInterval";
 	id: string;
-}
-
-export interface ChangeProperties extends IntervalCollectionSpec {
-	type: "changeProperties";
-	id: string;
-	properties: PropertySet;
 }
 
 export interface RevertSharedStringRevertibles {
@@ -96,7 +94,7 @@ export interface RevertibleWeights {
 	changeProperties: number;
 }
 
-export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
+export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
 export type TextOperation = AddText | RemoveRange;
 
@@ -228,14 +226,18 @@ export function makeReducer(
 		},
 		changeInterval: async (
 			{ client },
-			{ id, start, end, collectionName, startSide, endSide },
+			{ id, start, end, collectionName, startSide, endSide, properties },
 		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
-		},
-		changeProperties: async ({ client }, { id, properties, collectionName }) => {
-			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.changeProperties(id, { ...properties });
+			if (start !== undefined && end !== undefined) {
+				collection.change(id, {
+					start: { pos: start, side: startSide },
+					end: { pos: end, side: endSide },
+					props: properties,
+				});
+			} else {
+				collection.change(id, { props: properties });
+			}
 		},
 		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
@@ -352,11 +354,11 @@ export const baseModel: Omit<
 				case "removeRange":
 				case "addInterval":
 				case "changeInterval":
-					if (op.start > 0) {
-						op.start -= 1;
+					if (op.start! > 0) {
+						op.start! -= 1;
 					}
-					if (op.end > 0) {
-						op.end -= 1;
+					if (op.end! > 0) {
+						op.end! -= 1;
 					}
 					break;
 				default:
@@ -371,8 +373,8 @@ export const baseModel: Omit<
 			) {
 				return;
 			}
-			if (op.end > 0) {
-				op.end -= 1;
+			if (op.end! > 0) {
+				op.end! -= 1;
 			}
 		},
 	],

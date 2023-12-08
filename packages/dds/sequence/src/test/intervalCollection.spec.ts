@@ -215,6 +215,19 @@ describe("SharedString interval collections", () => {
 				});
 				assert.equal(collection.getIntervalById(id)?.properties.a, 2);
 			});
+			it("passes empty property set to change", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "hello world");
+				const id = collection.add({ start: 0, end: 3, props: { a: 1 } }).getIntervalId();
+
+				collection.change(id, { props: {} });
+
+				assertIntervalEquals(sharedString, collection.getIntervalById(id), {
+					start: 0,
+					end: 3,
+				});
+				assert.equal(collection.getIntervalById(id)?.properties.a, 1);
+			});
 		});
 
 		// Regression test for bug described in <https://dev.azure.com/fluidframework/internal/_workitems/edit/4477>
