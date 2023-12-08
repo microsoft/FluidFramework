@@ -16,10 +16,5 @@ export function transformApiEntryPoint(
 	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
-	return transformApiModuleLike(
-		apiEntryPoint,
-		apiEntryPoint.members,
-		config,
-		generateChildContent,
-	);
+	return transformApiModuleLike(apiEntryPoint, config, generateChildContent);
 }
