@@ -130,7 +130,7 @@ extends:
     packageManager: pnpm
     tagName: server
     isReleaseGroup: true
-    pool: Large
+    pool: Large-1ES
     pack: true
     lint: true
     test: ci:test

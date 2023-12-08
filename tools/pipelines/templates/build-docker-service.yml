@@ -115,7 +115,7 @@ extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-1ES
+      name: ${{ parameters.pool }}
       os: linux
     sdl:
       arrow:
