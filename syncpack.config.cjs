@@ -19,6 +19,8 @@ module.exports = {
 		},
 	},
 
+  dependencyTypes: ["!local"],
+
 	/**
 	 * SemverGroups are used to ensure that groups of packages use the same semver range for dependencies.
 	 *
@@ -131,6 +133,29 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+    {
+			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			isIgnored: true,
+			packages: [
+				"@fluid-example/**",
+				"@fluid-experimental/**",
+				"@fluid-internal/**",
+				"@fluid-private/**",
+				"@fluid-tools/**",
+				"@fluidframework/**",
+				"fluid-framework",
+			],
+			dependencies: [
+				"@fluid-example/**",
+				"@fluid-experimental/**",
+				"@fluid-internal/**",
+				"@fluid-private/**",
+				"@fluid-tools/**",
+				"@fluidframework/**",
+				"fluid-framework",
+			],
 		},
 
 		// All deps should use caret ranges unless previously overridden
