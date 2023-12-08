@@ -168,7 +168,7 @@ describe("SharedTree", () => {
 
 			const unhydratedInitialTree = new Foo({});
 			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
-			assert.equal(view.root, unhydratedInitialTree);
+			assert(view.root === unhydratedInitialTree);
 		});
 	});
 
