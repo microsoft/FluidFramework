@@ -439,7 +439,7 @@ extends:
                 targetType: 'inline'
                 workingDirectory: $(hostPathToTestResultsArtifact)
                 script: |
-                  chmod -R +r .
+                  sudo chmod -R +r .
 
           # Docs
           - ${{ if eq(parameters.docs, true) }}:
