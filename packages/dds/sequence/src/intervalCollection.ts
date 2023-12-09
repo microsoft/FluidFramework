@@ -883,9 +883,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * Changes the endpoints, properties, or both of an existing interval.
 	 * @param id - Id of the Interval to change
-	 * @param args - Object containing the new start, end, and/or props values. If only changing endpoints or properties,
-	 * only pass the desired object as the args parameter. To leave an endpoint unchanged, pass the current value.
 	 * @returns the interval that was changed, if it existed in the collection.
+	 * Pass the desired new start position, end position, and/or properties in an object. Start and end positions must be changed
+	 * simultaneously - they must either both be specified or both undefined. To only change the properties, leave both endpoints
+	 * undefined. To only change the endpoints, leave the properties undefined.
 	 */
 	change(
 		id: string,
@@ -1414,6 +1415,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * @deprecated - call change with the id and an object containing the new start, end, and/or props values
 	 */
 	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
+	/**
+	 * {@inheritdoc IIntervalCollection.change}
+	 */
 	public change(
 		id: string,
 		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },

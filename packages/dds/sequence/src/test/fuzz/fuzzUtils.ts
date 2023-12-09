@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import * as path from "path";
 import { strict as assert } from "assert";
 import {
@@ -354,11 +352,11 @@ export const baseModel: Omit<
 				case "removeRange":
 				case "addInterval":
 				case "changeInterval":
-					if (op.start! > 0) {
-						op.start! -= 1;
+					if (op.start !== undefined && op.start > 0) {
+						op.start -= 1;
 					}
-					if (op.end! > 0) {
-						op.end! -= 1;
+					if (op.end !== undefined && op.end > 0) {
+						op.end -= 1;
 					}
 					break;
 				default:
@@ -373,8 +371,8 @@ export const baseModel: Omit<
 			) {
 				return;
 			}
-			if (op.end! > 0) {
-				op.end! -= 1;
+			if (op.end !== undefined && op.end > 0) {
+				op.end -= 1;
 			}
 		},
 	],
