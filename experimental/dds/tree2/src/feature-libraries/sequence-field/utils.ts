@@ -1130,7 +1130,7 @@ export function compareLineages(
 			} else if (offset1 > offset2) {
 				return 1;
 			}
-		} else if (metadata.tryGetInfo(event.revision) === undefined) {
+		} else {
 			eventsNotInLineage1.push(event);
 		}
 	}
@@ -1140,7 +1140,7 @@ export function compareLineages(
 		// The cell1 should come before any such cell, so if cell2 comes after C
 		// then we know that cell1 should come before the cell2.
 		// TODO: Account for the cell1's tiebreak policy
-		if (event.offset !== 0) {
+		if (metadata.tryGetInfo(event.revision) === undefined && event.offset !== 0) {
 			return -1;
 		}
 	}
@@ -1151,7 +1151,7 @@ export function compareLineages(
 		// The cell2 should come before any such cell, so if cell1 comes after C
 		// then we know that cell2 should come before the cell1.
 		// TODO: Account for the cell2's tiebreak policy
-		if (event.offset !== 0) {
+		if (metadata.tryGetInfo(event.revision) === undefined && event.offset !== 0) {
 			return 1;
 		}
 	}
