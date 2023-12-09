@@ -1474,7 +1474,7 @@ export interface SchemaEvents {
 }
 
 // @beta @sealed
-export class SchemaFactory<TScope extends string, TName extends number | string = string> {
+export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
     constructor(scope: TScope);
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     fixRecursiveReference<T extends AllowedTypes_2>(...types: T): void;
