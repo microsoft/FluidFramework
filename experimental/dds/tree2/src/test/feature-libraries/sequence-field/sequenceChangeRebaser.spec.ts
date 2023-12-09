@@ -386,20 +386,20 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	const iterationCap = Math.min(maxIndex, state.content.length);
 
 	// Undo the most recent edit
-	if (state.mostRecentEdit !== undefined) {
-		assert(state.parent?.content !== undefined, "Must have parent state to undo");
-		const undoIntention = mintIntention();
-		const invertedEdit = invert(state.mostRecentEdit.changeset);
-		yield {
-			content: state.parent.content,
-			mostRecentEdit: {
-				changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
-				intention: undoIntention,
-				description: `Undo:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
+	// if (state.mostRecentEdit !== undefined) {
+	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
+	// 	const undoIntention = mintIntention();
+	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	yield {
+	// 		content: state.parent.content,
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+	// 			intention: undoIntention,
+	// 			description: `Undo:${state.mostRecentEdit.description}`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
 
 	for (const nodeCount of numNodes) {
 		for (let i = 0; i <= iterationCap; i++) {
@@ -486,9 +486,9 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	}
 };
 
-describe.skip("SequenceField - State-based Rebaser Axioms", () => {
+describe("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1], maxIndex: 2 } }],
+		[{ content: { length: 4, numNodes: [2], maxIndex: 2 } }],
 		generateChildStates,
 		{
 			rebase,
@@ -507,16 +507,16 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 					return false;
 				}
 
-				return assert.deepEqual(
-					withoutLineage(change1.change),
-					withoutLineage(change2.change),
-				);
+				const pruned1 = prune(change1.change);
+				const pruned2 = prune(change2.change);
+
+				return assert.deepEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 			},
 		},
 		{
 			groupSubSuites: false,
 			numberOfEditsToVerifyAssociativity: 3,
-			skipRebaseOverCompose: true,
+			skipRebaseOverCompose: false,
 		},
 	);
 });
