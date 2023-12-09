@@ -714,7 +714,11 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-		if (this.configs.shouldRunSweep && sweepReadyNodes.size > 0) {
+		if (!this.configs.shouldRunSweep) {
+			this.tombstones.push(...Array.from(sweepReadyNodes));
+			// If Sweep is disabled, include SweepReady nodes as tombstoned routes.
+			this.runtime.updateTombstonedRoutes(Array.from(sweepReadyNodes));
+		} else if (sweepReadyNodes.size > 0) {
 			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
 			// to data store only, all its DDSes are deleted along with it. The DDS ids will be retrieved from the
 			// local state when processing the op.
