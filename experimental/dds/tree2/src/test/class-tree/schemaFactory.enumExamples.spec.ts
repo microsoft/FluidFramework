@@ -74,48 +74,41 @@ function adaptEnum<TScope extends string, const TEnum extends Record<string, str
 	return out;
 }
 
-function enumFromStrings<TScope extends string, const Members extends string>(
+function enumFromStrings<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
-	members: Members[],
+	members: Members,
 ) {
-	const names = new Set(members);
-	if (names.size !== members.length) {
-		throw new UsageError("All members of enums must have distinct values");
-	}
-
-	const out: Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>> = Object.create(
-		null,
-	);
+	const enumObject: {
+		[key in keyof Members as Members[key] extends string ? Members[key] : never]: Members[key];
+	} = Object.create(null);
 	for (const name of members) {
-		Object.defineProperty(out, name, {
+		Object.defineProperty(enumObject, name, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, name),
+			value: name,
 		});
 	}
 
-	return out;
+	return adaptEnum(factory, enumObject);
 }
 
 function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[] {
 	return Object.values(object);
 }
 
-const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
-
-class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
-
-const config = new TreeConfiguration(
-	Parent,
-	() =>
-		new Parent({
-			mode: new Mode.Bonus({}),
-		}),
-);
-
 describe("Enum union example", () => {
 	it("type switch", () => {
+		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
+		class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
+		const config = new TreeConfiguration(
+			Parent,
+			() =>
+				new Parent({
+					mode: new Mode.Bonus({}),
+				}),
+		);
+
 		const factory = new TreeFactory({});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view: TreeView<Parent> = tree.schematize(config);
@@ -137,6 +130,16 @@ describe("Enum union example", () => {
 	});
 
 	it("value switch", () => {
+		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
+		class Parent extends schema.object("Parent", { mode: typedObjectValues(Mode) }) {}
+		const config = new TreeConfiguration(
+			Parent,
+			() =>
+				new Parent({
+					mode: new Mode.Bonus({}),
+				}),
+		);
+
 		const factory = new TreeFactory({});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		const view: TreeView<Parent> = tree.schematize(config);
@@ -165,14 +168,14 @@ describe("Enum union example", () => {
 			Tomorrow = "Tomorrow",
 		}
 
-		const DayNodes = enumFromStrings(schema, Object.values(Day));
+		const DayNodes = enumFromStrings(schema, typedObjectValues(Day));
 
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const day = Day.Today;
 
 		const view = tree.schematize(
-			new TreeConfiguration(Object.values(DayNodes), () => new DayNodes[day]({})),
+			new TreeConfiguration(typedObjectValues(DayNodes), () => DayNodes(day)),
 		);
 
 		switch (view.root.value) {
