@@ -1106,11 +1106,7 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
  * Returns 1 if cell2 is earlier in the field.
  * Returns 0 if the order cannot be determined from the lineage.
  */
-export function compareLineages(
-	cell1: CellId,
-	cell2: CellId,
-	metadata: RevisionMetadataSource,
-): number {
+export function compareLineages(cell1: CellId, cell2: CellId): number {
 	const cell1Events = new Map<RevisionTag, LineageEvent>();
 	for (const event of cell1.lineage ?? []) {
 		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
@@ -1118,7 +1114,6 @@ export function compareLineages(
 	}
 
 	const lineage2 = cell2.lineage ?? [];
-	const eventsNotInLineage1: LineageEvent[] = [];
 	for (let i = lineage2.length - 1; i >= 0; i--) {
 		const event = lineage2[i];
 		const offset1 = cell1Events.get(event.revision)?.offset;
@@ -1130,29 +1125,6 @@ export function compareLineages(
 			} else if (offset1 > offset2) {
 				return 1;
 			}
-		} else {
-			eventsNotInLineage1.push(event);
-		}
-	}
-
-	for (const event of eventsNotInLineage1) {
-		// We've found a cell C that was emptied before the cell1 started tracking lineage.
-		// The cell1 should come before any such cell, so if cell2 comes after C
-		// then we know that cell1 should come before the cell2.
-		// TODO: Account for the cell1's tiebreak policy
-		if (metadata.tryGetInfo(event.revision) === undefined && event.offset !== 0) {
-			return -1;
-		}
-	}
-
-	// cell1Events now contains only revisions which were not in cell2's lineage.
-	for (const event of cell1Events.values()) {
-		// We've found a cell C that was emptied before the cell2 started tracking lineage.
-		// The cell2 should come before any such cell, so if cell1 comes after C
-		// then we know that cell2 should come before the cell1.
-		// TODO: Account for the cell2's tiebreak policy
-		if (metadata.tryGetInfo(event.revision) === undefined && event.offset !== 0) {
-			return 1;
 		}
 	}
 	return 0;

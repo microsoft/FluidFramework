@@ -56,6 +56,7 @@ import {
 	MarkEffect,
 	MoveOut,
 	MoveIn,
+	LineageEvent,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -954,9 +955,14 @@ function compareCellPositions(
 	}
 
 	if (newId !== undefined) {
-		const cmp = compareLineages(baseId, newId, metadata);
+		const cmp = compareLineages(baseId, newId);
 		if (cmp !== 0) {
 			return Math.sign(cmp) * Infinity;
+		}
+
+		const cmp2 = compareMissingLineageEntries(baseId.lineage, newId.lineage, metadata);
+		if (cmp2 !== 0) {
+			return Math.sign(cmp2) * Infinity;
 		}
 	}
 
@@ -987,4 +993,50 @@ function compareCellPositions(
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	return -Infinity;
+}
+
+function compareMissingLineageEntries(
+	lineage1: LineageEvent[] | undefined,
+	lineage2: LineageEvent[] | undefined,
+	metadata: RevisionMetadataSource,
+): number {
+	const events1 = new Map<RevisionTag, LineageEvent>();
+	for (const event of lineage1 ?? []) {
+		events1.set(event.revision, event);
+	}
+
+	const events2 = new Map<RevisionTag, LineageEvent>();
+	for (const event of lineage2 ?? []) {
+		events2.set(event.revision, event);
+	}
+
+	for (const revision of events1.keys()) {
+		if (events2.has(revision)) {
+			events1.delete(revision);
+			events2.delete(revision);
+		}
+	}
+
+	for (const event of events2.values()) {
+		// We've found a cell C that was emptied before the cell1 started tracking lineage.
+		// The cell1 should come before any such cell, so if cell2 comes after C
+		// then we know that cell1 should come before the cell2.
+		// TODO: Account for the cell1's tiebreak policy
+		if (!metadata.hasRollback(event.revision) && event.offset !== 0) {
+			return -1;
+		}
+	}
+
+	// cell1Events now contains only revisions which were not in cell2's lineage.
+	for (const event of events1.values()) {
+		// We've found a cell C that was emptied before the cell2 started tracking lineage.
+		// The cell2 should come before any such cell, so if cell1 comes after C
+		// then we know that cell2 should come before the cell1.
+		// TODO: Account for the cell2's tiebreak policy
+		if (!metadata.hasRollback(event.revision) && event.offset !== 0) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
