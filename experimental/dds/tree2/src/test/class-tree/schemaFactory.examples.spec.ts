@@ -48,7 +48,6 @@ class Note extends schema.object("Note", {
 	}
 }
 
-
 class NodeMap extends schema.map("NoteMap", Note) {}
 class NodeList extends schema.list("NoteList", Note) {}
 
