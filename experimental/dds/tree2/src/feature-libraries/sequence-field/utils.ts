@@ -1134,7 +1134,7 @@ export function compareLineages(
 			} else if (youngerOffset > olderOffset) {
 				return olderFirst;
 			}
-		} else {
+		} else if (metadata.tryGetInfo(event.revision) === undefined) {
 			// We've found a cell C that became empty before the younger cell was created.
 			// The younger cell should come before any such cell, so if the older cell comes after C
 			// then we know that the younger cell should come before the older cell.
