@@ -42,6 +42,7 @@ import {
 	MarkEffect,
 	InverseAttachFields,
 	IdRange,
+	MovePlaceholder,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -533,8 +534,8 @@ function areMergeableCellIds(
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
  * @param rhs - The effect so extend `rhs` with.
- * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
- * When `false` is returned, `lhs` is left untouched.
+ * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
+ * When `undefined` is returned, `lhs` is left untouched.
  */
 export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> | undefined {
 	if (rhs.type !== lhs.type) {
@@ -637,8 +638,13 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "Placeholder":
+		case "Placeholder": {
+			const lhsPlaceholder = lhs as MovePlaceholder;
+			if ((lhsPlaceholder.id as number) + lhsCount === rhs.id) {
+				return lhsPlaceholder;
+			}
 			break;
+		}
 		default:
 			unreachableCase(type);
 	}
@@ -1090,8 +1096,13 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			return [effect1, effect2];
 		}
-		case "Placeholder":
-			fail("TODO");
+		case "Placeholder": {
+			const effect2: MovePlaceholder = {
+				...effect,
+				id: brand((effect.id as number) + length),
+			};
+			return [effect, effect2 as TEffect];
+		}
 		default:
 			unreachableCase(type);
 	}
