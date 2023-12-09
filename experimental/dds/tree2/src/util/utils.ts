@@ -33,6 +33,14 @@ export type RecursiveReadonly<T> = {
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /**
+ * Make all field required and omits fields whose ony valid value would be `undefined`.
+ * This is analogous to `Required<T>` except it tolerates 'optional undefined'.
+ */
+export type Populated<T> = {
+	[P in keyof T as Exclude<P, T[P] extends undefined ? P : never>]-?: T[P];
+};
+
+/**
  * Casts a readonly object to a mutable one.
  * Better than casting to `Mutable<Foo>` because it doesn't risk casting a non-`Foo` to a `Mutable<Foo>`.
  * @param readonly - The object with readonly fields.

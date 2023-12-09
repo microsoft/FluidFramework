@@ -35,6 +35,7 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorField,
 	StoredSchemaCollection,
+	DeltaDetachedNodeId,
 } from "../../core";
 import { RevisionTagCodec } from "../../shared-tree-core";
 import {
@@ -848,6 +849,45 @@ function invertBuilds(
 		return destroys;
 	}
 	return undefined;
+}
+
+/**
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
+ *
+ * May be conservative by returning more removed roots than strictly necessary.
+ *
+ * Will never return IDs for non-root trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ * @param fieldKinds - The field kinds to delegate to.
+ */
+export function* relevantRemovedRoots(
+	{ change, revision }: TaggedChange<ModularChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Iterable<DeltaDetachedNodeId> {
+	yield* relevantRemovedRootsFromFields(change.fieldChanges, revision, fieldKinds);
+}
+
+function* relevantRemovedRootsFromFields(
+	change: FieldChangeMap,
+	revision: RevisionTag | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): Iterable<DeltaDetachedNodeId> {
+	for (const [_, fieldChange] of change) {
+		const fieldRevision = fieldChange.revision ?? revision;
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		const delegate = function* (node: NodeChangeset): Iterable<DeltaDetachedNodeId> {
+			if (node.fieldChanges !== undefined) {
+				yield* relevantRemovedRootsFromFields(node.fieldChanges, fieldRevision, fieldKinds);
+			}
+		};
+		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
+	}
 }
 
 /**
