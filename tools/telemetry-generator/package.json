@@ -35,7 +35,7 @@
 		"applicationinsights": "^2.4.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^3.0.0-220558",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/node": "^14.18.0",
 		"concurrently": "^8.2.1",

@@ -75,7 +75,7 @@
 		"@fluidframework/protocol-definitions": "^3.1.0-220363",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
+		"@fluidframework/server-local-server": "^3.0.0-220558",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",

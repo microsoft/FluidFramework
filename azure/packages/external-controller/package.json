@@ -72,7 +72,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
+		"@fluidframework/server-local-server": "^3.0.0-220558",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/expect-puppeteer": "2.2.1",
