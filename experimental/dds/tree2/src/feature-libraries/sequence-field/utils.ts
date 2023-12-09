@@ -1111,63 +1111,51 @@ export function compareLineages(
 	cell2: CellId,
 	metadata: RevisionMetadataSource,
 ): number {
-	const [youngerFirst, youngerCell, olderCell] =
-		compareCellAge(cell1, cell2, metadata) < 0 ? [-1, cell1, cell2] : [1, cell2, cell1];
-
-	if (olderCell.lineage === undefined) {
-		return 0;
+	const cell1Events = new Map<RevisionTag, LineageEvent>();
+	for (const event of cell1.lineage ?? []) {
+		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
+		cell1Events.set(event.revision, event);
 	}
 
-	const olderFirst = -1 * youngerFirst;
-	const youngerOffsets = new Map<RevisionTag, number>();
-	for (const event of youngerCell.lineage ?? []) {
-		youngerOffsets.set(event.revision, event.offset);
-	}
-
-	for (let i = olderCell.lineage.length - 1; i >= 0; i--) {
-		const event = olderCell.lineage[i];
-		const youngerOffset = youngerOffsets.get(event.revision);
-		if (youngerOffset !== undefined) {
-			const olderOffset = event.offset;
-			if (youngerOffset < olderOffset) {
-				return youngerFirst;
-			} else if (youngerOffset > olderOffset) {
-				return olderFirst;
+	const lineage2 = cell2.lineage ?? [];
+	const eventsNotInLineage1: LineageEvent[] = [];
+	for (let i = lineage2.length - 1; i >= 0; i--) {
+		const event = lineage2[i];
+		const offset1 = cell1Events.get(event.revision)?.offset;
+		if (offset1 !== undefined) {
+			const offset2 = event.offset;
+			cell1Events.delete(event.revision);
+			if (offset1 < offset2) {
+				return -1;
+			} else if (offset1 > offset2) {
+				return 1;
 			}
 		} else if (metadata.tryGetInfo(event.revision) === undefined) {
-			// We've found a cell C that became empty before the younger cell was created.
-			// The younger cell should come before any such cell, so if the older cell comes after C
-			// then we know that the younger cell should come before the older cell.
-			// TODO: Account for the younger cell's tiebreak policy
-			if (event.offset !== 0) {
-				return youngerFirst;
-			}
+			eventsNotInLineage1.push(event);
+		}
+	}
+
+	for (const event of eventsNotInLineage1) {
+		// We've found a cell C that was emptied before the cell1 started tracking lineage.
+		// The cell1 should come before any such cell, so if cell2 comes after C
+		// then we know that cell1 should come before the cell2.
+		// TODO: Account for the cell1's tiebreak policy
+		if (event.offset !== 0) {
+			return -1;
+		}
+	}
+
+	// cell1Events now contains only revisions which were not in cell2's lineage.
+	for (const event of cell1Events.values()) {
+		// We've found a cell C that was emptied before the cell2 started tracking lineage.
+		// The cell2 should come before any such cell, so if cell1 comes after C
+		// then we know that cell2 should come before the cell1.
+		// TODO: Account for the cell2's tiebreak policy
+		if (event.offset !== 0) {
+			return 1;
 		}
 	}
 	return 0;
-}
-
-/**
- * Returns 1 if cell1 has more lineage and -1 if cell2 has more lineage.
- * Note that this will return zero if both cells are older than the revision metadata and they both
- * have the same lineage, even if they are not the same cell.
- */
-function compareCellAge(cell1: CellId, cell2: CellId, metadata: RevisionMetadataSource): number {
-	return (
-		getTrunkLineageLength(cell1.lineage, metadata) -
-		getTrunkLineageLength(cell2.lineage, metadata)
-	);
-}
-
-function getTrunkLineageLength(
-	lineage: LineageEvent[] | undefined,
-	metadata: RevisionMetadataSource,
-): number {
-	if (lineage === undefined) {
-		return 0;
-	}
-
-	return lineage.filter((event) => !metadata.hasRollback(event.revision)).length;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.

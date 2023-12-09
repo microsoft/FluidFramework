@@ -960,6 +960,9 @@ function compareCellPositions(
 		}
 	}
 
+	// Both cells must never have been filled (in their common history), otherwise they would have some common lineage.
+	// A new attach targets a cell that has never been filled.
+	// A mark can also target a cell which was initially filled on another branch, but which has never been filled on the current branch.
 	if (newId.revision === undefined) {
 		// An undefined revision must mean that the cell was created on the branch we are rebasing.
 		// Since it is newer than the `baseMark`'s cell, it should come first.
