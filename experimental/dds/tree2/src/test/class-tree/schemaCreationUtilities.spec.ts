@@ -6,99 +6,20 @@
 import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
-import { fail } from "../../util";
-import { EmptyObject } from "../../feature-libraries";
+import {
+	enumFromStrings,
+	typedObjectValues,
+	adaptEnum,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../class-tree/schemaCreationUtilities";
 
-// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
-const schema = new SchemaFactory("enums");
+const schema = new SchemaFactory("test");
 
-/**
- * Create a schema for a node with no state.
- * @remarks
- * This is commonly used in unions when the only information needed is which kind of node the value is.
- * Enums are a common example of this pattern.
- */
-function singletonSchema<TScope extends string, TName extends string>(
-	factory: SchemaFactory<TScope>,
-	name: TName,
-) {
-	return class SingletonSchema extends factory.object(name, {}) {
-		public constructor(data?: EmptyObject) {
-			super(data ?? {});
-		}
-		public get value(): TName {
-			return name;
-		}
-	};
-}
-
-function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
-	factory: SchemaFactory<TScope>,
-	members: TEnum,
-) {
-	type Values = TEnum[keyof TEnum];
-	const values = Object.values(members) as Values[];
-	const inverse = new Map(Object.entries(members).map(([key, value]) => [value, key])) as Map<
-		Values,
-		keyof TEnum
-	>;
-
-	if (inverse.size !== values.length) {
-		throw new UsageError("All members of enums must have distinct values.");
-	}
-
-	type TOut = {
-		readonly [Property in keyof TEnum]: ReturnType<
-			typeof singletonSchema<TScope, TEnum[Property]>
-		>;
-	};
-	const factoryOut = <TValue extends Values>(value: TValue) => {
-		return new out[inverse.get(value) ?? fail("missing enum value")](
-			{},
-		) as unknown as ReturnType<typeof singletonSchema<TScope, TValue>>;
-	};
-	const out = factoryOut as typeof factoryOut & TOut;
-	for (const [key, value] of Object.entries(members)) {
-		Object.defineProperty(out, key, {
-			enumerable: true,
-			configurable: false,
-			writable: false,
-			value: singletonSchema(factory, value),
-		});
-	}
-
-	return out;
-}
-
-function enumFromStrings<TScope extends string, const Members extends readonly string[]>(
-	factory: SchemaFactory<TScope>,
-	members: Members,
-) {
-	const enumObject: {
-		[key in keyof Members as Members[key] extends string ? Members[key] : never]: Members[key];
-	} = Object.create(null);
-	for (const name of members) {
-		Object.defineProperty(enumObject, name, {
-			enumerable: true,
-			configurable: false,
-			writable: false,
-			value: name,
-		});
-	}
-
-	return adaptEnum(factory, enumObject);
-}
-
-function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[] {
-	return Object.values(object);
-}
-
-describe("Enum union example", () => {
-	it("type switch", () => {
+describe("schemaCreationUtilities", () => {
+	it("enum type switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
 		const config = new TreeConfiguration(
@@ -129,7 +50,7 @@ describe("Enum union example", () => {
 		}
 	});
 
-	it("value switch", () => {
+	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: typedObjectValues(Mode) }) {}
 		const config = new TreeConfiguration(
