@@ -22,6 +22,7 @@ import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { ILoaderProps } from '@fluidframework/container-loader';
 import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -173,6 +174,9 @@ export interface IVersionedModel {
     readonly version: string;
 }
 
+// @internal @deprecated
+export const makeModelRequestHandler: <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+
 // @internal
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
@@ -191,7 +195,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "migrated" | "stopping" | "migrating";
+    get migrationState(): "collaborating" | "stopping" | "migrating" | "migrated";
     // (undocumented)
     get newContainerId(): string | undefined;
     // (undocumented)
@@ -246,6 +250,9 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 }
 
 // @internal
+export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
+
+// @internal
 export type SameContainerMigrationState = "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "uploadingV2Summary" | "submittingV2Summary" | "migrated";
 
 // @internal (undocumented)
@@ -262,7 +269,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "migrated";
+    get migrationState(): "collaborating" | "migrated" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration";
     // (undocumented)
     get proposedVersion(): string | undefined;
     // (undocumented)
