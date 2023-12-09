@@ -17,7 +17,7 @@ import { SchemaFactory } from "./schemaFactory";
 /**
  * Extends SchemaFactory with utilities for recursive types.
  *
- * This is separated from SchemaFactory as these APIs are more experimental, and may be stabilized independently.
+ * @remarks This is separated from SchemaFactory as these APIs are more experimental, and may be stabilized independently.
  *
  * @sealed @alpha
  */

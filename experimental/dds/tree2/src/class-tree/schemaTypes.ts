@@ -121,9 +121,9 @@ export interface TreeNodeSchemaCore<
 	readonly info: unknown;
 
 	/**
-	 * If true, when constructing insertable content,
-	 * instead of including an {@link Unhydrated} node,
-	 * the data that would have been passed to the constructor can be included instead.
+	 * When constructing insertable content,
+	 * data that could be passed to the node's constructor can be used instead of an {@link Unhydrated} node
+	 * iff implicitlyConstructable is true.
 	 * @privateRemarks
 	 * Currently the logic for traversing insertable content,
 	 * both to build trees and to hydrate them does not defer to the schema classes to handle the policy,
