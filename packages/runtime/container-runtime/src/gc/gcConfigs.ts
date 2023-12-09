@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { MonitoringContext, UsageError } from "@fluidframework/telemetry-utils";
+import {
+	MonitoringContext,
+	UsageError,
+	validatePrecondition,
+} from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
 	nextGCVersion,
@@ -26,7 +30,8 @@ import {
 	stableGCVersion,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
-	gcThrowOnTombstoneLoadOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	defaultSweepGracePeriodMs,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
@@ -159,10 +164,16 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
-	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
-	// via feature flags.
-	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
+	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
+	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
+	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
+
+	const sweepGracePeriodMs =
+		createParams.gcOptions.sweepGracePeriodMs ?? defaultSweepGracePeriodMs;
+	validatePrecondition(sweepGracePeriodMs >= 0, "sweepGracePeriodMs must be non-negative", {
+		sweepGracePeriodMs,
+	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
 	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
@@ -172,8 +183,7 @@ export function generateGCConfigs(
 
 	const throwOnTombstoneLoadConfig =
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
-		createParams.gcOptions[gcThrowOnTombstoneLoadOptionName] ??
-		false;
+		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
 	const throwOnTombstoneLoad =
 		throwOnTombstoneLoadConfig &&
 		tombstoneEnforcementAllowed &&
@@ -193,6 +203,7 @@ export function generateGCConfigs(
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
+		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,

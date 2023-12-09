@@ -15,7 +15,7 @@ export async function getHashedDocumentId(driveId: string, itemId: string): Prom
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISnapshotContents {
 	snapshotTree: ISnapshotTree;

@@ -19,8 +19,12 @@ export {
 	CrossFieldTarget,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
-export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, Multiplicity, FieldKindWithEditor } from "./fieldKind";
+export {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+} from "./modularChangeFormat";
+export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -55,4 +59,5 @@ export {
 	FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
+	relevantRemovedRoots,
 } from "./modularChangeFamily";

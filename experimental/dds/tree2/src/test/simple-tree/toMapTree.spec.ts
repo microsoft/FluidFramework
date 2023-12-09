@@ -12,6 +12,7 @@ import { SchemaBuilder, leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree";
 import { brand } from "../../util";
+import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries";
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -372,6 +373,18 @@ describe("toMapTree", () => {
 		};
 
 		assert.deepEqual(actual, expected);
+	});
+
+	it("ambagious unions", () => {
+		const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
+		const a = schemaBuilder.object("a", {});
+		const b = schemaBuilder.object("b", {});
+		const schema = schemaBuilder.intoSchema([a, b]);
+
+		assert.throws(
+			() => nodeDataToMapTree({}, { schema }, schema.rootFieldSchema.types),
+			/\["test.a","test.b"]/,
+		);
 	});
 
 	// Our data serialization format does not support certain numeric values.

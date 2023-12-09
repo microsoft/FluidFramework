@@ -11,6 +11,7 @@ import {
 	IdCreationRange,
 } from "@fluidframework/runtime-definitions";
 import { IDataStoreAliasMessage } from "./dataStore";
+import { GarbageCollectionMessage } from "./gc";
 import { IChunkedOp } from "./opLifecycle";
 
 /**
@@ -41,6 +42,12 @@ export enum ContainerMessageType {
 	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
 	 */
 	IdAllocation = "idAllocation",
+
+	/**
+	 * Garbage collection specific op. This is sent by the summarizer client when GC runs. It's used to synchronize GC
+	 * state across all clients.
+	 */
+	GC = "GC",
 }
 
 /**
@@ -120,6 +127,10 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.IdAllocation,
 	IdCreationRange
 >;
+export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.GC,
+	GarbageCollectionMessage
+>;
 
 /**
  * Represents an unrecognized {@link TypedContainerRuntimeMessage}, e.g. a message from a future version of the container runtime.
@@ -148,6 +159,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -160,6 +172,7 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 
@@ -171,7 +184,8 @@ export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
-	| ContainerRuntimeIdAllocationMessage;
+	| ContainerRuntimeIdAllocationMessage
+	| ContainerRuntimeGCMessage;
 
 /**
  * An unpacked ISequencedDocumentMessage with the inner TypedContainerRuntimeMessage type/contents/etc

@@ -488,15 +488,15 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 
 describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
+		[{ content: { length: 4, numNodes: [1], maxIndex: 2 } }],
 		generateChildStates,
 		{
 			rebase,
 			invert,
-			compose: (changes, metadata) => compose(changes),
+			compose: (changes, metadata) => compose(changes, metadata),
 			rebaseComposed: (metadata, change, ...baseChanges) => {
-				const composedChanges = compose(baseChanges);
-				return rebase(change, makeAnonChange(composedChanges));
+				const composedChanges = compose(baseChanges, metadata);
+				return rebase(change, makeAnonChange(composedChanges), metadata);
 			},
 			assertEqual: (change1, change2) => {
 				if (change1 === undefined && change2 === undefined) {
@@ -514,7 +514,9 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 			},
 		},
 		{
-			groupSubSuites: true,
+			groupSubSuites: false,
+			numberOfEditsToVerifyAssociativity: 3,
+			skipRebaseOverCompose: true,
 		},
 	);
 });
@@ -671,6 +673,36 @@ describe("SequenceField - Sandwich composing", () => {
 		];
 
 		assert.deepEqual(composed, expected);
+	});
+
+	it("[insert, insert] ↷ adjacent delete", () => {
+		const deleteT = tagChange([Mark.delete(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseTagged(insertA, deleteT);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, deleteT, insertA2]);
+		const TAB = compose([deleteT, insertA2, insertB2]);
+		const AiTAB = compose(
+			[inverseA, makeAnonChange(TAB)],
+			[
+				{ revision: tag4, rollbackOf: tag2 },
+				{ revision: tag1 },
+				{ revision: tag2 },
+				{ revision: tag3 },
+			],
+		);
+
+		const expected = [
+			Mark.delete(1, { revision: tag1, localId: brand(0) }),
+			Mark.insert(1, {
+				revision: tag3,
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(AiTAB, expected);
 	});
 });
 

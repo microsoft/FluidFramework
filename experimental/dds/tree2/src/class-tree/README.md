@@ -38,11 +38,29 @@ Private data can still be stored using `#` private fields, or via weak keyed map
 Even regular private and protected fields can be used in the implementation and casts away from the type returned by the factory,
 though doing this risks name collisions with user added members.
 
-Recursive types are still somewhat sketchy.
-
 Comparing trees to object literals (for example in tests), will require a dedicated tree comparison function and/or comparing to unhydrated nodes (and implementing more APIs for them) instead of plain literals.
 
 Adding custom constructors to the schema classes is likely to break them, though static builders (like "create") can be added just fine.
+
+### Insertable content
+
+Currently the type allowed within InsertableContent comes from `InsertableTypedNode`.
+This type includes `NodeBuilderData<T>`, which extracts the type from the constructor's parameter.
+This allows changing what types can be used to build a node in a single place, however the logic to process that data is not part of the class currently.
+This means that changing the types can easily lead to cases where runtime behavior of parsing or hydrating the `InsertableTypedNode` might not align with the types.
+Directing the logic back into the schema for implementation would make extending the set of node kinds and adjusting constructor parameters much more encapsulated.
+
+### Missing Tree Comparison test utility
+
+There is currently no good API to dump tree content or compare it which includes all persisted data (including types).
+Related to this there is also no good way to round trip a tree through an external system.
+The lower-level APIs have solutions, but there currently aren't any for the simple/class tree layer.
+
+### Recursive types are still very sketchy
+
+Recursive objects can work ok, see notes on `SchemaFactory.fixRecursiveReference`.
+This does not seem to fix directly recursive lists or maps (but some cases of co-recursive through object does seem to work).
+Experiments are ongoing for how to fix them.
 
 ## Ideas to consider in the future
 
