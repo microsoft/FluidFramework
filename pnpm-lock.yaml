@@ -7054,7 +7054,6 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/random-js': ^1.0.31
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7065,7 +7064,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      random-js: ^1.0.8
+      random-js: ^2.1.0
       rimraf: ^4.4.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7097,7 +7096,6 @@ importers:
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/random-js': 1.0.31
       c8: 7.14.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -7108,7 +7106,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      random-js: 1.0.8
+      random-js: 2.1.0
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10249,7 +10247,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/random-js': ^1.0.31
       best-random: ^1.0.0
       c8: ^7.7.1
       copyfiles: ^2.4.1
@@ -10260,7 +10257,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
-      random-js: ^1.0.8
+      random-js: ^2.1.0
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
@@ -10275,7 +10272,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/random-js': 1.0.31
       c8: 7.14.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -10285,7 +10281,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      random-js: 1.0.8
+      random-js: 2.1.0
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -10579,18 +10575,17 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/random-js': ^1.0.31
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      random-js: ^1.0.8
+      random-js: ^2.1.0
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
-      random-js: 1.0.8
+      random-js: 2.1.0
     devDependencies:
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -10600,7 +10595,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/random-js': 1.0.31
       c8: 7.14.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11955,7 +11949,6 @@ importers:
       '@fluidframework/tool-utils-previous': npm:@fluidframework/tool-utils@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.38.3
       '@types/debug': ^4.1.5
-      '@types/jwt-decode': ^2.2.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       async-mutex: ^0.3.1
@@ -11964,7 +11957,7 @@ importers:
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
-      jwt-decode: ^2.2.0
+      jwt-decode: ^4.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -11980,7 +11973,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       async-mutex: 0.3.2
       debug: 4.3.4
-      jwt-decode: 2.2.0
+      jwt-decode: 4.0.0
       proper-lockfile: 4.1.2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -11992,7 +11985,6 @@ importers:
       '@fluidframework/tool-utils-previous': /@fluidframework/tool-utils/2.0.0-internal.7.2.0
       '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
       '@types/debug': 4.1.12
-      '@types/jwt-decode': 2.2.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 7.14.0
@@ -22632,10 +22624,6 @@ packages:
     resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
     dev: true
 
-  /@types/jwt-decode/2.2.1:
-    resolution: {integrity: sha512-aWw2YTtAdT7CskFyxEX2K21/zSDStuf/ikI3yBqmwpwJF0pS+/IX5DWv+1UFffZIbruP6cnT9/LAJV1gFwAT1A==}
-    dev: true
-
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
@@ -22792,10 +22780,6 @@ packages:
 
   /@types/qs/6.9.10:
     resolution: {integrity: sha512-3Gnx08Ns1sEoCrWssEgTSJs/rsT2vhGP+Ja9cnnk9k4ALxinORlQneLXFeFKOTJMOeZUFD1s7w+w2AphTpvzZw==}
-
-  /@types/random-js/1.0.31:
-    resolution: {integrity: sha512-EAM56DrKw3VhcE4HV0/YlVKeJI07We4Mz1ra6TNtZpaMoiBVMA2bkLEcoFpYOyxoDXfVZWojxkR617LTqtRI0A==}
-    dev: true
 
   /@types/range-parser/1.2.7:
     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
@@ -34464,9 +34448,15 @@ packages:
 
   /jwt-decode/2.2.0:
     resolution: {integrity: sha512-86GgN2vzfUu7m9Wcj63iUkuDzFNYFVmjeDm2GzWpUk+opB0pEpMsw6ePCMrhYkumz2C1ihqtZzOMAg7FiXcNoQ==}
+    dev: true
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+
+  /jwt-decode/4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
+    dev: false
 
   /keyborg/2.2.0:
     resolution: {integrity: sha512-yQa1dz+FilQ+w3JM6GH2V/wnFeQhfbkK9stvs3UiraW3GOEO7zrOBBh0ZuHsrzeN1xx6v7P5EpA2JtOUUnfN/w==}
@@ -39148,8 +39138,8 @@ packages:
       ret: 0.1.15
     dev: true
 
-  /random-js/1.0.8:
-    resolution: {integrity: sha512-LznfUohEMi6jfwZXa0C5uY1p1tciZozzMiwf9LGlwj52tfvpHozYklHHkrvh2Ya/mdiJ9qPGXR6byVN7+hCMTw==}
+  /random-js/2.1.0:
+    resolution: {integrity: sha512-CRUyWmnzmZBA7RZSVGq0xMqmgCyPPxbiKNLFA5ud7KenojVX2s7Gv+V7eB52beKTPGxWRnVZ7D/tCIgYJJ8vNQ==}
 
   /randombytes/2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}

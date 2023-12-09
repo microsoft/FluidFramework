@@ -66,6 +66,7 @@ export {
 	makeArray,
 	mapIterable,
 	Mutable,
+	Populated,
 	RecursiveReadonly,
 	zipIterables,
 	Assume,
