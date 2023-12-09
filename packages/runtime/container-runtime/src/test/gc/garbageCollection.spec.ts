@@ -231,15 +231,7 @@ describe("Garbage Collection Tests", () => {
 		);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("runSweepPhase", () => {
+	describe("runSweepPhase", () => {
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
