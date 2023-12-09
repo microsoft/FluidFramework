@@ -84,7 +84,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-base": "^2.0.1",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-220363",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^2.0.1",
 		"@fluidframework/server-services-client": "^2.0.1",
