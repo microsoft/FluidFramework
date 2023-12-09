@@ -85,14 +85,14 @@ describe("Enum union example", () => {
 		const mode = view.root.mode;
 		switch (mode.value) {
 			case "Fun": {
-				// This one runs
-				break;
+				assert.fail();
 			}
 			case "Cool": {
 				assert.fail();
 			}
 			case "Bonus": {
-				assert.fail();
+				// This one runs
+				break;
 			}
 			default:
 				unreachableCase(mode.value);
