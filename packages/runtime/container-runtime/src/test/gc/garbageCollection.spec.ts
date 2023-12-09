@@ -52,6 +52,7 @@ import {
 	UnreferencedState,
 	defaultSweepGracePeriodMs,
 	GarbageCollectionMessage,
+	gcSweepGenerationOptionName,
 } from "../../gc";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes";
 import {
@@ -239,7 +240,60 @@ describe("Garbage Collection Tests", () => {
 	//* ONLY
 	//* ONLY
 	describe.only("runSweepPhase", () => {
-		it("asdf", async () => {
+		it("Tombstone then Delete", async () => {
+			// Simple starting reference graph - root and two nodes
+			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
+			defaultGCData.gcNodes[nodes[0]] = [];
+			defaultGCData.gcNodes[nodes[1]] = [];
+
+			// Sweep enabled
+			gc = createGarbageCollector({ gcOptions: { [gcSweepGenerationOptionName]: 1 } });
+			const spies = {
+				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
+				submitMessage: spy(gc, "submitMessage"),
+			};
+
+			// Nodes 0 and 1 are referenced
+			await gc.collectGarbage({});
+
+			// Unreference 0
+			defaultGCData.gcNodes["/"] = [nodes[1]];
+			clock.tick(10);
+			await gc.collectGarbage({});
+
+			spies.updateTombstonedRoutes.resetHistory();
+
+			// Skip to TombstoneReady state
+			clock.tick(defaultSweepTimeoutMs);
+			await gc.collectGarbage({});
+
+			assert(
+				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
+				"updateTombstonedRoutes should be called with node 0",
+			);
+			assert.equal(
+				spies.submitMessage.callCount,
+				0,
+				"submitMessage should not be called yet, didn't pass Grace Period yet",
+			);
+			spies.updateTombstonedRoutes.resetHistory();
+
+			// Skip past Sweep Grace Period. GC Sweep op should be submitted
+			clock.tick(defaultSweepGracePeriodMs);
+			await gc.collectGarbage({});
+
+			assert.equal(
+				spies.submitMessage.callCount,
+				1,
+				"submitMessage should be called since Sweep is enabled",
+			);
+			assert(
+				spies.updateTombstonedRoutes.alwaysCalledWith([]),
+				"No additional nodes should be Tombstoned",
+			);
+		});
+
+		it("Sweep Disabled - Should Tombstone SweepReady nodes", async () => {
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
 			defaultGCData.gcNodes[nodes[0]] = [];
 			defaultGCData.gcNodes[nodes[1]] = [];
@@ -260,17 +314,23 @@ describe("Garbage Collection Tests", () => {
 
 			// Skip all the way past Sweep Grace Period.  But Sweep is disabled, so Tombstone should happen
 			clock.tick(defaultSweepTimeoutMs + defaultSweepGracePeriodMs);
+			assert.equal(
+				gc.unreferencedNodesState.get(nodes[0])?.state,
+				"SweepReady",
+				"Node 0 should be SweepReady (not TombstoneReady)",
+			);
+
 			spies.updateTombstonedRoutes.resetHistory();
 			await gc.collectGarbage({});
 
+			assert(
+				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
+				"updateTombstonedRoutes should be called with node 0",
+			);
 			assert.equal(
 				spies.submitMessage.callCount,
 				0,
 				"submitMessage should not be called since Sweep is disabled",
-			);
-			assert(
-				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
-				"updateTombstonedRoutes should be called with node 0",
 			);
 		});
 	});
