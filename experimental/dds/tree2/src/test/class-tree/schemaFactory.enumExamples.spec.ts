@@ -44,7 +44,7 @@ const config = new TreeConfiguration(
 		}),
 );
 
-describe("Class based end to end example", () => {
+describe("Enum union example", () => {
 	it("run example", () => {
 		const factory = new TreeFactory({});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
