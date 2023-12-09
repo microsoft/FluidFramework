@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { SinonFakeTimers, useFakeTimers, spy } from "sinon";
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
@@ -63,6 +63,7 @@ import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
+	readonly runtime: IGarbageCollectionRuntime;
 	readonly configs: IGarbageCollectorConfigs;
 	readonly summaryStateTracker: Omit<
 		GCSummaryStateTracker,
@@ -124,7 +125,7 @@ describe("Garbage Collection Tests", () => {
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
-	) {
+	): GcWithPrivates {
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
 				return GCNodeType.Other;
@@ -178,7 +179,7 @@ describe("Garbage Collection Tests", () => {
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
-		});
+		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
 
@@ -222,11 +223,56 @@ describe("Garbage Collection Tests", () => {
 			() => {
 				closeCalled = true;
 			},
-		) as GcWithPrivates;
+		);
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
 		);
+	});
+
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	describe.only("runSweepPhase", () => {
+		it("asdf", async () => {
+			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
+			defaultGCData.gcNodes[nodes[0]] = [];
+			defaultGCData.gcNodes[nodes[1]] = [];
+
+			gc = createGarbageCollector();
+			const spies = {
+				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
+				submitMessage: spy(gc, "submitMessage"),
+			};
+
+			// Nodes 0 and 1 are referenced
+			await gc.collectGarbage({});
+
+			// Unreference 0
+			defaultGCData.gcNodes["/"] = [nodes[1]];
+			clock.tick(10);
+			await gc.collectGarbage({});
+
+			// Skip all the way past Sweep Grace Period.  But Sweep is disabled, so Tombstone should happen
+			clock.tick(defaultSweepTimeoutMs + defaultSweepGracePeriodMs);
+			spies.updateTombstonedRoutes.resetHistory();
+			await gc.collectGarbage({});
+
+			assert.equal(
+				spies.submitMessage.callCount,
+				0,
+				"submitMessage should not be called since Sweep is disabled",
+			);
+			assert(
+				spies.updateTombstonedRoutes.calledWith([nodes[0]]),
+				"updateTombstonedRoutes should be called with node 0",
+			);
+		});
 	});
 
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
@@ -811,7 +857,7 @@ describe("Garbage Collection Tests", () => {
 					{ baseSnapshot: snapshotTree },
 					gcBlobsMap,
 					gcMetadata,
-				) as GcWithPrivates;
+				);
 			}
 
 			it("reads all GC data from base snapshot when GC version does not change", async () => {
@@ -894,7 +940,7 @@ describe("Garbage Collection Tests", () => {
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 
-			const garbageCollector = createGarbageCollector({}) as GcWithPrivates;
+			const garbageCollector = createGarbageCollector({});
 
 			function validateUnreferencedStates(
 				expectedUnreferencedStates: Record<number, UnreferencedState>,
@@ -1661,7 +1707,7 @@ describe("Garbage Collection Tests", () => {
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
 			sweepTimeoutMs: defaultSweepTimeoutMs,
-		}) as GcWithPrivates;
+		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 		const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
