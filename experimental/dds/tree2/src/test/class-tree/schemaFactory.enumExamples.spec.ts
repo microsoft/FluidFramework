@@ -10,41 +10,99 @@ import { UsageError } from "@fluidframework/telemetry-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
+import { fail } from "../../util";
+import { EmptyObject } from "../../feature-libraries";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("enums");
 
-function Enum<TFactory extends SchemaFactory, const Members extends string>(
-	factory: TFactory,
-	members: Members[],
+/**
+ * Create a schema for a node with no state.
+ * @remarks
+ * This is commonly used in unions when the only information needed is which kind of node the value is.
+ * Enums are a common example of this pattern.
+ */
+function singletonSchema<TScope extends string, TName extends string>(
+	factory: SchemaFactory<TScope>,
+	name: TName,
 ) {
-	const names = new Set(members);
-	if (names.size !== members.length) {
-		throw new UsageError("All members of enums must have distinct names");
+	return class SingletonSchema extends factory.object(name, {}) {
+		public constructor(data?: EmptyObject) {
+			super(data ?? {});
+		}
+		public get value(): TName {
+			return name;
+		}
+	};
+}
+
+function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
+	factory: SchemaFactory<TScope>,
+	members: TEnum,
+) {
+	type Values = TEnum[keyof TEnum];
+	const values = Object.values(members) as Values[];
+	const inverse = new Map(Object.entries(members).map(([key, value]) => [value, key])) as Map<
+		Values,
+		keyof TEnum
+	>;
+
+	if (inverse.size !== values.length) {
+		throw new UsageError("All members of enums must have distinct values.");
 	}
 
-	function makeSchema<TName extends string>(name: TName) {
-		return class EnumMember extends factory.object(name, {}) {
-			public get value(): TName {
-				return name;
-			}
-		};
-	}
-
-	const out: Record<Members, ReturnType<typeof makeSchema<Members>>> = Object.create(null);
-	for (const name of members) {
-		Object.defineProperty(out, name, {
+	type TOut = {
+		readonly [Property in keyof TEnum]: ReturnType<
+			typeof singletonSchema<TScope, TEnum[Property]>
+		>;
+	};
+	const factoryOut = <TValue extends Values>(value: TValue) => {
+		return new out[inverse.get(value) ?? fail("missing enum value")](
+			{},
+		) as unknown as ReturnType<typeof singletonSchema<TScope, TValue>>;
+	};
+	const out = factoryOut as typeof factoryOut & TOut;
+	for (const [key, value] of Object.entries(members)) {
+		Object.defineProperty(out, key, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: makeSchema(name),
+			value: singletonSchema(factory, value),
 		});
 	}
 
 	return out;
 }
 
-const Mode = Enum(schema, ["Fun", "Cool", "Bonus"]);
+function enumFromStrings<TScope extends string, const Members extends string>(
+	factory: SchemaFactory<TScope>,
+	members: Members[],
+) {
+	const names = new Set(members);
+	if (names.size !== members.length) {
+		throw new UsageError("All members of enums must have distinct values");
+	}
+
+	const out: Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>> = Object.create(
+		null,
+	);
+	for (const name of members) {
+		Object.defineProperty(out, name, {
+			enumerable: true,
+			configurable: false,
+			writable: false,
+			value: singletonSchema(factory, name),
+		});
+	}
+
+	return out;
+}
+
+function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[] {
+	return Object.values(object);
+}
+
+const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 
 class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
 
@@ -99,7 +157,7 @@ describe("Enum union example", () => {
 		}
 	});
 
-	it("enum interop", () => {
+	it("enum interop - enumFromStrings", () => {
 		const factory = new TreeFactory({});
 
 		enum Day {
@@ -107,7 +165,7 @@ describe("Enum union example", () => {
 			Tomorrow = "Tomorrow",
 		}
 
-		const DayNodes = Enum(schema, Object.values(Day));
+		const DayNodes = enumFromStrings(schema, Object.values(Day));
 
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
@@ -127,6 +185,39 @@ describe("Enum union example", () => {
 			}
 			default:
 				unreachableCase(view.root.value);
+		}
+	});
+
+	it("enum interop - adaptEnum", () => {
+		const factory = new TreeFactory({});
+
+		enum Day {
+			Today = "today",
+			Tomorrow = "tomorrow",
+		}
+
+		const DayNodes = adaptEnum(schema, Day);
+
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+
+		// Can convert enum to unhydrated node:
+		const x = DayNodes(Day.Today);
+		// Can construct unhydrated node from enum's key:
+		const y = new DayNodes.Today({});
+
+		const view = tree.schematize(
+			new TreeConfiguration(typedObjectValues(DayNodes), () => DayNodes(Day.Today)),
+		);
+
+		switch (view.root.value) {
+			case Day.Today: {
+				break;
+			}
+			case Day.Tomorrow: {
+				assert.fail();
+			}
+			default:
+				unreachableCase(view.root);
 		}
 	});
 });
