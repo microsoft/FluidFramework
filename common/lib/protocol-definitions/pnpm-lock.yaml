@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.38.3':
-    hash: p4gemz6xo2owxftfuvjusnappy
+    hash: veevzrg6trzjzkr6gaha4thdmm
     path: ../../../patches/@microsoft__api-extractor@7.38.3.patch
 
 importers:
@@ -29,7 +29,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/2.0.0
-      '@microsoft/api-extractor': 7.38.3_p4gemz6xo2owxftfuvjusnappy
+      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       concurrently: 6.5.1
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -172,7 +172,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@4.5.5
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_p4gemz6xo2owxftfuvjusnappy
+      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@4.5.5
       '@oclif/plugin-commands': 3.0.3
@@ -528,7 +528,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.38.3_p4gemz6xo2owxftfuvjusnappy:
+  /@microsoft/api-extractor/7.38.3_veevzrg6trzjzkr6gaha4thdmm:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:

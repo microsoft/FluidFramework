@@ -15,7 +15,6 @@ export {
 	AllowedTypes,
 	FieldSchema,
 	ApplyKind,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeBuilderData,
 } from "./schemaTypes";

@@ -60,12 +60,6 @@ module.exports = (env) => {
 				}),
 				// new CleanWebpackPlugin(),
 			],
-			devServer: {
-				// keep port in sync with VS Code launch.json
-				port: 3000,
-				// Hot-reloading, the sole reason to use webpack here <3
-				hot: true,
-			},
 		},
 		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
 	);
