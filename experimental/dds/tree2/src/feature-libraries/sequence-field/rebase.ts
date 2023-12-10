@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
 import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
 import {
 	ChangeAtomId,

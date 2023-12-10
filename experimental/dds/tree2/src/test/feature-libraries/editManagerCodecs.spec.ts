@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
@@ -147,7 +148,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 describe("EditManager codec", () => {
 	const codec = makeEditManagerCodec(
 		withDefaultBinaryEncoding(TestChange.codec),
-		new RevisionTagCodec(),
+		new RevisionTagCodec(new MockIdCompressor()),
 		{
 			jsonValidator: typeboxValidator,
 		},

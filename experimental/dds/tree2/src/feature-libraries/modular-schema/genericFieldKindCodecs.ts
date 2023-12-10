@@ -4,11 +4,11 @@
  */
 
 import { Type } from "@sinclair/typebox";
+import { SessionId } from "@fluidframework/runtime-definitions";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
-import { SessionId } from "@fluidframework/runtime-definitions";
 
 export function makeGenericChangeCodec(
 	childCodec: IJsonCodec<NodeChangeset>,

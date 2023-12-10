@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
@@ -100,7 +101,7 @@ const testCases = useDeterministicStableId(() => {
 });
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(), {
+	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(new MockIdCompressor()), {
 		jsonValidator: typeboxValidator,
 	});
 

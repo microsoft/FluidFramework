@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -43,7 +44,6 @@ import {
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
-	testIdCompressor,
 } from "../../utils";
 import {
 	ModularChangeFamily,
@@ -95,7 +95,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, testIdCompressor, {
+const family = new ModularChangeFamily(fieldKinds, new MockIdCompressor(), {
 	jsonValidator: typeboxValidator,
 });
 

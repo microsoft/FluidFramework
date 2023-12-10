@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field";
@@ -29,7 +30,10 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 
 describe("SequenceField encoding", () => {
 	makeEncodingTestSuite(
-		SF.sequenceFieldChangeCodecFactory(TestChange.codec, new RevisionTagCodec()),
+		SF.sequenceFieldChangeCodecFactory(
+			TestChange.codec,
+			new RevisionTagCodec(new MockIdCompressor()),
+		),
 		encodingTestData,
 	);
 });
