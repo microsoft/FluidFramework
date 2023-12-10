@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { strict as assert } from "assert";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
 	combineReducers,
@@ -13,7 +13,7 @@ import {
 	AsyncGenerator,
 	Generator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MapFactory } from "../../map";
 import { ISharedMap } from "../../interfaces";
@@ -47,13 +47,13 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
 	}
 }
 
-const reducer = combineReducers<Operation, DDSFuzzTestState<MapFactory>>({
-	clear: ({ channel }) => channel.clear(),
-	setKey: ({ channel }, { key, value }) => {
-		channel.set(key, value);
+const reducer = combineReducers<Operation, State>({
+	clear: ({ client }) => client.channel.clear(),
+	setKey: ({ client }, { key, value }) => {
+		client.channel.set(key, value);
 	},
-	deleteKey: ({ channel }, { key }) => {
-		channel.delete(key);
+	deleteKey: ({ client }, { key }) => {
+		client.channel.delete(key);
 	},
 });
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { BaseSegment, ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
@@ -19,10 +19,16 @@ import { PropertySet } from "./properties";
 // Exported for test use only.
 export const TextSegmentGranularity = 256;
 
+/**
+ * @internal
+ */
 export interface IJSONTextSegment extends IJSONSegment {
 	text: string;
 }
 
+/**
+ * @alpha
+ */
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";
 
@@ -114,6 +120,10 @@ export class TextSegment extends BaseSegment {
 	}
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
+ */
 export interface IMergeTreeTextHelper {
 	getText(
 		refSeq: number,

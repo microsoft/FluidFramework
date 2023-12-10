@@ -7,29 +7,20 @@
  * Exports for `id-compressor`
  */
 
+export { IdCompressor } from "./idCompressor";
 export {
-	defaultClusterCapacity,
-	hasOngoingSession,
-	IdCompressor,
-	isFinalId,
-	isLocalId,
-} from "./idCompressor";
-export { getIds } from "./idRange";
-export {
-	NumericUuid,
-	numericUuidEquals,
-	getPositiveDelta,
+	compareFiniteNumbers,
 	createSessionId,
+	assertIsSessionId,
 	numericUuidFromStableId,
+	offsetNumericUuid,
 	stableIdFromNumericUuid,
-	incrementUuid,
-	ensureSessionUuid,
-} from "./numericUuid";
-export {
-	generateStableId,
+	subtractNumericUuids,
+	addNumericUuids,
 	assertIsStableId,
+	generateStableId,
 	isStableId,
-	assertIsUuidString,
-} from "./uuidUtilities";
-export { SessionIdNormalizer } from "./sessionIdNormalizer";
-export { fail, Mutable, getOrCreate, compareStrings } from "./utils";
+} from "./utilities";
+export { readNumericUuid, writeNumericUuid } from "./persistanceUtilities";
+export { AppendOnlySortedMap } from "./appendOnlySortedMap";
+export { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";

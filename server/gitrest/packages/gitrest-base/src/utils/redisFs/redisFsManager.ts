@@ -39,17 +39,20 @@ export class RedisFsManager implements IFileSystemManager {
 	// is `fs`, it would do `fs.promises.readfile()`. Therefore, we wrap `RedisFs`
 	// in `RedisFsManager`, with a `promises` property
 	public readonly promises: IFileSystemPromises;
+
 	constructor(
 		redisParam: RedisParams,
 		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
 	) {
-		this.promises = new RedisFs(redisParam, redisOptions, redisFsConfig);
+		this.promises = RedisFs.getInstance(redisParam, redisOptions, redisFsConfig);
 	}
 }
 
 export class RedisFs implements IFileSystemPromises {
+	private static instance: RedisFs;
 	public readonly redisFsClient: Redis;
+
 	constructor(
 		redisParams: RedisParams,
 		redisOptions: IoRedis.RedisOptions,
@@ -57,6 +60,17 @@ export class RedisFs implements IFileSystemPromises {
 	) {
 		const redisClient = new IoRedis.default(redisOptions);
 		this.redisFsClient = new Redis(redisClient, redisParams);
+	}
+
+	public static getInstance(
+		redisParams: RedisParams,
+		redisOptions: IoRedis.RedisOptions,
+		redisFsConfig: RedisFsConfig,
+	): RedisFs {
+		if (!RedisFs.instance) {
+			RedisFs.instance = new RedisFs(redisParams, redisOptions, redisFsConfig);
+		}
+		return RedisFs.instance;
 	}
 
 	/**
@@ -289,13 +303,13 @@ export class RedisFs implements IFileSystemPromises {
 
 		const deleteP = keysToRemove.map(async (key) => {
 			return executeRedisFsApi(
-				async () => this.redisFsClient.delete(key),
+				async () => this.redisFsClient.delete(key, false),
 				RedisFsApis.Rmdir,
 				RedisFSConstants.RedisFsApi,
 				this.redisFsConfig.enableRedisFsMetrics,
 				this.redisFsConfig.redisApiMetricsSamplingPeriod,
 				{
-					folderpathString,
+					key,
 				},
 			);
 		});
@@ -363,6 +377,10 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
 		const filepathString = filepath.toString();
+		if (options?.recursive) {
+			return this.rmdir(filepath);
+		}
+
 		await executeRedisFsApi(
 			async () => this.redisFsClient.delete(filepathString),
 			RedisFsApis.Removefile,
@@ -450,7 +468,10 @@ class RedisFsError extends Error {
 		return this.err.code;
 	}
 
-	constructor(public readonly err: ISystemError, message?: string) {
+	constructor(
+		public readonly err: ISystemError,
+		message?: string,
+	) {
 		super(message ? `${err.description}: ${message}` : err.description);
 		this.name = "RedisFsError";
 	}

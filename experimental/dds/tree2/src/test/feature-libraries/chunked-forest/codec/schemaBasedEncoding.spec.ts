@@ -4,18 +4,20 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
-import { SchemaBuilder, defaultSchemaPolicy } from "../../../../feature-libraries";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
+import { defaultSchemaPolicy, cursorForJsonableTreeField } from "../../../../feature-libraries";
 
 import {
 	buildCache,
 	fieldShaper,
 	oneFromSet,
-	schemaCompressedEncode,
 	treeShaper,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
-
+import {
+	makeSchemaCompressedCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/compressedCodecs";
 import {
 	AnyShape,
 	EncoderCache,
@@ -29,23 +31,24 @@ import { brand } from "../../../../util";
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
 // eslint-disable-next-line import/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { assertChunkCursorEquals, fieldCursorFromJsonableTrees } from "../fieldCursorTestUtilities";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
 import {
 	hasOptionalField,
 	library,
 	minimal,
-	numeric,
 	numericMap,
 	recursiveType,
 	testTrees,
-} from "./testTrees";
+} from "../../../testTrees";
+import { typeboxValidator } from "../../../../external-utilities";
+import { leaf, SchemaBuilder } from "../../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
-const numericShape = new NodeShape(numeric.name, true, [], undefined);
+const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {
@@ -59,16 +62,17 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldValue(minimal),
+				SchemaBuilder.required(minimal),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -78,23 +82,24 @@ describe("schemaBasedEncoding", () => {
 					type: minimal.name,
 				},
 			]);
-			assert.deepEqual(buffer, [new IdentifierToken("minimal")]);
+			assert.deepEqual(buffer, [new IdentifierToken("test.minimal")]);
 		});
 
 		it("polymorphic-value", () => {
 			const cache = new EncoderCache(
 				() => anyNodeShape,
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldValue(minimal, numeric),
+				SchemaBuilder.required([minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -107,27 +112,28 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldSequence(minimal),
+				SchemaBuilder.sequence(minimal),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
 			assert.equal(shape.shape, cache.nestedArray(onlyTypeShape));
 			assert.deepEqual(checkFieldEncode(shape, cache, []), [0]);
 			assert.deepEqual(checkFieldEncode(shape, cache, [{ type: minimal.name }]), [
-				[new IdentifierToken("minimal")],
+				[new IdentifierToken("test.minimal")],
 			]);
 			assert.deepEqual(
 				checkFieldEncode(shape, cache, [{ type: minimal.name }, { type: minimal.name }]),
-				[[new IdentifierToken("minimal"), new IdentifierToken("minimal")]],
+				[[new IdentifierToken("test.minimal"), new IdentifierToken("test.minimal")]],
 			);
 		});
 	});
@@ -137,6 +143,7 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
 			const shape = treeShaper(
 				library,
@@ -152,13 +159,14 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
@@ -178,7 +186,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [0]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: hasOptionalField.name,
-				fields: { field: [{ type: numeric.name, value: 5 }] },
+				fields: { field: [{ type: leaf.number.name, value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[5]]);
 		});
@@ -187,13 +195,14 @@ describe("schemaBasedEncoding", () => {
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
+				fieldKinds,
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
@@ -208,7 +217,7 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(bufferEmpty, [[]]);
 			const bufferFull = checkNodeEncode(shape, cache, {
 				type: numericMap.name,
-				fields: { extra: [{ type: numeric.name, value: 5 }] },
+				fields: { extra: [{ type: leaf.number.name, value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[new IdentifierToken("extra"), [5]]]);
 		});
@@ -227,23 +236,24 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
-		for (const { name, schema, treeFactory, schemaData } of testTrees) {
+		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
 				const tree = treeFactory();
 				// Check with checkFieldEncode
 				const cache = buildCache(schemaData, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				// End to end test
-				const encoded = schemaCompressedEncode(
+				const codec = makeSchemaCompressedCodec(
+					{ jsonValidator: typeboxValidator },
 					schemaData,
 					defaultSchemaPolicy,
-					fieldCursorFromJsonableTrees(tree),
 				);
-				const json = JSON.stringify(encoded);
-				const parsed = JSON.parse(json);
-				const result = decode(parsed);
-				assertChunkCursorEquals(result, tree);
+				// End to end test
+				const encoded = codec.encode(cursorForJsonableTreeField(tree));
+				const result = codec.decode(encoded);
+				const resultTree = jsonableTreesFromFieldCursor(result);
+				assert.deepEqual(resultTree, tree);
+				assert.equal(resultTree.length, tree.length);
 			});
 		}
 	});

@@ -4,11 +4,16 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Type of "valueChanged" event parameter.
+ * @alpha
  */
 export interface IValueChanged {
 	/**
@@ -28,6 +33,7 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
+ * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,7 +114,10 @@ export interface IDirectory
 
 /**
  * Events emitted in response to changes to the directory data.
+ *
+ * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
+ * @alpha
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
@@ -181,6 +190,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
+ * @alpha
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -261,6 +271,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
+ * @alpha
  */
 export interface ISharedDirectory
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -274,7 +285,8 @@ export interface ISharedDirectory
 }
 
 /**
- * Type of "valueChanged" event parameter for {@link ISharedDirectory}
+ * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
+ * @alpha
  */
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
@@ -285,6 +297,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
+ * @alpha
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -323,6 +336,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
+ * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -367,6 +381,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated.
+ * @alpha
  */
 export interface ISerializableValue {
 	/**
@@ -383,6 +398,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
+ * @alpha
  */
 export interface ISerializedValue {
 	/**

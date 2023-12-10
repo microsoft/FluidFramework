@@ -2,11 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import { Client, RedBlackTree } from "@fluidframework/merge-tree";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 
+/**
+ * @internal
+ */
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
@@ -22,15 +33,16 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	nextInterval(pos: number): TInterval | undefined;
 }
 
-class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpointIndex<TInterval> {
+export class EndpointIndex<TInterval extends ISerializableInterval>
+	implements IEndpointIndex<TInterval>
+{
 	private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
 
 	constructor(
 		private readonly client: Client,
 		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+		this.endIntervalTree = new RedBlackTree<TInterval, TInterval>((a, b) => a.compareEnd(b));
 	}
 
 	public previousInterval(pos: number): TInterval | undefined {
@@ -70,9 +82,10 @@ class EndpointIndex<TInterval extends ISerializableInterval> implements IEndpoin
 	}
 }
 
-export function createEndpointIndex<TInterval extends ISerializableInterval>(
-	client: Client,
-	helpers: IIntervalHelpers<TInterval>,
-): IEndpointIndex<TInterval> {
-	return new EndpointIndex<TInterval>(client, helpers);
+/**
+ * @internal
+ */
+export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "http";
+import { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
@@ -13,34 +13,103 @@ import { ClientManager } from "../utilities";
 import { assertValidTaskData, ITaskData } from "../model-interface";
 
 /**
+ * Expected shape of the "broadcast-signal" message that is sent to the /broadcast-signal service endpoint.
+ */
+export interface BroadcastSignalBodyInterface {
+	/**
+	 * Content of signal. Required by server.
+	 */
+	signalContent: {
+		/**
+		 * Required by server. User may add more properties besides `type` and `content` below.
+		 */
+		contents: {
+			/**
+			 * Required by server. User defined content that will be passed unchanged to client.
+			 */
+			content: unknown;
+			/**
+			 * Required. User defined content that will be passed unchanged to client.
+			 * User may consider using this type to differentiate between different signal types,
+			 * and possibly use it for versioning as well.
+			 */
+			type: string;
+		};
+	};
+}
+
+/**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
-	containerUrl: string,
 	externalTaskListId: string,
+	tenantId: string,
+	documentId: string,
 ): void {
+	const fluidService = `${fluidServiceUrl}/${tenantId}/${documentId}/broadcast-signal`;
 	console.log(
-		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
+		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidService}`,
 	);
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
-	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
-	fetch(fluidServiceUrl, {
+	const messageBody: BroadcastSignalBodyInterface = {
+		signalContent: {
+			contents: {
+				content: { externalTaskListId },
+				type: "ExternalDataChanged_V1.0.0",
+			},
+		},
+	};
+
+	fetch(fluidService, {
 		method: "POST",
 		headers: {
 			"Access-Control-Allow-Origin": "*",
 			"Content-Type": "application/json",
 		},
-		body: messageBody,
+		body: JSON.stringify(messageBody),
 	}).catch((error) => {
 		console.error(
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
 			error,
 		);
 	});
+}
+
+/**
+ * Expected shape of the request that is handled by the
+ * /events-listener endpoint
+ */
+export interface EventsListenerRequest extends express.Request {
+	body: {
+		/**
+		 * The type of the event.
+		 * Different event types expect different request parameters and produce different effects.
+		 */
+		type: string;
+	};
+}
+
+/**
+ * Expected shape of the "session-end" event request that is handled by the
+ * /events-listener endpoint
+ */
+export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
+	body: {
+		/**
+		 * The type of the event
+		 */
+		type: "session-end";
+		/**
+		 * The documentId of the Fluid container whose session has ended.
+		 */
+		documentId: string;
+		/**
+		 * The tenantId of the Fluid container whose session has ended.
+		 */
+		tenantId: string;
+	};
 }
 
 /**
@@ -62,7 +131,14 @@ export interface ServiceProps {
 	 * any time the external data service communicates them.
 	 */
 	externalDataServiceWebhookRegistrationUrl: string;
-
+	/**
+	 * URL of the endpoint used to unregister webhooks from the external data service.
+	 *
+	 * @remarks
+	 *
+	 * This endpoint will unregister a given webhook from the external data service so that it will no longer receive data change notifications.
+	 */
+	externalDataServiceWebhookUnregistrationUrl: string;
 	/**
 	 * URL of the Fluid Service to notify when external data notification comes in.
 	 *
@@ -77,9 +153,15 @@ export interface ServiceProps {
 
 /**
  * Initializes the mock customer service.
+ * @internal
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-	const { port, externalDataServiceWebhookRegistrationUrl, fluidServiceUrl } = props;
+	const {
+		port,
+		externalDataServiceWebhookRegistrationUrl,
+		externalDataServiceWebhookUnregistrationUrl,
+		fluidServiceUrl,
+	} = props;
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -142,20 +224,24 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			const containerUrls = clientManager.getClientSessions(externalTaskListId);
+			const containerSessionRecords = clientManager.getClientSessions(externalTaskListId);
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			for (const containerUrl of containerUrls) {
+			// eslint-disable-next-line unicorn/no-array-for-each
+			containerSessionRecords.forEach((record) => {
+				const tenantId = record.TenantId;
+				const documentId = record.DocumentId;
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
-					containerUrl,
 					externalTaskListId,
+					tenantId,
+					documentId,
 				);
-			}
+			});
 			result.send();
 		}
 	});
@@ -170,23 +256,26 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * ```json
 	 *	{
-	 *		containerUrl: string,
+	 *		documentId: string,
+	 *		tenantId: string,
 	 *		externalTaskListId: string
 	 *	}
 	 * ```
-	 *
-	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
-	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
-	 * object. The URL also contains all this information so for simplicity I use the url here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerUrl = request.body?.containerUrl as string;
+		const tenantId = request.body?.tenantId as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const documentId = request.body?.documentId as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as string;
-		if (containerUrl === undefined) {
-			const errorMessage =
-				'No session data provided by client. Expected under "containerUrl" property.';
+		if (tenantId === undefined) {
+			const errorMessage = "Required property 'tenantId' not provided in request body";
+			result.status(400).json({ message: errorMessage });
+			return;
+		}
+		if (documentId === undefined) {
+			const errorMessage = "Required property 'documentId' not provided in request body";
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
@@ -205,8 +294,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					// The external data service will call this service's own webhook echoer endpoint which will in turn notify our subscribers of the data changes.
 					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+					externalTaskListId,
 				}),
 			}).catch((error) => {
 				console.error(
@@ -219,12 +309,81 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			});
 		}
 
-		clientManager.registerClient(containerUrl, externalTaskListId);
+		const containerSessionInfo = { TenantId: tenantId, DocumentId: documentId };
+		clientManager.registerClient(containerSessionInfo, externalTaskListId);
 		console.log(
 			formatLogMessage(
-				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+				`Registered containerSessionInfo ${JSON.stringify(
+					containerSessionInfo,
+				)} with external query: ${externalTaskListId}".`,
 			),
 		);
+
+		result.send();
+	});
+
+	/**
+	 * An 'events' endpoint that can be called by Fluid services.
+	 *
+	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If after unregistering the given client URL, there are any task ids that have an outstanding
+	 * webhook registered using this service's internal '/external-data-webhook' endpoint but has no respective active client sessions mapped to them anymore,
+	 * then those webhooks will be deregistered.
+	 *
+	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
+	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
+	 */
+	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
+		const eventType = request.body?.type;
+
+		if (eventType === "session-end") {
+			const typedRequest = request as SessionEndEventsListenerRequest;
+			const documentId = typedRequest.body?.documentId;
+			if (documentId === undefined || typeof documentId !== "string") {
+				const errorMessage = `Missing or malformed documentId: ${documentId}`;
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+
+			const tenantId = typedRequest.body?.tenantId;
+			if (tenantId === undefined || typeof tenantId !== "string") {
+				const errorMessage = `Missing or malformed tenantId: ${tenantId}`;
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+
+			// Removes the mapping of the given container URL from all task id's
+			const emptyTaskListRegistrationIds = clientManager.removeAllClientTaskListRegistrations(
+				{ TenantId: tenantId, DocumentId: documentId },
+			);
+			// If there are any task list id's that no longer have any active client sessions mapped to them
+			// then we should deregister our webhook for that task list id.
+			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {
+				fetch(externalDataServiceWebhookUnregistrationUrl, {
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						// External data service will call our webhook echoer to notify our subscribers of the data changes.
+						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${emptyExternalTaskListId}`,
+						emptyExternalTaskListId,
+					}),
+				}).catch((error) => {
+					console.error(
+						formatLogMessage(
+							`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
+						),
+						error,
+					);
+					throw error;
+				});
+			}
+		} else {
+			const errorMessage = `Unexpected event type: ${eventType}`;
+			console.error(formatLogMessage(errorMessage));
+			result.status(400).json({ errorMessage });
+		}
 
 		result.send();
 	});

@@ -17,6 +17,9 @@
  *   default: unreachableCase(bool);
  * }
  * ```
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
+ * @internal
  */
 export function unreachableCase(_: never, message = "Unreachable Case"): never {
 	throw new Error(message);

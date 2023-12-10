@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-lambdas",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid service lambdas",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,21 +17,21 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test/*.spec.js --unhandled-rejections=strict",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"test": "mocha --recursive \"dist/test/*.spec.js\"",
+		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -52,11 +52,11 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-definitions": "^1.0.0",
+		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^2.1.0",
+		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
@@ -64,7 +64,7 @@
 		"@types/semver": "^7.5.0",
 		"assert": "^2.0.0",
 		"async": "^3.2.2",
-		"axios": "^0.26.0",
+		"axios": "^1.6.2",
 		"buffer": "^6.0.3",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
@@ -73,28 +73,28 @@
 		"nconf": "^0.12.0",
 		"semver": "^7.5.3",
 		"sha.js": "^2.4.11",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@0.1040.1000",
+		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",
 		"@types/json-stringify-safe": "^5.0.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
-		"@types/uuid": "^8.3.0",
-		"concurrently": "^7.6.0",
+		"@types/uuid": "^9.0.2",
+		"c8": "^7.7.1",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"source-map-loader": "^0.2.4",
@@ -104,26 +104,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DeliLambda": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ICheckpointParams": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ILatestSummaryState": {
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_getRandomInt": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ForemanLambda": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ForemanLambdaFactory": {
-				"forwardCompat": false,
-				"backCompat": false
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

@@ -7,7 +7,7 @@
 		"dockerfile": "Dockerfile",
 		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
 		"args": {
-			"NODE_VERSION": "16"
+			"NODE_VERSION": "18"
 		}
 	},
 	"runArgs": ["--init"],

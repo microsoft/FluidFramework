@@ -12,6 +12,7 @@ import { FlaggedError } from "./flaggedError";
  * @param method - The HTTP method used in the request
  * @param url - The URL that the request was sent to
  * @param flags - Flags that characterize the error. See {@link FlaggedError.FLAGS}.
+ * @internal
  */
 export class HTTPError extends Error {
 	constructor(
@@ -60,6 +61,7 @@ export class HTTPError extends Error {
 		const stack = this.stack === undefined ? "" : String(this.stack);
 
 		const isFirefox =
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- optional chain causes a test failure
 			typeof window !== "undefined" &&
 			typeof window.navigator !== "undefined" &&
 			typeof window.navigator.userAgent !== "undefined" &&

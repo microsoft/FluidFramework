@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	MonitoringContext,
+	UsageError,
+	validatePrecondition,
+} from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
@@ -16,7 +19,7 @@ import {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -25,8 +28,12 @@ import {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
+	throwOnTombstoneLoadOverrideKey,
+	throwOnTombstoneUsageKey,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	defaultSweepGracePeriodMs,
 } from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
+import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -43,6 +50,7 @@ export function generateGCConfigs(
 		gcOptions: IGCRuntimeOptions;
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
+		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean;
@@ -108,7 +116,7 @@ export function generateGCConfigs(
 
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
+		mc.config.getBoolean(gcVersionUpgradeToV4Key) === true ? nextGCVersion : stableGCVersion;
 
 	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
 	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
@@ -156,10 +164,34 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
-	// Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
-	// via feature flags.
-	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
+	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
+	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
+	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
+
+	const sweepGracePeriodMs =
+		createParams.gcOptions.sweepGracePeriodMs ?? defaultSweepGracePeriodMs;
+	validatePrecondition(sweepGracePeriodMs >= 0, "sweepGracePeriodMs must be non-negative", {
+		sweepGracePeriodMs,
+	});
+
+	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
+		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+		createParams.gcOptions[gcTombstoneGenerationOptionName] /* current */,
+	);
+
+	const throwOnTombstoneLoadConfig =
+		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
+		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
+	const throwOnTombstoneLoad =
+		throwOnTombstoneLoadConfig &&
+		tombstoneEnforcementAllowed &&
+		!createParams.isSummarizerClient;
+	const throwOnTombstoneUsage =
+		mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+		tombstoneEnforcementAllowed &&
+		!createParams.isSummarizerClient;
 
 	return {
 		gcEnabled,
@@ -171,10 +203,15 @@ export function generateGCConfigs(
 		tombstoneMode,
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
+		sweepGracePeriodMs,
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,
+		throwOnInactiveLoad,
+		tombstoneEnforcementAllowed,
+		throwOnTombstoneLoad,
+		throwOnTombstoneUsage,
 	};
 }
 

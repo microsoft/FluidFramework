@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export enum SummaryCompressionAlgorithm {
 	None = 0,
 	LZ4 = 1,
 }
 
+/**
+ * @alpha
+ */
 export interface ICompressionStorageConfig {
 	algorithm: SummaryCompressionAlgorithm;
 	minSizeToCompress: number;

@@ -14,6 +14,7 @@ import {
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { json, urlencoded } from "body-parser";
@@ -42,6 +43,7 @@ export function create(
 	// Express app configuration
 	const app: Express = express();
 
+	app.use(bindTelemetryContext());
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(

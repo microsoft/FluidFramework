@@ -6,6 +6,9 @@
 import { IDocument, IDocumentRepository } from "@fluidframework/server-services-core";
 
 const defaultErrorMsg = "Method not implemented. Provide your own mock.";
+/**
+ * @internal
+ */
 export class TestNotImplementedDocumentRepository implements IDocumentRepository {
 	async create(document: IDocument): Promise<any> {
 		throw new Error(defaultErrorMsg);
@@ -16,6 +19,10 @@ export class TestNotImplementedDocumentRepository implements IDocumentRepository
 	}
 
 	async updateOne(filter: any, update: any, options?: any): Promise<void> {
+		throw new Error(defaultErrorMsg);
+	}
+
+	async deleteOne(filter: any): Promise<any> {
 		throw new Error(defaultErrorMsg);
 	}
 

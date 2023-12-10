@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { FieldKey, TreeSchemaIdentifier } from "../schema-stored";
-import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
  * @alpha
  */
-export type TreeType = TreeSchemaIdentifier;
+export type TreeType = TreeNodeSchemaIdentifier;
 
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
@@ -20,7 +20,7 @@ export type TreeType = TreeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a FieldKey since different nodes will have different FieldStoredSchema for it.
+ * This has to be a FieldKey since different nodes will have different TreeFieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
  * @alpha
@@ -74,9 +74,6 @@ export type ChildCollection = FieldKey | RootField;
  * any additional content inserted before or after contents of this range will be included in the range.
  * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
  *
- * DetachedFields are not valid to use as across edits:
- * they are only valid within the edit in which they were created.
- *
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
  * @alpha
@@ -118,17 +115,19 @@ export interface FieldKind {
 }
 
 /**
- * Value that may be stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- *
- * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
+ * Value that may be stored on a leaf node.
  * @alpha
  */
-export interface TreeValue extends Serializable {}
+export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
+	{
+		[ValueSchema.Number]: number;
+		[ValueSchema.String]: string;
+		[ValueSchema.Boolean]: boolean;
+		[ValueSchema.FluidHandle]: IFluidHandle;
+		// eslint-disable-next-line @rushstack/no-new-null
+		[ValueSchema.Null]: null;
+	}[TSchema],
+][_InlineTrick];
 
 /**
  * Value stored on a node.
@@ -138,10 +137,12 @@ export type Value = undefined | TreeValue;
 
 /**
  * The fields required by a node in a tree.
- * @alpha
- * @privateRemarks - A forked version of this type is used in `persistedTreeTextFormat.ts`.
+ *
+ * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
+ *
+ * @alpha
  */
 export interface NodeData {
 	/**
@@ -158,5 +159,12 @@ export interface NodeData {
 	 * Provides contexts/semantics for this node and its content.
 	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
-	readonly type: TreeSchemaIdentifier;
+	readonly type: TreeNodeSchemaIdentifier;
 }
+
+/**
+ * Use this type to indicate that a node sits above the detached fields, and thus is not a real node and who's type should not matter.
+ */
+export const aboveRootPlaceholder: TreeNodeSchemaIdentifier = brand(
+	"com.fluidframework.placeholder.aboveRoot",
+);

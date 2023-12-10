@@ -3,18 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
+import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
-	RangeEntry,
 	RangeMap,
-	brand,
-	getFirstFromRangeMap,
+	RangeQueryResult,
+	getFromRangeMap,
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util";
-import { IdAllocator } from "./fieldChangeHandler";
-import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
@@ -43,8 +39,8 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeEntry<T> | undefined {
-	return getFirstFromRangeMap(map.get(revision) ?? [], id, count);
+): RangeQueryResult<T> {
+	return getFromRangeMap(map.get(revision) ?? [], id, count);
 }
 
 /**
@@ -71,12 +67,12 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeEntry<T> | undefined;
+	): RangeQueryResult<T>;
 
 	/**
-	 * If there is no data for this key, sets the value to `newValue`, then returns the data for this key.
+	 * Sets the range of keys to `newValue`.
 	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
-	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose` as appropriate.
+	 * and will be given a chance to address the new data in `amendCompose`, or a second pass of `rebase` or `invert` as appropriate.
 	 */
 	set(
 		target: CrossFieldTarget,
@@ -86,25 +82,4 @@ export interface CrossFieldManager<T = unknown> {
 		newValue: T,
 		invalidateDependents: boolean,
 	): void;
-}
-
-export interface IdAllocationState {
-	maxId: ChangesetLocalId;
-}
-
-/**
- * @alpha
- */
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	return idAllocatorFromState({ maxId: maxId ?? brand(-1) });
-}
-
-export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
-	return (c?: number) => {
-		const count = c ?? 1;
-		assert(count > 0, 0x5cf /* Must allocate at least one ID */);
-		const id: ChangesetLocalId = brand((state.maxId as number) + 1);
-		state.maxId = brand((state.maxId as number) + count);
-		return id;
-	};
 }

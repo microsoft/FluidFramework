@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -27,6 +27,7 @@ export const currentReadVersion = "1.0";
 /**
  * The parsing is significantly faster if the position of props is well known instead of dynamic. So these variables
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
+ * @internal
  */
 export interface ISnapshotContentsWithProps extends ISnapshotContents {
 	telemetryProps: Record<string, number>;
@@ -215,7 +216,8 @@ function readSnapshotSection(node: NodeTypes) {
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
- * @returns - tree, blobs and ops from the snapshot.
+ * @returns Tree, blobs and ops from the snapshot.
+ * @internal
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,

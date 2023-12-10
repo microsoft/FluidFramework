@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
@@ -18,9 +19,12 @@ import {
 	CommonProperties,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { AxiosRequestHeaders } from "axios";
+import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
 
+/**
+ * @internal
+ */
 export class Tenant implements core.ITenant {
 	public get id(): string {
 		return this.config.id;
@@ -46,12 +50,26 @@ export class Tenant implements core.ITenant {
 
 /**
  * Manages a collection of tenants
+ * @internal
  */
 export class TenantManager implements core.ITenantManager, core.ITenantConfigManager {
-	constructor(private readonly endpoint: string, private readonly internalHistorianUrl: string) {}
+	constructor(
+		private readonly endpoint: string,
+		private readonly internalHistorianUrl: string,
+	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
-		const restWrapper = new BasicRestWrapper();
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			getCorrelationId,
+		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
 			undefined,
@@ -96,10 +114,14 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
-				password: generateToken(tenantId, documentId, key, null),
+				password: generateToken(tenantId, documentId, key, [
+					ScopeType.DocWrite,
+					ScopeType.DocRead,
+					ScopeType.SummaryWrite,
+				]),
 				user: tenantId,
 			};
-			const headers: AxiosRequestHeaders = {
+			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
 			if (storageName) {
@@ -126,19 +148,24 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			getDefaultHeaders,
 			getCorrelationId,
 		);
-		const historian = new Historian(
-			`${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
-			true,
-			false,
-			tenantRestWrapper,
-		);
+		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
 
 		return gitManager;
 	}
 
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
-		const restWrapper = new BasicRestWrapper();
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			getCorrelationId,
+		);
 		await restWrapper.post(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
 			{ token },
@@ -146,7 +173,17 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
-		const restWrapper = new BasicRestWrapper();
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			getCorrelationId,
+		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
 			{ includeDisabledTenant },
@@ -166,7 +203,17 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenantConfig> {
-		const restWrapper = new BasicRestWrapper();
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			getCorrelationId,
+		);
 		return restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
 			includeDisabledTenant,
 		});

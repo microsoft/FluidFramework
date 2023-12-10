@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -171,6 +172,12 @@ export class SnapshotLegacy {
 		);
 
 		if (catchUpMsgs !== undefined && catchUpMsgs.length > 0) {
+			// Messages used to have a "term" property which has since been removed.
+			// It is benign so it doesn't really need to be deleted here, but doing so permits snapshot tests
+			// to pass with an exact match (and matching the updated definition of ISequencedDocumentMessage).
+			catchUpMsgs.forEach((message) => {
+				delete (message as any).term;
+			});
 			builder.addBlob(
 				this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
 				serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),

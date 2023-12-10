@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+/* eslint-disable import/no-deprecated */
+
+import { assert } from "@fluidframework/core-utils";
 import {
 	Client,
 	IMergeTreeDeltaCallbackArgs,
@@ -23,6 +25,7 @@ import {
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into any future modifications performed to the underlying sequence and merge tree.
+ * @alpha
  */
 export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
@@ -105,6 +108,7 @@ export abstract class SequenceEvent<
  * For group ops, each op will get its own event, and the group op property will be set on the op args.
  *
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
+ * @alpha
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
 	/**
@@ -128,6 +132,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * The properties of this object and its sub-objects represent the state of the sequence at the
  * point in time at which the operation was applied.
  * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
+ * @alpha
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	constructor(
@@ -141,31 +146,40 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 /**
  * A range that has changed corresponding to a segment modification.
+ * @alpha
  */
 export interface ISequenceDeltaRange<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	/**
 	 * The type of operation that changed this range.
-	 * @remarks - Consuming code should typically compare this to the enum values defined in
+	 *
+	 * @remarks Consuming code should typically compare this to the enum values defined in
 	 * `MergeTreeDeltaOperationTypes`.
 	 */
 	operation: TOperation;
+
 	/**
 	 * The index of the start of the range.
 	 */
 	position: number;
+
 	/**
 	 * The segment that corresponds to the range.
 	 */
 	segment: ISegment;
+
 	/**
 	 * Deltas object which contains all modified properties with their previous values.
 	 * Since `undefined` doesn't survive a round-trip through JSON serialization, the old value being absent
 	 * is instead encoded with `null`.
-	 * @remarks - This object is motivated by undo/redo scenarios, and provides a convenient "inverse op" to apply to
+	 *
+	 * @remarks This object is motivated by undo/redo scenarios, and provides a convenient "inverse op" to apply to
 	 * undo a property change.
-	 * @example - If a segment initially had properties `{ foo: "1", bar: 2 }` and it was annotated with
+	 *
+	 * @example
+	 *
+	 * If a segment initially had properties `{ foo: "1", bar: 2 }` and it was annotated with
 	 * `{ foo: 3, baz: 5 }`, the corresponding event would have a `propertyDeltas` of `{ foo: "1", baz: null }`.
 	 */
 	propertyDeltas: PropertySet;

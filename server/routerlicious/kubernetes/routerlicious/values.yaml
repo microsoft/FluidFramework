@@ -57,7 +57,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
-  checkpointsTTLInSeconds: 864000
+  checkpointsTTLInSeconds: -1
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -107,7 +107,7 @@ zookeeper:
 
 system:
   httpServer:
-    connectionTimeout: 0
+    connectionTimeoutMs: 0
 
 usage:
   clientConnectivityCountingEnabled: false
@@ -129,9 +129,6 @@ mongodb:
   softDeletionEnabled: false
   permanentDeletionEnabled: false
   deletionIntervalMs: 3600000
-
-rabbitmq:
-  connectionString: ""
 
 redis:
   url: redis_url
@@ -167,3 +164,18 @@ ingress:
 error:
   track: true
   endpoint: "error_tracking_endpoint"
+
+lumberjack:
+  options:
+    enableGlobalTelemetryContext: true
+    enableSanitization: false
+
+config:
+  configDumpEnabled: false
+  secretNamesToRedactInConfigDump:
+    - mongo.globalDbEndpoint
+    - mongo.operationsDbEndpoint
+    - redis.pass
+    - redisForTenantCache.pass
+    - redis2.pass
+    - redisForThrottling.pass

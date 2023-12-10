@@ -8,6 +8,7 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -18,6 +19,7 @@ import { DriverVersionHeaderName } from "@fluidframework/server-services-client"
 import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
+	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
@@ -32,6 +34,7 @@ export function create(
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
@@ -53,6 +56,7 @@ export function create(
 	};
 	app.use(restLessMiddleware());
 
+	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
@@ -91,6 +95,7 @@ export function create(
 		storageNameRetriever,
 		restTenantThrottlers,
 		restClusterThrottlers,
+		documentManager,
 		cache,
 		asyncLocalStorage,
 		revokedTokenChecker,

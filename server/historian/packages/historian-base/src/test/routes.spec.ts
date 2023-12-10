@@ -102,6 +102,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -207,6 +208,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -326,6 +328,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -433,6 +436,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -503,6 +507,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -565,6 +570,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -626,6 +632,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -715,6 +722,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -808,6 +816,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -915,6 +924,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1003,6 +1013,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1065,6 +1076,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1119,6 +1131,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);
@@ -1176,6 +1189,7 @@ describe("routes", () => {
 					undefined,
 					tenantThrottlers,
 					clusterThrottlers,
+					undefined,
 					defaultCache,
 					asyncLocalStorage,
 				);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IDeltaService,
@@ -14,6 +15,7 @@ import {
 	IThrottler,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -37,6 +39,7 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -70,6 +73,7 @@ export function create(
 		tenantThrottlers,
 		singleUseTokenCache,
 		revokedTokenChecker,
+		collaborationSessionEventEmitter,
 	);
 
 	router.use(cors());

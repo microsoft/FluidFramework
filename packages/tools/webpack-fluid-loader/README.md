@@ -18,6 +18,7 @@ See the [Azure Fluid Relay](#azure-fluid-relay) and [SharePoint](#sharepoint) se
 | `tenantSecret`             | Secret for your tenant                                                                                   |
 | `bearerSecret`             | Secret for your bearer                                                                                   |
 | `enableWholeSummaryUpload` | Enables whole summary upload functionality (required for Azure Fluid Relay)                              |
+| `isEphemeralContainer`     | Indicates that the container is ephemeral (required for Azure Fluid Relay)                               |
 
 | modes         | description                                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------------------- |
@@ -58,6 +59,7 @@ npm run start -- --env fluidHost=https://fluidhost.com --env tenantId=my_tenant 
 -   `fluid__webpack__bearerSecret`
 -   `fluid__webpack__npm`
 -   `fluid__webpack__enableWholeSummaryUpload`
+-   `fluid__webpack__isEphemeralContainer`
 
 ### config file:
 
@@ -73,7 +75,8 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 			"tenantSecret": "my_secret",
 			"bearerSecret": "bear_secret",
 			"npm": "npm.com",
-			"enableWholeSummaryUpload": false
+			"enableWholeSummaryUpload": false,
+			"isEphemeralContainer": false
 		}
 	}
 }
@@ -94,7 +97,8 @@ npm run start:r11s --env mode=r11s \
                    --env enableWholeSummaryUpload=true \
                    --env tenantId=$TenantId \
                    --env tenantSecret=$PrimaryKey \
-                   --env discoveryEndpoint=$ServiceEndpoint
+                   --env discoveryEndpoint=$ServiceEndpoint \
+				   --env isEphemeralContainer=$isEphemeralContainer
 ```
 
 ## SharePoint
@@ -122,8 +126,7 @@ Two keys are provided to enable a production system to to regenerate a key witho
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

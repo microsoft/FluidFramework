@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
@@ -41,12 +41,6 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 * Returns the current client's ID.
 	 */
 	readonly getClientID: () => string | undefined;
-
-	/**
-	 * Send custom signal to simulate being the RuntimeMessage signal
-	 * from alfred while that signal is in prototype state on the dev branch.
-	 */
-	readonly sendCustomDebugSignal: () => void;
 
 	/**
 	 * Returns the resolved URL for the attached container. If container is not

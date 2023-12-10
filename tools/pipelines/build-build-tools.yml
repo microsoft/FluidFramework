@@ -46,6 +46,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -55,6 +56,9 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 pr:
   branches:
@@ -65,12 +69,16 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 extends:
   template: templates/build-npm-package.yml
@@ -83,8 +91,12 @@ extends:
     packageManager: pnpm
     buildDirectory: build-tools
     tagName: build-tools
+    isReleaseGroup: true
     taskBuild: build
     taskBuildDocs: false
+    tasktest:
+    - ci:test
+    - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
     poolBuild: Large
@@ -93,4 +105,5 @@ extends:
     checks:
     - syncpack:deps
     - syncpack:versions
+    - generate:packageList
     - prettier

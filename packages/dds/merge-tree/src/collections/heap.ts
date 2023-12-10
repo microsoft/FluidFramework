@@ -13,7 +13,10 @@ export class Heap<T> {
 	public count() {
 		return this.L.length - 1;
 	}
-	constructor(a: T[], public comp: Comparer<T>) {
+	constructor(
+		a: T[],
+		public comp: Comparer<T>,
+	) {
 		this.L = [comp.min];
 		for (let i = 0, len = a.length; i < len; i++) {
 			this.add(a[i]);

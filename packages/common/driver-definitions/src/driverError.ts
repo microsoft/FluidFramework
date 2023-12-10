@@ -3,11 +3,119 @@
  * Licensed under the MIT License.
  */
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+
 import { IResolvedUrl } from "./urlResolver";
+
+// Omit `dataCorruptionError` and `dataProcessingError` from the list of values inherited from FluidErrorTypes
+const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTypes } =
+	FluidErrorTypes;
+
+/**
+ * Different error types the Driver may report out to the Host.
+ * @internal
+ */
+export const DriverErrorTypes = {
+	// Inherit base error types
+	...FluidErrorTypesExceptDataTypes,
+
+	/**
+	 * Some non-categorized (below) networking error
+	 * Include errors like  fatal server error (usually 500).
+	 */
+	genericNetworkError: "genericNetworkError",
+
+	/**
+	 * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
+	 */
+	authorizationError: "authorizationError",
+
+	/**
+	 * File not found, or file deleted during session
+	 */
+	fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError",
+
+	/**
+	 * We can not reach server due to computer being offline.
+	 */
+	offlineError: "offlineError",
+
+	/*
+	 * Unsupported client protocol
+	 */
+	unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion",
+
+	/**
+	 * User does not have write permissions to a file, but is changing content of a file.
+	 * That might be indication of some data store error - data stores should not generate ops in readonly mode.
+	 */
+	writeError: "writeError",
+
+	/**
+	 * A generic fetch failure that indicates we were not able to get a response from the server.
+	 * This may be due to the client being offline (though, if we are able to detect offline state it will be
+	 * logged as an offlineError instead).  Other possibilities could be DNS errors, malformed fetch request,
+	 * CSP violation, etc.
+	 */
+	fetchFailure: "fetchFailure",
+
+	/**
+	 * This error occurs when token provider fails to fetch orderer token
+	 */
+	fetchTokenError: "fetchTokenError",
+
+	/**
+	 * Unexpected response from server. Either JSON is malformed, or some required properties are missing
+	 */
+	incorrectServerResponse: "incorrectServerResponse",
+
+	/**
+	 * This error occurs when the file is modified externally (not through Fluid protocol) in storage.
+	 * It will occur in cases where client has some state or cache that is based on old content (identity) of a file,
+	 * and storage / driver / loader detects such mismatch.
+	 * When it's hit, client needs to forget all the knowledge about this file and start over.
+	 */
+	fileOverwrittenInStorage: "fileOverwrittenInStorage",
+
+	/**
+	 * The document is read-only and delta stream connection is forbidden.
+	 */
+	deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden",
+
+	/**
+	 * The location of file/container can change on server. So if the file location moves and we try to access the old
+	 * location, then this error is thrown to let the client know about the new location info.
+	 */
+	locationRedirection: "locationRedirection",
+
+	/**
+	 * When a file is not a Fluid file, but has Fluid extension such as ".note",
+	 * server won't be able to open it and will return this error. The innerMostErrorCode will be
+	 * "fluidInvalidSchema"
+	 */
+	fluidInvalidSchema: "fluidInvalidSchema",
+
+	/**
+	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
+	 */
+	fileIsLocked: "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError: "outOfStorageError",
+} as const;
+/**
+ * @internal
+ */
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 /**
  * Driver Error types
  * Lists types that are likely to be used by all drivers
+ *
+ * @deprecated Use {@link (DriverErrorTypes:type)} instead.
+ * @alpha
  */
 export enum DriverErrorType {
 	/**
@@ -106,6 +214,11 @@ export enum DriverErrorType {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked = "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError = "outOfStorageError",
 }
 
 /**
@@ -116,6 +229,7 @@ export enum DriverErrorType {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
+ * @alpha
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
@@ -123,10 +237,13 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 
 /**
  * Base interface for all errors and warnings
+ * @alpha
  */
 export interface IDriverErrorBase {
 	/**
-	 * Classification of what type of error this is, used programmatically by consumers to interpret the error
+	 * Classification of what type of error this is, used programmatically by consumers to interpret the error.
+	 *
+	 * @privateRemarks TODO: use {@link DriverErrorTypes} instead (breaking change).
 	 */
 	readonly errorType: DriverErrorType;
 
@@ -152,22 +269,34 @@ export interface IDriverErrorBase {
 	endpointReached?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IThrottlingWarning extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.throttlingError;
 	readonly retryAfterSeconds: number;
 }
 
+/**
+ * @internal
+ */
 export interface IGenericNetworkError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.genericNetworkError;
 	readonly statusCode?: number;
 }
 
+/**
+ * @internal
+ */
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.authorizationError;
 	readonly claims?: string;
 	readonly tenantId?: string;
 }
 
+/**
+ * @internal
+ */
 export interface ILocationRedirectionError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.locationRedirection;
 	readonly redirectUrl: IResolvedUrl;
@@ -176,6 +305,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
+ * @internal
  */
 export interface IDriverBasicError extends IDriverErrorBase {
 	readonly errorType:
@@ -190,10 +320,14 @@ export interface IDriverBasicError extends IDriverErrorBase {
 		| DriverErrorType.fileOverwrittenInStorage
 		| DriverErrorType.fluidInvalidSchema
 		| DriverErrorType.usageError
-		| DriverErrorType.fileIsLocked;
+		| DriverErrorType.fileIsLocked
+		| DriverErrorType.outOfStorageError;
 	readonly statusCode?: number;
 }
 
+/**
+ * @internal
+ */
 export type DriverError =
 	| IThrottlingWarning
 	| IGenericNetworkError

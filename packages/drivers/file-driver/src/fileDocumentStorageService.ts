@@ -4,7 +4,8 @@
  */
 
 import fs from "fs";
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -12,6 +13,9 @@ import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/r
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
+/**
+ * @internal
+ */
 export const FileStorageDocumentName = "FileStorageDocId"; // Some unique document name
 
 // Tree ID use to communicate between getVersions() & getSnapshotTree() that IVersion is ours.
@@ -19,6 +23,7 @@ const FileStorageVersionTreeId = "FileStorageTreeId";
 
 /**
  * Document storage service for the file driver.
+ * @internal
  */
 export class FluidFetchReader
 	extends ReadDocumentStorageServiceBase
@@ -26,7 +31,10 @@ export class FluidFetchReader
 {
 	protected docTree: api.ISnapshotTree | null = null;
 
-	constructor(private readonly path: string, private readonly versionName?: string) {
+	constructor(
+		private readonly path: string,
+		private readonly versionName?: string,
+	) {
 		super();
 	}
 
@@ -34,6 +42,7 @@ export class FluidFetchReader
 	 * Read the file and returns the snapshot tree.
 	 * @param version - The version contains the path of the file which contains the snapshot tree.
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
 		assert(version !== null, 0x092 /* "version input for reading snapshot tree is null!" */);
 		assert(
@@ -73,9 +82,10 @@ export class FluidFetchReader
 	 * @param versionId - version ID.
 	 * @param count - Number of versions to be returned.
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
 		if (versionId === FileStorageDocumentName || versionId === null) {
-			if (this.docTree || this.versionName !== undefined) {
+			if (this.docTree !== null || this.versionName !== undefined) {
 				return [{ id: "latest", treeId: FileStorageVersionTreeId }];
 			}
 			// Started with ops - return empty set.
@@ -104,12 +114,21 @@ export class FluidFetchReader
 	}
 }
 
+/**
+ * @internal
+ */
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
 	onSnapshotHandler(snapshot: IFileSnapshot): void;
 	reset(): void;
 }
 
+/**
+ * @internal
+ */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
+/**
+ * @internal
+ */
 export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
 	class extends Base implements ISnapshotWriterStorage {
 		// Note: if variable name has same name as in base class, it overrides it!
@@ -135,6 +154,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			return super.readBlob(sha);
 		}
 
+		// eslint-disable-next-line @rushstack/no-new-null
 		public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
 			// If we already saved document, that means we are getting here because of snapshot generation.
 			// Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
@@ -152,6 +172,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			return super.getVersions(versionId, count);
 		}
 
+		// eslint-disable-next-line @rushstack/no-new-null
 		public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
 			if (this.latestWriterTree && (!version || version.id === "latest")) {
 				return this.latestWriterTree;
@@ -220,4 +241,7 @@ function removeNullTreeIds(tree: api.ITree) {
 	);
 	delete tree.id;
 }
+/**
+ * @internal
+ */
 export const FluidFetchReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(FluidFetchReader);

@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { assert, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -51,6 +52,7 @@ import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
+ * @internal
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -93,6 +95,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
+/**
+ * @internal
+ */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
 	clientSequenceNumber: number;
@@ -101,6 +106,7 @@ export interface IMockContainerRuntimePendingMessage {
 
 /**
  * Options for the container runtime mock.
+ * @internal
  */
 export interface IMockContainerRuntimeOptions {
 	/**
@@ -141,11 +147,15 @@ interface IInternalMockRuntimeMessage {
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
+ * @internal
  */
 export class MockContainerRuntime {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
 	private readonly deltaManager: MockDeltaManager;
+	/**
+	 * @deprecated use the associated datastore to create the delta connection
+	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
@@ -181,6 +191,9 @@ export class MockContainerRuntime {
 		);
 	}
 
+	/**
+	 * @deprecated use the associated datastore to create the delta connection
+	 */
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
@@ -194,10 +207,10 @@ export class MockContainerRuntime {
 			localOpMetadata,
 		};
 
+		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				this.submitInternal(message);
-				this.clientSequenceNumber++;
+				this.submitInternal(message, clientSequenceNumber);
 				break;
 			}
 
@@ -224,9 +237,19 @@ export class MockContainerRuntime {
 			return;
 		}
 
+		let fakeClientSequenceNumber = 1;
 		while (this.outbox.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.submitInternal(this.outbox.shift()!);
+			this.submitInternal(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.outbox.shift()!,
+				// When grouped batching is used, the ops within the same grouped batch will have
+				// fake sequence numbers when they're ungrouped. The submit function will still
+				// return the clientSequenceNumber but this will ensure that the readers will always
+				// read the fake client sequence numbers.
+				this.runtimeOptions.enableGroupedBatching
+					? fakeClientSequenceNumber++
+					: this.clientSequenceNumber,
+			);
 		}
 	}
 
@@ -254,15 +277,15 @@ export class MockContainerRuntime {
 		);
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage) {
+	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
 		this.factory.pushMessage({
 			clientId: this.clientId,
-			clientSequenceNumber: this.clientSequenceNumber,
+			clientSequenceNumber,
 			contents: message.content,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
 		});
-		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
+		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -271,13 +294,6 @@ export class MockContainerRuntime {
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
 		this.dataStoreRuntime.process(message, local, localOpMetadata);
-
-		if (this.runtimeOptions.enableGroupedBatching) {
-			// If the grouped batching scenario is enabled, we need to advance the
-			// client sequence number when we process a remote op. Sending ops will
-			// not increment this value.
-			this.clientSequenceNumber++;
-		}
 	}
 
 	protected addPendingMessage(
@@ -300,7 +316,7 @@ export class MockContainerRuntime {
 			const pendingMessage = this.pendingMessages.shift();
 			assert(
 				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
-				"Unexpected client sequence number from message",
+				"Unexpected message",
 			);
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
@@ -321,6 +337,7 @@ export class MockContainerRuntime {
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
+ * @internal
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -353,12 +370,26 @@ export class MockContainerRuntimeFactory {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quorum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
+			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(
@@ -449,6 +480,9 @@ export class MockContainerRuntimeFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
 	private readonly eventEmitter = new EventEmitter();
@@ -545,6 +579,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
+ * @internal
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
@@ -554,14 +589,19 @@ export class MockFluidDataStoreRuntime
 		clientId?: string;
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
+		logger?: ITelemetryLoggerExt;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
 		this.id = overrides?.id ?? uuid();
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
 	}
 
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -577,7 +617,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -592,9 +632,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt = createChildLogger({
-		namespace: "fluid:MockFluidDataStoreRuntime",
-	});
+	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
@@ -734,6 +772,10 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && clientId !== undefined) {
+			this.clientId = clientId;
+		}
+		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
 	}
 
@@ -742,7 +784,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
@@ -818,6 +860,7 @@ export class MockFluidDataStoreRuntime
 
 /**
  * Mock implementation of IDeltaConnection
+ * @internal
  */
 export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public connected = false;
@@ -834,6 +877,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
+ * @internal
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
@@ -856,6 +900,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
+ * @internal
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

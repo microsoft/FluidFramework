@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ISequencedDocumentMessage,
 	ISummaryAck,
@@ -549,6 +549,10 @@ function processOp(
 			}
 			// skip for now because these ops do not have contents
 			case ContainerMessageType.BlobAttach: {
+				break;
+			}
+			// The default method to count stats should be used for GC messages.
+			case ContainerMessageType.GC: {
 				break;
 			}
 			case ContainerMessageType.ChunkedOp: {

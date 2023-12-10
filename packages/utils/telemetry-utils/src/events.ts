@@ -3,18 +3,36 @@
  * Licensed under the MIT License.
  */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+/**
+ * Note: The contents of this file really don't belong in this package, as they are only intended for internal use.
+ * They should be moved into the `core-utils` package in the future.
+ */
+
+/**
+ * @internal
+ */
 export const connectedEventName = "connected";
+
+/**
+ * @internal
+ */
 export const disconnectedEventName = "disconnected";
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export function safeRaiseEvent(
 	emitter: EventEmitter,
 	logger: ITelemetryLoggerExt,
 	event: string,
-	...args
-) {
+	...args: unknown[]
+): void {
 	try {
 		emitter.emit(event, ...args);
 	} catch (error) {
@@ -29,6 +47,8 @@ export function safeRaiseEvent(
  * @param connected - A boolean tracking whether the connection was in a connected state or not
  * @param clientId - The connected/disconnected clientId
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
+ *
+ * @internal
  */
 export function raiseConnectedEvent(
 	logger: ITelemetryLoggerExt,
@@ -36,7 +56,7 @@ export function raiseConnectedEvent(
 	connected: boolean,
 	clientId?: string,
 	disconnectedReason?: string,
-) {
+): void {
 	try {
 		if (connected) {
 			emitter.emit(connectedEventName, clientId);

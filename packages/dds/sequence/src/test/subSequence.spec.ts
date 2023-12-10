@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+/* eslint-disable @typescript-eslint/no-base-to-string */
+
+import { assert } from "@fluidframework/core-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import {
 	createInsertSegmentOp,
@@ -11,7 +13,7 @@ import {
 	PropertySet,
 } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test";
+import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
 import { SubSequence } from "../sharedSequence";
 
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];

@@ -3,44 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import {
+	ChangeAtomIdMap,
+	ChangesetLocalId,
+	FieldKey,
+	FieldKindIdentifier,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core";
 import { Brand } from "../../util";
-
-/**
- * An ID which is unique within a revision of a `ModularChangeset`.
- * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
- * but they are unique when qualified by the revision of the change they are used in.
- * @alpha
- */
-export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-
-/**
- * A globally unique ID for an atom of change, or a node associated with the atom of change.
- * @alpha
- */
-export interface ChangeAtomId {
-	/**
-	 * Uniquely identifies the changeset within which the change was made.
-	 * Only undefined when referring to an anonymous changesets.
-	 */
-	readonly revision?: RevisionTag;
-	/**
-	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-	 */
-	readonly localId: ChangesetLocalId;
-}
-
-/**
- * @alpha
- */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
-	/**
-	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
-	 * The value corresponds to the `revision` of the original changeset being rolled back.
-	 */
-	readonly rollbackOf?: RevisionTag;
-}
+import { EncodedChunk } from "../chunked-forest";
 
 /**
  * @alpha
@@ -59,6 +31,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
+	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
+	readonly builds?: ChangeAtomIdMap<EncodedChunk>;
 }
 
 /**

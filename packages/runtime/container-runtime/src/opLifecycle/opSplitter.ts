@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
+	createChildLogger,
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes";
 import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
 
@@ -210,7 +210,7 @@ const chunkToBatchMessage = (
 	referenceSequenceNumber: number,
 	metadata: Record<string, unknown> | undefined = undefined,
 ): BatchMessage => {
-	const payload: ContainerRuntimeMessage = {
+	const payload: ContainerRuntimeChunkedOpMessage = {
 		type: ContainerMessageType.ChunkedOp,
 		contents: chunk,
 	};

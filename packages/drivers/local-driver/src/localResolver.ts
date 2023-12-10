@@ -4,12 +4,15 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth";
 
+/**
+ * @alpha
+ */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
 	const createNewRequest: IRequest = {
 		url: `http://localhost:3000/${documentId}`,
@@ -23,6 +26,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
+ * @alpha
  */
 export class LocalResolver implements IUrlResolver {
 	private readonly tenantId = "tenantId";

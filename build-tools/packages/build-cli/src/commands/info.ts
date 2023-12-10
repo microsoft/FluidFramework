@@ -15,9 +15,9 @@ import { PackageVersionList } from "../lib";
  * The root `info` command.
  */
 export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
-	static description = "Get info about the repo, release groups, and packages.";
+	static readonly description = "Get info about the repo, release groups, and packages.";
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			required: false,
 		}),
@@ -31,10 +31,10 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		...BaseCommand.flags,
 	};
 
-	static enableJsonFlag: boolean = true;
+	static readonly enableJsonFlag: boolean = true;
 
 	async run(): Promise<PackageVersionList> {
-		const flags = this.flags;
+		const { flags } = this;
 		const context = await this.getContext();
 		let packages =
 			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)

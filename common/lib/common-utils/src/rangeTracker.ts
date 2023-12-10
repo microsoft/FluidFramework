@@ -9,6 +9,9 @@ import { assert } from "./assert";
 
 /**
  * A range in the {@link RangeTracker}
+ *
+ * @deprecated No replacement.
+ * @internal
  */
 export interface IRange {
 	primary: number;
@@ -18,6 +21,9 @@ export interface IRange {
 
 /**
  * A serialized version of the {@link RangeTracker}
+ *
+ * @deprecated No replacement.
+ * @internal
  */
 export interface IRangeTrackerSnapshot {
 	ranges: IRange[];
@@ -31,6 +37,9 @@ export interface IRangeTrackerSnapshot {
  * defines an increasing step function.
  *
  * Used by deli to keep track of the branch map
+ *
+ * @deprecated No replacement.
+ * @internal
  */
 export class RangeTracker {
 	private ranges: IRange[];

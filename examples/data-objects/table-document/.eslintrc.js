@@ -9,15 +9,8 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
-	},
-	settings: {
-		"import/resolver": {
-			// Use eslint-import-resolver-typescript.
-			// This ensures ESNext with `.js` extensions resolve correctly to their corresponding `.ts` files.
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-			},
-		},
+		"import/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 	},
 };

@@ -9,8 +9,8 @@ import {
 	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+} from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ITree,
@@ -34,6 +34,7 @@ import {
  * Combines summary stats by adding their totals together.
  * Returns empty stats if called without args.
  * @param stats - stats to merge
+ * @internal
  */
 export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 	const results = {
@@ -53,6 +54,9 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 	return results;
 }
 
+/**
+ * @internal
+ */
 export function utf8ByteLength(str: string): number {
 	// returns the byte length of an utf8 string
 	let s = str.length;
@@ -70,6 +74,9 @@ export function utf8ByteLength(str: string): number {
 	return s;
 }
 
+/**
+ * @internal
+ */
 export function getBlobSize(content: ISummaryBlob["content"]): number {
 	return typeof content === "string" ? utf8ByteLength(content) : content.byteLength;
 }
@@ -97,12 +104,18 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
 	}
 }
 
+/**
+ * @internal
+ */
 export function calculateStats(summary: SummaryObject): ISummaryStats {
 	const stats = mergeStats();
 	calculateStatsCore(summary, stats);
 	return stats;
 }
 
+/**
+ * @internal
+ */
 export function addBlobToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -117,6 +130,9 @@ export function addBlobToSummary(
 	summary.stats.totalBlobSize += getBlobSize(content);
 }
 
+/**
+ * @internal
+ */
 export function addTreeToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -126,6 +142,9 @@ export function addTreeToSummary(
 	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
+/**
+ * @internal
+ */
 export function addSummarizeResultToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -135,6 +154,9 @@ export function addSummarizeResultToSummary(
 	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
+/**
+ * @internal
+ */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
 
@@ -203,6 +225,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @internal
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,
@@ -249,6 +272,7 @@ export function convertToSummaryTreeWithStats(
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @internal
  */
 export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -272,6 +296,7 @@ export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false)
  * Converts ISnapshotTree to ISummaryTree format and tracks stats. This snapshot tree was
  * was taken by serialize api in detached container.
  * @param snapshot - snapshot in ISnapshotTree format
+ * @internal
  */
 export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats {
 	const builder = new SummaryTreeBuilder();
@@ -305,6 +330,7 @@ export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISumm
 /**
  * Converts ISummaryTree to ITree format. This is needed for back-compat while we get rid of snapshot.
  * @param summaryTree - summary tree in ISummaryTree format
+ * @internal
  */
 export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
@@ -347,6 +373,9 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	};
 }
 
+/**
+ * @internal
+ */
 export class TelemetryContext implements ITelemetryContext {
 	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
 

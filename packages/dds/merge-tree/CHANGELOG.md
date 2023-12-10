@@ -1,5 +1,150 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Deprecate BaseSegment.ack, Client, CollaborationWindow, compareNumbers, compareStrings, createAnnotateMarkerOp, createAnnotateRangeOp, createInsertOp, createInsertSegmentOp, createRemoveRangeOp, IConsensusInfo, IConsensusValue, IMarkerModifiedAction, IMergeTreeTextHelper, ISegment.ack, LocalClientId, MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, NonCollabClient, SegmentAccumulator, SegmentGroup, SegmentGroupCollection.dequeue, SegmentGroupCollection.enqueue, SegmentGroupCollection.pop, SortedSegmentSet, SortedSegmentSetItem, SortedSet, toRemovalInfo, TreeMaintenanceSequenceNumber, UnassignedSequenceNumber, UniversalSequenceNumber ([#17952](https://github.com/microsoft/FluidFramework/issues/17952)) [b762798c48](https://github.com/microsoft/FluidFramework/commits/b762798c48ec581202fb5335e907637b8482edcc)
+
+    This functionality was not intended for export and will be removed in a future release.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   merge-tree: Deprecate Stack, clone, combine, createMap, extend, extendIfUndefined, and matchProperties ([#17650](https://github.com/microsoft/FluidFramework/issues/17650)) [2b12bc7e59](https://github.com/microsoft/FluidFramework/commits/2b12bc7e59f7825a222ad33b7faff17477d0fa66)
+
+    The following classes and functions have been deprecated. They were not intended for public export and will be removed
+    in a future release.
+
+    -   Stack
+    -   clone
+    -   combine
+    -   createMap
+    -   extend
+    -   extendIfUndefined
+    -   matchProperties
+
+-   merge-tree: Deprecate IntervalType.Nest, internedSpaces, RangeStackMap, refGetRangeLabels, refHasRangeLabel, and refHasRangeLabels ([#17555](https://github.com/microsoft/FluidFramework/issues/17555)) [e4c11874ef](https://github.com/microsoft/FluidFramework/commits/e4c11874ef7c62b7cde7c282bc7997519d35fbbc)
+
+    The following classes and functions have been deprecated. The functionality has poor test coverage and is largely
+    unused. They will be removed in a future release.
+
+    -   IntervalType.Nest
+    -   internedSpaces
+    -   RangeStackMap
+    -   refGetRangeLabels
+    -   refHasRangeLabel
+    -   refHasRangeLabels
+
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   sequence: New API for specifying spatial positioning of intervals [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Previously intervals were specified with only an index. Now the model is a bit more nuanced in that you can specify positions that lie before or after a given index. This makes it more clear how interval endpoints should interact with changes to the sequence. See the docs for SequencePlace for additional context.
+
+-   Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    This included the following changes from the protocol-definitions release:
+
+    -   Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+        submitted by clients to the server and the resulting signals sent from the server to clients.
+        -   A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+            been added, which will be the typing for signals sent from the client to the server. Both extend a new
+            ISignalMessageBase interface that contains common members.
+    -   The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+
+-   Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Dependencies on the following Fluid server package have been updated to version 2.0.1:
+
+    -   @fluidframework/gitresources: 2.0.1
+    -   @fluidframework/server-kafka-orderer: 2.0.1
+    -   @fluidframework/server-lambdas: 2.0.1
+    -   @fluidframework/server-lambdas-driver: 2.0.1
+    -   @fluidframework/server-local-server: 2.0.1
+    -   @fluidframework/server-memory-orderer: 2.0.1
+    -   @fluidframework/protocol-base: 2.0.1
+    -   @fluidframework/server-routerlicious: 2.0.1
+    -   @fluidframework/server-routerlicious-base: 2.0.1
+    -   @fluidframework/server-services: 2.0.1
+    -   @fluidframework/server-services-client: 2.0.1
+    -   @fluidframework/server-services-core: 2.0.1
+    -   @fluidframework/server-services-ordering-kafkanode: 2.0.1
+    -   @fluidframework/server-services-ordering-rdkafka: 2.0.1
+    -   @fluidframework/server-services-ordering-zookeeper: 2.0.1
+    -   @fluidframework/server-services-shared: 2.0.1
+    -   @fluidframework/server-services-telemetry: 2.0.1
+    -   @fluidframework/server-services-utils: 2.0.1
+    -   @fluidframework/server-test-utils: 2.0.1
+    -   tinylicious: 2.0.1
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+-   sequence: Remove the mergeTreeUseNewLengthCalculations flag [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The `mergeTreeUseNewLengthCalculations` flag has been removed, because the feature was enabled by default in 2.0.0-internal.6.0.0.
+
+## 2.0.0-internal.6.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Deprecate getStackContext and associated NestBegin/End ([#16877](https://github.com/microsoft/FluidFramework/issues/16877)) [8e743fe1dd](https://github.com/microsoft/FluidFramework/commits/8e743fe1dde9adb3a1240971987d3abd51ab2fbe)
+
+    Deprecate SharedSegmentSequence.getStackContext and Client.getStackContext (and the enums ReferenceType.NestBegin and NestEnd they use).
+    This functionality is unused, poorly tested, and incurs performance overhead.
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+-   Deprecation of findTile in favor of searchForMarker, which uses depthFirstNodeWalk to locate the nearest marker. ([#16517](https://github.com/microsoft/FluidFramework/issues/16517)) [e928b1f185](https://github.com/microsoft/FluidFramework/commits/e928b1f185ca32123eff9d4bfc5bce28ba1b95c1)
+
+    findTile has a decent amount of buggy behavior, which leads partners who want to use it to implement workarounds for the odd behavior. searchForMarker is being introduced as a replacement. It performs the same basic functionality of searching for the nearest marker to a given start position in the indicated direction. However, it includes the start position as one of the nodes to search, so markers at the start position will be returned as the nearest marker to that position. Notably, positions 0 and length-1 will be included in the search as well, so searching forwards from position 0 or backwards from position length-1 would allow the entire string to be searched.
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

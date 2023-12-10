@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
-	IErrorBase,
 	IFluidCodeDetails,
 	isFluidPackage,
 	ReadOnlyInfo,
@@ -101,7 +100,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 
 	/**
 	 * Submits messages to relay service.
@@ -134,10 +133,10 @@ export interface IConnectionManagerFactoryArgs {
 	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
 
 	/**
-	 * Called by connection manager for each incoming signals.
-	 * Maybe called before connectHandler is called (initial signals on socket connection)
+	 * Called by connection manager for each incoming signal.
+	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (message: ISignalMessage) => void;
+	readonly signalHandler: (signals: ISignalMessage[]) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.
@@ -180,8 +179,12 @@ export interface IConnectionManagerFactoryArgs {
 	 *
 	 * @param readonly - Whether or not the container is now read-only.
 	 * `undefined` indicates that user permissions are not yet known.
+	 * @param readonlyConnectionReason - reason/error if any for the change
 	 */
-	readonly readonlyChangeHandler: (readonly?: boolean) => void;
+	readonly readonlyChangeHandler: (
+		readonly?: boolean,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
+	) => void;
 
 	/**
 	 * Called whenever we try to start establishing a new connection.

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import { ux, Flags, Command } from "@oclif/core";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra";
 import inquirer from "inquirer";
-import path from "path";
+import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
@@ -141,7 +141,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
 					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
-					rgs.push(...Object.keys(rgVerMap));
+					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {
 					rgs.push(releaseGroupOrPackage);
@@ -152,7 +152,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 			rgs.push(releaseGroupOrPackage);
 		} else if (releaseGroupOrPackage === undefined) {
 			// No filter, so include all release groups and packages
-			rgs.push(...context.repo.releaseGroups.keys());
+			rgs.push(...([...context.repo.releaseGroups.keys()] as ReleaseGroup[]));
 			pkgs.push(...context.independentPackages.map((p) => p.name));
 		} else {
 			// Filter to only the specified package
@@ -335,7 +335,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseReportCommand
 > {
-	static description = `Generates a report of Fluid Framework releases.
+	static readonly description = `Generates a report of Fluid Framework releases.
 
     The release report command is used to produce a report of all the packages that were released and their version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
 
@@ -343,7 +343,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
     The "release group" mode can be activated by passing a --releaseGroup flag. In this mode, the specified release group's version will be loaded from the repo, and its immediate Fluid dependencies will be included in the report. This is useful when we want to include only the dependency versions that the release group depends on in the report.`;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description:
 				"Generate a release report of the highest semver release for each package and release group and display it in the terminal only.",
@@ -360,8 +360,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		},
 	];
 
-	static enableJsonFlag = true;
-	static flags = {
+	static readonly enableJsonFlag = true;
+	static readonly flags = {
 		interactive: Flags.boolean({
 			char: "i",
 			description:
@@ -394,11 +394,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		...ReleaseReportBaseCommand.flags,
 	};
 
-	defaultMode: ReleaseSelectionMode = "inRepo";
+	readonly defaultMode: ReleaseSelectionMode = "inRepo";
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 
 		const shouldOutputFiles = flags.output !== undefined;
 		const outputPath = flags.output ?? process.cwd();
@@ -546,7 +546,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 						date: latestDate,
 						releaseType: bumpType,
-						releaseGroup: pkg.monoRepo?.kind,
+						releaseGroup: pkg.monoRepo?.releaseGroup,
 						isNewRelease,
 						ranges,
 					};
@@ -594,7 +594,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
-			const displayPreviousVersion = prevVer === undefined ? DEFAULT_MIN_VERSION : prevVer;
+			const displayPreviousVersion = prevVer ?? DEFAULT_MIN_VERSION;
 
 			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
 			const displayBumpType = highlight(`${bumpType}`);

@@ -46,6 +46,13 @@ export class ContainerContext implements IContainerContext {
 	}
 
 	/**
+	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
+	 */
+	public get id(): string {
+		return this._getContainerDiagnosticId() ?? "";
+	}
+
+	/**
 	 * When true, ops are free to flow
 	 * When false, ops should be kept as pending or rejected
 	 */
@@ -78,11 +85,12 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (contents: any) => void,
+		public readonly submitSignalFn: (content: any, targetClientId?: string) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
+		private readonly _getContainerDiagnosticId: () => string | undefined,
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,

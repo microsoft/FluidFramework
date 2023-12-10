@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -24,6 +24,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @param propertyInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedString that intercepts the methods modifying the SharedString properties.
+ * @internal
  */
 export function createSharedStringWithInterception(
 	sharedString: SharedString,

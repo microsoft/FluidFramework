@@ -6,7 +6,6 @@
 import assert from "assert";
 import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -14,16 +13,13 @@ import {
 	ITestObjectProvider,
 	DataObjectFactoryType,
 	createAndAttachContainer,
-	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
-import { PendingLocalState } from "@fluidframework/container-runtime/dist/test";
-// eslint-disable-next-line import/no-internal-modules
-import { IPendingBlobs } from "@fluidframework/container-runtime/dist/blobManager.js";
+import { IPendingRuntimeState } from "@fluidframework/container-runtime/dist/test";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -38,7 +34,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
+describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider) => {
 	describe("from attached container", () => {
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
@@ -46,15 +42,6 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
 			dataObject.context.containerRuntime as ContainerRuntime;
-
-		const forceWriteMode = async (map, dataStore1): Promise<void> => {
-			map.set("forceWrite", true);
-			const runtime = runtimeOf(dataStore1);
-			while (runtime.isDirty) {
-				await timeoutPromise((resolve) => runtime.once("saved", resolve));
-			}
-			await provider.ensureSynchronized();
-		};
 
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
@@ -69,10 +56,9 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 		it("blob is aborted before uploading", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const ac = new AbortController();
 			ac.abort("abort test");
-
 			try {
 				await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"), ac.signal);
 				assert.fail("Should not succeed");
@@ -81,42 +67,39 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, undefined);
 			}
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
-			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const ac = new AbortController();
-			// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/4685
-			await forceWriteMode(map, dataStore1);
-			let blob;
+			let blob: IFluidHandle<ArrayBufferLike>;
 			try {
 				blob = await dataStore1.runtime.uploadBlob(
 					stringToBuffer(testString, "utf-8"),
 					ac.signal,
 				);
 				ac.abort();
+				map.set("key", blob);
 			} catch (error: any) {
 				assert.fail("Should succeed");
 			}
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			const acked = Object.values<any>(pendingBlobs)[0].acked;
-			assert.strictEqual(blob.isAttached, false);
-			assert.strictEqual(acked, true);
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			})) as IPendingRuntimeState | undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("blob is attached after usage in map", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -128,7 +111,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 		it("blob is attached after usage in directory", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -137,71 +120,45 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			assert.strictEqual(blob.isAttached, true);
 		});
 
-		it("blob is acked after upload", async function () {
+		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
-
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
-			// goes into online flow
-			await forceWriteMode(map, dataStore1);
-
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			const acked = Object.values<any>(pendingBlobs)[0].acked;
-			assert.strictEqual(blob.isAttached, false);
-			assert.strictEqual(acked, true);
-		});
-
-		it("blob is acked after offline upload", async function () {
-			const testString = "this is a test string";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
-			// by not calling forceWriteMode we are actually checking offline flow
-			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
-			await provider.ensureSynchronized();
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			const acked = Object.values<any>(pendingBlobs)[0].acked;
-			assert.strictEqual(blob.isAttached, false);
-			assert.strictEqual(acked, true);
+			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			});
+			map.set("key", blob);
+			const pendingState = await pendingStateP;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("removes pending blob after attached and acked", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
-			// goes into online flow
-			await forceWriteMode(map, dataStore1);
-
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("removes multiple pending blobs after attached and acked", async function () {
-			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
-			// force write mode to avoid reconnection while uploading the blob. This ensures uploadBlob
-			// goes into online flow
-			await forceWriteMode(map, dataStore1);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
 				map.set(`${i}`, blob);
 			}
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
+				| IPendingRuntimeState
+				| undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 	});
 
@@ -228,7 +185,7 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			provider.updateDocumentId(container.resolvedUrl);
-			detachedDataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+			detachedDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			map = SharedMap.create(detachedDataStore.runtime);
 			directory = SharedDirectory.create(detachedDataStore.runtime);
 			text = "this is some example text";

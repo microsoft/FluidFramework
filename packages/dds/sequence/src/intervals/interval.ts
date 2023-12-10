@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	ICombiningOp,
@@ -11,27 +12,33 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
+import { SequencePlace } from "../intervalCollection";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
 
 const reservedIntervalIdKey = "intervalId";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
+ * @internal
  */
 export class Interval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
 	public properties: PropertySet;
-	/** @internal */
+	/***/
 	public auxProps: PropertySet[] | undefined;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
-	constructor(public start: number, public end: number, props?: PropertySet) {
+	constructor(
+		public start: number,
+		public end: number,
+		props?: PropertySet,
+	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
 
@@ -60,7 +67,7 @@ export class Interval implements ISerializableInterval {
 	 * Adds an auxiliary set of properties to this interval.
 	 * These properties can be recovered using `getAdditionalPropertySets`
 	 * @param props - set of properties to add
-	 * @remarks - This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
+	 * @remarks This gets called as part of the default conflict resolver for `IIntervalCollection<Interval>`
 	 * (i.e. non-sequence-based interval collections). However, the additional properties don't get serialized.
 	 * This functionality seems half-baked.
 	 */
@@ -73,7 +80,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
-	 * @internal
 	 */
 	public serialize(): ISerializedInterval {
 		const serializedInterval: ISerializedInterval = {
@@ -144,7 +150,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @internal
 	 */
 	public union(b: Interval) {
 		return new Interval(
@@ -160,7 +165,6 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -182,11 +186,22 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @internal
 	 */
-	public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
-		const startPos = start ?? this.start;
-		const endPos = end ?? this.end;
+	public modify(
+		label: string,
+		start?: SequencePlace,
+		end?: SequencePlace,
+		op?: ISequencedDocumentMessage,
+	) {
+		if (typeof start === "string" || typeof end === "string") {
+			throw new UsageError(
+				"The start and end positions of a plain interval may not be on the special endpoint segments.",
+			);
+		}
+
+		const startPos = typeof start === "number" ? start : start?.pos ?? this.start;
+		const endPos = typeof end === "number" ? end : end?.pos ?? this.end;
+
 		if (this.start === startPos && this.end === endPos) {
 			// Return undefined to indicate that no change is necessary.
 			return;
@@ -213,18 +228,25 @@ export class Interval implements ISerializableInterval {
 	}
 }
 
-export function createInterval(label: string, start: number, end: number): Interval {
+export function createInterval(label: string, start: SequencePlace, end: SequencePlace): Interval {
+	if (typeof start === "string" || typeof end === "string") {
+		throw new UsageError(
+			"The start and end positions of a plain interval may not be on the special endpoint segments.",
+		);
+	}
+
 	const rangeProp: PropertySet = {};
 
 	if (label && label.length > 0) {
 		rangeProp[reservedRangeLabelsKey] = [label];
 	}
 
-	return new Interval(start, end, rangeProp);
+	const startPos = typeof start === "number" ? start : start.pos;
+	const endPos = typeof end === "number" ? end : end.pos;
+
+	return new Interval(startPos, endPos, rangeProp);
 }
 
 export const intervalHelpers: IIntervalHelpers<Interval> = {
-	compareEnds: (a: Interval, b: Interval) => a.end - b.end,
-	compareStarts: (a: Interval, b: Interval) => a.start - b.start,
 	create: createInterval,
 };

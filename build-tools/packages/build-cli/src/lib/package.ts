@@ -7,7 +7,6 @@ import {
 	Logger,
 	MonoRepo,
 	Package,
-	VersionBag,
 	VersionDetails,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
@@ -23,7 +22,7 @@ import {
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJson, readJsonSync, writeFile } from "fs-extra";
@@ -31,7 +30,7 @@ import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-import path from "path";
+import path from "node:path";
 import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 
@@ -173,8 +172,9 @@ export async function npmCheckUpdates(
 		if (glob.endsWith("*")) {
 			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { name } = readJsonSync(jsonPath);
-				const pkg = context.fullPackageMap.get(name);
+				const pkg = context.fullPackageMap.get(name as string);
 				if (pkg === undefined) {
 					log?.warning(`Package not found in context: ${name}`);
 					continue;
@@ -191,8 +191,9 @@ export async function npmCheckUpdates(
 			}
 		} else {
 			const jsonPath = path.join(repoPath, glob, "package.json");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { name } = readJsonSync(jsonPath);
-			const pkg = context.fullPackageMap.get(name);
+			const pkg = context.fullPackageMap.get(name as string);
 			if (pkg === undefined) {
 				log?.warning(`Package not found in context: ${name}`);
 				continue;
@@ -293,7 +294,7 @@ export async function getPreReleaseDependencies(
 				if (depPkg.monoRepo === undefined) {
 					prereleasePackages.set(depPkg.name, depVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.kind, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
 				}
 			}
 		}
@@ -492,7 +493,7 @@ export async function setVersion(
 	const translatedVersion = version;
 	const scheme = detectVersionScheme(translatedVersion);
 
-	const name = releaseGroupOrPackage.name;
+	const { name } = releaseGroupOrPackage;
 	const cmds: [string, string[], execa.Options | undefined][] = [];
 	let options: execa.Options | undefined;
 
@@ -538,7 +539,7 @@ export async function setVersion(
 			if (results.all !== undefined) {
 				log?.verbose(results.all);
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
 			throw error;
 		}
@@ -552,6 +553,7 @@ export async function setVersion(
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const [lernaJson, prettierConfig] = await Promise.all([
 		readJson(lernaPath),
 		resolvePrettierConfig(lernaPath),
@@ -560,9 +562,11 @@ export async function setVersion(
 	if (prettierConfig !== null) {
 		prettierConfig.filepath = lernaPath;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	lernaJson.version = translatedVersion.version;
-	const output = prettier(
+	const output = await prettier(
 		JSON.stringify(lernaJson),
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- the nullish-coalescing form looks strange; this is clearer
 		prettierConfig === null ? undefined : prettierConfig,
 	);
 	await writeFile(lernaPath, output);
@@ -590,9 +594,11 @@ export async function setVersion(
 					? translatedVersion.version
 					: getVersionRange(translatedVersion, interdependencyRange);
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
 	} else {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
@@ -658,6 +664,7 @@ async function setPackageDependencies(
 					continue;
 				}
 
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				newRangeString = dep.range.toString();
 				if (dependencies[name] !== newRangeString) {
 					changed = true;
@@ -749,9 +756,9 @@ export async function npmCheckUpdatesHomegrown(
 	updatedPackages: PackageWithKind[];
 	updatedDependencies: PackageVersionMap;
 }> {
-	if (releaseGroup === releaseGroupFilter) {
+	if (releaseGroupFilter !== undefined && releaseGroup === releaseGroupFilter) {
 		throw new Error(
-			`releaseGroup and releaseGroupFilter are the same. They must be different values.`,
+			`releaseGroup and releaseGroupFilter are the same (${releaseGroup}). They must be different values.`,
 		);
 	}
 	log?.info(`Calculating dependency updates...`);
@@ -769,18 +776,16 @@ export async function npmCheckUpdatesHomegrown(
 			  AllPackagesSelectionCriteria
 			: {
 					independentPackages: false,
-					releaseGroups: [releaseGroup],
-					releaseGroupRoots: [releaseGroup],
+					releaseGroups: [releaseGroup as ReleaseGroup],
+					releaseGroupRoots: [releaseGroup as ReleaseGroup],
 			  };
 
 	// Remove the filtered release group from the list if needed
 	if (releaseGroupFilter !== undefined) {
 		const indexOfFilteredGroup = selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
 		if (indexOfFilteredGroup !== -1) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroups[indexOfFilteredGroup];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroupRoots[indexOfFilteredGroup];
+			selectionCriteria.releaseGroups.splice(indexOfFilteredGroup, 1);
+			selectionCriteria.releaseGroupRoots.splice(indexOfFilteredGroup, 1);
 		}
 	}
 
@@ -811,6 +816,7 @@ export async function npmCheckUpdatesHomegrown(
 	}
 
 	const range: InterdependencyRange = prerelease ? newVersion : `^${[...versionSet][0]}`;
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	log?.verbose(`Calculated new range: ${range}`);
 	for (const dep of Object.keys(dependencyVersionMap)) {
 		const pkg = context.fullPackageMap.get(dep);

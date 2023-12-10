@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined } from './Common';
 import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types';
@@ -12,7 +12,7 @@ import { getNodeId } from './NodeIdUtilities';
 
 /**
  * An object which may have traits with children of the given type underneath it
- * @public
+ * @internal
  */
 export interface HasVariadicTraits<TChild> {
 	readonly traits?: {
@@ -22,7 +22,7 @@ export interface HasVariadicTraits<TChild> {
 
 /**
  * The type of a Change
- * @public
+ * @internal
  */
 export enum ChangeType {
 	Insert,
@@ -35,17 +35,23 @@ export enum ChangeType {
 /**
  * A change that composes an Edit.
  *
+ * @remarks
+ *
  * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * Change.insert(sourceId, destination)
- * @public
+ * ```
+ * @internal
  */
 export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 /**
  * Node or a detached sequence of nodes (referred to by a detached sequence ID) for use in a Build change.
  * See `BuildTreeNode` for more.
- * @public
+ * @internal
  */
 export type BuildNode = BuildTreeNode | number;
 
@@ -56,6 +62,7 @@ export type BuildNode = BuildTreeNode | number;
  * BuildTreeNode can be observed. If `identifier` is not supplied, one will be generated for it in an especially efficient manner
  * that allows for compact storage and transmission and thus this property should be omitted if convenient.
  * See the SharedTree readme for more on the tree format.
+ * @internal
  */
 export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
 	definition: string;
@@ -69,8 +76,7 @@ export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
  *
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
  * and all Nodes' identifiers are previously unused.
- *
- * @public
+ * @internal
  */
 export interface Build {
 	readonly destination: number;
@@ -81,7 +87,7 @@ export interface Build {
 /**
  * Inserts a sequence of nodes at the specified destination.
  * The source can be constructed either by a Build (used to insert new nodes) or a Detach (amounts to a "move" operation).
- * @public
+ * @internal
  */
 export interface Insert {
 	readonly destination: StablePlace;
@@ -94,7 +100,7 @@ export interface Insert {
  * If a destination is specified, the detached sequence is associated with that ID and held for possible reuse
  * by later changes in this same Edit (such as by an Insert).
  * A Detach without a destination is a deletion of the specified sequence, as is a Detach with a destination that is not used later.
- * @public
+ * @internal
  */
 export interface Detach {
 	readonly destination?: number;
@@ -104,7 +110,7 @@ export interface Detach {
 
 /**
  * Modifies the payload of a node.
- * @public
+ * @internal
  */
 export interface SetValue {
 	readonly nodeToModify: NodeId;
@@ -125,7 +131,7 @@ export interface SetValue {
  * non-semantic ways. It is processed in order like any other Change in an Edit. It can cause an edit to fail if the
  * various constraints are not met at the time of evaluation (ex: the parentNode has changed due to concurrent editing).
  * Does not modify the document.
- * @public
+ * @internal
  */
 export interface Constraint {
 	/**
@@ -183,7 +189,7 @@ export interface Constraint {
 
 // Note: Documentation of this constant is merged with documentation of the `Change` interface.
 /**
- * @public
+ * @internal
  */
 export const Change = {
 	build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number): Build => ({
@@ -275,10 +281,14 @@ export const Change = {
  * The anchor (`referenceSibling` or `referenceTrait`) used for a particular `StablePlace` can have an impact in collaborative scenarios.
  *
  * `StablePlace` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * StablePlace.before(node)
  * StablePlace.atStartOf(trait)
- * @public
+ * ```
+ * @internal
  */
 export interface StablePlace {
 	/**
@@ -307,10 +317,16 @@ export interface StablePlace {
  *
  * See {@link (StablePlace:interface)} for what it means for a place to be "after" another place.
  *
+ * @remarks
+ *
  * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
- * @public
+ * ```
+ * @internal
  */
 export interface StableRange {
 	readonly start: StablePlace;
@@ -327,7 +343,7 @@ export interface StableRange {
 
 // Note: Documentation of this constant is merged with documentation of the `StablePlace` interface.
 /**
- * @public
+ * @internal
  */
 export const StablePlace = {
 	/**
@@ -353,13 +369,17 @@ export const StablePlace = {
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
 /**
- * @public
+ * @internal
  */
 export const StableRange = {
 	/**
 	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 *
 	 * @example
+	 *
+	 * ```typescript
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 * ```
 	 */
 	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
 		to: (end: StablePlace): StableRange => {

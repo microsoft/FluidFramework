@@ -9,6 +9,7 @@ import { ITelemetryBaseLogger, FluidObject } from "@fluidframework/core-interfac
 /**
  * Contract that defines the necessary exports for the bundle provided at runtime
  * For an example, see "src/test/sampleCodeLoaders/sampleCodeLoader.ts"
+ * @internal
  */
 export interface ICodeLoaderBundle {
 	/**
@@ -19,6 +20,7 @@ export interface ICodeLoaderBundle {
 
 /**
  * Instance that holds all the details for Fluid file conversion
+ * @internal
  */
 export interface IFluidFileConverter {
 	/**

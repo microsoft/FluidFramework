@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -30,7 +30,6 @@ describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
-		term: 1,
 	};
 	const blobContent = "testing";
 	const createSummary = () => {

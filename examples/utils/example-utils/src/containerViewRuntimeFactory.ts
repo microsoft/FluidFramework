@@ -3,39 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 const dataStoreId = "modelDataStore";
 
+/**
+ * @internal
+ */
 export type ViewCallback<T> = (fluidModel: T) => any;
 
-const makeViewRequestHandler =
-	<T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
-	async (request: RequestParser, runtime: IContainerRuntime) => {
-		if (request.pathParts.length === 0) {
-			const objectRequest = RequestParser.create({
-				url: ``,
-				headers: request.headers,
-			});
-			// TODO type the requestFluidObject
-			const fluidObject = await requestFluidObject<T>(
-				await runtime.getRootDataStore(dataStoreId),
-				objectRequest,
-			);
-			const viewResponse = viewCallback(fluidObject);
-			return { status: 200, mimeType: "fluid/view", value: viewResponse };
-		}
-	};
+/**
+ * @internal
+ */
+export async function getDataStoreEntryPoint<T>(
+	containerRuntime: IContainerRuntime,
+	alias: string,
+): Promise<T> {
+	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
+		| IFluidHandle<T>
+		| undefined;
+
+	if (entryPointHandle === undefined) {
+		throw new Error(`Default dataStore [${alias}] must exist`);
+	}
+
+	return entryPointHandle.get();
+}
+
+/**
+ * @internal
+ */
+export interface IFluidMountableViewEntryPoint {
+	getDefaultDataObject(): Promise<FluidObject>;
+	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+}
 
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
  * within the container.  For more-robust implementation of binding views within the container, check out the examples
  * \@fluid-example/app-integration-container-views and \@fluid-example/multiview-container
+ * @internal
  */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
 	constructor(
@@ -44,9 +56,26 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	) {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]), undefined, [
-			mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
-		]);
+		super({
+			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
+				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
+
+				const view = viewCallback(entryPoint);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				let getMountableDefaultView = async () => view;
+				if (MountableView.canMount(view)) {
+					getMountableDefaultView = async () => new MountableView(view);
+				}
+
+				return {
+					getDefaultDataObject: async () => entryPoint as FluidObject,
+					getMountableDefaultView,
+				};
+			},
+		});
 	}
 
 	/**

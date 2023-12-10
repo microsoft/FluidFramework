@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IClient,
 	IClientConfiguration,
@@ -134,10 +134,11 @@ describe("ConnectionStateHandler Tests", () => {
 		};
 
 		protocolHandler = new ProtocolHandler(
-			{ minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }, // attributes
+			{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
 			{ members: [], proposals: [], values: [] }, // quorumSnapshot
 			(key, value) => 0, // sendProposal
 			new Audience(),
+			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
 		handlerInputs = {

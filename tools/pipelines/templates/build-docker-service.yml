@@ -58,6 +58,10 @@ parameters:
   type: string
   default:
 
+- name: isReleaseGroup
+  type: boolean
+  default: false
+
 - name: pool
   type: string
   default: Small
@@ -85,6 +89,11 @@ parameters:
 - name: checks
   type: object
   default: []
+
+# Any additional build arguments to pass to the docker build command.
+- name: additionalBuildArguments
+  type: string
+  default: ""
 
 trigger: none
 
@@ -142,6 +151,7 @@ stages:
 
 - stage: build
   displayName: Build Stage
+  dependsOn: [] # this stage doesn't depend on preceding stage
   jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
@@ -277,22 +287,48 @@ stages:
           command: build
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
-          arguments: --target base
+          arguments: --target base ${{ parameters.additionalBuildArguments }}
           tags: |
             $(containerTagSuffix)
 
       # Pack
       - ${{ if eq(parameters.pack, true) }}:
+        # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
+        # we won't be able to write to them from outside the container when generating the lists of packages below.
+        - task: Bash@3
+          displayName: Create folder for pack artifact
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/pack
+
         - task: Docker@0
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna@5.6.2 exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+
+        # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
+        # inside the Docker container is proving problematic.
+        # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
+        - task: Bash@3
+          displayName: Generate package lists
+          env:
+            RELEASE_GROUP: ${{ parameters.tagName }}
+            STAGING_PATH: $(Build.ArtifactStagingDirectory)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
           inputs:
-            targetPath: '$(System.DefaultWorkingDirectory)/pack'
+            targetPath: '$(Build.ArtifactStagingDirectory)/pack'
             artifactName: pack
             publishLocation: 'pipeline'
 
@@ -312,7 +348,7 @@ stages:
             displayName: npm run ${{ parameters.test }}
             inputs:
               action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
+              customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
 
         # Test - With coverage
         - ${{ if eq(variables.testCoverage, true) }}:
@@ -320,14 +356,14 @@ stages:
             displayName: npm run ci:test:coverage
             inputs:
               action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
+              customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
 
           - task: PublishCodeCoverageResults@1
             displayName: Publish Code Coverage
             inputs:
               codeCoverageTool: Cobertura
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-              reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+              summaryFileLocation: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+              reportDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
               failIfCoverageEmpty: true
             condition: succeededOrFailed()
 
@@ -337,7 +373,7 @@ stages:
           inputs:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/*junit-report.xml'
-            searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
+            searchFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
             mergeTestResults: true
           condition: succeededOrFailed()
 
@@ -347,12 +383,12 @@ stages:
           displayName: npm run ci:build:docs
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
+            customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Docs: Publish Artifact'
           inputs:
-            targetPath: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+            targetPath: '$(Build.ArtifactStagingDirectory)/_api-extractor-temp'
             artifactName: _api-extractor-temp
             publishLocation: 'pipeline'
 
@@ -365,6 +401,7 @@ stages:
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
+        arguments: ${{ parameters.additionalBuildArguments }}
         tags: |
           $(containerTagSuffix)
           ${{ variables.latestContainerTagSuffix }}
@@ -430,8 +467,8 @@ stages:
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
   - template: include-publish-npm-package.yml
     parameters:
-      namespace: true
       tagName: ${{ parameters.tagName }}
+      isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
 - ${{ if eq(variables.releaseImage, true) }}:
   - template: include-publish-docker-service.yml

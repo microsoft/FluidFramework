@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+/* eslint-disable import/no-deprecated */
+
+import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionPolicy } from "./mergeTree";
@@ -189,8 +191,8 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 }
 
 /**
- * @alpha
- * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
+ * @returns An {@link AttributionPolicy} which tracks only insertion of content.
+ * @internal
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(
@@ -203,7 +205,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 
 /**
  * @param propNames - List of property names for which attribution should be tracked.
- * @returns - A policy which only attributes annotation of the properties specified.
+ * @returns A policy which only attributes annotation of the properties specified.
  * Keys for each property are stored under attribution channels of the same name--see example below.
  *
  * @example

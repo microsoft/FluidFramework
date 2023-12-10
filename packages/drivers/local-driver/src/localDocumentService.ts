@@ -23,6 +23,7 @@ import { LocalDeltaStorageService } from "./localDeltaStorageService";
 
 /**
  * Basic implementation of a document service for local use.
+ * @internal
  */
 export class LocalDocumentService implements IDocumentService {
 	/**
@@ -55,7 +56,6 @@ export class LocalDocumentService implements IDocumentService {
 				new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase),
 			),
 			{
-				minBlobSize: 2048, // Test blob aggregation
 				maximumCacheDurationMs: 432_000_000, // 5 days in ms. Not actually enforced but shouldn't matter for any local driver scenario
 			},
 			this.localDeltaConnectionServer,
@@ -121,6 +121,7 @@ export class LocalDocumentService implements IDocumentService {
  * @param tokenProvider - token provider with a single token
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
+ * @internal
  */
 export function createLocalDocumentService(
 	resolvedUrl: IResolvedUrl,

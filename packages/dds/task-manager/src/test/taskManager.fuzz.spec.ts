@@ -12,8 +12,8 @@ import {
 	makeRandom,
 	AsyncReducer as Reducer,
 	takeAsync as take,
-} from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/stochastic-test-utils";
+import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
@@ -118,9 +118,11 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ channel }: OpSelectionState): boolean => channel.canVolunteer();
-	const isQueued = ({ channel, taskId }: OpSelectionState): boolean => channel.queued(taskId);
-	const isAssigned = ({ channel, taskId }: OpSelectionState): boolean => channel.assigned(taskId);
+	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.queued(taskId);
+	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.assigned(taskId);
 
 	const clientBaseOperationGenerator = createWeightedGenerator<Operation, OpSelectionState>([
 		[volunteer, 1, canVolunteer],
@@ -170,11 +172,11 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 		};
 
 	const reducer = combineReducers<Operation, FuzzTestState>({
-		volunteer: async ({ channel }, { taskId }) => {
+		volunteer: async ({ client }, { taskId }) => {
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
-			channel.volunteerForTask(taskId).catch((e: Error) => {
+			client.channel.volunteerForTask(taskId).catch((e: Error) => {
 				// We expect an error to be thrown if we are disconnected while volunteering
 				const expectedErrors = [
 					"Disconnected before acquiring task assignment",
@@ -185,14 +187,14 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 				}
 			});
 		},
-		abandon: async ({ channel }, { taskId }) => {
-			channel.abandon(taskId);
+		abandon: async ({ client }, { taskId }) => {
+			client.channel.abandon(taskId);
 		},
-		subscribe: async ({ channel }, { taskId }) => {
-			channel.subscribeToTask(taskId);
+		subscribe: async ({ client }, { taskId }) => {
+			client.channel.subscribeToTask(taskId);
 		},
-		complete: async ({ channel }, { taskId }) => {
-			channel.complete(taskId);
+		complete: async ({ client }, { taskId }) => {
+			client.channel.complete(taskId);
 		},
 	});
 
@@ -261,7 +263,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		// ADO:5083, eventual consistency issue was detected
+		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
 		skip: [0, 2, 6],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {
@@ -271,6 +273,11 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.

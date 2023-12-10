@@ -12,9 +12,7 @@ import { SharedString } from "@fluidframework/sequence";
 const textSharedStringId = "text";
 
 export class SharedTextDataObject extends DataObject {
-	public static get Name() {
-		return "@fluid-example/shared-text";
-	}
+	public static readonly Name = "@fluid-example/shared-text";
 
 	public static readonly factory = new DataObjectFactory(
 		SharedTextDataObject.Name,

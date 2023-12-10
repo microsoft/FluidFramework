@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -12,7 +12,6 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
@@ -152,19 +151,12 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
- * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
- * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(
-	gcData: IGarbageCollectionData,
-	filter?: (id: string) => boolean,
-): IGarbageCollectionData {
+export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		if (filter?.(id) !== true) {
-			clonedGCNodes[id] = Array.from(outboundRoutes);
-		}
+		clonedGCNodes[id] = Array.from(outboundRoutes);
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -306,12 +298,17 @@ export function trimLeadingAndTrailingSlashes(str: string) {
 }
 
 /**
- * Tags the passed value as a CodeArtifact and returns the tagged value.
- * @deprecated - Use telemetry-utils tagCodeArtifacts instead
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownGCMessageType - Typed as never to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
  */
-export function tagAsCodeArtifact(value: string) {
-	return {
-		value,
-		tag: TelemetryDataTag.CodeArtifact,
-	};
+export function compatBehaviorAllowsGCMessageType(
+	_unknownGCMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
+): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
+	return compatBehavior === "Ignore";
 }

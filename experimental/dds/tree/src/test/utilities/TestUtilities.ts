@@ -4,13 +4,12 @@
  */
 
 import { resolve } from 'path';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
+import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -173,7 +172,7 @@ export function setUpTestSharedTree(
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
+	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -199,7 +198,7 @@ export function setUpTestSharedTree(
 	} else {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: componentRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(undefined),
 		};
 		tree.connect(services);
@@ -270,6 +269,11 @@ export interface LocalServerSharedTreeTestingOptions {
 	 * If set, will be passed to the container on load
 	 */
 	pendingLocalState?: string;
+	/**
+	 * If set, will be added to the configProvider object passed to the loader
+	 * and will take effect for the duration of its lifetime
+	 */
+	featureGates?: Record<string, ConfigTypes>;
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
@@ -302,6 +306,10 @@ export async function setUpLocalServerTestSharedTree(
 		attributionId,
 		pendingLocalState,
 	} = options;
+
+	const featureGates = options.featureGates ?? {};
+	featureGates['Fluid.Container.enableOfflineLoad'] = true;
+	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -352,10 +360,7 @@ export async function setUpLocalServerTestSharedTree(
 
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
-			configProvider: configProvider({
-				'Fluid.Container.enableOfflineLoad': true,
-				'Fluid.ContainerRuntime.DisablePartialFlush': true,
-			}),
+			configProvider: configProvider(featureGates),
 		});
 	}
 
@@ -378,7 +383,7 @@ export async function setUpLocalServerTestSharedTree(
 		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 	const uploadedBlobs =
 		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));

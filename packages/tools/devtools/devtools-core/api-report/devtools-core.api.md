@@ -9,8 +9,8 @@ import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -89,13 +89,13 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @public
+// @internal
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
 }
 
-// @public
+// @internal
 export type ContainerKey = string;
 
 // @internal
@@ -190,6 +190,7 @@ export namespace DevtoolsDisposed {
 
 // @internal
 export interface DevtoolsFeatureFlags {
+    opLatencyTelemetry?: boolean;
     telemetry?: boolean;
 }
 
@@ -206,7 +207,7 @@ export namespace DevtoolsFeatures {
     }
 }
 
-// @public @sealed
+// @internal @sealed
 export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
@@ -246,10 +247,10 @@ export const EditType: {
     readonly Null: "null";
 };
 
-// @internal (undocumented)
-export type EditType = typeof EditType[keyof typeof EditType];
+// @internal
+export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @public
+// @internal
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
@@ -370,7 +371,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @public
+// @internal
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }
@@ -386,7 +387,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @public
+// @internal
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -407,7 +408,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @public
+// @internal
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal

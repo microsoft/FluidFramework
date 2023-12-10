@@ -5,25 +5,27 @@
 
 /* eslint-disable unicorn/numeric-separators-style */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
-import { assert } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelStorageService,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	createSingleBlobSummary,
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { PactMapFactory } from "./pactMapFactory";
-import { IAcceptedPact, IPactMap, IPactMapEvents } from "./interfaces";
+import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces";
 
 /**
  * The accepted pact information, if any.
@@ -153,6 +155,7 @@ const snapshotFileName = "header";
  *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
+ * @internal
  */
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
 	/**
@@ -175,7 +178,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		return new PactMapFactory();
 	}
 
-	private readonly values: Map<string, Pact<T>> = new Map();
+	private readonly values = new Map<string, Pact<T>>();
 
 	private readonly incomingOp: EventEmitter = new EventEmitter();
 
@@ -410,7 +413,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * Create a summary for the PactMap
 	 *
 	 * @returns the summary of the current state of the PactMap
-	 * @internal
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
@@ -419,7 +421,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
@@ -430,19 +431,16 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
-	 * @internal
 	 */
 	protected initializeLocalCore(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
-	 * @internal
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
@@ -474,18 +472,18 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * @param local - whether the message was sent by the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
-				case "set":
+				case "set": {
 					this.incomingOp.emit(
 						"set",
 						op.key,
@@ -494,8 +492,9 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				case "accept":
+				case "accept": {
 					this.incomingOp.emit(
 						"accept",
 						op.key,
@@ -503,9 +502,11 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						message.sequenceNumber,
 					);
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("Unknown operation");
+				}
 			}
 		}
 	}

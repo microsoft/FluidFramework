@@ -4,7 +4,7 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import Axios from "axios";
@@ -22,6 +22,7 @@ import Axios from "axios";
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
  * part of the URL that the document interprets and maps to a data store. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
+ * @internal
  */
 export class InsecureUrlResolver implements IUrlResolver {
 	private readonly cache = new Map<string, Promise<IResolvedUrl>>();
@@ -48,7 +49,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		// service using our bearer token.
 		if (this.isForNodeTest) {
 			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
-			const relativePath = tmpRelativePath === undefined ? "" : tmpRelativePath;
+			const relativePath = tmpRelativePath ?? "";
 			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
 			const fullPath = parsedUrl.pathname.substr(1);

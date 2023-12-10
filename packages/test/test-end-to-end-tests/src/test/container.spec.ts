@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	IPendingLocalState,
 	ContainerErrorType,
+	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
@@ -39,19 +39,26 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
+	describeCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	DataCorruptionError,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError } from "@fluidframework/container-utils";
+import {
+	DeltaStreamConnectionForbiddenError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils";
+import { Deferred } from "@fluidframework/core-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -59,7 +66,7 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeNoCompat("Container", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -85,7 +92,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -98,7 +105,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 
-		return loader.resolve(testRequest);
+		return loader.resolve({
+			url: testRequest.url,
+			headers: { ...testRequest.headers, ...headers },
+		});
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
@@ -123,6 +133,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -136,7 +147,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			mockFactory.createDocumentService = async (resolvedUrl) => {
 				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
 				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
+				service.connectToStorage = () => {
+					throw new Error("expectedFailure");
+				};
 				return service;
 			};
 
@@ -296,7 +309,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		const container = await localTestObjectProvider.makeTestContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 		let runCount = 0;
 
@@ -332,9 +345,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
-			testContainerConfig,
-		);
+		const container: IContainerExperimental =
+			await localTestObjectProvider.makeTestContainer(testContainerConfig);
 		const pendingString = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingString);
 		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
@@ -397,7 +409,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"container is not connected after connected event fires",
 		);
 
-		const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
+		const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
 		const directory1 = dataObject._root;
 		directory1.set("key", "value");
 		let value1 = await directory1.get("key");
@@ -408,7 +420,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			durationMs: timeoutMs,
 			errorMsg: "container2 initial connect timeout",
 		});
-		const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
+		const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
 		const directory2 = dataObjectTest._root;
 		await localTestObjectProvider.ensureSynchronized();
 		let value2 = await directory2.get("key");
@@ -585,12 +597,91 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
+	it("DeltaStreamConnectionForbidden error on connectToDeltaStream sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
+
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new DeltaStreamConnectionForbiddenError(
+					"deltaStreamConnectionForbidden",
+					{ driverVersion: "1" },
+					"deltaStreamConnectionForbidden",
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		);
+
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on("readonly", (readonly?: boolean) => {
+			assert(readonly, "Readonly should be true");
+			readOnlyPromise.resolve(true);
+		});
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on DeltaStreamConnectionForbidden error",
+		);
+	});
+
+	it("OutOfStorageError sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
+
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new NonRetryableError(
+					"outOfStorageError",
+					DriverErrorType.outOfStorageError,
+					{ driverVersion: "1" },
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		);
+
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on(
+			"readonly",
+			(
+				readonly?: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			) => {
+				assert(readonly, "Readonly should be true");
+				assert.strictEqual(
+					readonlyConnectionReason?.error?.errorType,
+					DriverErrorType.outOfStorageError,
+					"Error should be outOfStorageError",
+				);
+				readOnlyPromise.resolve(true);
+			},
+		);
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on Out of storage error",
+		);
+	});
+
 	itExpects(
 		"Disposing container should send dispose events",
 		[{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" }],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;
@@ -643,7 +734,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await createConnectedContainer();
-			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
 			let containerDisposed = 0;
 			let containerClosed = 0;
@@ -770,7 +861,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Driver", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;

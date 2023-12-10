@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ChildLogger, createChildLogger } from "../logger";
+import { strict as assert } from "node:assert";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
@@ -177,18 +182,92 @@ describe("ChildLogger", () => {
 		assert(sent, "event should be sent");
 	});
 
-	it("should not create multiple child loggers", () => {
+	it("should not send events with log level less than minloglevel", () => {
+		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {},
-		};
-		const childLogger1 = ChildLogger.create(logger);
-		const childLogger2 = ChildLogger.create(childLogger1) as ChildLogger;
-		const childLogger3 = ChildLogger.create(childLogger2) as ChildLogger;
+			send(event: ITelemetryBaseEvent): void {
+				if (event.eventName !== "testEvent") {
+					throw new Error("unexpected event");
+				}
+				sent = true;
+			},
 
-		assert(
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			childLogger3["baseLogger"]["baseLogger"]["baseLogger"] === undefined,
-			"created multiple loggers",
-		);
+			minLogLevel: LogLevel.error,
+		};
+		const childLogger1 = createChildLogger({ logger });
+
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.error);
+		assert(sent, "event should be sent");
+
+		sent = false;
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		assert(!sent, "event should not be sent");
+	});
+
+	it("should receive verbose events with min loglevel set as verbose", () => {
+		let sent = false;
+		const logger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				if (event.eventName !== "testEvent") {
+					throw new Error("unexpected event");
+				}
+				sent = true;
+			},
+
+			minLogLevel: LogLevel.verbose,
+		};
+		const childLogger1 = createChildLogger({ logger });
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		assert(sent, "event should be sent");
+
+		sent = false;
+		childLogger1.send({ category: "error", eventName: "testEvent" });
+		assert(sent, "default event should be sent");
+	});
+
+	it("should not receive verbose events with no min loglevel", () => {
+		let sent = false;
+		const logger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				if (event.eventName !== "testEvent") {
+					throw new Error("unexpected event");
+				}
+				sent = true;
+			},
+		};
+		const childLogger1 = createChildLogger({ logger });
+
+		childLogger1.send({ category: "error", eventName: "testEvent" });
+		assert(sent, "default event should be sent");
+
+		sent = false;
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		assert(!sent, "event should not be sent");
+	});
+
+	it("should be able to send events correctly according to loglevel if multisink logger is used inside childlogger", () => {
+		let sent = false;
+		const logger1: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				if (event.eventName !== "testEvent") {
+					throw new Error("unexpected event");
+				}
+				sent = true;
+			},
+			minLogLevel: LogLevel.default,
+		};
+		const multiSinkLogger = createMultiSinkLogger({
+			loggers: [logger1, new MockLogger(LogLevel.error)],
+		});
+		const childLogger1 = createChildLogger({
+			logger: multiSinkLogger,
+		});
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		assert(!sent, "verbose event should not be sent");
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		assert(sent, "verbose event should be sent");
 	});
 });

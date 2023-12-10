@@ -2,9 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -12,26 +20,27 @@ import { HasComparisonOverride, compareOverrideables, forceCompare } from "./int
  * Collection of intervals.
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose endpoints fall within a specified range.
+ * @internal
  */
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
 	 * @returns an array of all intervals contained in this collection whose endpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithEndpointInRange(start: number, end: number);
+	findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
-class EndpointInRangeIndex<TInterval extends ISerializableInterval>
+export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IEndpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
 
 	constructor(
-		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly client: Client,
+		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
-			const compareEndsResult = helpers.compareEnds(a, b);
+			const compareEndsResult = a.compareEnd(b);
 			if (compareEndsResult !== 0) {
 				return compareEndsResult;
 			}
@@ -61,7 +70,7 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithEndpointInRange(start: number, end: number) {
+	public findIntervalsWithEndpointInRange(start: number, end: number): TInterval[] {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
@@ -96,9 +105,12 @@ class EndpointInRangeIndex<TInterval extends ISerializableInterval>
 	}
 }
 
-export function createEndpointInRangeIndex<TInterval extends ISerializableInterval>(
-	helpers: IIntervalHelpers<TInterval>,
-	client: Client,
-): IEndpointInRangeIndex<TInterval> {
-	return new EndpointInRangeIndex<TInterval>(helpers, client);
+/**
+ * @internal
+ */
+export function createEndpointInRangeIndex(
+	sharedString: SharedString,
+): IEndpointInRangeIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new EndpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
@@ -16,7 +18,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { defaultFluidObjectRequestHandler } from "../request-handlers";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
@@ -25,9 +27,11 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @alpha
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
 {
 	/**
@@ -56,6 +60,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	public get id() {
 		return this.runtime.id;
 	}
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
@@ -78,8 +86,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-		const obj = await runtime.entryPoint?.get();
-		assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
 
@@ -97,8 +104,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		(this.runtime as any)._dataObject = this;
 	}
 
-	// #region IFluidRouter
-
 	/**
 	 * Return this object if someone requests it directly
 	 * We will return this object in two scenarios:
@@ -108,10 +113,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * 2. the request url is empty
 	 */
 	public async request(req: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, req);
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
-
-	// #endregion IFluidRouter
 
 	/**
 	 * Call this API to ensure PureDataObject is fully initialized.

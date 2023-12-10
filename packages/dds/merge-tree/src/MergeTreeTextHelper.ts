@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { IIntegerRange } from "./base";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";
@@ -73,6 +75,7 @@ function gatherText(
 		}
 	} else if (placeholder && placeholder.length > 0) {
 		const placeholderText =
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 		textSegment.text += placeholderText;
 	}

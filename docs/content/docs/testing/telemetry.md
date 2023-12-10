@@ -223,7 +223,7 @@ suggests, the `ConsoleLogger` defined the `send()` method to stringify the entir
 browser console.
 
 ```ts
-import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 // Define a custom ITelemetry Logger. This logger will be passed into TinyliciousClient
 // and gets hooked up to the Tinylicious container telemetry system.

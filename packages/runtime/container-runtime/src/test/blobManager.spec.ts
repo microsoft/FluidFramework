@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	bufferToString,
-	Deferred,
 	gitHashFile,
 	IsoBuffer,
 	TypedEventEmitter,
-} from "@fluidframework/common-utils";
-import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
+} from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -28,14 +28,10 @@ import {
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
-import {
-	BlobManager,
-	IBlobManagerLoadInfo,
-	IBlobManagerRuntime,
-	PendingBlobStatus,
-} from "../blobManager";
-import { sweepAttachmentBlobsKey } from "../gc";
+import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
+import { disableAttachmentBlobSweepKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -96,8 +92,6 @@ export class MockRuntime
 		);
 	}
 
-	public gcTombstoneEnforcementAllowed: boolean = true;
-
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
@@ -126,7 +120,7 @@ export class MockRuntime
 				});
 				this.unprocessedBlobs.add(blob);
 				this.emit("blob");
-				this.blobPs.push(P.catch(() => {}));
+				this.blobPs.push(P);
 				return P;
 			},
 			readBlob: async (id) => this.storage.readBlob(id),
@@ -152,8 +146,8 @@ export class MockRuntime
 		return this.blobManager.getBlob(blobId);
 	}
 
-	public async getPendingLocalState(waitBlobsToAttach: boolean) {
-		const pendingBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+	public async getPendingLocalState() {
+		const pendingBlobs = await this.blobManager.attachAndGetPendingBlobs();
 		return [[...this.ops], pendingBlobs];
 	}
 
@@ -177,16 +171,22 @@ export class MockRuntime
 		this.ops = [];
 	}
 
-	public async processBlobs(resolve = true) {
+	public async processBlobs(
+		resolve: boolean,
+		canRetry: boolean = false,
+		retryAfterSeconds?: number,
+	) {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
 		if (resolve) {
 			this.processBlobsP.resolve();
 		} else {
-			this.processBlobsP.reject(new Error("fake error"));
+			this.processBlobsP.reject(
+				new LoggingError("fake driver error", { canRetry, retryAfterSeconds }),
+			);
 		}
 		this.processBlobsP = new Deferred<void>();
-		await Promise.all(blobPs);
+		await Promise.allSettled(blobPs).catch(() => {});
 	}
 
 	public async processHandles() {
@@ -198,7 +198,7 @@ export class MockRuntime
 
 	public async processAll() {
 		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
-			const p1 = this.processBlobs();
+			const p1 = this.processBlobs(true);
 			const p2 = this.processHandles();
 			this.processOps();
 			await Promise.race([p1, p2]);
@@ -223,22 +223,31 @@ export class MockRuntime
 		return summary;
 	}
 
-	public async connect(delay?: number) {
+	public async connect(delay = 0, processStashedWithRetry?: boolean) {
 		assert(!this.connected);
-		await new Promise<void>((resolve) => setTimeout(resolve, 0));
-		if (this.blobManager.hasPendingOfflineUploads) {
-			const uploadP = this.blobManager.onConnected();
-			this.processing = true;
-			await this.processBlobs();
-			await uploadP;
-			this.processing = false;
-		}
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
+		await this.processStashed(processStashedWithRetry);
 		const ops = this.ops;
 		this.ops = [];
 		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
+	}
+
+	public async processStashed(processStashedWithRetry?: boolean) {
+		const uploadP = this.blobManager.processStashedChanges();
+		this.processing = true;
+		if (processStashedWithRetry) {
+			await this.processBlobs(false, false, 0);
+			// wait till next retry
+			await new Promise<void>((resolve) => setTimeout(resolve, 1));
+			// try again successfully
+			await this.processBlobs(true);
+		} else {
+			await this.processBlobs(true);
+		}
+		await uploadP;
+		this.processing = false;
 	}
 
 	public disconnect() {
@@ -403,11 +412,10 @@ describe("BlobManager", () => {
 
 	it("uploads while disconnected", async () => {
 		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.connect();
 		await runtime.processAll();
+		await assert.doesNotReject(handleP);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
@@ -419,7 +427,7 @@ describe("BlobManager", () => {
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
@@ -427,40 +435,66 @@ describe("BlobManager", () => {
 		await runtime.processAll();
 	});
 
-	it("close container if expired while connect", async () => {
-		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
-		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
-		await runtime.connect(50);
-		assert.strictEqual(runtime.closed, true);
-		await runtime.processAll();
-	});
-
-	it("transition to offline while upload pending", async () => {
+	it("completes after disconnection while upload pending", async () => {
 		await runtime.attach();
 		await runtime.connect();
 
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handle;
-		await runtime.connect();
+		await runtime.connect(10); // adding some delay to reconnection
 		await runtime.processAll();
+		await assert.doesNotReject(handleP);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("transition to offline while op in flight", async () => {
+	it("upload fails gracefully", async () => {
+		await runtime.attach();
+		await runtime.connect();
+
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs(false);
+		runtime.processOps();
+		try {
+			await handleP;
+			assert.fail("should fail");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "fake driver error");
+		}
+		await assert.rejects(handleP);
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
+		assert.strictEqual(summaryData.redirectTable, undefined);
+	});
+
+	it.skip("upload fails and retries for retriable errors", async () => {
+		// Needs to use some sort of fake timer or write test in a different way as it is waiting
+		// for actual time which is causing timeouts.
+		await runtime.attach();
+		await runtime.connect();
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs(false, true, 0);
+		// wait till next retry
+		await new Promise<void>((resolve) => setTimeout(resolve, 1));
+		// try again successfully
+		await runtime.processBlobs(true);
+		runtime.processOps();
+		await runtime.processHandles();
+		assert(handleP);
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
+	it("completes after disconnection while op in flight", async () => {
 		await runtime.attach();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 
 		runtime.disconnect();
 		await runtime.connect();
@@ -478,19 +512,16 @@ describe("BlobManager", () => {
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handleP;
-		await runtime.connect();
+		await runtime.connect(10);
 
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handleP2;
 
-		await runtime.connect();
+		await runtime.connect(10);
 		await runtime.processAll();
-
+		await assert.doesNotReject(handleP);
+		await assert.doesNotReject(handleP2);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 2);
 		assert.strictEqual(summaryData.redirectTable.size, 2);
@@ -503,12 +534,11 @@ describe("BlobManager", () => {
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.disconnect();
-		await runtime.processBlobs();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 
 		runtime.disconnect();
 		await runtime.connect();
@@ -547,7 +577,6 @@ describe("BlobManager", () => {
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 
 		runtime.disconnect();
-		await runtime.processBlobs();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
@@ -566,10 +595,10 @@ describe("BlobManager", () => {
 
 		await runtime.attach();
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
-
 		await runtime.connect();
+
+		await runtime.processAll();
+		await assert.doesNotReject(handle);
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
@@ -602,7 +631,7 @@ describe("BlobManager", () => {
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -615,8 +644,8 @@ describe("BlobManager", () => {
 		await runtime.attach();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
 		await runtime.connect();
+		await runtime.processBlobs(true);
 		await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -645,7 +674,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
 		await createBlob(IsoBuffer.from("blob1", "utf8"));
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
-		await runtime.processBlobs();
+		await runtime.processBlobs(true);
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
 		await runtime.processAll();
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
@@ -671,6 +700,7 @@ describe("BlobManager", () => {
 				assert.strictEqual(error.status, undefined);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, undefined);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -681,19 +711,18 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 1);
+			await runtime.processBlobs(true);
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				ac.abort("abort test");
-				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-				await runtime.processBlobs();
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			assert(handleP);
 			await assert.rejects(handleP);
@@ -706,22 +735,26 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
+			ac.abort("abort test");
+			assert.strictEqual(runtime.unprocessedBlobs.size, 2);
+			await runtime.processBlobs(false);
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				ac.abort("abort test");
-				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-				await runtime.processBlobs(false);
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
-				assert.strictEqual(error.uploadTime, undefined);
-				assert.strictEqual(error.acked, false);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
-			assert(handleP);
+			try {
+				await handleP2;
+				assert.fail("Should not succeed");
+			} catch (error: any) {
+				assert.strictEqual(error.message, "fake driver error");
+			}
 			await assert.rejects(handleP);
+			await assert.rejects(handleP2);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
@@ -731,21 +764,17 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			runtime.disconnect();
+			ac.abort();
+			await runtime.processBlobs(true);
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				runtime.disconnect();
-				ac.abort();
-				await runtime.processBlobs();
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingUpload);
-				assert.strictEqual(error.uploadTime, undefined);
-				assert.strictEqual(error.acked, false);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
-			assert(handleP);
 			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
@@ -776,53 +805,24 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob, ac.signal);
+			const p1 = runtime.processBlobs(true);
+			const p2 = runtime.processHandles();
+			// finish upload
+			await Promise.race([p1, p2]);
+			ac.abort();
+			runtime.processOps();
 			try {
-				const blob = IsoBuffer.from("blob", "utf8");
-				handleP = runtime.createBlob(blob, ac.signal);
-				const p1 = runtime.processBlobs();
-				const p2 = runtime.processHandles();
-				// finish upload
-				await Promise.race([p1, p2]);
-				ac.abort();
-				runtime.processOps();
 				// finish op
-				await Promise.all([p1, p2]);
+				await handleP;
+				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingOp);
+				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
-			assert(handleP);
 			await assert.rejects(handleP);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
-			assert.strictEqual(summaryData.redirectTable, undefined);
-		});
-
-		// tests results will change after
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/4550
-		// handles won't be resolved on disconnection
-		it("resubmit on aborted pending upload", async () => {
-			await runtime.attach();
-			await runtime.connect();
-			const ac = new AbortController();
-			let handleP;
-			try {
-				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				// we can't reject the handle after disconnection but
-				// we can still clean the pending entries
-				runtime.disconnect();
-				await runtime.processBlobs();
-				await handleP;
-				ac.abort();
-				await runtime.connect();
-				runtime.processOps();
-			} catch (error: any) {
-				assert.fail("Should succeed");
-			}
-			assert(handleP);
-			await assert.doesNotReject(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
@@ -835,20 +835,22 @@ describe("BlobManager", () => {
 			let handleP;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				await runtime.processBlobs();
-				// disconnect causes blob to transition to offline if we already upload the
-				// blob, therefore resolving its handle. Once we change that, handle will
-				// reject
+				const p1 = runtime.processBlobs(true);
+				const p2 = runtime.processHandles();
+				// finish upload
+				await Promise.race([p1, p2]);
 				runtime.disconnect();
-				await handleP;
 				ac.abort();
-				await runtime.connect();
-				runtime.processOps();
+				await handleP;
+				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.fail("Should succeed");
+				assert.strictEqual(error.message, "uploadBlob aborted");
+				assert.ok(error.uploadTime);
+				assert.strictEqual(error.acked, false);
 			}
-			assert(handleP);
-			await assert.doesNotReject(handleP);
+			await runtime.connect();
+			runtime.processOps();
+			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
@@ -893,7 +895,6 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
-			injectedSettings[sweepAttachmentBlobsKey] = true;
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 
@@ -938,6 +939,28 @@ describe("BlobManager", () => {
 				},
 				"Deleted blob2 fetch should have failed",
 			);
+		});
+
+		it("disableAttachmentBlobsSweep true - DOESN'T delete unused blobs ", async () => {
+			injectedSettings[disableAttachmentBlobSweepKey] = true;
+
+			await runtime.attach();
+			await runtime.connect();
+
+			const blob1 = await createBlobAndGetIds("blob1");
+			const blob2 = await createBlobAndGetIds("blob2");
+
+			// Delete blob1's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
+			assert(redirectTable.has(blob1.localId));
+			assert(redirectTable.has(blob1.storageId));
+
+			// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
+			assert(redirectTable.has(blob2.localId));
+			assert(redirectTable.has(blob2.storageId));
 		});
 
 		it("deletes unused blobs", async () => {

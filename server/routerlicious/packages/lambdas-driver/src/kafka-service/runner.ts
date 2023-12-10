@@ -22,11 +22,15 @@ import {
 import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
+/**
+ * @internal
+ */
 export class KafkaRunner implements IRunner {
 	private deferred: Deferred<void> | undefined;
 	private partitionManager: PartitionManager | undefined;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.KafkaRunner);
+	private runnerMetricProperties: Map<string, any> | Record<string, any> | undefined;
 
 	constructor(
 		private readonly factory: IPartitionLambdaFactory,
@@ -70,7 +74,12 @@ export class KafkaRunner implements IRunner {
 				},
 			};
 
-			this.runnerMetric.setProperties(lumberProperties);
+			this.runnerMetricProperties = {
+				...lumberProperties,
+				errorLabel: errorData?.errorLabel,
+			};
+
+			this.runnerMetric.setProperties(this.runnerMetricProperties);
 
 			if (errorData && !errorData.restart) {
 				const errorMsg =
@@ -80,7 +89,7 @@ export class KafkaRunner implements IRunner {
 				if (!this.runnerMetric.isCompleted()) {
 					this.runnerMetric.error(errorMsg, error);
 				} else {
-					Lumberjack.error(errorMsg, lumberProperties, error);
+					Lumberjack.error(errorMsg, this.runnerMetricProperties, error);
 				}
 			} else {
 				const errorMsg = "KafkaRunner encountered an error that will trigger a restart";
@@ -89,7 +98,7 @@ export class KafkaRunner implements IRunner {
 				if (!this.runnerMetric.isCompleted()) {
 					this.runnerMetric.error(errorMsg, error);
 				} else {
-					Lumberjack.error(errorMsg, lumberProperties, error);
+					Lumberjack.error(errorMsg, this.runnerMetricProperties, error);
 				}
 				this.deferred?.reject(error);
 				this.deferred = undefined;
@@ -106,13 +115,15 @@ export class KafkaRunner implements IRunner {
 	 */
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("KafkaRunner.stop already called, returning early.");
+			Lumberjack.info("KafkaRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("KafkaRunner.stop starting.");
+		Lumberjack.info("KafkaRunner.stop starting.", { caller });
 		try {
+			this.runnerMetric.setProperty("caller", caller);
+
 			// Stop listening for new updates
 			await this.consumer.pause();
 
@@ -137,13 +148,17 @@ export class KafkaRunner implements IRunner {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.success("KafkaRunner stopped");
 			} else {
-				Lumberjack.info("KafkaRunner stopped");
+				Lumberjack.info("KafkaRunner stopped", { ...this.runnerMetricProperties, caller });
 			}
 		} catch (error) {
 			if (!this.runnerMetric.isCompleted()) {
 				this.runnerMetric.error("KafkaRunner encountered an error during stop", error);
 			} else {
-				Lumberjack.error("KafkaRunner encountered an error during stop", undefined, error);
+				Lumberjack.error(
+					"KafkaRunner encountered an error during stop",
+					{ ...this.runnerMetricProperties, caller },
+					error,
+				);
 			}
 			if (caller === "sigterm") {
 				this.deferred?.resolve();

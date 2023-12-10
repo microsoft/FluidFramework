@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeFamily,
 	SessionId,
@@ -13,9 +13,11 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	ChangeFamilyEditor,
-	Delta,
+	GraphCommit,
+	DeltaRoot,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
 import {
 	TestChange,
 	UnrebasableTestChangeRebaser,
@@ -23,10 +25,11 @@ import {
 	asDelta,
 	NoOpChangeRebaser,
 } from "../testChange";
-import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import { createTestUndoRedoStacks } from "../utils";
 import {
 	TestEditManager,
-	editManagerFactory,
+	testChangeEditManagerFactory,
+	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils";
@@ -268,7 +271,7 @@ describe("EditManager", () => {
 			}
 
 			it("Evicts trunk commits according to a provided minimum sequence number", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				for (let i = 1; i <= 10; ++i) {
 					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
@@ -290,7 +293,7 @@ describe("EditManager", () => {
 			});
 
 			it("Evicts trunk commits at exactly the minimum sequence number", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				manager.addSequencedChange(applyLocalCommit(manager), brand(1), brand(0));
 				assert.equal(manager.getTrunkChanges().length, 1);
 				manager.addSequencedChange(applyLocalCommit(manager), brand(2), brand(1));
@@ -305,7 +308,7 @@ describe("EditManager", () => {
 
 			it("Rebases peer branches", () => {
 				// This is a regression test that ensures peer branches are rebased up to at least the new tail of the trunk after trunk commits are evicted.
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				// First, we receive a commit from a peer ("1").
 				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
 				// We then submit and ack a local commit ("2").
@@ -329,7 +332,7 @@ describe("EditManager", () => {
 			});
 
 			it("Evicts properly when the minimum sequence number advances past the trunk (and there are no local commits)", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 				manager.advanceMinimumSequenceNumber(brand(2));
 				manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
@@ -337,7 +340,7 @@ describe("EditManager", () => {
 			});
 
 			it("Evicts properly when the minimum sequence number advances past the trunk (and there are local commits)", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 				const local = applyLocalCommit(manager, [1], 2);
 				manager.advanceMinimumSequenceNumber(brand(2));
@@ -346,7 +349,7 @@ describe("EditManager", () => {
 			});
 
 			it("Delays eviction of a branch base commit until the branch is disposed", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 				const local = applyLocalCommit(manager, [1], 2);
 				const fork = manager.localBranch.fork();
@@ -359,7 +362,7 @@ describe("EditManager", () => {
 			});
 
 			it("Evicts after the oldest branch rebases", () => {
-				const { manager } = editManagerFactory({});
+				const { manager } = testChangeEditManagerFactory({});
 				const local1 = applyLocalCommit(manager, [], 1);
 				const fork1 = manager.localBranch.fork();
 				manager.addSequencedChange(local1, brand(1), brand(0));
@@ -377,37 +380,104 @@ describe("EditManager", () => {
 				checkChangeList(manager, []);
 			});
 
-			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
-		});
+			it("Evicts properly when changes come in batches having the same sequence number", () => {
+				const { manager } = testChangeEditManagerFactory({});
+				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(peerCommit(peer1, [1], 2), brand(1), brand(0));
+				manager.addSequencedChange(peerCommit(peer1, [1, 2], 3), brand(1), brand(0));
+				checkChangeList(manager, [1, 2, 3]);
+				manager.advanceMinimumSequenceNumber(brand(2));
+				checkChangeList(manager, []);
+				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(1));
+				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3, 4], 5), brand(4), brand(1));
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5], 6),
+					brand(5),
+					brand(4),
+				);
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5, 6], 7),
+					brand(5),
+					brand(4),
+				);
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5, 6, 7], 8),
+					brand(5),
+					brand(4),
+				);
+				checkChangeList(manager, [4, 5, 6, 7, 8]);
+				manager.advanceMinimumSequenceNumber(brand(4));
+				checkChangeList(manager, [6, 7, 8]);
+			});
 
-		it("Rebases anchors over local changes", () => {
-			const { manager, anchors } = editManagerFactory({});
-			const change = TestChange.mint([], 1);
-			manager.localBranch.apply(change, mintRevisionTag());
-			assert.deepEqual(anchors.rebases, [change]);
-			assert.deepEqual(anchors.intentions, change.intentions);
-		});
+			it("does not evict commits including and after the oldest revertible commit", () => {
+				const { manager } = testChangeEditManagerFactory({ autoDiscardRevertibles: false });
+				const { unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
 
-		it("Rebases anchors over sequenced changes", () => {
-			const { manager, anchors } = editManagerFactory({});
-			const change = TestChange.mint([], 1);
-			manager.addSequencedChange(
-				{
-					change,
-					revision: mintRevisionTag(),
-					sessionId: peer1,
-				},
-				brand(1),
-				brand(0),
-			);
-			assert.deepEqual(anchors.rebases, [change]);
-			assert.deepEqual(anchors.intentions, change.intentions);
+				const commit1 = applyLocalCommit(manager, [], 1);
+				const commit2 = applyLocalCommit(manager, [], 1);
+				const commit3 = applyLocalCommit(manager, [], 1);
+				const commit4 = applyLocalCommit(manager, [], 1);
+				manager.addSequencedChange(commit1, brand(1), brand(0));
+				manager.addSequencedChange(commit2, brand(2), brand(0));
+				manager.addSequencedChange(commit3, brand(3), brand(0));
+				manager.addSequencedChange(commit4, brand(4), brand(0));
+				manager.advanceMinimumSequenceNumber(brand(4));
+
+				// check that commits are all still in the trunk
+				let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
+				assert.equal(current.revision, commit4.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit3.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit2.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit1.revision);
+
+				unsubscribe();
+			});
+
+			it("advances the oldest revertible commit when that revertible is disposed", () => {
+				const { manager } = testChangeEditManagerFactory({ autoDiscardRevertibles: false });
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
+
+				const commit1 = applyLocalCommit(manager, [], 1);
+				const commit2 = applyLocalCommit(manager, [], 1);
+				const commit3 = applyLocalCommit(manager, [], 1);
+				const commit4 = applyLocalCommit(manager, [], 1);
+				manager.addSequencedChange(commit1, brand(1), brand(0));
+				manager.addSequencedChange(commit2, brand(2), brand(0));
+				manager.addSequencedChange(commit3, brand(3), brand(0));
+				manager.addSequencedChange(commit4, brand(4), brand(0));
+
+				// discard the oldest revertible and trim the trunk
+				undoStack[0].discard();
+				manager.advanceMinimumSequenceNumber(brand(4));
+
+				// check that all commits except the first are still in the trunk
+				let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
+				assert.equal(current.revision, commit4.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit3.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit2.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.notEqual(current.revision, commit1.revision);
+
+				unsubscribe();
+			});
 		});
 
 		it("Updates local branch when loading from summary", () => {
 			// This regression tests ensures that the local branch is rebased to the head of the trunk
 			// when the trunk is modified by a summary load
-			const { manager } = editManagerFactory({});
+			const { manager } = testChangeEditManagerFactory({});
 			const revision = mintRevisionTag();
 			manager.loadSummaryData({
 				trunk: [
@@ -434,11 +504,15 @@ describe("EditManager", () => {
 
 		describe("Reports correct max branch length", () => {
 			it("When there are no branches", () => {
-				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const { manager } = testChangeEditManagerFactory({
+					rebaser: new NoOpChangeRebaser(),
+				});
 				assert.equal(manager.getLongestBranchLength(), 0);
 			});
 			it("When the local branch is longest", () => {
-				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const { manager } = testChangeEditManagerFactory({
+					rebaser: new NoOpChangeRebaser(),
+				});
 				const sequencedLocalChange = mintRevisionTag();
 				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
 				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
@@ -464,7 +538,9 @@ describe("EditManager", () => {
 				assert.equal(manager.getLongestBranchLength(), 2);
 			});
 			it("When a peer branch is longest", () => {
-				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const { manager } = testChangeEditManagerFactory({
+					rebaser: new NoOpChangeRebaser(),
+				});
 				const sequencedLocalChange = mintRevisionTag();
 				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
 				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
@@ -567,36 +643,400 @@ describe("EditManager", () => {
 		];
 
 		describe("Local commit rebasing", () => {
-			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
-				it(`Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`, () => {
+			for (const { rebasedEditCount: L, trunkEditCount: T } of scenarios) {
+				// This test simulates the following inputs to the EditManager:
+				//   - Add local edit L1 with a ref seq# pointing to edit 0
+				//   ...(not incrementing the ref seq# for each L)
+				//   - Add local edit Lc with a ref seq# pointing to edit 0
+				//   => we start measuring from here
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc)
+				//     └───────────────(L1)─...─(Lc)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)
+				//     └───────────────(L1)─...─(Lc)
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)
+				//                   └─(L1)─...─(Lc)
+				it(`Rebase ${L} local commits over ${T} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
-					rebaseLocalEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
-					assert.equal(rebaser.rebasedCount, trunkEditCount * rebasedEditCount ** 2);
-					assert.equal(rebaser.invertedCount, trunkEditCount * rebasedEditCount);
-					assert.equal(
-						rebaser.composedCount,
-						trunkEditCount * (rebasedEditCount * 2 + 1),
+					const manager = testChangeEditManagerFactory({ rebaser }).manager;
+					const run = rebaseLocalEditsOverTrunkEdits(
+						L,
+						T,
+						manager,
+						() => TestChange.emptyChange,
+						true,
 					);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// As part of rebasing the local branch over the trunk edits,
+						//   the Ith local edit on the branch is rebased over...
+						//     - the inverse of each local edit before it: I - 1
+						//     - the new trunk edit: 1
+						//     - the rebased version of each local edit before it: I - 1
+						//   This adds up to 1 + 2I - 2 rebases for the Ith edit.
+						//   Summing over all L edits transforms I into L(L+1)/2
+						//   Which gives us: L + 2L(L+1)/2 - 2L
+						// Summing over all T branch rebases gives us: TL + 2TL(L+1)/2 - 2TL
+						// Which simplifies to:
+						rebased: T * L * L,
+						// As part of rebasing the local branch over the trunk edits,
+						//   the Ith local edit on the branch is inverted once
+						//   Summing over all L edits gives us L
+						// Summing over all T branch rebases gives us: TL
+						inverted: T * L,
+						// As part of rebasing the local branch over the trunk edits,
+						//   for each branch rebase, we compose...
+						//     - the inverse of each local edits: L
+						//     - the trunk edit:  1
+						//     - the rebased version of each local edits: L
+						//   This adds up to 2L + 1 per branch rebase.
+						// Summing over all T branch rebases gives us:
+						composed: T * (2 * L + 1),
+					};
+					assert.deepEqual(actual, expected);
 				});
 			}
 		});
-		describe("Peer commit rebasing", () => {
-			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
-				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
-					const rebaser = new NoOpChangeRebaser();
-					rebasePeerEditsOverTrunkEdits(rebasedEditCount, trunkEditCount, rebaser);
-					assert.equal(
-						rebaser.rebasedCount,
-						trunkEditCount * rebasedEditCount +
-							rebasedEditCount * (rebasedEditCount - 1),
-					);
 
-					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
-					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
+		describe("Peer commit rebasing for peer with fixed seq ref#", () => {
+			for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
+				// This test simulates the following inputs to the EditManager:
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				//   => we start measuring from here
+				//   - Add peer edit P1 with a ref seq# pointing to edit 0
+				//   ...(not incrementing the ref seq# for each P)
+				//   - Add peer edit Pc with a ref seq# pointing to edit 0
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc)
+				//     └───────────────(P1)─...─(Pc)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)
+				//     └─
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)
+				//                                 └─
+				it(`Rebase ${P} peer commits over ${T} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					const manager = testChangeEditManagerFactory({ rebaser }).manager;
+					const run = rebasePeerEditsOverTrunkEdits(
+						P,
+						T,
+						manager,
+						() => TestChange.emptyChange,
+						true,
+					);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const expected = {
+						// As part of rebasing the new peer edit to the tip of the trunk,
+						//   For the Ith peer edit, we rebase it over...
+						//     - the inverse of the peer edits on the peer branch: I - 1
+						//     - the trunk edits that were not contributed by that peer: T
+						//     - the the rebased version of the peer edits (now on the trunk): I - 1
+						//   This adds up to T + 2I - 2 rebases for the Ith edit.
+						//   Summing over all P edits transforms I into P(P + 1)/2
+						//   Which gives us: PT + 2P(P + 1)/2 - 2P
+						//   Which simplifies to:
+						rebased: P * (T + P - 1),
+						// As part of rebasing the new peer edit to the tip of the trunk,
+						//   For the Ith peer edit, we invert...
+						//     - each peer edit before it: I - 1
+						//   Summing over all P edits transforms I into P(P + 1)/2
+						//   Which gives us: P(P + 1)/2 - 1
+						//   However, we cache the inverse of each change, so overall we only invert once each peer
+						//   edit that has peer edit after it.
+						inverted: P - 1,
+						// As part of rebasing the local branch edit over the peer edit,
+						//   For the Ith peer edit, we compose...
+						//     - the rebased version of that peer edit: 1
+						//   Summing over all P edits transforms gives us: P
+						// Note: this composition is only needed to bake the RevisionTag into the changeset.
+						composed: P,
+					};
+					assert.deepEqual(actual, expected);
 				});
 			}
+		});
+
+		describe("Peer commit rebasing for peer with advancing (but not tip) seq ref#", () => {
+			for (const editCount of [1, 2, 10]) {
+				// This test simulates the following inputs to the EditManager:
+				//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each T)
+				//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+				//   => we start measuring from here
+				//   - Add peer edit P1 with a ref seq# pointing to edit 0
+				//   ...(incrementing the ref seq# for each P)
+				//   - Add peer edit Pc with a ref seq# pointing to edit Tc-1
+				// This defines the following relationships between edits:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)
+				//     |    |          └──────(P1)─(P2)─...─(Pc)
+				//     |    └─────────────────(P1)─(P2)
+				//     └──────────────────────(P1)
+				// Before we start measuring, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)
+				//     └─
+				// By the end of the test, the EditManager has the following structure:
+				//   (0)─(T1)─...─(Tc─1)─(Tc)─(P1)─(P2)─...─(Pc)
+				//                                             └─
+				it(`for ${editCount} peer commits and ${editCount} trunk commits`, () => {
+					const rebaser = new NoOpChangeRebaser();
+					const manager = testChangeEditManagerFactory({ rebaser }).manager;
+					const run = rebaseAdvancingPeerEditsOverTrunkEdits(
+						editCount,
+						manager,
+						() => TestChange.emptyChange,
+						true,
+					);
+					rebaser.rebasedCount = 0;
+					rebaser.invertedCount = 0;
+					rebaser.composedCount = 0;
+					run();
+					const actual = {
+						rebased: rebaser.rebasedCount,
+						inverted: rebaser.invertedCount,
+						composed: rebaser.composedCount,
+					};
+					const P = editCount;
+					const T = editCount;
+					const expected = {
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//   we rebase all edits on the branch over the one new trunk edit.
+						//   For the Ith peer edit there are I - 1 edits to rebase.
+						//     For the Kth peer edit we rebase it over...
+						//       - the inverse of each peer edit before it: K - 1
+						//       - the one new trunk edit: 1
+						//       - the rebased version of each peer edit before it: K - 1
+						//     This adds up to 1 + 2K - 2 rebases for the Kth edit.
+						//     Summing over all I - 1 edits transforms K in (I - 1)I/2
+						//     Which gives us (I - 1) + 2(I - 1)I/2 - 2(I - 1)
+						//     Which simplifies to: (I - 1)² rebases for the Ith branch rebase.
+						//   The number of the first N squares is N(N+1)(2N+1)/6
+						//   Summing over all P branch rebases gives us: (P-1)P(2(P-1)+1)/6
+						// As part of rebasing the new peer edit to the tip of the trunk,
+						//   For the Ith peer edit, we rebase it over...
+						//     - the inverse of the peer edits on the peer branch: I - 1
+						//     - the trunk edits that were not contributed by that peer: T - (I - 1)
+						//     - the the rebased version of the peer edits (now on the trunk): I - 1
+						//   This adds up to I - 1 + T rebases for the Ith edit.
+						//   Summing over all P edits transforms I into P(P + 1)/2
+						//   This gives us: P(P + 1)/2 - P + PT
+						//   Which simplifies to: P(P - 1)/2 + PT
+						// Adding both terms and simplifying:
+						rebased: (P * (P - 1) * (P + 1)) / 3 + P * T,
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//   For the Ith peer edit there are I-1 edits to invert.
+						//   Summing over all P transforms I into P(P + 1)/2
+						//   Which gives us: P(P + 1)/2 - P
+						//   Which simplifies to: P(P - 1)/2
+						// As part of rebasing the new peer edit to the tip of the trunk,
+						//   For the Ith peer edit, there are I - 1 edits to invert.
+						//   Summing over all P transforms I into P(P + 1)/2
+						//   Which gives us: P(P + 1)/2 - P
+						//   Which simplifies to: P(P - 1)/2
+						// Adding both terms:
+						inverted: (P - 1) * P,
+						// As part of rebasing the peer branch that contains the prior peer edits,
+						//  the composition is skipped because no subscribers exist to read the net change.
+						// As part of updating the local branch,
+						//   for the Ith peer edit we compose that peer edit: 1
+						//   Summing over all P branch rebases gives us: P
+						// Adding both terms:
+						composed: P,
+					};
+					assert.deepEqual(actual, expected);
+				});
+			}
+		});
+
+		describe("Single peer commit on top of existing peer branch", () => {
+			describe("with peer commit ref# to the trunk edit that the existing peer branch should rebase over", () => {
+				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
+					// This test simulates the following inputs to the EditManager:
+					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+					//   ...(incrementing the ref seq# for each T)
+					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+					//   - Add peer edit P1 with a ref seq# pointing to edit 0
+					//   ...(not incrementing the ref seq# for each P)
+					//   - Add peer edit Pc with a ref seq# pointing to edit 0
+					//   => we start measuring from here
+					//   - Add peer edit P+ with a ref seq# pointing to edit Tc
+					// This defines the following relationships between edits:
+					//   (0)─(T1)─...─(Tc)
+					//     |             └─(P1)─...─(Pc)─(P+)
+					//     └───────────────(P1)─...─(Pc)
+					// Before we start measuring, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)
+					//     └───────────────(P1)─...─(Pc)
+					// By the end of the test, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(P1)─...─(Pc)─(P+)
+					//                                      └─
+					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
+						const rebaser = new NoOpChangeRebaser();
+						const manager = testChangeEditManagerFactory({ rebaser }).manager;
+						rebasePeerEditsOverTrunkEdits(P, T, manager, () => TestChange.emptyChange);
+						rebaser.rebasedCount = 0;
+						rebaser.invertedCount = 0;
+						rebaser.composedCount = 0;
+						manager.addSequencedChange(
+							{
+								change: TestChange.emptyChange,
+								revision: mintRevisionTag(),
+								sessionId: "peer",
+							},
+							brand(T + P + 1),
+							brand(T),
+						);
+						const actual = {
+							rebased: rebaser.rebasedCount,
+							inverted: rebaser.invertedCount,
+							composed: rebaser.composedCount,
+						};
+						const expected = {
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no rebasing.
+							// As part of rebasing P+ to the tip of the trunk,
+							//   we realize that it is based on the tip of the trunk.
+							//   It therefore undergoes no rebasing.
+							rebased: 0,
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//   we realize that the trunk already contains those edits.
+							//   They therefore undergo no inverting.
+							// As part of rebasing P+, we invert...
+							//   - each of the phase-1 peer edits: P
+							// Adding both terms and simplifying:
+							inverted: P,
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//  the composition is skipped because no subscribers exist to read the net change.
+							// As part of rebasing the local branch, we compose...
+							//   - the phase-2 peer edit: 1
+							// Note: this composition is only needed to bake the RevisionTag into the changeset.
+							// Adding both terms and simplifying:
+							composed: 1,
+						};
+						assert.deepEqual(actual, expected);
+					});
+				}
+			});
+
+			describe("with peer commit ref# to the trunk edit before the trunk edit that the existing peer branch should rebase over", () => {
+				for (const { rebasedEditCount: P, trunkEditCount: T } of scenarios) {
+					// This test simulates the following inputs to the EditManager:
+					//   - Add trunk edit T1 with a ref seq# pointing to edit 0
+					//   ...(incrementing the ref seq# for each T)
+					//   - Add trunk edit Tc with a ref seq# pointing to edit Tc-1
+					//   - Add trunk edit T+ with a ref seq# pointing to edit Tc
+					//   - Add peer edit P1 with a ref seq# pointing to edit 0
+					//   ...(not incrementing the ref seq# for each P)
+					//   - Add peer edit Pc with a ref seq# pointing to edit 0
+					//   => we start measuring from here
+					//   - Add peer edit P+ with a ref seq# pointing to edit Tc
+					// This defines the following relationships between edits:
+					//   (0)─(T1)─...─(Tc)─(T+)
+					//     |             └──────(P1)─...─(Pc)─(P+)
+					//     └────────────────────(P1)─...─(Pc)
+					// Before we start measuring, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(T+)
+					//     └────────────────────(P1)─...─(Pc)
+					// By the end of the test, the EditManager has the following structure:
+					//   (0)─(T1)─...─(Tc)─(T+)─(P1)─...─(Pc)─(P+)
+					//                   └──(P1)─...─(Pc)─(P+)
+					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
+						const rebaser = new NoOpChangeRebaser();
+						const manager = testChangeEditManagerFactory({ rebaser }).manager;
+						rebasePeerEditsOverTrunkEdits(
+							P,
+							T + 1,
+							manager,
+							() => TestChange.emptyChange,
+						);
+						rebaser.rebasedCount = 0;
+						rebaser.invertedCount = 0;
+						rebaser.composedCount = 0;
+						manager.addSequencedChange(
+							{
+								change: TestChange.emptyChange,
+								revision: mintRevisionTag(),
+								sessionId: "peer",
+							},
+							brand(T + P + 2),
+							brand(T),
+						);
+						const actual = {
+							rebased: rebaser.rebasedCount,
+							inverted: rebaser.invertedCount,
+							composed: rebaser.composedCount,
+						};
+						const expected = {
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//   there are P edits on the branch to be rebased.
+							//     The Ith edit is rebased over...
+							//       - the inverse of each peer edit before it: I - 1
+							//       - each of the trunk edits: T
+							//       - the fully rebased version of each peer edit before it: I - 1
+							//     This adds up to T + 2I - 2 rebases for the Ith edit.
+							//   Summing over all P edits transforms I into P(P + 1)/2
+							//   Which gives us: PT + 2P(P + 1)/2 - 2P
+							//   Which simplifies to: P(T + P - 1)
+							// As part of rebasing P+,
+							//   we rebase it over...
+							//     - the inverse of each peer edit before it: P
+							//       (these are based on commit Tc)
+							//     - the one remaining trunk edit T+: 1
+							//     - each peer fully rebased version of each peer edit before it: P
+							//       (these are based on commit T+)
+							//   This adds up to 2P + 1 rebases.
+							// Adding both terms:
+							rebased: P * (T + P - 1) + P * 2 + 1,
+							// As part of rebasing the peer branch,
+							//   we invert...
+							//     - each of the phase-1 peer edits: P
+							//       (these are based on commit 0)
+							//   This adds up P inverts.
+							// As part of rebasing P+ to the tip of the trunk,
+							//   we invert...
+							//     - each of the phase-1 peer edits: P
+							//       (these are based on commit Tc)
+							//   This adds up P inverts.
+							// Adding both terms:
+							inverted: 2 * P,
+							// As part of rebasing the peer branch that contains the phase-1 edits,
+							//  the composition is skipped because no subscribers exist to read the net change.
+							// As part of rebasing the local branch,
+							//   we compose...
+							//     - the phase-2 peer edit P+: 1
+							//   This adds up 1 edit composed.
+							// Note: this composition is only needed to bake the RevisionTag into the changeset.
+							// Adding both terms:
+							composed: 1,
+						};
+						assert.deepEqual(actual, expected);
+					});
+				}
+			});
 		});
 	});
 
@@ -705,13 +1145,16 @@ function runUnitTestScenario(
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
 	const run = (advanceMinimumSequenceNumber: boolean) => {
-		const { manager, anchors } = editManagerFactory({ rebaser });
+		const { manager } = testChangeEditManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
 		 * Used as a source of summary data to spin-up `joiners`.
 		 * This `EditManager` never has local changes.
 		 */
-		const summarizer = editManagerFactory({ rebaser, sessionId: "Summarizer" }).manager;
+		const summarizer = testChangeEditManagerFactory({
+			rebaser,
+			sessionId: "Summarizer",
+		}).manager;
 		/**
 		 * A set of `EditManager`s spun-up based on summaries produced by `summarizer`.
 		 * One such joiner is produced after every sequenced edit (i.e., after every "Ack" or "Pull" step).
@@ -819,7 +1262,7 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						asDelta(manager.localBranch.getHead().change.intentions),
 						asDelta([seq]),
 					);
 					break;
@@ -909,8 +1352,6 @@ function runUnitTestScenario(
 				default:
 					unreachableCase(type);
 			}
-			// Anchors should be kept up to date with the known intentions
-			assert.deepEqual(anchors.intentions, knownToLocal);
 			// The exposed trunk and local changes should reflect what is known to the local client
 			checkChangeList(
 				manager,
@@ -924,7 +1365,7 @@ function runUnitTestScenario(
 			// Spin-up a new joiner whenever a summary client would have a different state.
 			// This assumes summary clients have no local changes, which may change in the future.
 			if (step.type !== "Push") {
-				const joiner = editManagerFactory({
+				const joiner = testChangeEditManagerFactory({
 					rebaser,
 					sessionId: `Join${joiners.length}`,
 				}).manager;
@@ -959,12 +1400,12 @@ function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
 function addSequencedChange(
 	editManager: TestEditManager,
-	...args: Parameters<typeof editManager["addSequencedChange"]>
-): Delta.Root {
-	let delta: Delta.Root = emptyDelta;
-	const offChange = editManager.localBranch.on("change", ({ change }) => {
+	...args: Parameters<(typeof editManager)["addSequencedChange"]>
+): DeltaRoot {
+	let delta: DeltaRoot = emptyDelta;
+	const offChange = editManager.localBranch.on("afterChange", ({ change }) => {
 		if (change !== undefined) {
-			delta = editManager.changeFamily.intoDelta(change);
+			delta = asDelta(change.change.intentions);
 		}
 	});
 	editManager.addSequencedChange(...args);

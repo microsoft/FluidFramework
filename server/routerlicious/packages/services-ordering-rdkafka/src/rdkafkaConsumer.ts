@@ -15,6 +15,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
+/**
+ * @internal
+ */
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
 	consumeLoopTimeoutDelay: number;
@@ -41,6 +44,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 
 /**
  * Kafka consumer using the node-rdkafka library
+ * @internal
  */
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly consumerOptions: IKafkaConsumerOptions;
@@ -163,7 +167,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
-			this.error(error);
+			this.error(error, { restart: false, errorLabel: "rdkafkaConsumer:connection.failure" });
 
 			this.connect();
 		});
@@ -182,7 +186,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === this.kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.error(err);
+					this.error(err, {
+						restart: false,
+						errorLabel: "rdkafkaConsumer:offset.commit",
+					});
 				}
 			}
 
@@ -209,7 +216,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						this.emit("checkpoint", offset.partition, offset.offset);
 					}
 				} else {
-					this.error(new Error(`Unknown commit for partition ${offset.partition}`));
+					this.error(new Error(`Unknown commit for partition ${offset.partition}`), {
+						restart: false,
+						errorLabel: "rdkakfaConsumer:offset.commit",
+					});
 				}
 			}
 		});
@@ -282,21 +292,21 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				} catch (ex) {
 					this.isRebalancing = false;
-					this.error(ex);
+					this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
 				} finally {
 					this.pendingMessages.clear();
 				}
 			} else {
-				this.error(err);
+				this.error(err, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
 			}
 		});
 
 		consumer.on("rebalance.error", (error) => {
-			this.error(error);
+			this.error(error, { restart: false, errorLabel: "rdkafkaConsumer:rebalance.error" });
 		});
 
 		consumer.on("event.error", (error) => {
-			this.error(error);
+			this.error(error, { restart: false, errorLabel: "rdkafkaConsumer:event.error" });
 		});
 
 		consumer.on("event.throttle", (event) => {

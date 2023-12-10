@@ -12,7 +12,8 @@ import {
 	NonRetryableError,
 	NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -49,6 +50,9 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
+/**
+ * @alpha
+ */
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
@@ -301,6 +305,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 	return resolvedUrl as IOdspResolvedUrl;
 }
 
+/**
+ * @internal
+ */
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
+	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
+}
+
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
 	createChildLogger({
 		logger,
@@ -440,6 +451,7 @@ export function buildOdspShareLinkReqParams(
 	}
 	const scope = (shareLinkType as ISharingLinkKind).scope;
 	if (!scope) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		return `createLinkType=${shareLinkType}`;
 	}
 	let shareLinkRequestParams = `createLinkScope=${scope}`;

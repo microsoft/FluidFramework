@@ -4,11 +4,15 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
+import {
+	IntervalType,
+	SequenceDeltaEvent,
+	SharedString,
+	createEndpointIndex,
+} from "@fluidframework/sequence";
 import {
 	positionToRowCol,
 	rowColToPosition,
@@ -40,6 +44,7 @@ export interface ITableDocumentEvents extends IEvent {
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @internal
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
 	public static getFactory() {
@@ -78,9 +83,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
-	public async getRange(label: string) {
+	public async getRange(label: string): Promise<CellRange> {
+		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
 		const intervals = this.matrix.getIntervalCollection(label);
-		const interval = intervals.nextInterval(0);
+		intervals.attachIndex(endpointIndex);
+		const interval = endpointIndex.nextInterval(0);
+		intervals.detachIndex(endpointIndex);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 

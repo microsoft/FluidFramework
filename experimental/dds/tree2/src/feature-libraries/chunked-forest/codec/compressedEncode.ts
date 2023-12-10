@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
 	FieldKey,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
+	FieldKindIdentifier,
 } from "../../../core";
 import { fail, getOrCreate } from "../../../util";
+import { type FieldKind } from "../../modular-schema";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
@@ -269,7 +271,10 @@ export class InlineArrayShape
 	/**
 	 * @param length - number of invocations of `inner`.
 	 */
-	public constructor(public readonly length: number, public readonly inner: NodesEncoder) {
+	public constructor(
+		public readonly length: number,
+		public readonly inner: NodesEncoder,
+	) {
 		super();
 	}
 
@@ -395,6 +400,7 @@ export function encodeValue(
 		}
 	} else {
 		if (shape === true) {
+			assert(value !== undefined, 0x78d /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else if (shape === false) {
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
@@ -408,14 +414,15 @@ export function encodeValue(
 }
 
 export class EncoderCache implements TreeShaper, FieldShaper {
-	private readonly shapesFromSchema: Map<TreeSchemaIdentifier, NodeEncoder> = new Map();
+	private readonly shapesFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> = new Map();
 	private readonly nestedArrays: Map<NodeEncoder, NestedArrayShape> = new Map();
 	public constructor(
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 	) {}
 
-	public shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.shapesFromSchema, schemaName, () =>
 			this.treeEncoder(this, schemaName),
 		);
@@ -425,24 +432,27 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayShape(inner));
 	}
 
-	public shapeFromField(field: FieldStoredSchema): FieldEncoder {
+	public shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 		return new LazyFieldEncoder(this, field, this.fieldEncoder);
 	}
 }
 
 export interface TreeShaper {
-	shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder;
+	shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
 }
 
 export interface FieldShaper {
-	shapeFromField(field: FieldStoredSchema): FieldEncoder;
+	shapeFromField(field: TreeFieldStoredSchema): FieldEncoder;
 }
 
-export type FieldShapePolicy = (treeShaper: TreeShaper, field: FieldStoredSchema) => FieldEncoder;
+export type FieldShapePolicy = (
+	treeShaper: TreeShaper,
+	field: TreeFieldStoredSchema,
+) => FieldEncoder;
 
 export type TreeShapePolicy = (
 	fieldShaper: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ) => NodeEncoder;
 
 class LazyFieldEncoder implements FieldEncoder {
@@ -450,7 +460,7 @@ class LazyFieldEncoder implements FieldEncoder {
 
 	public constructor(
 		public readonly cache: TreeShaper,
-		public readonly field: FieldStoredSchema,
+		public readonly field: TreeFieldStoredSchema,
 		private readonly fieldEncoder: FieldShapePolicy,
 	) {}
 	public encodeField(

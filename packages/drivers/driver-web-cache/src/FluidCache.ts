@@ -4,7 +4,7 @@
  */
 
 import { IDBPDatabase } from "idb";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -28,6 +28,9 @@ interface StorageQuotaUsageDetails {
 	indexedDB: number | undefined;
 }
 
+/**
+ * @internal
+ */
 export interface FluidCacheConfig {
 	/**
 	 * A string to specify what partition of the cache you wish to use (e.g. a user id).
@@ -58,7 +61,8 @@ export interface FluidCacheConfig {
 }
 
 /**
- * A cache that can be used by the Fluid ODSP driver to cache data for faster performance
+ * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
+ * @internal
  */
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;

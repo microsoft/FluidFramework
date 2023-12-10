@@ -11,6 +11,9 @@ import { TypedEventEmitter } from "./typedEventEmitter";
  * Base class used for forwarding events from a source EventEmitter.
  * This can be useful when all arbitrary listeners need to be removed,
  * but the primary source needs to stay intact.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export class EventForwarder<TEvent = IEvent>
 	extends TypedEventEmitter<TEvent>

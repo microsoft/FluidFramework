@@ -41,8 +41,6 @@ export {
 	latestSummarySha,
 	logAndThrowApiError,
 	NodeFsManagerFactory,
-	NodegitRepositoryManager,
-	NodegitRepositoryManagerFactory,
 	parseStorageRoutingId,
 	persistLatestFullSummaryInStorage,
 	RedisFsManagerFactory,

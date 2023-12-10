@@ -12,9 +12,9 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
-import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
-import { assertIntervals } from "./intervalUtils";
+import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
+import { IntervalStickiness, SequenceInterval } from "../intervals";
+import { assertSequenceIntervals } from "./intervalTestUtils";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
@@ -25,7 +25,7 @@ async function loadSharedString(
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
@@ -38,10 +38,12 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
-	dataStoreRuntime.options = { intervalStickinessEnabled: true };
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+	};
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime1.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 	const sharedString = new SharedString(dataStoreRuntime, "", SharedStringFactory.Attributes);
@@ -49,24 +51,18 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	sharedString.connect(services);
 	sharedString.insertText(0, "ABCDEF");
 	const collection = sharedString.getIntervalCollection("test");
-	collection.add(0, 2, IntervalType.SlideOnRemove);
+	collection.add({ start: 0, end: 2 });
 	const collectionStartSticky = sharedString.getIntervalCollection("start-sticky");
-	const startStickyInterval = collectionStartSticky.add(
-		0,
-		2,
-		IntervalType.SlideOnRemove,
-		undefined,
-		IntervalStickiness.START,
-	);
+	const startStickyInterval = collectionStartSticky.add({
+		start: { pos: 0, side: Side.After },
+		end: { pos: 2, side: Side.After },
+	});
 	assert.equal(startStickyInterval.stickiness, IntervalStickiness.START);
 	const collectionEndSticky = sharedString.getIntervalCollection("end-sticky");
-	const endStickyInterval = collectionEndSticky.add(
-		0,
-		2,
-		IntervalType.SlideOnRemove,
-		undefined,
-		IntervalStickiness.END,
-	);
+	const endStickyInterval = collectionEndSticky.add({
+		start: { pos: 0, side: Side.Before },
+		end: { pos: 2, side: Side.Before },
+	});
 	assert.equal(endStickyInterval.stickiness, IntervalStickiness.END);
 	containerRuntimeFactory.processAllMessages();
 	const { summary } = await sharedString.summarize();
@@ -133,7 +129,9 @@ describe("IntervalCollection snapshotting", () => {
 			detachedSummary,
 		);
 		const collection = stringLoadedWithDetachedInterval.getIntervalCollection("test");
-		assertIntervals(stringLoadedWithDetachedInterval, collection, [{ start: -1, end: -1 }]);
+		assertSequenceIntervals(stringLoadedWithDetachedInterval, collection, [
+			{ start: -1, end: -1 },
+		]);
 	});
 
 	describe("enables operations on reload", () => {
@@ -157,10 +155,10 @@ describe("IntervalCollection snapshotting", () => {
 
 		it("reloaded interval can be changed", async () => {
 			collection.change(id, 1, 3);
-			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
-			assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
+			assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 		});
 
 		it("reloaded interval can be deleted", async () => {
@@ -172,14 +170,14 @@ describe("IntervalCollection snapshotting", () => {
 		});
 
 		it("new interval can be added after reload", async () => {
-			collection.add(2, 4, IntervalType.SlideOnRemove);
-			assertIntervals(sharedString, collection, [
+			collection.add({ start: 2, end: 4 });
+			assertSequenceIntervals(sharedString, collection, [
 				{ start: 0, end: 2 },
 				{ start: 2, end: 4 },
 			]);
-			assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [
+			assertSequenceIntervals(sharedString2, collection2, [
 				{ start: 0, end: 2 },
 				{ start: 2, end: 4 },
 			]);
@@ -190,7 +188,7 @@ describe("IntervalCollection snapshotting", () => {
 				collection.getIntervalById(id) ?? assert.fail("collection should have interval");
 			const locator1 = intervalLocatorFromEndpoint(interval1.start);
 			assert.deepEqual(locator1, { interval: interval1, label: "test" });
-			const interval2 = collection.add(1, 2, IntervalType.SlideOnRemove);
+			const interval2 = collection.add({ start: 1, end: 2 });
 			const locator2 = intervalLocatorFromEndpoint(interval2.start);
 			assert.deepEqual(locator2, { interval: interval2, label: "test" });
 		});

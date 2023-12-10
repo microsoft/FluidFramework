@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
 
@@ -15,7 +15,6 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	createLoader,
@@ -23,8 +22,9 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	timeoutPromise,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -71,7 +71,7 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 	},
 };
 
-describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
+describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObjectProvider) => {
 	const scenarioToContainerUrl = new Map<string, string>();
 	const scenarioToSeqNum = new Map<string, number>();
 
@@ -109,10 +109,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				);
 				containerResolvedUrl = initContainer.resolvedUrl;
 
-				const initDataObject = await requestFluidObject<ITestFluidObject>(
-					initContainer,
-					"default",
-				);
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
 				for (let i = 0; i < maxOps; i++) {
 					initDataObject.root.set(i.toString(), i);
 				}
@@ -155,6 +153,11 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				const summaryContainer = await summaryLoader.resolve({
 					url: containerUrl,
 				});
+
+				// Force the container into write mode to ensure a summary will be created
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(summaryContainer);
+				dataObject.root.set("Force write", 0);
 
 				const summaryCollection = new SummaryCollection(
 					summaryContainer.deltaManager,
@@ -207,10 +210,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				const validationContainer = await validationLoader.resolve({
 					url: containerUrl,
 				});
-				const validationDataObject = await requestFluidObject<ITestFluidObject>(
-					validationContainer,
-					"default",
-				);
+				const validationDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
 				const storageOnlyDsF: IDocumentServiceFactory = {
 					createContainer: provider.documentServiceFactory.createContainer.bind(
@@ -235,7 +236,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 										return policies;
 									}
 
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
 									return Reflect.get(target, prop, r);
 								},
 							},
@@ -294,10 +295,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						"deltaManager.readOnlyInfo.storageOnly",
 					);
 
-					const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-						storageOnlyContainer,
-						"default",
-					);
+					const storageOnlyDataObject =
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							storageOnlyContainer,
+						);
 					for (const key of validationDataObject.root.keys()) {
 						assert.strictEqual(
 							storageOnlyDataObject.root.get(key),

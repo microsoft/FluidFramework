@@ -78,15 +78,25 @@ export interface IShareModalState {
 	};
 }
 
+export type SharingPermission = "read" | "write" | "delete";
+
 export interface IShareOptions {
 	/**
 	 * The handler that is invoked if the user decides to share.
 	 */
-	shareHandler: (userIds: string[], groupIds: string[]) => Promise<any>;
+	shareHandler: (
+		userIds: string[],
+		groupIds: string[],
+		permissions: { actions: SharingPermission[] },
+	) => Promise<any>;
 	/**
 	 * The handler that is invoked if the user decides to unshare.
 	 */
-	unshareHandler: (userIds: string[], groupIds: string[]) => Promise<any>;
+	unshareHandler: (
+		userIds: string[],
+		groupIds: string[],
+		permissions: { actions: SharingPermission[] },
+	) => Promise<any>;
 	/**
 	 * A list of user ids with their permissions on this item.
 	 */

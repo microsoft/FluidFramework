@@ -8,8 +8,8 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
-import { performance } from "@fluidframework/common-utils";
-import { debug as registerDebug, IDebugger } from "debug";
+import { performance } from "@fluid-internal/client-utils";
+
 import {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
@@ -17,6 +17,12 @@ import {
 	eventNamespaceSeparator,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
+
+// This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
+import debugPkg from "debug";
+const { debug: registerDebug } = debugPkg;
+
+import type { IDebugger } from "debug";
 
 /**
  * Implementation of debug logger
@@ -60,7 +66,10 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		});
 	}
 
-	private constructor(private readonly debug: IDebugger, private readonly debugErr: IDebugger) {}
+	private constructor(
+		private readonly debug: IDebugger,
+		private readonly debugErr: IDebugger,
+	) {}
 
 	/**
 	 * Send an event to debug loggers
@@ -108,6 +117,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		}
 
 		// Print multi-line.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		logger(`${name} ${payload} ${tick} ${stack}`);
 	}
 }

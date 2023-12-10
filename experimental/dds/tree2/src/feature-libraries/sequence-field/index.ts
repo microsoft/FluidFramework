@@ -4,8 +4,6 @@
  */
 
 export {
-	Attach,
-	NewAttach,
 	Changeset,
 	Delete,
 	Detach,
@@ -19,45 +17,40 @@ export {
 	NodeChangeType,
 	CellCount as NodeCount,
 	MoveId,
-	ProtoNode,
-	Reattach,
-	ReturnFrom,
-	ReturnTo,
-	Revive,
+	Attach,
 	NoopMark,
 	LineageEvent,
-	HasReattachFields,
 	CellId,
 	HasMarkFields,
 	HasLineage,
-} from "./format";
+	IdRange,
+	CellMark,
+	AttachAndDetach,
+} from "./types";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
 } from "./sequenceFieldChangeHandler";
 export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-export { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
+export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs";
 export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";
-export { amendRebase, NodeChangeRebaser, rebase } from "./rebase";
-export { amendInvert, invert, NodeChangeInverter } from "./invert";
+export { NodeChangeRebaser, rebase } from "./rebase";
+export { invert, NodeChangeInverter } from "./invert";
 export { amendCompose, compose, NodeChangeComposer } from "./compose";
 export {
 	areComposable,
 	areRebasable,
 	getInputLength,
-	isDetachMark,
-	isReattach,
+	isDetach,
 	DetachedNodeTracker,
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
+	cloneMark,
+	extractMarkEffect,
 } from "./utils";
-export {
-	isMoveMark,
-	MoveMark,
-	MoveEffectTable,
-	MoveEffect,
-	PairedMarkUpdate,
-} from "./moveEffectTable";
+export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable";
+
+export { relevantRemovedRoots } from "./relevantRemovedRoots";

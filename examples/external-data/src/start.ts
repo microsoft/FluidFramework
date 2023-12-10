@@ -30,7 +30,7 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 	if (showExternalServerView) {
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(React.createElement(DebugView, { model }), debugDiv);
+		ReactDOM.render(React.createElement(DebugView), debugDiv);
 	}
 };
 
@@ -91,6 +91,7 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 start().catch((error) => {
 	console.error(error);
 });

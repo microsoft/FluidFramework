@@ -6,6 +6,9 @@
 import { ICollection, IDocumentRepository } from "./database";
 import { IDocument } from "./document";
 
+/**
+ * @internal
+ */
 export class MongoDocumentRepository implements IDocumentRepository {
 	constructor(private readonly collection: ICollection<IDocument>) {}
 
@@ -18,6 +21,10 @@ export class MongoDocumentRepository implements IDocumentRepository {
 		await (options?.upsert
 			? this.collection.upsert(filter, update, addToSet, options)
 			: this.collection.update(filter, update, addToSet, options));
+	}
+
+	async deleteOne(filter: any): Promise<any> {
+		return this.collection.deleteOne(filter);
 	}
 
 	async findOneOrCreate(

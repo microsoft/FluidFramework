@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -23,6 +24,9 @@ interface ISequencedOpInfo<TOp> {
 	op: TOp;
 }
 
+/**
+ * @internal
+ */
 export abstract class SharedOT<TState, TOp> extends SharedObject {
 	/**
 	 * Queue of sequenced ops that are above minSeq.  Used by 'processCore' to

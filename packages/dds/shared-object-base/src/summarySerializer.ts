@@ -8,6 +8,7 @@ import { FluidSerializer } from "./serializer";
 
 /**
  * Serializer implementation for serializing handles during summary.
+ * @alpha
  */
 export class SummarySerializer extends FluidSerializer {
 	private readonly serializedRoutes: Set<string> = new Set();

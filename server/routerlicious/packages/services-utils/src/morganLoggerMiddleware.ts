@@ -13,6 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getCorrelationIdWithHttpFallback } from "./asyncLocalStorage";
+import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -26,10 +27,16 @@ const stream = split().on("data", (message) => {
 	}
 });
 
+/**
+ * @internal
+ */
 export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 	return morgan(loggerFormat, { stream });
 }
 
+/**
+ * @internal
+ */
 export function jsonMorganLoggerMiddleware(
 	serviceName: string,
 	computeAdditionalProperties?: (
@@ -59,6 +66,7 @@ export function jsonMorganLoggerMiddleware(
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				...additionalProperties,
+				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 			};
 			httpMetric.setProperties(properties);
 			if (properties.status?.startsWith("2")) {

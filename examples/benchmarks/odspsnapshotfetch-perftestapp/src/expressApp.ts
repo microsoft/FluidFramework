@@ -14,7 +14,7 @@ import {
 	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.js";
 
 const getThisOrigin = (port: number): string => `http://localhost:${port}`;
@@ -25,6 +25,7 @@ const app = express();
 const compiler = webpack(config);
 
 app.use(
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	webpackDevMiddleware(compiler, {
 		publicPath: config.output.publicPath,
 	}),

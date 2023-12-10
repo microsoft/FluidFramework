@@ -6,7 +6,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 const crypto = require("crypto");
 const { LocalResolver, LocalDocumentServiceFactory } = require("@fluidframework/local-driver");
-const { requestFluidObject } = require("@fluidframework/runtime-utils");
 const { LocalDeltaConnectionServer } = require("@fluidframework/server-local-server");
 const {
 	createAndAttachContainer,
@@ -17,7 +16,7 @@ const {
 const { DeterministicRandomGenerator } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 const { PropertyFactory } = require("@fluid-experimental/property-properties");
-const { assert } = require("@fluidframework/common-utils");
+const { assert } = require("@fluidframework/core-utils");
 const { SharedPropertyTree } = require("@fluid-experimental/property-dds");
 const createMhs = require("../utils/create_mhs");
 const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
@@ -196,7 +195,7 @@ describe("Rebasing", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = await requestFluidObject(container1, "default");
+		dataObject1 = await container1.getEntryPoint();
 		sharedPropertyTree1 = await dataObject1.getSharedObject(propertyDdsId);
 		sharedPropertyTree1.__id = 1; // Add an id to simplify debugging via conditional breakpoints
 
@@ -213,7 +212,7 @@ describe("Rebasing", () => {
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = await requestFluidObject(container2, "default");
+		dataObject2 = await container2.getEntryPoint();
 		sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
 		sharedPropertyTree2.__id = 2; // Add an id to simplify debugging via conditional breakpoints
 

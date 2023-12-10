@@ -12,7 +12,7 @@ import { compareArrays } from "../..";
 compareArrays(undefined, undefined);
 
 // @ts-expect-error 'null' is not an array
-compareArrays(null, null);
+compareArrays(null, null); // eslint-disable-line unicorn/no-null
 
 const s = Symbol();
 // @ts-expect-error 'Symbol()' is not an array

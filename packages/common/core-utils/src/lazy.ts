@@ -5,6 +5,7 @@
 
 /**
  * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable.
+ * @internal
  */
 export class Lazy<T> {
 	private _value: T | undefined;
@@ -13,7 +14,7 @@ export class Lazy<T> {
 	 * Instantiates an instance of Lazy<T>.
 	 * @param valueGenerator - The function that will generate the value when value is accessed the first time.
 	 */
-	constructor(private readonly valueGenerator: () => T) {}
+	public constructor(private readonly valueGenerator: () => T) {}
 
 	/**
 	 * Return true if the value as been generated, otherwise false.
@@ -40,6 +41,7 @@ export class Lazy<T> {
  * the promise is used, e.g. await, then, catch ...
  * The execute function is only called once.
  * All calls are then proxied to the promise returned by the execute method.
+ * @internal
  */
 export class LazyPromise<T> implements Promise<T> {
 	public get [Symbol.toStringTag](): string {
@@ -48,12 +50,14 @@ export class LazyPromise<T> implements Promise<T> {
 
 	private result: Promise<T> | undefined;
 
-	constructor(private readonly execute: () => Promise<T>) {}
+	public constructor(private readonly execute: () => Promise<T>) {}
 
+	// eslint-disable-next-line unicorn/no-thenable
 	public async then<TResult1 = T, TResult2 = never>(
 		// eslint-disable-next-line @rushstack/no-new-null
 		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// TODO: Use `unknown` instead (API breaking)
+		// eslint-disable-next-line @rushstack/no-new-null, @typescript-eslint/no-explicit-any
 		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,
 	): Promise<TResult1 | TResult2> {
 		// eslint-disable-next-line prefer-rest-params
@@ -61,7 +65,8 @@ export class LazyPromise<T> implements Promise<T> {
 	}
 
 	public async catch<TResult = never>(
-		// eslint-disable-next-line @rushstack/no-new-null
+		// TODO: Use `unknown` instead (API breaking)
+		// eslint-disable-next-line @rushstack/no-new-null, @typescript-eslint/no-explicit-any
 		onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined,
 	): Promise<T | TResult> {
 		// eslint-disable-next-line prefer-rest-params

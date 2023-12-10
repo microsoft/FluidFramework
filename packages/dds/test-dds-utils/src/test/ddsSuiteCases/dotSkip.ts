@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
 import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
 

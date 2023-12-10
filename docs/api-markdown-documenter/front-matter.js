@@ -4,14 +4,12 @@
  */
 
 const {
+	ApiItemKind,
+	ApiItemUtilities,
 	createDocumentWriter,
-	getLinkForApiItem,
-	getUnscopedPackageName,
-	renderNodeAsMarkdown,
-	transformDocNode,
-	getMarkdownRenderContextWithDefaults,
+	MarkdownRenderer,
+	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
 
 const generatedContentNotice =
@@ -29,7 +27,7 @@ const generatedContentNotice =
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
 	function extractSummary() {
-		const summaryParagraph = transformDocNode(
+		const summaryParagraph = transformTsdocNode(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
@@ -40,13 +38,9 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		}
 
 		const documentWriter = createDocumentWriter();
-		renderNodeAsMarkdown(
-			summaryParagraph,
-			documentWriter,
-			getMarkdownRenderContextWithDefaults({
-				renderers: customRenderers,
-			}),
-		);
+		MarkdownRenderer.renderNode(summaryParagraph, documentWriter, {
+			customRenderers,
+		});
 		return documentWriter.getText().replace(/"/g, "'").trim();
 	}
 
@@ -97,14 +91,15 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		if (!frontMatter.members[element.kind]) {
 			frontMatter.members[element.kind] = {};
 		}
-		const link = getLinkForApiItem(element, config);
+		const link = ApiItemUtilities.getLinkForApiItem(element, config);
 		frontMatter.members[element.kind][element.displayName] = link.target;
 	});
 
 	const associatedPackage = apiItem.getAssociatedPackage();
 	if (associatedPackage) {
 		frontMatter.package = associatedPackage.name.replace(/"/g, "").replace(/!/g, "");
-		frontMatter.unscopedPackageName = getUnscopedPackageName(associatedPackage);
+		frontMatter.unscopedPackageName =
+			ApiItemUtilities.getUnscopedPackageName(associatedPackage);
 	} else {
 		frontMatter.package = "undefined";
 	}

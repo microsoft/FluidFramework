@@ -51,5 +51,6 @@ export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
 export {
 	applyStorageCompression,
 	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./adapters";

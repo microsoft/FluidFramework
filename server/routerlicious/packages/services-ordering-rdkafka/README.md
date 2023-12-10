@@ -84,9 +84,6 @@ If you wish to enable SSL for Kafka, please follow these instructions:
         scribe:
             volumes: ...
                 - ./certs:/certs
-        foreman:
-            volumes: ...
-                - ./certs:/certs
         riddler:
             volumes: ...
                 - ./certs:/certs

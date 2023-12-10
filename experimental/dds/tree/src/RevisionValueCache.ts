@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
 import { fail, compareFiniteNumbers } from './Common';
@@ -17,6 +17,7 @@ import { fail, compareFiniteNumbers } from './Common';
  * - revision 0 corresponds to the initialRevision.
  *
  * - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
+ * @internal
  */
 export type Revision = number;
 

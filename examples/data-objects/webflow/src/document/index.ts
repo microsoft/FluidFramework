@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+/* eslint-disable import/no-deprecated */
+
+import { assert } from "@fluidframework/core-utils";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	LazyLoadedDataObject,
 	LazyLoadedDataObjectFactory,
 } from "@fluidframework/data-object-base";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	createDetachedLocalReferencePosition,
 	createInsertSegmentOp,
@@ -40,7 +42,6 @@ import {
 	SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray, randomId, TagName, TokenList } from "../util/index.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";
@@ -86,10 +87,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		switch (markerType) {
 			case ReferenceType.Tile:
 			case ReferenceType.Tile | ReferenceType.NestBegin:
+				const hasRangeLabels = refHasRangeLabels(segment);
 				const kind = (
-					refHasRangeLabels(segment)
-						? refGetRangeLabels(segment)[0]
-						: refGetTileLabels(segment)[0]
+					hasRangeLabels ? refGetRangeLabels(segment)[0] : refGetTileLabels(segment)[0]
 				) as DocSegmentKind;
 
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
@@ -162,6 +162,9 @@ export interface IFlowDocumentEvents extends IEvent {
 
 const textId = "text";
 
+/**
+ * @internal
+ */
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
 	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
 		documentType,

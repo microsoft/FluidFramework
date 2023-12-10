@@ -3,15 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	LogLevel,
-	TelemetryEventCategory,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+
+/**
+ * The categories FF uses when instrumenting the code.
+ *
+ * generic - Informational log event
+ *
+ * error - Error log event, ideally 0 of these are logged during a session
+ *
+ * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ * @alpha
+ */
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * Property types that can be logged.
- * Includes extra types beyond TelemetryEventPropertyType (which will be deprecated in favor of this one)
+ *
+ * @remarks
+ * Includes extra types beyond {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType}, which must be
+ * converted before sending to a base logger.
+ *
+ * @alpha
  */
 export type TelemetryEventPropertyTypeExt =
 	| string
@@ -28,6 +41,9 @@ export type TelemetryEventPropertyTypeExt =
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
+ *
+ * @deprecated Use {@link @fluidframework/core-interfaces#Tagged}\<{@link TelemetryEventPropertyTypeExt}\>
+ * @internal
  */
 export interface ITaggedTelemetryPropertyTypeExt {
 	value: TelemetryEventPropertyTypeExt;
@@ -36,16 +52,20 @@ export interface ITaggedTelemetryPropertyTypeExt {
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
+ *
+ * @alpha
  */
 export interface ITelemetryPropertiesExt {
-	[index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+	[index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 /**
  * Interface for logging telemetry statements.
- * Can contain any number of properties that get serialized as json payload.
+ * @remarks May contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
+ *
+ * @internal
  */
 export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 	category: string;
@@ -54,7 +74,8 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 
 /**
  * Informational (non-error) telemetry event
- * Maps to category = "generic"
+ * @remarks Maps to category = "generic"
+ * @alpha
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
@@ -63,7 +84,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 
 /**
  * Error telemetry event.
- * Maps to category = "error"
+ * @remarks Maps to category = "error"
+ * @alpha
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
@@ -71,16 +93,20 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 
 /**
  * Performance telemetry event.
- * Maps to category = "performance"
+ * @remarks Maps to category = "performance"
+ * @alpha
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
 	duration?: number; // Duration of event (optional)
 }
 
 /**
- * An extended TelemetryLogger interface which allows for more lenient event types.
+ * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
+ *
+ * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
- * and ITelemetryBaseLogger should be used when loggers are passed between layers.
+ * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
+ * @alpha
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**
@@ -89,14 +115,18 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log.
 	 */
-	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel): void;
+	sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+	): void;
 
 	/**
 	 * Send error telemetry event
 	 * @param event - Event to send
 	 * @param error - optional error object to log
 	 */
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
 
 	/**
 	 * Send performance telemetry event
@@ -106,7 +136,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 */
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
-		error?: any,
-		logLevel?: LogLevel,
+		error?: unknown,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 }

@@ -14,9 +14,10 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../ApiItemUtilities";
+import { filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { filterChildMembers } from "../ApiItemTransformUtilities";
 
 /**
  * Default documentation transform for `Interface` items.
@@ -58,9 +59,8 @@ export function transformApiInterface(
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
-	const hasAnyChildren = apiInterface.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiInterface, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructSignatures = filterByKind(apiInterface.members, [
 			ApiItemKind.ConstructSignature,
@@ -172,5 +172,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createChildContentSections(apiInterface, childSections, config);
+	return config.createDefaultLayout(apiInterface, childSections, config);
 }

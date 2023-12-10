@@ -8,16 +8,16 @@
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * @example "Canvas Container"
+ * @example
  *
- * @public
+ * "Canvas Container"
+ * @internal
  */
 export type ContainerKey = string;
 
 /**
  * Common interface for data associated with a particular Container registered with the Devtools.
- *
- * @public
+ * @internal
  */
 export interface HasContainerKey {
 	/**
@@ -79,6 +79,7 @@ export const EditType = {
 } as const;
 
 /**
+ * {@inheritDoc (EditType:variable)}
  * @internal
  */
-export type EditType = typeof EditType[keyof typeof EditType];
+export type EditType = (typeof EditType)[keyof typeof EditType];

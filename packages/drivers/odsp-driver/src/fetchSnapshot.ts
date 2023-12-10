@@ -10,7 +10,8 @@ import {
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -55,6 +56,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
+ * @internal
  */
 export enum SnapshotFormatSupportType {
 	Json = 0,
@@ -162,7 +164,7 @@ export async function fetchSnapshotWithRedeem(
 				// If redeem failed, that most likely means user has no permissions to access a file,
 				// and thus it's not worth it logging extra errors - same error will be logged by end-to-end
 				// flow (container open) based on a failure above.
-				logger.sendErrorEvent(
+				logger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
 						errorType: error.errorType,
@@ -507,7 +509,6 @@ export interface ISnapshotRequestAndResponseOptions {
 function getFormBodyAndHeaders(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	snapshotOptions: ISnapshotOptions | undefined,
 	headers?: { [index: string]: string },
 ) {
 	const formBoundary = uuid();
@@ -515,13 +516,7 @@ function getFormBodyAndHeaders(
 	formParams.push(`--${formBoundary}`);
 	formParams.push(`Authorization: Bearer ${storageToken}`);
 	formParams.push(`X-HTTP-Method-Override: GET`);
-	if (snapshotOptions !== undefined) {
-		Object.entries(snapshotOptions).forEach(([key, value]) => {
-			if (value !== undefined) {
-				formParams.push(`${key}: ${value}`);
-			}
-		});
-	}
+
 	if (headers !== undefined) {
 		Object.entries(headers).forEach(([key, value]) => {
 			if (value !== undefined) {
@@ -599,18 +594,25 @@ export async function downloadSnapshot(
 	}
 
 	const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-	const url = `${snapshotUrl}/trees/latest?ump=1`;
+
+	const queryParams = { ump: 1 };
+	if (snapshotOptions !== undefined) {
+		Object.entries(snapshotOptions).forEach(([key, value]) => {
+			// Exclude "timeout" from query string
+			if (value !== undefined && key !== "timeout") {
+				queryParams[key] = value;
+			}
+		});
+	}
+
+	const queryString = getQueryString(queryParams);
+	const url = `${snapshotUrl}/trees/latest${queryString}`;
 	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 	// for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
-	const { body, headers } = getFormBodyAndHeaders(
-		odspResolvedUrl,
-		storageToken,
-		snapshotOptions,
-		header,
-	);
+	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, header);
 	const fetchOptions = {
 		body,
 		headers,

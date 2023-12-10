@@ -132,6 +132,7 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 -   Creating an undo (or redo) edit
 -   Applying a (peer or local) undo (or redo) edit on a `SharedTreeView`
 -   Applying the effect of a move (peer or local) that pulls content out from a previously deleted subtree and into the document tree
+-   Applying the effect of an edit that targets already removed content
 -   Applying the effect of rebasing local destructive changes
     (i.e., overwrites and deletions)
     that were predicated on a constraint that was violated as part of the rebase
@@ -176,28 +177,28 @@ In order to meet this need, we introduce the `TreeIndex` class,
 which maintains a mapping between the two identification systems,
 and also serves as an inventory of the repair data that exists in the forest.
 
-We also introduce the concept of `RemovedTreeId`,
+We also introduce the concept of `ForestRootId`,
 which is a value type (likely a number) that uniquely identifies a removed subtree within the forest on a given `SharedTreeView`.
 
 At a minimum, `TreeIndex`'s interface needs to offer the following methods:
 
--   Retrieve the matching `RemovedTreeId` for a given `ChangeAtomId` if any.
--   Add an entry in its records for a given `ChangeAtomId` to `RemovedTreeId` mapping.
+-   Retrieve the matching `ForestRootId` for a given `ChangeAtomId` if any.
+-   Add an entry in its records for a given `ChangeAtomId` to `ForestRootId` mapping.
 -   Remove an entry from its records for a given `ChangeAtomId`.
 -   Save to a summary format.
 -   Load from the summary format.
 
 For the sake of performance, it would likely make sense to also support the following methods:
 
--   Retrieve all the `RemovedTreeId`s for a given `RevisionTag`.
--   Add a range of entries in its records for a given `RevisionTag` and range of `ChangeAtomId` to `RemovedTreeId` pairs.
+-   Retrieve all the `ForestRootId`s for a given `RevisionTag`.
+-   Add a range of entries in its records for a given `RevisionTag` and range of `ChangeAtomId` to `ForestRootId` pairs.
 -   Remove all the entries from its records for a given `RevisionTag`.
 -   Reassign all the entries for a given `RevisionTag` to a new `RevisionTag`.
 
-The generation of new `RemovedTreeId`s and their conversion to forest paths is left as an implementation detail of the `SharedTreeView`.
+The generation of new `ForestRootId`s and their conversion to forest paths is left as an implementation detail of the `SharedTreeView` or the `TreeIndex`.
 In the future, it is likely that the `Forest` will take on these responsibilities.
-For now, the `SharedTreeView` can use a monotonically increasing counter to generate `RemovedTreeId`s,
-and can use `removed-${removedTreeId}` as a way of generating unique paths.
+For now, the `SharedTreeView` can use a monotonically increasing counter to generate `ForestRootId`s,
+and can use `removed-${forestRootId}` as a way of generating unique paths.
 
 ### Creating Repair Data On Change Application
 
@@ -211,11 +212,11 @@ When a changeset is applied to the `SharedTreeView`,
 for every change conveyed by the changeset that would erase document data,
 the `SharedTreeView` must do the following:
 
--   Generate a new `RemovedTreeId`.
+-   Generate a new `ForestRootId`.
 -   Translate that change into an equivalent delta that preserves the otherwise deleted subtree
     by moving that subtree to a part of the forest that lies outside the scope of the document.
 -   Apply that delta to the forest.
--   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
+-   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `ForestRootId`.
 
 Another scenario where repair data is added to the `Forest`
 arises when a peer sends a commit whose changes explicitly instructs the `SharedTreeView` to do so,
@@ -224,10 +225,10 @@ When that happens, `SharedTreeView` should consult its `TreeIndex` to check whet
 If it does, then it can safely keep the repair data that it has.
 If it doesn't, then it should:
 
--   Generate a new `RemovedTreeId`.
+-   Generate a new `ForestRootId`.
 -   Generate a delta that adds the content to the forest.
 -   Apply that delta to the forest.
--   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `RemovedTreeId`.
+-   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `ForestRootId`.
 
 (The need for this capability is covered in [Garbage-Collecting Repair Data](#garbage-collecting-repair-data).)
 
@@ -252,7 +253,7 @@ When a changeset is applied to the `SharedTreeView`,
 for every change conveyed by the changeset that consumes repair data,
 the `SharedTreeView` must do the following:
 
--   Look up the `RemovedTreeId` in the `TreeIndex` for the relevant subtree.
+-   Look up the `ForestRootId` in the `TreeIndex` for the relevant subtree.
 -   Translate the change into an equivalent delta that moves the repair data tree into the document tree.
 -   Apply that delta to the forest.
 -   Remove the entry in the `TreeIndex` for the relevant subtree.
@@ -270,7 +271,7 @@ When a changeset is applied to the `SharedTreeView`,
 for every change conveyed by the changeset that edits repair data,
 the `SharedTreeView` must do the following:
 
--   Look up the `RemovedTreeId` in the `TreeIndex` for the relevant subtree.
+-   Look up the `ForestRootId` in the `TreeIndex` for the relevant subtree.
 -   Translate the change into an equivalent delta that applies to the repair data tree in the forest.
 -   Apply that delta to the forest.
 
@@ -344,37 +345,60 @@ This speaks to undo's role of preventing data loss, but leads to a problem of un
 
 While we want to preserve the ability of a session to undo its past edits,
 we also want to ensure that the associated memory needs can be constrained.
-There are many ways this could be accomplished.
-For now we adopt the following garbage-collection scheme:
 
-The repair data associated with a given edit E must _not_ be garbage-collected if _either_ of the following criteria apply:
+How we should go about evicting repair data from the forest is dependent on the set of merge semantics we support.
+For this V1 of undo, we intend to allow editing of removed content,
+meaning it can be edited after it is removed and before (as well as after) it is restored,
+but solely in situations where the issuer of the edit was now aware of the item being removed.
+In other words, we only allow new edits to be generated on in-document trees,
+and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency.
 
--   E was produced by the local session and E is within the undo window supported by the session.
--   E was still in the collaboration window
-    (meaning its sequence number was >= to the min ref sequence number)
-    when edit X was sequenced,
-    where X is the edit whose sequence number is the same as the current min ref sequence number.
-    (see diagrams below.)
+In the future, we will also support editing already removed trees.
 
-In all other cases, the repair data associated with E must be garbage-collected.
+This gives applications more options for dealing with situations where a client has locally performed some amount of work
+that involves editing a region of the document that was concurrently removed.
+Indeed, without that capability, such work could not be reconciled with the rest of the document,
+and would need to be detected and dropped.
+This scenario is likely to occur if client applications use local branches to stage their work.
+
+#### Proposed Scheme
+
+Allowing the garbage-collection of repair data means that not all clients will have the repair data if it becomes necessary later.
+When a client makes an edit that requires repair data which may have been evicted by peers,
+that client must include a copy of the relevant repair data in the edit being sent.
+This acts as a "refresher" for any peers that may have garbage collected that repair data.
+(See [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) for details on how that refresher is handled by the peers.)
+
+There are two kinds of cases where a client would need to include such a refresher in the edit they send:
+
+-   When reverting the edit that originally lead to the removal of the subtree.
+-   When editing the removed subtree.
+
+For a given `SharedTreeView`, the repair data associated with a given removed tree T must _not_ be garbage-collected if _either_ of the following criteria apply:
+
+-   The local user may make an edit that requires T.
+    -   This could be due to the revert of the edit that let to T being removed.
+    -   This could be due to the revert of an edit that edits T.
+    -   This could be due to a merge of a branch whose commits made an edit that requires T.
+-   A peer edit P might be received such that P's ref sequence number might be lower than the sequence number of the edit that last removed or edited T.
+
+In all other cases, the repair data associated with T can and should be garbage-collected.
+This involves:
+
+-   Destroying the tree T in the forest
+-   Removing the entry for T in the `TreeIndex`
 
 This approach ensures that a client,
 no matter how long its history of undoable/redoable edits,
 does not burden its peers by requiring them to store unbounded amounts of repair data,
 and does not force summaries to include that repair data.
 
-The one drawback,
-is that peers will not have the required repair data to apply the undo edit that a session might generate
-if the undo occurs sufficiently late.
-We address this problem by including in the undo commit being sent a copy of the relevant repair data,
-if the edit being undone lies outside of the current collaboration window
-(represented as a light blue rectangle in the diagrams below).
-This acts as a "refresher" for any peers that may have garbage collected that repair data.
-(See [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) for details on how that refresher is handled by the peers.)
+If this switch from not including the refresher with an edit to including it came any later,
+meaning, if we did not include the refresher on relevant created beyond the point where the removal of T falls out of the collaboration window,
+then we would run the risk of peers receiving an edit for which they have already discarded the repair data.
 
-If this switch from not including the refresher with the undo to including it came any later,
-meaning, if we did not include the refresher on undos created beyond the point where the undone edit falls out of the collaboration window,
-then we would run the risk of peers receiving an undo for which they have already discarded the repair data:
+Note that, while the diagrams below use an undo edit as the edit which leads to the need for repair data,
+any edit (undo, redo, or otherwise) targeting a removed tree may lead to such a need.
 
 ![An undo edit is received by a peer that no longer has the repair data for it](../.attachments/UndoAfterCollab.png)
 
@@ -382,19 +406,19 @@ In the scenario pictured above, the undo edit must carry with it a refresher for
 
 Note that the undo could also end up being sequenced before the point at which peers will garbage-collect the repair data:
 
-![An undo edit is received by a peer that still has the repair data for it](../.attachments/UndoAfterCollabAndFast.png)
+![An undo edit is received by a peer that still has the repair data for it](../.attachments/UndoAfterCollabFast.png)
 
-When that's the case, both the peer and the undo edit have some repair data.
-The repair data on both should be the same, so the peer can just ignore the refresher,
-as described in the [Creating Repair Data On Change Application](#creating-repair-data-on-change-application) section.
+In that scenario, both the peer and the undo edit have some repair data.
+The peer can just [ignore the refresher](#ignoring-refreshers).
 
 If this switch from not including the refresher along with the undo to including it came any earlier,
-meaning, if we included the refresher on undos created before the point where the undone edit falls out of the collaboration window,
-then we would run the risk of peers receiving an undo with incorrect repair data:
+we would waste resources because the receiving peer is guaranteed to still have the removed tree T.
+See more below in [ignoring the refresher](#ignoring-refreshers).
+Also note that the refresher may carry stale data:
 
 ![An undo is sent with out of date repair data](../.attachments/UndoDuringCollab.png)
 
-In the scenario pictured above, the client sending the undo must not include a refresher.
+In the scenario pictured above, the client sending the undo does not have to include a refresher.
 If it did, and the green edit affected the portion of the document removed by the deletion,
 then the repair data refresher would not reflect the impact of that edit.
 
@@ -411,14 +435,27 @@ during which peers will still be holding on to their copy of the repair data.
 
 While the repair data being sent may be large,
 and therefore costly to send over the wire,
-this cost is only incurred when undo is actually used.
-
-While this repair data is part of the undo commit,
-it is not, properly speaking, a change and therefore does not take part in rebasing operations.
+this cost is only incurred when the removed tree is actually edited or restored.
 
 Note that, contrary to cases where the repair data is consumed,
 generating such an undo should not remove the repair data from the `TreeIndex`.
-That data will however be consumed, and therefore removed, through the usual channels if and when the undo edit is applied.
+That data will however be consumed, and therefore removed, through the usual channels if and when the edit is applied.
+
+#### Ignoring Refreshers
+
+There are two situations where a peer should ignore the refresher:
+
+-   The refresher is for a tree that is already tracked
+    (i.e., the local client has not garbage-collected it).
+    This can be detected by checking the `TreeIndex` before adding the refresher to it (and to the forest).
+-   The refresher is for a tree that has already been restored.
+    This can be detected during rebasing of the refresher.
+
+Adopting the refresher in either of those cases could lead to a memory leak or could lead to the wrong tree being restored later on.
+
+Note that for the sake of getting started on the implementation of refreshers,
+it's fine to always send the refreshers so long as the receiving peers know when to ignore them.
+Doing this might be easier as a first step since it means that the re-submit code path doesn't need to worry about converting an edit that doesn't include the refresher into an edit that does.
 
 ### Repair Data In Summaries
 

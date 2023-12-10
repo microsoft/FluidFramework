@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
-	SchemaData,
-	TreeSchemaIdentifier,
+	StoredSchemaCollection,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
-import { getFieldKind } from "../../contextuallyTyped";
+import { Multiplicity } from "../../multiplicity";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
@@ -31,21 +31,23 @@ import { NodeShape } from "./nodeShape";
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
+ * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 
-export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
+		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
-		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
+		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
+		policy.fieldKinds,
 	);
 	return cache;
 }
@@ -55,14 +57,14 @@ export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): Encode
  */
 export function fieldShaper(
 	treeHandler: TreeShaper,
-	field: FieldStoredSchema,
+	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
-	const kind = getFieldKind(field);
+	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (kind.multiplicity === Multiplicity.Value) {
+	if (kind.multiplicity === Multiplicity.Single) {
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);
@@ -73,26 +75,26 @@ export function fieldShaper(
  * Selects shapes to use to encode trees.
  */
 export function treeShaper(
-	fullSchema: SchemaData,
+	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
 
 	// TODO:Performance:
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty
 	// to reduce encoded size.
 
-	const structFields: KeyedFieldEncoder[] = [];
-	for (const [key, field] of schema.structFields ?? []) {
-		structFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+	const objectNodeFields: KeyedFieldEncoder[] = [];
+	for (const [key, field] of schema.objectNodeFields ?? []) {
+		objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
 	}
 
 	const shape = new NodeShape(
 		schemaName,
 		valueShapeFromSchema(schema.leafValue),
-		structFields,
+		objectNodeFields,
 		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
 	);
 	return shape;
@@ -117,8 +119,10 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.Serializable:
+		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

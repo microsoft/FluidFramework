@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITable, TableDocumentItem } from "../table";
@@ -31,6 +31,7 @@ import { TableDocument } from "../document";
  * @param propertyInterceptionCallback - The interception callback to be called.
  *
  * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.
+ * @internal
  */
 export function createTableWithInterception<T extends ITable>(
 	table: T,

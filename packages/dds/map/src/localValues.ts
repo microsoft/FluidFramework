@@ -11,10 +11,12 @@ import {
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue } from "./interfaces";
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).
+ * @alpha
  */
 export interface ILocalValue {
 	/**
@@ -51,6 +53,7 @@ export function makeSerializable(
 	localValue: ILocalValue,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
+	// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
 	const value = localValue.makeSerialized(serializer, bind);
 	return {
@@ -95,6 +98,7 @@ export class PlainLocalValue implements ILocalValue {
 /**
  * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
  * values with minimal awareness of how those objects are stored, serialized, and deserialized.
+ * @alpha
  */
 export class LocalValueMaker {
 	/**
@@ -107,6 +111,7 @@ export class LocalValueMaker {
 	 * Create a new local value from an incoming serialized value.
 	 * @param serializable - The serializable value to make local
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public fromSerializable(serializable: ISerializableValue): ILocalValue {
 		// Migrate from old shared value to handles
 		if (serializable.type === ValueType[ValueType.Shared]) {

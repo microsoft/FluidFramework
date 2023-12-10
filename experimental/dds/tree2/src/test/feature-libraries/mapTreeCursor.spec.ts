@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../../feature-libraries";
 import { testGeneralPurposeTreeCursor } from "../cursorTestSuite";
 
-testGeneralPurposeTreeCursor("mapTreeCursor", singleMapTreeCursor, mapTreeFromCursor);
+testGeneralPurposeTreeCursor("mapTreeCursor", cursorForMapTreeNode, mapTreeFromCursor);

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import {
 	Client,
@@ -16,9 +17,13 @@ import {
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
 } from "../intervals";
+import { SharedString } from "../sharedString";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
+/**
+ * @public
+ */
 class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
@@ -64,8 +69,12 @@ class OverlappingSequenceIntervalsIndex
 	}
 }
 
+/**
+ * @internal
+ */
 export function createOverlappingSequenceIntervalsIndex(
-	client: Client,
+	sharedString: SharedString,
 ): SequenceIntervalIndexes.Overlapping {
+	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingSequenceIntervalsIndex(client);
 }

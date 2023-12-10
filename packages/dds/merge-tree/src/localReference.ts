@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+/* eslint-disable import/no-deprecated */
+
+import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
@@ -20,6 +22,7 @@ import {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @alpha
  */
 export const SlidingPreference = {
 	/**
@@ -35,8 +38,9 @@ export const SlidingPreference = {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @alpha
  */
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
 /**
  * @internal
@@ -60,12 +64,18 @@ function _validateReferenceType(refType: ReferenceType) {
 }
 /**
  * @sealed
+ * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
 	callbacks?: Partial<
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
 	readonly trackingCollection: TrackingGroupCollection;
+	/**
+	 * Whether or not this reference position can slide onto one of the two
+	 * special segments representing the position before or after the tree
+	 */
+	readonly canSlideToEndpoint?: boolean;
 }
 
 /**
@@ -91,6 +101,7 @@ class LocalReference implements LocalReferencePosition {
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
 		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+		public readonly canSlideToEndpoint?: boolean,
 	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
@@ -145,6 +156,9 @@ class LocalReference implements LocalReferencePosition {
 	}
 }
 
+/**
+ * @internal
+ */
 export function createDetachedLocalReferencePosition(
 	refType?: ReferenceType,
 ): LocalReferencePosition {
@@ -194,6 +208,7 @@ export function* filterLocalReferencePositions(
 
 /**
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * @alpha
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment) {
@@ -215,16 +230,12 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public hierRefCount: number = 0;
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
-	/**
-	 *
-	 * @internal
-	 */
+	/***/
 	constructor(
 		/** Segment this `LocalReferenceCollection` is associated to. */
 		private readonly segment: ISegment,
@@ -238,7 +249,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public [Symbol.iterator]() {
 		const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
@@ -278,7 +288,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public clear() {
 		this.refCount = 0;
@@ -303,7 +312,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public get empty() {
 		return this.refCount === 0;
@@ -311,15 +319,15 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public createLocalRef(
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties, slidingPreference);
+		const ref = new LocalReference(refType, properties, slidingPreference, canSlideToEndpoint);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
@@ -329,7 +337,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addLocalRef(lref: LocalReferencePosition, offset: number) {
 		assertLocalReferences(lref);
@@ -356,7 +363,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
 		if (this.has(lref)) {
@@ -384,7 +390,6 @@ export class LocalReferenceCollection {
 	 * will be incorrect.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public append(other: LocalReferenceCollection) {
 		if (!other || other.empty) {
@@ -409,7 +414,6 @@ export class LocalReferenceCollection {
 	 * Returns true of the local reference is in the collection, otherwise false.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public has(lref: ReferencePosition): boolean {
 		if (
@@ -431,7 +435,9 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.before?.includes(listNode) ||
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.at?.includes(listNode) ||
 			refsAtOffset?.after?.includes(listNode)
 		) {
@@ -450,7 +456,6 @@ export class LocalReferenceCollection {
 	 * before splitting.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public split(offset: number, splitSeg: ISegment) {
 		if (!this.empty) {
@@ -478,7 +483,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const beforeRefs = this.refsByOffset[0]?.before ?? new List();
@@ -514,7 +518,6 @@ export class LocalReferenceCollection {
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const lastOffset = this.segment.cachedLength - 1;
@@ -548,7 +551,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public isAfterTombstone(lref: LocalReferencePosition) {
 		const after = this.refsByOffset[lref.getOffset()]?.after;
@@ -561,7 +563,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public walkReferences(
 		visitor: (lref: LocalReferencePosition) => boolean | void | undefined,

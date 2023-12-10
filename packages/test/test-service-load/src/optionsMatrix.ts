@@ -8,7 +8,7 @@ import {
 	generatePairwiseOptions,
 	OptionsMatrix,
 	numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluid-private/test-pairwise-generator";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -29,13 +29,15 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	enableOfflineLoad: booleanCases,
 };
 
-export function applyOverrides<T>(
+export function applyOverrides<T extends Record<string, any>>(
 	options: OptionsMatrix<T>,
 	optionsOverrides: Partial<OptionsMatrix<T>> | undefined,
 ) {
 	const realOptions: OptionsMatrix<T> = { ...options };
 	if (optionsOverrides !== undefined) {
-		for (const key of Object.keys(optionsOverrides)) {
+		// The cast is required because TS5 infers that 'key' must be in the set 'keyof T' and
+		// notes that the type 'Partial<OptionsMatrix<T>>' may contain additional keys not in T.
+		for (const key of Object.keys(optionsOverrides) as (string & keyof T)[]) {
 			const override = optionsOverrides[key];
 			if (override !== undefined) {
 				if (Array.isArray(override)) {
@@ -65,8 +67,8 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 	disableGC: booleanCases,
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
-	sweepAllowed: [false],
-	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
+	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
+	sweepGracePeriodMs: [undefined], // Don't need coverage here, GC sweep is tested separately
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {

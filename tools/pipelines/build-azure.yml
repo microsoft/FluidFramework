@@ -26,10 +26,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default: []
 
 trigger:
   branches:
@@ -42,6 +38,7 @@ trigger:
     - release/v2int/4.0
   paths:
     include:
+    - .prettierignore
     - azure
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -52,6 +49,9 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
     # Relevant to the test-azure-frs pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
@@ -72,6 +72,7 @@ pr:
     - release/v2int/4.0
   paths:
     include:
+    - .prettierignore
     - azure
     - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -82,6 +83,9 @@ pr:
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
     # Relevant to the test-azure-frs pipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
@@ -96,7 +100,6 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm

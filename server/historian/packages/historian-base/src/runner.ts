@@ -12,6 +12,7 @@ import {
 	IRunner,
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -31,6 +32,7 @@ export class HistorianRunner implements IRunner {
 		private readonly storageNameRetriever: IStorageNameRetriever,
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
+		private readonly documentManager: IDocumentManager,
 		private readonly cache?: ICache,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
@@ -47,6 +49,7 @@ export class HistorianRunner implements IRunner {
 			this.storageNameRetriever,
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
+			this.documentManager,
 			this.cache,
 			this.asyncLocalStorage,
 			this.revokedTokenChecker,
@@ -68,14 +71,14 @@ export class HistorianRunner implements IRunner {
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
-		this.server.close().then(
-			() => {
+		this.server
+			.close()
+			.then(() => {
 				this.runningDeferred.resolve();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.runningDeferred.reject(error);
-			},
-		);
+			});
 
 		return this.runningDeferred.promise;
 	}

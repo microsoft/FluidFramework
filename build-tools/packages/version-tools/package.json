@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.23.0",
+	"version": "0.29.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,10 +11,18 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"default": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"fluv": "./bin/run"
+		"fluv": "./bin/run.js"
 	},
 	"files": [
 		"/bin",
@@ -22,31 +30,31 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "npm run clean:manifest && concurrently npm:build:compile npm:lint && npm run build:docs && npm run build:manifest",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs && npm run build:readme",
 		"build:docs": "api-extractor run --local",
-		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
+		"build:manifest": "oclif manifest",
 		"build:readme": "fluid-readme generate readme",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"oclif.manifest.json\" \"*.tsbuildinfo\" \"*.build.log\"",
-		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
+		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean:manifest": "rimraf --glob oclif.manifest.json",
+		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"postpack": "npm run clean:manifest",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
-		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "nyc npm run test:mocha:report",
+		"test:coverage": "c8 npm run test",
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -67,45 +75,43 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^2.8.11",
-		"@oclif/plugin-autocomplete": "^2.3.1",
-		"@oclif/plugin-commands": "^2.2.17",
-		"@oclif/plugin-help": "^5.2.11",
-		"@oclif/plugin-not-found": "^2.3.27",
-		"@oclif/plugin-plugins": "^3.1.6",
+		"@oclif/core": "^3.9.0",
+		"@oclif/plugin-autocomplete": "^2.3.10",
+		"@oclif/plugin-commands": "^3.0.4",
+		"@oclif/plugin-help": "^6.0.4",
+		"@oclif/plugin-not-found": "^3.0.2",
+		"@oclif/plugin-plugins": "^3.9.4",
 		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "workspace:*",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@microsoft/api-extractor": "^7.36.1",
-		"@oclif/test": "^2.3.27",
+		"@fluid-private/readme-command": "workspace:~",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@microsoft/api-extractor": "^7.38.3",
+		"@oclif/test": "~2.3.33",
 		"@types/chai": "^4.3.5",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.53",
+		"@types/node": "^18.18.6",
 		"@types/semver": "^7.5.0",
+		"c8": "^7.14.0",
 		"chai": "^4.3.7",
-		"concurrently": "^7.6.0",
-		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
-		"eslint-config-oclif": "^4.0.0",
-		"eslint-config-oclif-typescript": "^1.0.3",
-		"eslint-config-prettier": "~8.5.0",
+		"concurrently": "^8.2.1",
+		"eslint": "~8.51.0",
+		"eslint-config-oclif": "^5.0.0",
+		"eslint-config-oclif-typescript": "^3.0.8",
+		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
-		"nyc": "^15.1.0",
-		"oclif": "^3.9.1",
-		"prettier": "~2.6.2",
+		"oclif": "^4.0.3",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"engines": {
 		"node": ">=14.17.0"

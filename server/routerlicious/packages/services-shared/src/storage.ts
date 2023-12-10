@@ -16,6 +16,7 @@ import {
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
 	ISession,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -39,6 +40,9 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export class DocumentStorage implements IDocumentStorage {
 	constructor(
 		private readonly documentRepository: IDocumentRepository,
@@ -128,6 +132,7 @@ export class DocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
+		messageBrokerId?: string,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
 		const gitManager = await this.tenantManager.getTenantGitManager(
@@ -208,6 +213,9 @@ export class DocumentStorage implements IDocumentStorage {
 			throw error;
 		}
 
+		// Storage is known to take too long sometimes. Check timeout before continuing.
+		getGlobalTimeoutContext().checkTimeout();
+
 		const deli: IDeliState = {
 			clients: undefined,
 			durableSequenceNumber: sequenceNumber,
@@ -250,6 +258,11 @@ export class DocumentStorage implements IDocumentStorage {
 			isSessionAlive: true,
 			isSessionActive: false,
 		};
+
+		// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
+		if (messageBrokerId) {
+			session.messageBrokerId = messageBrokerId;
+		}
 
 		Lumberjack.info(
 			`Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,
@@ -406,11 +419,11 @@ export class DocumentStorage implements IDocumentStorage {
 		const document = await this.documentRepository.readOne({ documentId, tenantId });
 		if (document === null) {
 			// Guard against storage failure. Returns false if storage is unresponsive.
-			const foundInSummaryP = this.readFromSummary(tenantId, documentId).then(
-				(result) => {
+			const foundInSummaryP = this.readFromSummary(tenantId, documentId)
+				.then((result) => {
 					return result;
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
 					winston.error(err);
 					const lumberjackProperties = {
@@ -419,8 +432,7 @@ export class DocumentStorage implements IDocumentStorage {
 					};
 					Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
 					return false;
-				},
-			);
+				});
 
 			const inSummary = await foundInSummaryP;
 			Lumberjack.warning("Backfilling document from summary!", {

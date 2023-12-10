@@ -5,21 +5,26 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IErrorEvent } from "@fluidframework/common-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IErrorEvent } from "@fluidframework/core-interfaces";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops
 // throttling and batching
 
+/**
+ * @internal
+ */
 export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
  * eventing patterns of EventEmitter.  In addition to sending and responding to signals, it
  * provides explicit methods around signal requests to other connected clients.
+ * @internal
  */
 export interface ISignaler {
 	/**
@@ -49,6 +54,7 @@ export interface ISignaler {
 /**
  * Duck type of something that provides the expected signalling functionality:
  * A way to verify we can signal, a way to send a signal, and a way to listen for incoming signals
+ * @internal
  */
 export interface IRuntimeSignaler {
 	connected: boolean;
@@ -127,6 +133,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 /**
  * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
  * users to get an ISignaler without a custom DO.
+ * @internal
  */
 export class Signaler
 	extends DataObject<{ Events: IErrorEvent }>
@@ -138,9 +145,7 @@ export class Signaler
 		return this._signaler;
 	}
 
-	public static get Name() {
-		return "@fluid-example/signaler";
-	}
+	public static readonly Name = "@fluid-example/signaler";
 
 	public static readonly factory = new DataObjectFactory(Signaler.Name, Signaler, [], {});
 

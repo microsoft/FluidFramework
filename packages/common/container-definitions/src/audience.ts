@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+// False positive: this is an import from the `events` package, not from Node.
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Manages the state and the members for {@link IAudience}
+ * @alpha
  */
 export interface IAudienceOwner extends IAudience {
 	/**
@@ -27,6 +30,7 @@ export interface IAudienceOwner extends IAudience {
  *
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
  * class.
+ * @alpha
  */
 export interface IAudience extends EventEmitter {
 	/**

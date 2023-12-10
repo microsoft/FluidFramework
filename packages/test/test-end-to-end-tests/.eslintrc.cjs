@@ -15,15 +15,6 @@ module.exports = {
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
 		"import/no-nodejs-modules": ["error", { allow: ["url"] }],
 	},
-	settings: {
-		"import/resolver": {
-			// Use eslint-import-resolver-typescript.
-			// This ensures ESNext with `.js` extensions resolve correctly to their corresponding `.ts` files.
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-			},
-		},
-	},
 	overrides: [
 		{
 			// Rules only for test files

@@ -9,59 +9,19 @@ import {
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { IGitManager, IHistorian } from "./storageContracts";
-import { IR11sResponse, createR11sResponseFromContent } from "./restWrapper";
+import { IR11sResponse } from "./restWrapper";
 import { IWholeFlatSnapshot } from "./contracts";
 
 export class GitManager implements IGitManager {
-	private readonly blobCache = new Map<string, resources.IBlob>();
-	private readonly commitCache = new Map<string, resources.ICommit>();
-	private readonly treeCache = new Map<string, resources.ITree>();
-	private readonly refCache = new Map<string, string>();
-
 	constructor(private readonly historian: IHistorian) {}
 
 	/**
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
 	public async getCommits(
-		shaOrRef: string,
+		sha: string,
 		count: number,
 	): Promise<IR11sResponse<resources.ICommitDetails[]>> {
-		let sha: string | undefined = shaOrRef;
-
-		// See if the sha is really a ref and convert
-		if (this.refCache.has(shaOrRef)) {
-			sha = this.refCache.get(shaOrRef);
-
-			// Delete refcache after first use
-			this.refCache.delete(shaOrRef);
-
-			// If null is stored for the ref then there are no commits - return an empty array
-			if (!sha) {
-				return createR11sResponseFromContent([]);
-			}
-		}
-
-		// See if the commit sha is hashed and return it if so
-		const commit = this.commitCache.get(sha);
-		if (commit !== undefined) {
-			return createR11sResponseFromContent([
-				{
-					commit: {
-						author: commit.author,
-						committer: commit.committer,
-						message: commit.message,
-						tree: commit.tree,
-						url: commit.url,
-					},
-					parents: commit.parents,
-					sha: commit.sha,
-					url: commit.url,
-				},
-			]);
-		}
-
-		// Otherwise fall back to the historian
 		return this.historian.getCommits(sha, count);
 	}
 
@@ -69,19 +29,10 @@ export class GitManager implements IGitManager {
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
 	public async getTree(root: string, recursive = true): Promise<IR11sResponse<resources.ITree>> {
-		const tree = this.treeCache.get(root);
-		if (tree !== undefined) {
-			return createR11sResponseFromContent(tree);
-		}
-
 		return this.historian.getTree(root, recursive);
 	}
 
 	public async getBlob(sha: string): Promise<IR11sResponse<resources.IBlob>> {
-		const blob = this.blobCache.get(sha);
-		if (blob !== undefined) {
-			return createR11sResponseFromContent(blob);
-		}
 		return this.historian.getBlob(sha);
 	}
 

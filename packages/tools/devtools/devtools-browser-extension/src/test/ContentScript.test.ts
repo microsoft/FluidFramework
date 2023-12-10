@@ -7,7 +7,7 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import {
 	CloseContainer,
 	TelemetryEvent,
@@ -15,7 +15,7 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { extensionMessageSource } from "../messaging";
-import { Globals } from "../Globals";
+import { type Globals } from "../Globals";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
 import { emptyObject, TagName } from "../util/index.js";
@@ -235,6 +235,9 @@ class TextFormatter extends Formatter<ITextState> {
 	}
 }
 
+/**
+ * @internal
+ */
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());

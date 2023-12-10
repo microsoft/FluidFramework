@@ -1,5 +1,86 @@
 # @fluidframework/odsp-doclib-utils
 
+## 2.0.0-internal.7.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
+    handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
+    object as connection and load the container in read mode, so that it loads properly. We also notify the that the
+    container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
+    can listen to the event like this:
+
+    ```ts
+    container.deltaManager.on(
+    	"readonly",
+    	(readonly?: boolean, readonlyConnectionReason?: { text: string; error?: IErrorBase }) => {
+    		// error?.errorType will be equal to DriverErrorType.outOfStorage in this case
+    		// App logic
+    	},
+    );
+    ```
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+## 2.0.0-internal.6.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "console";
+import { cloneDeep } from "lodash";
 import * as core from "@fluidframework/server-services-core";
 import {
 	AggregationCursor,
@@ -25,7 +26,7 @@ import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
-const errorSanitizationMessage = "REDACTED";
+const errorSanitizationMessage = "FluidREDACTED";
 const errorResponseKeysAllowList = new Set([
 	"_id",
 	"code",
@@ -56,9 +57,13 @@ const errorResponseKeysAllowList = new Set([
 	"writeConcernErrors",
 ]);
 
+/**
+ * @internal
+ */
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
+	private consecutiveFailedCount = 0;
 	constructor(
 		private readonly collection: Collection<T>,
 		public readonly retryEnabled = false,
@@ -68,6 +73,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
+		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
 	) {
 		setInterval(() => {
 			if (!this.apiCounter.countersAreActive) {
@@ -130,7 +136,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -152,7 +159,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateManyCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -174,7 +182,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -220,9 +229,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					value as OptionalUnlessRequiredId<T>,
 				);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result.insertedId;
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -240,7 +249,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], {
 					ordered: false,
 				});
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -304,7 +314,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				return result.value
 					? { value: result.value, existing: true }
 					: { value, existing: false };
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -323,7 +334,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
-				// eslint-disable-next-line @typescript-eslint/await-thenable
 				const result = await this.collection.findOneAndUpdate(
 					query,
 					{ $set: value },
@@ -333,7 +343,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				return result.value
 					? { value: result.value, existing: true }
 					: { value, existing: false };
-			} catch (error) {
+			} catch (sdkError) {
+				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
 				throw error;
 			}
@@ -384,11 +395,15 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				MaxRetryAttempts, // maxRetries
 				InitialRetryIntervalInMs, // retryAfterMs
 				telemetryProperties,
-				(e) => e.code === 11000, // shouldIgnoreError
+				(e) =>
+					e.code === 11000 || e.message?.toString()?.indexOf("E11000 duplicate key") >= 0, // shouldIgnoreError
 				(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 				(error: any, numRetries: number, retryAfterInterval: number) =>
 					numRetries * retryAfterInterval, // calculateIntervalMs
-				(error) => this.sanitizeError(error) /* onErrorFn */,
+				(error) => {
+					const facadeError = this.cloneError(error);
+					this.sanitizeError(facadeError);
+				} /* onErrorFn */,
 				this.telemetryEnabled, // telemetryEnabled
 			);
 			this.apiCounter.incrementCounter(callerName);
@@ -442,6 +457,41 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 	}
 
+	private cloneError<TError>(error: TError): TError {
+		try {
+			return structuredClone(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneErrorDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return cloneDeep(error);
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using cloneDeep.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		try {
+			return JSON.parse(JSON.stringify(error)) as TError;
+		} catch (errCloning) {
+			Lumberjack.warning(
+				`Error cloning error object using JSON.stringify.`,
+				undefined,
+				errCloning,
+			);
+		}
+
+		Lumberjack.error("Failed to clone error object. Using the shallow copy.", undefined, error);
+		return { ...error };
+	}
+
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
 		if (this.apiFailureRateTerminationThreshold > 1) {
 			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
@@ -455,25 +505,42 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			}
 		}
 
-		if (totalCount < this.apiMinimumCountToEnableTermination) {
-			// too little requests to consider
+		const failureRate = totalFailedCount / totalCount;
+
+		if (failureRate <= this.apiFailureRateTerminationThreshold) {
+			this.consecutiveFailedCount = 0;
 			return;
 		}
-		const failureRate = totalFailedCount / totalCount;
-		if (failureRate <= this.apiFailureRateTerminationThreshold) {
-			// OK, no need to terminate
+
+		this.consecutiveFailedCount++;
+		const logProperties = {
+			failureRate,
+			totalCount,
+			totalFailedCount,
+			apiFailureRateTerminationThreshold: this.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination: this.apiMinimumCountToEnableTermination,
+			consecutiveFailedCount: this.consecutiveFailedCount,
+			consecutiveFailedThresholdForLowerTotalRequests:
+				this.consecutiveFailedThresholdForLowerTotalRequests,
+		};
+		if (
+			totalCount < this.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount < this.consecutiveFailedThresholdForLowerTotalRequests
+		) {
+			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
 			return;
 		}
 
 		// This logic is to automate the process of terminates application if db become unfunctional, so
 		// kubernetes would automatically handle the restart process.
-		Lumberjack.warning(
-			`Failure rate ${failureRate} more than threshold ${this.apiFailureRateTerminationThreshold}`,
-		);
+		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
 		process.kill(process.pid, "SIGTERM");
 	}
 }
 
+/**
+ * @internal
+ */
 export class MongoDb implements core.IDb {
 	constructor(
 		private readonly client: MongoClient,
@@ -483,6 +550,7 @@ export class MongoDb implements core.IDb {
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
+		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -505,6 +573,7 @@ export class MongoDb implements core.IDb {
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
+			this.consecutiveFailedThresholdForLowerTotalRequests,
 		);
 	}
 
@@ -513,6 +582,9 @@ export class MongoDb implements core.IDb {
 	}
 }
 
+/**
+ * @internal
+ */
 export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
 const DefaultMongoDbMonitoringEvents = [
 	"serverOpening",
@@ -521,8 +593,8 @@ const DefaultMongoDbMonitoringEvents = [
 	"topologyOpening",
 	"topologyClosed",
 	"topologyDescriptionChanged",
-	"serverHeartbeatStarted",
-	"serverHeartbeatSucceeded",
+	// "serverHeartbeatStarted", Comment out because this will be too often
+	// "serverHeartbeatSucceeded", Comment out because this will be too often
 	"serverHeartbeatFailed",
 	// "commandStarted", Comment out because this will be too often
 	// "commandSucceeded", Comment out because this will be too often
@@ -530,9 +602,9 @@ const DefaultMongoDbMonitoringEvents = [
 	"connectionPoolCreated",
 	"connectionPoolReady",
 	"connectionPoolClosed",
-	"connectionCreated",
-	"connectionReady",
-	"connectionClosed",
+	// "connectionCreated", Comment out because this will be too often
+	// "connectionReady", Comment out because this will be too often
+	// "connectionClosed", Comment out because this will be too often
 	// "connectionCheckOutStarted", Comment out because this will be too often
 	"connectionCheckOutFailed",
 	// "connectionCheckedOut", Comment out because this will be too often
@@ -548,6 +620,7 @@ const DefaultApiCounterIntervalMS = 60000;
 // 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
 const DefaultApiFailureRateTerminationThreshold = 2;
 const DefaultApiMinimumCountToEnableTermination = 30;
+const DefaultConsecutiveFailedThresholdForLowerTotalRequests = 3;
 const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {
@@ -571,8 +644,12 @@ interface IMongoDBConfig {
 	apiFailureRateTerminationThreshold?: number;
 	apiMinimumCountToEnableTermination?: number;
 	serverSelectionTimeoutMS?: number;
+	consecutiveFailedThresholdForLowerTotalRequests: number;
 }
 
+/**
+ * @internal
+ */
 export class MongoDbFactory implements core.IDbFactory {
 	private readonly operationsDbEndpoint: string;
 	private readonly globalDbEndpoint?: string;
@@ -593,6 +670,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly apiFailureRateTerminationThreshold: number;
 	private readonly apiMinimumCountToEnableTermination: number;
 	private readonly serverSelectionTimeoutMS: number;
+	private readonly consecutiveFailedThresholdForLowerTotalRequests: number;
 
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -613,6 +691,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			apiFailureRateTerminationThreshold,
 			apiMinimumCountToEnableTermination,
 			serverSelectionTimeoutMS,
+			consecutiveFailedThresholdForLowerTotalRequests,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -640,6 +719,9 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.apiMinimumCountToEnableTermination =
 			apiMinimumCountToEnableTermination ?? DefaultApiMinimumCountToEnableTermination;
 		this.serverSelectionTimeoutMS = serverSelectionTimeoutMS ?? DefaultServerSelectionTimeoutMS;
+		this.consecutiveFailedThresholdForLowerTotalRequests =
+			consecutiveFailedThresholdForLowerTotalRequests ??
+			DefaultConsecutiveFailedThresholdForLowerTotalRequests;
 	}
 
 	public async connect(global = false): Promise<core.IDb> {
@@ -697,6 +779,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
+			this.consecutiveFailedThresholdForLowerTotalRequests,
 		);
 	}
 }

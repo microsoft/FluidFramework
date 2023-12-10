@@ -30,6 +30,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
 		apiMetricsSamplingPeriod?: number,
+		private readonly isEphemeralContainer?: boolean,
 	) {
 		super(
 			directory,
@@ -77,7 +78,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 				};
 				return result;
 			});
-		} catch (err) {
+		} catch (err: any) {
 			Lumberjack.error(
 				"getCommits error",
 				{
@@ -88,6 +89,9 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 				},
 				err,
 			);
+			if (this.isEphemeralContainer && err?.code === "NotFoundError") {
+				throw new NetworkError(404, "Unable to get commits for ephemeral container.");
+			}
 			throw new NetworkError(500, "Unable to get commits.");
 		}
 	}
@@ -422,6 +426,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
+		isEphemeralContainer?: boolean,
 	): IRepositoryManager {
 		return new IsomorphicGitRepositoryManager(
 			fileSystemManager,
@@ -431,6 +436,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 			lumberjackBaseProperties,
 			enableRepositoryManagerMetrics,
 			apiMetricsSamplingPeriod,
+			isEphemeralContainer,
 		);
 	}
 

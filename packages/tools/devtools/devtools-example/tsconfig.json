@@ -3,9 +3,10 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "dist",
+		"module": "ESNext",
 		"composite": true,
 		"jsx": "react",
-		"types": ["jest"],
+		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],

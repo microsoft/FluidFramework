@@ -1,11 +1,12 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
+		"module": "esnext",
+		"lib": ["ESNext", "DOM"],
 		"rootDir": "src",
 		"outDir": "dist",
 		"composite": true,
 		"jsx": "react",
-		"types": ["jest"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],

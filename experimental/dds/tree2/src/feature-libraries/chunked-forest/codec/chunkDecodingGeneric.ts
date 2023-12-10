@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { BrandedType } from "../../../util";
+import { DiscriminatedUnionDispatcher } from "../../../codec";
 import { TreeChunk } from "../chunk";
 import { EncodedChunkGeneric, IdentifierOrIndex } from "./formatGeneric";
-import {
-	ChunkDecoder,
-	DiscriminatedUnionDispatcher,
-	StreamCursor,
-	getChecked,
-	readStream,
-} from "./chunkCodecUtilities";
+import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodecUtilities";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.

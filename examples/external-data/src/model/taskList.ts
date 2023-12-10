@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -407,6 +407,13 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}
+		// We are doing this ungainly string parsing here to retrieve documentId and tenantId separately.
+		// However, our production drivers have methods that return these parameters separately, so in
+		// production code you should not have to do this URL splitting logic.
+		const containerUrlParts = containerUrlData.url.split("/");
+		const documentId = containerUrlParts[containerUrlParts.length - 1];
+		const tenantId = containerUrlParts[containerUrlParts.length - 2];
+
 		try {
 			console.log(
 				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
@@ -418,7 +425,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					containerUrl: containerUrlData.url,
+					tenantId,
+					documentId,
 					externalTaskListId: this.externalTaskListId,
 				}),
 			});

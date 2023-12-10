@@ -4,22 +4,14 @@
  */
 
 // Used by public types, but not part of the desired API surface.
+export { MakeNominal, RestrictiveReadonlyRecord } from "./util";
+
 export {
-	MakeNominal,
-	Invariant,
-	Contravariant,
-	Covariant,
-	BrandedType,
-	ExtractFromOpaque,
-	Assume,
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
-	_InlineTrick,
-	_RecursiveTrick,
-	FlattenKeys,
-	AllowOptionalNotFlattened,
-	isAny,
-	RestrictiveReadonlyRecord,
-	BrandedKeyContent,
-} from "./util";
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	InternalClassTreeTypes,
+} from "./class-tree";
+
+export { TreeListNodeBase } from "./simple-tree";

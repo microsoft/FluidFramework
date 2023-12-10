@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { brandedStringType, generateStableId } from "../../util";
-import { ReadonlyRepairDataStore } from "../repair";
+import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -22,7 +21,57 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
-export const RevisionTagSchema = brandedStringType<StableId>();
+export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
+export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();
+
+/**
+ * An ID which is unique within a revision of a `ModularChangeset`.
+ * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
+ * but they are unique when qualified by the revision of the change they are used in.
+ * @alpha
+ */
+export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+/**
+ * A globally unique ID for an atom of change, or a node associated with the atom of change.
+ * @alpha
+ *
+ * @privateRemarks
+ * TODO: Rename this to be more general.
+ */
+export interface ChangeAtomId {
+	/**
+	 * Uniquely identifies the changeset within which the change was made.
+	 * Only undefined when referring to an anonymous changesets.
+	 */
+	readonly revision?: RevisionTag;
+	/**
+	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
+	 */
+	readonly localId: ChangesetLocalId;
+}
+
+export interface EncodedChangeAtomId {
+	readonly revision?: EncodedRevisionTag;
+	readonly localId: ChangesetLocalId;
+}
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
+
+/**
+ * @alpha
+ */
+export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
+
+/**
+ * @returns true iff `a` and `b` are the same.
+ */
+export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
+	return a.localId === b.localId && a.revision === b.revision;
+}
 
 /**
  * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
@@ -54,8 +103,6 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/* The repair data associated with the commit */
-	readonly repairData?: ReadonlyRepairDataStore;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
 	/** The inverse of this commit */
@@ -74,11 +121,10 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change, repairData } = commit;
+	const { revision, change } = commit;
 	return {
 		revision,
 		change,
 		parent,
-		repairData,
 	};
 }

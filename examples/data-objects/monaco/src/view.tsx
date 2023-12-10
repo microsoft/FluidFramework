@@ -10,7 +10,7 @@ import * as monaco from "monaco-editor";
 import React, { useEffect, useRef } from "react";
 
 /**
- * Compilation options for Monaco to use on Typescript
+ * Compilation options for Monaco to use on TypeScript
  */
 const defaultCompilerOptions = {
 	noImplicitAny: true,
@@ -156,8 +156,9 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 								break;
 							}
 
-							default:
+							default: {
 								break;
+							}
 						}
 					}
 				}

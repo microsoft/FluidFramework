@@ -6,8 +6,7 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -285,6 +284,7 @@ class Document {
 
 /**
  * All the logic of replay tool
+ * @internal
  */
 export class ReplayTool {
 	private storage: ISnapshotWriterStorage;
@@ -395,7 +395,7 @@ export class ReplayTool {
 		// If there are snapshots present (from fetch tool), find latest snapshot and load from it.
 		if (this.args.fromVersion === undefined) {
 			for (const name of fs.readdirSync(this.args.inDirName)) {
-				if (name.indexOf("9-") === 0) {
+				if (name.startsWith("9-")) {
 					// It can be any file, even created not detached and downloaded by fetch-tool
 					// Do quick and ugly test to see if it's for sequenceNumber <= 1.
 					// Note we rely here on a fact that .attributes are always downloaded by fetch tool first
@@ -405,7 +405,7 @@ export class ReplayTool {
 					for (const file of fs.readdirSync(dir)) {
 						try {
 							if (
-								file.indexOf("0-") === 0 &&
+								file.startsWith("0-") &&
 								JSON.parse(fs.readFileSync(`${dir}/${file}`).toString("utf-8"))
 									.sequenceNumber <= 1
 							) {

@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// TODO: This is implicitly typed as any.
+// Making the config file a TypeScript file would fix this, but break policy-check.
+// policy-check should be fixed to accommodate TypeScript jest config files, but doing that breaks its reporter validation.
+// If reporter configuration is deduplicated, then validation of it in every package can be removed, then support for TypeScript config files can be added,
+// then the config ported to TypeScript and expect-error can be removed.
+// @ts-expect-error This is implicitly typed as any due to above issue.
 import { globals } from "../jest.config";
 
 describe("Bubblebench", () => {
@@ -21,7 +27,7 @@ describe("Bubblebench", () => {
 
 		beforeEach(async () => {
 			await page.goto(globals.PATH, { waitUntil: "load" });
-			await page.waitForFunction(() => window["fluidStarted"]);
+			await page.waitForFunction(() => (window as any).fluidStarted as unknown);
 		});
 
 		it("The page loads and displays current FPS", async () => {

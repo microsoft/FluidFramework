@@ -13,8 +13,8 @@ import {
 	TableRow,
 	TableCell,
 	TableCellLayout,
-	TableColumnDefinition,
-	TableColumnSizingOptions,
+	type TableColumnDefinition,
+	type TableColumnSizingOptions,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 	TableBody,
@@ -31,14 +31,14 @@ import {
 	CloseContainer,
 	ConnectContainer,
 	ContainerStateChange,
-	ContainerStateMetadata,
+	type ContainerStateMetadata,
 	DisconnectContainer,
 	GetContainerState,
 	handleIncomingMessage,
-	HasContainerKey,
-	IMessageRelay,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
+	type HasContainerKey,
+	type IMessageRelay,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -139,24 +139,27 @@ function containerStatusValueCell(statusComponents: string[]): React.ReactElemen
 		<TableCellLayout
 			media={((): JSX.Element => {
 				switch (statusComponents[0]) {
-					case AttachState.Attaching:
+					case AttachState.Attaching: {
 						return (
 							<Badge shape="rounded" color="warning">
 								{statusComponents[0]}
 							</Badge>
 						);
-					case AttachState.Detached:
+					}
+					case AttachState.Detached: {
 						return (
 							<Badge shape="rounded" color="danger">
 								{statusComponents[0]}
 							</Badge>
 						);
-					default:
+					}
+					default: {
 						return (
 							<Badge shape="rounded" color="success">
 								{statusComponents[0]}
 							</Badge>
 						);
+					}
 				}
 			})()}
 		>

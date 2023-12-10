@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { type IRequest } from "@fluidframework/core-interfaces";
+import {
+	DriverHeader,
+	type IResolvedUrl,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
@@ -67,19 +71,19 @@ function decodeAzureUrl(urlString: string): {
 } {
 	const url = new URL(urlString);
 	const ordererUrl = url.origin;
-	const searchParams = url.searchParams;
-	const storageUrl = searchParams.get("storage");
+	const searchParameters = url.searchParams;
+	const storageUrl = searchParameters.get("storage");
 	if (storageUrl === null) {
 		throw new Error("Azure URL did not contain a storage URL");
 	}
-	const tenantId = searchParams.get("tenantId");
+	const tenantId = searchParameters.get("tenantId");
 	if (tenantId === null) {
 		throw new Error("Azure URL did not contain a tenant ID");
 	}
 	const storageUrlDecoded = decodeURIComponent(storageUrl);
 	const tenantIdDecoded = decodeURIComponent(tenantId);
-	const containerId = searchParams.get("containerId");
-	const containerIdDecoded = containerId !== null ? decodeURIComponent(containerId) : undefined;
+	const containerId = searchParameters.get("containerId");
+	const containerIdDecoded = containerId === null ? undefined : decodeURIComponent(containerId);
 	return {
 		ordererUrl,
 		storageUrl: storageUrlDecoded,

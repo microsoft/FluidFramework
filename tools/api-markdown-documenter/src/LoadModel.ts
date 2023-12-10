@@ -22,11 +22,13 @@ import { Logger } from "./Logging";
  *
  * @remarks
  *
- * The resulting `ApiModel` can be passed to {@link transformApiModel} or {@link renderApiModelAsMarkdown}
+ * The resulting `ApiModel` can be passed to {@link transformApiModel} or to one of the bundled renderers
  * to generate API documentation for the model and its packages.
  *
  * @param reportsDirectoryPath - Path to the directory containing the API reports.
  * @param logger - Optional logger for reporting system events while loading the model.
+ *
+ * @public
  */
 export async function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel> {
 	if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {
@@ -79,8 +81,11 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
  * @remarks Copied from `@microsoft/api-documenter` as a workaround for an `API-Extractor` limitation tracked by
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
+// "inheritDoc" is the name of the tag
+// eslint-disable-next-line unicorn/prevent-abbreviations
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger): void {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
+		// eslint-disable-next-line unicorn/prevent-abbreviations
 		const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
 		if (inheritDocTag?.declarationReference !== undefined) {
@@ -101,7 +106,10 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger):
 				result.resolvedApiItem.tsdocComment &&
 				result.resolvedApiItem !== apiItem
 			) {
-				copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
+				copyInheritedDocumentation(
+					apiItem.tsdocComment,
+					result.resolvedApiItem.tsdocComment,
+				);
 			}
 		}
 	}
@@ -120,18 +128,18 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger):
  * @remarks Copied from `@microsoft/api-documenter` as a workaround for an `API-Extractor` limitation tracked by
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
-function copyInheritedDocs(targetDocComment: DocComment, sourceDocComment: DocComment): void {
-	targetDocComment.summarySection = sourceDocComment.summarySection;
-	targetDocComment.remarksBlock = sourceDocComment.remarksBlock;
+function copyInheritedDocumentation(targetComment: DocComment, sourceComment: DocComment): void {
+	targetComment.summarySection = sourceComment.summarySection;
+	targetComment.remarksBlock = sourceComment.remarksBlock;
 
-	targetDocComment.params.clear();
-	for (const param of sourceDocComment.params) {
-		targetDocComment.params.add(param);
+	targetComment.params.clear();
+	for (const parameter of sourceComment.params) {
+		targetComment.params.add(parameter);
 	}
-	for (const typeParam of sourceDocComment.typeParams) {
-		targetDocComment.typeParams.add(typeParam);
+	for (const typeParameter of sourceComment.typeParams) {
+		targetComment.typeParams.add(typeParameter);
 	}
-	targetDocComment.returnsBlock = sourceDocComment.returnsBlock;
+	targetComment.returnsBlock = sourceComment.returnsBlock;
 
-	targetDocComment.inheritDocTag = undefined;
+	targetComment.inheritDocTag = undefined;
 }

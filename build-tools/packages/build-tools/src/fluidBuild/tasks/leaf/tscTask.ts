@@ -5,17 +5,14 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as ts from "typescript";
+import * as tsTypes from "typescript";
+import isEqual from "lodash.isequal";
 
-import { defaultLogger } from "../../../common/logging";
+import { readFileSync } from "fs-extra";
 import { existsSync, readFileAsync } from "../../../common/utils";
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
-import * as TscUtils from "../../../common/tscUtils";
+import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
+import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-
-const isEqual = require("lodash.isequal");
-
-const { verbose } = defaultLogger;
 
 interface ITsBuildInfo {
 	program: {
@@ -30,11 +27,24 @@ interface ITsBuildInfo {
 export class TscTask extends LeafTask {
 	private _tsBuildInfoFullPath: string | undefined;
 	private _tsBuildInfo: ITsBuildInfo | undefined;
-	private _tsConfig: ts.ParsedCommandLine | undefined;
+	private _tsConfig: tsTypes.ParsedCommandLine | undefined;
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
 	private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
+	private _tscUtils: TscUtil | undefined;
 
+	private getTscUtils() {
+		if (this._tscUtils) {
+			return this._tscUtils;
+		}
+		this._tscUtils = getTscUtils(this.node.pkg.directory);
+		return this._tscUtils;
+	}
+
+	protected get isIncremental() {
+		const config = this.readTsConfig();
+		return config?.options.incremental;
+	}
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
@@ -62,11 +72,13 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const tscUtils = this.getTscUtils();
+
 		// Keep a list of files that need to be compiled based on the command line flags and config, and
 		// remove the files that we sees from the tsBuildInfo.  The remaining files are
 		// new files that need to be rebuilt.
 		const configFileNames = new Set(
-			config.fileNames.map((p) => TscUtils.getCanonicalFileName(path.normalize(p))),
+			config.fileNames.map((p) => tscUtils.getCanonicalFileName(path.normalize(p))),
 		);
 
 		// Check dependencies file hashes
@@ -87,7 +99,10 @@ export class TscTask extends LeafTask {
 				if (this._projectReference) {
 					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
 				}
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
+				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+					fullPath,
+					tscUtils.getSourceFileVersion,
+				);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
 					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
@@ -95,7 +110,7 @@ export class TscTask extends LeafTask {
 				}
 
 				// Remove files that we have built before
-				configFileNames.delete(TscUtils.getCanonicalFileName(path.normalize(fullPath)));
+				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
 			} catch (e: any) {
 				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
 				return false;
@@ -114,7 +129,7 @@ export class TscTask extends LeafTask {
 			);
 
 			if (tsVersion !== tsBuildInfo.version) {
-				this.traceTrigger("previous build error");
+				this.traceTrigger("mismatched type script version");
 				return false;
 			}
 		} catch (e) {
@@ -128,7 +143,7 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: ts.ParsedCommandLine) {
+	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine) {
 		if (!this._sourceStats) {
 			this._sourceStats = config ? config.fileNames.map((v) => fs.lstatSync(v)) : [];
 		}
@@ -145,23 +160,26 @@ export class TscTask extends LeafTask {
 	private checkTsConfig(
 		tsBuildInfoFileDirectory: string,
 		tsBuildInfo: ITsBuildInfo,
-		options: ts.ParsedCommandLine,
+		options: tsTypes.ParsedCommandLine,
 	) {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
 			assert.fail();
 		}
 
+		const tscUtils = this.getTscUtils();
 		// Patch relative path based on the file directory where the config comes from
-		const configOptions = TscUtils.filterIncrementalOptions(
-			TscUtils.convertToOptionsWithAbsolutePath(
+		const configOptions = tscUtils.filterIncrementalOptions(
+			tscUtils.convertOptionPaths(
 				options.options,
 				path.dirname(configFileFullPath),
+				path.resolve,
 			),
 		);
-		const tsBuildInfoOptions = TscUtils.convertToOptionsWithAbsolutePath(
+		const tsBuildInfoOptions = tscUtils.convertOptionPaths(
 			tsBuildInfo.program.options,
 			tsBuildInfoFileDirectory,
+			path.resolve,
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
@@ -189,20 +207,23 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 
-			const config = TscUtils.readConfigFile(configFileFullPath);
+			const tscUtils = this.getTscUtils();
+			const config = tscUtils.readConfigFile(configFileFullPath);
 			if (!config) {
-				verbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
+				this.traceError(`ts fail to parse ${configFileFullPath}`);
 				return undefined;
 			}
 
 			// Fix up relative path from the command line based on the package directory
-			const commandOptions = TscUtils.convertToOptionsWithAbsolutePath(
+			const commandOptions = tscUtils.convertOptionPaths(
 				parsedCommand.options,
 				this.node.pkg.directory,
+				path.resolve,
 			);
 
 			// Parse the config file relative to the config file directory
 			const configDir = path.parse(configFileFullPath).dir;
+			const ts = tscUtils.tsLib;
 			const options = ts.parseJsonConfigFileContent(
 				config,
 				ts.sys,
@@ -212,16 +233,10 @@ export class TscTask extends LeafTask {
 			);
 
 			if (options.errors.length) {
-				verbose(
-					`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`,
-				);
+				this.traceError(`ts fail to parse file content ${configFileFullPath}`);
 				return undefined;
 			}
 			this._tsConfig = options;
-
-			if (!options.options.incremental) {
-				console.warn(`${this.node.pkg.nameColored}: warning: incremental not enabled`);
-			}
 		}
 
 		return this._tsConfig;
@@ -237,7 +252,7 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 
-			this._tsConfigFullPath = TscUtils.findConfigFile(
+			this._tsConfigFullPath = this.getTscUtils().findConfigFile(
 				this.node.pkg.directory,
 				parsedCommand,
 			);
@@ -246,9 +261,9 @@ export class TscTask extends LeafTask {
 	}
 
 	private get parsedCommandLine() {
-		const parsedCommand = TscUtils.parseCommandLine(this.command);
+		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
-			verbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+			this.traceError(`ts fail to parse command line ${this.command}`);
 		}
 		return parsedCommand;
 	}
@@ -290,7 +305,7 @@ export class TscTask extends LeafTask {
 		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
 	}
 
-	private remapOutFile(options: ts.ParsedCommandLine, directory: string, fileName: string) {
+	private remapOutFile(options: tsTypes.ParsedCommandLine, directory: string, fileName: string) {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -334,20 +349,21 @@ export class TscTask extends LeafTask {
 					const tsBuildInfo = JSON.parse(
 						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
 					);
-					if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
+					if (
+						tsBuildInfo.program &&
+						tsBuildInfo.program.fileNames &&
+						tsBuildInfo.program.fileInfos &&
+						tsBuildInfo.program.options
+					) {
 						this._tsBuildInfo = tsBuildInfo;
 					} else {
-						verbose(
-							`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`,
-						);
+						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
 					}
 				} catch {
-					verbose(
-						`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`,
-					);
+					this.traceError(`Unable to load ${tsBuildInfoFileFullPath}`);
 				}
 			} else {
-				verbose(`${this.node.pkg.nameColored}: ${tsBuildInfoFileFullPath} file not found`);
+				this.traceError(`${tsBuildInfoFileFullPath} file not found`);
 			}
 		}
 		return this._tsBuildInfo;
@@ -355,6 +371,36 @@ export class TscTask extends LeafTask {
 
 	protected async markExecDone() {
 		this._tsBuildInfo = undefined;
+
+		const config = this.readTsConfig();
+		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+		const configFileFullPath = this.configFileFullPath;
+
+		// If there are no input, tsc doesn't update the build info file.  Do it manually so we use it for
+		// incremental build
+		if (tsBuildInfoFileFullPath && configFileFullPath && config?.fileNames.length === 0) {
+			const tscUtils = this.getTscUtils();
+			// Patch relative path based on the file directory where the config comes from
+			const options = tscUtils.filterIncrementalOptions(
+				tscUtils.convertOptionPaths(
+					config.options,
+					path.dirname(tsBuildInfoFileFullPath),
+					path.relative,
+				),
+			);
+			const dir = path.dirname(tsBuildInfoFileFullPath);
+			if (!existsSync(dir)) {
+				await fs.promises.mkdir(dir, { recursive: true });
+			}
+			await fs.promises.writeFile(
+				tsBuildInfoFileFullPath,
+				JSON.stringify({
+					program: { fileNames: [], fileInfos: [], options },
+					version: tscUtils.tsLib.version,
+				}),
+				"utf8",
+			);
+		}
 	}
 
 	protected get useWorker() {
@@ -410,10 +456,82 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
-			this.traceExec(`error generating done file content ${e}`);
+			this.traceError(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}
 	protected abstract get configFileFullPath(): string;
 	protected abstract getToolVersion(): Promise<string>;
+}
+
+/**
+ * A fluid-build task definition for tsc-multi.
+ *
+ * This implementation is a hack. It primarily uses the contents of the tsbuildinfo files created by the tsc-multi
+ * processes, and duplicates their content into the doneFile. It's duplicative but seems to be the simplest way to get
+ * basic incremental support in fluid-build.
+ *
+ * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
+ * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
+ */
+export class TscMultiTask extends LeafWithDoneFileTask {
+	protected async getToolVersion() {
+		return getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
+	}
+
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		const command = this.command;
+
+		/**
+		 * A list of files that should be considered part of the cache input, if they exist
+		 */
+		const commonFiles = [
+			"tsconfig.json",
+			"src/test/tsconfig.json",
+			"tsc-multi.json",
+			"tsc-multi.test.json",
+		]
+			.map((file) => path.resolve(this.package.directory, file))
+			.filter((file) => existsSync(file));
+
+		try {
+			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
+			// the command string to determine which file to use.
+			const tsbuildinfo = this.getPackageFileFullPath(
+				command.includes("esnext")
+					? "tsconfig.mjs.tsbuildinfo"
+					: "tsconfig.cjs.tsbuildinfo",
+			);
+			if (!existsSync(tsbuildinfo)) {
+				// No tsbuildinfo file, so we need to build
+				return undefined;
+			}
+
+			const files = [...commonFiles];
+
+			// Add src files
+			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
+
+			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
+			const hashesP = files.map(async (name) => {
+				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+					this.getPackageFileFullPath(name),
+				);
+				return { name, hash };
+			});
+
+			const buildInfo = readFileSync(tsbuildinfo).toString();
+			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
+			const hashes = await Promise.all(hashesP);
+			const result = JSON.stringify({
+				version,
+				buildInfo,
+				hashes,
+			});
+			return result;
+		} catch (e) {
+			this.traceError(`error generating done file content. ${e}`);
+		}
+		return undefined;
+	}
 }

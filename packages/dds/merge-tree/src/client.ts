@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -13,10 +14,9 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -73,8 +73,7 @@ type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- *
- * @internal
+ * @alpha
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
@@ -96,6 +95,10 @@ export interface IClientEvents {
 	);
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
+ */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
 
@@ -158,6 +161,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @param consensusCallback - The callback called when consensus is reached
 	 * @returns The annotate op if valid, otherwise undefined
+	 *
+	 * @deprecated We no longer intend to support this functionality and it will
+	 * be removed in a future release. There is no replacement for this
+	 * functionality.
 	 */
 	public annotateMarkerNotifyConsensus(
 		marker: Marker,
@@ -375,13 +382,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
+	 * @param canSlideToEndpoint - Whether or not the created local reference can
+	 * slide onto one of the special endpoint segments denoting the position
+	 * before the start of or after the end of the tree
 	 */
 	public createLocalReferencePosition(
-		segment: ISegment,
+		segment: ISegment | "start" | "end",
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
@@ -389,6 +400,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			refType,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 
@@ -1041,6 +1053,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
+	/**
+	 * @deprecated this functionality is no longer supported and will be removed
+	 */
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,
@@ -1053,6 +1068,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const segWindow = this.getCollabWindow();
 		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
 	}
+
 	localTransaction(groupOp: IMergeTreeGroupMsg) {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {
@@ -1161,8 +1177,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	/**
+	 * @deprecated Use searchForMarker instead.
+	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();
 		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
+	}
+
+	/**
+	 * Searches a string for the nearest marker in either direction to a given start position.
+	 * The search will include the start position, so markers at the start position are valid
+	 * results of the search. Makes use of block-accelerated search functions for log(n) complexity.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param markerLabel - Label of the marker to search for
+	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
+	 */
+	searchForMarker(startPos: number, markerLabel: string, forwards = true) {
+		const clientId = this.getClientId();
+		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
 	}
 }

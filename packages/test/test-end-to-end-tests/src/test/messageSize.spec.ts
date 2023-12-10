@@ -7,7 +7,6 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -16,9 +15,14 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import {
+	ConfigTypes,
+	FluidErrorTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import {
@@ -26,9 +30,9 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { GenericError } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Message size", (getTestObjectProvider) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -66,12 +70,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		localDataObject = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
 		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		remoteDataObject = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
@@ -133,11 +137,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			} catch {}
 
 			const error = await errorEvent;
-			assert.ok(error instanceof GenericError);
-			assert.ok(error.getTelemetryProperties().opSize ?? 0 > maxMessageSizeInBytes);
+			assert.equal(error?.errorType, FluidErrorTypes.genericError);
+			assert.ok(error.getTelemetryProperties?.().opSize ?? 0 > maxMessageSizeInBytes);
 
 			// Limit has to be around 1Mb, but we should not assume here precise number.
-			const limit = error.getTelemetryProperties().limit as number;
+			const limit = error.getTelemetryProperties?.().limit as number;
 			assert(limit > maxMessageSizeInBytes / 2);
 			assert(limit < maxMessageSizeInBytes * 2);
 		},

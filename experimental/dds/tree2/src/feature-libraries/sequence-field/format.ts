@@ -3,370 +3,148 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import { ITreeCursorSynchronous, JsonableTree, RevisionTag, RevisionTagSchema } from "../../core";
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
-	NodeChangeset,
-} from "../modular-schema";
-
-// TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
-// Currently, types in this file are largely used for both.
-// See for example `Revive` whose type uses ITreeCursorSynchronous,
-// but the schema for the serialized type uses ProtoNode (which is the result of serializing that cursor).
+import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { RevisionTagSchema } from "../../core";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
+import { unionOptions } from "../../codec";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-/**
- * The contents of a node to be created
- */
-export type ProtoNode = JsonableTree;
-export const ProtoNode = Type.Any();
+const CellCount = Type.Number();
 
-export type CellCount = number;
-export const CellCount = Type.Number();
+const MoveId = ChangesetLocalIdSchema;
+const HasMoveId = Type.Object({ id: MoveId });
 
-/**
- * Left undefined for terseness.
- */
-export const NoopMarkType = undefined;
+const LineageEvent = Type.Tuple([
+	RevisionTagSchema,
+	ChangesetLocalIdSchema,
+	/* count */ Type.Number(),
+	/* offset */ Type.Number(),
+]);
 
-/**
- * A monotonically increasing positive integer assigned to an individual mark within the changeset.
- * MoveIds are scoped to a single changeset, so referring to MoveIds across changesets requires
- * qualifying them by change tag.
- *
- * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
- */
-export type MoveId = ChangesetLocalId;
-export const MoveId = ChangesetLocalIdSchema;
+const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
 
-export interface HasMoveId {
-	/**
-	 * The sequential ID assigned to a change within a transaction.
-	 */
-	id: MoveId;
-}
-export const HasMoveId = Type.Object({ id: MoveId });
+const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
-export type NodeChangeType = NodeChangeset;
+const CellId = Type.Composite(
+	[
+		EncodedChangeAtomId,
+		HasLineage,
+		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+	],
+	noAdditionalProps,
+);
 
-// Boolean encodings can use this alternative to save space for frequently false values.
-const OptionalTrue = Type.Optional(Type.Literal(true));
+const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-/**
- * Represents a position within a contiguous range of nodes detached by a single changeset.
- * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
- * `LineageEvent`s for a given revision can only be meaningfully compared if it is known that they must refer to the
- * same detach.
- * @alpha
- */
-export interface LineageEvent {
-	readonly revision: RevisionTag;
-	readonly id: ChangesetLocalId;
-	readonly count: number;
+const Insert = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
 
-	/**
-	 * The position of this mark within a range of nodes which were detached in this revision.
-	 */
-	readonly offset: number;
-}
-export const LineageEvent = Type.Object(
+const HasMoveFields = Type.Composite([
+	HasMoveId,
+	HasRevisionTag,
+	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+]);
+
+const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
+
+const InverseAttachFields = Type.Object({
+	detachIdOverride: Type.Optional(EncodedChangeAtomId),
+});
+
+const Delete = Type.Composite(
+	[
+		Type.Object({
+			id: ChangesetLocalIdSchema,
+		}),
+		HasRevisionTag,
+		InverseAttachFields,
+	],
+	noAdditionalProps,
+);
+
+const MoveOut = Type.Composite([HasMoveFields, InverseAttachFields], noAdditionalProps);
+
+const MovePlaceholder = Type.Composite([HasMoveId, HasRevisionTag], noAdditionalProps);
+
+const Attach = Type.Object(
 	{
-		revision: Type.Readonly(RevisionTagSchema),
-		id: Type.Readonly(ChangesetLocalIdSchema),
-		count: Type.Readonly(Type.Number()),
-		offset: Type.Readonly(Type.Number()),
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
 	},
-	noAdditionalProps,
+	unionOptions,
 );
 
-/**
- * @alpha
- */
-export interface HasLineage {
-	/**
-	 * History of detaches adjacent to the cells described by this `ChangeAtomId`.
-	 */
-	lineage?: LineageEvent[];
-}
-
-export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
-
-/**
- * @alpha
- */
-export interface CellId extends ChangeAtomId, HasLineage {}
-
-export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
-
-/**
- * Mark which targets a range of existing cells instead of creating new cells.
- */
-export interface HasMarkFields<TNodeChange = never> {
-	/**
-	 * Describes the detach which last emptied the target cells,
-	 * or the attach which allocated the cells if the cells have never been filled.
-	 * Undefined if the target cells are not empty in this mark's input context.
-	 */
-	cellId?: CellId;
-
-	changes?: TNodeChange;
-
-	count: CellCount;
-}
-export const HasMarkFields = <TNodeChange extends TSchema>(tNodeChange: TNodeChange) =>
-	Type.Object({
-		cellId: Type.Optional(CellId),
-		changes: Type.Optional(tNodeChange),
-		count: CellCount,
-	});
-
-export interface HasReattachFields<TNodeChange = never> extends HasMarkFields<TNodeChange> {
-	/**
-	 * The revision this mark is inverting a detach from.
-	 * If defined this mark is a revert-only inverse,
-	 * meaning that it will only reattach nodes if those nodes were last detached by `inverseOf`.
-	 * If `inverseOf` is undefined, this mark will reattach nodes regardless of when they were last detached.
-	 */
-	inverseOf?: RevisionTag;
-}
-export const HasReattachFields = <TNodeChange extends TSchema>(tNodeChange: TNodeChange) =>
-	Type.Composite([
-		Type.Object({
-			inverseOf: Type.Optional(RevisionTagSchema),
-		}),
-		HasMarkFields(tNodeChange),
-	]);
-
-export interface NoopMark<TNodeChange> extends HasMarkFields<TNodeChange> {
-	/**
-	 * Declared for consistency with other marks.
-	 * Left undefined for terseness.
-	 */
-	type?: typeof NoopMarkType;
-}
-export const NoopMark = <TNodeChange extends TSchema>(tNodeChange: TNodeChange) =>
-	Type.Composite([HasMarkFields(tNodeChange)], noAdditionalProps);
-
-export interface HasRevisionTag {
-	/**
-	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
-	 */
-	revision?: RevisionTag;
-}
-export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
-
-export interface Transient {
-	/**
-	 * The details of the change that deletes the transient content.
-	 */
-	transientDetach: ChangeAtomId;
-}
-export const Transient = Type.Object({ detachedBy: EncodedChangeAtomId });
-
-export type CanBeTransient = Partial<Transient>;
-export const CanBeTransient = Type.Partial(Transient);
-
-export interface Insert<TNodeChange = NodeChangeType>
-	extends HasMarkFields<TNodeChange>,
-		HasRevisionTag,
-		CanBeTransient {
-	type: "Insert";
-	content: ProtoNode[];
-}
-export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasMarkFields(tNodeChange),
-			HasRevisionTag,
-			CanBeTransient,
-			Type.Object({
-				type: Type.Literal("Insert"),
-				content: Type.Array(ProtoNode),
-			}),
-		],
-		noAdditionalProps,
-	);
-
-export interface MoveIn extends HasMoveId, HasMarkFields, HasRevisionTag {
-	type: "MoveIn";
-	/**
-	 * When true, the corresponding MoveOut has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
-
-export const MoveIn = Type.Composite(
-	[
-		HasMoveId,
-		HasMarkFields(Type.Undefined()),
-		HasRevisionTag,
-		Type.Object({
-			type: Type.Literal("MoveIn"),
-			isSrcConflicted: OptionalTrue,
-		}),
-	],
-	noAdditionalProps,
+const Detach = Type.Object(
+	{
+		delete: Type.Optional(Delete),
+		moveOut: Type.Optional(MoveOut),
+	},
+	unionOptions,
 );
 
-export interface Delete<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasMarkFields<TNodeChange> {
-	type: "Delete";
-	id: ChangesetLocalId;
-}
+const AttachAndDetach = Type.Object({
+	attach: Attach,
+	detach: Detach,
+});
 
-export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasRevisionTag,
-			HasMarkFields(tNodeChange),
-			Type.Object({
-				type: Type.Literal("Delete"),
-				id: ChangesetLocalIdSchema,
-			}),
-		],
-		noAdditionalProps,
-	);
-
-export interface MoveOut<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasMoveId,
-		HasMarkFields<TNodeChange> {
-	type: "MoveOut";
-}
-export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasRevisionTag,
-			HasMoveId,
-			HasMarkFields(tNodeChange),
-			Type.Object({
-				type: Type.Literal("MoveOut"),
-			}),
-		],
-		noAdditionalProps,
-	);
-
-export interface Revive<TNodeChange = NodeChangeType>
-	extends HasReattachFields<TNodeChange>,
-		HasRevisionTag,
-		CanBeTransient {
-	type: "Revive";
-	content: ITreeCursorSynchronous[];
-}
-export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasReattachFields(tNodeChange),
-			HasRevisionTag,
-			CanBeTransient,
-			Type.Object({
-				type: Type.Literal("Revive"),
-				content: Type.Array(ProtoNode),
-			}),
-		],
-		noAdditionalProps,
-	);
-
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
-	type: "ReturnTo";
-
-	/**
-	 * When true, the corresponding ReturnFrom has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
-export const ReturnTo = Type.Composite(
-	[
-		HasReattachFields(Type.Undefined()),
-		HasRevisionTag,
-		HasMoveId,
-		Type.Object({
-			type: Type.Literal("ReturnTo"),
-			isSrcConflicted: OptionalTrue,
-		}),
-	],
-	noAdditionalProps,
+const MarkEffect = Type.Object(
+	{
+		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
+		insert: Type.Optional(Insert),
+		moveIn: Type.Optional(MoveIn),
+		delete: Type.Optional(Delete),
+		moveOut: Type.Optional(MoveOut),
+		placeholder: Type.Optional(MovePlaceholder),
+		attachAndDetach: Type.Optional(AttachAndDetach),
+	},
+	unionOptions,
 );
 
-export interface ReturnFrom<TNodeChange = NodeChangeType>
-	extends HasRevisionTag,
-		HasMoveId,
-		HasMarkFields<TNodeChange> {
-	type: "ReturnFrom";
-
-	/**
-	 * When true, the corresponding ReturnTo has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
-}
-export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasRevisionTag,
-			HasMoveId,
-			HasMarkFields(tNodeChange),
-			Type.Object({
-				type: Type.Literal("ReturnFrom"),
-				isDstConflicted: OptionalTrue,
-			}),
-		],
+const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
+	tMark: TMark,
+	tNodeChange: TNodeChange,
+) =>
+	Type.Object(
+		{
+			// If undefined, indicates a Noop mark.
+			effect: Type.Optional(tMark),
+			cellId: Type.Optional(CellId),
+			changes: Type.Optional(tNodeChange),
+			count: CellCount,
+		},
 		noAdditionalProps,
 	);
 
-/**
- * An attach mark that allocates new cells.
- */
-export type NewAttach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
-export const NewAttach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Insert(tNodeChange), MoveIn]);
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
 
-export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
-export const Reattach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Revive(tNodeChange), ReturnTo]);
-
-export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
-export const Attach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([NewAttach(tNodeChange), Reattach(tNodeChange)]);
-
-export type Detach<TNodeChange = NodeChangeType> =
-	| Delete<TNodeChange>
-	| MoveOut<TNodeChange>
-	| ReturnFrom<TNodeChange>;
-export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Delete(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
-
-/**
- * Mark used during compose to temporarily remember the position of nodes which were being moved
- * but had their move cancelled with an inverse.
- * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
- */
-export interface MovePlaceholder<TNodeChange>
-	extends HasMarkFields<TNodeChange>,
-		HasRevisionTag,
-		HasMoveId {
-	type: "Placeholder";
-}
-
-export type Mark<TNodeChange = NodeChangeType> =
-	| NoopMark<TNodeChange>
-	| MovePlaceholder<TNodeChange>
-	| Attach<TNodeChange>
-	| Detach<TNodeChange>;
-export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([NoopMark(tNodeChange), Attach(tNodeChange), Detach(tNodeChange)]);
-
-export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
-
-export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
+
+/**
+ * @privateRemarks - Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
+ */
+export namespace Encoded {
+	export type CellCount = Static<typeof CellCount>;
+
+	export type MoveId = Static<typeof MoveId>;
+	export type LineageEvent = Static<typeof LineageEvent>;
+	export type IdRange = Static<typeof IdRange>;
+
+	export type CellId = Static<typeof CellId>;
+
+	export type Insert = Static<typeof Insert>;
+	export type MoveIn = Static<typeof MoveIn>;
+	export type Delete = Static<typeof Delete>;
+	export type MoveOut = Static<typeof MoveOut>;
+	export type MovePlaceholder = Static<typeof MovePlaceholder>;
+	export type Attach = Static<typeof Attach>;
+	export type Detach = Static<typeof Detach>;
+	export type AttachAndDetach = Static<typeof AttachAndDetach>;
+	export type MarkEffect = Static<typeof MarkEffect>;
+
+	export type CellMark<Schema extends TSchema, TNodeChange extends TSchema> = Static<
+		ReturnType<typeof CellMark<Schema, TNodeChange>>
+	>;
+	export type Mark<Schema extends TSchema> = Static<ReturnType<typeof Mark<Schema>>>;
+	export type Changeset<Schema extends TSchema> = Static<ReturnType<typeof Changeset<Schema>>>;
+}

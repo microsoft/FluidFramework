@@ -69,7 +69,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 	 * @private
 	 */
 	export const _performApplyAfterOnPropertyIndexedCollection = function (
-		io_basePropertyChanges: SerializedChangeSet, // eslint-disable-line complexity
+		io_basePropertyChanges: SerializedChangeSet,
 		in_appliedPropertyChanges: SerializedChangeSet,
 		in_typeid: string,
 		in_options: ApplyChangeSetOptions,
@@ -463,7 +463,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 	 * @private
 	 */
 	export const _rebaseIndexedCollectionChangeSetForProperty = function (
-		in_ownPropertyChangeSet: SerializedChangeSet, // eslint-disable-line complexity
+		in_ownPropertyChangeSet: SerializedChangeSet,
 		io_rebasePropertyChangeSet: SerializedChangeSet,
 		in_basePath: string,
 		in_typeid: string,
@@ -509,11 +509,9 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
 				// Store the ChangeSet
 				if (in_changePrefix === "other") {
-					if (!Array.isArray(in_collection)) {
-						changesByKeys[key].change = in_collection[key];
-					} else {
-						changesByKeys[key].change = key;
-					}
+					changesByKeys[key].change = Array.isArray(in_collection)
+						? key
+						: in_collection[key];
 				}
 			}
 		};
@@ -695,22 +693,24 @@ export namespace ChangeSetIndexedCollectionFunctions {
 					modification.own === "remove_insert" &&
 					modification.other === "modify"
 				) {
-					// We have a conflicting change. A node was removed and inserted (replaced) in the original
-					// ChangeSet and then modified by the rebased ChangeSet. Since the base of the modification
-					// can have been changed significantly by this operation, we don't know whether we can
-					// apply the modification
+					if (!isPrimitiveTypeid) {
+						// We have a conflicting change. A node was removed and inserted (replaced) in the original
+						// ChangeSet and then modified by the rebased ChangeSet. Since the base of the modification
+						// can have been changed significantly by this operation, we don't know whether we can
+						// apply the modification
 
-					// Create the conflict information
-					let conflict = {
-						path: newPath,
-						type: ConflictType.ENTRY_MODIFICATION_AFTER_REMOVE_INSERT,
-						conflictingChange:
-							io_rebasePropertyChangeSet.modify[modification.otherTypeid][key],
-					};
-					out_conflicts.push(conflict);
+						// Create the conflict information
+						let conflict = {
+							path: newPath,
+							type: ConflictType.ENTRY_MODIFICATION_AFTER_REMOVE_INSERT,
+							conflictingChange:
+								io_rebasePropertyChangeSet.modify[modification.otherTypeid][key],
+						};
+						out_conflicts.push(conflict);
 
-					// Delete the modification from the rebased ChangeSet
-					delete io_rebasePropertyChangeSet.modify[key];
+						// Delete the modification from the rebased ChangeSet
+						delete io_rebasePropertyChangeSet.modify[modification.otherTypeid][key];
+					}
 				} else if (
 					(modification.own === "modify" || modification.own === "remove") &&
 					(modification.other === "remove" || modification.other === "remove_insert")

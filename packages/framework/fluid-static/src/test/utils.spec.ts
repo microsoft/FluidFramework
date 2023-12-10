@@ -10,9 +10,7 @@ import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { parseDataObjectsFromSharedObjects } from "../utils";
 
 export class TestDataObject extends DataObject {
-	public static get Name(): string {
-		return "@fluid-example/test-data-object";
-	}
+	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		TestDataObject.Name,
@@ -23,9 +21,7 @@ export class TestDataObject extends DataObject {
 }
 
 export class AnotherTestDataObject extends DataObject {
-	public static get Name(): string {
-		return "@fluid-example/another-test-data-object";
-	}
+	public static readonly Name = "@fluid-example/another-test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		AnotherTestDataObject.Name,

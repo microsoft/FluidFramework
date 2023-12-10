@@ -15,11 +15,11 @@ import {
 	ITreeCursor,
 	ITreeCursorSynchronous,
 	JsonableTree,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	chunkTree,
 	TreeChunk,
 } from "../../../feature-libraries";
@@ -37,7 +37,7 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk";
-import { jsonNumber } from "../../../domains";
+import { leaf } from "../../../domains";
 import {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
@@ -48,7 +48,7 @@ import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtili
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -63,7 +63,7 @@ describe("basic chunk", () => {
 
 	it("calling chunkField on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -78,7 +78,7 @@ describe("basic chunk", () => {
 	testGeneralPurposeTreeCursor(
 		"basic chunk",
 		(data): ITreeCursor => {
-			const inputCursor = singleTextCursor(data);
+			const inputCursor = cursorForJsonableTreeNode(data);
 			const chunk = basicChunkTree(inputCursor, basicOnlyChunkPolicy);
 			const cursor: ITreeCursor = chunk.cursor();
 			cursor.enterNode(0);
@@ -88,7 +88,7 @@ describe("basic chunk", () => {
 		true,
 	);
 
-	const schema: TreeSchemaIdentifier = mapSchema.name;
+	const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 
 	const hybridData: TestField<BasicChunk>[] = [];
 	for (const data of testData) {
@@ -218,7 +218,7 @@ describe("basic chunk", () => {
 });
 
 function numericBasicChunk(value: number = 0): BasicChunk {
-	return new BasicChunk(jsonNumber.name, new Map(), value);
+	return new BasicChunk(leaf.number.name, new Map(), value);
 }
 
 /**

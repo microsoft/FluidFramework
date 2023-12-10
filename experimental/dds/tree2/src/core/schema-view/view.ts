@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchemaIdentifier, SchemaData } from "../schema-stored";
+import { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -47,8 +47,8 @@ export enum AllowedUpdateType {
  * @alpha
  */
 export interface TreeAdapter {
-	readonly output: TreeSchemaIdentifier;
-	readonly input: TreeSchemaIdentifier;
+	readonly output: TreeNodeSchemaIdentifier;
+	readonly input: TreeNodeSchemaIdentifier;
 
 	// TODO: include actual adapter functionality, not just what types it converts
 }
@@ -71,6 +71,6 @@ export interface Adapters {
 export class AdaptedViewSchema {
 	public constructor(
 		public readonly adapters: Adapters,
-		public readonly adaptedForViewSchema: SchemaData,
+		public readonly adaptedForViewSchema: TreeStoredSchema,
 	) {}
 }

@@ -4,7 +4,7 @@
  */
 
 import { parse } from "url";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
@@ -16,6 +16,9 @@ const r11sServers = [
 	"www.eu.prague.office-int.com",
 ];
 
+/**
+ * @internal
+ */
 export class RouterliciousUrlResolver implements IUrlResolver {
 	constructor(
 		private readonly config:
@@ -156,11 +159,17 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IAlfredUser extends IUser {
 	displayName: string;
 	name: string;
 }
 
+/**
+ * @internal
+ */
 export interface IConfig {
 	serverUrl: string;
 	blobStorageUrl: string;

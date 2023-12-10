@@ -14,8 +14,7 @@ const defaultFailMessage = 'Assertion failed';
  * https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-utils/src/error.ts
  *
  * Exporting this enables users to safely filter telemetry handling of errors based on their type.
- *
- * @public
+ * @internal
  */
 export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
 
@@ -28,6 +27,7 @@ export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
 
 /**
  * Returns if the supplied event is a SharedTree telemetry event.
+ * @internal
  */
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean {
 	return (event as unknown as SharedTreeTelemetryProperties).isSharedTreeEvent === true;
@@ -81,7 +81,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  *
  * @remarks
  * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
- * When a non constant message is not needed, use `assert` from `@fluidframework/common-utils`;
+ * When a non constant message is not needed, use `assert` from `@fluidframework/core-utils`;
  */
 export function assertWithMessage(condition: unknown, message?: string, notLogSafe = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -144,21 +144,11 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 }
 
 /**
- * Assign a property and value to a given object.
- * @param object - The object to add the property to
- * @param property - The property key
- * @param value - The value of the property
- * @returns `object` after assigning `value` to the property `property`.
- */
-export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
-	return Object.assign(object, { [property]: value }) as With<T, K, V>;
-}
-
-/**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
  * `Object.defineProperty`, but it is useful for caching public getters on first read.
  *
  * @example
+ *
  * ```typescript
  * // `randomOnce()` will return a random number, but always the same random number.
  * {
@@ -167,6 +157,7 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
  *   }
  * }
  * ```
+ *
  * @param object - The object containing the property
  * @param propName - The name of the property on the object
  * @param value - The value of the property
@@ -364,6 +355,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 
 /**
  * @example
+ *
  * ```typescript
  * function (thing: ObjectWithMaybeFoo) {
  * 	   const x: MyActualType = {
@@ -375,7 +367,6 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  * }
  * ```
  */
-
 function breakOnDifference(): { break: boolean } {
 	return { break: true };
 }
@@ -407,14 +398,19 @@ export type ErrorString = string;
 
 /**
  * Discriminated union instance that wraps either a result of type `TOk` or an error of type `TError`.
+ * @internal
  */
 export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
 
+/**
+ * @internal
+ */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Result {
 	/**
 	 * Factory function for making a successful Result.
 	 * @param result - The result to wrap in the Result.
+	 * @internal
 	 */
 	export function ok<TOk>(result: TOk): Ok<TOk> {
 		return { type: ResultType.Ok, result };
@@ -422,6 +418,7 @@ export namespace Result {
 	/**
 	 * Factory function for making a unsuccessful Result.
 	 * @param error - The error to wrap in the Result.
+	 * @internal
 	 */
 	export function error<TError>(error: TError): Error<TError> {
 		return { type: ResultType.Error, error };
@@ -429,6 +426,7 @@ export namespace Result {
 	/**
 	 * Type guard for successful Result.
 	 * @returns True if `result` is successful.
+	 * @internal
 	 */
 	export function isOk<TOk, TError>(result: Result<TOk, TError>): result is Ok<TOk> {
 		return result.type === ResultType.Ok;
@@ -436,6 +434,7 @@ export namespace Result {
 	/**
 	 * Type guard for unsuccessful Result.
 	 * @returns True if `result` is unsuccessful.
+	 * @internal
 	 */
 	export function isError<TOk, TError>(result: Result<TOk, TError>): result is Error<TError> {
 		return result.type === ResultType.Error;
@@ -445,6 +444,7 @@ export namespace Result {
 	 * @param result - The result to map.
 	 * @param map - The function to apply to derive the new result.
 	 * @returns The given result if it is not ok, the mapped result otherwise.
+	 * @internal
 	 */
 	export function mapOk<TOkIn, TOkOut, TError>(
 		result: Result<TOkIn, TError>,
@@ -457,6 +457,7 @@ export namespace Result {
 	 * @param result - The result to map.
 	 * @param map - The function to apply to derive the new error.
 	 * @returns The given result if it is ok, the mapped result otherwise.
+	 * @internal
 	 */
 	export function mapError<TOk, TErrorIn, TErrorOut>(
 		result: Result<TOk, TErrorIn>,
@@ -466,6 +467,7 @@ export namespace Result {
 	}
 	/**
 	 * Tag value use to differentiate the members of the `Result` discriminated union.
+	 * @internal
 	 */
 	export enum ResultType {
 		/** Signals a successful result. */
@@ -475,6 +477,7 @@ export namespace Result {
 	}
 	/**
 	 * Wraps a result of type `TOk`.
+	 * @internal
 	 */
 	export interface Ok<TOk> {
 		readonly type: ResultType.Ok;
@@ -482,6 +485,7 @@ export namespace Result {
 	}
 	/**
 	 * Wraps an error of type `TError`.
+	 * @internal
 	 */
 	export interface Error<TError> {
 		readonly type: ResultType.Error;

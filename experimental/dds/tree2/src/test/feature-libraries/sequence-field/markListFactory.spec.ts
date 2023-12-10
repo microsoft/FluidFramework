@@ -4,14 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	mintRevisionTag,
+	RevisionTag,
+	TreeNodeSchemaIdentifier,
+} from "../../../core";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = mintRevisionTag();
 
 describe("SequenceField - MarkListFactory", () => {
@@ -56,31 +60,44 @@ describe("SequenceField - MarkListFactory", () => {
 		const id1: ChangesetLocalId = brand(1);
 		const id2: ChangesetLocalId = brand(2);
 		const factory = new SF.MarkListFactory();
-		const insert1 = Mark.insert([{ type, value: 1 }], id1);
-		const insert2 = Mark.insert([{ type, value: 2 }], id2);
+		const insert1 = Mark.insert(1, id1);
+		const insert2 = Mark.insert(1, id2);
 		factory.pushContent(insert1);
 		factory.pushContent(insert2);
-		assert.deepStrictEqual(factory.list, [
-			Mark.insert(
-				[
-					{ type, value: 1 },
-					{ type, value: 2 },
-				],
-				id1,
-			),
-		]);
+		assert.deepStrictEqual(factory.list, [Mark.insert(2, id1)]);
 	});
 
 	it("Can merge consecutive deletes", () => {
 		const factory = new SF.MarkListFactory();
-		const delete1 = Mark.delete(1, brand(0));
-		const delete2 = Mark.delete(1, brand(1));
+		const delete1 = Mark.delete(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const delete2 = Mark.delete(1, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+		});
 		factory.pushContent(delete1);
 		factory.pushContent(delete2);
-		assert.deepStrictEqual(factory.list, [Mark.delete(2, brand(0))]);
+		assert.deepStrictEqual(factory.list, [
+			Mark.delete(2, brand(0), {
+				detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			}),
+		]);
 	});
 
-	it("Can merge adjacent moves ", () => {
+	it("Does not merge consecutive deletes with discontinuous detach overrides", () => {
+		const factory = new SF.MarkListFactory();
+		const delete1 = Mark.delete(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const delete2 = Mark.delete(1, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+		});
+		factory.pushContent(delete1);
+		factory.pushContent(delete2);
+		assert.deepStrictEqual(factory.list, [delete1, delete2]);
+	});
+
+	it("Can merge adjacent moves", () => {
 		const factory = new SF.MarkListFactory();
 		const moveOut1 = Mark.moveOut(1, brand(0));
 		const moveOut2 = Mark.moveOut(1, brand(1));
@@ -99,7 +116,7 @@ describe("SequenceField - MarkListFactory", () => {
 		]);
 	});
 
-	it("Can merge three adjacent moves ", () => {
+	it("Can merge three adjacent moves", () => {
 		const factory = new SF.MarkListFactory();
 		const moveOut1 = Mark.moveOut(1, brand(0));
 		const moveOut2 = Mark.moveOut(1, brand(1));
@@ -124,17 +141,17 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive revives", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 1, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(1),
 		});
 		factory.pushContent(revive1);
 		factory.pushContent(revive2);
-		const expected = Mark.revive(fakeRepair(detachedBy, 0, 2), {
+		const expected = Mark.revive(2, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
@@ -160,13 +177,42 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
+	it("Can merge consecutive move-out", () => {
+		const factory = new SF.MarkListFactory();
+		const return1 = Mark.moveOut(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const return2 = Mark.moveOut(2, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+		});
+		factory.pushContent(return1);
+		factory.pushContent(return2);
+		const expected = Mark.moveOut(3, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		assert.deepStrictEqual(factory.list, [expected]);
+	});
+
+	it("Does not merge consecutive move-out with discontinuous detach overrides", () => {
+		const factory = new SF.MarkListFactory();
+		const return1 = Mark.moveOut(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const return2 = Mark.moveOut(2, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+		});
+		factory.pushContent(return1);
+		factory.pushContent(return2);
+		assert.deepStrictEqual(factory.list, [return1, return2]);
+	});
+
 	it("Does not merge revives with gaps", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 2, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(2),
 		});

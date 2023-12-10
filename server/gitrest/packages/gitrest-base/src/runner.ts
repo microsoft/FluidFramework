@@ -48,14 +48,14 @@ export class GitrestRunner implements IRunner {
 
 	public async stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
-		this.server.close().then(
-			() => {
+		this.server
+			.close()
+			.then(() => {
 				this.runningDeferred.resolve();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.runningDeferred.reject(error);
-			},
-		);
+			});
 
 		return this.runningDeferred.promise;
 	}

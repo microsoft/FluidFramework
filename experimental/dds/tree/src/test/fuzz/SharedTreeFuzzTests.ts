@@ -13,7 +13,7 @@ import {
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
-} from '@fluid-internal/stochastic-test-utils';
+} from '@fluid-private/stochastic-test-utils';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,

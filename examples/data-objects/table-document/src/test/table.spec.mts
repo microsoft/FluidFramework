@@ -4,14 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluid-internal/test-version-utils";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { TableDocument } from "../document.js";
 import { TableSlice } from "../slice.js";
 import { TableDocumentItem } from "../table.js";
 
-describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
+describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 	let tableDocument: TableDocument;
 
 	function makeId(type: string) {
@@ -23,7 +22,7 @@ describeLoaderCompat("TableDocument", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		const container = await provider.createContainer(TableDocument.getFactory());
-		tableDocument = await requestFluidObject<TableDocument>(container, "default");
+		tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
 	});
 
 	const extract = (table: TableDocument) => {

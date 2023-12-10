@@ -3,23 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
-import { ITelemetryPropertiesExt } from "./telemetryTypes";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
 import { createChildLogger } from "./logger";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
+ *
+ * @internal
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
 
-	clear() {
+	constructor(public readonly minLogLevel?: LogLevel) {}
+
+	clear(): void {
 		this.events = [];
 	}
 
-	toTelemetryLogger() {
+	toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
@@ -48,12 +56,14 @@ export class MockLogger implements ITelemetryBaseLogger {
 		return unmatchedExpectedEventCount === 0;
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
+	 */
 	assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -85,12 +95,14 @@ ${JSON.stringify(actualEvents)}`);
 		return matchedExpectedEventCount > 0;
 	}
 
-	/** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
+	 */
 	assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -120,12 +132,14 @@ ${JSON.stringify(actualEvents)}`);
 		);
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchEvents is true, and prints the actual/expected output if not
+	 */
 	assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -137,12 +151,14 @@ ${JSON.stringify(actualEvents)}`);
 		}
 	}
 
-	/** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
+	 */
 	assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -159,7 +175,7 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean,
 	): number {
 		let iExpectedEvent = 0;
-		this.events.forEach((event) => {
+		for (const event of this.events) {
 			if (
 				iExpectedEvent < expectedEvents.length &&
 				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
@@ -167,7 +183,7 @@ ${JSON.stringify(actualEvents)}`);
 				// We found the next expected event; increment
 				++iExpectedEvent;
 			}
-		});
+		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
 		this.events = [];
@@ -191,16 +207,19 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
+				// eslint-disable-next-line unicorn/numeric-separators-style
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const detailsExpanded = JSON.parse(details);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return matchObjects({ ...actualForMatching, ...detailsExpanded }, expected);
 		}
 		return matchObjects(actual, expected);
 	}
 }
 
-function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt) {
+function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
 		const actualValue = actual[expectedKey];
 		if (

@@ -3,16 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag } from "../../core";
-import { fail, Invariant } from "../../util";
+import {
+	TaggedChange,
+	RevisionTag,
+	RevisionMetadataSource,
+	DeltaFieldMap,
+	DeltaFieldChanges,
+	DeltaDetachedNodeId,
+	EncodedRevisionTag,
+} from "../../core";
+import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { ChangesetLocalId, NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -20,9 +28,36 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
-	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly codecsFactory: (
+		childCodec: IJsonCodec<NodeChangeset>,
+		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+	intoDelta(
+		change: TaggedChange<TChangeset>,
+		deltaFromChild: ToDelta,
+		idAllocator: MemoizedIdRangeAllocator,
+	): DeltaFieldChanges;
+	/**
+	 * Returns the set of removed roots that should be in memory for the given change to be applied.
+	 * A removed root is relevant if any of the following is true:
+	 * - It is being inserted
+	 * - It is being restored
+	 * - It is being edited
+	 * - The ID it is associated with is being changed
+	 *
+	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
+	 * (though they should, for the sake of performance, try to avoid doing so).
+	 *
+	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
+	 *
+	 * @param change - The change to be applied.
+	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
+	 */
+	readonly relevantRemovedRoots: (
+		change: TaggedChange<TChangeset>,
+		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	) => Iterable<DeltaDetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -31,9 +66,6 @@ export interface FieldChangeHandler<
 	isEmpty(change: TChangeset): boolean;
 }
 
-/**
- * @alpha
- */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -69,20 +101,9 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-	): TChangeset;
-
-	/**
-	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendInvert(
-		invertedChange: TChangeset,
-		originalRevision: RevisionTag | undefined,
-		reviver: NodeReviver,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -95,21 +116,14 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
+		revisionMetadata: RebaseRevisionMetadata,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**
-	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
+	 * @returns `change` with any empty child node changesets removed.
 	 */
-	amendRebase(
-		rebasedChange: TChangeset,
-		over: TaggedChange<TChangeset>,
-		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-	): TChangeset;
+	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 }
 
 /**
@@ -118,12 +132,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
+	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
+		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -136,14 +150,10 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		amendCompose: () => fail("Not implemented"),
-		amendInvert: () => fail("Not implemented"),
-		amendRebase: (change) => change,
+		prune: (change) => change,
 	};
 }
 
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -156,24 +166,12 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 
 /**
  * @alpha
  */
-export type NodeReviver = (
-	revision: RevisionTag,
-	index: number,
-	count: number,
-) => Delta.ProtoNode[];
-
-/**
- * @alpha
- */
-export type NodeChangeInverter = (
-	change: NodeChangeset,
-	index: number | undefined,
-) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
  * @alpha
@@ -202,31 +200,19 @@ export type NodeChangeRebaser = (
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
- * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
- * For convenience can be called with no parameters to allocate a single ID.
  * @alpha
  */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
+export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
- * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
- * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
- * compose or rebase operation.
+ * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  *
- * During composition, the index reflects the order of the changeset within the overall composed changeset that is
- * being produced.
- *
- * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
  * @alpha
  */
-export type RevisionIndexer = (tag: RevisionTag) => number;
+export type RelevantRemovedRootsFromChild = (child: NodeChangeset) => Iterable<DeltaDetachedNodeId>;
 
-/**
- * @alpha
- */
-export interface RevisionMetadataSource {
-	readonly getIndex: RevisionIndexer;
-	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	readonly getBaseRevisions: () => RevisionTag[];
 }
 
 /**
@@ -236,5 +222,5 @@ export function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

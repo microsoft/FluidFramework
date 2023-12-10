@@ -5,7 +5,9 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
@@ -59,6 +61,7 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
+	// eslint-disable-next-line import/no-deprecated
 	[key: string]: ISerializableValue;
 }
 
@@ -572,6 +575,7 @@ export class MapKernel {
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
 		if (
 			serializable.type === ValueType[ValueType.Plain] ||
@@ -610,8 +614,8 @@ export class MapKernel {
 			return false;
 		}
 
-		const pendingKeyMessageId = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageId !== undefined) {
+		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
+		if (pendingKeyMessageIds !== undefined) {
 			// Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
 			// and don't process the op.
 			if (local) {
@@ -619,14 +623,12 @@ export class MapKernel {
 					localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata),
 					0x014 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingKeys.get(op.key);
 				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x2fa /* Unexpected pending message received */,
 				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
+				pendingKeyMessageIds.shift();
+				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
 			}
@@ -779,15 +781,16 @@ export class MapKernel {
 
 		// no need to submit messages for op's that have been aborted
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (
-			pendingMessageIds === undefined ||
-			pendingMessageIds[0] !== localOpMetadata.pendingMessageId
-		) {
+		if (pendingMessageIds === undefined) {
 			return;
 		}
 
-		// clear the old pending message id
-		pendingMessageIds.shift();
+		const index = pendingMessageIds.findIndex((id) => id === localOpMetadata.pendingMessageId);
+		if (index === -1) {
+			return;
+		}
+
+		pendingMessageIds.splice(index, 1);
 		if (pendingMessageIds.length === 0) {
 			this.pendingKeys.delete(op.key);
 		}

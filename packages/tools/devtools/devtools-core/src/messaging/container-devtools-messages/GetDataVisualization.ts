@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerKey, HasFluidObjectId } from "../../CommonInterfaces";
-import { IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey, type HasFluidObjectId } from "../../CommonInterfaces";
+import { type IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetDataVisualization.Message}.

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import BTree from 'sorted-btree';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -892,7 +892,7 @@ export class IdCompressor {
 	}
 
 	private static isStableInversionKey(inversionKey: InversionKey): inversionKey is StableId {
-		return inversionKey.charAt(0) !== nonStableOverridePrefix;
+		return !inversionKey.startsWith(nonStableOverridePrefix);
 	}
 
 	/**
@@ -1086,9 +1086,7 @@ export class IdCompressor {
 			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
 			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
-			return localOverride !== undefined
-				? localOverride
-				: stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
+			return localOverride ?? stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 		}
 	}
 
@@ -1658,12 +1656,12 @@ export class IdCompressor {
 			| [
 					serialized: SerializedIdCompressorWithNoSession,
 					newSessionIdMaybe: SessionId,
-					attributionIdMaybe?: AttributionId
+					attributionIdMaybe?: AttributionId,
 			  ]
 			| [
 					serialized: SerializedIdCompressorWithOngoingSession,
 					newSessionIdMaybe?: undefined,
-					attributionIdMaybe?: undefined
+					attributionIdMaybe?: undefined,
 			  ]
 	): IdCompressor {
 		const [serialized, newSessionIdMaybe, attributionIdMaybe] = args;

@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
- * @alpha
+ * @internal
  */
 export interface IAttributor {
 	/**
@@ -37,7 +37,7 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
- * @alpha
+ * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -78,7 +78,7 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
- * @alpha
+ * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	constructor(

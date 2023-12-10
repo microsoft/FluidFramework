@@ -17,20 +17,15 @@ export {
 	CrossFieldMap,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-	idAllocatorFromMaxId,
 	setInCrossFieldMap,
 } from "./crossFieldQueries";
-export { ChangesetLocalId, ChangeAtomId } from "./modularChangeTypes";
-export { ChangesetLocalIdSchema, EncodedChangeAtomId } from "./modularChangeFormat";
 export {
-	FieldKind,
-	FullSchemaPolicy,
-	Multiplicity,
-	BrandedFieldKind,
-	brandedFieldKind,
-} from "./fieldKind";
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+} from "./modularChangeFormat";
+export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
 export {
-	IdAllocator,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -38,10 +33,10 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeReviver,
+	NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
-	RevisionMetadataSource,
-	RevisionIndexer,
+	RebaseRevisionMetadata,
+	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
 } from "./fieldChangeHandler";
@@ -52,7 +47,6 @@ export {
 	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeset,
-	RevisionInfo,
 	NodeExistsConstraint,
 } from "./modularChangeTypes";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
@@ -61,6 +55,9 @@ export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
-	revisionMetadataSourceFromInfo,
+	GlobalEditDescription,
+	FieldEditDescription,
+	rebaseRevisionMetadataFromInfo,
+	intoDelta,
+	relevantRemovedRoots,
 } from "./modularChangeFamily";
-export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";

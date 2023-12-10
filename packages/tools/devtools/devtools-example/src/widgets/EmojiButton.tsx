@@ -5,10 +5,11 @@
 import { Button, Tooltip } from "@fluentui/react-components";
 import React from "react";
 
-import { SharedCell } from "@fluidframework/cell";
+import { type SharedCell } from "@fluidframework/cell";
 
 /**
  * {@link EmojiButton} input props.
+ * @internal
  */
 export interface EmojiButtonProps {
 	emojiCell: SharedCell<boolean>;
@@ -19,6 +20,7 @@ export interface EmojiButtonProps {
  * Pressing the button toggles between the two.
  *
  * State is shared via the provided `SharedCell`.
+ * @internal
  */
 export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 	const { emojiCell } = props;

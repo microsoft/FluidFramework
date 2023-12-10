@@ -9,18 +9,17 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -45,7 +44,10 @@ type ProxyOverrides<T> = {
 		: OverrideFunction<T, P>;
 };
 
-function createFunctionOverrideProxy<T extends object>(obj: T, overrides: ProxyOverrides<T>): T {
+function createFunctionOverrideProxy<T extends Record<string, any>>(
+	obj: T,
+	overrides: ProxyOverrides<T>,
+): T {
 	return new Proxy(obj, {
 		get: (target: T, property: string) => {
 			const override = overrides[property as keyof T];
@@ -111,7 +113,7 @@ async function runAndValidateBatch(
 			},
 		);
 		const container = await loader.resolve({ url: containerUrl });
-		const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+		const testObject = (await container.getEntryPoint()) as TestFluidObject;
 		// send batch
 		testObject.context.containerRuntime.orderSequentially(() => {
 			for (let i = 0; i < 10; i++) {
@@ -139,7 +141,7 @@ async function runAndValidateBatch(
 	}
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 
@@ -375,7 +377,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);
@@ -456,7 +459,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);

@@ -45,7 +45,7 @@ import { SharedStringFactory } from "../sequenceFactory";
 			dataStoreRuntime.local = false;
 			const containerRuntime = factory.createContainerRuntime(dataStoreRuntime);
 			const services = {
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			const sharedString = new SharedString(

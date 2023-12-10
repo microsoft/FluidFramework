@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import minimatch from "minimatch";
+import { minimatch } from "minimatch";
 import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
 // Mapping of branch to a list of release groups/packages that should run policy by default.

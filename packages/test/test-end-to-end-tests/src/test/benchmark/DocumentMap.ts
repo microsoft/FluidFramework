@@ -8,21 +8,25 @@ import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
+import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -33,6 +37,15 @@ import {
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
+const featureGates = {
+	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+};
+
 const defaultDataStoreId = "default";
 const mapId = "mapId";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -129,13 +142,13 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedMap.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			this.dataObjectFactory,
-			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-			undefined,
-			undefined,
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: this.dataObjectFactory,
+			registryEntries: [
+				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
+			],
 			runtimeOptions,
-		);
+		});
 		switch (this.props.documentType) {
 			case "DocumentMap":
 				this.keysInMap = this.props.documentTypeInfo.numberOfItems;
@@ -150,10 +163,6 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		assert(
 			this._mainContainer !== undefined,
 			"Container should be initialized before creating data stores",
-		);
-		assert(
-			this.containerRuntime !== undefined,
-			"ContainerRuntime should be initialized before creating data stores",
 		);
 		assert(
 			this.mainDataStore !== undefined,
@@ -184,16 +193,34 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
+	private async waitForContainerSave(c: IContainer) {
+		if (!c.isDirty) {
+			return;
+		}
+		await new Promise<void>((resolve) => c.on("saved", () => resolve()));
+	}
+
 	public async initializeDocument() {
-		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
-			logger: this.props.logger,
-		});
+		const loader = this.props.provider.createLoader(
+			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+		);
+		this._mainContainer = await loader.createDetachedContainer(
+			this.props.provider.defaultCodeDetails,
+		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
-		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.mainDataStore._root.set("mode", "write");
-		await this.ensureContainerConnectedWriteMode(this._mainContainer);
 		await this.populateMap();
+		await this._mainContainer.attach(
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
+		);
+		await this.waitForContainerSave(this._mainContainer);
+		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
+
+		if (this._mainContainer.deltaManager.active) {
+			await this.ensureContainerConnectedWriteMode(this._mainContainer);
+		}
 	}
 
 	public async loadDocument(): Promise<IContainer> {
@@ -209,12 +236,12 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		};
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger },
+			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
 
 		await this.props.provider.ensureSynchronized();
-		const dataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		const dataStore = (await container2.getEntryPoint()) as TestDataObject;
 
 		const mapHandle = dataStore._root.get(mapId);
 		assert(mapHandle !== undefined, "map not found");
@@ -246,6 +273,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 					undefined,
 					undefined,
 					this.logger,
+					configProvider(featureGates),
 				);
 
 			const newSummaryVersion = await this.waitForSummary(summarizerClient);
@@ -258,8 +286,8 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 				summarizer: summarizerClient,
 				summaryVersion: newSummaryVersion,
 			};
-		} catch (_error: any) {
-			throw new Error(`Error Summarizing`);
+		} catch (error: any) {
+			throw new Error(`Error Summarizing ${error}`);
 		}
 	}
 }

@@ -6,6 +6,8 @@ import { Logger } from "./Logging";
 
 /**
  * Common base interface for configuration interfaces.
+ *
+ * @public
  */
 export interface ConfigurationBase {
 	/**

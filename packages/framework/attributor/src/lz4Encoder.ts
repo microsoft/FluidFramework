@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { compress, decompress } from "lz4js";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { Encoder } from "./encoders";
 

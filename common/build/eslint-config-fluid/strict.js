@@ -14,6 +14,12 @@
  * * Publicized examples - any libraries, sample applications, etc. we expect external consumers to use for reference.
  */
 module.exports = {
+	env: {
+		browser: true,
+		es6: true,
+		es2024: false,
+		node: true,
+	},
 	extends: ["./recommended.js"],
 	rules: {
 		/**
@@ -64,14 +70,63 @@ module.exports = {
 					},
 				],
 
-				// Parameter properties can be confusing to those new to TypeScript as they are less explicit than other
-				// ways of declaring and initializing class members.
-				"@typescript-eslint/no-parameter-properties": [
-					"warn",
-					{
-						allows: ["private", "private readonly", "public readonly", "readonly"],
-					},
+				/**
+				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
+				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+				 */
+				"@typescript-eslint/consistent-type-exports": "error",
+
+				/**
+				 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
+				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
+				 */
+				"@typescript-eslint/consistent-type-imports": [
+					"error",
+					{ fixStyle: "inline-type-imports" },
 				],
+
+				/**
+				 * Prefer Record to index-signature object style. That is, prefer:
+				 *
+				 * ```ts
+				 * type Foo = Record<string, unknown>;
+				 * ```
+				 *
+				 * to
+				 *
+				 * ```ts
+				 * type Foo = {
+				 *   [key: string]: unknown;
+				 * }
+				 * ```
+				 */
+				"@typescript-eslint/consistent-indexed-object-style": "error",
+
+				/**
+				 * Flags when an enum-typed value is compared to a non-enum number.
+				 */
+				"@typescript-eslint/no-unsafe-enum-comparison": "error",
+
+				/**
+				 * Prefer generic type annotations on the constructor.
+				 *
+				 * @example
+				 *
+				 * This:
+				 *
+				 * ```ts
+				 * const map = new Map<string, number>();
+				 * ```
+				 *
+				 * instead of:
+				 *
+				 * ```ts
+				 * const map: Map<string, number> = new Map();
+				 * ```
+				 */
+				"@typescript-eslint/consistent-generic-constructors": "error",
+
+				"@typescript-eslint/no-redundant-type-constituents": "error",
 			},
 		},
 	],

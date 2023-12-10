@@ -8,12 +8,14 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { merge } = require("webpack-merge");
 
 const sourcePath = path.join(__dirname, "src");
+const webpack = require("webpack");
 
 module.exports = (env) => {
 	const isProduction = env && env.production;
 
 	return merge(
 		{
+			mode: "development",
 			entry: {
 				main: path.join(sourcePath, "index.tsx"),
 			},
@@ -23,8 +25,21 @@ module.exports = (env) => {
 			module: {
 				rules: [
 					{
+						test: /\.m?js/,
+						type: "javascript/auto",
+					},
+					{
+						test: /\.m?js/,
+						resolve: {
+							fullySpecified: false,
+						},
+					},
+					{
 						test: /\.tsx?$/,
 						loader: require.resolve("ts-loader"),
+						resolve: {
+							fullySpecified: false,
+						},
 					},
 				],
 			},
@@ -36,6 +51,9 @@ module.exports = (env) => {
 				libraryTarget: "umd",
 			},
 			plugins: [
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
 				new HtmlWebpackPlugin({
 					template: path.join(sourcePath, "index.html"),
 				}),

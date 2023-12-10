@@ -13,7 +13,6 @@ import { BaseStateHandler } from "./stateHandlers";
  * machines so this class serves as a base class for machine-specific handlers.
  */
 export abstract class InitFailedStateHandler extends BaseStateHandler {
-	/* eslint-disable @typescript-eslint/no-unused-vars */
 	async handleState(
 		state: MachineState,
 		machine: Machine<unknown>,
@@ -21,7 +20,6 @@ export abstract class InitFailedStateHandler extends BaseStateHandler {
 		log: CommandLogger,
 		data: unknown,
 	): Promise<boolean> {
-		/* eslint-enable @typescript-eslint/no-unused-vars */
 		switch (state) {
 			case "Init": {
 				if (testMode) {

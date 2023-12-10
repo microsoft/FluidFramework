@@ -1,6 +1,27 @@
 # @fluid-experimental/tree2
 
-This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+
+## Status
+
+Notable consideration that early adopters should be wary of:
+
+-   The persisted format is not stable and long term support for persisted format is not yet in effect.
+    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
+    Current estimate for LTS is April 2024.
+-   SharedTree currently has unbounded memory growth:
+    -   Removed content is retained forever.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
+-   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -13,9 +34,10 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
-scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
-[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
+you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
+Standard `^` and `~` ranges will not work as expected.
+See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
 package for more information including tools to convert between version schemes.
 
 <!-- prettier-ignore-end -->
@@ -48,7 +70,7 @@ The current feature focus is on:
     -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
     -   New services (ex: to support permissions, server side indexing etc.)
 
-## Whats missing from existing DDSes?
+## What's missing from existing DDSes?
 
 `directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
 and are missing (and cannot be practically extended to have) efficient ways to handle large data or schema.
@@ -84,14 +106,11 @@ This package can be developed using any of the [regular workflows for working on
 
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
--   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   Build the Client release group as normal (for example: `pnpm i && npm run build:fast` in the repository root).
 -   After editing the tree project, run `npm run build` in its directory.
 -   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
-
-This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
-If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
 
 ## Architecture
 
@@ -141,7 +160,7 @@ Views may also have state from the application, including:
 -   registrations for application callbacks / events.
 
 [`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
-Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
+Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
 
 [transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
@@ -271,7 +290,7 @@ graph LR;
 ### Dependencies
 
 `@fluid-experimental/tree2` depends on the Fluid runtime (various packages in `@fluidframework/*`)
-and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-experimental`).
 `@fluid-experimental/tree2` is also complex,
 so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
 The goal of this internal structuring is to make evolution and maintenance easy.
@@ -298,7 +317,7 @@ Some of the principles used to guide this are:
     This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
     which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
     If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
-    this would violate this guiding principal and result in much harder to isolate and test policy logic.
+    this would violate this guiding principle and result in much harder to isolate and test policy logic.
 
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
@@ -312,7 +331,6 @@ Some of the principles used to guide this are:
     Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
 
 These approaches have led to a dependency structure that looks roughly like the diagram below.
-A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
 In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
 
 ```mermaid
@@ -325,28 +343,24 @@ flowchart
             schema-view
             forest-->schema-stored
             rebase-->tree
-            change-family-->repair
-            rebase-->repair
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
-            undo-->rebase
-            undo-->change-family
+            revertible-->rebase
         end
         core-->events-->util
         core-->id-compressor-->util
         core-->codec-->util
         feature-->shared-tree-core
         shared-tree-core-->core
-        shared-tree-->feature
+        shared-tree-->simple-tree
+        simple-tree-->feature
         external-utilities-->feature
         subgraph feature ["feature-libraries"]
             direction TB
-            schema-aware-->defaultSchema
-            schema-aware-->contextuallyTyped
-            editable-tree-->contextuallyTyped
-            editable-tree-->node-key
+            flex-tree-->contextuallyTyped
+            flex-tree-->node-key
             defaultRebaser
             contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
@@ -362,7 +376,7 @@ flowchart
         subgraph domains
             JSON
         end
-        domains-->feature
+        domains-->simple-tree
     end
     package-->runtime["Fluid runtime"]
 ```

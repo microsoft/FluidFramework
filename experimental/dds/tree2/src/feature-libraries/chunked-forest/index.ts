@@ -5,5 +5,6 @@
 
 export { uniformChunk, ChunkShape } from "./uniformChunk";
 export { TreeChunk, dummyRoot } from "./chunk";
-export { chunkTree, defaultChunkPolicy } from "./chunkTree";
+export { chunkTree, defaultChunkPolicy, makeTreeChunker, IChunker } from "./chunkTree";
 export { buildChunkedForest } from "./chunkedForest";
+export { decode, uncompressedEncode, schemaCompressedEncode, EncodedChunk } from "./codec";

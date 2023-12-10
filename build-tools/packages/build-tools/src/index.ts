@@ -25,4 +25,10 @@ export { VersionBag } from "./common/versionBag";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { type Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
-export { type PreviousVersionStyle } from "./common/fluidRepo";
+export type {
+	IFluidBuildConfig,
+	IFluidRepoPackage,
+	PackageNamePolicyConfig,
+	PolicyConfig,
+	PreviousVersionStyle,
+} from "./common/fluidRepo";

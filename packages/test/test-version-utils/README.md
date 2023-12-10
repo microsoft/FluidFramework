@@ -1,4 +1,4 @@
-# @fluid-internal/test-version-utils
+# @fluid-private/test-version-utils
 
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided
@@ -7,11 +7,35 @@ combinations and driver selection can be controlled via the `mocha` command line
 `describe*` functions. For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**It is not published, and therefore may only be used as a dev dependency.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluid-private/test-version-utils -D
+```
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Versioned combination test generation
 
 ### Layer version combinations
 
-Similar to `mocha`'s `describe`, this package provide various `describe*` functions that will generate variants with
+Similar to `mocha`'s `describe`, this package provide a `describeCompat` function that will generate variants with
 a specific driver and different version combinations of Fluid API between layers. All possible layer combinations that
 are generated (empty entries are current versions):
 
@@ -27,38 +51,53 @@ are generated (empty entries are current versions):
 | NewContainerRuntime | old    | old    |                   | old          |
 | NewDataRuntime      | old    | old    | old               |              |
 
+### Cross version combinations
+
+In addition to the layer version combinations seen above, this package also provides functions to generate variations
+intended to test all layers of one version against all layers of another version in tests that feature more than one client.
+The intention is to simulate scenarios where the client that created a document was using a different version than the client
+loading the document. These variations are applied in our cross version tests where we test the current version against the
+most recent **public** release.
+
+For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
+Therefore, we would test the following combinations:
+
+-   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
+-   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
+
 ### Mocha test setup with layer version combinations
 
-There are three compat `describe*` to generate different combinations, depending of the need of the tests
+`describeCompat` expects 3 arguments (name: string, compatVersionKind: CompatVersionKind, tests). There are three compatVersionKind options to generate different combinations, depending of the need of the tests:
 
-`describeFullCompat`: generate test variants with compat combinations that varies the version for all layers.
+`FullCompat`: generate test variants with compat combinations that varies the version for all layers.
 
 -   Used for tests that exercise all layers and will benefits compat combinations of all layers.
 
-`describeLoaderCompat`: generate test variants with compat combinations that only varies the loader version.
+`LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
 
 -   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
 -   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
-`describeNoCompat` - generate one test variant that doesn't varies version of any layers.
+`NoCompat` - generate one test variant that doesn't varies version of any layers.
 
 -   Use for tests that doesn't benefit or require any compat testing.
 -   Test combination generated: [CompatKind.None]
 
-These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
+This compat `describe*` function will also load the APIs with appropriate version and provide the test with a
 `TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
-to enable compat testing easily in the future just by changing the `describe*`.
+to enable compat testing easily in the future just by changing the compatVersionKind parameter.
 
 ### Legacy version defaults and installation
 
-By default, N-1, N-2, and LTS (hard coded) test variants are generated. The versions can be specified using command
-line (see below) to run the test against any two versions. This package includes a `mocha` global hook that will
-install legacy packages at the beginning of the package based on the `compatVersion` settings.
+By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
+generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
+`compatVersion` settings.
 
 ## Command line options
 
-Tests using the compat `describe*` will be controllable using the command line options when running mocha on
+Tests using `describeCompat` will be controllable using the command line options when running mocha on
 driver selection, versions for compat testing, and compat kind combinations.
 
 ```text
@@ -134,3 +173,66 @@ Legacy versions of all packages in all categories are installed regardless of wh
 For now, the current version are statically bound to also provide type. Although it can be switch to
 dynamic loading for consistency (or don't want to force the script to be loaded if they are not needed).
 Currently, we don't have such scenario yet.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Help
+
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

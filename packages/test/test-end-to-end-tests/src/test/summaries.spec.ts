@@ -5,21 +5,20 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	Summarizer,
 	ISummarizer,
 	ISummarizeResults,
 	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
 	SummaryCollection,
+	TEST_requestSummarizer,
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	waitForContainerConnection,
@@ -28,20 +27,19 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	createSummarizer,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
-	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 
-const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -85,7 +83,7 @@ async function createMainContainerAndSummarizer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return {
 		mainContainer: container,
@@ -103,7 +101,7 @@ async function createSummarizerFromContainer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return summarizer;
 }
@@ -131,7 +129,7 @@ class TestDataObject1 extends DataObject {
 	}
 }
 
-describeNoCompat("Summaries", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -227,24 +225,17 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 	it("summarizer client should be read-only", async () => {
 		const container1 = await createContainer(provider, {});
-		const dsContainer1 = await requestFluidObject<ITestDataObject>(container1, "default");
+		const dsContainer1 = (await container1.getEntryPoint()) as ITestDataObject;
 		const readOnlyContainer1 = dsContainer1._context.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlyContainer1 !== true, "Non-summarizer container 1 should not be readonly");
 
-		const { container: summarizerContainer } = await createSummarizer(provider, container1);
-		const dsSummarizer = await requestFluidObject<ITestDataObject>(
-			summarizerContainer,
-			"default",
-		);
-		const readOnlySummarizer = dsSummarizer._context.deltaManager.readOnlyInfo.readonly;
+		const { summarizer } = await createSummarizer(provider, container1);
+		const readOnlySummarizer = (summarizer as any).runtime.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlySummarizer === true, "Summarizer should be readonly");
 	});
 	it("should generate summary tree", async () => {
 		const container = await createContainer(provider, {});
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			container,
-			defaultDataStoreId,
-		);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
 		await provider.ensureSynchronized();
@@ -332,69 +323,63 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects(
-		"full initialization of data object should not happen by default",
-		[
-			{
-				eventName: "fluid:telemetry:Container:Request_cancel",
-				error: "Non interactive/summarizer client's data object should not be initialized",
+	it("full initialization of data object should not happen by default", async () => {
+		const dataStoreFactory1 = new DataObjectFactory(
+			"@fluid-example/test-dataStore1",
+			TestDataObject1,
+			[],
+			[],
+		);
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+		]);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataStoreFactory1,
+			registryEntries: registryStoreEntries,
+		});
+
+		// Create a container for the first client.
+		const container1 = await provider.createContainer(runtimeFactory);
+		await assert.doesNotReject(
+			container1.getEntryPoint(),
+			"Initial creation of container and data store should succeed.",
+		);
+
+		// Create a summarizer for the container and do a summary shouldn't throw.
+		const createSummarizerResult = await createSummarizerFromFactory(
+			provider,
+			container1,
+			dataStoreFactory1,
+			undefined,
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			registryStoreEntries,
+		);
+		await assert.doesNotReject(
+			summarizeNow(createSummarizerResult.summarizer, "test"),
+			"Summarizing should not throw",
+		);
+
+		// In summarizer, load the data store should fail.
+		await assert.rejects(
+			async () => {
+				const runtime = (createSummarizerResult.summarizer as any)
+					.runtime as ContainerRuntime;
+				const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				await dsEntryPoint?.get();
 			},
-		],
-		async () => {
-			const dataStoreFactory1 = new DataObjectFactory(
-				"@fluid-example/test-dataStore1",
-				TestDataObject1,
-				[],
-				[],
-			);
-			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
-				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				dataStoreFactory1,
-				registryStoreEntries,
-				undefined,
-				[],
-			);
+			(e: Error) =>
+				e.message ===
+				"Non interactive/summarizer client's data object should not be initialized",
+			"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
+		);
 
-			// Create a container for the first client.
-			const container1 = await provider.createContainer(runtimeFactory);
-			await assert.doesNotReject(
-				requestFluidObject<TestDataObject1>(container1, "/"),
-				"Initial creation of container and data store should succeed.",
-			);
-
-			// Create a summarizer for the container and do a summary shouldn't throw.
-			const createSummarizerResult = await createSummarizerFromFactory(
-				provider,
-				container1,
-				dataStoreFactory1,
-				undefined,
-				ContainerRuntimeFactoryWithDefaultDataStore,
-				registryStoreEntries,
-			);
-			await assert.doesNotReject(
-				summarizeNow(createSummarizerResult.summarizer, "test"),
-				"Summarizing should not throw",
-			);
-
-			// In summarizer, load the data store should fail.
-			await assert.rejects(
-				requestFluidObject<TestDataObject1>(createSummarizerResult.container, "/"),
-				(e: Error) =>
-					e.message ===
-					"Non interactive/summarizer client's data object should not be initialized",
-				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
-			);
-
-			// Load second container, load the data store will also call initializingFromExisting and succeed.
-			const container2 = await provider.loadContainer(runtimeFactory);
-			await assert.doesNotReject(
-				requestFluidObject<TestDataObject1>(container2, "/"),
-				"Loading data store in second interactive client should not throw.",
-			);
-		},
-	);
+		// Load second container, load the data store will also call initializingFromExisting and succeed.
+		const container2 = await provider.loadContainer(runtimeFactory);
+		await assert.doesNotReject(
+			container2.getEntryPoint(),
+			"Initial creation of container and data store should succeed.",
+		);
+	});
 
 	/**
 	 * This test validates that the first summary for a container by the first summarizer client does not violate
@@ -410,24 +395,21 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			createChildLogger(),
 		);
 
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			container,
-			defaultDataStoreId,
-		);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
 		// Create a bunch of data stores before the container is attached so that they are part of the summary that the
 		// first summarizer client loads from.
 		const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
-		const testDataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
+		const testDataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
 		defaultDataStore._root.set("ds2", testDataObject.handle);
 
 		const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-		const testDataObject2 = await requestFluidObject<ITestDataObject>(dataStore2, "");
+		const testDataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
 		defaultDataStore._root.set("ds3", testDataObject2.handle);
 
 		const dataStore3 = await containerRuntime.createDataStore(TestDataObjectType);
-		const testDataObject3 = await requestFluidObject<ITestDataObject>(dataStore3, "");
+		const testDataObject3 = (await dataStore3.entryPoint.get()) as ITestDataObject;
 		defaultDataStore._root.set("ds4", testDataObject3.handle);
 
 		await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
@@ -441,7 +423,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Summaries", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -452,10 +434,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		async () => {
 			const mockLogger = new MockLogger();
 			const container = await createContainer(provider, {}, mockLogger);
-			const defaultDataStore = await requestFluidObject<ITestDataObject>(
-				container,
-				defaultDataStoreId,
-			);
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 			await provider.ensureSynchronized();
 
@@ -502,7 +482,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
+describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	beforeEach(() => {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
 import Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
@@ -13,6 +14,7 @@ import { LocalKafkaSubscription } from "./localKafkaSubscription";
  * Lambdas can subscribe to messages.
  * Each subscription keeps track of its offset in the queue.
  * Queue is cleaned up once all subscriptions processed past the min.
+ * @internal
  */
 export class LocalKafka implements IProducer {
 	private readonly subscriptions: LocalKafkaSubscription[] = [];
@@ -77,7 +79,9 @@ export class LocalKafka implements IProducer {
 		}
 
 		for (const subscription of this.subscriptions) {
-			void subscription.process();
+			subscription.process().catch((error) => {
+				Lumberjack.error("Error processing local kafka subscription", undefined, error);
+			});
 		}
 	}
 

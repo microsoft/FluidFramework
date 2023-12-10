@@ -6,23 +6,20 @@
 import { Type } from "@sinclair/typebox";
 import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
 import {
-	BrandedFieldKind,
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	singleTextCursor,
+	Multiplicity,
+	cursorForJsonableTreeNode,
 } from "../feature-libraries";
 // This is imported directly to implement an example of a field kind.
 import {
-	FieldEditor,
-	FieldKind,
-	Multiplicity,
-	ToDelta,
+	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, FieldKindIdentifier, FieldStoredSchema, TreeTypeSet } from "../core";
-import { jsonNumber } from "../domains";
+import { DeltaFieldChanges, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
+import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
@@ -55,30 +52,48 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("value"),
-					[
-						{ type: Delta.MarkType.Delete, count: 1 },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									// KLUDGE: Domains should not be depended on by anything.
-									// This is to get around the removal of setValue.
-									type: jsonNumber.name,
-									value: change,
-								}),
-							],
-						},
-					],
-				],
-			]),
-		},
-	],
+	intoDelta: ({ change, revision }: TaggedChange<number>): DeltaFieldChanges => {
+		const buildId = makeDetachedNodeId(revision, 424243);
+		return {
+			local: [
+				{
+					count: 1,
+					fields: new Map<FieldKey, DeltaFieldChanges>([
+						[
+							brand("value"),
+							{
+								local: [
+									{
+										count: 1,
+										detach: {
+											major: revision,
+											// This is an arbitrary number for testing.
+											minor: 424242,
+										},
+										attach: buildId,
+									},
+								],
+								build: [
+									{
+										id: buildId,
+										trees: [
+											cursorForJsonableTreeNode({
+												// KLUDGE: Domains should not be depended on by anything.
+												// This is to get around the removal of setValue.
+												type: leaf.number.name,
+												value: change,
+											}),
+										],
+									},
+								],
+							},
+						],
+					]),
+				},
+			],
+		};
+	},
+	relevantRemovedRoots: (change) => [],
 	isEmpty: (change: number) => change === 0,
 };
 
@@ -103,34 +118,10 @@ export const counterHandle: FieldChangeHandler<number> = {
  * How should it use its type set?
  * How should it handle lack of associative addition due to precision and overflow?
  */
-export const counter: BrandedFieldKind<
+export const counter = new FieldKindWithEditor(
 	"Counter",
-	Multiplicity.Value,
-	FieldEditor<number>
-> = brandedFieldKind(
-	"Counter",
-	Multiplicity.Value,
+	Multiplicity.Single,
 	counterHandle,
-	(types, other) => other.kind.identifier === counter.identifier,
+	(types, other) => other.kind.identifier === "Counter",
 	new Set(),
 );
-
-function brandedFieldKind<
-	TName extends string,
-	TMultiplicity extends Multiplicity,
-	TEditor extends FieldEditor<any>,
->(
-	identifier: TName,
-	multiplicity: TMultiplicity,
-	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
-	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor, TMultiplicity>(
-		brand(identifier),
-		multiplicity,
-		changeHandler,
-		allowsTreeSupersetOf,
-		handlesEditsFrom,
-	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}
