@@ -93,7 +93,7 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 	}
 
 	public get rootFieldSchema(): TreeFieldStoredSchema {
-		return this.rootFieldSchema;
+		return this.rootFieldSchemaData;
 	}
 
 	public update(newSchema: TreeStoredSchema): void {
