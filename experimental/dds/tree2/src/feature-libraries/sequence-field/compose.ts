@@ -666,7 +666,7 @@ function compareCellPositions(
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
 	}
 
-	const cmp = compareLineages(baseCellId, newCellId, metadata);
+	const cmp = compareLineages(baseCellId, newCellId);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
 	}
