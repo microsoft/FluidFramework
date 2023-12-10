@@ -264,7 +264,10 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 
 // @alpha (undocumented)
 export interface GCFeatureMatrix {
+    gcGeneration?: number;
+    // @deprecated
     sweepGeneration?: number;
+    // @deprecated
     tombstoneGeneration?: number;
 }
 
@@ -439,6 +442,7 @@ export interface IGCMetadata {
 export interface IGCRuntimeOptions {
     [key: string]: any;
     disableGC?: boolean;
+    enableGCSweep?: true;
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;

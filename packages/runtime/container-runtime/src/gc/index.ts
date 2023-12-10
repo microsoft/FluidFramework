@@ -14,6 +14,7 @@ export {
 	gcTombstoneGenerationOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
+	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
 	gcVersionUpgradeToV4Key,

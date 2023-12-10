@@ -163,6 +163,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import {
 	GarbageCollector,
 	GCNodeType,
+	// eslint-disable-next-line import/no-deprecated
 	gcTombstoneGenerationOptionName,
 	IGarbageCollector,
 	IGCRuntimeOptions,

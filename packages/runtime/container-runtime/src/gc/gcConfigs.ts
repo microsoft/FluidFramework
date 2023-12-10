@@ -15,8 +15,10 @@ import {
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	gcSweepGenerationOptionName,
 	gcTestModeKey,
+	// eslint-disable-next-line import/no-deprecated
 	gcTombstoneGenerationOptionName,
 	GCVersion,
 	gcVersionUpgradeToV4Key,

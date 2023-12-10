@@ -115,14 +115,23 @@ export interface GCFeatureMatrix {
 	 * The Tombstone Generation value in effect when this file was created.
 	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement.
 	 * Provided via Container Runtime Options.
+	 *
+	 * @deprecated - only used for back-compat with old containers
 	 */
 	tombstoneGeneration?: number;
 	/**
 	 * The Sweep Generation value in effect when this file was created.
 	 * Gives a way for an app to disqualify old files from GC Sweep.
 	 * Provided via Container Runtime Options.
+	 *
+	 * @deprecated - Use gcGeneration instead
 	 */
 	sweepGeneration?: number;
+
+	/**
+	 * //* Add comment
+	 */
+	gcGeneration?: number;
 }
 
 /**
@@ -157,7 +166,7 @@ export interface IGCMetadata {
 	 *
 	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
 	 */
-	readonly sweepEnabled?: boolean;
+	readonly sweepEnabled?: boolean; //* Follow-up: Delete
 	/** If this is present, the session for this container will expire after this time and the container will close */
 	readonly sessionExpiryTimeoutMs?: number;
 	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
