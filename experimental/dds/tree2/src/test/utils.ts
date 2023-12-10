@@ -33,6 +33,13 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { IdCompressor } from "@fluidframework/container-runtime/dist/id-compressor";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
+	IIdCompressor,
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/runtime-definitions";
+import {
 	ISharedTree,
 	ITreeCheckout,
 	SharedTreeFactory,
@@ -380,6 +387,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
+				idCompressor: createIdCompressor(),
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
 			this.runtimeFactory.createContainerRuntime(runtime);
@@ -873,7 +881,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 									}
 									const decoded = jsonCodec.decode(
 										encoded,
-										testIdCompressor.localSessionId,
+										mockIdCompressor.localSessionId,
 									);
 									assertEquivalent(decoded, data);
 								});
@@ -889,7 +897,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(
 							encoded,
-							testIdCompressor.localSessionId,
+							mockIdCompressor.localSessionId,
 						);
 						assertEquivalent(decoded, data);
 					});
@@ -1019,4 +1027,36 @@ export function createTestUndoRedoStacks(
 	return { undoStack, redoStack, unsubscribe };
 }
 
+class MockIdCompressor implements IIdCompressor {
+	public localSessionId: SessionId = "MockLocalSessionId" as SessionId;
+
+	public generateCompressedId(): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+		return id as unknown as OpSpaceCompressedId;
+	}
+	public normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId {
+		return id as unknown as SessionSpaceCompressedId;
+	}
+	public decompress(id: SessionSpaceCompressedId): StableId {
+		throw new Error("Method not implemented.");
+	}
+	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
+		throw new Error("Method not implemented.");
+	}
+	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
+		throw new Error("Method not implemented.");
+	}
+}
+
+const mockIdCompressor = new MockIdCompressor();
+
 export const testIdCompressor = IdCompressor.create();
+export const createIdCompressor = () => IdCompressor.create();
+export function mintRevisionTag(): RevisionTag {
+	return testIdCompressor.generateCompressedId();
+}

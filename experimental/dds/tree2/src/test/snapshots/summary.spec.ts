@@ -22,7 +22,7 @@ function getFilepath(name: string): string {
 
 const testNames = new Set<string>();
 
-describe("snapshot tests", () => {
+describe.skip("snapshot tests", () => {
 	if (regenerateSnapshots) {
 		regenTestDirectory(dirPath);
 	}

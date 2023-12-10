@@ -44,8 +44,12 @@ import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	IIdCompressor,
+	IIdCompressorCore,
 	ISummaryTreeWithStats,
+	IdCreationRange,
 	OpSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
@@ -203,6 +207,19 @@ export class MockContainerRuntime {
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
+	}
+
+	public getGeneratedIdRange(): IdCreationRange | undefined {
+		const range = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		return range?.ids === undefined ? undefined : range;
+	}
+
+	public finalizeIdRange(range: IdCreationRange) {
+		assert(
+			this.dataStoreRuntime.idCompressor !== undefined,
+			"Shouldn't try to finalize IdRanges without an IdCompressor",
+		);
+		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
@@ -420,6 +437,18 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private processGeneratedIds() {
+		for (const runtime of this.runtimes) {
+			const idRange = runtime.getGeneratedIdRange();
+
+			if (idRange !== undefined) {
+				for (const nestedRuntime of this.runtimes) {
+					nestedRuntime.finalizeIdRange(idRange);
+				}
+			}
+		}
+	}
+
 	private lastProcessedMessage?: ISequencedDocumentMessage;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
@@ -467,6 +496,8 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
+		this.processGeneratedIds();
+
 		this.lastProcessedMessage = undefined;
 
 		for (let i = 0; i < count; i++) {
@@ -478,6 +509,7 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
+		this.processGeneratedIds();
 		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
@@ -595,6 +627,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryLoggerExt;
+		idCompressor?: IIdCompressor & IIdCompressorCore;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -604,6 +637,7 @@ export class MockFluidDataStoreRuntime
 			logger: overrides?.logger,
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		});
+		this.idCompressor = overrides?.idCompressor;
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -640,7 +674,7 @@ export class MockFluidDataStoreRuntime
 	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor = new MockIdCompressor();
+	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
@@ -927,24 +961,38 @@ export class MockSharedObjectServices implements IChannelServices {
  * Mock implementation of IIdCompressor
  * @internal
  */
-export class MockIdCompressor implements IIdCompressor {
+export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
+	private count: number = 0;
 	public readonly localSessionId: SessionId;
 
 	public constructor() {
 		this.localSessionId = uuid() as SessionId;
 	}
-
-	public generateCompressedId(): SessionSpaceCompressedId {
+	public takeNextCreationRange(): IdCreationRange {
 		throw new Error("Method not implemented.");
 	}
-	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+	public finalizeCreationRange(range: IdCreationRange): void {
 		throw new Error("Method not implemented.");
+	}
+	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
+	public serialize(
+		withSession: unknown,
+	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
+		throw new Error("Method not implemented.");
+	}
+
+	public generateCompressedId(): SessionSpaceCompressedId {
+		return this.count++ as SessionSpaceCompressedId;
+	}
+	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
+		return id as unknown as OpSpaceCompressedId;
 	}
 	public normalizeToSessionSpace(
 		id: OpSpaceCompressedId,
 		originSessionId: SessionId,
 	): SessionSpaceCompressedId {
-		throw new Error("Method not implemented.");
+		return id as unknown as SessionSpaceCompressedId;
 	}
 	public decompress(id: SessionSpaceCompressedId): StableId {
 		throw new Error("Method not implemented.");

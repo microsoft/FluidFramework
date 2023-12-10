@@ -8,7 +8,6 @@ import { assert } from "@fluidframework/core-utils";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
-	assertIsRevisionTag,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	findAncestor,
@@ -117,14 +116,19 @@ export class EditManager<
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		this.trunkBase = {
-			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+			revision: mintRevisionTag(),
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
-		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, mintRevisionTag);
+		this.localBranch = new SharedTreeBranch(
+			this.trunk.getHead(),
+			changeFamily,
+			mintRevisionTag,
+		);
 
 		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
@@ -443,7 +447,11 @@ export class EditManager<
 
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+				new SharedTreeBranch(
+					branch.commits.reduce(mintCommit, commit),
+					this.changeFamily,
+					this.mintRevisionTag,
+				),
 			);
 		}
 	}
@@ -529,7 +537,8 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
+			() =>
+				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -544,6 +553,7 @@ export class EditManager<
 				newCommit.change,
 				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
+				this.mintRevisionTag,
 			);
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);

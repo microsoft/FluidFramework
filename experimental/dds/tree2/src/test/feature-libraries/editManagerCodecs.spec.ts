@@ -6,11 +6,10 @@
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
-import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
 import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../utils";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 

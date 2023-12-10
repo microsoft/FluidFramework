@@ -8,6 +8,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory } from "../../class-tree/schemaFactory";
 import { ITree, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
+import { createIdCompressor } from "../utils";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
@@ -37,7 +38,10 @@ function setup(tree: ITree) {
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {
 		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		setup(theTree);
 	});
 });

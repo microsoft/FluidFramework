@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { isStableId } from "@fluidframework/container-runtime";
-import { SessionId, StableId } from "@fluidframework/runtime-definitions";
-import { Brand, NestedMap, RangeMap, brandedStringType, generateStableId } from "../../util";
+import {
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/runtime-definitions";
+import { Brand, NestedMap, RangeMap, brandedNumberType, brandedStringType } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -18,15 +20,9 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * the same, will share the same revision tag.
  * @alpha
  */
-// TODO: These can be compressed by an `IdCompressor` in the future
-/*
 export type RevisionTag = SessionSpaceCompressedId;
 export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag">;
 export const RevisionTagSchema = brandedNumberType<EncodedRevisionTag>();
-*/
-export type RevisionTag = StableId;
-export type EncodedRevisionTag = Brand<string, "EncodedRevisionTag">;
-export const RevisionTagSchema = brandedStringType<EncodedRevisionTag>();
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
@@ -75,28 +71,6 @@ export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
  */
 export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
-}
-
-/**
- * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
- */
-export function assertIsRevisionTag(revision: string): RevisionTag {
-	assert(isRevisionTag(revision), 0x577 /* Expected revision to be valid RevisionTag */);
-	return revision;
-}
-
-/**
- * @returns true iff the given string is a valid `RevisionTag`
- */
-export function isRevisionTag(revision: string): revision is RevisionTag {
-	return isStableId(revision);
-}
-
-/**
- * @returns a random, universally unique `RevisionTag`
- */
-export function mintRevisionTag(): RevisionTag {
-	return generateStableId();
 }
 
 /**

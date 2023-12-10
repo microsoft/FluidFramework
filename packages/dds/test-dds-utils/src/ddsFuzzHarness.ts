@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/runtime-definitions";
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
@@ -443,6 +444,11 @@ export interface DDSFuzzSuiteOptions {
 	 * test case. See {@link MinimizationTransform} for additional context.
 	 */
 	skipMinimization?: boolean;
+
+	/**
+	 * An optional IdCompressor that can will be passed to the constructed MockDataStoreRuntime instance.
+	 */
+	idCompressorFactory?: () => IIdCompressor & IIdCompressorCore;
 }
 
 /**
@@ -939,9 +945,13 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
 	clientId: string,
-	options: Pick<DDSFuzzSuiteOptions, "emitter">,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Client<TChannelFactory> {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		clientId,
+		idCompressor:
+			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
+	});
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
@@ -965,10 +975,14 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	summarizerClient: Client<TChannelFactory>,
 	factory: TChannelFactory,
 	clientId: string,
-	options: Pick<DDSFuzzSuiteOptions, "emitter">,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
 	const { summary } = summarizerClient.channel.getAttachSummary();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		clientId,
+		idCompressor:
+			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
+	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
 	});

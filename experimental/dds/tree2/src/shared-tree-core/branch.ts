@@ -10,7 +10,6 @@ import {
 	findAncestor,
 	GraphCommit,
 	mintCommit,
-	mintRevisionTag,
 	tagChange,
 	TaggedChange,
 	rebaseBranch,
@@ -150,6 +149,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -260,7 +260,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
-		const revision = mintRevisionTag();
+		const revision = this.mintRevisionTag();
 
 		const newHead = mintCommit(startCommit, {
 			revision,
@@ -307,7 +307,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagRollbackInverse(inverse, mintRevisionTag(), commits[i].revision));
+			inverses.push(tagRollbackInverse(inverse, this.mintRevisionTag(), commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -420,7 +420,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		return this.applyChange(
 			change,
-			mintRevisionTag(),
+			this.mintRevisionTag(),
 			revertibleKind === RevertibleKind.Default || revertibleKind === RevertibleKind.Redo
 				? RevertibleKind.Undo
 				: RevertibleKind.Redo,
@@ -435,7 +435,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(this.head, this.changeFamily);
+		const fork = new SharedTreeBranch(this.head, this.changeFamily, this.mintRevisionTag);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -553,7 +553,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, head, upTo, onto.getHead());
+		const rebaseResult = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			head,
+			upTo,
+			onto.getHead(),
+		);
 		if (this.head === rebaseResult.newSourceHead) {
 			return undefined;
 		}

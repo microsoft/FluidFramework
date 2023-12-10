@@ -8,8 +8,9 @@ import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
+import { mintRevisionTag } from "../../utils";
 
 const tag: RevisionTag = mintRevisionTag();
 

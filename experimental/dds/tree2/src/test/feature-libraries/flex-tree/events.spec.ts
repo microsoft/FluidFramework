@@ -10,7 +10,7 @@ import { FieldKinds } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { SchemaBuilder, leaf } from "../../../domains";
-import { flexTreeViewWithContent } from "../../utils";
+import { createIdCompressor, flexTreeViewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
 import { AllowedUpdateType } from "../../../core";
@@ -36,7 +36,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire the expected number of times", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -144,7 +147,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire in the expected order and always together", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -200,7 +206,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("event argument contains the expected node", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -273,7 +282,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("listeners can be removed successfully", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -322,7 +334,10 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -350,7 +365,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -380,7 +398,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -408,7 +429,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -470,7 +494,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -510,7 +537,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -582,7 +612,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("not emitted by nodes when they are replaced", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
@@ -612,7 +645,10 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("bubble up from the affected node to the root", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",

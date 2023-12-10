@@ -59,7 +59,7 @@ type RevisionTagMinter = () => RevisionTag;
 function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
 	// Rather than use UUIDs, allocate these sequentially for an easier time debugging tests.
 	let currentRevision = 0;
-	return () => `${prefix}${currentRevision++}` as RevisionTag;
+	return () => currentRevision++ as RevisionTag;
 }
 
 const type: TreeNodeSchemaIdentifier = brand("Node");

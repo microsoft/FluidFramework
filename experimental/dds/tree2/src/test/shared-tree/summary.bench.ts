@@ -10,6 +10,7 @@ import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
+	MockIdCompressor,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
@@ -85,7 +86,9 @@ describe("Summary benchmarks", () => {
 						),
 						objectStorage: new MockStorage(summaryTree),
 					};
-					const datastoreRuntime = new MockFluidDataStoreRuntime();
+					const datastoreRuntime = new MockFluidDataStoreRuntime({
+						idCompressor: new MockIdCompressor(),
+					});
 					await factory.load(datastoreRuntime, "test", services, factory.attributes);
 				},
 			});

@@ -11,7 +11,6 @@ import {
 	ChangeRebaser,
 	TaggedChange,
 	emptyDelta,
-	mintRevisionTag,
 	ChangeFamilyEditor,
 	GraphCommit,
 	DeltaRoot,
@@ -25,7 +24,7 @@ import {
 	asDelta,
 	NoOpChangeRebaser,
 } from "../testChange";
-import { createTestUndoRedoStacks } from "../utils";
+import { createTestUndoRedoStacks, mintRevisionTag } from "../utils";
 import {
 	TestEditManager,
 	testChangeEditManagerFactory,

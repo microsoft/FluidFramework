@@ -41,6 +41,7 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 	checkoutWithContent,
+	createIdCompressor,
 } from "../utils";
 import {
 	ForestType,
@@ -110,7 +111,10 @@ describe("SharedTree", () => {
 		});
 
 		it("initialize tree", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			);
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const view = tree.schematizeInternal({
@@ -122,7 +126,10 @@ describe("SharedTree", () => {
 		});
 
 		it("noop upgrade", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
@@ -136,7 +143,10 @@ describe("SharedTree", () => {
 		});
 
 		it("incompatible upgrade errors", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
 			tree.storedSchema.update(schemaGeneralized);
 			assert.throws(() => {
 				tree.schematizeInternal({
@@ -148,7 +158,10 @@ describe("SharedTree", () => {
 		});
 
 		it("upgrade schema", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
 			tree.storedSchema.update(schema);
 			const schematized = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -177,13 +190,19 @@ describe("SharedTree", () => {
 		}
 
 		it("empty", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
 			const view = assertSchema(tree, schemaEmpty);
 			assert.deepEqual([...view.editableTree[boxedIterator]()], []);
 		});
 
 		it("differing schema errors and schema change callback", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"the tree",
+			) as SharedTree;
 			const builder = new SchemaBuilder({ scope: "test" });
 			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
 			{
@@ -236,7 +255,10 @@ describe("SharedTree", () => {
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
 		});
-		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		const view = sharedTree.schematizeInternal({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: 1,
@@ -252,7 +274,10 @@ describe("SharedTree", () => {
 
 	it("contentSnapshot", () => {
 		const factory = new SharedTreeFactory();
-		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"the tree",
+		);
 		{
 			const snapshot = sharedTree.contentSnapshot();
 			assert.deepEqual(snapshot.tree, []);

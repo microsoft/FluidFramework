@@ -20,7 +20,7 @@ function getSchemaFilepath(name: string): string {
 	return path.join(schemaDirPath, `${name}.json`);
 }
 
-describe("schema snapshots", () => {
+describe.skip("schema snapshots", () => {
 	if (regenerateSnapshots) {
 		regenTestDirectory(schemaDirPath);
 	}

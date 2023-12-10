@@ -15,6 +15,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
+import { mintRevisionTag } from "../utils";
 
 function newCommit(
 	intention: number | number[],
@@ -24,11 +25,11 @@ function newCommit(
 	if (parent !== undefined) {
 		const path: GraphCommit<TestChange>[] = [];
 		const ancestor = findAncestor([parent, path]);
-		inputContext2.push(...[ancestor, ...path].map((c) => Number.parseInt(c.revision, 10)));
+		inputContext2.push(...[ancestor, ...path].map((c) => c.revision));
 	}
 	return {
 		change: TestChange.mint(inputContext2, intention),
-		revision: intention.toString() as RevisionTag,
+		revision: intention as RevisionTag,
 		parent,
 	};
 }
@@ -71,12 +72,12 @@ describe("rebaseBranch", () => {
 		const n3 = newCommit(3);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n3, n2),
+			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n2),
 			(e: Error) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n2, n3, n1),
+			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n2, n3, n1),
 			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
@@ -94,7 +95,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n3, n1);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n1);
 		assert.equal(n3_1, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
@@ -117,7 +118,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n5, n3);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n3);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
@@ -145,7 +146,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n5, n2, n3);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n3);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
@@ -175,7 +176,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n5, n2, n4);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3],
@@ -205,7 +206,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n5, n4);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
 			inputContext: [1, 2, 3, 4],
@@ -236,7 +237,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n6_1,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n6, n2, n5);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n6, n2, n5);
 		const newPath = getPath(n2, n6_1);
 		assertChanges(
 			newPath,
@@ -266,7 +267,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_2,
 			sourceChange,
 			commits,
-		} = rebaseBranch(new TestChangeRebaser(), n3_1, n3, n4);
+		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3_1, n3, n4);
 		assert.equal(n3_2, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);

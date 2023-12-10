@@ -19,6 +19,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { IdCreationRange } from '@fluidframework/runtime-definitions';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -57,6 +58,8 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { OpSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/runtime-definitions';
+import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/runtime-definitions';
 import { SessionId } from '@fluidframework/runtime-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
@@ -117,7 +120,11 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    // (undocumented)
+    finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
+    // (undocumented)
+    getGeneratedIdRange(): IdCreationRange | undefined;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -384,6 +391,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryLoggerExt;
+        idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -444,7 +452,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: MockIdCompressor;
+    idCompressor?: IIdCompressor & IIdCompressorCore;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // @deprecated (undocumented)
@@ -530,10 +538,12 @@ export class MockHandle<T> implements IFluidHandle {
 }
 
 // @internal
-export class MockIdCompressor implements IIdCompressor {
+export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
     constructor();
     // (undocumented)
     decompress(id: SessionSpaceCompressedId): StableId;
+    // (undocumented)
+    finalizeCreationRange(range: IdCreationRange): void;
     // (undocumented)
     generateCompressedId(): SessionSpaceCompressedId;
     // (undocumented)
@@ -544,6 +554,12 @@ export class MockIdCompressor implements IIdCompressor {
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     // (undocumented)
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
+    // (undocumented)
+    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+    // (undocumented)
+    serialize(withSession: false): SerializedIdCompressorWithNoSession;
+    // (undocumented)
+    takeNextCreationRange(): IdCreationRange;
     // (undocumented)
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }

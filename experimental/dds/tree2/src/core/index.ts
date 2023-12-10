@@ -142,12 +142,10 @@ export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
 	areEqualChangeAtomIds,
-	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
-	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
 	ChangesetLocalId,
@@ -162,7 +160,6 @@ export {
 	tagRollbackInverse,
 	SessionIdSchema,
 	mintCommit,
-	mintRevisionTag,
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,

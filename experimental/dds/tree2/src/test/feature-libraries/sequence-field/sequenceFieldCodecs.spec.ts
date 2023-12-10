@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { mintRevisionTag } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../../utils";
 import { ChangeMaker as Change, cases } from "./testEdits";
 
 const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {

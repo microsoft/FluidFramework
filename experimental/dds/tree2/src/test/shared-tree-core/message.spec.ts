@@ -4,7 +4,6 @@
  */
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily } from "../../codec";
-import { mintRevisionTag } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
@@ -14,7 +13,7 @@ import { DecodedMessage } from "../../shared-tree-core/messageTypes";
 import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
 import { useDeterministicStableId } from "../../util";
 import { TestChange } from "../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../utils";
 
 const commit1 = {
 	revision: mintRevisionTag(),

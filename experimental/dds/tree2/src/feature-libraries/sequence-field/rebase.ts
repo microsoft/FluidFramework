@@ -234,7 +234,7 @@ function isInverseAttach(effect: MarkEffect): boolean {
  */
 function generateNoOpWithCellId<T>(
 	mark: Mark<T>,
-	revision: StableId | undefined,
+	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 ): CellMark<NoopMark, T> {
 	const length = mark.count;

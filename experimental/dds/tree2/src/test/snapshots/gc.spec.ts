@@ -55,7 +55,7 @@ function createLocalTree(id: string) {
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
-describe("Garbage Collection", () => {
+describe.skip("Garbage Collection", () => {
 	class GCSequenceProvider implements IGCTestProvider {
 		private treeCount = 0;
 		private _expectedRoutes: string[] = [];

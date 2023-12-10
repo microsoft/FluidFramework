@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
 	FieldKey,
-	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
 	JsonableTree,
@@ -35,7 +34,7 @@ import {
 	schemaCompressedEncode,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { assertDeltaEqual, testIdCompressor } from "../../utils";
+import { assertDeltaEqual, mintRevisionTag, testIdCompressor } from "../../utils";
 import { noopValidator } from "../../../codec";
 import { testTrees } from "../../testTrees";
 

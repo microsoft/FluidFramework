@@ -162,7 +162,7 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
-		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
+		(intention: number) => intention as RevisionTag,
 		intentionMinter ?? makeIntentionMinter(),
 	)) {
 		const edits: NamedChangeset<TChangeset>[] = [];

@@ -18,7 +18,12 @@ import {
 	jsonableTreeFromCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
+import {
+	SharedTreeTestFactory,
+	createIdCompressor,
+	createTestUndoRedoStacks,
+	validateTree,
+} from "../../utils";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
@@ -134,6 +139,7 @@ describe("Fuzz - anchor stability", () => {
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
+			idCompressorFactory: createIdCompressor,
 		});
 	});
 	describe("Anchors are stable", () => {
@@ -195,6 +201,7 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: createIdCompressor,
 		});
 	});
 });

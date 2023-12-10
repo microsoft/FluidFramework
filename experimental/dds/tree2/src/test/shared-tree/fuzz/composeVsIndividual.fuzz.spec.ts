@@ -15,7 +15,12 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
+import {
+	SharedTreeTestFactory,
+	createIdCompressor,
+	toJsonableTree,
+	validateTree,
+} from "../../utils";
 import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
 import {
 	makeOpGenerator,
@@ -133,6 +138,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
 			emitter,
+			idCompressorFactory: createIdCompressor,
 		});
 	});
 });

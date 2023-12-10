@@ -8,6 +8,8 @@ import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-te
 import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
@@ -93,6 +95,7 @@ export interface DDSFuzzSuiteOptions {
         enabled: boolean;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+    idCompressorFactory?: () => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)

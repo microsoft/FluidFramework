@@ -14,6 +14,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
@@ -72,6 +73,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
+	private readonly idCompressor: IIdCompressor;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -103,8 +106,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			runtime.idCompressor !== undefined,
 			"IdCompressor must be enabled to use SharedTree",
 		);
+		this.idCompressor = runtime.idCompressor;
+		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId);
+		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			const { type } = args;
 			switch (type) {

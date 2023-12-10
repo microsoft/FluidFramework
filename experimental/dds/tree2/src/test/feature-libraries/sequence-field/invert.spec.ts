@@ -7,13 +7,12 @@ import { strict as assert } from "assert";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, mintRevisionTag } from "../../utils";
 import { brand } from "../../../util";
 import { invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";

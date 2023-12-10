@@ -27,8 +27,6 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	mintRevisionTag,
-	assertIsRevisionTag,
 	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
@@ -43,6 +41,7 @@ import {
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
+	mintRevisionTag,
 	testChangeReceiver,
 	testIdCompressor,
 } from "../../utils";
@@ -284,7 +283,7 @@ const rootChange3: ModularChangeset = {
 };
 
 const dummyMaxId = 10;
-const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const dummyRevisionTag = mintRevisionTag();
 const rootChange4: ModularChangeset = {
 	maxId: brand(dummyMaxId),
 	revisions: [{ revision: dummyRevisionTag }],

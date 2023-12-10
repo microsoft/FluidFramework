@@ -14,7 +14,6 @@ import {
 	AnchorSet,
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
-	assertIsRevisionTag,
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
@@ -174,9 +173,10 @@ export function createTreeCheckout(
 		new SharedTreeBranch(
 			{
 				change: changeFamily.rebaser.compose([]),
-				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+				revision: idCompressor.generateCompressedId(),
 			},
 			changeFamily,
+			() => idCompressor.generateCompressedId(),
 		);
 	const events = args?.events ?? createEmitter();
 

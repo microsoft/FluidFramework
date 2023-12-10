@@ -13,7 +13,6 @@ import {
 	FieldKey,
 	FieldKindIdentifier,
 	makeAnonChange,
-	mintRevisionTag,
 	revisionMetadataSourceFromInfo,
 	RevisionTag,
 	tagChange,
@@ -32,6 +31,7 @@ import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
+	mintRevisionTag,
 	testChangeReceiver,
 	testIdCompressor,
 } from "../utils";

@@ -4,10 +4,11 @@
  */
 
 import { SessionId } from "@fluidframework/runtime-definitions";
-import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor, mintRevisionTag } from "../../core";
+import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core";
 import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
+import { createIdCompressor, mintRevisionTag } from "../utils";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
@@ -35,11 +36,13 @@ export function editManagerFactory<TChange = TestChange>(
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
 	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
+	const idCompressor = createIdCompressor();
+	const genId = () => idCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TChange,
 		ChangeFamily<ChangeFamilyEditor, TChange>
-	>(family, options.sessionId ?? ("0" as SessionId));
+	>(family, options.sessionId ?? ("0" as SessionId), genId);
 
 	if (autoDiscardRevertibles === true) {
 		// by default, discard revertibles in the edit manager tests

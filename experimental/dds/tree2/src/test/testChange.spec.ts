@@ -9,7 +9,6 @@ import {
 	makeAnonChange,
 	FieldKey,
 	tagChange,
-	mintRevisionTag,
 	deltaForSet,
 	RevisionTag,
 	TaggedChange,
@@ -19,7 +18,7 @@ import { brand } from "../util";
 import { TestChange } from "./testChange";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
-import { deepFreeze } from "./utils";
+import { deepFreeze, mintRevisionTag } from "./utils";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
