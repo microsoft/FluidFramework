@@ -917,7 +917,7 @@ export class SharedMatrix<T = any>
 
 	/**
 	 * Api to switch Set Op policy from Last Writer Win to First Writer Win. It only switches from LWW to FWW
-	 * and not from FWW to LWW. An op will be sent to communicate this to other clients.
+	 * and not from FWW to LWW. The next SetOp which is sent will communicate this policy to other clients.
 	 */
 	public switchSetCellPolicy() {
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1) {
