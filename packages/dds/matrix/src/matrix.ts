@@ -744,6 +744,10 @@ export class SharedMatrix<T = any>
 		colHandle: Handle,
 		message: ISequencedDocumentMessage,
 	) {
+		assert(
+			this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
+			"should be in Fww mode when calling this method",
+		);
 		assert(message.clientId !== null, "clientId should not be null");
 		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
