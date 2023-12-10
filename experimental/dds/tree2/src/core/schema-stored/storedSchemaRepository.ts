@@ -61,7 +61,7 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 	 * Otherwise, it will be deep-cloned.
 	 *
 	 * We might not want to store schema in maps long term, as we might want a way to reserve a
-	 * large namespace of schema with the same schema.
+	 * large space of schema IDs within a schema.
 	 * The way mapFields has been structured mitigates the need for this, but it still might be useful.
 	 *
 	 * (ex: someone using data as field identifiers might want to
