@@ -452,7 +452,11 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-				gcFeatureMatrix: { gcGeneration: 2, tombstoneGeneration: undefined },
+				gcFeatureMatrix: {
+					gcGeneration: 2,
+					sweepGeneration: undefined,
+					tombstoneGeneration: undefined,
+				},
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcGenerationOptionName]: 2,

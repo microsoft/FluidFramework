@@ -27,6 +27,7 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	return metadata.gcFeature ?? 0;
 }
 
+//* Update doc comment
 /**
  * Indicates whether Tombstone Enforcement is allowed for this document based on the current/persisted
  * TombstoneGeneration values
@@ -38,21 +39,26 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
  *
  * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
  *
- * @param persistedGeneration - The persisted tombstoneGeneration value
+ * @param persistedGeneration - The persisted gcGeneration value
  * @param currentGeneration - The current app-provided tombstoneGeneration value
+ * @param legacyPersistedGeneration - The persisted tombstoneGeneration value (legacy)
  * @returns true if GC Tombstone enforcement (Fail on Tombstone load/usage) should be allowed for this document
  */
 export function shouldAllowGcTombstoneEnforcement(
 	persistedGeneration: number | undefined,
 	currentGeneration: number | undefined,
+	legacyPersistedGeneration?: number,
 ): boolean {
 	// If no Generation value is provided for this session, then we should default to letting Tombstone feature behave as intended.
 	if (currentGeneration === undefined) {
 		return true;
 	}
-	return persistedGeneration === currentGeneration;
+	return (
+		persistedGeneration === currentGeneration //* NEXT STEP || legacyPersistedGeneration === currentGeneration
+	);
 }
 
+//* Update doc comment
 /**
  * Indicates whether Sweep is allowed for this document based on the GC Feature Matrix and current SweepGeneration
  *
@@ -63,12 +69,15 @@ export function shouldAllowGcTombstoneEnforcement(
  * If no generation is provided, Sweep will be disabled.
  * Passing 0 is a special case: Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
  *
- * @param persistedGenerations - The persisted sweep/tombstone generations from the GC Feature Matrix
- * @param currentGeneration - The current app-provided sweepGeneration value
+ * @param persistedGenerations - The persisted GC generations from the GC Feature Matrix
+ * @param currentGeneration - The current app-provided gcGeneration value
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
-	persistedGenerations: Pick<GCFeatureMatrix, "sweepGeneration" | "tombstoneGeneration">,
+	persistedGenerations: Pick<
+		GCFeatureMatrix,
+		"sweepGeneration" | "tombstoneGeneration" | "gcGeneration"
+	>,
 	currentGeneration: number | undefined,
 ): boolean {
 	// If no Generation value is provided for this session, default to false
@@ -76,16 +85,13 @@ export function shouldAllowGcSweep(
 		return false;
 	}
 
-	// 0 is a special case: It matches both SweepGeneration and TombstoneGeneration
-	// This is an optimistic measure to maximize coverage of GC Sweep if no bumps to TombstoneGeneration are needed before enabling Sweep.
-	if (currentGeneration === 0) {
-		return (
-			persistedGenerations.sweepGeneration === 0 ||
-			persistedGenerations.tombstoneGeneration === 0
-		);
-	}
+	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
+	const legacyPersistedGeneration = persistedGenerations.tombstoneGeneration;
 
-	return persistedGenerations.sweepGeneration === currentGeneration;
+	return (
+		persistedGenerations.gcGeneration === currentGeneration ||
+		legacyPersistedGeneration === currentGeneration
+	);
 }
 
 /**

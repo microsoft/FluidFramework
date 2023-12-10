@@ -34,6 +34,7 @@ import {
 	throwOnTombstoneUsageKey,
 	gcDisableThrowOnTombstoneLoadOptionName,
 	defaultSweepGracePeriodMs,
+	gcGenerationOptionName,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
 
@@ -80,9 +81,11 @@ export function generateGCConfigs(
 	} else {
 		const tombstoneGeneration = createParams.gcOptions[gcTombstoneGenerationOptionName];
 		const sweepGeneration = createParams.gcOptions[gcSweepGenerationOptionName];
+		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 
-		// Sweep should not be enabled (via sweepGeneration value) without enabling GC mark phase.
-		if (sweepGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
+		//* What about SweepGeneration?
+		// Sweep should not be enabled (via gcGeneration value) without enabling GC mark phase.
+		if (gcGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
 			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
 		}
 
@@ -102,10 +105,15 @@ export function generateGCConfigs(
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (tombstoneGeneration !== undefined || sweepGeneration !== undefined) {
+		if (
+			tombstoneGeneration !== undefined ||
+			sweepGeneration !== undefined ||
+			gcGeneration !== undefined
+		) {
 			persistedGcFeatureMatrix = {
 				tombstoneGeneration,
 				sweepGeneration,
+				gcGeneration,
 			};
 		}
 	}
@@ -113,7 +121,7 @@ export function generateGCConfigs(
 	// Is sweepEnabled for this document?
 	const sweepEnabled = shouldAllowGcSweep(
 		persistedGcFeatureMatrix ?? {} /* persistedGenerations */,
-		createParams.gcOptions[gcSweepGenerationOptionName] /* currentGeneration */,
+		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 
 	// If version upgrade is not enabled, fall back to the stable GC version.
@@ -178,10 +186,16 @@ export function generateGCConfigs(
 	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+	//* Next step
 	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
 		createParams.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 	);
+	// const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
+	// 	createParams.metadata?.gcFeatureMatrix?.gcGeneration /* persisted */,
+	// 	createParams.gcOptions[gcGenerationOptionName] /* current */,
+	// 	createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
+	// );
 
 	const throwOnTombstoneLoadConfig =
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
