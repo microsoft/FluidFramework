@@ -209,10 +209,22 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis.default(redisOptions2);
+		let redisClient: Redis.default | Redis.Cluster;
+		if (redisConfig2.enableClustering) {
+			redisClient = new Redis.Cluster([{port: redisConfig2.port, host: redisConfig2.host}], redisOptions2);
+		} else {
+			redisClient = new Redis.default(redisOptions2);
+		}
+
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache = new Redis.default(redisOptions2);
+		let redisClientForJwtCache: Redis.default | Redis.Cluster;
+		if (redisConfig2.enableClustering) {
+			redisClientForJwtCache = new Redis.Cluster([{port: redisConfig2.port, host: redisConfig2.host}], redisOptions2);
+		} else {
+			redisClientForJwtCache = new Redis.default(redisOptions2);
+		}
+
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -309,7 +321,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+
+		let redisClientForThrottling: Redis.default | Redis.Cluster;
+		if (redisConfigForThrottling.enableClustering) {
+			redisClientForThrottling = new Redis.Cluster([{port: redisConfigForThrottling.port, host: redisConfigForThrottling.host}], redisOptionsForThrottling);
+		} else {
+			redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+		}
+
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -440,7 +459,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					servername: redisConfig.host,
 				};
 			}
-			const redisClientForLogging = new Redis.default(redisOptions);
+
+			let redisClientForLogging: Redis.default | Redis.Cluster;
+			if (redisConfig.enableClustering) {
+				redisClientForLogging = new Redis.Cluster([{port: redisConfig.port, host: redisConfig.host}], redisOptions);
+			} else {
+				redisClientForLogging = new Redis.default(redisOptions);
+			}
+
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

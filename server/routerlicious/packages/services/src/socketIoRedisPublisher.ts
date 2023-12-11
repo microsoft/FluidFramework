@@ -24,11 +24,17 @@ export class SocketIoRedisTopic implements core.ITopic {
  * @internal
  */
 export class SocketIoRedisPublisher implements core.IPublisher {
-	private readonly redisClient: Redis.Redis;
+	private readonly redisClient: Redis.Redis | Redis.Cluster;
 	private readonly io: any;
 	private readonly events = new EventEmitter();
 
-	constructor(options: Redis.RedisOptions) {
+	constructor(options: Redis.RedisOptions, enableClustering: boolean = false) {
+		if (enableClustering) {
+			this.redisClient = new Redis.Cluster([{port: options.port, host: options.host}], options);
+		} else {
+			this.redisClient = new Redis.default(options);
+		}
+
 		this.redisClient = new Redis.default(options);
 		this.io = new SocketIoEmitter(this.redisClient);
 
