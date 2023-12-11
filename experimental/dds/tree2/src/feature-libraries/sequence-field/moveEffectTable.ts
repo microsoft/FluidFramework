@@ -98,11 +98,14 @@ export function isMoveIn(effect: MarkEffect): effect is MoveIn {
 }
 
 export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
-	return effect.type === "MoveIn"
-		? effect
-		: effect.type === "AttachAndDetach"
-		? getMoveIn(effect.attach)
-		: undefined;
+	switch (effect.type) {
+		case "MoveIn":
+			return effect;
+		case "AttachAndDetach":
+			return getMoveIn(effect.attach);
+		default:
+			return undefined;
+	}
 }
 
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
