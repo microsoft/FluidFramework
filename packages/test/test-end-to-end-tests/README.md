@@ -79,6 +79,13 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 });
 ```
 
+#### Exceptions
+
+Enforcement of this rule is a work in progress.
+
+-   Some test-version-utils APIs such as `describeInstallVersions` don't make static import convenient.
+-   Not all imports are yet enforced.
+
 ### Example
 
 Take a look at the [SharedStringEndToEndTest](src/test/sharedStringEndToEndTests.spec.ts) for a basic example
