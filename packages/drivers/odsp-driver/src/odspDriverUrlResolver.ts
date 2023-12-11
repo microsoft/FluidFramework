@@ -127,6 +127,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 					containerPackageName: packageName ?? undefined,
 				},
 				fileVersion: undefined,
+				shareLinkInfo: undefined,
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}
