@@ -68,7 +68,6 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -76,6 +75,7 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
