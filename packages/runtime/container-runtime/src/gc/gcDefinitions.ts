@@ -402,7 +402,7 @@ export interface IGCRuntimeOptions {
 	disableGC?: boolean;
 
 	/**
-	 * Flag that if true, will enable the full sweep phase of garbage collection,
+	 * Flag that if true, will enable the full Sweep Phase of garbage collection,
 	 * where Tombstoned objects are permanently deleted from the container.
 	 *
 	 * Current default behavior is for Sweep Phase not to delete Tombstoned objects,

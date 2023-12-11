@@ -563,6 +563,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			},
 		);
 
+		//* Maybe replace gcTombstoneGeneration input with simply "Fluid.GarbageCollection.RunSweep"?
 		itExpects(
 			"Requesting tombstoned datastores succeeds for legacy document given gcTombstoneGeneration option is defined",
 			[

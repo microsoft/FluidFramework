@@ -1343,6 +1343,7 @@ export class ContainerRuntime
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
+			//* Update this... why is this here not in GC class?
 			inputs: JSON.stringify({
 				gcOptions_gcTombstoneGeneration:
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],

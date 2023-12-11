@@ -28,14 +28,14 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 }
 
 /**
- * Indicates whether Sweep is allowed for this document based on the persisted GC Feature Matrix and current SweepGeneration
- * This also applies to Tombstone enforcement (i.e. should loading a Tombstone fail?).
+ * Indicates whether Sweep is allowed for this document based on the persisted GC Feature Matrix and current gcGeneration.
+ * This applies to the entire Sweep Phase the same - both Tombstone Enforcement (i.e. should loading a Tombstone fail?) and Deletion.
  *
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
  * such that enforcing GC Sweep would cause legitimate data loss, the container author may increment the generation value for Sweep
  * such that containers created with a different value will not be subjected to GC Sweep.
  *
- * If no generation is provided, Sweep will be disabled.
+ * If no generation is provided, Sweep will be enabled for all documents.
  *
  * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration.
  *
@@ -50,9 +50,9 @@ export function shouldAllowGcSweep(
 	>,
 	currentGeneration: number | undefined,
 ): boolean {
-	// If no Generation value is provided for this session, default to false
+	// If no Generation value is provided for this session, default to true
 	if (currentGeneration === undefined) {
-		return false;
+		return true;
 	}
 
 	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
