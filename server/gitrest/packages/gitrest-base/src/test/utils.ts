@@ -68,3 +68,32 @@ export function initializeBeforeAfterTestHooks(provider: nconf.Provider) {
 		return rimraf(storageDirConfig.baseDir);
 	});
 }
+
+export function convertAllUtf8ToBase64<T>(obj: Record<string, any>): T {
+	return JSON.parse(
+		JSON.stringify(obj, (key, value: any): any => {
+			// console.log(key, value);
+			if (
+				typeof value === "object" &&
+				value !== null &&
+				value.encoding === "utf-8" &&
+				value.content
+			) {
+				const originalValue = value;
+				const newValue = {
+					content: Buffer.from(value.content, "utf-8").toString("base64"),
+					encoding: "base64",
+					size: undefined,
+				};
+				if (originalValue.size !== undefined) {
+					newValue.size = newValue.content.length;
+				}
+				return {
+					...originalValue,
+					...newValue,
+				};
+			}
+			return value;
+		}),
+	) as unknown as T;
+}
