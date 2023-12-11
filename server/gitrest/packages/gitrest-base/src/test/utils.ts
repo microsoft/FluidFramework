@@ -16,9 +16,9 @@ export interface IRouteTestMode {
 }
 export interface ISummaryTestMode {
 	repoPerDocEnabled: boolean;
-    enableLowIoWrite: boolean;
-    enableOptimizedInitialSummary: boolean;
-    enableSlimGitInit: boolean;
+	enableLowIoWrite: boolean;
+	enableOptimizedInitialSummary: boolean;
+	enableSlimGitInit: boolean;
 }
 
 export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
@@ -42,10 +42,10 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 			name: "isomorphic-git",
 		},
 		filesystem: {
-			name: "nodeFs"
+			name: "nodeFs",
 		},
 		ephemeralfilesystem: {
-			name: "redisFs"
+			name: "redisFs",
 		},
 		persistLatestFullSummary: false,
 		repoPerDocEnabled: false,
@@ -56,7 +56,7 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 		enableSlimGitInit: false,
 		enableRedisFsMetrics: true,
 		redisApiMetricsSamplingPeriod: 0,
-		enforceStrictPersistedFullSummaryReads: false
+		enforceStrictPersistedFullSummaryReads: false,
 	},
 });
 

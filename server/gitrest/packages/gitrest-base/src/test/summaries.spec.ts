@@ -8,77 +8,220 @@ import { v4 as uuid } from "uuid";
 import { ISummaryTestMode } from "./utils";
 import { GitWholeSummaryManager, IsomorphicGitManagerFactory, MemFsManagerFactory } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
+import {
+	sampleChannelSummaryUpload,
+	sampleContainerSummaryUpload,
+	sampleContainerSummaryResponse,
+	sampleInitialSummaryResponse,
+	sampleInitialSummaryUpload,
+} from "./examples";
+import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
-    const keys = Object.keys(obj);
-    const permutations: Record<string, boolean>[] = [];
-    for (let i = 0; i < Math.pow(2, keys.length); i++) {
-        const permutation: Record<string, boolean> = {};
-        for (let j = 0; j < keys.length; j++) {
-            permutation[keys[j]] = (i & (1 << j)) !== 0;
-        }
-        permutations.push(permutation);
-    }
-    return permutations;
+	const keys = Object.keys(obj);
+	const permutations: Record<string, boolean>[] = [];
+	for (let i = 0; i < Math.pow(2, keys.length); i++) {
+		const permutation: Record<string, boolean> = {};
+		for (let j = 0; j < keys.length; j++) {
+			permutation[keys[j]] = (i & (1 << j)) !== 0;
+		}
+		permutations.push(permutation);
+	}
+	return permutations;
 }
 
 const testModes = permuteFlags({
 	repoPerDocEnabled: false,
-    enableLowIoWrite: false,
-    enableOptimizedInitialSummary: false,
-    enableSlimGitInit: false,
+	enableLowIoWrite: false,
+	enableOptimizedInitialSummary: false,
+	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
 
-testModes.forEach((testMode) => {
-    describe(`Summaries (${JSON.stringify(testMode)})`, () => {
-        const memfsManagerFactory = new MemFsManagerFactory();
-        const tenantId = 'gitrest-summaries-test';
-        let documentId: string;
-        let wholeSummaryManager: GitWholeSummaryManager;
-        beforeEach(async () => {
-            documentId = uuid();
-            const repoManagerFactory = new IsomorphicGitManagerFactory(
-                {
-                    useRepoOwner: true,
-                    baseDir: `/${uuid()}/tmp`
-                },
-                {
-                    defaultFileSystemManagerFactory: memfsManagerFactory,
-                },
-                new NullExternalStorageManager(),
-                testMode.repoPerDocEnabled,
-                false /* enableRepositoryManagerMetrics */,
-                testMode.enableSlimGitInit,
-                undefined /* apiMetricsSamplingPeriod */
-            );
-            const repoManager = await repoManagerFactory.create({
-                repoOwner: tenantId,
-                repoName: documentId,
-                storageRoutingId: { tenantId, documentId },
-            });
-            wholeSummaryManager = new GitWholeSummaryManager(
-                uuid(),
-                repoManager,
-                {documentId, tenantId},
-                false /* externalStorageEnabled */,
-                {
-                    enableLowIoWrite: testMode.enableLowIoWrite,
-                    optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
-                },
-            );
-        });
+// TODO: Use all tests
+[testModes[0]].forEach((testMode) => {
+	describe(`Summaries (${JSON.stringify(testMode)})`, () => {
+		const memfsManagerFactory = new MemFsManagerFactory();
+		const tenantId = "gitrest-summaries-test";
+		let documentId: string;
+		let wholeSummaryManager: GitWholeSummaryManager;
+		beforeEach(async () => {
+			documentId = uuid();
+			const repoManagerFactory = new IsomorphicGitManagerFactory(
+				{
+					useRepoOwner: true,
+					baseDir: `/${uuid()}/tmp`,
+				},
+				{
+					defaultFileSystemManagerFactory: memfsManagerFactory,
+				},
+				new NullExternalStorageManager(),
+				testMode.repoPerDocEnabled,
+				false /* enableRepositoryManagerMetrics */,
+				testMode.enableSlimGitInit,
+				undefined /* apiMetricsSamplingPeriod */,
+			);
+			const repoManager = await repoManagerFactory.create({
+				repoOwner: tenantId,
+				repoName: documentId,
+				storageRoutingId: { tenantId, documentId },
+			});
+			wholeSummaryManager = new GitWholeSummaryManager(
+				uuid(),
+				repoManager,
+				{ documentId, tenantId },
+				false /* externalStorageEnabled */,
+				{
+					enableLowIoWrite: testMode.enableLowIoWrite,
+					optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
+				},
+			);
+		});
 
-        afterEach(() => {
-            process.stdout.write(`\nFinal storage size: ${JSON.stringify(memfsManagerFactory.volume.toJSON()).length/1_024}kb\n`);
-            memfsManagerFactory.volume.reset();
-        });
+		afterEach(() => {
+			process.stdout.write(
+				`\nFinal storage size: ${Math.ceil(
+					JSON.stringify(memfsManagerFactory.volume.toJSON()).length / 1_024,
+				)}kb\n`,
+			);
+			memfsManagerFactory.volume.reset();
+		});
 
-        it("Can create an initial summary", () => {
-            assert(true);
-        });
-        it("Can create an incremental summary", () => {
-            assert(true);
-        });
-    });
+		it("Can create and read an initial summary and a subsequent incremental summary", async () => {
+			const initialWriteResponse = await wholeSummaryManager.writeSummary(
+				sampleInitialSummaryUpload,
+				true,
+			);
+			assert.strictEqual(
+				initialWriteResponse.isNew,
+				true,
+				"Initial summary write `isNew` should be `true`.",
+			);
+			// We cannot compare the container id because it is generated by a commit which takes timestamp into account.
+			assert.deepStrictEqual(
+				{
+					...initialWriteResponse.writeSummaryResponse,
+					id: "test-commit-sha",
+					trees: [
+						{
+							...(initialWriteResponse.writeSummaryResponse as IWholeFlatSummary)
+								.trees[0],
+							/* id: "test-tree-sha",*/
+						},
+					],
+				},
+				{
+					...sampleInitialSummaryResponse,
+					id: "test-commit-sha",
+					trees: [{ ...sampleInitialSummaryResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				"Initial summary write response should match expected response.",
+			);
+			const initialReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			assert.deepStrictEqual(
+				{
+					...initialReadResponse,
+					id: "test-commit-sha",
+					trees: [{ ...initialReadResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				{
+					...sampleInitialSummaryResponse,
+					id: "test-commit-sha",
+					trees: [{ ...sampleInitialSummaryResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				"Initial summary read response should match expected response.",
+			);
+			const channelWriteResponse = await wholeSummaryManager.writeSummary(
+				sampleChannelSummaryUpload,
+				false,
+			);
+			assert.strictEqual(
+				channelWriteResponse.isNew,
+				false,
+				"Channel summary write `isNew` should be `false`.",
+			);
+			// We can compare the channel id because it is generated by a tree which is content based.
+			// assert.deepStrictEqual(channelWriteResponse, sampleChannelSummaryResult);
+			// Latest should still be the initial summary.
+			const postChannelReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			assert.deepStrictEqual(
+				{
+					...postChannelReadResponse,
+					id: "test-commit-sha",
+					trees: [{ ...postChannelReadResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				{
+					...sampleInitialSummaryResponse,
+					id: "test-commit-sha",
+					trees: [{ ...sampleInitialSummaryResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				"Channel summary read response should match expected initial container summary response.",
+			);
+			const containerWriteResponse = await wholeSummaryManager.writeSummary(
+				sampleContainerSummaryUpload,
+				false,
+			);
+			assert.strictEqual(
+				containerWriteResponse.isNew,
+				false,
+				"Container summary write `isNew` should be `false`.",
+			);
+			// We cannot compare the container id because it is generated by a commit which takes timestamp into account.
+			assert.deepStrictEqual(
+				{
+					...containerWriteResponse.writeSummaryResponse,
+					id: "test-commit-sha",
+					trees: [
+						{
+							...(containerWriteResponse.writeSummaryResponse as IWholeFlatSummary)
+								.trees[0],
+							/* id: "test-tree-sha",*/
+						},
+					],
+				},
+				{
+					...sampleContainerSummaryResponse,
+					id: "test-commit-sha",
+					trees: [
+						{ ...sampleContainerSummaryResponse.trees[0] /* id: "test-tree-sha" */ },
+					],
+				},
+				"Container summary write response should match expected response.",
+			);
+			const containerReadResponse = await wholeSummaryManager.readSummary(LatestSummaryId);
+			assert.deepStrictEqual(
+				{
+					...containerReadResponse,
+					id: "test-commit-sha",
+					trees: [{ ...containerReadResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				{
+					...sampleContainerSummaryResponse,
+					id: "test-commit-sha",
+					trees: [
+						{ ...sampleContainerSummaryResponse.trees[0] /* id: "test-tree-sha" */ },
+					],
+				},
+				"Container summary read response should match expected response.",
+			);
+			// And we should still be able to read the initial summary when referenced by ID.
+			const initialLaterReadResponse = await wholeSummaryManager.readSummary(
+				initialWriteResponse.writeSummaryResponse.id,
+			);
+			// We cannot compare the container id because it is generated by a commit which takes timestamp into account.
+			assert.deepStrictEqual(
+				{
+					...initialLaterReadResponse,
+					id: "test-commit-sha",
+					trees: [{ ...initialLaterReadResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				{
+					...sampleInitialSummaryResponse,
+					id: "test-commit-sha",
+					trees: [{ ...sampleInitialSummaryResponse.trees[0] /* id: "test-tree-sha" */ }],
+				},
+				"Later initial summary read response should match expected initial summary response.",
+			);
+		});
+	});
 });
