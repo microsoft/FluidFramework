@@ -394,7 +394,10 @@ export class ModularChangeFamily
 			for (const fieldChange of fieldsToUpdate) {
 				const originalFieldChange = fieldChange.change;
 				const context = crossFieldTable.originalFieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x851 /* Should have context for every invalidated field */,
+				);
 				const { invertedField, revision } = context;
 
 				const amendedChange = getChangeHandler(
@@ -534,7 +537,7 @@ export class ModularChangeFamily
 			for (const field of fieldsToUpdate) {
 				// TODO: Should we copy the context table out before this loop?
 				const context = crossFieldTable.rebasedFieldToContext.get(field);
-				assert(context !== undefined, "Every field should have a context");
+				assert(context !== undefined, 0x852 /* Every field should have a context */);
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
@@ -844,7 +847,10 @@ export function intoDelta(
 		const builds: DeltaDetachedNodeBuild[] = [];
 		forEachInNestedMap(change.builds, (tree, major, minor) => {
 			const cursor = decode(tree).cursor();
-			assert(cursor.getFieldLength() === 1, "each encoded chunk should only contain 1 node.");
+			assert(
+				cursor.getFieldLength() === 1,
+				0x853 /* each encoded chunk should only contain 1 node. */,
+			);
 			cursor.enterNode(0);
 			builds.push({
 				id: makeDetachedNodeId(major ?? revision, minor),
@@ -1194,7 +1200,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
 		for (const tree of encodedTrees) {
-			assert(!innerMap.has(id), "Unexpected duplicate build ID");
+			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
 			innerMap.set(id, tree);
 			id = brand((id as number) + 1);
 		}
