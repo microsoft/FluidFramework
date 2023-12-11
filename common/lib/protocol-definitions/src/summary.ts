@@ -14,7 +14,7 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 
 /**
  * The root of the summary tree.
- * @internal
+ * @alpha
  */
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 

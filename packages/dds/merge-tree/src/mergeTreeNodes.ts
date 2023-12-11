@@ -24,7 +24,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
- * @internal
+ * @alpha
  */
 export interface IMergeNodeCommon {
 	/**
@@ -88,7 +88,7 @@ export interface IHierBlock extends IMergeBlock {
 
 /**
  * Contains removal information associated to an {@link ISegment}.
- * @internal
+ * @alpha
  */
 export interface IRemovalInfo {
 	/**
@@ -127,7 +127,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
- * @internal
+ * @alpha
  */
 export interface IMoveInfo {
 	/**
@@ -203,7 +203,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @internal
+ * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
@@ -321,7 +321,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -395,7 +395,8 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
- * @internal
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export interface SegmentGroup {
 	segments: ISegmentLeaf[];
@@ -405,7 +406,7 @@ export interface SegmentGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
@@ -469,7 +470,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export abstract class BaseSegment extends MergeNode implements ISegment {
 	public clientId: number = LocalClientId;
@@ -701,7 +702,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
@@ -716,7 +717,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
- * @internal
+ * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
@@ -791,7 +792,8 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
- * @internal
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @alpha
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;

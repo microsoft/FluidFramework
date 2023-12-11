@@ -9,12 +9,12 @@ import { ISegment } from "./mergeTreeNodes";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 /**
- * @internal
+ * @alpha
  */
 export type Trackable = ISegment | LocalReferencePosition;
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITrackingGroup {
 	tracked: readonly Trackable[];
@@ -25,7 +25,7 @@ export interface ITrackingGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
 	// eslint-disable-next-line import/no-deprecated
@@ -104,7 +104,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 
 /**
  * A collection of {@link ITrackingGroup}.
- * @internal
+ * @alpha
  */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;

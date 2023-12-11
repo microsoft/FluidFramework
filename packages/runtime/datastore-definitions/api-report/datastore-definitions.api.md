@@ -137,12 +137,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @internal
+// @alpha
 export type Jsonable<T = any, TReplaced = void> = T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? {
     [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
 } : never;
 
-// @internal
+// @alpha
 export type Serializable<T = any> = Jsonable<T, IFluidHandle>;
 
 ```
