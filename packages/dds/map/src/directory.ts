@@ -1508,7 +1508,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		assert(
 			subdirNames.length === this._subdirectories.size,
-			"The count of keys for iteration should be consistent with the size of actual data",
+			0x85c /* The count of keys for iteration should be consistent with the size of actual data */,
 		);
 
 		const entriesIterator = {
