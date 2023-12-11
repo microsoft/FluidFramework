@@ -90,6 +90,7 @@ export enum ContainerMessageType {
     ChunkedOp = "chunkedOp",
     // (undocumented)
     FluidDataStoreOp = "component",
+    GC = "GC",
     IdAllocation = "idAllocation",
     // (undocumented)
     Rejoin = "rejoin"
@@ -125,9 +126,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
-    deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+    deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
     // @deprecated (undocumented)
-    deleteUnusedNodes(unusedRoutes: string[]): string[];
+    deleteUnusedNodes(unusedRoutes: readonly string[]): string[];
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
@@ -225,9 +226,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateTombstonedRoutes(tombstonedRoutes: string[]): void;
-    updateUnusedRoutes(unusedRoutes: string[]): void;
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
+    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
+    updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }

@@ -91,11 +91,11 @@ export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
 			const schema = value.toFlex();
 			const classSchema = getClassSchema(schema);
 			if (classSchema === undefined) {
-				assert(schemaIsLeaf(schema), "invalid leaf");
+				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
 				assert(
 					cachedFlexSchemaFromClassSchema(classSchema) === schema,
-					"mismatched schema",
+					0x83f /* mismatched schema */,
 				);
 			}
 			return [key, schema];
@@ -194,7 +194,7 @@ export function convertNodeSchema(
 				const cached =
 					cachedFlexSchemaFromClassSchema(schema) ??
 					fail("leaf schema should be pre-cached");
-				assert(schemaIsLeaf(cached), "expected leaf");
+				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
 			case NodeKind.Map: {
@@ -240,13 +240,13 @@ export function convertNodeSchema(
 			default:
 				unreachableCase(kind);
 		}
-		assert(out instanceof FlexTreeNodeSchemaBase, "invalid schema produced");
+		assert(out instanceof FlexTreeNodeSchemaBase, 0x841 /* invalid schema produced */);
 		{
 			const cached = cachedFlexSchemaFromClassSchema(schema);
 			if (cached !== undefined) {
 				assert(
 					cachedFlexSchemaFromClassSchema(schema) === out,
-					"incorrect flexSchemaSymbol",
+					0x842 /* incorrect flexSchemaSymbol */,
 				);
 			} else {
 				setFlexSchemaFromClassSchema(schema, out);
