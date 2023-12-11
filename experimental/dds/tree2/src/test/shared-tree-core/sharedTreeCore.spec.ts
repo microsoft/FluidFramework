@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -35,7 +36,7 @@ import {
 	typeNameSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
-import { SharedTreeTestFactory, createIdCompressor } from "../utils";
+import { SharedTreeTestFactory } from "../utils";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 import { TestSharedTreeCore } from "./utils";

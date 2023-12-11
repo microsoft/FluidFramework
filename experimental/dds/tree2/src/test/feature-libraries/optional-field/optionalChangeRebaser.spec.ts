@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	CrossFieldManager,
-	NodeChangeset,
-	cursorForJsonableTreeNode,
-} from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -75,7 +71,7 @@ const OptionalChange = {
 			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
+		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
 	clear(wasEmpty: boolean, id: ChangesetLocalId) {
@@ -107,10 +103,6 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		for (const build of change.build ?? []) {
-			ingest(build.id.localId);
-		}
-
 		for (const [src, dst] of change.moves) {
 			if (src !== "self") {
 				ingest(src.localId);

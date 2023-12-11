@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -18,12 +19,7 @@ import {
 	jsonableTreeFromCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries";
-import {
-	SharedTreeTestFactory,
-	createIdCompressor,
-	createTestUndoRedoStacks,
-	validateTree,
-} from "../../utils";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,

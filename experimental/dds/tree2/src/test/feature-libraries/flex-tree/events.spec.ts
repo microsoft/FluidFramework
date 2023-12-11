@@ -5,12 +5,12 @@
 import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { FieldKinds } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { SchemaBuilder, leaf } from "../../../domains";
-import { createIdCompressor, flexTreeViewWithContent } from "../../utils";
+import { flexTreeViewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
 import { AllowedUpdateType } from "../../../core";

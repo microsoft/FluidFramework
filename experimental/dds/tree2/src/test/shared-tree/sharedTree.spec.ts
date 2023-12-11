@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
@@ -41,7 +42,6 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 	checkoutWithContent,
-	createIdCompressor,
 } from "../utils";
 import {
 	ForestType,
@@ -70,6 +70,7 @@ import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { leaf, SchemaBuilder } from "../../domains";
 import { noopValidator } from "../../codec";
+import { SchemaFactory, TreeConfiguration } from "../../class-tree";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -115,7 +116,7 @@ describe("SharedTree", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
 			);
-			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const view = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.None,
@@ -170,6 +171,17 @@ describe("SharedTree", () => {
 			});
 			// Initial tree should not be applied
 			assert.equal(schematized.editableTree.content, undefined);
+		});
+
+		// TODO: ensure unhydrated initialTree input is correctly hydrated.
+		it.skip("unhydrated tree input", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const unhydratedInitialTree = new Foo({});
+			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			assert(view.root === unhydratedInitialTree);
 		});
 	});
 

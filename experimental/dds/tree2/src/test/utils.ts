@@ -29,8 +29,6 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-// eslint-disable-next-line import/no-internal-modules
-import { IdCompressor } from "@fluidframework/container-runtime/dist/id-compressor";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IIdCompressor,
@@ -38,7 +36,8 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "@fluidframework/runtime-definitions";
+	createIdCompressor,
+} from "@fluidframework/id-compressor";
 import {
 	ISharedTree,
 	ITreeCheckout,
@@ -1055,8 +1054,7 @@ class MockIdCompressor implements IIdCompressor {
 
 const mockIdCompressor = new MockIdCompressor();
 
-export const testIdCompressor = IdCompressor.create();
-export const createIdCompressor = () => IdCompressor.create();
+export const testIdCompressor = createIdCompressor();
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }

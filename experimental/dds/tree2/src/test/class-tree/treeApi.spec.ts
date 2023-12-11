@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeApi } from "../../class-tree/treeApi";
 import { TreeFactory } from "../../treeFactory";
 import { SchemaFactory, TreeConfiguration } from "../../class-tree";
-import { createIdCompressor } from "../utils";
 
 const schema = new SchemaFactory("com.example");
 

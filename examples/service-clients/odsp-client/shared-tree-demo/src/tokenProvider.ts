@@ -3,67 +3,67 @@
  * Licensed under the MIT License.
  */
 
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
-import {
-	IClientConfig,
-	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
-} from "@fluidframework/odsp-doclib-utils";
+import { PublicClientApplication } from "@azure/msal-browser";
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
-import { OdspTestCredentials } from "./clientProps";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 
-/**
- * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
- */
 export class OdspTestTokenProvider implements IOdspTokenProvider {
-	private readonly creds: OdspTestCredentials;
-
-	constructor(credentials: OdspTestCredentials) {
-		this.creds = credentials;
+	private readonly msalInstance: PublicClientApplication;
+	constructor(clientId: string) {
+		const msalConfig = {
+			auth: {
+				clientId,
+				authority: "https://login.microsoftonline.com/common/",
+			},
+		};
+		this.msalInstance = new PublicClientApplication(msalConfig);
 	}
 
 	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
-		const tokens = await this.fetchTokens(siteUrl, pushScope);
+		const pushScope = ["offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All"];
+		const token = await this.fetchTokens(pushScope);
 		return {
 			fromCache: true,
-			token: tokens.accessToken,
+			token,
 		};
 	}
 
 	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const sharePointScopes = `${siteUrl}/Container.Selected`;
-		const tokens = await this.fetchTokens(siteUrl, sharePointScopes);
+		const storageScope = [`${siteUrl}/Container.Selected`];
+
+		const token = await this.fetchTokens(storageScope);
+
 		return {
 			fromCache: true,
-			token: tokens.accessToken,
+			token,
 		};
 	}
 
-	private async fetchTokens(siteUrl: string, scope: string) {
-		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
-			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
-		};
-		const credentials: TokenRequestCredentials = {
-			grant_type: "password",
-			username: this.creds.username,
-			password: this.creds.password,
-		};
-		const body = {
-			scope,
-			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
-			...credentials,
-		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
+	private async fetchTokens(scope: string[]): Promise<string> {
+		const accounts = this.msalInstance.getAllAccounts();
+		let response;
 
-		const parsedResponse = await response.json();
-		const accessToken = parsedResponse.access_token;
-		const refreshToken = parsedResponse.refresh_token;
+		if (accounts.length === 0) {
+			try {
+				// This will only work if loginPopup is synchronous, otherwise, you may need to handle the response in a different way
+				response = await this.msalInstance.loginPopup({
+					scopes: ["FileStorageContainer.Selected"],
+				});
+			} catch (error) {
+				throw new Error(`MSAL error: ${error}`);
+			}
+		} else {
+			response = { account: accounts[0] };
+		}
 
-		return { accessToken, refreshToken };
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+		this.msalInstance.setActiveAccount(response.account);
+
+		try {
+			const result = await this.msalInstance.acquireTokenSilent({ scopes: scope });
+			return result.accessToken;
+		} catch (error) {
+			throw new Error(`MSAL error: ${error}`);
+		}
 	}
 }

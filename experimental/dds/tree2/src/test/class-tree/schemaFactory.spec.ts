@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../class-tree";
@@ -24,7 +25,6 @@ import {
 } from "../../class-tree/schemaFactory";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util";
 import { TreeFactory } from "../../treeFactory";
-import { createIdCompressor } from "../utils";
 
 {
 	const schema = new SchemaFactory("Blah");

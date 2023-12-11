@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	AsyncGenerator,
 	combineReducersAsync,
@@ -15,12 +16,7 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	SharedTreeTestFactory,
-	createIdCompressor,
-	toJsonableTree,
-	validateTree,
-} from "../../utils";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
 import {
 	makeOpGenerator,

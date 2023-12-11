@@ -25,5 +25,4 @@ export {
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
-	cloneSchemaData,
 } from "./storedSchemaRepository";

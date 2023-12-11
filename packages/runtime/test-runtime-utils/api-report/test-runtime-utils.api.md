@@ -35,8 +35,10 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/runtime-definitions';
-import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressor as IIdCompressor_2 } from '@fluidframework/runtime-definitions';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
+import { IIdCompressorCore as IIdCompressorCore_2 } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -393,7 +395,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryLoggerExt;
-        idCompressor?: IIdCompressor & IIdCompressorCore;
+        idCompressor?: IIdCompressor_2 & IIdCompressorCore_2;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -454,7 +456,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor?: IIdCompressor & IIdCompressorCore;
+    idCompressor?: IIdCompressor_2 & IIdCompressorCore_2;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // @deprecated (undocumented)
@@ -540,7 +542,7 @@ export class MockHandle<T> implements IFluidHandle {
 }
 
 // @internal
-export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
+export class MockIdCompressor implements IIdCompressor_2, IIdCompressorCore_2 {
     constructor();
     // (undocumented)
     decompress(id: SessionSpaceCompressedId): StableId;

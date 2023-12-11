@@ -134,7 +134,6 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
-	cloneSchemaData,
 	StoredSchemaCollection,
 } from "./schema-stored";
 

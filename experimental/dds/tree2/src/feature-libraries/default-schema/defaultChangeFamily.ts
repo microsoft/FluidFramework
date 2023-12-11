@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { OptionalChangeset } from "../optional-field";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
@@ -18,6 +19,8 @@ import {
 	TaggedChange,
 	DeltaRoot,
 	StoredSchemaCollection,
+	ChangesetLocalId,
+	DeltaDetachedNodeId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -28,6 +31,8 @@ import {
 	FieldEditDescription,
 	FullSchemaPolicy,
 	intoDelta as intoModularDelta,
+	relevantRemovedRoots as relevantModularRemovedRoots,
+	EditDescription,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -65,6 +70,26 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  */
 export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
 	return intoModularDelta(taggedChange, fieldKinds);
+}
+
+/**
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
+ *
+ * May be conservative by returning more removed roots than strictly necessary.
+ *
+ * Will never return IDs for non-root trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ */
+export function relevantRemovedRoots(
+	taggedChange: TaggedChange<ModularChangeset>,
+): Iterable<DeltaDetachedNodeId> {
+	return relevantModularRemovedRoots(taggedChange, fieldKinds);
 }
 
 /**
@@ -154,13 +179,23 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
+				const fillId = this.modularBuilder.generateId();
+
+				const build = this.modularBuilder.buildTrees(fillId, [newContent]);
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, {
-						fill: this.modularBuilder.generateId(),
+					valueFieldKind.changeHandler.editor.set({
+						fill: fillId,
 						detach: this.modularBuilder.generateId(),
 					}),
 				);
-				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
+
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: valueFieldKind.identifier,
+					change,
+				};
+				this.modularBuilder.submitChanges([build, edit]);
 			},
 		};
 	}
@@ -168,16 +203,36 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
-				const id = this.modularBuilder.generateId();
-				const optionalChange =
-					newContent === undefined
-						? optional.changeHandler.editor.clear(wasEmpty, id)
-						: optional.changeHandler.editor.set(newContent, wasEmpty, {
-								fill: this.modularBuilder.generateId(),
-								detach: this.modularBuilder.generateId(),
-						  });
+				const detachId = this.modularBuilder.generateId();
+				let fillId: ChangesetLocalId | undefined;
+				const edits: EditDescription[] = [];
+				let optionalChange: OptionalChangeset;
+				if (newContent !== undefined) {
+					fillId = this.modularBuilder.generateId();
+					const build = this.modularBuilder.buildTrees(fillId, [newContent]);
+					edits.push(build);
+
+					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
+						fill: fillId,
+						detach: detachId,
+					});
+				} else {
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detachId);
+				}
+
 				const change: FieldChangeset = brand(optionalChange);
-				this.modularBuilder.submitChange(field, optional.identifier, change);
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: optional.identifier,
+					change,
+				};
+				edits.push(edit);
+
+				this.modularBuilder.submitChanges(
+					edits,
+					newContent === undefined ? detachId : fillId,
+				);
 			},
 		};
 	}

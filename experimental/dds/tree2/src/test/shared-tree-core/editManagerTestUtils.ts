@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { ChangeFamily, ChangeRebaser, ChangeFamilyEditor } from "../../core";
 import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
-import { createIdCompressor, mintRevisionTag } from "../utils";
+import { mintRevisionTag } from "../utils";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {

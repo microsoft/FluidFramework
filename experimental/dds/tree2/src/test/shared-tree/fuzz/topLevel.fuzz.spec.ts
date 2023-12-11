@@ -10,7 +10,8 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedTreeTestFactory, createIdCompressor, validateTreeConsistency } from "../../utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { failureDirectory, onCreate } from "./fuzzUtils";
@@ -77,7 +78,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skip: [26],
 			idCompressorFactory: createIdCompressor,
 		};
 		createDDSFuzzSuite(model, options);
@@ -107,9 +107,9 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [42],
 			idCompressorFactory: createIdCompressor,
 		};
+
 		createDDSFuzzSuite(model, options);
 	});
 });
