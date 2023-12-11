@@ -711,7 +711,7 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     protected createSplitSegmentAt(pos: number): SubSequence<T> | undefined;
     // (undocumented)
-    static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined;
+    static fromJSONObject<U>(spec: any): SubSequence<U> | undefined;
     // (undocumented)
     static is(segment: ISegment): segment is SubSequence<any>;
     // (undocumented)

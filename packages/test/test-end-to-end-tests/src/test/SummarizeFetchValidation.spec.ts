@@ -141,7 +141,7 @@ describeCompat(
 		});
 
 		function getAndIncrementCellValue(
-			sharedMatrix: SharedMatrix,
+			sharedMatrix: SharedMatrix<string>,
 			row: number,
 			column: number,
 			initialValue?: string,

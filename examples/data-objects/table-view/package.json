@@ -51,6 +51,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
+		"@tiny-calc/nano": "0.0.0-alpha.5",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
