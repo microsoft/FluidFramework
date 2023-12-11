@@ -1,7 +1,6 @@
 ---
 "@fluidframework/container-runtime": minor
 "@fluidframework/runtime-definitions": minor
-"@fluidframework/id-compressor": minor
 ---
 
 Moves `IdCompressor` and related types from `@fluidframework/container-runtime` and `@fluidframework/runtime-definitions` into their own package, `@fluidframework/id-compressor`.
