@@ -76,7 +76,8 @@ export type FactoryObjectNodeSchemaRecursive<
  * TODO: Maybe rename to DefaultSchemaBuilder1 because of the versioning implications above.
  * Same applies to SchemaBuilder.
  * TODO: figure out a way to link `leaf` above without breaking API Extractor.
- * @sealed @alpha
+ * @sealed
+ * @deprecated Users of this class should either use {@link SchemaBuilderBase} and explicitly work with {@link TreeFieldSchema}, or use SchemaFactory and work at its higher level of abstraction.
  */
 export class SchemaBuilder<
 	TScope extends string = string,
