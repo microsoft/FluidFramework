@@ -6,8 +6,8 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { AppendOnlySortedMap, compareFiniteNumbers } from "../../id-compressor";
+import { AppendOnlySortedMap } from "../appendOnlySortedMap";
+import { compareFiniteNumbers } from "../utilities";
 import { assertNotUndefined } from "./testCommon";
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
@@ -17,7 +17,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		const exception = "Inserted key must be > all others in the map.";
 		assert.throws(
 			() => map.append(-1, 1),
-			(e: Error) => validateAssertionError(e, exception),
+			(e: Error) => e.message === exception,
 		);
 		map.append(1, 2);
 	});
