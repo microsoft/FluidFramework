@@ -17,6 +17,7 @@ trigger:
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publish: false
     taskLint: false
     taskTest: [] # no tests
     taskPack: false
