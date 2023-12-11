@@ -7,7 +7,7 @@
 "@fluidframework/tinylicious-client": minor
 ---
 
-azure-client: Deprecate FluidStatic Classes
+azure-client: Deprecated FluidStatic Classes
 
 Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
 keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
