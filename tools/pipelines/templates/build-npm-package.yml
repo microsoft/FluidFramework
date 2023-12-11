@@ -145,7 +145,7 @@ extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: NewLarge-linux-1ES
+      name: ${{ parameters.poolBuild }}
       os: linux
     sdl:
       arrow:
@@ -607,7 +607,7 @@ extends:
           jobs:
             - job: upload_run_telemetry
               displayName: Upload pipeline run telemetry to Kusto
-              pool: Small
+              pool: Small-1ES
               variables:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
