@@ -29,7 +29,7 @@ const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
  * "internal" should always be the first value since there is code that treats ALLOWED_PRERELEASE_IDENTIFIER[0] as the
  * "default value", and internal was the default value when we started using the internal version scheme.
  */
-export const ALLOWED_PRERELEASE_IDENTIFIERS = ["internal", "beta"];
+export const ALLOWED_PRERELEASE_IDENTIFIERS = ["internal", "betarc"];
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal

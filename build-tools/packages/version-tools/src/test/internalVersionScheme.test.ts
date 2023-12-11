@@ -23,8 +23,8 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-beta.1.0.0 is internal scheme", () => {
-			const input = `2.0.0-beta.1.0.0`;
+		it("2.0.0-betarc.1.0.0 is internal scheme", () => {
+			const input = `2.0.0-betarc.1.0.0`;
 			const result = isInternalVersionScheme(input);
 			assert.isTrue(result);
 		});
@@ -41,8 +41,8 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-beta.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
-			const input = `2.0.0-beta.1.0.0`;
+		it("2.0.0-betarc.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
+			const input = `2.0.0-betarc.1.0.0`;
 			const result = isInternalVersionScheme(input, false, true);
 			assert.isTrue(result);
 		});
@@ -65,8 +65,8 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
-		it("2.0.0-beta.1.1.0.0 is not internal scheme (prerelease must only have four items)", () => {
-			const input = `2.0.0-beta.1.1.0.0`;
+		it("2.0.0-betarc.1.1.0.0 is not internal scheme (prerelease must only have four items)", () => {
+			const input = `2.0.0-betarc.1.1.0.0`;
 			const result = isInternalVersionScheme(input);
 			assert.isFalse(result);
 		});
@@ -89,8 +89,8 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-beta.1.1.0 is a valid internal version when prerelease is true", () => {
-			const input = `2.0.0-beta.1.1.0`;
+		it("2.0.0-betarc.1.1.0 is a valid internal version when prerelease is true", () => {
+			const input = `2.0.0-betarc.1.1.0`;
 			const result = isInternalVersionScheme(input, true);
 			assert.isTrue(result);
 		});
@@ -130,13 +130,13 @@ describe("internalScheme", () => {
 			assert.isTrue(isInternalVersionRange(input));
 		});
 
-		it(">=2.0.0-beta.1.0.0 <2.0.0-beta.1.1.0 is internal", () => {
-			const input = `>=2.0.0-beta.1.0.0 <2.0.0-beta.1.1.0`;
+		it(">=2.0.0-betarc.1.0.0 <2.0.0-betarc.1.1.0 is internal", () => {
+			const input = `>=2.0.0-betarc.1.0.0 <2.0.0-betarc.1.1.0`;
 			assert.isTrue(isInternalVersionRange(input));
 		});
 
-		it(">=2.0.0-internal.1.0.0 <2.0.0-beta.1.1.0 is not internal", () => {
-			const input = `>=2.0.0-internal.1.0.0 <2.0.0-beta.1.1.0`;
+		it(">=2.0.0-internal.1.0.0 <2.0.0-betarc.1.1.0 is not internal", () => {
+			const input = `>=2.0.0-internal.1.0.0 <2.0.0-betarc.1.1.0`;
 			assert.isFalse(isInternalVersionRange(input));
 		});
 
