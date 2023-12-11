@@ -112,7 +112,7 @@ describe("SharedTree", () => {
 
 		it("initialize tree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const view = tree.schematizeInternal({
 				allowedSchemaModifications: AllowedUpdateType.None,

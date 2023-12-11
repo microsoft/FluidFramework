@@ -203,7 +203,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
  *
  * @remarks
  * Note: the owner of this may modify it over time:
- * thus if needing to hand onto a specific version, make a copy.
+ * thus if needing to hang onto a specific version, make a copy.
  * @alpha
  */
 export interface StoredSchemaCollection {
