@@ -41,13 +41,6 @@ parameters:
     displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
-  - name: docVersions
-    type: object
-    default:
-      currentVersion: '2.0'
-      ltsVersion: '1.0' 
-      previousVersions:
-        - '1.0'
 
 variables:
   - group: doc-versions
@@ -200,34 +193,6 @@ stages:
             artifact: api-extractor-combined
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
-        - ${{ each version in parameters.docVersions.previousVersions }}:
-          - task: Bash@3
-            displayName: Create ${{version}} api-extractor-temp directory
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)
-              script: |
-                echo "creating api-extractor-temp-${{version}} folder"
-                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models
-
-          - task: AzureCLI@2
-            displayName: 'Download ${{version}} api-extractor JSON blob'
-            continueOnError: true
-            inputs:
-              azureSubscription: 'fluid-docs'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az storage blob download -f '$(Build.SourcesDirectory)/latest-${{version}}.tar.gz' -c 'api-extractor-json' -n latest-${{version}}.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-
-          - task: ExtractFiles@1
-            displayName: 'Extract ${{version}} blob content'
-            inputs:
-              destinationFolder: '$(Build.SourcesDirectory)/_api-extractor-temp-${{version}}/doc-models'
-              archiveFilePatterns: '$(Build.SourcesDirectory)/*tar.gz'
-              cleanDestinationFolder: true
-              overwriteExistingFiles: true
-
         - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml
@@ -241,6 +206,29 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               pnpm i --frozen-lockfile
+
+        - script: |
+            sudo apt-get update
+            sudo apt-get install jq -y
+          displayName: 'Install jq'
+
+        - task: Bash@3
+          displayName: Download and extract previous version API
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Read and process JSON using jq
+              json_content=$(cat docs/data/versions.json | jq -c '.params.previousVersions[]')
+              # Download API from storage container and extract file
+              while IFS= read -r version; do
+                version=$(echo "$version" | sed 's/"//g')
+                echo "creating _api-extractor-temp-$version folder"
+                mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
+                az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
+                
+                tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
+              done <<< "$json_content"
 
         - task: Npm@1
           displayName: npm run build
