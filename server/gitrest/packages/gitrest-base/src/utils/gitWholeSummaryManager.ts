@@ -379,7 +379,6 @@ export class GitWholeSummaryManager {
 			GitRestLumberEventName.WholeSummaryManagerReadSummary,
 			this.lumberjackProperties,
 		);
-		// Lumberjack.info(`[READ_SUMMARY_INPUT]: ${JSON.stringify({ sha })}`);
 
 		try {
 			let version: ISummaryVersion;
@@ -395,20 +394,6 @@ export class GitWholeSummaryManager {
 			);
 			readSummaryMetric.setProperty("treeId", version.treeId);
 			readSummaryMetric.success("GitWholeSummaryManager succeeded in reading summary");
-			// Lumberjack.info(
-			// 	`[READ_SUMMARY_RESULT]: ${JSON.stringify({
-			// 		id: version.id,
-			// 		trees: [
-			// 			{
-			// 				id: version.treeId,
-			// 				entries: treeEntries,
-			// 				// We don't store sequence numbers in git
-			// 				sequenceNumber: undefined,
-			// 			},
-			// 		],
-			// 		blobs,
-			// 	})}`,
-			// );
 			return {
 				id: version.id,
 				trees: [
@@ -468,21 +453,12 @@ export class GitWholeSummaryManager {
 		writeSummaryMetric.setProperty("isInitial", isInitial);
 		try {
 			if (isChannelSummary(payload)) {
-				// Lumberjack.info(`[WRITE_CHANNEL_SUMMARY_INPUT]: ${JSON.stringify(payload)}`);
 				writeSummaryMetric.setProperty("summaryType", "channel");
 				const summaryTreeHandle = await this.writeChannelSummary(payload);
 				writeSummaryMetric.setProperty("treeSha", summaryTreeHandle);
 				writeSummaryMetric.success(
 					"GitWholeSummaryManager succeeded in writing channel summary",
 				);
-				// Lumberjack.info(
-				// 	`[WRITE_CHANNEL_SUMMARY_RESULT]: ${JSON.stringify({
-				// 		isNew: false,
-				// 		writeSummaryResponse: {
-				// 			id: summaryTreeHandle,
-				// 		},
-				// 	})}`,
-				// );
 				return {
 					isNew: false,
 					writeSummaryResponse: {
@@ -491,7 +467,6 @@ export class GitWholeSummaryManager {
 				};
 			}
 			if (isContainerSummary(payload)) {
-				// Lumberjack.info(`[WRITE_CONTAINER_SUMMARY_INPUT]: ${JSON.stringify(payload)}`);
 				writeSummaryMetric.setProperty("summaryType", "container");
 				const writeSummaryInfo = await this.writeContainerSummary(payload, isInitial);
 				writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
@@ -502,9 +477,6 @@ export class GitWholeSummaryManager {
 				writeSummaryMetric.success(
 					"GitWholeSummaryManager succeeded in writing container summary",
 				);
-				// Lumberjack.info(
-				// 	`[WRITE_CONTAINER_SUMMARY_RESULT]: ${JSON.stringify(writeSummaryInfo)}`,
-				// );
 				return writeSummaryInfo;
 			}
 			throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
