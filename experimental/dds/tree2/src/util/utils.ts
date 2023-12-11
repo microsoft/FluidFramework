@@ -504,3 +504,10 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 
 	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
 }
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+	return a > b ? 1 : a === b ? 0 : -1;
+}
