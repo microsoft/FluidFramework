@@ -85,7 +85,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-kafka-orderer-previous': npm:@fluidframework/server-kafka-orderer@2.0.0
       '@fluidframework/server-services-core': workspace:~
       '@types/node': ^18.17.1
@@ -95,7 +95,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-core': link:../services-core
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_arb67uuw3qsmr24y5xn6pymdwm
@@ -120,7 +120,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-lambdas-driver': workspace:~
       '@fluidframework/server-lambdas-previous': npm:@fluidframework/server-lambdas@2.0.0
       '@fluidframework/server-services-client': workspace:~
@@ -164,7 +164,7 @@ importers:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
@@ -275,7 +275,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-local-server-previous': npm:@fluidframework/server-local-server@2.0.0
       '@fluidframework/server-memory-orderer': workspace:~
@@ -308,7 +308,7 @@ importers:
       webpack-cli: ^4.9.2
     dependencies:
       '@fluidframework/common-utils': 3.0.0
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-memory-orderer': link:../memory-orderer
       '@fluidframework/server-services-client': link:../services-client
@@ -353,7 +353,7 @@ importers:
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-memory-orderer-previous': npm:@fluidframework/server-memory-orderer@2.0.0
       '@fluidframework/server-services-client': workspace:~
@@ -385,7 +385,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
@@ -429,7 +429,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base-previous': npm:@fluidframework/protocol-base@2.0.0
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@microsoft/api-extractor': ^7.38.3
       '@types/assert': ^1.5.1
       '@types/mocha': ^10.0.1
@@ -446,7 +446,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_arb67uuw3qsmr24y5xn6pymdwm
@@ -475,7 +475,7 @@ importers:
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-kafka-orderer': workspace:~
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-lambdas-driver': workspace:~
@@ -505,7 +505,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
@@ -546,7 +546,7 @@ importers:
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-kafka-orderer': workspace:~
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-lambdas-driver': workspace:~
@@ -609,7 +609,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
@@ -682,7 +682,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-ordering-kafkanode': workspace:~
@@ -727,7 +727,7 @@ importers:
       winston: ^3.6.0
     dependencies:
       '@fluidframework/common-utils': 3.0.0
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-ordering-kafkanode': link:../services-ordering-kafkanode
@@ -785,12 +785,11 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client-previous': npm:@fluidframework/server-services-client@2.0.0
       '@microsoft/api-extractor': ^7.38.3
       '@types/debug': ^4.1.5
       '@types/jsrsasign': ^8.0.8
-      '@types/jwt-decode': ^2.2.1
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       axios: ^1.6.2
@@ -803,7 +802,7 @@ importers:
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
       jsrsasign: ^10.5.25
-      jwt-decode: ^3.0.0
+      jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
       querystring: ^0.2.0
@@ -815,13 +814,13 @@ importers:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       axios: 1.6.2_debug@4.3.4
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 10.8.6
-      jwt-decode: 3.1.2
+      jwt-decode: 4.0.0
       querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 9.0.0
@@ -834,7 +833,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@types/debug': 4.1.8
       '@types/jsrsasign': 8.0.13
-      '@types/jwt-decode': 2.2.1
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       axios-mock-adapter: 1.21.5_axios@1.6.2
@@ -855,7 +853,7 @@ importers:
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core-previous': npm:@fluidframework/server-services-core@2.0.0
       '@fluidframework/server-services-telemetry': workspace:~
@@ -872,7 +870,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@types/nconf': 0.10.3
@@ -1050,7 +1048,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-shared-previous': npm:@fluidframework/server-services-shared@2.0.0
@@ -1072,6 +1070,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       express: ^4.17.3
+      fast-redact: ^3.3.0
       ioredis: ^5.2.3
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -1092,7 +1091,7 @@ importers:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1101,6 +1100,7 @@ importers:
       body-parser: 1.20.2
       debug: 4.3.4
       events: 3.3.0
+      fast-redact: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
       nconf: 0.12.0
@@ -1191,7 +1191,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
@@ -1230,7 +1230,7 @@ importers:
       winston: ^3.6.0
       winston-transport: ^4.5.0
     dependencies:
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1283,7 +1283,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
@@ -1311,7 +1311,7 @@ importers:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1349,7 +1349,7 @@ importers:
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/protocol-definitions': ^3.1.0-220363
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-local-server': workspace:~
       '@fluidframework/server-memory-orderer': workspace:~
@@ -1412,7 +1412,7 @@ importers:
       '@fluidframework/common-utils': 3.0.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-local-server': link:../local-server
       '@fluidframework/server-memory-orderer': link:../memory-orderer
@@ -2928,6 +2928,11 @@ packages:
     resolution: {integrity: sha512-FUIw5B5aTVJ831zAvsNUzKGFCkPoswmUeeYfZtVlq2wRpO2Ffm28TYhbkrAGFOtCd0BiByJDho6Oo+iZbNBgUA==}
     dependencies:
       '@fluidframework/common-definitions': 1.0.0
+    dev: true
+
+  /@fluidframework/protocol-definitions/3.1.0-220363:
+    resolution: {integrity: sha512-5V4UDx7azGSNriM322q9w1pl8QfFw1F5TrByiXm1hqManEV241hz3vK5X1E7nslP8d+YXHyVoORxuVn7B0KVIQ==}
+    dev: false
 
   /@fluidframework/server-kafka-orderer/2.0.0:
     resolution: {integrity: sha512-3Wn0XLecbz8kytyfE4mukFUUeoEEnzAFFfEBzjBelpkS6bbAZ/7TdLLJ34q9JS8Cnb5vqreFfJCaHbboIUe6YQ==}
@@ -6891,10 +6896,6 @@ packages:
 
   /@types/jsrsasign/8.0.13:
     resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
-    dev: true
-
-  /@types/jwt-decode/2.2.1:
-    resolution: {integrity: sha512-aWw2YTtAdT7CskFyxEX2K21/zSDStuf/ikI3yBqmwpwJF0pS+/IX5DWv+1UFffZIbruP6cnT9/LAJV1gFwAT1A==}
     dev: true
 
   /@types/keyv/3.1.4:
@@ -11272,6 +11273,11 @@ packages:
     resolution: {integrity: sha512-Ue0LwpDYErFbmNnZSF0UH6eImUwDmogUO1jyE+JbN2gsQz/jICm1Ve7t9QT0rNSsfJt+Hs4/S3GnsDVjL4HVrw==}
     dev: true
 
+  /fast-redact/3.3.0:
+    resolution: {integrity: sha512-6T5V1QK1u4oF+ATxs1lWUmlEk6P2T9HqJG3e2DnHOdVgZy2rFJBoEnrIedcTXlkAHU/zKC+7KETJ+KGGKwxgMQ==}
+    engines: {node: '>=6'}
+    dev: false
+
   /fast-xml-parser/4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}
     hasBin: true
@@ -13446,6 +13452,12 @@ packages:
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: true
+
+  /jwt-decode/4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
+    dev: false
 
   /kafka-node/5.0.0:
     resolution: {integrity: sha512-dD2ga5gLcQhsq1yNoQdy1MU4x4z7YnXM5bcG9SdQuiNr5KKuAmXixH1Mggwdah5o7EfholFbcNDPSVA6BIfaug==}
