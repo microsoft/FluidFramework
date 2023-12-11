@@ -220,7 +220,7 @@ export interface ITransaction {
 	start(): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
-	 * If this is the checkout view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 	 */
 	commit(): TransactionResult.Commit;
 	/**
