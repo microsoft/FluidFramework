@@ -77,7 +77,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skip: [26],
 		};
 		createDDSFuzzSuite(model, options);
 	});
