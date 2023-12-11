@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { AppendOnlySortedMap, compareFiniteNumbers } from "../../id-compressor";
+import { AppendOnlySortedMap, compareFiniteNumbers } from "../";
 import { assertNotUndefined } from "./testCommon";
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {

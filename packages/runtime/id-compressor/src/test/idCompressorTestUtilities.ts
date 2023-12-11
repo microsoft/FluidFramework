@@ -15,7 +15,11 @@ import {
 	take,
 	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	IdCompressor,
+	createSessionId,
+	assertIsSessionId,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -23,9 +27,7 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IdCompressor, createSessionId, assertIsSessionId } from "../../id-compressor";
+} from "../";
 import {
 	FinalCompressedId,
 	getOrCreate,

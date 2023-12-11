@@ -5,6 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	IdCreationRange,
 	IIdCompressor,
@@ -17,9 +19,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 	initialClusterCapacity,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "./types";
 import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
 import {
 	createSessionId,

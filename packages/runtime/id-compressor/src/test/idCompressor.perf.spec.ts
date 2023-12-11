@@ -7,7 +7,10 @@
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
 import {
+	IdCompressor,
+	createSessionId,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	OpSpaceCompressedId,
@@ -15,9 +18,7 @@ import {
 	SessionId,
 	StableId,
 	initialClusterCapacity,
-} from "@fluidframework/runtime-definitions";
-import { take } from "@fluid-private/stochastic-test-utils";
-import { IdCompressor, createSessionId } from "../../id-compressor";
+} from "../";
 import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
 import {
 	Client,

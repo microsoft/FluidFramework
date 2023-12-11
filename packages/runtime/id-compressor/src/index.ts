@@ -24,3 +24,16 @@ export {
 export { readNumericUuid, writeNumericUuid } from "./persistanceUtilities";
 export { AppendOnlySortedMap } from "./appendOnlySortedMap";
 export { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
+export {
+	IIdCompressorCore,
+	IIdCompressor,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorWithNoSession,
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	StableId,
+	IdCreationRange,
+	initialClusterCapacity,
+} from "./types";
