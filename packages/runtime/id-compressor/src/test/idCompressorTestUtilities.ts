@@ -17,7 +17,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	IdCompressor,
+	createIdCompressor,
 	createSessionId,
 	assertIsSessionId,
 	IdCreationRange,
@@ -28,6 +28,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "../";
+import { IdCompressor } from "../idCompressor";
 import {
 	FinalCompressedId,
 	getOrCreate,
@@ -98,7 +99,7 @@ export class CompressorFactory {
 		clusterCapacity = 5,
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
-		const compressor = IdCompressor.create(sessionId, logger);
+		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
 		compressor.clusterCapacity = clusterCapacity;
 		return compressor;
 	}
