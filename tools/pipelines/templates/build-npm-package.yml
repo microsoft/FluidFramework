@@ -130,13 +130,9 @@ parameters:
     type: boolean
     default: false
 
-######################################################################################
-# Had to move these from variables to parameters as part of moving to 1ES templates
-  - name: canRelease
-    type: boolean
+  # Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
   - name: publish
     type: boolean
-######################################################################################
 
 resources:
   repositories:
@@ -242,12 +238,12 @@ extends:
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
-                      canRelease=${{ parameters.canRelease }}
                       interdependencyRange='${{ parameters.interdependencyRange }}'
                       packageTypesOverride='${{ parameters.packageTypesOverride }}'
                       publish=${{ parameters.publish }}
 
                     Computed variables:
+                      canRelease=$(canRelease)
                       pnpmStorePath=$(pnpmStorePath)
                       release=$(release)"
                       shouldPublish=$(shouldPublish)
@@ -259,7 +255,7 @@ extends:
 
                     # Error checking
                     if [[ "$(release)" == "release" ]]; then
-                      if [[ "${{ parameters.canRelease }}" == "False" ]]; then
+                      if [[ "$(canRelease)" == "False" ]]; then
                         echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
                         exit -1;
                       fi
