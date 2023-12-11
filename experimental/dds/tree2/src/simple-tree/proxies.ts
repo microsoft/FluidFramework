@@ -922,7 +922,10 @@ export function extractFactoryContent(
 		content = input as FactoryContent;
 	}
 
-	assert(!(content instanceof NodeBase), "Unhydrated insertion content should have FlexNode");
+	assert(
+		!(content instanceof NodeBase),
+		0x844 /* Unhydrated insertion content should have FlexNode */,
+	);
 
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
@@ -945,7 +948,7 @@ export function extractFactoryContent(
 
 	if (input instanceof NodeBase) {
 		const kindFromSchema = getNodeKind(input);
-		assert(kindFromSchema === type, "kind of data should match kind of schema");
+		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
 	}
 
 	if (fromFactory) {
