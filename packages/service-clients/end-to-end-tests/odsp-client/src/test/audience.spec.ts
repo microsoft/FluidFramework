@@ -120,16 +120,12 @@ describe("Fluid audience", () => {
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		const members = servicesGet.audience.getMembers();
-		// TODO: uncomment this. One more test creds are required
-		// assert.strictEqual(members.size, 2, "We should have two members at this point.");
-		assert.strictEqual(members.size, 1, "We should have two members at this point.");
-
-		// TODO: login using a different M365 account
-		// assert.notStrictEqual(
-		// 	partner?.userId,
-		// 	originalSelf?.userId,
-		// 	"Self and partner should have different IDs",
-		// );
+		assert.strictEqual(members.size, 2, "We should have two members at this point.");
+		assert.notStrictEqual(
+			partner?.userId,
+			originalSelf?.userId,
+			"Self and partner should have different IDs",
+		);
 	});
 
 	/**
@@ -164,9 +160,7 @@ describe("Fluid audience", () => {
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		let members = servicesGet.audience.getMembers();
-		// TODO: uncomment this. One more test creds are required
-		// assert.strictEqual(members.size, 2, "We should have two members at this point.");
-		assert.strictEqual(members.size, 1, "We should have two members at this point.");
+		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		container.disconnect();
 
