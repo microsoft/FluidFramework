@@ -1084,6 +1084,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			0x150 /* "pkg should be available in local data store context" */,
 		);
 
+		const idRange = this.idCompressor?.takeNextCreationRange();
+		if (idRange !== undefined) {
+			this.idCompressor?.finalizeCreationRange(idRange);
+		}
+
 		const summarizeResult = this.channel.getAttachSummary();
 
 		// Wrap dds summaries in .channels subtree.

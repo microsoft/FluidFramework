@@ -969,11 +969,9 @@ export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.localSessionId = uuid() as SessionId;
 	}
 	public takeNextCreationRange(): IdCreationRange {
-		throw new Error("Method not implemented.");
+		return undefined as unknown as IdCreationRange;
 	}
-	public finalizeCreationRange(range: IdCreationRange): void {
-		throw new Error("Method not implemented.");
-	}
+	public finalizeCreationRange(range: IdCreationRange): void {}
 	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
 	public serialize(

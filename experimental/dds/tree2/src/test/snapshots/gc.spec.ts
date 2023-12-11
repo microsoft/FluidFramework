@@ -8,6 +8,7 @@ import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
+	MockIdCompressor,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedTree, SharedTreeFactory } from "../../shared-tree";
@@ -32,7 +33,9 @@ const config = new TreeConfiguration(SomeType, () => ({
 }));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: new MockIdCompressor(),
+	});
 	const tree = new SharedTree(
 		id,
 		dataStoreRuntime,
@@ -52,10 +55,13 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 
 function createLocalTree(id: string) {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: new MockIdCompressor() }),
+		id,
+	);
 }
 
-describe.skip("Garbage Collection", () => {
+describe("Garbage Collection", () => {
 	class GCSequenceProvider implements IGCTestProvider {
 		private treeCount = 0;
 		private _expectedRoutes: string[] = [];

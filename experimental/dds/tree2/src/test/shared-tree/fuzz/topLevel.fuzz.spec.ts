@@ -10,7 +10,7 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
+import { SharedTreeTestFactory, createIdCompressor, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { failureDirectory, onCreate } from "./fuzzUtils";
@@ -78,6 +78,7 @@ describe.skip("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0,
 			skip: [26],
+			idCompressorFactory: createIdCompressor,
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -107,6 +108,7 @@ describe.skip("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			skip: [42],
+			idCompressorFactory: createIdCompressor,
 		};
 		createDDSFuzzSuite(model, options);
 	});

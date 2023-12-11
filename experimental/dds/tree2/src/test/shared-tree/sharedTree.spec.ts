@@ -547,6 +547,7 @@ describe("SharedTree", () => {
 		);
 		const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
 		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
+		await provider.ensureSynchronized();
 		const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 		// Check that the joining tree was initialized with data from the attach summary
 		assert.deepEqual(tree2.editableTree.asArray, ["A", "C"]);
