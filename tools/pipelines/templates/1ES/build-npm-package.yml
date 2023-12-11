@@ -336,20 +336,23 @@ extends:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
 
-                  # Copy files so all artifacts we publish end up under the same parent folder.
-                  # Source is wherever the tinylicious log ends up in, after executing tests above.
-                  # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
-                  - task: Bash@3
-                    displayName: Copy tinylicious.log to artifact staging directory
-                    inputs:
-                      targetType: inline
-                      workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
-                      script: |
-                        mkdir -p $(Build.ArtifactStagingDirectory)/tinyliciousLog
-                        cp tinylicious.log $(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log
+                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
+                    # Copy files so all artifacts we publish end up under the same parent folder.
+                    # Source is wherever the tinylicious log ends up in, after executing tests above.
+                    # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
+                    - task: Bash@3
+                      displayName: Copy tinylicious.log to artifact staging directory
+                      inputs:
+                        targetType: inline
+                        workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
+                        condition: succeededOrFailed()
+                        continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+                        script: |
+                          mkdir -p $(Build.ArtifactStagingDirectory)/tinyliciousLog
+                          cp tinylicious.log $(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log
 
-                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                  # that is now part of templateContext.outputs below.
+                    # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
+                    # that is now part of templateContext.outputs below.
 
                   # Test - Upload coverage results
                   # Some webpacked file using externals introduce file name with quotes in them
