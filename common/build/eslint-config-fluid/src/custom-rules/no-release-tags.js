@@ -22,14 +22,16 @@ module.exports = {
 		
 		return {
 			ReleaseTagDeclaration(node) {
+				const fileName = context.filename;
 				const sourceCode = context.sourceCode;
 				const comments = sourceCode.getCommentsAfter(node);
+
 
 				comments.forEach((comment) => {
 					if (hasReleaseTag(comment)) {
 						context.report({
 							node: specifier,
-							message: `Importing ${tag} tagged items is not allowed: ${importedName}`,
+							message: `Including the ${tag} release-tag inside the ${fileName} is not allowed.`,
 						});
 					}
 				})
