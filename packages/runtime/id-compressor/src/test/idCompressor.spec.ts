@@ -28,15 +28,15 @@ describe("IdCompressor", () => {
 		const compressor = CompressorFactory.createCompressor(Client.Client1, 1);
 		assert.throws(
 			() => (compressor.clusterCapacity = -1),
-			(e: Error) => assert.equal(e.message, "Clusters must have a positive capacity."),
+			(e: Error) => e.message === "Clusters must have a positive capacity.",
 		);
 		assert.throws(
 			() => (compressor.clusterCapacity = 0),
-			(e: Error) => assert.equal(e.message, "Clusters must have a positive capacity."),
+			(e: Error) => e.message === "Clusters must have a positive capacity.",
 		);
 		assert.throws(
 			() => (compressor.clusterCapacity = 2 ** 20 + 1),
-			(e: Error) => assert.equal(e.message, "Clusters must not exceed max cluster size."),
+			(e: Error) => e.message === "Clusters must not exceed max cluster size.",
 		);
 	});
 
@@ -337,7 +337,7 @@ describe("IdCompressor", () => {
 			rangeCompressor.finalizeCreationRange(batchRange);
 			assert.throws(
 				() => rangeCompressor.finalizeCreationRange(batchRange),
-				(e: Error) => assert.equal(e.message, "Ranges finalized out of order."),
+				(e: Error) => e.message === "Ranges finalized out of order.",
 			);
 		});
 
@@ -349,7 +349,7 @@ describe("IdCompressor", () => {
 			const secondRange = compressor.takeNextCreationRange();
 			assert.throws(
 				() => compressor.finalizeCreationRange(secondRange),
-				(e: Error) => assert.equal(e.message, "Ranges finalized out of order."),
+				(e: Error) => e.message === "Ranges finalized out of order.",
 			);
 		});
 
@@ -419,11 +419,11 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			assert.throws(
 				() => compressor.decompress(-1 as LocalCompressedId),
-				(e: Error) => assert.equal(e.message, errorMessage),
+				(e: Error) => e.message === errorMessage,
 			);
 			assert.throws(
 				() => compressor.decompress(0 as SessionSpaceCompressedId),
-				(e: Error) => assert.equal(e.message, errorMessage),
+				(e: Error) => e.message === errorMessage,
 			);
 		});
 
@@ -501,10 +501,7 @@ describe("IdCompressor", () => {
 			assert.throws(
 				() => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId),
 				(e: Error) =>
-					assert.equal(
-						e.message,
-						"No IDs have ever been finalized by the supplied session.",
-					),
+					e.message === "No IDs have ever been finalized by the supplied session.",
 			);
 		});
 
@@ -759,20 +756,20 @@ describe("IdCompressor", () => {
 			compressor2.generateCompressedId();
 			const creationRange2 = compressor2.takeNextCreationRange();
 
-			const errorMessage = "Cluster collision detected.";
+			const errorMessage = "0x758";
 
 			// Simulate world in which range1 was sequenced first
 			compressor1.finalizeCreationRange(creationRange1);
 			assert.throws(
 				() => compressor1.finalizeCreationRange(creationRange2),
-				(e: Error) => assert.equal(e.message, errorMessage),
+				(e: Error) => e.message === errorMessage,
 			);
 
 			// Simulate world in which range2 was sequenced first
 			compressor2.finalizeCreationRange(creationRange2);
 			assert.throws(
 				() => compressor2.finalizeCreationRange(creationRange1),
-				(e: Error) => assert.equal(e.message, errorMessage),
+				(e: Error) => e.message === errorMessage,
 			);
 		});
 	});
@@ -866,11 +863,10 @@ describe("IdCompressor", () => {
 				const id = opSpaceIds[0];
 				const getSessionNormalizedId = () =>
 					compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
-				assert.throws(getSessionNormalizedId, (e: Error) =>
-					assert.equal(
-						e.message,
-						"No IDs have ever been finalized by the supplied session.",
-					),
+				assert.throws(
+					getSessionNormalizedId,
+					(e: Error) =>
+						e.message === "No IDs have ever been finalized by the supplied session.",
 				);
 				network.deliverOperations(Client.Client2);
 				assert(isFinalId(getSessionNormalizedId()));
@@ -1001,7 +997,7 @@ describe("IdCompressor", () => {
 			const emptyId = (id + 1) as SessionSpaceCompressedId;
 			assert.throws(
 				() => network.getCompressor(Client.Client2).decompress(emptyId),
-				(e: Error) => assert.equal(e.message, "Unknown ID"),
+				(e: Error) => e.message === "Unknown ID",
 			);
 		});
 
@@ -1048,7 +1044,7 @@ describe("IdCompressor", () => {
 								serializedWithoutLocalState,
 								sessionIds.get(Client.Client2),
 							),
-						(e: Error) => assert.equal(e.message, "Cannot resume existing session."),
+						(e: Error) => e.message === "Cannot resume existing session.",
 					);
 				},
 			);
