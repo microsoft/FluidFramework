@@ -128,7 +128,7 @@ export interface IValueOperation<T> {
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
-	);
+	): void;
 
 	/**
 	 * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
@@ -174,7 +174,7 @@ export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
 	(
 		event: "valueChanged" | "create",
 		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**

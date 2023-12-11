@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { forEachNode, forEachField, ITreeCursor } from "../../../core";
 
 export function sum(cursor: ITreeCursor): number {
@@ -38,7 +37,7 @@ export function sumMap(cursor: ITreeCursor): number {
 	return total;
 }
 
-export function sumDirect(jsonObj: Jsonable): number {
+export function sumDirect(jsonObj: any): number {
 	let total = 0;
 	for (const value of Object.values(jsonObj)) {
 		if (typeof value === "object" && value !== null) {
