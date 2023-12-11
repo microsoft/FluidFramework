@@ -84,6 +84,7 @@ export {
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareStrings,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
