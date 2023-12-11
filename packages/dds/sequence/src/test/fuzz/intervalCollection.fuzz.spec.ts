@@ -198,16 +198,15 @@ describe("IntervalCollection fuzz testing", () => {
 		...defaultFuzzOptions,
 		// AB#4477: Seed 20, 60 and others with its call stack is the same root cause as skipped regression test in
 		// intervalCollection.spec.ts--search for 4477.
+		// AB#6552: Seed 70 exposed a bug where the interval endpoints do not slide properly on shared string removeRange.
 		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
 		// This exposed ways that `0x54e` can occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28,
-			31, 32, 33, 35, 36, 37, 39, 40, 43, 44, 45, 46, 47, 48, 50, 51, 53, 54, 55, 59, 60, 62,
-			64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 78, 79, 80, 81, 82, 84, 86, 88, 89, 91, 92,
-			93, 94, 95, 96, 97,
+			1, 2, 5, 6, 14, 16, 18, 21, 24, 25, 26, 28, 31, 32, 33, 35, 36, 37, 44, 47, 51, 54, 59,
+			62, 64, 65, 66, 68, 70, 73, 78, 79, 81, 88, 89, 92, 93, 95, 96, 97,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -223,7 +222,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	const options = {
 		...defaultFuzzOptions,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477
-		skip: [25, 31, 88],
+		skip: [88],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -248,10 +247,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		...defaultFuzzOptions,
 		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [
-			1, 3, 5, 9, 10, 11, 13, 16, 17, 19, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 39, 41,
-			43, 46, 49, 51, 52, 53, 54, 57, 59, 64, 71, 73, 81, 86, 88, 91, 93,
-		],
+		skip: [1, 5, 10, 11, 16, 19, 25, 27, 28, 32, 33, 39, 43, 52, 54, 57, 71, 86, 93],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,

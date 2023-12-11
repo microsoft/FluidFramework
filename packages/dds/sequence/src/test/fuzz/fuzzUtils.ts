@@ -89,7 +89,6 @@ export interface RevertibleWeights {
 	addInterval: number;
 	deleteInterval: number;
 	changeInterval: number;
-	changeProperties: number;
 }
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
@@ -150,7 +149,6 @@ export const defaultIntervalOperationGenerationConfig: Required<IntervalOperatio
 			addInterval: 2,
 			deleteInterval: 2,
 			changeInterval: 2,
-			changeProperties: 2,
 		},
 	};
 

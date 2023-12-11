@@ -1498,11 +1498,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.addPendingChange(id, serializedInterval);
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
 			}
 			if (newInterval) {
+				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
 			}
 			return newInterval;
