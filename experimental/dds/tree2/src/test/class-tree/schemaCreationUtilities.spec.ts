@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
+import { NodeFromSchema, SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
 import {
 	enumFromStrings,
@@ -48,6 +48,42 @@ describe("schemaCreationUtilities", () => {
 			default:
 				assert.fail();
 		}
+	});
+
+	it("enumFromStrings example", () => {
+		const schemaFactory = new SchemaFactory("x");
+		const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
+		type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+		const nodeFromString: Mode = Mode("Fun");
+		const nodeFromSchema: Mode = new Mode.Fun();
+		// eslint-disable-next-line no-constant-condition
+		if (false) {
+			// Check this compiles, but don't run it since node is unhydrated
+			const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+		}
+
+		class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+	});
+
+	it("adaptEnum example", () => {
+		const schemaFactory = new SchemaFactory("x");
+
+		enum Mode {
+			a = "A",
+			b = "B",
+		}
+		const ModeNodes = adaptEnum(schema, Mode);
+		type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+		const nodeFromString: ModeNodes = ModeNodes(Mode.a);
+		const nodeFromSchema: ModeNodes = new ModeNodes.a();
+		// eslint-disable-next-line no-constant-condition
+		if (false) {
+			// Check this compiles, but don't run it since node is unhydrated
+			const nameFromNode: Mode = nodeFromSchema.value;
+		}
+		class Parent extends schemaFactory.object("Parent", {
+			mode: typedObjectValues(ModeNodes),
+		}) {}
 	});
 
 	it("enum value switch", () => {

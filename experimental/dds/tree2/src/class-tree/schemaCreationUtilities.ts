@@ -11,7 +11,7 @@ import { SchemaFactory } from "./schemaFactory";
 // Adding the import of it here prevents TypeScript from generating inline includes for it in the d.ts file.
 // If we let TypeScript generate these includes, they use relative paths which break API extractor's rollup.
 // eslint-disable-next-line unused-imports/no-unused-imports
-import { type NodeKind as _dummy } from "./schemaTypes";
+import { NodeFromSchema, type NodeKind as _dummy } from "./schemaTypes";
 
 /**
  * Create a schema for a node with no state.
@@ -20,8 +20,8 @@ import { type NodeKind as _dummy } from "./schemaTypes";
  * Enums are a common example of this pattern.
  * @alpha
  */
-export function singletonSchema<TScope extends string, TName extends string>(
-	factory: SchemaFactory<TScope>,
+export function singletonSchema<TScope extends string, TName extends string | number>(
+	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
 	return class SingletonSchema extends factory.object(name, {}) {
@@ -36,6 +36,28 @@ export function singletonSchema<TScope extends string, TName extends string>(
 
 /**
  * Converts an enum into a collection of schema which can be used in a union.
+ * @remarks
+ * Currently only supports `string` enums.
+ * @example
+ * ```typescript
+ * enum Mode {
+ * 	a = "A",
+ * 	b = "B",
+ * }
+ * const ModeNodes = adaptEnum(schema, Mode);
+ * type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+ * const nodeFromString: ModeNodes = ModeNodes(Mode.a);
+ * const nodeFromSchema: ModeNodes = new ModeNodes.a();
+ * const nameFromNode: Mode = nodeFromSchema.value;
+ * class Parent extends schemaFactory.object("Parent", {
+ * 	mode: typedObjectValues(ModeNodes),
+ * }) {}
+ * ```
+ * @privateRemarks
+ * TODO:
+ * Extends this to support numeric enums.
+ * Maybe require an explicit nested scope to group them under, or at least a warning about collisions.
+ * Maybe just provide `SchemaFactory.nested` to east creating nested scopes?
  * @alpha
  */
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
@@ -59,9 +81,9 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 		>;
 	};
 	const factoryOut = <TValue extends Values>(value: TValue) => {
-		return new out[inverse.get(value) ?? fail("missing enum value")](
-			{},
-		) as unknown as ReturnType<typeof singletonSchema<TScope, TValue>>;
+		return new out[inverse.get(value) ?? fail("missing enum value")]({}) as NodeFromSchema<
+			ReturnType<typeof singletonSchema<TScope, TValue>>
+		>;
 	};
 	const out = factoryOut as typeof factoryOut & TOut;
 	for (const [key, value] of Object.entries(members)) {
@@ -93,6 +115,16 @@ export function typedObjectValues<TKey extends string, TValues>(
  * Each node type has a `.value` getter which returns the associated string.
  *
  * The produced nodes use the provided strings as their `name`, and don't store any data beyond that.
+ * @example
+ * ```typescript
+ * const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
+ * type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+ * const nodeFromString: Mode = Mode("Fun");
+ * const nodeFromSchema: Mode = new Mode.Fun();
+ * const nameFromNode = nodeFromSchema.value;
+ *
+ * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+ * ```
  * @alpha
  */
 export function enumFromStrings<TScope extends string, const Members extends string>(
@@ -106,10 +138,11 @@ export function enumFromStrings<TScope extends string, const Members extends str
 
 	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
 	const factoryOut = <TValue extends Members>(value: TValue) => {
-		return new out[value]({}) as unknown as ReturnType<typeof singletonSchema<TScope, TValue>>;
+		return new out[value]({}) as NodeFromSchema<
+			ReturnType<typeof singletonSchema<TScope, TValue>>
+		>;
 	};
 	const out = factoryOut as typeof factoryOut & TOut;
-	// const out: Record<Members, ReturnType<typeof makeSchema<Members>>> = Object.create(null);
 	for (const name of members) {
 		Object.defineProperty(out, name, {
 			enumerable: true,
@@ -124,6 +157,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 
 // TODO: Why does this one generate an invalid d.ts file if exported?
 // Tracked by https://github.com/microsoft/TypeScript/issues/56718
+// TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,

@@ -24,12 +24,7 @@ import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => {
-    new (data?: EmptyObject | undefined): {
-        readonly value: TValue;
-    };
-    readonly identifier: `${TScope}.${TValue}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
+    readonly value: TValue;
 }) & { readonly [Property in keyof TEnum]: {
         new (data?: EmptyObject | undefined): {
             readonly value: TEnum[Property];
@@ -431,12 +426,7 @@ export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 
 // @alpha
 export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => {
-    new (data?: EmptyObject | undefined): {
-        readonly value: TValue;
-    };
-    readonly identifier: `${TScope}.${TValue}`;
-    readonly kind: NodeKind.Object;
-    readonly info: unknown;
+    readonly value: TValue;
 }) & Record<Members, {
     new (data?: EmptyObject | undefined): {
         readonly value: Members;
@@ -1637,7 +1627,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
-export function singletonSchema<TScope extends string, TName extends string>(factory: SchemaFactory<TScope>, name: TName): {
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): {
     new (data?: EmptyObject): {
         readonly value: TName;
     };
