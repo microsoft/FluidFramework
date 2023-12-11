@@ -22,6 +22,8 @@ export {
 } from "./schema";
 export {
 	StoredSchemaRepository,
+	EditableSchemaRepository,
+	MutableStoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,

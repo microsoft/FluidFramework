@@ -8,7 +8,7 @@ import {
 	ITreeSubscriptionCursor,
 	IEditableForest,
 	TreeNavigationResult,
-	StoredSchemaRepository,
+	EditableSchemaRepository,
 	FieldKey,
 	DetachedField,
 	AnchorSet,
@@ -60,7 +60,7 @@ export class ChunkedForest implements IEditableForest {
 	 */
 	public constructor(
 		public roots: BasicChunk,
-		public readonly schema: StoredSchemaRepository,
+		public readonly schema: EditableSchemaRepository,
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {}
@@ -73,7 +73,7 @@ export class ChunkedForest implements IEditableForest {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
+	public clone(schema: EditableSchemaRepository, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
 	}

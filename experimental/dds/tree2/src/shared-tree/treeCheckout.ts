@@ -264,7 +264,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
-		public readonly storedSchema: StoredSchemaRepository,
+		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -291,7 +291,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						combinedVisitor.free();
 					} else if (change.type === "schema") {
 						if (change.innerChange.schema !== undefined) {
-							storedSchema.update(change.innerChange.schema.new);
+							storedSchema.apply(change.innerChange.schema.new);
 						}
 					} else {
 						fail("Unknown Shared Tree change type.");
@@ -401,7 +401,7 @@ export function runSynchronous(
 
 function forkSchemaForCheckout(
 	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	schema?: StoredSchemaRepository,
+	schema?: InMemoryStoredSchemaRepository,
 ): InMemoryStoredSchemaRepository {
 	return new InMemoryStoredSchemaRepository(
 		(oldSchema, newSchema) => branch.editor.setStoredSchema(newSchema, oldSchema),

@@ -60,6 +60,7 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
+	EditableSchemaRepository,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,

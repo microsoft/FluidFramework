@@ -20,10 +20,10 @@ import {
 	TreeNodeStoredSchema,
 	ValueSchema,
 	TreeTypeSet,
-	InMemoryStoredSchemaRepository,
 	TreeNodeSchemaIdentifier,
 	storedEmptyFieldSchema,
 	FieldKindIdentifier,
+	MutableStoredSchemaRepository,
 } from "../../../core";
 import { Named, brand } from "../../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
@@ -160,11 +160,11 @@ describe("Schema Comparison", () => {
 	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
 	function updateTreeSchema(
-		repo: InMemoryStoredSchemaRepository,
+		repo: MutableStoredSchemaRepository,
 		identifier: TreeNodeSchemaIdentifier,
 		schema: TreeNodeStoredSchema,
 	) {
-		repo.update({
+		repo.apply({
 			rootFieldSchema: repo.rootFieldSchema,
 			nodeSchema: new Map([...repo.nodeSchema, [identifier, schema]]),
 		});

@@ -34,10 +34,16 @@ export interface SchemaEvents {
 }
 
 /**
+ * A collection of stored schema that fires events in response to changes.
+ * @alpha
+ */
+export interface EditableSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {}
+
+/**
  * Mutable collection of stored schema.
  * @alpha
  */
-export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
+export interface StoredSchemaRepository extends EditableSchemaRepository {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
@@ -49,9 +55,7 @@ export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, Tre
  * Mutable collection of stored schema.
  * @alpha
  */
-export interface MutableStoredSchemaRepository
-	extends ISubscribable<SchemaEvents>,
-		TreeStoredSchema {
+export interface MutableStoredSchemaRepository extends EditableSchemaRepository {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.

@@ -10,7 +10,7 @@ import {
 	initializeForest,
 	moveToDetachedField,
 	TreeNavigationResult,
-	StoredSchemaRepository,
+	EditableSchemaRepository,
 	FieldKey,
 	JsonableTree,
 	mapCursorField,
@@ -62,7 +62,7 @@ import { buildTestSchemaRepository } from "./feature-libraries/storedSchemaUtil"
  */
 export interface ForestTestConfiguration {
 	suiteName: string;
-	factory: (schema: StoredSchemaRepository) => IEditableForest;
+	factory: (schema: EditableSchemaRepository) => IEditableForest;
 
 	/**
 	 * If true, skip the tests that ensure errors are thrown when applying deltas without clearing cursors.
@@ -113,7 +113,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const forest = factory(schema);
 
 					const rootFieldSchema = TreeFieldSchema.create(FieldKinds.optional, jsonRoot);
-					schema.update({
+					schema.apply({
 						...jsonSchema,
 						rootFieldSchema,
 					});

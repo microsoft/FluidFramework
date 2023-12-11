@@ -124,6 +124,8 @@ export {
 	ValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
+	EditableSchemaRepository,
+	MutableStoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,

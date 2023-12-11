@@ -396,6 +396,10 @@ export enum DiscardResult {
 export const disposeSymbol: unique symbol;
 
 // @alpha
+export interface EditableSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
+}
+
+// @alpha
 export interface EditableTreeEvents {
     afterChange(event: TreeEvent): void;
     beforeChange(event: TreeEvent): void;
@@ -856,7 +860,7 @@ export interface IEmitter<E extends Events<E>> {
 export interface IForestSubscription extends ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
-    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
+    clone(schema: EditableSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     getCursorAboveDetachedFields(): ITreeCursorSynchronous;
     readonly isEmpty: boolean;
@@ -1622,7 +1626,7 @@ export interface StoredSchemaCollection {
 }
 
 // @alpha
-export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
+export interface StoredSchemaRepository extends EditableSchemaRepository {
     update(newSchema: TreeStoredSchema): void;
 }
 
