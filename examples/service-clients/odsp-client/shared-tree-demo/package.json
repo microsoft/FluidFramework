@@ -33,6 +33,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@azure/msal-browser": "^2.34.0",
 		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
