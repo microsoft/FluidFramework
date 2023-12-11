@@ -239,14 +239,7 @@ export class GCTelemetryTracker {
 					details: detailedProps,
 					gcConfigs,
 				};
-
-				// Do not log the inactive object x events as error events as they are not the best signal for
-				// detecting something wrong with GC either from the partner or from the runtime itself.
-				if (state === UnreferencedState.Inactive) {
-					this.mc.logger.sendTelemetryEvent(event);
-				} else {
-					this.mc.logger.sendErrorEvent(event);
-				}
+				this.mc.logger.sendTelemetryEvent(event);
 			}
 		}
 	}
@@ -393,12 +386,7 @@ export class GCTelemetryTracker {
 						fromPkg: fromPkg?.join("/"),
 					}),
 				};
-
-				if (state === UnreferencedState.Inactive) {
-					logger.sendTelemetryEvent(event);
-				} else {
-					logger.sendErrorEvent(event);
-				}
+				logger.sendTelemetryEvent(event);
 			}
 		}
 		this.pendingEventsQueue = [];
