@@ -276,7 +276,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private noActiveClients: boolean;
 
   // Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
-	private globalCheckpointOnly: boolean = false;
+	private globalCheckpointOnly: boolean;
 
 	private readonly localCheckpointEnabled: boolean;
 
