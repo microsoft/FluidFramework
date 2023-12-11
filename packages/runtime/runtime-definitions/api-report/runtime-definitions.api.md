@@ -17,6 +17,8 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -296,6 +298,10 @@ export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     usedRoutes?: string[];
 }
+
+export { IIdCompressor }
+
+export { IIdCompressorCore }
 
 // @alpha
 export interface IInboundSignalMessage extends ISignalMessage {

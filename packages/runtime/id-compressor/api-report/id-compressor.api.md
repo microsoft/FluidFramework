@@ -7,10 +7,13 @@
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @alpha
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor;
+export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @alpha
-export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor;
+export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+
+// @alpha
+export function createSessionId(): SessionId;
 
 // @alpha
 export interface IdCreationRange {

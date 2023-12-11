@@ -607,7 +607,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
  * Create a new {@link IIdCompressor}.
  * @alpha
  */
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor;
+export function createIdCompressor(
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
@@ -616,11 +618,11 @@ export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor
 export function createIdCompressor(
 	sessionId: SessionId,
 	logger?: ITelemetryBaseLogger,
-): IIdCompressor;
+): IIdCompressor & IIdCompressorCore;
 export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
-): IIdCompressor {
+): IIdCompressor & IIdCompressorCore {
 	let localSessionId: SessionId;
 	let logger: ITelemetryBaseLogger | undefined;
 	if (sessionIdOrLogger === undefined) {
@@ -639,4 +641,28 @@ export function createIdCompressor(
 		logger === undefined ? undefined : createChildLogger({ logger }),
 	);
 	return compressor;
+}
+
+/**
+ * Deserializes the supplied state into an ID compressor.
+ * @alpha
+ */
+export function deserializeIdCompressor(
+	serialized: SerializedIdCompressorWithOngoingSession,
+): IIdCompressor & IIdCompressorCore;
+/**
+ * Deserializes the supplied state into an ID compressor.
+ * @alpha
+ */
+export function deserializeIdCompressor(
+	serialized: SerializedIdCompressorWithNoSession,
+	newSessionId: SessionId,
+): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(
+	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
+	sessionId?: SessionId,
+): IIdCompressor & IIdCompressorCore {
+	return sessionId === undefined
+		? IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession)
+		: IdCompressor.deserialize(serialized as SerializedIdCompressorWithNoSession, sessionId);
 }

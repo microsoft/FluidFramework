@@ -9565,6 +9565,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions-previous': npm:@fluidframework/datastore-definitions@2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.38.3
@@ -9576,6 +9577,7 @@ importers:
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
@@ -9776,6 +9778,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
@@ -9809,6 +9812,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../runtime-definitions

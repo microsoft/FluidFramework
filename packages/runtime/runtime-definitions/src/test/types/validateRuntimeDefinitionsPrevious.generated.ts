@@ -648,50 +648,50 @@ use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressor": {"forwardCompat": false}
+* "InterfaceDeclaration_IIdCompressor": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IIdCompressor():
     TypeOnly<old.IIdCompressor>;
-declare function use_current_RemovedInterfaceDeclaration_IIdCompressor(
+declare function use_current_InterfaceDeclaration_IIdCompressor(
     use: TypeOnly<current.IIdCompressor>): void;
-use_current_RemovedInterfaceDeclaration_IIdCompressor(
+use_current_InterfaceDeclaration_IIdCompressor(
     get_old_InterfaceDeclaration_IIdCompressor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressor": {"backCompat": false}
+* "InterfaceDeclaration_IIdCompressor": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_IIdCompressor():
+declare function get_current_InterfaceDeclaration_IIdCompressor():
     TypeOnly<current.IIdCompressor>;
 declare function use_old_InterfaceDeclaration_IIdCompressor(
     use: TypeOnly<old.IIdCompressor>): void;
 use_old_InterfaceDeclaration_IIdCompressor(
-    get_current_RemovedInterfaceDeclaration_IIdCompressor());
+    get_current_InterfaceDeclaration_IIdCompressor());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressorCore": {"forwardCompat": false}
+* "InterfaceDeclaration_IIdCompressorCore": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IIdCompressorCore():
     TypeOnly<old.IIdCompressorCore>;
-declare function use_current_RemovedInterfaceDeclaration_IIdCompressorCore(
+declare function use_current_InterfaceDeclaration_IIdCompressorCore(
     use: TypeOnly<current.IIdCompressorCore>): void;
-use_current_RemovedInterfaceDeclaration_IIdCompressorCore(
+use_current_InterfaceDeclaration_IIdCompressorCore(
     get_old_InterfaceDeclaration_IIdCompressorCore());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressorCore": {"backCompat": false}
+* "InterfaceDeclaration_IIdCompressorCore": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_IIdCompressorCore():
+declare function get_current_InterfaceDeclaration_IIdCompressorCore():
     TypeOnly<current.IIdCompressorCore>;
 declare function use_old_InterfaceDeclaration_IIdCompressorCore(
     use: TypeOnly<old.IIdCompressorCore>): void;
 use_old_InterfaceDeclaration_IIdCompressorCore(
-    get_current_RemovedInterfaceDeclaration_IIdCompressorCore());
+    get_current_InterfaceDeclaration_IIdCompressorCore());
 
 /*
 * Validate forward compat by using old type in place of current type

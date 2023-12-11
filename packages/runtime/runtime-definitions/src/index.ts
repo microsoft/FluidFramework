@@ -65,3 +65,16 @@ export {
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
 } from "./summary";
+
+// Re-exports for backwards compatibility.
+// Will be removed in the future.
+export {
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	IIdCompressor,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	IIdCompressorCore,
+} from "@fluidframework/id-compressor";

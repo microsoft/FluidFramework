@@ -28,10 +28,10 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IIdCompressor,
 	IInboundSignalMessage,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannel } from ".";
 
 /**
