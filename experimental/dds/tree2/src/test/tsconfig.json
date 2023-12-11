@@ -9,7 +9,7 @@
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],
 	},
-	"include": ["./**/*", "../class-tree/schemaCreationUtilities.ts"],
+	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
