@@ -873,7 +873,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	changeProperties(id: string, props: PropertySet);
 	/**
 	 * Changes the endpoints of an existing interval.
-	 * @deprecated - call change with the start and end parameters encapsulated in an Endpoints object
+	 * @deprecated - call change with the start and end parameters encapsulated in an object
 	 * @param id - Id of the interval to change
 	 * @param start - New start value. To leave the endpoint unchanged, pass the current value.
 	 * @param end - New end value. To leave the endpoint unchanged, pass the current value.
@@ -1459,7 +1459,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// prevent the overwriting of an interval label, it should remain unchanged
 		// once it has been inserted into the collection.
 		if (props?.[reservedRangeLabelsKey] !== undefined) {
-			throw new LoggingError(
+			throw new UsageError(
 				"The label property should not be modified once inserted to the collection",
 			);
 		}
