@@ -59,5 +59,6 @@ export {
 	FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
+	relevantRemovedRoots,
 } from "./modularChangeFamily";
 export { makeModularChangeCodec } from "./modularChangeCodecs";

@@ -227,6 +227,7 @@ export {
 	defaultSchemaPolicy,
 	fieldKinds,
 	intoDelta,
+	relevantRemovedRoots,
 } from "./default-schema";
 
 export {
