@@ -441,15 +441,18 @@ export class DataStores implements IDisposable {
 		localMessageMetadata: unknown,
 	) {
 		const envelope = message.contents as IEnvelope;
+		const transformed = { ...message, contents: envelope.contents };
+		const context = this.contexts.get(envelope.address);
 
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case a deleted data store accidentally submitted an op.
-		if (this.checkAndLogIfDeleted(envelope.address, "Changed", "processFluidDataStoreOp")) {
+		if (
+			context === undefined &&
+			this.checkAndLogIfDeleted(envelope.address, "Changed", "processFluidDataStoreOp")
+		) {
 			return;
 		}
 
-		const transformed = { ...message, contents: envelope.contents };
-		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
 
