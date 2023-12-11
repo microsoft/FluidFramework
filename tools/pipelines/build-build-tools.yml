@@ -80,9 +80,17 @@ pr:
     - tools/pipelines/templates/1ES/include-process-test-results.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/1ES/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
   template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
