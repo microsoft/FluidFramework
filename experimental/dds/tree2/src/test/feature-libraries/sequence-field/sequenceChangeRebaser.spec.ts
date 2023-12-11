@@ -18,7 +18,7 @@ import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtil
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { brand } from "../../../util";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
@@ -356,20 +356,37 @@ describe("SequenceField - Rebaser Axioms", () => {
 	});
 });
 
+interface NodeState {
+	/**
+	 * Unique ID associated with the node.
+	 */
+	id: number;
+	/**
+	 * The list of intentions that have been applied to this subtree.
+	 * This is used to generate new nested changes for a node.
+	 */
+	nested: number[];
+}
+
 interface TestState {
 	/**
-	 * The current length of the sequence being edited
+	 * Represents the state of the sequence field.
 	 */
-	length: number;
+	currentState: NodeState[];
+	config: TestConfig;
+}
+
+interface TestConfig {
 	/**
-	 * The highest index that will be iterated to to generate inserts, deletes, and moves
+	 * The maximum length that the sequence should be as part of the test.
 	 */
-	maxIndex: number;
+	maxLength: number;
 	/**
 	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
 	 * deletes that operate on one node at a time and then 3 nodes at a time.
 	 */
 	numNodes: number[];
+	allocator: IdAllocator;
 }
 
 type SequenceFieldTestState = FieldStateTree<TestState, TestChangeset>;
@@ -382,9 +399,10 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<SequenceFieldTestState> {
-	const { numNodes, maxIndex } = state.content;
-	const iterationCap = Math.min(maxIndex, state.content.length);
+	const { currentState, config } = state.content;
 
+	// TODO: support for undoing earlier edits
+	// TODO: fix bugs encountered when this is enabled
 	// Undo the most recent edit
 	// if (state.mostRecentEdit !== undefined) {
 	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
@@ -395,100 +413,132 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 	// 		mostRecentEdit: {
 	// 			changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
 	// 			intention: undoIntention,
-	// 			description: `Undo:${state.mostRecentEdit.description}`,
+	// 			description: `Undo(${state.mostRecentEdit.description})`,
 	// 		},
 	// 		parent: state,
 	// 	};
 	// }
 
-	for (const nodeCount of numNodes) {
-		for (let i = 0; i <= iterationCap; i++) {
-			// Insert nodeCount nodes
-			const insertIntention = mintIntention();
-			yield {
-				content: {
-					length: state.content.length + nodeCount,
-					maxIndex,
-					numNodes,
-				},
-				mostRecentEdit: {
-					changeset: tagChange(
-						Change.insert(i, nodeCount),
-						tagFromIntention(insertIntention),
-					),
-					intention: insertIntention,
-					description: `Insert${nodeCount}${nodeCount === 1 ? "Node" : "Nodes"}At${i}`,
-				},
-				parent: state,
-			};
-
-			// Don't generate deletes past the length of the sequence
-			if (i + nodeCount <= state.content.length) {
-				// Delete nodeCount nodes
-				const deleteIntention = mintIntention();
+	for (const nodeCount of config.numNodes) {
+		// Insert nodeCount nodes
+		if (nodeCount + currentState.length <= config.maxLength) {
+			const inserted = makeArray(nodeCount, () => ({
+				id: config.allocator.allocate(),
+				nested: [],
+			}));
+			const insertedString = inserted.map((n) => n.id).join(",");
+			for (let i = 0; i <= currentState.length; i += 1) {
+				const insertIntention = mintIntention();
+				const newState = [...currentState];
+				newState.splice(i, 0, ...inserted);
 				yield {
 					content: {
-						length: state.content.length - nodeCount,
-						maxIndex,
-						numNodes,
+						currentState: newState,
+						config,
 					},
 					mostRecentEdit: {
 						changeset: tagChange(
-							Change.delete(i, nodeCount),
-							tagFromIntention(deleteIntention),
+							Change.insert(i, nodeCount),
+							tagFromIntention(insertIntention),
 						),
-						intention: deleteIntention,
-						description: `Delete${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}At${i}`,
+						intention: insertIntention,
+						description: `Add(${insertedString}@${i})`,
 					},
 					parent: state,
 				};
 			}
+		}
 
-			// Only generate moves when we're moving less than the length of the whole sequence
-			if (state.content.length > nodeCount) {
-				// MoveIn nodeCount nodes
+		const maxDetachIndex = currentState.length - nodeCount;
+
+		// Delete nodeCount nodes
+		for (let iSrc = 0; iSrc <= maxDetachIndex; iSrc += 1) {
+			const stateWithoutDetached = [...currentState];
+			const detached = stateWithoutDetached.splice(iSrc, nodeCount);
+			const detachedString = detached.map((n) => n.id).join(",");
+			const deleteIntention = mintIntention();
+			yield {
+				content: {
+					currentState: stateWithoutDetached,
+					config,
+				},
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.delete(iSrc, nodeCount),
+						tagFromIntention(deleteIntention),
+					),
+					intention: deleteIntention,
+					description: `Del(${detachedString})`,
+				},
+				parent: state,
+			};
+
+			// Move nodeCount nodes
+			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
 				const moveInIntention = mintIntention();
+				const newState = [...stateWithoutDetached];
+				newState.splice(iDst - iDst < iSrc ? 0 : nodeCount, 0, ...detached);
 				yield {
-					content: state.content,
+					content: {
+						currentState: newState,
+						config,
+					},
 					mostRecentEdit: {
 						changeset: tagChange(
-							Change.move(1, nodeCount, i),
+							Change.move(iSrc, nodeCount, iDst),
 							tagFromIntention(moveInIntention),
 						),
 						intention: moveInIntention,
-						description: `MoveIn${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}From1To${i}`,
-					},
-					parent: state,
-				};
-
-				// MoveOut nodeCount nodes
-				const moveOutIntention = mintIntention();
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(
-							Change.move(i, nodeCount, 1),
-							tagFromIntention(moveOutIntention),
-						),
-						intention: moveOutIntention,
-						description: `MoveOut${nodeCount}${
-							nodeCount === 1 ? "Node" : "Nodes"
-						}From${i}To1`,
+						description: `Mov(${detachedString})To${iDst}`,
 					},
 					parent: state,
 				};
 			}
 		}
 	}
+
+	// TODO: fix bugs encountered when this is enabled
+	// Made nested changes to a node
+	// for (let i = 0; i < currentState.length; i += 1) {
+	// 	const modifyIntention = mintIntention();
+	// 	const nestedChange = config.allocator.allocate();
+	// 	const newState = [...currentState];
+	// 	const node = currentState[i];
+	// 	newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
+	// 	yield {
+	// 		content: {
+	// 			currentState: newState,
+	// 			config,
+	// 		},
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(
+	// 				Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+	// 				tagFromIntention(modifyIntention),
+	// 			),
+	// 			intention: modifyIntention,
+	// 			description: `Mod(${nestedChange}on${node.id})`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
 };
 
 describe("SequenceField - State-based Rebaser Axioms", () => {
+	const allocator = idAllocatorFromMaxId();
+	const startingLength = 2;
+	const startingState: NodeState[] = makeArray(startingLength, () => ({
+		id: allocator.allocate(),
+		nested: [],
+	}));
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [2], maxIndex: 2 } }],
+		[
+			{
+				content: {
+					currentState: startingState,
+					config: { maxLength: 5, numNodes: [2], allocator },
+				},
+			},
+		],
 		generateChildStates,
 		{
 			rebase,
