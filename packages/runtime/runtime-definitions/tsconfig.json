@@ -6,10 +6,5 @@
 		"outDir": "./dist",
 		"composite": true,
 	},
-	"include": [
-		"src/**/*",
-		"../id-compressor/src/types/persisted-types",
-		"../id-compressor/src/types/index.ts",
-		"../id-compressor/src/types/idCompressor.ts",
-	],
+	"include": ["src/**/*"],
 }
