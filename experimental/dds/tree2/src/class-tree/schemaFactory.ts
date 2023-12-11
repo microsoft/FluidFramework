@@ -208,13 +208,13 @@ export class SchemaFactory<TScope extends string, TName extends number | string 
 				if (isFlexTreeNode(input)) {
 					assert(
 						getClassSchema(input.schema) === this.constructor,
-						"building node with wrong schema",
+						0x83b /* building node with wrong schema */,
 					);
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
 					!(input instanceof NodeBase),
-					"Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied",
+					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}
 		}
@@ -644,7 +644,7 @@ export function structuralName<const T extends string>(
 	} else {
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
-			assert(!isLazy(t), "invalid type provided");
+			assert(!isLazy(t), 0x83d /* invalid type provided */);
 			return t.identifier;
 		});
 		// Ensure name is order independent
