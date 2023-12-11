@@ -1,10 +1,85 @@
 # @fluid-private/test-end-to-end-tests
 
-These tests can be written by using the [test-utils](../test-utils/src).
+This package hosts end-to-end tests for the Fluid framework.
+The tests are end-to-end in the sense that they construct, load, and orchestrate collaborative scenarios involving containers
+in much the same way a real application using Fluid would.
+
+These tests are additionally meaningfully parameterized over two dimensions
+
+-   the underlying services the clients are using (see `@fluid-private/test-driver-definitions`, `@fluid-private/test-drivers`, and [its README](../test-drivers/README.md) for more information)
+-   a compatibility configuration determining which versions of packages should be used to create/load containers
+
+Testing against a variety of drivers helps catch server-specific bugs.
+It also enables running against more reliable analogs of real services that don't have availability issues, such as an "in-process service implementation" (LocalDriver) or "same-machine, out-of-process service" (tinylicious).
+
+Testing using containers loaded with different versions of Fluid helps to enforce we maintain compatibility across layers and versions.
+See [Compatibility.md](../../../docs/content/docs/deep/compatibility.md) for some relevant concerns.
+
+## How-to
+
+The tests in this package are typically built upon:
+
+-   The test utilities in [test-utils](../test-utils/README.md), which simplify the public API for some common types of e2e tests and provide APIs necessary to write deterministic tests you wouldn't expect to have on the production driver API (e.g. `testObjectProvider.ensureSynchronized` to make sure collaborating containers process all ops before running assertions)
+-   The compatibility utilities in [test-version-utils](../test-version-utils/README.md), which handle loading different-versioned packages and compatibility policy (see `describeCompat`).
 
 Check out the test-utils [README](../test-utils/README.md) that outlines how to write a test.
 
-## Example
+Whenever possible, try to avoid importing Fluid APIs statically, since that won't fully leverage `test-version-utils`:
+the containers the test constructs will only reference code in the current version of Fluid.
+Instead, use the `apis` argument passed to `describeCompat`'s test creation function.
+This argument provides Fluid public APIs which internally reference the package version being tested under the current compatibility configuration.
+The APIs are organized roughly by layer, i.e. `apis.dds` exports the various DDS types,
+`apis.containerRuntime` exports concepts for building a container runtime (including bits of `@fluidframework/aqueduct`), etc.
+
+### ❌ Incorrect
+
+```typescript
+import { SharedString } from "@fluidframework/sequence";
+
+const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+	fluidDataObjectType: DataObjectFactoryType.Test,
+	registry,
+};
+
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("supports collaborative text", async () => {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+	});
+});
+```
+
+#### ✅ Correct
+
+```typescript
+// If you don't need to refer to the SharedString type, you can omit the emport entirely!
+import type { SharedString } from "@fluidframework/sequence";
+
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("supports collaborative text", async () => {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+	});
+});
+```
+
+### Example
 
 Take a look at the [SharedStringEndToEndTest](src/test/sharedStringEndToEndTests.spec.ts) for a basic example
 of how to write an end-to-end test.

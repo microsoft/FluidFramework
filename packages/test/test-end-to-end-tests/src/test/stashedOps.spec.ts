@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import {
@@ -50,41 +50,6 @@ const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
 const directoryId = "directoryKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[stringId, SharedString.getFactory()],
-	[cellId, SharedCell.getFactory()],
-	[counterId, SharedCounter.getFactory()],
-	[directoryId, SharedDirectory.getFactory()],
-];
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
-				},
-			},
-		},
-		enableRuntimeIdCompressor: true,
-	},
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const lots = 30;
 const testKey = "test key";
@@ -97,85 +62,124 @@ type SharedObjCallback = (
 	dataStore: ITestFluidObject,
 ) => void | Promise<void>;
 
-// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (
-	args: ITestObjectProvider,
-	send: boolean,
-	cb: SharedObjCallback = () => undefined,
-) => {
-	const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
-	await waitForContainerConnection(container);
-	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-
-	[...Array(lots).keys()].map((i) =>
-		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-	);
-
-	await args.ensureSynchronized();
-	await args.opProcessingController.pauseProcessing(container);
-	assert(dataStore.runtime.deltaManager.outbound.paused);
-
-	await cb(container, dataStore);
-
-	let pendingState: string | undefined;
-	if (send) {
-		pendingState = await container.getPendingLocalState?.();
-		await args.ensureSynchronized();
-		container.close();
-	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
-	}
-
-	args.opProcessingController.resumeProcessing();
-
-	assert.ok(pendingState);
-	return pendingState;
-};
-
-async function loadOffline(
-	provider: ITestObjectProvider,
-	request: IRequest,
-	pendingLocalState?: string,
-): Promise<{ container: IContainerExperimental; connect: () => void }> {
-	const p = new Deferred();
-	const documentServiceFactory = provider.driver.createDocumentServiceFactory();
-
-	// patch document service methods to simulate offline by not resolving until we choose to
-	const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-	documentServiceFactory.createDocumentService = async (...args) => {
-		const docServ = await boundFn(...args);
-		const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-		docServ.connectToDeltaStream = async (...args2) => {
-			await p.promise;
-			return boundCTDStream(...args2);
-		};
-		const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-		docServ.connectToDeltaStorage = async (...args2) => {
-			await p.promise;
-			return boundCTDStorage(...args2);
-		};
-		const boundCTStorage = docServ.connectToStorage.bind(docServ);
-		docServ.connectToStorage = async (...args2) => {
-			await p.promise;
-			return boundCTStorage(...args2);
-		};
-
-		return docServ;
-	};
-	const loader = provider.createLoader(
-		[[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
-		{ ...testContainerConfig.loaderProps, documentServiceFactory },
-	);
-	const container = await loader.resolve(
-		request,
-		pendingLocalState ?? (await getPendingOps(provider, false)),
-	);
-	return { container, connect: () => p.resolve(undefined) };
-}
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[mapId, SharedMap.getFactory()],
+		[stringId, SharedString.getFactory()],
+		[cellId, SharedCell.getFactory()],
+		[counterId, SharedCounter.getFactory()],
+		[directoryId, SharedDirectory.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
+				},
+			},
+			enableRuntimeIdCompressor: true,
+		},
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
+	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
+	const getPendingOps = async (
+		args: ITestObjectProvider,
+		send: boolean,
+		cb: SharedObjCallback = () => undefined,
+	) => {
+		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+
+		[...Array(lots).keys()].map((i) =>
+			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+		);
+
+		await args.ensureSynchronized();
+		await args.opProcessingController.pauseProcessing(container);
+		assert(dataStore.runtime.deltaManager.outbound.paused);
+
+		await cb(container, dataStore);
+
+		let pendingState: string | undefined;
+		if (send) {
+			pendingState = await container.getPendingLocalState?.();
+			await args.ensureSynchronized();
+			container.close();
+		} else {
+			pendingState = await container.closeAndGetPendingLocalState?.();
+		}
+
+		args.opProcessingController.resumeProcessing();
+
+		assert.ok(pendingState);
+		return pendingState;
+	};
+
+	async function loadOffline(
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		provider: ITestObjectProvider,
+		request: IRequest,
+		pendingLocalState?: string,
+	): Promise<{ container: IContainerExperimental; connect: () => void }> {
+		const p = new Deferred();
+		const documentServiceFactory = provider.driver.createDocumentServiceFactory();
+
+		// patch document service methods to simulate offline by not resolving until we choose to
+		const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
+		documentServiceFactory.createDocumentService = async (...args) => {
+			const docServ = await boundFn(...args);
+			const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
+			docServ.connectToDeltaStream = async (...args2) => {
+				await p.promise;
+				return boundCTDStream(...args2);
+			};
+			const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
+			docServ.connectToDeltaStorage = async (...args2) => {
+				await p.promise;
+				return boundCTDStorage(...args2);
+			};
+			const boundCTStorage = docServ.connectToStorage.bind(docServ);
+			docServ.connectToStorage = async (...args2) => {
+				await p.promise;
+				return boundCTStorage(...args2);
+			};
+
+			return docServ;
+		};
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		const loader = provider.createLoader(
+			[[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
+			{ ...testContainerConfig.loaderProps, documentServiceFactory },
+		);
+		const container = await loader.resolve(
+			request,
+			pendingLocalState ?? (await getPendingOps(provider, false)),
+		);
+		return { container, connect: () => p.resolve(undefined) };
+	}
+
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -1675,7 +1679,40 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+	const registry: ChannelFactoryRegistry = [
+		[mapId, SharedMap.getFactory()],
+		[stringId, SharedString.getFactory()],
+		[cellId, SharedCell.getFactory()],
+		[counterId, SharedCounter.getFactory()],
+		[directoryId, SharedDirectory.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
+				},
+			},
+			enableRuntimeIdCompressor: true,
+		},
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);
