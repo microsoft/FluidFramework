@@ -99,7 +99,7 @@ export function generateGCConfigs(
 
 	// The persisted GC generation must indicate Sweep is allowed, according to the GC Generation option provided this session.
 	// Note that if no generation option is provided, Sweep is allowed for any document.
-	const sweepEnabled = shouldAllowGcSweep(
+	const sweepAllowed = shouldAllowGcSweep(
 		persistedGcFeatureMatrix ?? {} /* persistedGenerations */,
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
@@ -141,7 +141,7 @@ export function generateGCConfigs(
 		!shouldRunGC || sweepTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
-			  (sweepEnabled && createParams.gcOptions.enableGCSweep === true);
+			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
@@ -174,17 +174,17 @@ export function generateGCConfigs(
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
 		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
 	const throwOnTombstoneLoad =
-		throwOnTombstoneLoadConfig && shouldRunSweep && !createParams.isSummarizerClient;
+		throwOnTombstoneLoadConfig && sweepAllowed && !createParams.isSummarizerClient;
 	const throwOnTombstoneUsage =
 		mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-		shouldRunSweep &&
+		sweepAllowed &&
 		!createParams.isSummarizerClient;
 
 	return {
-		gcEnabled,
-		sweepEnabled,
-		shouldRunGC,
-		shouldRunSweep,
+		gcEnabled, // For this document
+		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
+		shouldRunGC, // For this session
+		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,
 		tombstoneMode,

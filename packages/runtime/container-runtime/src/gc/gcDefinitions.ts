@@ -48,11 +48,13 @@ export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents
- * by incrementing this value. This covers both disabling Tombstone Enforcement and disabling Sweep.
+ * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
+ * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
  * If unset, Tombstone Enforcement + Sweep will operate as otherwise configured.
  * Otherwise, the Sweep Phase will be disabled for documents where persisted value doesn't match what is passed into this session.
+ * This provides a way to disallow Sweep for old documents that may be too difficult for an app to repair,
+ * in case a bug is found that violates GC's assumptions.
  */
 export const gcGenerationOptionName = "gcGeneration";
 
