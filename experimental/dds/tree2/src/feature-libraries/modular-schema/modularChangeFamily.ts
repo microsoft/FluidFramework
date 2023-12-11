@@ -199,7 +199,9 @@ export class ModularChangeFamily
 			0x59b /* Should not need more than one amend pass. */,
 		);
 		const allBuilds: ChangeAtomIdMap<JsonableTree> = new Map();
-		for (const { revision, change } of changes) {
+		for (const taggedChange of changes) {
+			const revision = revisionFromTaggedChange(taggedChange);
+			const change = taggedChange.change;
 			if (change.builds) {
 				for (const [revisionKey, innerMap] of change.builds) {
 					const setRevisionKey = revisionKey ?? revision;
