@@ -441,9 +441,11 @@ export class EditManager<
 		this.localBranch.setHead(this.trunk.getHead());
 
 		for (const [sessionId, branch] of data.branches) {
-			const commit =
-				trunkRevisionCache.get(branch.base) ??
+			const commit = trunkRevisionCache.get(branch.base);
+
+			if (commit === undefined) {
 				fail("Expected summary branch to be based off of a revision in the trunk");
+			}
 
 			this.peerLocalBranches.set(
 				sessionId,

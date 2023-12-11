@@ -86,7 +86,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe.skip("Fuzz - composed vs individual changes", () => {
+describe("Fuzz - composed vs individual changes", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 

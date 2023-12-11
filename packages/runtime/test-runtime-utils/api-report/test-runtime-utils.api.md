@@ -153,6 +153,8 @@ export class MockContainerRuntimeFactory {
     // (undocumented)
     get outstandingMessageCount(): number;
     processAllMessages(): void;
+    // (undocumented)
+    protected readonly processedIdRanges: IdCreationRange[];
     processOneMessage(): void;
     processSomeMessages(count: number): void;
     // (undocumented)

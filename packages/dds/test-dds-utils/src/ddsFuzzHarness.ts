@@ -634,6 +634,9 @@ export function mixinAttach<
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
+
+			state.containerRuntimeFactory.processAllMessages();
+
 			const clients = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
 					loadClient(
@@ -977,6 +980,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
+	containerRuntimeFactory.processAllMessages();
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,

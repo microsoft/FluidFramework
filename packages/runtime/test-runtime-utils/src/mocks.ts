@@ -373,6 +373,7 @@ export class MockContainerRuntimeFactory {
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: MockContainerRuntime[] = [];
+	protected readonly processedIdRanges: IdCreationRange[] = [];
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -440,8 +441,9 @@ export class MockContainerRuntimeFactory {
 	private processGeneratedIds() {
 		for (const runtime of this.runtimes) {
 			const idRange = runtime.getGeneratedIdRange();
-
 			if (idRange !== undefined) {
+				this.processedIdRanges.push(idRange);
+
 				for (const nestedRuntime of this.runtimes) {
 					nestedRuntime.finalizeIdRange(idRange);
 				}

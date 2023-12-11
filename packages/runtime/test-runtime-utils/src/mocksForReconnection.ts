@@ -118,6 +118,11 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			this.runtimeOptions,
 			overrides,
 		);
+
+		for (const range of this.processedIdRanges) {
+			containerRuntime.finalizeIdRange(range);
+		}
+
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
 	}

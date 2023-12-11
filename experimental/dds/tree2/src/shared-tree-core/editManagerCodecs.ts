@@ -37,7 +37,10 @@ export function makeEditManagerCodec<TChangeset>(
 				trunk: data.trunk.map(encodeCommit),
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
-					{ ...branch, commits: branch.commits.map(encodeCommit) },
+					{
+						base: revisionTagCodec.encode(branch.base),
+						commits: branch.commits.map(encodeCommit),
+					},
 				]),
 			};
 			assert(format.check(json), 0x6cc /* Encoded schema should validate */);
@@ -51,7 +54,6 @@ export function makeEditManagerCodec<TChangeset>(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
 						{
-							...branch,
 							base: revisionTagCodec.decode(branch.base, sessionId),
 							commits: branch.commits.map(decodeCommit),
 						},
