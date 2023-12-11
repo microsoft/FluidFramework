@@ -336,7 +336,7 @@ extends:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
 
-                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
+                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     # Copy files so all artifacts we publish end up under the same parent folder.
                     # Source is wherever the tinylicious log ends up in, after executing tests above.
                     # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
