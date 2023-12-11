@@ -18,8 +18,6 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	createIdCompressor,
-	createSessionId,
-	assertIsSessionId,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -29,6 +27,7 @@ import {
 	StableId,
 } from "../";
 import { IdCompressor } from "../idCompressor";
+import { assertIsSessionId, createSessionId } from "../utilities";
 import {
 	FinalCompressedId,
 	getOrCreate,
