@@ -790,7 +790,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/debug': ^4.1.5
       '@types/jsrsasign': ^8.0.8
-      '@types/jwt-decode': ^2.2.1
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       axios: ^1.6.2
@@ -803,7 +802,7 @@ importers:
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
       jsrsasign: ^10.5.25
-      jwt-decode: ^3.0.0
+      jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
       querystring: ^0.2.0
@@ -821,7 +820,7 @@ importers:
       debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 10.8.6
-      jwt-decode: 3.1.2
+      jwt-decode: 4.0.0
       querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 9.0.0
@@ -834,7 +833,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@types/debug': 4.1.8
       '@types/jsrsasign': 8.0.13
-      '@types/jwt-decode': 2.2.1
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       axios-mock-adapter: 1.21.5_axios@1.6.2
@@ -1072,6 +1070,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       express: ^4.17.3
+      fast-redact: ^3.3.0
       ioredis: ^5.2.3
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -1101,6 +1100,7 @@ importers:
       body-parser: 1.20.2
       debug: 4.3.4
       events: 3.3.0
+      fast-redact: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
       nconf: 0.12.0
@@ -6893,10 +6893,6 @@ packages:
     resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
     dev: true
 
-  /@types/jwt-decode/2.2.1:
-    resolution: {integrity: sha512-aWw2YTtAdT7CskFyxEX2K21/zSDStuf/ikI3yBqmwpwJF0pS+/IX5DWv+1UFffZIbruP6cnT9/LAJV1gFwAT1A==}
-    dev: true
-
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
@@ -11272,6 +11268,11 @@ packages:
     resolution: {integrity: sha512-Ue0LwpDYErFbmNnZSF0UH6eImUwDmogUO1jyE+JbN2gsQz/jICm1Ve7t9QT0rNSsfJt+Hs4/S3GnsDVjL4HVrw==}
     dev: true
 
+  /fast-redact/3.3.0:
+    resolution: {integrity: sha512-6T5V1QK1u4oF+ATxs1lWUmlEk6P2T9HqJG3e2DnHOdVgZy2rFJBoEnrIedcTXlkAHU/zKC+7KETJ+KGGKwxgMQ==}
+    engines: {node: '>=6'}
+    dev: false
+
   /fast-xml-parser/4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}
     hasBin: true
@@ -13446,6 +13447,12 @@ packages:
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: true
+
+  /jwt-decode/4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
+    dev: false
 
   /kafka-node/5.0.0:
     resolution: {integrity: sha512-dD2ga5gLcQhsq1yNoQdy1MU4x4z7YnXM5bcG9SdQuiNr5KKuAmXixH1Mggwdah5o7EfholFbcNDPSVA6BIfaug==}

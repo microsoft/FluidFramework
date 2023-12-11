@@ -134,7 +134,6 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
-	cloneSchemaData,
 	StoredSchemaCollection,
 } from "./schema-stored";
 
@@ -171,6 +170,8 @@ export {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 } from "./rebase";
 
 export {
