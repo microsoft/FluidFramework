@@ -27,47 +27,17 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	return metadata.gcFeature ?? 0;
 }
 
-//* Update doc comment
 /**
- * Indicates whether Tombstone Enforcement is allowed for this document based on the current/persisted
- * TombstoneGeneration values
- *
- * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
- * such that enforcing GC Tombstone (Failing on Tombstone load/usage) would cause legitimate data loss,
- * the container author may increment the generation value for Tombstone such that containers created
- * with a different value will not be subjected to GC enforcement.
- *
- * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
- *
- * @param persistedGeneration - The persisted gcGeneration value
- * @param currentGeneration - The current app-provided tombstoneGeneration value
- * @param legacyPersistedGeneration - The persisted tombstoneGeneration value (legacy)
- * @returns true if GC Tombstone enforcement (Fail on Tombstone load/usage) should be allowed for this document
- */
-export function shouldAllowGcTombstoneEnforcement(
-	persistedGeneration: number | undefined,
-	currentGeneration: number | undefined,
-	legacyPersistedGeneration?: number,
-): boolean {
-	// If no Generation value is provided for this session, then we should default to letting Tombstone feature behave as intended.
-	if (currentGeneration === undefined) {
-		return true;
-	}
-	return (
-		persistedGeneration === currentGeneration //* NEXT STEP || legacyPersistedGeneration === currentGeneration
-	);
-}
-
-//* Update doc comment
-/**
- * Indicates whether Sweep is allowed for this document based on the GC Feature Matrix and current SweepGeneration
+ * Indicates whether Sweep is allowed for this document based on the persisted GC Feature Matrix and current SweepGeneration
+ * This also applies to Tombstone enforcement (i.e. should loading a Tombstone fail?).
  *
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
  * such that enforcing GC Sweep would cause legitimate data loss, the container author may increment the generation value for Sweep
  * such that containers created with a different value will not be subjected to GC Sweep.
  *
  * If no generation is provided, Sweep will be disabled.
- * Passing 0 is a special case: Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
+ *
+ * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration.
  *
  * @param persistedGenerations - The persisted GC generations from the GC Feature Matrix
  * @param currentGeneration - The current app-provided gcGeneration value
@@ -86,12 +56,10 @@ export function shouldAllowGcSweep(
 	}
 
 	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
-	const legacyPersistedGeneration = persistedGenerations.tombstoneGeneration;
+	const targetGeneration =
+		persistedGenerations.gcGeneration ?? persistedGenerations.tombstoneGeneration;
 
-	return (
-		persistedGenerations.gcGeneration === currentGeneration ||
-		legacyPersistedGeneration === currentGeneration
-	);
+	return currentGeneration === targetGeneration;
 }
 
 /**

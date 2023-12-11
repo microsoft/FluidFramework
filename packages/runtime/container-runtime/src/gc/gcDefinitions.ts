@@ -458,8 +458,6 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInEffect: GCVersion;
 	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
 	readonly throwOnInactiveLoad: boolean | undefined;
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	readonly tombstoneEnforcementAllowed: boolean;
 	/** If true, throw an error when a tombstone data store is retrieved */
 	readonly throwOnTombstoneLoad: boolean;
 	/** If true, throw an error when a tombstone data store is used. */

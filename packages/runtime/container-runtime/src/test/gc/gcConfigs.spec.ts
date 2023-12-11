@@ -267,6 +267,29 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
+		it("Metadata Roundtrip transition to gcGeneration from tombstoneGeneration", () => {
+			const inputMetadata: IGCMetadata = {
+				sweepEnabled: true, // ignored
+				gcFeature: 1,
+				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+				sweepTimeoutMs: 123,
+				gcFeatureMatrix: { tombstoneGeneration: 1 }, // legacy file before gcGeneration
+			};
+			gc = createGcWithPrivateMembers(inputMetadata, {
+				[gcGenerationOptionName]: 2, // Will be ignored - legacy file will only ever be stamped with tombstoneGeneration
+			});
+			const outputMetadata = gc.getMetadata();
+			const expectedOutputMetadata: IGCMetadata = {
+				...inputMetadata,
+				sweepEnabled: false, // Hardcoded, not used
+				gcFeature: stableGCVersion,
+			};
+			assert.deepEqual(
+				outputMetadata,
+				expectedOutputMetadata,
+				"getMetadata returned different metadata than loaded from",
+			);
+		});
 		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
 			injectedSettings[gcVersionUpgradeToV4Key] = true;
 			const inputMetadata: IGCMetadata = {
@@ -357,7 +380,6 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert(gc.configs.shouldRunSweep, "shouldRunSweep incorrect");
-			//* assert(gc.configs.tombstoneEnforcementAllowed, "tombstoneEnforcementAllowed incorrect");
 			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs !== undefined,
@@ -898,36 +920,54 @@ describe("Garbage Collection configurations", () => {
 		});
 	});
 
-	describe("throwOnTombstoneLoad", () => {
+	describe("throwOnTombstoneLoad (using new container)", () => {
+		beforeEach(() => {
+			injectedSettings[testOverrideSessionExpiryMsKey] = defaultSessionExpiryDurationMs; // Required for sweep to be enabled
+		});
 		it("gcDisableThrowOnTombstoneLoad true", () => {
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				{ [gcDisableThrowOnTombstoneLoadOptionName]: true },
+				undefined /* metadata */,
+				{ [gcGenerationOptionName]: 3, [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
 		it("gcDisableThrowOnTombstoneLoad false", () => {
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				{ [gcDisableThrowOnTombstoneLoadOptionName]: false },
+				undefined /* metadata */,
+				{ [gcGenerationOptionName]: 3, [gcDisableThrowOnTombstoneLoadOptionName]: false },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
 		it("gcDisableThrowOnTombstoneLoad undefined", () => {
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				undefined /* gcOptions */,
+				undefined /* metadata */,
+				{
+					[gcGenerationOptionName]: 3,
+					[gcDisableThrowOnTombstoneLoadOptionName]: undefined,
+				},
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
+		it("gcDisableThrowOnTombstoneLoad undefined - Sweep Disabled takes precedence", () => {
+			injectedSettings[runSweepKey] = false; // Disable Sweep
+			gc = createGcWithPrivateMembers(
+				undefined /* metadata */,
+				{
+					[gcGenerationOptionName]: 3,
+					[gcDisableThrowOnTombstoneLoadOptionName]: undefined,
+				},
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
+		});
 		it("Old 'enable' option false (ignored)", () => {
 			const gcThrowOnTombstoneLoadOptionName_old = "gcThrowOnTombstoneLoad";
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				{ [gcThrowOnTombstoneLoadOptionName_old]: false },
+				undefined /* metadata */,
+				{ [gcGenerationOptionName]: 3, [gcThrowOnTombstoneLoadOptionName_old]: false },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
@@ -935,8 +975,8 @@ describe("Garbage Collection configurations", () => {
 		it("throwOnTombstoneLoad enabled via override", () => {
 			injectedSettings[throwOnTombstoneLoadOverrideKey] = true;
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				{ [gcDisableThrowOnTombstoneLoadOptionName]: true },
+				undefined /* metadata */,
+				{ [gcGenerationOptionName]: 3, [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
@@ -944,8 +984,8 @@ describe("Garbage Collection configurations", () => {
 		it("throwOnTombstoneLoad disabled via override", () => {
 			injectedSettings[throwOnTombstoneLoadOverrideKey] = false;
 			gc = createGcWithPrivateMembers(
-				{ gcFeature: 0 },
-				{ [gcDisableThrowOnTombstoneLoadOptionName]: false },
+				undefined /* metadata */,
+				{ [gcGenerationOptionName]: 3, [gcDisableThrowOnTombstoneLoadOptionName]: false },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");

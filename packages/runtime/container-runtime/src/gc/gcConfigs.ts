@@ -36,7 +36,7 @@ import {
 	defaultSweepGracePeriodMs,
 	gcGenerationOptionName,
 } from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep, shouldAllowGcTombstoneEnforcement } from "./gcHelpers";
+import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -174,6 +174,7 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
+	//* Get rid of tombstoneMode in this PR?
 	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
 	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
 	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;
@@ -186,27 +187,15 @@ export function generateGCConfigs(
 	});
 
 	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
-	//* Next step
-	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
-		createParams.gcOptions[gcTombstoneGenerationOptionName] /* current */,
-	);
-	// const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-	// 	createParams.metadata?.gcFeatureMatrix?.gcGeneration /* persisted */,
-	// 	createParams.gcOptions[gcGenerationOptionName] /* current */,
-	// 	createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
-	// );
 
 	const throwOnTombstoneLoadConfig =
 		mc.config.getBoolean(throwOnTombstoneLoadOverrideKey) ??
 		createParams.gcOptions[gcDisableThrowOnTombstoneLoadOptionName] !== true;
 	const throwOnTombstoneLoad =
-		throwOnTombstoneLoadConfig &&
-		tombstoneEnforcementAllowed &&
-		!createParams.isSummarizerClient;
+		throwOnTombstoneLoadConfig && shouldRunSweep && !createParams.isSummarizerClient;
 	const throwOnTombstoneUsage =
 		mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-		tombstoneEnforcementAllowed &&
+		shouldRunSweep &&
 		!createParams.isSummarizerClient;
 
 	return {
@@ -225,7 +214,6 @@ export function generateGCConfigs(
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,
 		throwOnInactiveLoad,
-		tombstoneEnforcementAllowed,
 		throwOnTombstoneLoad,
 		throwOnTombstoneUsage,
 	};

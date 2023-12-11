@@ -117,7 +117,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
 	public get tombstoneEnforcementAllowed(): boolean {
-		return this.configs.tombstoneEnforcementAllowed;
+		return this.configs.shouldRunSweep;
 	}
 	/** If true, throw an error when a tombstone data store is retrieved */
 	public get throwOnTombstoneLoad(): boolean {
