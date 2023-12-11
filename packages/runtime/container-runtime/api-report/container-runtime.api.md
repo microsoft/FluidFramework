@@ -267,8 +267,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 export interface GCFeatureMatrix {
     gcGeneration?: number;
     // @deprecated
-    sweepGeneration?: number;
-    // @deprecated
     tombstoneGeneration?: number;
 }
 

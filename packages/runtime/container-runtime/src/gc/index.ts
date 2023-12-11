@@ -13,7 +13,6 @@ export {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
-	gcSweepGenerationOptionName,
 	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,

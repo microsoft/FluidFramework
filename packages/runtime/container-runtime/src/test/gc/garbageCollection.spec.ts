@@ -1685,7 +1685,7 @@ describe("Garbage Collection Tests", () => {
 
 		let garbageCollector: IGarbageCollector;
 		beforeEach(async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { gcSweepGeneration: 1 } });
+			garbageCollector = createGarbageCollector({ gcOptions: { enableGCSweep: true } });
 		});
 
 		it("can submit GC op compat behavior", async () => {

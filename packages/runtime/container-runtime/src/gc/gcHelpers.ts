@@ -44,10 +44,7 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
-	persistedGenerations: Pick<
-		GCFeatureMatrix,
-		"sweepGeneration" | "tombstoneGeneration" | "gcGeneration"
-	>,
+	persistedGenerations: Pick<GCFeatureMatrix, "tombstoneGeneration" | "gcGeneration">,
 	currentGeneration: number | undefined,
 ): boolean {
 	// If no Generation value is provided for this session, default to true

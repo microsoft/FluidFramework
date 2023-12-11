@@ -15,8 +15,6 @@ import {
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
 	GCFeatureMatrix,
-	// eslint-disable-next-line import/no-deprecated
-	gcSweepGenerationOptionName,
 	gcTestModeKey,
 	// eslint-disable-next-line import/no-deprecated
 	gcTombstoneGenerationOptionName,
@@ -80,10 +78,9 @@ export function generateGCConfigs(
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
 		const tombstoneGeneration = createParams.gcOptions[gcTombstoneGenerationOptionName];
-		const sweepGeneration = createParams.gcOptions[gcSweepGenerationOptionName];
 		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 
-		//* What about SweepGeneration?
+		//* Switch to enableGCSweep? Or keep this statement about generation?
 		// Sweep should not be enabled (via gcGeneration value) without enabling GC mark phase.
 		if (gcGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
 			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
@@ -105,14 +102,9 @@ export function generateGCConfigs(
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (
-			tombstoneGeneration !== undefined ||
-			sweepGeneration !== undefined ||
-			gcGeneration !== undefined
-		) {
+		if (tombstoneGeneration !== undefined || gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = {
 				tombstoneGeneration,
-				sweepGeneration,
 				gcGeneration,
 			};
 		}

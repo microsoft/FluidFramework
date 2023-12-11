@@ -41,7 +41,6 @@ import {
 	stableGCVersion,
 	gcVersionUpgradeToV4Key,
 	gcTombstoneGenerationOptionName,
-	gcSweepGenerationOptionName,
 	gcGenerationOptionName,
 	throwOnTombstoneLoadOverrideKey,
 	gcDisableThrowOnTombstoneLoadOptionName,
@@ -254,11 +253,10 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata, {
 				[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
-				[gcSweepGenerationOptionName]: 2, // 2 should not be persisted
 				[gcGenerationOptionName]: 2, // 2 should not be persisted
 			});
 			const outputMetadata = gc.getMetadata();
@@ -303,7 +301,7 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
@@ -325,7 +323,7 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
@@ -435,11 +433,10 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2, gcGeneration: 2 },
+				gcFeatureMatrix: { tombstoneGeneration: 2, gcGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcTombstoneGenerationOptionName]: 2,
-				[gcSweepGenerationOptionName]: 2,
 				[gcGenerationOptionName]: 2,
 			});
 			const outputMetadata = gc.getMetadata();
@@ -474,7 +471,6 @@ describe("Garbage Collection configurations", () => {
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: {
 					gcGeneration: 2,
-					sweepGeneration: undefined,
 					tombstoneGeneration: undefined,
 				},
 			};

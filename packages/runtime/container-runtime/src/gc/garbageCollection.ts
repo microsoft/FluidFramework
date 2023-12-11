@@ -1165,7 +1165,7 @@ export class GarbageCollector implements IGarbageCollector {
 		sweepPhaseStats.lifetimeDataStoreCount += sweepPhaseStats.deletedDataStoreCount;
 		sweepPhaseStats.lifetimeAttachmentBlobCount += sweepPhaseStats.deletedAttachmentBlobCount;
 
-		if (this.configs.sweepEnabled) {
+		if (this.configs.shouldRunSweep) {
 			return sweepPhaseStats;
 		}
 

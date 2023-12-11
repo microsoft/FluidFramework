@@ -33,12 +33,9 @@ export const stableGCVersion: GCVersion = 3;
 export const nextGCVersion: GCVersion = 4;
 
 /**
- * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
- *
- * If unset, GC Tombstone phase will operate as otherwise configured
- * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
- *
  * @deprecated use gcGenerationOptionName
+ *
+ * Note: For documents with this value persisted, it will be used in place of gcGeneration.
  */
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 
@@ -51,22 +48,11 @@ export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
 export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
- * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents
+ * by incrementing this value. This covers both disabling Tombstone Enforcement and disabling Sweep.
  *
- * If unset altogether, Sweep will be disabled.
- * If 0 is passed in, Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
- * If any other number is passed in, Sweep will be enabled only for documents with the same value persisted.
- *
- * @deprecated use gcGenerationOptionName + SweepEnabled GC Option
- */
-export const gcSweepGenerationOptionName = "gcSweepGeneration";
-
-/**
- * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
- * This covers disabling Tombstone Enforcement and disabling Sweep.
- *
- * If unset altogether, Tombstone Enforcement + Sweep will be disabled (no user impact regardless of GC status).
- * Otherwise, these will be enabled only for documents with the same value persisted as is passed into this session.
+ * If unset, Tombstone Enforcement + Sweep will operate as otherwise configured.
+ * Otherwise, the Sweep Phase will be disabled for documents where persisted value doesn't match what is passed into this session.
  */
 export const gcGenerationOptionName = "gcGeneration";
 
@@ -120,17 +106,9 @@ export interface GCFeatureMatrix {
 	 * @deprecated - only used for back-compat with old containers
 	 */
 	tombstoneGeneration?: number;
-	/**
-	 * The Sweep Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Sweep.
-	 * Provided via Container Runtime Options.
-	 *
-	 * @deprecated - Use gcGeneration instead
-	 */
-	sweepGeneration?: number;
 
 	/**
-	 * //* Add comment
+	 * //* Add comment -- and reconsider deprecation above
 	 */
 	gcGeneration?: number;
 }
@@ -165,7 +143,7 @@ export interface IGCMetadata {
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
 	 *
-	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
+	 * @deprecated use GCFeatureMatrix.gcGeneration instead. @see GCFeatureMatrix.gcGeneration
 	 */
 	readonly sweepEnabled?: boolean; //* Follow-up: Delete
 	/** If this is present, the session for this container will expire after this time and the container will close */
@@ -389,7 +367,7 @@ export interface IGCRuntimeOptions {
 	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
 	 * and marked as such in the summary. This option enables the mark phase.
 	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "gcSweepGeneration" option.
+	 * Sweep phase can be enabled using the "enableGCSweep" option.
 	 *
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
