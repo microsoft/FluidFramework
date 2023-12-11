@@ -1,9 +1,9 @@
 function hasReleaseTag(comment) {
 	if (/@(internal|alpha|beta)/.test(comment.value)) {
-		return True
+		return True;
 	}
 
-	return False 
+	return False;
 }
 
 module.exports = {
@@ -19,13 +19,11 @@ module.exports = {
 		},
 	},
 	create(context) {
-		
 		return {
 			ReleaseTagDeclaration(node) {
 				const fileName = context.filename;
 				const sourceCode = context.sourceCode;
 				const comments = sourceCode.getCommentsAfter(node);
-
 
 				comments.forEach((comment) => {
 					if (hasReleaseTag(comment)) {
@@ -34,9 +32,8 @@ module.exports = {
 							message: `Including the ${tag} release-tag inside the ${fileName} is not allowed.`,
 						});
 					}
-				})
-			}
-		}
-		
+				});
+			},
+		};
 	},
 };
