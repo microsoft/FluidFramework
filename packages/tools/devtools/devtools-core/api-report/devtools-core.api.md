@@ -95,7 +95,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
     containerData?: Record<string, IFluidLoadable>;
 }
 
-// @internal
+// @alpha
 export type ContainerKey = string;
 
 // @internal
@@ -207,7 +207,7 @@ export namespace DevtoolsFeatures {
     }
 }
 
-// @internal @sealed
+// @alpha @sealed
 export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
@@ -371,7 +371,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @internal
+// @alpha
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }

@@ -43,7 +43,7 @@ import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class DevtoolsLogger implements ITelemetryBaseLogger {
 	/**
