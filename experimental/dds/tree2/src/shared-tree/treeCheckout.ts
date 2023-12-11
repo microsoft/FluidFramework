@@ -150,14 +150,13 @@ export interface ITreeCheckout extends AnchorLocator {
 export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
 	changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
-	schema?: StoredSchemaRepository;
+	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	removedRoots?: DetachedFieldIndex;
 }): TreeCheckout {
-	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new SharedTreeChangeFamily({ jsonValidator: noopValidator });
@@ -170,6 +169,7 @@ export function createTreeCheckout(args?: {
 			},
 			changeFamily,
 		);
+	const schema = forkSchemaForCheckout(branch, args?.schema);
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -331,9 +331,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
 		// TODO: ensure editing this clone of the schema does the right thing.
-		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
-		const forest = this.forest.clone(storedSchema, anchors);
 		const branch = this.branch.fork();
+		const storedSchema = forkSchemaForCheckout(branch, this.storedSchema);
+		const forest = this.forest.clone(storedSchema, anchors);
 		const transaction = new Transaction(branch);
 		return new TreeCheckout(
 			transaction,
@@ -397,4 +397,14 @@ export function runSynchronous(
 	return result === TransactionResult.Abort
 		? view.transaction.abort()
 		: view.transaction.commit();
+}
+
+function forkSchemaForCheckout(
+	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	schema?: StoredSchemaRepository,
+): InMemoryStoredSchemaRepository {
+	return new InMemoryStoredSchemaRepository(
+		(oldSchema, newSchema) => branch.editor.setStoredSchema(newSchema, oldSchema),
+		schema,
+	);
 }

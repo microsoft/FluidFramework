@@ -170,7 +170,7 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository();
+		const schema = new InMemoryStoredSchemaRepository(failSchemaEdit);
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
@@ -283,7 +283,7 @@ export class SharedTree
 		try {
 			moveToDetachedField(this.view.forest, cursor);
 			return {
-				schema: new InMemoryStoredSchemaRepository(this.storedSchema),
+				schema: new InMemoryStoredSchemaRepository(failSchemaEdit, this.storedSchema),
 				tree: jsonableTreeFromFieldCursor(cursor),
 			};
 		} finally {
@@ -426,4 +426,8 @@ export class SharedTreeFactory implements IChannelFactory {
 		tree.initializeLocal();
 		return tree;
 	}
+}
+
+function failSchemaEdit(): void {
+	fail("Cannot generate a schema edit directly on the trunk of a SharedTree");
 }

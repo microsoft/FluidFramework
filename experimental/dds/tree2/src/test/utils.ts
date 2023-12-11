@@ -77,7 +77,6 @@ import {
 	ChangeFamily,
 	TaggedChange,
 	FieldUpPath,
-	InMemoryStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
 	IEditableForest,
@@ -112,6 +111,8 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+// eslint-disable-next-line import/no-internal-modules
+import { buildTestSchemaRepository } from "./feature-libraries/storedSchemaUtil";
 
 // Testing utilities
 
@@ -621,7 +622,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	const view = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: buildTestSchemaRepository(content.schema),
 	});
 	return new CheckoutFlexTreeView(
 		view,
@@ -658,7 +659,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	const branch = createTreeCheckout({
 		...args,
 		forest,
-		schema: new InMemoryStoredSchemaRepository(content.schema),
+		schema: buildTestSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(

@@ -13,12 +13,14 @@ import {
 	NewFieldContent,
 } from "../../feature-libraries";
 import { CheckoutEvents } from "../../shared-tree";
-import { AllowedUpdateType, InMemoryStoredSchemaRepository, TreeStoredSchema } from "../../core";
+import { AllowedUpdateType, TreeStoredSchema } from "../../core";
 import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
 import { SchemaBuilder, leaf } from "../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { buildTestSchemaRepository } from "../feature-libraries/storedSchemaUtil";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
@@ -57,7 +59,7 @@ describe("schematizeTree", () => {
 		): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
-					const storedSchema = new InMemoryStoredSchemaRepository();
+					const storedSchema = buildTestSchemaRepository();
 					let count = 0;
 					initializeContent(storedSchema, content.schema, () => {
 						count++;
@@ -71,14 +73,12 @@ describe("schematizeTree", () => {
 					// Currently we do not have a function which tests that data is compatible with a given schema. When such a function is available
 					// this test should be updated to use it to greatly increase its validation.
 
-					const storedSchema = new InMemoryStoredSchemaRepository();
-					let previousSchema: TreeStoredSchema = new InMemoryStoredSchemaRepository(
-						storedSchema,
-					);
+					const storedSchema = buildTestSchemaRepository();
+					let previousSchema: TreeStoredSchema = buildTestSchemaRepository(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
 					storedSchema.on("afterSchemaChange", () => {
-						previousSchema = new InMemoryStoredSchemaRepository(storedSchema);
+						previousSchema = buildTestSchemaRepository(storedSchema);
 					});
 
 					let currentData: NewFieldContent;
@@ -94,7 +94,7 @@ describe("schematizeTree", () => {
 				});
 
 				it("has expected steps", () => {
-					const storedSchema = new InMemoryStoredSchemaRepository();
+					const storedSchema = buildTestSchemaRepository();
 					const log: string[] = [];
 
 					storedSchema.on("afterSchemaChange", () => {
@@ -130,7 +130,7 @@ describe("schematizeTree", () => {
 			for (const [name, data] of testCases) {
 				it(name, () => {
 					const events = createEmitter<CheckoutEvents>();
-					const storedSchema = new InMemoryStoredSchemaRepository(data);
+					const storedSchema = buildTestSchemaRepository(data);
 
 					// Error if modified
 					storedSchema.on("afterSchemaChange", () => {
@@ -148,7 +148,7 @@ describe("schematizeTree", () => {
 
 		it("upgrade works", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+			const storedSchema = buildTestSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -159,7 +159,7 @@ describe("schematizeTree", () => {
 
 		it("upgrade schema errors when in AllowedUpdateType.None", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+			const storedSchema = buildTestSchemaRepository(schema);
 			assert.throws(() => {
 				schematize(events, storedSchema, {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -170,7 +170,7 @@ describe("schematizeTree", () => {
 
 		it("incompatible upgrade errors and does not modify schema", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
+			const storedSchema = buildTestSchemaRepository(schemaGeneralized);
 
 			let modified = false;
 			storedSchema.on("afterSchemaChange", () => {
@@ -191,7 +191,7 @@ describe("schematizeTree", () => {
 
 		it("errors at correct time when schema changes to not be compatible with view schema", () => {
 			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+			const storedSchema = buildTestSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
