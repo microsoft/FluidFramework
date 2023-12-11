@@ -35,7 +35,7 @@ steps:
   - checkout: self
     clean: true
 
-- template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
+- template: include-use-node-version.yml
 
 - task: Bash@3
   displayName: Print parameter/variable values for template

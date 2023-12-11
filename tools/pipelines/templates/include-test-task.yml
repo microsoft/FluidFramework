@@ -5,12 +5,12 @@
 
 parameters:
 - name: taskTestStep
-  type: string
+  type: string 
 
 - name: buildDirectory
-  type: string
+  type: string 
 
-steps:
+steps: 
 # Test - With coverage
 - ${{ if and(eq(variables['testCoverage'], true), startsWith(parameters.taskTestStep, 'ci:test')) }}:
   - task: Npm@1

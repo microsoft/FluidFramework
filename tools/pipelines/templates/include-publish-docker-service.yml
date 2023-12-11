@@ -14,14 +14,15 @@ parameters:
   type: string
 - name: tagName
   type: string
-  default: ''
+  default:
+
 stages:
 - stage: publish_docker_official
   dependsOn: build
   displayName: Publish Official Docker Image
   condition: and(succeeded(), eq(variables['release'], 'release'))
   jobs:
-  - template: /tools/pipelines/templates/1ES/include-publish-docker-service-steps.yml@self
+  - template: include-publish-docker-service-steps.yml
     parameters:
       environment: container-registry-public
       containerRegistry: ${{ parameters.containerRegistry }}
@@ -29,3 +30,4 @@ stages:
       containerRegistryUrl: ${{ parameters.containerRegistryUrl }}
       containerName: public/${{ parameters.containerName }}
       tagName: ${{ parameters.tagName }}
+
