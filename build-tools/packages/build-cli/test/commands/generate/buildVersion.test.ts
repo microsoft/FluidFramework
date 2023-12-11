@@ -8,9 +8,9 @@ const test_tags = [
 	"client_v2.0.0-internal.1.0.0",
 	"client_v1.2.4",
 	"client_v1.2.3",
-	"client_v2.0.0-betarc.1.0.0",
-	"client_v2.0.0-betarc.1.0.1",
-	"client_v2.0.0-betarc.2.0.0",
+	"client_v2.0.0-rc.1.0.0",
+	"client_v2.0.0-rc.1.0.1",
+	"client_v2.0.0-rc.2.0.0",
 	"build-tools_v0.5.2002",
 	"build-tools_v0.4.2001",
 	"build-tools_v0.4.2000",
@@ -359,14 +359,14 @@ describe("generate:buildVersion", () => {
 		.command([
 			"generate:buildVersion",
 			"--fileVersion",
-			"2.0.0-betarc.3.0.0",
+			"2.0.0-rc.3.0.0",
 			"--tag",
 			"client",
 			"--tags",
 			...test_tags,
 		])
 		.it("beta version, prerelease", (ctx) => {
-			expect(ctx.stdout).to.contain("version=2.0.0-dev-betarc.3.0.0.212045");
+			expect(ctx.stdout).to.contain("version=2.0.0-dev-rc.3.0.0.212045");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
@@ -381,7 +381,7 @@ describe("generate:buildVersion", () => {
 		.command([
 			"generate:buildVersion",
 			"--fileVersion",
-			"2.0.0-betarc.3.0.0",
+			"2.0.0-rc.3.0.0",
 			"--tag",
 			"client",
 			"--tags",
@@ -403,12 +403,12 @@ describe("generate:buildVersion", () => {
 		.command([
 			"generate:buildVersion",
 			"--fileVersion",
-			"2.0.0-betarc.3.0.0",
+			"2.0.0-rc.3.0.0",
 			"--tags",
 			...test_tags,
 		])
 		.it("beta version, release", (ctx) => {
-			expect(ctx.stdout).to.contain("version=2.0.0-betarc.3.0.0");
+			expect(ctx.stdout).to.contain("version=2.0.0-rc.3.0.0");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 });
