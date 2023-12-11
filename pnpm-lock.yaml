@@ -78,6 +78,7 @@ importers:
 
   azure/packages/azure-client:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/tree2': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
@@ -134,6 +135,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       axios: 0.26.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -163,6 +165,7 @@ importers:
 
   azure/packages/azure-local-service:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
@@ -178,6 +181,7 @@ importers:
     dependencies:
       tinylicious: 2.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
@@ -192,6 +196,7 @@ importers:
 
   azure/packages/azure-service-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@2.0.0-internal.7.2.0
       '@fluidframework/build-common': ^2.0.3
@@ -214,6 +219,7 @@ importers:
       jsrsasign: 10.9.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/2.0.0-internal.7.2.0
       '@fluidframework/build-common': 2.0.3
@@ -5904,6 +5910,7 @@ importers:
 
   packages/common/client-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -5958,6 +5965,7 @@ importers:
       lodash: 4.17.21
       sha.js: 2.4.11
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -5997,6 +6005,7 @@ importers:
 
   packages/common/container-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6020,6 +6029,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -6036,6 +6046,7 @@ importers:
 
   packages/common/core-interfaces:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6049,6 +6060,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -6064,6 +6076,7 @@ importers:
 
   packages/common/core-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -6088,6 +6101,7 @@ importers:
       sinon: ^7.4.2
       typescript: ~5.1.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -6114,6 +6128,7 @@ importers:
 
   packages/common/driver-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6131,6 +6146,7 @@ importers:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/protocol-definitions': 3.0.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -6145,6 +6161,7 @@ importers:
 
   packages/dds/cell:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -6184,6 +6201,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -6210,6 +6228,7 @@ importers:
 
   packages/dds/counter:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6248,6 +6267,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -6273,6 +6293,7 @@ importers:
 
   packages/dds/ink:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6310,6 +6331,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -6334,6 +6356,7 @@ importers:
 
   packages/dds/map:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -6386,6 +6409,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       path-browserify: 1.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.48.0
@@ -6415,6 +6439,7 @@ importers:
 
   packages/dds/matrix:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
@@ -6474,6 +6499,7 @@ importers:
       events: 3.3.0
       tslib: 1.14.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
@@ -6506,6 +6532,7 @@ importers:
 
   packages/dds/merge-tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
@@ -6554,6 +6581,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-pairwise-generator': link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark': 0.48.0
@@ -6583,6 +6611,7 @@ importers:
 
   packages/dds/ordered-collection:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -6626,6 +6655,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -6719,6 +6749,7 @@ importers:
 
   packages/dds/register-collection:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -6760,6 +6791,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -6786,6 +6818,7 @@ importers:
 
   packages/dds/sequence:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -6839,6 +6872,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.48.0
@@ -6871,6 +6905,7 @@ importers:
 
   packages/dds/shared-object-base:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -6922,6 +6957,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -6950,6 +6986,7 @@ importers:
 
   packages/dds/shared-summary-block:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -6988,6 +7025,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7015,6 +7053,7 @@ importers:
 
   packages/dds/task-manager:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -7062,6 +7101,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
@@ -7151,6 +7191,7 @@ importers:
 
   packages/drivers/debugger:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7178,6 +7219,7 @@ importers:
       '@fluidframework/replay-driver': link:../replay-driver
       jsonschema: 1.4.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7194,6 +7236,7 @@ importers:
 
   packages/drivers/driver-base:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7232,6 +7275,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7257,6 +7301,7 @@ importers:
 
   packages/drivers/driver-web-cache:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7285,6 +7330,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       idb: 6.1.5
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7304,6 +7350,7 @@ importers:
 
   packages/drivers/file-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7332,6 +7379,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/replay-driver': link:../replay-driver
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7347,6 +7395,7 @@ importers:
 
   packages/drivers/fluidapp-odsp-urlResolver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluid-tools/fluidapp-odsp-urlresolver-previous': npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.7.2.0
@@ -7381,6 +7430,7 @@ importers:
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluid-tools/fluidapp-odsp-urlresolver-previous': /@fluid-tools/fluidapp-odsp-urlresolver/2.0.0-internal.7.2.0
       '@fluidframework/build-common': 2.0.3
@@ -7404,6 +7454,7 @@ importers:
 
   packages/drivers/local-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7466,6 +7517,7 @@ importers:
       url: 0.11.3
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7493,6 +7545,7 @@ importers:
 
   packages/drivers/odsp-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7547,6 +7600,7 @@ importers:
       socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7574,6 +7628,7 @@ importers:
 
   packages/drivers/odsp-driver-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7592,6 +7647,7 @@ importers:
     dependencies:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -7609,6 +7665,7 @@ importers:
 
   packages/drivers/odsp-urlResolver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7639,6 +7696,7 @@ importers:
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7662,6 +7720,7 @@ importers:
 
   packages/drivers/replay-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7693,6 +7752,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7711,6 +7771,7 @@ importers:
 
   packages/drivers/routerlicious-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -7773,6 +7834,7 @@ importers:
       url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7804,6 +7866,7 @@ importers:
 
   packages/drivers/routerlicious-urlResolver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7840,6 +7903,7 @@ importers:
       nconf: 0.12.1
       url: 0.11.3
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7865,6 +7929,7 @@ importers:
 
   packages/drivers/tinylicious-driver:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -7901,6 +7966,7 @@ importers:
       jsrsasign: 10.9.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -7924,6 +7990,7 @@ importers:
 
   packages/framework/agent-scheduler:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/agent-scheduler-previous': npm:@fluidframework/agent-scheduler@2.0.0-internal.7.2.0
@@ -7963,6 +8030,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/agent-scheduler-previous': /@fluidframework/agent-scheduler/2.0.0-internal.7.2.0
       '@fluidframework/build-common': 2.0.3
@@ -7979,6 +8047,7 @@ importers:
 
   packages/framework/aqueduct:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct-previous': npm:@fluidframework/aqueduct@2.0.0-internal.7.2.0
@@ -8033,6 +8102,7 @@ importers:
       '@fluidframework/view-interfaces': link:../view-interfaces
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/aqueduct-previous': /@fluidframework/aqueduct/2.0.0-internal.7.2.0
       '@fluidframework/build-common': 2.0.3
@@ -8188,6 +8258,7 @@ importers:
 
   packages/framework/data-object-base:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -8227,6 +8298,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8243,6 +8315,7 @@ importers:
 
   packages/framework/dds-interceptions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8279,6 +8352,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8306,6 +8380,7 @@ importers:
 
   packages/framework/fluid-framework:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8332,6 +8407,7 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8347,6 +8423,7 @@ importers:
 
   packages/framework/fluid-static:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
@@ -8396,6 +8473,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8467,6 +8545,7 @@ importers:
 
   packages/framework/request-handler:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8503,6 +8582,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8530,6 +8610,7 @@ importers:
 
   packages/framework/synthesize:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8557,6 +8638,7 @@ importers:
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8583,6 +8665,7 @@ importers:
 
   packages/framework/tinylicious-client:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -8632,6 +8715,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/aqueduct': link:../aqueduct
       '@fluidframework/build-common': 2.0.3
@@ -8656,6 +8740,7 @@ importers:
 
   packages/framework/undo-redo:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8693,6 +8778,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8721,6 +8807,7 @@ importers:
 
   packages/framework/view-adapters:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8745,6 +8832,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -8762,6 +8850,7 @@ importers:
 
   packages/framework/view-interfaces:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -8780,6 +8869,7 @@ importers:
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -8797,6 +8887,7 @@ importers:
 
   packages/loader/container-loader:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
@@ -8854,6 +8945,7 @@ importers:
       url: 0.11.3
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-loader-utils': link:../test-loader-utils
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -8884,6 +8976,7 @@ importers:
 
   packages/loader/driver-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -8932,6 +9025,7 @@ importers:
       url: 0.11.3
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8992,6 +9086,7 @@ importers:
 
   packages/runtime/container-runtime:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
@@ -9055,6 +9150,7 @@ importers:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
@@ -9085,6 +9181,7 @@ importers:
 
   packages/runtime/container-runtime-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9108,6 +9205,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -9122,6 +9220,7 @@ importers:
 
   packages/runtime/datastore:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -9172,6 +9271,7 @@ importers:
       lodash: 4.17.21
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -9197,6 +9297,7 @@ importers:
 
   packages/runtime/datastore-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9218,6 +9319,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -9232,6 +9334,7 @@ importers:
 
   packages/runtime/runtime-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9254,6 +9357,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.0.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -9269,6 +9373,7 @@ importers:
 
   packages/runtime/runtime-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -9313,6 +9418,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -9338,6 +9444,7 @@ importers:
 
   packages/runtime/test-runtime-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -9390,6 +9497,7 @@ importers:
       jsrsasign: 10.9.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -9742,6 +9850,7 @@ importers:
 
   packages/test/mocha-test-setup:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9765,6 +9874,7 @@ importers:
       mocha: 10.2.0
       source-map-support: 0.5.21
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -9915,6 +10025,7 @@ importers:
 
   packages/test/test-app-insights-logger:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9932,6 +10043,7 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       applicationinsights: 2.9.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -9944,6 +10056,7 @@ importers:
 
   packages/test/test-driver-definitions:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -9965,6 +10078,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0
@@ -10319,6 +10433,7 @@ importers:
 
   packages/test/test-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -10393,6 +10508,7 @@ importers:
       debug: 4.3.4
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -11106,6 +11222,7 @@ importers:
 
   packages/tools/fetch-tool:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluid-tools/fetch-tool-previous': npm:@fluid-tools/fetch-tool@2.0.0-internal.7.2.0
@@ -11150,6 +11267,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/tool-utils': link:../../utils/tool-utils
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluid-tools/fetch-tool-previous': /@fluid-tools/fetch-tool/2.0.0-internal.7.2.0
       '@fluidframework/build-common': 2.0.3
@@ -11163,6 +11281,7 @@ importers:
 
   packages/tools/fluid-runner:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -11204,6 +11323,7 @@ importers:
       json2csv: 5.0.7
       yargs: 13.2.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -11311,6 +11431,7 @@ importers:
 
   packages/tools/webpack-fluid-loader:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluid-tools/webpack-fluid-loader-previous': npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.7.2.0
       '@fluidframework/build-common': ^2.0.3
@@ -11391,6 +11512,7 @@ importers:
       uuid: 9.0.1
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluid-tools/webpack-fluid-loader-previous': /@fluid-tools/webpack-fluid-loader/2.0.0-internal.7.2.0_wvskkfkvbt5crqa4uyjlq44kiy
       '@fluidframework/build-common': 2.0.3
@@ -11420,6 +11542,7 @@ importers:
 
   packages/utils/odsp-doclib-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -11459,6 +11582,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../telemetry-utils
       node-fetch: 2.7.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -11483,6 +11607,7 @@ importers:
 
   packages/utils/telemetry-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
@@ -11523,6 +11648,7 @@ importers:
       events: 3.3.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -11550,6 +11676,7 @@ importers:
 
   packages/utils/tool-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.28.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
@@ -11590,6 +11717,7 @@ importers:
       jwt-decode: 2.2.0
       proper-lockfile: 4.1.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -11630,6 +11758,35 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.20
+    dev: true
+
+  /@andrewbranch/untar.js/1.0.3:
+    resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
+    dev: true
+
+  /@arethetypeswrong/cli/0.13.3:
+    resolution: {integrity: sha512-lA29j9fkRGq+hNE3zQGxD/d8WmjhimSaPU2887CBe0Yv3C1UbIWvy51mYerp3/NoevjBLKSWhHmP5oY/eavtjQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+    dependencies:
+      '@arethetypeswrong/core': 0.13.3
+      chalk: 4.1.2
+      cli-table3: 0.6.3
+      commander: 10.0.1
+      marked: 9.1.6
+      marked-terminal: 6.1.0_marked@9.1.6
+      semver: 7.5.4
+    dev: true
+
+  /@arethetypeswrong/core/0.13.3:
+    resolution: {integrity: sha512-oxa26D3z5DEv9LGzfJWV/6PhQd170dFfDOXl9J3cGRNLo2B68zj6/YOD1RJaYF/kmxechdXT1XyGUPOtkXv8Lg==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      fflate: 0.7.4
+      semver: 7.5.4
+      typescript: 5.3.2
+      validate-npm-package-name: 5.0.0
     dev: true
 
   /@azure/abort-controller/1.1.0:
@@ -23477,6 +23634,13 @@ packages:
     dependencies:
       type-fest: 0.21.3
 
+  /ansi-escapes/6.2.0:
+    resolution: {integrity: sha512-kzRaCqXnpzWs+3z5ABPQiVke+iq0KXkHo8xiWV4RPTi5Yli0l97BEQuhXV1s7+aSU/fu1kUuxgS4MsQ0fRuygw==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      type-fest: 3.13.1
+    dev: true
+
   /ansi-html-community/0.0.8:
     resolution: {integrity: sha512-1APHAyr3+PCamwNw3bXCPp4HFLONZt/yIH0sZp0/469KWNTEy+qN5jQ3GVX6DMZ1UXAi34yVwtTeaG/HpBuuzw==}
     engines: {'0': node >= 0.8.0}
@@ -27761,6 +27925,10 @@ packages:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
     dev: true
 
+  /emojilib/2.4.0:
+    resolution: {integrity: sha512-5U0rVMU5Y2n2+ykNLQqMoqklN9ICBT/KsvC1Gz6vqHbz2AXXGkG+Pm5rMWk/8Vjrr/mY9985Hi8DYzn1F09Nyw==}
+    dev: true
+
   /emojis-list/3.0.0:
     resolution: {integrity: sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==}
     engines: {node: '>= 4'}
@@ -29285,6 +29453,10 @@ packages:
 
   /fetch-retry/5.0.6:
     resolution: {integrity: sha512-3yurQZ2hD9VISAhJJP9bpYFNQrHHBXE2JxxjY5aLEcDi46RmAzJE2OC9FAde0yis5ElW0jTTzs0zfg/Cca4XqQ==}
+    dev: true
+
+  /fflate/0.7.4:
+    resolution: {integrity: sha512-5u2V/CDW15QM1XbbgS+0DfPxVB+jUKhWEKuuFuHncbk3tEEqzmoXL+2KyOFuKGqOnmdIy0/davWF1CkuwtibCw==}
     dev: true
 
   /figgy-pudding/3.5.2:
@@ -34699,6 +34871,21 @@ packages:
       repeat-string: 1.6.1
     dev: true
 
+  /marked-terminal/6.1.0_marked@9.1.6:
+    resolution: {integrity: sha512-QaCSF6NV82oo6K0szEnmc65ooDeW0T/Adcyf0fcW+Hto2GT1VADFg8dn1zaeHqzj65fqDH1hMNChGNRaC/lbkA==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      marked: '>=1 <11'
+    dependencies:
+      ansi-escapes: 6.2.0
+      cardinal: 2.1.1
+      chalk: 5.3.0
+      cli-table3: 0.6.3
+      marked: 9.1.6
+      node-emoji: 2.1.3
+      supports-hyperlinks: 3.0.0
+    dev: true
+
   /marked/0.4.0:
     resolution: {integrity: sha512-tMsdNBgOsrUophCAFQl0XPe6Zqk/uy9gnue+jIIKhykO51hxyu6uNx7zBPy0+y/WKYVZZMspV9YeXLNdKk+iYw==}
     engines: {node: '>=0.10.0'}
@@ -34716,6 +34903,12 @@ packages:
     engines: {node: '>= 12'}
     hasBin: true
     dev: false
+
+  /marked/9.1.6:
+    resolution: {integrity: sha512-jcByLnIFkd5gSXZmjNvS1TlmRhCXZjIzHYlaGkPlLIekG55JDR2Z4va9tZwCiP+/RDERiNhMOFu01xd6O5ct1Q==}
+    engines: {node: '>= 16'}
+    hasBin: true
+    dev: true
 
   /marky/1.2.5:
     resolution: {integrity: sha512-q9JtQJKjpsVxCRVgQ+WapguSbKC3SQ5HEzFGPAJMStgh3QjCawp00UKv3MTTAArTmGmmPUvllHZoNbZ3gs0I+Q==}
@@ -35955,6 +36148,16 @@ packages:
     engines: {node: '>= 0.10.5'}
     dependencies:
       minimatch: 3.1.2
+    dev: true
+
+  /node-emoji/2.1.3:
+    resolution: {integrity: sha512-E2WEOVsgs7O16zsURJ/eH8BqhF029wGpEOnv7Urwdo2wmQanOACwJQh0devF9D9RhoZru0+9JXIS0dBXIAz+lA==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@sindresorhus/is': 4.6.0
+      char-regex: 1.0.2
+      emojilib: 2.4.0
+      skin-tone: 2.0.0
     dev: true
 
   /node-fetch/2.7.0:
@@ -40340,6 +40543,13 @@ packages:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
     dev: true
 
+  /skin-tone/2.0.0:
+    resolution: {integrity: sha512-kUMbT1oBJCpgrnKoSr0o6wPtvRWT9W9UKvGLwfJYO2WuahZRHOpEyL1ckyMGgMWh0UdpmaoFqKKD29WTomNEGA==}
+    engines: {node: '>=8'}
+    dependencies:
+      unicode-emoji-modifier-base: 1.0.0
+    dev: true
+
   /slash/2.0.0:
     resolution: {integrity: sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==}
     engines: {node: '>=6'}
@@ -41333,6 +41543,14 @@ packages:
     dependencies:
       has-flag: 4.0.0
       supports-color: 7.2.0
+
+  /supports-hyperlinks/3.0.0:
+    resolution: {integrity: sha512-QBDPHyPQDRTy9ku4URNGY5Lah8PAaXs6tAAwp55sL5WCsSW7GIfdf6W5ixfziW+t7wh3GVvHyHHyQ1ESsoRvaA==}
+    engines: {node: '>=14.18'}
+    dependencies:
+      has-flag: 4.0.0
+      supports-color: 7.2.0
+    dev: true
 
   /supports-preserve-symlinks-flag/1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
@@ -42365,6 +42583,11 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
+  /type-fest/3.13.1:
+    resolution: {integrity: sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==}
+    engines: {node: '>=14.16'}
+    dev: true
+
   /type-is/1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
     engines: {node: '>= 0.6'}
@@ -42598,6 +42821,11 @@ packages:
 
   /unicode-canonical-property-names-ecmascript/2.0.0:
     resolution: {integrity: sha512-yY5PpDlfVIU5+y/BSCxAJRBIS1Zc2dDG3Ujq+sR0U+JjUevW2JhocOF+soROYDSaAezOzOKuyyixhD6mBknSmQ==}
+    engines: {node: '>=4'}
+    dev: true
+
+  /unicode-emoji-modifier-base/1.0.0:
+    resolution: {integrity: sha512-yLSH4py7oFH3oG/9K+XWrz1pSi3dfUrWEnInbxMfArOfc1+33BlGPQtLsOYwvdMy11AwUBetYuaRxSPqgkq+8g==}
     engines: {node: '>=4'}
     dev: true
 
