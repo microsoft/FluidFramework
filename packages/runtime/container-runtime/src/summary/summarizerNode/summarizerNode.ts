@@ -116,8 +116,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
-		const nodeLatestSummarySequenceNumber = this._latestSummary?.referenceSequenceNumber ?? 0;
-		if (latestSummarySequenceNumber !== nodeLatestSummarySequenceNumber) {
+		const nodeLatestSummarySequenceNumber = this._latestSummary?.referenceSequenceNumber;
+		if (
+			nodeLatestSummarySequenceNumber !== undefined &&
+			latestSummarySequenceNumber !== nodeLatestSummarySequenceNumber
+		) {
 			const error = new LoggingError("LatestSummarySequenceNumberMismatch", {
 				latestSummarySequenceNumber,
 				nodeLatestSummarySequenceNumber,
@@ -441,6 +444,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 						maybeSummaryNode.referenceSequenceNumber,
 					);
 					isSummaryTracked = true;
+				}
+				if (this.pendingSummaries.size > 0) {
+					this.logger.sendErrorEvent(
+						{ eventName: "PendingSummariesNotAcked" },
+						new Error("PendingSummariesNotAcked"),
+					);
 				}
 				event.end({ ...eventProps, isSummaryNewer, pendingSummaryFound: isSummaryTracked });
 				return { isSummaryTracked, isSummaryNewer };

@@ -247,7 +247,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			() => {
+			async (options: IRefreshSummaryAckOptions) => {
+				await this.refreshLatestSummaryAckCallback(options);
 				this.totalSuccessfulAttempts++;
 			},
 			this.summaryWatcher,

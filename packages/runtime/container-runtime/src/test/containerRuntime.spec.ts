@@ -1565,6 +1565,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummarySequenceNumber: 0,
 				});
 				assert(summarizeResult.stage === "submit", "Summary did not succeed");
 			});
@@ -1577,6 +1578,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: cancelledSummaryToken,
+					latestSummarySequenceNumber: 0,
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
@@ -1594,6 +1596,7 @@ describe("Runtime", () => {
 				const summarizeResultP = containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummarySequenceNumber: 0,
 				});
 
 				// Advance the clock by the time that container runtime would wait for pending ops to be processed.
@@ -1629,6 +1632,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummarySequenceNumber: 0,
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
@@ -1673,6 +1677,7 @@ describe("Runtime", () => {
 				const summarizeResultP = containerRuntime.submitSummary({
 					summaryLogger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummarySequenceNumber: 0,
 				});
 
 				// Advance the clock by 1 ms less than the time waited for pending ops to be processed. This will allow

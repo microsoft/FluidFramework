@@ -132,6 +132,9 @@
 			},
 			"InterfaceDeclaration_IGCStats": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISubmitSummaryOptions": {
+				"forwardCompat": false
 			}
 		}
 	}
