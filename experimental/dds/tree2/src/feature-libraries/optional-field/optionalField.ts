@@ -214,7 +214,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (originalSrc !== undefined) {
 					const [dst2, existingTarget] =
 						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
-					assert(areEqualRegisterIds(dst2, src), "expected consistent backward mapping");
+					assert(
+						areEqualRegisterIds(dst2, src),
+						0x855 /* expected consistent backward mapping */,
+					);
 					currentTarget = existingTarget;
 				} else {
 					originalSrc = src;
@@ -300,7 +303,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
 			assert(
 				src === "self" || dst === "self",
-				"Invert is not currently supported for changes that transfer nodes between non-self registers.",
+				0x856 /* Invert is not currently supported for changes that transfer nodes between non-self registers. */,
 			);
 			if (src !== "self" && dst === "self") {
 				inverseEmptiesSelf = true;
@@ -365,7 +368,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		for (const [src, dst, target] of moves) {
 			if (target === "cellTargeting") {
-				assert(src === "self", "Cell targeting moves must have self as a source");
+				assert(src === "self", 0x857 /* Cell targeting moves must have self as a source */);
 				// TODO: Should we drop cell targeting / node targeting and just special-case 'self'? Might be simpler to understand.
 				// Holding off on making a call until AB#6298 is addressed (possibly support for rebasing transactions makes the
 				// answer to this more obvious).

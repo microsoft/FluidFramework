@@ -392,11 +392,11 @@ export class SharedMatrix<T = any>
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
 	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, "reentrant code");
+		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
 		this.reentrantCount++;
 		callback();
 		this.reentrantCount--;
-		assert(this.reentrantCount === 0, "reentrant code on exit");
+		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
 	}
 
 	private submitVectorMessage(
@@ -746,9 +746,9 @@ export class SharedMatrix<T = any>
 	) {
 		assert(
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
-			"should be in Fww mode when calling this method",
+			0x85f /* should be in Fww mode when calling this method */,
 		);
-		assert(message.clientId !== null, "clientId should not be null");
+		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
 		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
@@ -789,7 +789,7 @@ export class SharedMatrix<T = any>
 					this.setCellLwwToFwwPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
 				}
 
-				assert(rawMessage.clientId !== null, "clientId should not be null!!");
+				assert(rawMessage.clientId !== null, 0x861 /* clientId should not be null!! */);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;

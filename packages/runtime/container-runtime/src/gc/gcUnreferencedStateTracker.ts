@@ -63,7 +63,7 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.SweepReady;
 			assert(
 				!this.inactiveTimer.hasTimer && !this.tombstoneTimer.hasTimer,
-				"inactiveTimer or tombstoneTimer still running after sweepTimer fired!",
+				0x863 /* inactiveTimer or tombstoneTimer still running after sweepTimer fired! */,
 			);
 		});
 
@@ -71,7 +71,7 @@ export class UnreferencedStateTracker {
 			this._state = UnreferencedState.TombstoneReady;
 			assert(
 				!this.inactiveTimer.hasTimer,
-				"inactiveTimer still running after tombstoneTimer fired!",
+				0x864 /* inactiveTimer still running after tombstoneTimer fired! */,
 			); // aka 0x3b1
 
 			if (this.sweepGracePeriodMs > 0) {
