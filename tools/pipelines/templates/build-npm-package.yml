@@ -244,9 +244,9 @@ extends:
 
                     Computed variables:
                       canRelease=$(canRelease)
-                      pnpmStorePath=$(pnpmStorePath)
-                      release=$(release)"
+                      release=$(release)
                       shouldPublish=$(shouldPublish)
+                    "
 
                     # Target Branch variable (PR policy related)
                     if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
