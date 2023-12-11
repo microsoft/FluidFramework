@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import BTree from "sorted-btree";
 import { createEmitter, ISubscribable } from "../../events";
+import { compareStrings } from "../../util";
 import {
+	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
@@ -49,14 +52,16 @@ export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, Tre
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
 export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
-	protected readonly data: MutableSchemaData;
+	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected readonly events = createEmitter<SchemaEvents>();
 
 	/**
-	 * For now, the schema are just scored in maps.
-	 * There are a couple reasons we might not want this simple solution long term:
-	 * 1. We might want an easy/fast copy.
-	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
+	 * Copies in the provided schema. If `data` is an InMemoryStoredSchemaRepository, it will be cheap-cloned.
+	 * Otherwise, it will be deep-cloned.
+	 *
+	 * We might not want to store schema in maps long term, as we might want a way to reserve a
+	 * large space of schema IDs within a schema.
 	 * The way mapFields has been structured mitigates the need for this, but it still might be useful.
 	 *
 	 * (ex: someone using data as field identifiers might want to
@@ -65,51 +70,77 @@ export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
 	public constructor(data?: TreeStoredSchema) {
-		this.data = cloneSchemaData(data ?? defaultSchemaData);
+		this.rootFieldSchemaData = storedEmptyFieldSchema;
+		this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
+			[],
+			compareStrings,
+		);
+		if (data !== undefined) {
+			this.cloneData(data);
+		}
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public get rootFieldSchema(): TreeFieldStoredSchema {
-		return this.data.rootFieldSchema;
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+		// Btree implements iterator, but not in a type-safe way
+		return this.nodeSchemaData as unknown as ReadonlyMap<
+			TreeNodeSchemaIdentifier,
+			TreeNodeStoredSchema
+		>;
 	}
 
-	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-		return this.data.nodeSchema;
+	public get rootFieldSchema(): TreeFieldStoredSchema {
+		return this.rootFieldSchemaData;
 	}
 
 	public update(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-
-		this.data.rootFieldSchema = newSchema.rootFieldSchema;
-
-		this.data.nodeSchema.clear();
-		for (const [name, schema] of newSchema.nodeSchema) {
-			this.data.nodeSchema.set(name, schema);
-		}
+		// In the future, we could use btree's delta functionality to do a more efficient update
+		this.cloneData(newSchema);
 		this.events.emit("afterSchemaChange", newSchema);
 	}
-}
 
-export interface MutableSchemaData extends TreeStoredSchema {
-	rootFieldSchema: TreeFieldStoredSchema;
-	nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	private cloneData(data: TreeStoredSchema): void {
+		if (data instanceof InMemoryStoredSchemaRepository) {
+			this.rootFieldSchemaData = data.rootFieldSchema;
+			this.nodeSchemaData = data.nodeSchemaData.clone();
+		} else {
+			this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+			this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
+		}
+	}
 }
 
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 	return data.nodeSchema.size === 0;
 }
 
-export const defaultSchemaData: TreeStoredSchema = {
-	nodeSchema: new Map(),
-	rootFieldSchema: storedEmptyFieldSchema,
-};
+function cloneNodeSchemaData(
+	nodeSchema: StoredSchemaCollection["nodeSchema"],
+): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [];
+	for (const [name, schema] of nodeSchema.entries()) {
+		entries.push([
+			name,
+			{
+				mapFields:
+					schema.mapFields === undefined
+						? undefined
+						: cloneFieldSchemaData(schema.mapFields),
+				objectNodeFields: new Map(schema.objectNodeFields),
+				leafValue: schema.leafValue,
+			},
+		]);
+	}
+	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
+}
 
-export function cloneSchemaData(data: TreeStoredSchema): MutableSchemaData {
+function cloneFieldSchemaData(fieldSchema: TreeFieldStoredSchema): TreeFieldStoredSchema {
 	return {
-		nodeSchema: new Map(data?.nodeSchema ?? []),
-		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
+		kind: fieldSchema.kind,
+		types: fieldSchema.types === undefined ? undefined : new Set(fieldSchema.types),
 	};
 }

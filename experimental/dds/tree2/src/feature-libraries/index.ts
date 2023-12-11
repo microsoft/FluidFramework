@@ -224,6 +224,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	intoDelta,
+	relevantRemovedRoots,
 } from "./default-schema";
 
 export {

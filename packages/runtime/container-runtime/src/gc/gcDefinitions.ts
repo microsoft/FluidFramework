@@ -20,6 +20,7 @@ import {
 	IRefreshSummaryResult,
 } from "../summary";
 import { RuntimeHeaderData } from "../containerRuntime";
+import { ContainerRuntimeGCMessage } from "../messageTypes";
 
 /**
  * @alpha
@@ -244,6 +245,37 @@ export const GCNodeType = {
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
+ * The type of a garbage collection message.
+ * @internal
+ */
+export const GarbageCollectionMessageType = {
+	/** Message sent directing GC to delete the given nodes */
+	Sweep: "Sweep",
+} as const;
+
+/**
+ * @internal
+ */
+export type GarbageCollectionMessageType =
+	(typeof GarbageCollectionMessageType)[keyof typeof GarbageCollectionMessageType];
+
+/**
+ * The garbage collection sweep message.
+ * @internal
+ */
+export interface ISweepMessage {
+	type: "Sweep";
+	// The ids of nodes that are deleted.
+	deletedNodeIds: string[];
+}
+
+/**
+ * Type for a message to be used for sending / received garbage collection messages.
+ * @internal
+ */
+export type GarbageCollectionMessage = ISweepMessage;
+
+/**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
@@ -252,17 +284,17 @@ export interface IGarbageCollectionRuntime {
 	/** Returns the garbage collection data of the runtime. */
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
-	updateUsedRoutes(usedRoutes: string[]): void;
+	updateUsedRoutes(usedRoutes: readonly string[]): void;
 	/** After GC has run, called to notify the runtime of routes that are unused in it. */
-	updateUnusedRoutes(unusedRoutes: string[]): void;
+	updateUnusedRoutes(unusedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
 	 * should return the routes of nodes that were deleted.
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 */
-	deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
+	deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
 	/** Called to notify the runtime of routes that are tombstones. */
-	updateTombstonedRoutes(tombstoneRoutes: string[]): void;
+	updateTombstonedRoutes(tombstoneRoutes: readonly string[]): void;
 	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
 	getCurrentReferenceTimestampMs(): number | undefined;
 	/** Returns the type of the GC node. */
@@ -322,6 +354,8 @@ export interface IGarbageCollector {
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	/** Called to process a garbage collection message. */
+	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
@@ -342,6 +376,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly activeConnection: () => boolean;
+	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 }
 
 /**
