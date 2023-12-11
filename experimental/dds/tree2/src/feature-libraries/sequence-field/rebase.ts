@@ -154,11 +154,7 @@ function rebaseMarkList<TNodeChange>(
 
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
-		if (
-			(markEmptiesCells(baseMark) ||
-				isImpactfulCellRename(baseMark, baseRevision, metadata)) &&
-			!isInverseAttach(baseMark)
-		) {
+		if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, baseRevision, metadata)) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(baseMark, baseRevision, undefined);
@@ -213,18 +209,6 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	}
 
 	return factory.list;
-}
-
-function isInverseAttach(effect: MarkEffect): boolean {
-	switch (effect.type) {
-		case "Delete":
-		case "MoveOut":
-			return effect.detachIdOverride !== undefined;
-		case "AttachAndDetach":
-			return isInverseAttach(effect.detach);
-		default:
-			return false;
-	}
 }
 
 /**
@@ -714,7 +698,12 @@ function updateLineageState(
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
 	for (const revision of detachBlocks.keys()) {
 		const revisionIndex = getRevisionIndex(metadata, revision);
-		if (attachRevisionIndex <= revisionIndex && revisionIndex < detachRevisionIndex) {
+		// revisionIndex can be -Infinity if it is from a detachIdOverride
+		if (
+			revisionIndex > -Infinity &&
+			attachRevisionIndex <= revisionIndex &&
+			revisionIndex < detachRevisionIndex
+		) {
 			detachBlocks.delete(revision);
 		}
 	}
@@ -876,8 +865,9 @@ function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): vo
 		mark.cellId !== undefined,
 		0x74d /* Can only set adjacent cells on a mark with cell ID */,
 	);
-	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
-	mark.cellId.adjacentCells = adjacentCells;
+	if (mark.cellId.adjacentCells === undefined) {
+		mark.cellId.adjacentCells = adjacentCells;
+	}
 }
 
 function shouldReceiveLineage(
@@ -896,6 +886,13 @@ function shouldReceiveLineage(
 	const rollbackOf = metadata.tryGetInfo(detachRevision)?.rollbackOf;
 	const detachIntention = rollbackOf ?? detachRevision;
 	const detachRevisionIndex = getRevisionIndex(metadata, detachIntention);
+	if (detachRevisionIndex === undefined) {
+		// This case means that these cells are being "re-detached" through a detachIdOverride.
+		// We could use the revision of the re-detach to determine whether or not this cell needs this lineage entry.
+		// But to be conservative we always add lineage here.
+		return true;
+	}
+
 	const isRollback = rollbackOf !== undefined;
 	return isRollback
 		? detachRevisionIndex < cellRevisionIndex
