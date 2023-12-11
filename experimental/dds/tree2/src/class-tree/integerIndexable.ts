@@ -58,7 +58,7 @@ export function integerIndexable<T, TTarget extends object>(
 		get: (target, key, receiver): T | unknown => {
 			const index = keyToNumber(key);
 			if (index !== undefined) {
-				assert(isValidIndex(index), "invalid index");
+				assert(isValidIndex(index), 0x839 /* invalid index */);
 				return provider.read(index);
 			}
 
@@ -100,7 +100,7 @@ export function integerIndexable<T, TTarget extends object>(
 		set: (target, key, newValue): boolean => {
 			const index = keyToNumber(key);
 			if (index !== undefined) {
-				assert(isValidIndex(index), "invalid index");
+				assert(isValidIndex(index), 0x83a /* invalid index */);
 				return provider.write(index, newValue);
 			}
 			return Reflect.set(target, key, newValue);

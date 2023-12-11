@@ -920,7 +920,7 @@ function compareCellPositions(
 	const baseLength = baseMark.count;
 	assert(baseId?.revision !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getInputCellId(newMark, undefined, metadata);
-	assert(newId !== undefined, "newMark should have cell ID");
+	assert(newId !== undefined, 0x85a /* newMark should have cell ID */);
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		const cmp = compareCellsFromSameRevision(baseId, baseMark.count, newId, newMark.count);
