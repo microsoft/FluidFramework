@@ -16,6 +16,11 @@ import { OdspTestTokenProvider } from "./OdspTokenFactory";
  * Interface representing the credentials required for testing odsp-client.
  */
 export interface OdspTestCredentials {
+	username: string;
+	password: string;
+}
+
+export interface OdspCredentials {
 	clientId: string;
 	clientSecret: string;
 	username: string;
@@ -33,25 +38,36 @@ export function createOdspClient(
 ): OdspClient {
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
-	if (siteUrl === "" || siteUrl === undefined) {
+	const clientId = process.env.odsp__client__client__id as string;
+	const clientSecret = process.env.odsp__client__client__secret as string;
+	if (siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
-	if (driveId === "" || driveId === undefined) {
+	if (driveId === undefined) {
 		throw new Error("RaaS drive id is missing");
 	}
 
-	if (
-		creds.clientId === undefined ||
-		creds.clientSecret === undefined ||
-		creds.username === undefined ||
-		creds.password === undefined
-	) {
+	if (clientId === undefined) {
+		throw new Error("client id is missing");
+	}
+
+	if (clientSecret === undefined) {
+		throw new Error("client secret is missing");
+	}
+
+	if (creds.username === undefined || creds.password === undefined) {
 		throw new Error("Some of the odsp credentials are undefined");
 	}
 
+	const credentials: OdspCredentials = {
+		clientId,
+		clientSecret,
+		...creds,
+	};
+
 	const connectionProps: OdspConnectionConfig = {
 		siteUrl,
-		tokenProvider: new OdspTestTokenProvider(creds),
+		tokenProvider: new OdspTestTokenProvider(credentials),
 		driveId,
 	};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {

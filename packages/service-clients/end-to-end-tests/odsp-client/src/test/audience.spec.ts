@@ -23,15 +23,11 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
  * Default test credentials for odsp-client.
  */
 const client1Creds: OdspTestCredentials = {
-	clientId: "process.env.odsp__client__client__id",
-	clientSecret: "process.env.odsp__client__client__secret",
 	username: "process.env.odsp__client__login__username",
 	password: "process.env.odsp__client__login__password",
 };
 
 const client2Creds: OdspTestCredentials = {
-	clientId: "process.env.odsp__client2__client__id",
-	clientSecret: "process.env.odsp__client2__client__secret",
 	username: "process.env.odsp__client2__login__username",
 	password: "process.env.odsp__client2__login__password",
 };
