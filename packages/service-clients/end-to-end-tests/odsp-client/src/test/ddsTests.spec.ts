@@ -16,8 +16,8 @@ import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
 
 const clientCreds: OdspTestCredentials = {
-	username: "process.env.odsp__client__login__username",
-	password: "process.env.odsp__client__login__password",
+	username: process.env.odsp__client__login__username as string,
+	password: process.env.odsp__client__login__password as string,
 };
 
 describe("Fluid data updates", () => {
