@@ -205,7 +205,7 @@ describe("Garbage Collection configurations", () => {
 				{ [gcGenerationOptionName]: 0 },
 			);
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect"); //* Follow-up: Change behavior to false or undefined
+			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert.equal(
 				gc.summaryStateTracker.latestSummaryGCVersion,
 				0,
@@ -365,19 +365,6 @@ describe("Garbage Collection configurations", () => {
 		it("gcAllowed false", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-		});
-		//* Double-check this one
-		it("gcGeneration specified, gcAllowed false", () => {
-			assert.throws(
-				() => {
-					gc = createGcWithPrivateMembers(undefined /* metadata */, {
-						gcAllowed: false,
-						[gcGenerationOptionName]: 1,
-					});
-				},
-				(e: IErrorBase) => e.errorType === "usageError",
-				"Should be unsupported",
-			);
 		});
 		it("Sweep enabled via gcGeneration, gcAllowed true", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {

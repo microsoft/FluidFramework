@@ -16,8 +16,6 @@ import {
 	disableTombstoneKey,
 	GCFeatureMatrix,
 	gcTestModeKey,
-	// eslint-disable-next-line import/no-deprecated
-	gcTombstoneGenerationOptionName,
 	GCVersion,
 	gcVersionUpgradeToV4Key,
 	IGarbageCollectorConfigs,
@@ -77,15 +75,6 @@ export function generateGCConfigs(
 			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
-		const tombstoneGeneration = createParams.gcOptions[gcTombstoneGenerationOptionName];
-		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
-
-		//* Switch to enableGCSweep? Or keep this statement about generation?
-		// Sweep should not be enabled (via gcGeneration value) without enabling GC mark phase.
-		if (gcGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
-			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
-		}
-
 		// This Test Override only applies for new containers
 		const testOverrideSweepTimeoutMs = mc.config.getNumber(
 			"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs",
@@ -102,11 +91,9 @@ export function generateGCConfigs(
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (tombstoneGeneration !== undefined || gcGeneration !== undefined) {
-			persistedGcFeatureMatrix = {
-				tombstoneGeneration,
-				gcGeneration,
-			};
+		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
+		if (gcGeneration !== undefined) {
+			persistedGcFeatureMatrix = { gcGeneration };
 		}
 	}
 
@@ -170,7 +157,6 @@ export function generateGCConfigs(
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
-	//* Get rid of tombstoneMode in this PR?
 	// Whether we are running in tombstone mode. If disabled, tombstone data will not be written to or read from snapshots,
 	// and objects will not be marked as tombstoned even if they pass to the "TombstoneReady" state during the session.
 	const tombstoneMode = mc.config.getBoolean(disableTombstoneKey) !== true;

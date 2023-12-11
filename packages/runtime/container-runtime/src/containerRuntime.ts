@@ -164,8 +164,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import {
 	GarbageCollector,
 	GCNodeType,
-	// eslint-disable-next-line import/no-deprecated
-	gcTombstoneGenerationOptionName,
+	gcGenerationOptionName,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -1343,10 +1342,8 @@ export class ContainerRuntime
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			//* Update this... why is this here not in GC class?
 			inputs: JSON.stringify({
-				gcOptions_gcTombstoneGeneration:
-					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
 

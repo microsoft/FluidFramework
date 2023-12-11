@@ -266,7 +266,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 // @alpha (undocumented)
 export interface GCFeatureMatrix {
     gcGeneration?: number;
-    // @deprecated
     tombstoneGeneration?: number;
 }
 
