@@ -349,6 +349,7 @@ extends:
                       targetType: inline
                       workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
                       script: |
+                        mkdir -p $(Build.ArtifactStagingDirectory)/tinyliciousLog
                         cp tinylicious.log $(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log
 
                   # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
