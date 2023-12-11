@@ -240,6 +240,8 @@ describe("Garbage Collection Tests", () => {
 
 			// Sweep enabled
 			gc = createGarbageCollector({ gcOptions: { [gcSweepGenerationOptionName]: 1 } });
+			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
+			// The original behavior of the function is preserved, but we can check how it was called.
 			const spies = {
 				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
 				submitMessage: spy(gc, "submitMessage"),
@@ -253,6 +255,7 @@ describe("Garbage Collection Tests", () => {
 			clock.tick(10);
 			await gc.collectGarbage({});
 
+			// Erase the spy's tracking of calls up to this point - I just want to observe what happens next.
 			spies.updateTombstonedRoutes.resetHistory();
 
 			// Skip to TombstoneReady state

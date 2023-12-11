@@ -709,27 +709,30 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// If sweep is disabled, we'll tombstone both tombstone-ready and sweep-ready nodes.
-		const { toTombstone, toDelete } = this.configs.shouldRunSweep
+		// This is important because a container may never load during a node's Sweep Grace Period,
+		// so that node would directly become sweep-ready skipping over tombstone-ready state,
+		// but should be Tombstoned since Sweep is disabled.
+		const { nodesToTombstone, nodesToDelete } = this.configs.shouldRunSweep
 			? {
-					toTombstone: [...tombstoneReadyNodes],
-					toDelete: [...sweepReadyNodes],
+					nodesToTombstone: [...tombstoneReadyNodes],
+					nodesToDelete: [...sweepReadyNodes],
 			  }
 			: {
-					toTombstone: [...tombstoneReadyNodes, ...sweepReadyNodes],
-					toDelete: [],
+					nodesToTombstone: [...tombstoneReadyNodes, ...sweepReadyNodes],
+					nodesToDelete: [],
 			  };
 
 		if (this.configs.tombstoneMode) {
-			this.tombstones = toTombstone;
+			this.tombstones = nodesToTombstone;
 			// If we are running in GC tombstone mode, update tombstoned routes.
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-		if (this.configs.shouldRunSweep && toDelete.length > 0) {
+		if (this.configs.shouldRunSweep && nodesToDelete.length > 0) {
 			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
 			// to data store only, all its DDSes are deleted along with it. The DDS ids will be retrieved from the
 			// local state when processing the op.
-			const sweepReadyDSAndBlobs = toDelete.filter((nodeId) => {
+			const sweepReadyDSAndBlobs = nodesToDelete.filter((nodeId) => {
 				const nodeType = this.runtime.getNodeType(nodeId);
 				return nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob;
 			});
