@@ -4,10 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag } from "../../core";
+import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./format";
+import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
 import { MoveMarkEffect } from "./helperTypes";
 
@@ -21,7 +21,7 @@ export interface MoveEffect<T> {
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: TaggedChange<T>;
 
 	/**
 	 * A mark which should be moved to the same position as this mark.
@@ -53,7 +53,7 @@ export interface MovePartition<TNodeChange> {
 	// Undefined means the partition is the same size as the input.
 	count?: number;
 	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TNodeChange;
+	modifyAfter?: TaggedChange<TNodeChange>;
 }
 
 export function setMoveEffect<T>(
@@ -143,7 +143,7 @@ function applyMoveEffectsToSource<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T> {
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
@@ -215,7 +215,7 @@ export function applyMoveEffectsToMark<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T>[] {
 	if (isAttachAndDetachEffect(mark)) {
 		if (isMoveIn(mark.attach)) {
@@ -441,7 +441,7 @@ export function getModifyAfter<T>(
 	id: MoveId,
 	count: number,
 	consumeEffect: boolean = true,
-): T | undefined {
+): TaggedChange<T> | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 

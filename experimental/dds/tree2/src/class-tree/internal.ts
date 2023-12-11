@@ -15,11 +15,6 @@ export {
 	AllowedTypes,
 	FieldSchema,
 	ApplyKind,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeBuilderData,
 } from "./schemaTypes";
-
-// Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
-import * as testRecursiveDomain from "./testRecursiveDomain";
-export { testRecursiveDomain };

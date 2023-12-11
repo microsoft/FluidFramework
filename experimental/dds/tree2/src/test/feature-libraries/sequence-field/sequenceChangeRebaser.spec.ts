@@ -8,7 +8,6 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
-	emptyFieldChanges,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
@@ -28,10 +27,10 @@ import {
 	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
-	toDelta,
 	withNormalizedLineage,
 	withoutLineage,
 	rebase,
+	prune,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -274,8 +273,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 					tagRollbackInverse(inv, tag6, taggedChange.revision),
 				];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -291,8 +290,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 				tracker.apply(inv);
 				const changes = [inv, taggedChange];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, emptyFieldChanges);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -489,15 +488,15 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 
 describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 	runExhaustiveComposeRebaseSuite(
-		[{ content: { length: 4, numNodes: [1, 3], maxIndex: 2 } }],
+		[{ content: { length: 4, numNodes: [1], maxIndex: 2 } }],
 		generateChildStates,
 		{
 			rebase,
 			invert,
-			compose: (changes, metadata) => compose(changes),
+			compose: (changes, metadata) => compose(changes, metadata),
 			rebaseComposed: (metadata, change, ...baseChanges) => {
-				const composedChanges = compose(baseChanges);
-				return rebase(change, makeAnonChange(composedChanges));
+				const composedChanges = compose(baseChanges, metadata);
+				return rebase(change, makeAnonChange(composedChanges), metadata);
 			},
 			assertEqual: (change1, change2) => {
 				if (change1 === undefined && change2 === undefined) {
@@ -515,7 +514,9 @@ describe.skip("SequenceField - State-based Rebaser Axioms", () => {
 			},
 		},
 		{
-			groupSubSuites: true,
+			groupSubSuites: false,
+			numberOfEditsToVerifyAssociativity: 3,
+			skipRebaseOverCompose: true,
 		},
 	);
 });
@@ -573,8 +574,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
+		assert.deepEqual(actual, []);
 	});
 
 	// See bug 4104
@@ -634,6 +634,67 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
 		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
 		assert.deepEqual(insertB2.change, expected);
+	});
+});
+
+describe("SequenceField - Sandwich composing", () => {
+	it("insert ↷ redundant delete", () => {
+		const insertA = tagChange(
+			[
+				Mark.insert(1, {
+					localId: brand(0),
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				}),
+			],
+			tag3,
+		);
+		const uninsertA = tagRollbackInverse(invert(insertA), tag4, tag3);
+		const redundantDeleteT = tagChange(
+			[Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+			tag2,
+		);
+
+		const composed = compose([uninsertA, redundantDeleteT, insertA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.delete(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{ cellId: { revision: tag1, localId: brand(0) } },
+			),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
+
+	it("[insert, insert] ↷ adjacent delete", () => {
+		const deleteT = tagChange([Mark.delete(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseTagged(insertA, deleteT);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, deleteT, insertA2]);
+		const TAB = compose([deleteT, insertA2, insertB2]);
+		const AiTAB = compose(
+			[inverseA, makeAnonChange(TAB)],
+			[
+				{ revision: tag4, rollbackOf: tag2 },
+				{ revision: tag1 },
+				{ revision: tag2 },
+				{ revision: tag3 },
+			],
+		);
+
+		const expected = [
+			Mark.delete(1, { revision: tag1, localId: brand(0) }),
+			Mark.insert(1, {
+				revision: tag3,
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(AiTAB, expected);
 	});
 });
 

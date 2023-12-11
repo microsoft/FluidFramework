@@ -162,6 +162,9 @@ export interface IFlowDocumentEvents extends IEvent {
 
 const textId = "text";
 
+/**
+ * @internal
+ */
 export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
 	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
 		documentType,

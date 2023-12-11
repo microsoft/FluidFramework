@@ -142,6 +142,9 @@ interface IOpEvent {
 	sequencedMessagesSinceLastOpEvent: number;
 }
 
+/**
+ * @internal
+ */
 export enum OpEventType {
 	/**
 	 * There have been no sequenced ops for X milliseconds since the last message.
@@ -164,6 +167,9 @@ export enum OpEventType {
 	UpdatedDurableSequenceNumber,
 }
 
+/**
+ * @internal
+ */
 export interface IDeliLambdaEvents extends IEvent {
 	/**
 	 * Emitted when certain op event heuristics are triggered.
@@ -229,6 +235,9 @@ const isServiceMessageType = (type: string) =>
 	type === MessageType.SummaryAck ||
 	type === MessageType.SummaryNack;
 
+/**
+ * @internal
+ */
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
 	private sequenceNumber: number;
 	private signalClientConnectionNumber: number;
@@ -266,8 +275,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private noActiveClients: boolean;
 
-    // Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
+  // Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
 	private globalCheckpointOnly: boolean = false;
+
+	private readonly localCheckpointEnabled: boolean;
+
+	private recievedNoClientOp: boolean = false;
 
 	private closed: boolean = false;
 
@@ -359,6 +372,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			context,
 			this.checkpointService,
 		);
+
+		this.localCheckpointEnabled = this.checkpointService?.getLocalCheckpointEnabled() ?? false;
+
+		this.globalCheckpointOnly = this.localCheckpointEnabled ? false : true;
 
 		// start the activity idle timer when created
 		this.setActivityIdleTimer();
@@ -640,15 +657,19 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.updateCheckpointMessages(rawMessage);
 
 		if (this.lastMessageType === MessageType.ClientJoin) {
-			this.globalCheckpointOnly = false;
+			this.recievedNoClientOp = false;
+			if (this.localCheckpointEnabled) {
+				this.globalCheckpointOnly = false;
+			}
+		} else if (this.lastMessageType === MessageType.NoClient) {
+			this.recievedNoClientOp = true;
+			if (this.localCheckpointEnabled) {
+				this.globalCheckpointOnly = true;
+			}
 		}
 
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
-			// Set a flag to route all checkpoints to global collection if there are no active clients, and reset when clients join
-			if (checkpointReason === CheckpointReason.NoClients) {
-				this.globalCheckpointOnly = true;
-			}
 			// checkpoint the current up to date state
 			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
 		} else {
@@ -715,11 +736,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		if (this.serviceConfiguration.enableLumberjack) {
 			this.logSessionEndMetrics(closeType);
-			if (
-				this.checkpointService?.getLocalCheckpointEnabled() &&
-				!this.globalCheckpointOnly &&
-				closeType === LambdaCloseType.ActivityTimeout
-			) {
+			if (!this.recievedNoClientOp && closeType === LambdaCloseType.ActivityTimeout) {
 				Lumberjack.info(
 					`Closing due to ActivityTimeout before NoClient op`,
 					getLumberBaseProperties(this.documentId, this.tenantId),
@@ -1978,11 +1995,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
-					localCheckpointEnabled: this.checkpointService?.getLocalCheckpointEnabled(),
+					localCheckpointEnabled: this.localCheckpointEnabled,
 					globalCheckpointOnly: this.globalCheckpointOnly,
-					localCheckpoint:
-						this.checkpointService?.getLocalCheckpointEnabled() &&
-						!this.globalCheckpointOnly,
+					localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
+					sessionEndCheckpoint: checkpointParams.reason === CheckpointReason.NoClients,
+					recievedNoClientOp: this.recievedNoClientOp,
 				};
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				lumberjackProperties.checkpointReason = checkpointReason;

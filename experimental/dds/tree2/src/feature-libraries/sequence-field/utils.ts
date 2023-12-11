@@ -41,7 +41,9 @@ import {
 	AttachAndDetach,
 	MarkEffect,
 	InverseAttachFields,
-} from "./format";
+	IdRange,
+	MovePlaceholder,
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
@@ -311,8 +313,15 @@ export function isDetachOfRemovedNodes(
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function isCellRename(mark: Mark<unknown>): mark is CellMark<CellRename, unknown> {
-	return isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark);
+export function isImpactfulCellRename(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): mark is CellMark<CellRename, unknown> {
+	return (
+		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
+		isImpactful(mark, revision, revisionMetadata)
+	);
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
@@ -338,6 +347,26 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 }
 
 /**
+ * Creates a mark that is equivalent to the given `mark` but with effects removed if those have no impact in the input
+ * context of that mark.
+ *
+ * @param mark - The mark to settle. Never mutated.
+ * @param revision - The revision associated with the mark.
+ * @param revisionMetadata - Metadata source for the revision associated with the mark.
+ * @returns either the original mark or a shallow clone of it with effects stripped out.
+ */
+export function settleMark<TChildChange>(
+	mark: Mark<TChildChange>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): Mark<TChildChange> {
+	if (isImpactful(mark, revision, revisionMetadata)) {
+		return mark;
+	}
+	return omitMarkEffect(mark);
+}
+
+/**
  * @returns true, iff the given `mark` would have impact on the field when applied.
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
@@ -353,12 +382,13 @@ export function isImpactful(
 		case "Placeholder":
 			return false;
 		case "Delete": {
-			if (mark.cellId === undefined) {
+			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			if (inputId === undefined) {
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
 			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
-			return !areEqualChangeAtomIds(mark.cellId, outputId);
+			return !areEqualChangeAtomIds(inputId, outputId);
 		}
 		case "AttachAndDetach":
 		case "MoveOut":
@@ -415,6 +445,42 @@ export function areOverlappingIdRanges(
 	return (id2 <= id1 && id1 <= lastId2) || (id1 <= id2 && id2 <= lastId1);
 }
 
+export function compareCellsFromSameRevision(
+	cell1: CellId,
+	count1: number,
+	cell2: CellId,
+	count2: number,
+): number | undefined {
+	assert(cell1.revision === cell2.revision, "Expected cells to have the same revision");
+	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
+		return cell1.localId - cell2.localId;
+	}
+
+	// Both cells should have the same `adjacentCells`.
+	const adjacentCells = cell1.adjacentCells;
+	if (adjacentCells !== undefined) {
+		return (
+			getPositionAmongAdjacentCells(adjacentCells, cell1.localId) -
+			getPositionAmongAdjacentCells(adjacentCells, cell2.localId)
+		);
+	}
+
+	return undefined;
+}
+
+function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
+	let priorCells = 0;
+	for (const range of adjacentCells) {
+		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
+			return priorCells + (id - range.id);
+		}
+
+		priorCells += range.count;
+	}
+
+	fail("Could not find id in adjacentCells");
+}
+
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
 	return type === "Delete" || type === "MoveOut";
@@ -468,8 +534,8 @@ function areMergeableCellIds(
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
  * @param rhs - The effect so extend `rhs` with.
- * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
- * When `false` is returned, `lhs` is left untouched.
+ * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
+ * When `undefined` is returned, `lhs` is left untouched.
  */
 export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> | undefined {
 	if (rhs.type !== lhs.type) {
@@ -572,8 +638,13 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "Placeholder":
+		case "Placeholder": {
+			const lhsPlaceholder = lhs as MovePlaceholder;
+			if ((lhsPlaceholder.id as number) + lhsCount === rhs.id) {
+				return lhsPlaceholder;
+			}
 			break;
+		}
 		default:
 			unreachableCase(type);
 	}
@@ -1025,8 +1096,13 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			return [effect1, effect2];
 		}
-		case "Placeholder":
-			fail("TODO");
+		case "Placeholder": {
+			const effect2: MovePlaceholder = {
+				...effect,
+				id: brand((effect.id as number) + length),
+			};
+			return [effect, effect2 as TEffect];
+		}
 		default:
 			unreachableCase(type);
 	}
@@ -1041,68 +1117,28 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
  * Returns 1 if cell2 is earlier in the field.
  * Returns 0 if the order cannot be determined from the lineage.
  */
-export function compareLineages(
-	cell1: CellId,
-	cell2: CellId,
-	metadata: RevisionMetadataSource,
-): number {
-	const [youngerFirst, youngerCell, olderCell] =
-		compareCellAge(cell1, cell2, metadata) < 0 ? [-1, cell1, cell2] : [1, cell2, cell1];
-
-	if (olderCell.lineage === undefined) {
-		return 0;
+export function compareLineages(cell1: CellId, cell2: CellId): number {
+	const cell1Events = new Map<RevisionTag, LineageEvent>();
+	for (const event of cell1.lineage ?? []) {
+		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
+		cell1Events.set(event.revision, event);
 	}
 
-	const olderFirst = -1 * youngerFirst;
-	const youngerOffsets = new Map<RevisionTag, number>();
-	for (const event of youngerCell.lineage ?? []) {
-		youngerOffsets.set(event.revision, event.offset);
-	}
-
-	for (let i = olderCell.lineage.length - 1; i >= 0; i--) {
-		const event = olderCell.lineage[i];
-		const youngerOffset = youngerOffsets.get(event.revision);
-		if (youngerOffset !== undefined) {
-			const olderOffset = event.offset;
-			if (youngerOffset < olderOffset) {
-				return youngerFirst;
-			} else if (youngerOffset > olderOffset) {
-				return olderFirst;
-			}
-		} else {
-			// We've found a cell C that became empty before the younger cell was created.
-			// The younger cell should come before any such cell, so if the older cell comes after C
-			// then we know that the younger cell should come before the older cell.
-			// TODO: Account for the younger cell's tiebreak policy
-			if (event.offset !== 0) {
-				return youngerFirst;
+	const lineage2 = cell2.lineage ?? [];
+	for (let i = lineage2.length - 1; i >= 0; i--) {
+		const event = lineage2[i];
+		const offset1 = cell1Events.get(event.revision)?.offset;
+		if (offset1 !== undefined) {
+			const offset2 = event.offset;
+			cell1Events.delete(event.revision);
+			if (offset1 < offset2) {
+				return -1;
+			} else if (offset1 > offset2) {
+				return 1;
 			}
 		}
 	}
 	return 0;
-}
-
-/**
- * Returns 1 if cell1 has more lineage and -1 if cell2 has more lineage.
- * Note that this will return zero if both cells are older than the revision metadata and they both
- * have the same lineage, even if they are not the same cell.
- */
-function compareCellAge(cell1: CellId, cell2: CellId, metadata: RevisionMetadataSource): number {
-	return (
-		getTrunkLineageLength(cell1.lineage, metadata) -
-		getTrunkLineageLength(cell2.lineage, metadata)
-	);
-}
-
-function getTrunkLineageLength(
-	lineage: LineageEvent[] | undefined,
-	metadata: RevisionMetadataSource,
-): number {
-	if (lineage === undefined) {
-		return 0;
-	}
-
-	return lineage.filter((event) => !metadata.hasRollback(event.revision)).length;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
@@ -1111,6 +1147,21 @@ export function extractMarkEffect<TEffect extends MarkEffect>(
 ): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
+}
+
+// TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
+export function omitMarkEffect<TChildChange>(
+	mark: CellMark<unknown, TChildChange>,
+): CellMark<NoopMark, TChildChange> {
+	const { cellId, count, changes } = mark;
+	const noopMark: CellMark<NoopMark, TChildChange> = { count };
+	if (cellId !== undefined) {
+		noopMark.cellId = cellId;
+	}
+	if (changes !== undefined) {
+		noopMark.changes = changes;
+	}
+	return noopMark;
 }
 
 export function withNodeChange<

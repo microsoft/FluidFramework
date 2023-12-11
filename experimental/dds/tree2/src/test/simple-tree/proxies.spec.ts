@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../domains";
-import { TypedNode, TreeRoot, Tree, TreeListNode } from "../../simple-tree";
+import { TypedNode, Tree, TreeListNode, TreeField } from "../../simple-tree";
 import { typeNameSymbol } from "../../feature-libraries";
-import { getRoot, pretty } from "./utils";
+import { getOldRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({
@@ -37,21 +37,21 @@ describe("SharedTree proxies", () => {
 	};
 
 	it("cache and reuse objects", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const objectProxy = root.object;
 		const objectProxyAgain = root.object;
 		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	it("cache and reuse lists", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const listProxy = root.list;
 		const listProxyAgain = root.list;
 		assert.equal(listProxyAgain, listProxy);
 	});
 
 	it("cache and reuse maps", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
@@ -101,13 +101,13 @@ describe("SharedTreeObject", () => {
 	};
 
 	it("can read required fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.content, 42);
 		assert.equal(root.child.content, 42);
 	});
 
 	it("can read lists", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.list.length, 2);
 		for (const x of root.list) {
 			assert.equal(x.content, 42);
@@ -115,7 +115,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	it("can read maps", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.map.size, 2);
 		assert.equal(root.map.get("foo"), "Hello");
 		assert.equal(root.map.get("bar"), "World");
@@ -123,12 +123,12 @@ describe("SharedTreeObject", () => {
 	});
 
 	it("can read fields common to all polymorphic types", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.polyChild.content, "42");
 	});
 
 	it("can narrow polymorphic value fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		if (typeof root.polyValue === "number") {
 			assert.equal(root.polyChild.content, 42);
 		} else {
@@ -137,7 +137,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	it("can narrow polymorphic struct fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		if (Tree.is(root.polyChild, numberChild)) {
 			assert.equal(root.polyChild.content, 42);
 		} else {
@@ -146,7 +146,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	it("can narrow polymorphic combinations of value and struct fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		if (Tree.is(root.polyValueChild, numberChild)) {
 			assert.equal(root.polyValueChild.content, 42);
 		} else {
@@ -162,14 +162,14 @@ describe("SharedTreeObject", () => {
 
 	// TODO:#6133: Make this properly async and check that the value of the handle is correct
 	it("can read and write handles", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.notEqual(root.handle, undefined);
 		root.handle = new MockHandle(43);
 		assert.notEqual(root.handle, undefined);
 	});
 
 	it("can set fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.child.content, 42);
 		assert.equal(root.optional?.content, 42);
 		const newChild = numberChild.create({ content: 43 });
@@ -181,7 +181,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	it("can unset fields", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.optional?.content, 42);
 		root.optional = undefined;
 		assert.equal(root.optional, undefined);
@@ -195,7 +195,7 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(_.list(obj));
 
 		it("insertAtStart()", () => {
-			const root = getRoot(schema, [{ id: "B" }]);
+			const root = getOldRoot(schema, [{ id: "B" }]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			const newItem = obj.create({ id: "A" });
 			root.insertAtStart(newItem);
@@ -205,7 +205,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("insertAtEnd()", () => {
-			const root = getRoot(schema, [{ id: "A" }]);
+			const root = getOldRoot(schema, [{ id: "A" }]);
 			assert.deepEqual(root, [{ id: "A" }]);
 			const newItem = obj.create({ id: "B" });
 			root.insertAtEnd(newItem);
@@ -215,7 +215,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("insertAt()", () => {
-			const root = getRoot(schema, [{ id: "A" }, { id: "C" }]);
+			const root = getOldRoot(schema, [{ id: "A" }, { id: "C" }]);
 			assert.deepEqual(root, [{ id: "A" }, { id: "C" }]);
 			const newItem = obj.create({ id: "B" });
 			root.insertAt(1, newItem);
@@ -225,14 +225,14 @@ describe("SharedTreeList", () => {
 		});
 
 		it("at()", () => {
-			const root = getRoot(schema, [{ id: "B" }]);
+			const root = getOldRoot(schema, [{ id: "B" }]);
 			assert.equal(root.at(0), root[0]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			assert.deepEqual(root.at(0), { id: "B" });
 		});
 
 		it("at() with negative", () => {
-			const root = getRoot(schema, [{ id: "B" }]);
+			const root = getOldRoot(schema, [{ id: "B" }]);
 			assert.equal(root.at(-1), root[0]);
 			const newItem = obj.create({ id: "C" });
 			root.insertAt(1, newItem);
@@ -247,7 +247,7 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(_.list(_.number));
 
 		it("insertAtStart()", () => {
-			const list = getRoot(schema, []);
+			const list = getOldRoot(schema, []);
 			list.insertAtStart(TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
@@ -259,7 +259,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("insertAtEnd()", () => {
-			const list = getRoot(schema, []);
+			const list = getOldRoot(schema, []);
 			list.insertAtEnd(TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
@@ -271,7 +271,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("insertAt()", () => {
-			const list = getRoot(schema, []);
+			const list = getOldRoot(schema, []);
 			list.insertAt(0, TreeListNode.inline([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
@@ -295,7 +295,7 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(obj);
 		const initialTree = { numbers: [], strings: [], booleans: [], handles: [], poly: [] };
 		it("numbers", () => {
-			const root = getRoot(schema, initialTree);
+			const root = getOldRoot(schema, initialTree);
 			root.numbers.insertAtStart(0);
 			root.numbers.insertAt(1, 1);
 			root.numbers.insertAtEnd(2);
@@ -303,7 +303,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("booleans", () => {
-			const root = getRoot(schema, initialTree);
+			const root = getOldRoot(schema, initialTree);
 			root.booleans.insertAtStart(true);
 			root.booleans.insertAt(1, false);
 			root.booleans.insertAtEnd(true);
@@ -311,7 +311,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("handles", () => {
-			const root = getRoot(schema, initialTree);
+			const root = getOldRoot(schema, initialTree);
 			const handles = [new MockHandle(5), new MockHandle(6), new MockHandle(7)];
 			root.handles.insertAtStart(handles[0]);
 			root.handles.insertAt(1, handles[1]);
@@ -320,7 +320,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("of multiple possible types", () => {
-			const root = getRoot(schema, initialTree);
+			const root = getOldRoot(schema, initialTree);
 			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
 			allowsStrings.insertAtStart(42);
 			const allowsStsrings: typeof root.strings | typeof root.poly = root.poly;
@@ -339,21 +339,21 @@ describe("SharedTreeList", () => {
 		const schema = _.intoSchema(_.list(_.number));
 
 		it("removeAt()", () => {
-			const list = getRoot(schema, [0, 1, 2]);
+			const list = getOldRoot(schema, [0, 1, 2]);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeAt(1);
 			assert.deepEqual(list, [0, 2]);
 		});
 
 		it("removeRange()", () => {
-			const list = getRoot(schema, [0, 1, 2, 3]);
+			const list = getOldRoot(schema, [0, 1, 2, 3]);
 			assert.deepEqual(list, [0, 1, 2, 3]);
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
 		});
 
 		it("removeRange() - all", () => {
-			const list = getRoot(schema, [0, 1, 2, 3]);
+			const list = getOldRoot(schema, [0, 1, 2, 3]);
 			assert.deepEqual(list, [0, 1, 2, 3]);
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
@@ -362,7 +362,7 @@ describe("SharedTreeList", () => {
 		});
 
 		it("removeRange() - past end", () => {
-			const list = getRoot(schema, [0, 1, 2, 3]);
+			const list = getOldRoot(schema, [0, 1, 2, 3]);
 			assert.deepEqual(list, [0, 1, 2, 3]);
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
@@ -371,14 +371,14 @@ describe("SharedTreeList", () => {
 		});
 
 		it("removeRange() - empty range", () => {
-			const list = getRoot(schema, [0, 1, 2, 3]);
+			const list = getOldRoot(schema, [0, 1, 2, 3]);
 			assert.deepEqual(list, [0, 1, 2, 3]);
 			list.removeRange(2, 2);
 			assert.deepEqual(list, [0, 1, 2, 3]);
 		});
 
 		it("removeRange() - empty list", () => {
-			const list = getRoot(schema, []);
+			const list = getOldRoot(schema, []);
 			assert.deepEqual(list, []);
 			assert.throws(() => list.removeRange());
 		});
@@ -391,21 +391,21 @@ describe("SharedTreeList", () => {
 			const initialTree = [0, 1, 2, 3];
 
 			it("moveToStart()", () => {
-				const list = getRoot(schema, initialTree);
+				const list = getOldRoot(schema, initialTree);
 				assert.deepEqual(list, [0, 1, 2, 3]);
 				list.moveToStart(1);
 				assert.deepEqual(list, [1, 0, 2, 3]);
 			});
 
 			it("moveToEnd()", () => {
-				const list = getRoot(schema, initialTree);
+				const list = getOldRoot(schema, initialTree);
 				assert.deepEqual(list, [0, 1, 2, 3]);
 				list.moveToEnd(1);
 				assert.deepEqual(list, [0, 2, 3, 1]);
 			});
 
 			it("moveToIndex()", () => {
-				const list = getRoot(schema, initialTree);
+				const list = getOldRoot(schema, initialTree);
 				assert.deepEqual(list, [0, 1, 2, 3]);
 				list.moveToIndex(1, 2);
 				assert.deepEqual(list, [0, 2, 1, 3]);
@@ -416,14 +416,14 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveRangeToStart()", () => {
-				const list = getRoot(schema, initialTree);
+				const list = getOldRoot(schema, initialTree);
 				assert.deepEqual(list, [0, 1, 2, 3]);
 				list.moveRangeToStart(/* sourceStart: */ 1, /* sourceEnd: */ 3);
 				assert.deepEqual(list, [1, 2, 0, 3]);
 			});
 
 			it("moveRangeToEnd()", () => {
-				const list = getRoot(schema, initialTree);
+				const list = getOldRoot(schema, initialTree);
 				assert.deepEqual(list, [0, 1, 2, 3]);
 				list.moveRangeToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 3);
 				assert.deepEqual(list, [0, 3, 1, 2]);
@@ -450,7 +450,7 @@ describe("SharedTreeList", () => {
 					)}.moveToStart(dest: ${index}, start: ${start}, end: ${end}) -> ${pretty(
 						expected,
 					)}`, () => {
-						const list = getRoot(schema, initialTree);
+						const list = getOldRoot(schema, initialTree);
 						assert.deepEqual(list, initialTree);
 						list.moveRangeToIndex(index, start, end);
 						assert.deepEqual(list, expected);
@@ -486,7 +486,7 @@ describe("SharedTreeList", () => {
 			};
 
 			it("moveToStart()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveToStart(0, listA);
@@ -495,7 +495,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveToEnd()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveToEnd(0, listA);
@@ -504,7 +504,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveToIndex()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveToIndex(/* index: */ 1, /* sourceStart: */ 0, listA);
@@ -513,7 +513,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveRangeToStart()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveRangeToStart(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
@@ -522,7 +522,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveRangeToEnd()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveRangeToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
@@ -531,7 +531,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("moveRangeToIndex()", () => {
-				const { listA, listB } = getRoot(schema, initialTree);
+				const { listA, listB } = getOldRoot(schema, initialTree);
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
 				listB.moveRangeToIndex(
@@ -567,14 +567,14 @@ describe("SharedTreeList", () => {
 
 			/** This function returns a union of both listA and listB, which exercises more interesting compile type-checking cases */
 			function getEitherList(
-				root: TreeRoot<typeof schema>,
+				root: TreeField<typeof schema.rootFieldSchema>,
 				list: "a" | "b",
 			): TypedNode<typeof listA> | TypedNode<typeof listB> {
 				return list === "a" ? root.listA : root.listB;
 			}
 
 			it("move to start", () => {
-				const root = getRoot(schema, initialTree);
+				const root = getOldRoot(schema, initialTree);
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
 				list2.moveToStart(1, list1);
@@ -586,7 +586,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("move to end", () => {
-				const root = getRoot(schema, initialTree);
+				const root = getOldRoot(schema, initialTree);
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
 				list2.moveToEnd(1, list1);
@@ -598,7 +598,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("move to index", () => {
-				const root = getRoot(schema, initialTree);
+				const root = getOldRoot(schema, initialTree);
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
 				list2.moveToIndex(/* index: */ 1, /* sourceIndex */ 1, list1);
@@ -615,7 +615,7 @@ describe("SharedTreeList", () => {
 			});
 
 			it("fails if incompatible type", () => {
-				const root = getRoot(schema, initialTree);
+				const root = getOldRoot(schema, initialTree);
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
 				assert.throws(() =>
@@ -654,7 +654,7 @@ describe("SharedTreeMap", () => {
 	};
 
 	it("entries", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.deepEqual(Array.from(root.map.entries()), [
 			["foo", "Hello"],
 			["bar", "World"],
@@ -662,17 +662,17 @@ describe("SharedTreeMap", () => {
 	});
 
 	it("keys", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
 	});
 
 	it("values", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
 	});
 
 	it("iteration", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const result = [];
 		for (const entry of root.map) {
 			result.push(entry);
@@ -685,14 +685,14 @@ describe("SharedTreeMap", () => {
 	});
 
 	it("has", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		assert.equal(root.map.has("foo"), true);
 		assert.equal(root.map.has("bar"), true);
 		assert.equal(root.map.has("baz"), false);
 	});
 
 	it("set", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		// Insert new value
 		root.map.set("baz", "42");
 		assert.equal(root.map.size, 3);
@@ -713,7 +713,7 @@ describe("SharedTreeMap", () => {
 	});
 
 	it("set object", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		const o = object.create({ content: 42 });
 		root.objectMap.set("foo", o);
 		assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
@@ -721,7 +721,7 @@ describe("SharedTreeMap", () => {
 	});
 
 	it("delete", () => {
-		const root = getRoot(schema, initialTree);
+		const root = getOldRoot(schema, initialTree);
 		// Delete existing value
 		root.map.delete("bar");
 		assert.equal(root.map.size, 1);

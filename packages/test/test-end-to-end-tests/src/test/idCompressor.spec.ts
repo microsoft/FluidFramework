@@ -14,7 +14,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat } from "@fluid-private/test-version-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import {
 	IIdCompressor,
@@ -33,7 +33,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
+describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -618,7 +618,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, apis) => {
+describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -672,7 +672,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, a
 	});
 });
 
-describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: true },

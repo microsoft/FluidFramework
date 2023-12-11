@@ -13,7 +13,7 @@ import { IContainer } from "@fluidframework/container-definitions";
  * @typeParam T - Defines the type you expect to be returned.
  *
  * @param container - Container you're attempting to get the object from
- * @public
+ * @internal
  */
 export async function getDefaultObjectFromContainer<T = FluidObject>(
 	container: IContainer,
@@ -41,7 +41,7 @@ export async function getDefaultObjectFromContainer<T = FluidObject>(
  *
  * @param id - Unique id of the FluidObject
  * @param container - Container you're attempting to get the object from
- * @public
+ * @internal
  */
 export async function getObjectWithIdFromContainer<T = FluidObject>(
 	id: string,
@@ -70,7 +70,7 @@ export async function getObjectWithIdFromContainer<T = FluidObject>(
  *
  * @param path - Unique path/url of the FluidObject
  * @param container - Container you're attempting to get the object from
- * @public
+ * @internal
  */
 export async function getObjectFromContainer<T = FluidObject>(
 	path: string,

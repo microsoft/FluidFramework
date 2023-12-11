@@ -32,6 +32,9 @@ import {
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
+/**
+ * @internal
+ */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;

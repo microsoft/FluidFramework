@@ -20,7 +20,7 @@ import {
 	createSummarizer,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -43,10 +43,10 @@ import { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
- * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
+ * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
+describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(
@@ -767,7 +767,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 			],
@@ -1043,11 +1043,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 			],
@@ -1196,7 +1196,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const summary2 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCStateFromSummary(summary2.summaryTree),
-				(e: Error) => validateAssertionError(e, "GC state is not a blob"),
+				(e: Error) =>
+					validateAssertionError(e, "getGCStateFromSummary: GC state is not a blob"),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1208,7 +1209,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			const summary3 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
-				(e: Error) => validateAssertionError(e, "GC data should be a tree"),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"getGCTombstoneStateFromSummary: GC data should be a tree",
+					),
 			);
 		});
 
@@ -1388,11 +1393,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Changed",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Changed",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Loaded",
 					clientType: "noninteractive/summarizer",
 				},
 				{
@@ -1524,11 +1529,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Changed",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Changed",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Loaded",
 					clientType: "noninteractive/summarizer",
 				},
 			],

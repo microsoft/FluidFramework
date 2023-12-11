@@ -76,6 +76,9 @@ export class OrdererManager implements core.IOrdererManager {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
@@ -139,6 +142,9 @@ export class NexusResources implements core.IResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusResourcesFactory implements core.IResourcesFactory<NexusResources> {
 	public async create(
 		config: Provider,
@@ -533,6 +539,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 	}
 }
 
+/**
+ * @internal
+ */
 export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 	public async create(resources: NexusResources): Promise<core.IRunner> {
 		return new NexusRunner(

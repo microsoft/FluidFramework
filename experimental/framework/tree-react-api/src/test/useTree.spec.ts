@@ -5,34 +5,32 @@
 
 import { strict as assert } from "assert";
 import {
-	AllowedUpdateType,
 	ForestType,
-	TypedTreeFactory,
+	TreeConfiguration,
+	TreeFactory,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";
-import { Inventory, schema } from "./schema";
+import { Inventory } from "./schema";
 
 // TODO: why do failing tests in this suite not cause CI to fail?
 describe("useTree()", () => {
 	function createLocalTree(id: string): Inventory {
-		const factory = new TypedTreeFactory({
+		const factory = new TreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
 
 			subtype: "InventoryList",
 		});
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		return tree.schematizeOld({
-			initialTree: {
+		return tree.schematize(
+			new TreeConfiguration(Inventory, () => ({
 				nuts: 0,
 				bolts: 0,
-			},
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema,
-		}).root;
+			})),
+		).root;
 	}
 
 	// Mock 'React.setState()'

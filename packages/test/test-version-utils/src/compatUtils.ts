@@ -12,13 +12,14 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
@@ -164,5 +165,79 @@ export async function getVersionedTestObjectProvider(
 			driver: getDriverApi(baseVersion, driverConfig?.version),
 		},
 		driverConfig,
+	);
+}
+
+/**
+ * @internal
+ */
+export async function getCompatVersionedTestObjectProviderFromApis(
+	apis: CompatApis,
+	driverConfig: {
+		type: TestDriverTypes;
+		config: FluidTestDriverConfig;
+	},
+): Promise<TestObjectProviderWithVersionedLoad> {
+	assert(apis.driverForLoading !== undefined, "driverForLoading must be defined");
+	assert(apis.loaderForLoading !== undefined, "loaderForLoading must be defined");
+	assert(apis.dataRuntimeForLoading !== undefined, "dataRuntimeForLoading must be defined");
+
+	const driverForCreating = await createFluidTestDriver(
+		driverConfig.type,
+		driverConfig.config,
+		apis.driver,
+	);
+
+	const driverConfigForLoading = driverConfig;
+	const driverForLoading = await createFluidTestDriver(
+		driverConfigForLoading.type,
+		driverConfigForLoading.config,
+		apis.driverForLoading,
+	);
+
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		runtime.IFluidHandleContext.resolveHandle(request);
+
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(
+		apis.dataRuntimeForLoading,
+	);
+
+	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			apis.containerRuntime.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
+		assert(
+			apis.containerRuntimeForLoading !== undefined,
+			"containerRuntimeForLoading must be defined",
+		);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			apis.containerRuntimeForLoading.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+
+	return new TestObjectProviderWithVersionedLoad(
+		apis.loader.Loader,
+		apis.loaderForLoading.Loader,
+		driverForCreating,
+		driverForLoading,
+		createContainerFactoryFn,
+		loadContainerFactoryFn,
 	);
 }

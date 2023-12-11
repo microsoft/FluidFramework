@@ -7,8 +7,7 @@ import { strict as assert } from "assert";
 import { LeafNodeSchema, NewFieldContent, TreeSchema } from "../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../domains";
 import { TreeValue } from "../../core";
-import { treeViewWithContent } from "../utils";
-import { getRoot, makeSchema, pretty } from "./utils";
+import { getOldRoot, makeOldSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
@@ -39,12 +38,8 @@ function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEquals'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const view = treeViewWithContent({
-					schema,
-					initialTree: initialTree as NewFieldContent,
-				});
+				const proxy = getOldRoot(schema, initialTree as NewFieldContent);
 				const real = initialTree;
-				const proxy = view.root;
 
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
 					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
@@ -64,7 +59,7 @@ function testObjectLike(testCases: TestCase[]) {
 			for (const { schema, initialTree } of testCases) {
 				describe("instanceof Object", () => {
 					it(`${pretty(initialTree)} -> true`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getOldRoot(schema, initialTree);
 						assert(root instanceof Object, "object must be instanceof Object");
 					});
 				});
@@ -76,7 +71,7 @@ function testObjectLike(testCases: TestCase[]) {
 						it(`Object.getOwnPropertyDescriptor(${pretty(
 							initialTree,
 						)}, ${key}) -> ${pretty(descriptor)}`, () => {
-							const root = getRoot(schema, initialTree);
+							const root = getOldRoot(schema, initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
 								descriptor,
@@ -88,14 +83,14 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe("methods inherited from Object.prototype", () => {
 					it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getOldRoot(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 					});
 
 					it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getOldRoot(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(asObject), false);
@@ -110,7 +105,7 @@ function testObjectLike(testCases: TestCase[]) {
 						);
 
 						it(`${key} -> ${expected}`, () => {
-							const root = getRoot(schema, initialTree);
+							const root = getOldRoot(schema, initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
 							assert.equal(asObject.propertyIsEnumerable(key), expected);
@@ -126,7 +121,7 @@ function testObjectLike(testCases: TestCase[]) {
 				const expected = fn(real);
 
 				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const proxy = getRoot(schema, initialTree);
+					const proxy = getOldRoot(schema, initialTree);
 					const actual = fn(proxy as object);
 					assert.deepEqual(actual, expected);
 				});
@@ -297,8 +292,8 @@ testObjectLike(tcs);
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
 		it("throws TypeError in strict mode", () => {
-			const root = getRoot(
-				makeSchema((_) => _.object("no fields", {})),
+			const root = getOldRoot(
+				makeOldSchema((_) => _.object("no fields", {})),
 				{},
 			);
 			assert.throws(() => {
@@ -317,8 +312,8 @@ describe("Object-like", () => {
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: schema })),
+						const root = getOldRoot(
+							makeOldSchema((_) => _.object("", { _value: schema })),
 							{ _value: before },
 						);
 						assert.equal(root._value, before);
@@ -329,8 +324,8 @@ describe("Object-like", () => {
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
+						const root = getOldRoot(
+							makeOldSchema((_) => _.object("", { _value: _.optional(schema) })),
 							{ _value: undefined },
 						);
 						assert.equal(root._value, undefined);
@@ -361,7 +356,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, { child: before });
+				const root = getOldRoot(schema, { child: before });
 				assert.equal(root.child.objId, 0);
 				root.child = after;
 				assert.equal(root.child.objId, 1);
@@ -382,7 +377,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, { child: undefined });
+				const root = getOldRoot(schema, { child: undefined });
 				assert.equal(root.child, undefined);
 				root.child = before;
 				assert.equal(root.child.objId, 0);

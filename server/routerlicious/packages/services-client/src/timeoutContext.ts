@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface ITimeoutContext {
 	/**
 	 * Attaches timeout info to the callback context.
@@ -39,9 +42,15 @@ const nullTimeoutContext = new NullTimeoutContext();
 declare var global: typeof globalThis;
 export const getGlobal = (): any => (typeof window !== "undefined" ? window : global);
 
+/**
+ * @internal
+ */
 export const getGlobalTimeoutContext = () =>
 	(getGlobal()?.timeoutContext as ITimeoutContext | undefined) ?? nullTimeoutContext;
 
+/**
+ * @internal
+ */
 export const setGlobalTimeoutContext = (timeoutContext: ITimeoutContext) => {
 	if (!getGlobal()) return;
 	getGlobal().timeoutContext = timeoutContext;

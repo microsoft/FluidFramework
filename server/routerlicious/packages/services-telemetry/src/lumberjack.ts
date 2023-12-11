@@ -16,6 +16,9 @@ import {
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
 import { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";
 
+/**
+ * @internal
+ */
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
 	enableSanitization?: boolean;
@@ -36,6 +39,9 @@ export const setGlobalLumberjackInstance = (lumberjackInstance: Lumberjack) => {
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
 // An optional ILumberjackSchemaValidator list can be provided to validate the schema of the data.
+/**
+ * @internal
+ */
 export class Lumberjack {
 	private readonly _engineList: ILumberjackEngine[] = [];
 	private _schemaValidators: ILumberjackSchemaValidator[] | undefined;

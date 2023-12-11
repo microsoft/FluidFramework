@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { SharedMatrix, MatrixItem } from "./matrix";
+export { ISharedMatrixEvents, SharedMatrix, MatrixItem } from "./matrix";
 export { SharedMatrixFactory } from "./runtime";
 
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development

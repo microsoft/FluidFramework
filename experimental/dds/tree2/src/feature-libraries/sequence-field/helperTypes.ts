@@ -12,7 +12,7 @@ import {
 	AttachAndDetach,
 	MoveIn,
 	MoveOut,
-} from "./format";
+} from "./types";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
 

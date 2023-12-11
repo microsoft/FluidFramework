@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Changeset } from "./format";
+import { Changeset } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { withNodeChange } from "./utils";
 

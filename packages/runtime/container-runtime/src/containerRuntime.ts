@@ -47,6 +47,7 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	UsageError,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -194,6 +195,7 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
+	ContainerRuntimeGCMessage,
 } from "./messageTypes";
 
 /**
@@ -213,7 +215,7 @@ function compatBehaviorAllowsMessageType(
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -235,7 +237,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -298,21 +300,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @public
+ * @alpha
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
@@ -320,7 +322,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
- * @public
+ * @internal
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -349,7 +351,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
@@ -366,7 +368,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @public
+ * @alpha
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -384,7 +386,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
- * @public
+ * @alpha
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -466,7 +468,7 @@ export interface IContainerRuntimeOptions {
 
 /**
  * Accepted header keys for requests coming to the runtime.
- * @public
+ * @internal
  */
 export enum RuntimeHeaders {
 	/** True to wait for a data store to be created and loaded before returning it. */
@@ -476,23 +478,23 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
- * @public
+ * @internal
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 /**
  * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @public
+ * @internal
  */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /**
  * Tombstone error responses will have this header set to true
- * @public
+ * @internal
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @public
+ * @internal
  */
 export const InactiveResponseHeaderKey = "isInactive";
 
@@ -516,7 +518,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
- * @public
+ * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -585,7 +587,7 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated use ContainerRuntimeMessageType instead
- * @public
+ * @internal
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -599,7 +601,7 @@ export enum RuntimeMessage {
 
 /**
  * @deprecated please use version in driver-utils
- * @public
+ * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -609,7 +611,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
  * special-case for document dirty state.  Ultimately we should have no special-cases from the
  * ContainerRuntime's perspective.
- * @public
+ * @internal
  */
 export const agentSchedulerId = "_scheduler";
 
@@ -718,7 +720,7 @@ export async function TEST_requestSummarizer(loader: ILoader, url: string): Prom
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
- * @public
+ * @alpha
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
@@ -1215,9 +1217,7 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
-	/**
-	 * @internal
-	 */
+	/***/
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
@@ -1449,6 +1449,7 @@ export class ContainerRuntime
 			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
 			// delta manager would always return false for summarizer client.
 			activeConnection: () => this.innerDeltaManager.active,
+			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -2084,6 +2085,9 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never have stashed ops.
+				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -2337,6 +2341,9 @@ export class ContainerRuntime
 					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				}
 				break;
+			case ContainerMessageType.GC:
+				this.garbageCollector.processMessage(messageWithContext.message, local);
+				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
 				break;
@@ -2583,7 +2590,6 @@ export class ContainerRuntime
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
-	 * @internal
 	 */
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
@@ -2635,18 +2641,28 @@ export class ContainerRuntime
 	}
 
 	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
-		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
-		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
-		if (type === ContainerMessageType.Attach) {
-			const attachMessage = contents as InboundAttachMessage;
-			if (attachMessage.id === agentSchedulerId) {
+		// Certain container runtime messages should not mark the container dirty such as the old built-in
+		// AgentScheduler and Garbage collector messages.
+		switch (type) {
+			case ContainerMessageType.Attach: {
+				const attachMessage = contents as InboundAttachMessage;
+				if (attachMessage.id === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
+				const envelope = contents;
+				if (envelope.address === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.GC: {
 				return false;
 			}
-		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents;
-			if (envelope.address === agentSchedulerId) {
-				return false;
-			}
+			default:
+				break;
 		}
 		return true;
 	}
@@ -2877,7 +2893,7 @@ export class ContainerRuntime
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
 	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
 		// summarizing is required and asserted by the the summarizer node. We are the root and are
 		// always referenced, so the used routes is only self-route (empty string).
@@ -2891,7 +2907,7 @@ export class ContainerRuntime
 	 * This is called to update objects whose routes are unused.
 	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]) {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
 		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
@@ -2901,7 +2917,7 @@ export class ContainerRuntime
 	/**
 	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
-	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
@@ -2910,7 +2926,7 @@ export class ContainerRuntime
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 * @returns The routes of nodes that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[] {
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
@@ -2922,7 +2938,7 @@ export class ContainerRuntime
 	 * This is called to update objects that are tombstones.
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
@@ -2982,7 +2998,7 @@ export class ContainerRuntime
 	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
-	private getDataStoreAndBlobManagerRoutes(routes: string[]) {
+	private getDataStoreAndBlobManagerRoutes(routes: readonly string[]) {
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
@@ -3059,10 +3075,10 @@ export class ContainerRuntime
 			);
 		}
 
-		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
-		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
-		// within the timeout, check if it should be failed or can continue.
-		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
+		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
+		// saved within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.isDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
@@ -3084,7 +3100,7 @@ export class ContainerRuntime
 			// happens, whether we attempted to wait for these ops to be acked and what was the result.
 			summaryNumberLogger.sendTelemetryEvent({
 				eventName: "PendingOpsWhileSummarizing",
-				saved: this.hasPendingMessages() ? false : true,
+				saved: !this.isDirty,
 				timeout: pendingOpsTimeout,
 				countBefore,
 				countAfter: this.pendingMessagesCount,
@@ -3363,7 +3379,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
 	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
@@ -3379,7 +3395,7 @@ export class ContainerRuntime
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
 	): Promise<IBaseSummarizeResult | undefined> {
-		if (!this.hasPendingMessages()) {
+		if (!this.isDirty) {
 			return;
 		}
 
@@ -3755,6 +3771,9 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
 				break;
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never reconnect.
+				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version

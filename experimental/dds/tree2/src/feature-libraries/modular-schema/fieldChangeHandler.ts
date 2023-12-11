@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, RevisionMetadataSource } from "../../core";
+import {
+	TaggedChange,
+	RevisionTag,
+	RevisionMetadataSource,
+	DeltaFieldMap,
+	DeltaFieldChanges,
+	DeltaDetachedNodeId,
+	EncodedRevisionTag,
+} from "../../core";
 import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
@@ -20,27 +28,36 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
-	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly codecsFactory: (
+		childCodec: IJsonCodec<NodeChangeset>,
+		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+	) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.FieldChanges;
+	): DeltaFieldChanges;
 	/**
-	 * Returns the set of removed trees that should be in memory for the given change to be applied.
-	 * A removed tree is relevant if it is being restored being edited (or both).
+	 * Returns the set of removed roots that should be in memory for the given change to be applied.
+	 * A removed root is relevant if any of the following is true:
+	 * - It is being inserted
+	 * - It is being restored
+	 * - It is being edited
+	 * - The ID it is associated with is being changed
 	 *
-	 * Implementations are allowed to be conservative by returning more trees than strictly necessary
-	 * (though they should try to avoid doing so for the sake of performance).
+	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
+	 * (though they should, for the sake of performance, try to avoid doing so).
+	 *
+	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
 	 *
 	 * @param change - The change to be applied.
-	 * @param removedTreesFromChild - Delegate for collecting relevant removed trees from child changes.
+	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
 	 */
-	readonly relevantRemovedTrees: (
-		change: TChangeset,
-		removedTreesFromChild: RemovedTreesFromChild,
-	) => Iterable<Delta.DetachedNodeId>;
+	readonly relevantRemovedRoots: (
+		change: TaggedChange<TChangeset>,
+		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	) => Iterable<DeltaDetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -149,7 +166,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
+export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 
 /**
  * @alpha
@@ -188,11 +205,11 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
- * A function that returns the set of removed trees that should be in memory for a given node changeset to be applied.
+ * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  *
  * @alpha
  */
-export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.DetachedNodeId>;
+export type RelevantRemovedRootsFromChild = (child: NodeChangeset) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getBaseRevisions: () => RevisionTag[];

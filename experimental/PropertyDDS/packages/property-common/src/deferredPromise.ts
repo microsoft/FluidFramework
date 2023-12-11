@@ -8,6 +8,7 @@
  * through the constructor's executor).
  * For example, a deferred promise could be fulfilled after waiting for many asynchronous
  * tasks to terminate. This class becomes useful when combining classic async calls with promises.
+ * @internal
  */
 export class DeferredPromise<T> implements Promise<T> {
 	private _resolveSelf;

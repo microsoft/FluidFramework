@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, JsonableTree } from "../../core";
+import { ChangeAtomId } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 /**
@@ -25,11 +25,6 @@ export type RegisterId = ChangeAtomId | "self";
  */
 export interface OptionalChangeset {
 	/**
-	 * Detached trees to build.
-	 */
-	build: { set: JsonableTree; id: ChangeAtomId }[];
-
-	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.
 	 *
 	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
@@ -47,9 +42,7 @@ export interface OptionalChangeset {
 	/**
 	 * Nested changes to nodes that occupy registers.
 	 *
-	 * Nodes are identified by the register they occupy in the *output* context of the changeset.
-	 * Note that this is different from the delta format.
-	 * Switching this to be consistent is tracked by AB#6296.
+	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
 	childChanges: [register: RegisterId, childChange: NodeChangeset][];
 

@@ -90,6 +90,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
+ * @internal
  */
 export class ConsensusOrderedCollection<T = any>
 	extends SharedObject<IConsensusOrderedCollectionEvents<T>>

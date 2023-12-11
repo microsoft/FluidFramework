@@ -5,6 +5,7 @@
 
 /**
  * enum representing the possible types of a shared object
+ * @internal
  */
 export enum ValueType {
 	/**
