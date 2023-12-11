@@ -4,24 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains";
-import { TreeField } from "../../simple-tree";
-import { getOldRoot, pretty } from "./utils";
-
-const builder = new SchemaBuilder({ scope: "test" });
-
-export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
-
-export const numberList = builder.fieldNode("List<number>", builder.sequence(leaf.number));
-
-// TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
-//       UnboxNodeUnion not unboxing unions.
-const root = builder.object("root", {
-	strings: stringList,
-	numbers: numberList,
-});
-
-const schema = builder.intoSchema(root);
+import { getRoot, pretty } from "./utils";
 
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
@@ -56,16 +39,10 @@ describe("List", () => {
 		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
-	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree(): TreeField<typeof schema.rootFieldSchema> {
-		return getOldRoot(schema, { numbers: [], strings: [] });
-	}
-
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
-		const list = createTree().numbers;
-		list.insertAtStart(...items);
+		const list = getRoot((_) => _.list(_.number), () => items);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -73,8 +50,7 @@ describe("List", () => {
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
-		const list = createTree().strings;
-		list.insertAtStart(...items);
+		const list = getRoot((_) => _.list(_.string), () => items);
 		assert.deepEqual(list, items);
 		return list;
 	}
