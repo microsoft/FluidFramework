@@ -106,7 +106,6 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [42],
 		};
 		createDDSFuzzSuite(model, options);
 	});
