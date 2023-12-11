@@ -6,6 +6,9 @@
 import { ICollection, IDocumentRepository } from "./database";
 import { IDocument } from "./document";
 
+/**
+ * @internal
+ */
 export class MongoDocumentRepository implements IDocumentRepository {
 	constructor(private readonly collection: ICollection<IDocument>) {}
 

@@ -4,20 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
 import { brand } from "../../../util";
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	JsonableTree,
-	mintRevisionTag,
-	RevisionTag,
-	TreeNodeSchemaIdentifier,
-} from "../../../core";
+import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
-import { composeAnonChanges } from "./utils";
 
-const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;
@@ -35,12 +28,12 @@ export const cases: {
 	transient_insert: TestChangeset;
 } = {
 	no_change: [],
-	insert: createInsertChangeset(1, 2, 1),
+	insert: createInsertChangeset(1, 2, brand(1)),
 	modify: SF.sequenceFieldEditor.buildChildChange(0, TestChange.mint([], 1)),
-	modify_insert: composeAnonChanges([
-		createInsertChangeset(1, 1, 1),
-		createModifyChangeset(1, TestChange.mint([], 2)),
-	]),
+	modify_insert: [
+		createSkipMark(1),
+		createInsertMark(1, brand(1), { changes: TestChange.mint([], 2) }),
+	],
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
@@ -54,24 +47,10 @@ export const cases: {
 
 function createInsertChangeset(
 	index: number,
-	size: number,
-	startingValue: number = 0,
+	count: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset<never> {
-	const content = generateJsonables(size, startingValue);
-	return SF.sequenceFieldEditor.insert(
-		index,
-		content.map(cursorForJsonableTreeNode),
-		id ?? brand(startingValue),
-	);
-}
-
-function generateJsonables(size: number, startingValue: number = 0) {
-	const content = [];
-	while (content.length < size) {
-		content.push({ type, value: startingValue + content.length });
-	}
-	return content;
+	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
 }
 
 function createDeleteChangeset(
@@ -148,25 +127,20 @@ function createModifyDetachedChangeset<TNodeChange>(
 }
 
 /**
- * @param countOrContent - The content to insert.
- * If a number is passed, that many dummy nodes will be generated.
+ * @param count - The number of nodes inserted.
  * @param cellId - The first cell to insert the content into (potentially includes lineage information).
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
 function createInsertMark<TChange = never>(
-	countOrContent: number | JsonableTree[],
+	count: number,
 	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
-): SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } {
-	const content = Array.isArray(countOrContent)
-		? countOrContent
-		: generateJsonables(countOrContent);
+): SF.CellMark<SF.Insert, TChange> {
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } = {
+	const mark: SF.CellMark<SF.Insert, TChange> = {
 		type: "Insert",
-		content,
-		count: content.length,
+		count,
 		id: cellIdObject.localId,
 		cellId: cellIdObject,
 	};
@@ -237,6 +211,24 @@ function createDeleteMark<TChange = never>(
 }
 
 /**
+ * @param count - The number of nodes to move.
+ * @param markId - The id to associate with the marks.
+ * Defines how later edits refer the emptied cells.
+ * @param overrides - Any additional properties to add to the mark.
+ * @returns A pair of marks, the first for moving out, the second for moving in.
+ */
+function createMoveMarks<TChange = never>(
+	count: number,
+	markId: ChangesetLocalId | ChangeAtomId,
+	overrides?: Partial<SF.CellMark<(SF.MoveOut & SF.MoveIn) | { changes?: TChange }, TChange>>,
+): [moveOut: SF.CellMark<SF.MoveOut, TChange>, moveIn: SF.CellMark<SF.MoveIn, never>] {
+	const moveOut = createMoveOutMark(count, markId, overrides);
+	const { changes: _, ...overridesWithNoChanges } = overrides ?? {};
+	const moveIn = createMoveInMark(count, markId, overridesWithNoChanges);
+	return [moveOut, moveIn];
+}
+
+/**
  * @param count - The number of nodes to move out.
  * @param markId - The id to associate with the mark.
  * Defines how later edits refer the emptied cells.
@@ -279,29 +271,6 @@ function createMoveInMark(
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	return { ...mark, ...overrides };
-}
-
-/**
- * @param count - The number of nodes to be detached.
- * @param markId - The id to associate with the mark.
- * Defines how later edits refer the emptied cells.
- * @param overrides - Any additional properties to add to the mark.
- */
-function createReturnFromMark<TChange = never>(
-	count: number,
-	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.ReturnFrom, TChange>>,
-): SF.CellMark<SF.ReturnFrom, TChange> {
-	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.ReturnFrom, TChange> = {
-		type: "ReturnFrom",
-		count,
-		id: atomId.localId,
-	};
-	if (atomId.revision !== undefined) {
-		mark.revision = atomId.revision;
 	}
 	return { ...mark, ...overrides };
 }
@@ -352,6 +321,10 @@ function createModifyMark<TChange>(
 	return mark;
 }
 
+function createSkipMark(count: number): SF.CellMark<SF.NoopMark, never> {
+	return { count };
+}
+
 function createAttachAndDetachMark<TChange>(
 	attach: SF.CellMark<SF.Attach, TChange>,
 	detach: SF.CellMark<SF.Detach, TChange>,
@@ -366,10 +339,7 @@ function createAttachAndDetachMark<TChange>(
 	);
 	// As a matter of normalization, we only use AttachAndDetach marks to represent cases where the detach's
 	// implicit revival semantics would not be a sufficient representation.
-	assert(
-		attach.type === "MoveIn" || attach.content !== undefined,
-		"Unnecessary AttachAndDetach mark",
-	);
+	assert(attach.type === "MoveIn" || isNewAttach(attach), "Unnecessary AttachAndDetach mark");
 	const mark: SF.CellMark<SF.AttachAndDetach, TChange> = {
 		type: "AttachAndDetach",
 		count: attach.count,
@@ -393,12 +363,13 @@ export const MarkMaker = {
 	onEmptyCell: overrideCellId,
 	insert: createInsertMark,
 	revive: createReviveMark,
+	skip: createSkipMark,
 	pin: createPinMark,
 	delete: createDeleteMark,
 	modify: createModifyMark,
+	move: createMoveMarks,
 	moveOut: createMoveOutMark,
 	moveIn: createMoveInMark,
-	returnFrom: createReturnFromMark,
 	returnTo: createReturnToMark,
 	attachAndDetach: createAttachAndDetachMark,
 };

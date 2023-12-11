@@ -3,26 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag, TaggedChange } from "../core";
-import { RevisionMetadataSource } from "../feature-libraries";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema";
 
 /**
- * Given a state tree, constructs the sequence of intentions which led to that state.
- * This is useful for constructing `TestChange`s.
+ * Given a state tree, constructs the sequence of edits which led to that state.
  */
-export function getInputContext<TContent, TChangeset>(
+export function getSequentialEdits<TContent, TChangeset>(
+	initialState: FieldStateTree<TContent, TChangeset>,
+): NamedChangeset<TChangeset>[] {
+	const edits: NamedChangeset<TChangeset>[] = [];
+	for (const state of getSequentialStates(initialState)) {
+		if (state.mostRecentEdit !== undefined) {
+			edits.push(state.mostRecentEdit);
+		}
+	}
+	return edits;
+}
+
+export function getSequentialStates<TContent, TChangeset>(
 	state: FieldStateTree<TContent, TChangeset>,
-): number[] {
-	const inputContext: number[] = [];
+): FieldStateTree<TContent, TChangeset>[] {
+	const states: FieldStateTree<TContent, TChangeset>[] = [];
 	for (
 		let current: FieldStateTree<TContent, TChangeset> | undefined = state;
-		current?.mostRecentEdit !== undefined;
+		current !== undefined;
 		current = current.parent
 	) {
-		inputContext.push(current.mostRecentEdit.intention);
+		states.push(current);
 	}
-	inputContext.reverse();
-	return inputContext;
+	states.reverse();
+	return states;
 }
 
 /**
@@ -33,7 +45,11 @@ export function getInputContext<TContent, TChangeset>(
  */
 export interface BoundFieldChangeRebaser<TChangeset> {
 	invert(change: TaggedChange<TChangeset>): TChangeset;
-	rebase(change: TChangeset, base: TaggedChange<TChangeset>): TChangeset;
+	rebase(
+		change: TChangeset,
+		base: TaggedChange<TChangeset>,
+		metadata?: RebaseRevisionMetadata,
+	): TChangeset;
 	/**
 	 * Rebase the provided change over the composition of a set of base changes.
 	 *
@@ -43,11 +59,15 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	 * on further refactoring would be nice to remove.
 	 */
 	rebaseComposed(
-		metadata: RevisionMetadataSource,
+		metadata: RebaseRevisionMetadata,
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
 	compose(changes: TaggedChange<TChangeset>[], metadata?: RevisionMetadataSource): TChangeset;
+	assertEqual?(
+		change1: TaggedChange<TChangeset> | undefined,
+		change2: TaggedChange<TChangeset> | undefined,
+	): void;
 }
 
 export interface NamedChangeset<TChangeset> {

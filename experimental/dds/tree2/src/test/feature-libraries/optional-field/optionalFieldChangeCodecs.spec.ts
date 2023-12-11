@@ -5,16 +5,17 @@
 
 import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
-import { mintRevisionTag } from "../../../core";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
+	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-import { changesetForChild, testTree } from "../fieldKindTestUtils";
+import { changesetForChild } from "../fieldKindTestUtils";
+import { RevisionTagCodec } from "../../../shared-tree-core";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
@@ -32,51 +33,50 @@ const childCodec1: IJsonCodec<NodeChangeset> = {
 };
 
 const change1: OptionalChangeset = {
-	fieldChange: {
-		id: brand(1),
-		newContent: {
-			set: testTree("tree1"),
-			changes: nodeChange1,
-			buildId: { localId: brand(41) },
-		},
-		wasEmpty: true,
-	},
+	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
+	childChanges: [],
+	reservedDetachId: { localId: brand(1) },
 };
 
-const revertChange2: OptionalChangeset = {
-	fieldChange: {
-		id: brand(2),
-		newContent: {
-			revert: { revision: mintRevisionTag(), localId: brand(2) },
-		},
-		wasEmpty: false,
-	},
+const change2: OptionalChangeset = optionalFieldEditor.set(false, {
+	fill: brand(42),
+	detach: brand(2),
+});
+
+const change2Inverted: OptionalChangeset = {
+	moves: [
+		[{ localId: brand(2) }, "self", "nodeTargeting"],
+		["self", { localId: brand(42) }, "cellTargeting"],
+	],
+	childChanges: [],
 };
+
+const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
 
 const change1WithChildChange: OptionalChangeset = {
-	fieldChange: {
-		newContent: {
-			set: testTree("tree1"),
-			changes: nodeChange1,
-			buildId: { localId: brand(41) },
-		},
-		wasEmpty: false,
-		id: brand(1),
-		revision: mintRevisionTag(),
-	},
+	moves: [
+		[{ localId: brand(41) }, "self", "nodeTargeting"],
+		["self", { localId: brand(1) }, "cellTargeting"],
+	],
+	childChanges: [["self", nodeChange1]],
 };
 
 describe("defaultFieldChangeCodecs", () => {
 	describe("OptionalChangeset", () => {
 		const encodingTestData: EncodingTestData<OptionalChangeset, unknown> = {
 			successes: [
-				["change", change1],
-				["with child change", change1WithChildChange],
-				["with repair data", revertChange2],
+				["set from empty", change1],
+				["set from non-empty", change2],
+				["child change", changeWithChildChange],
+				["field set with child change", change1WithChildChange], // Note: should only get sent over the wire when using transaction APIs.
+				["undone field change", change2Inverted],
 			],
 		};
 
-		makeEncodingTestSuite(makeOptionalFieldCodecFamily(childCodec1), encodingTestData);
+		makeEncodingTestSuite(
+			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec()),
+			encodingTestData,
+		);
 	});
 
 	// TODO: test other kinds of changesets

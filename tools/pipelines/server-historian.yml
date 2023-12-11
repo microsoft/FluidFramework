@@ -45,6 +45,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
@@ -70,6 +71,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml

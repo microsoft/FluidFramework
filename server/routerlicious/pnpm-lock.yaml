@@ -6,6 +6,11 @@ overrides:
   qs: ^6.11.0
   socket.io-parser: ^4.2.1
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.38.3':
+    hash: t5dutvxrlkz26qgmievy2jdkpi
+    path: patches/@microsoft__api-extractor@7.38.3.patch
+
 importers:
 
   .:
@@ -66,7 +71,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/gitresources-previous': /@fluidframework/gitresources/2.0.0
-      '@microsoft/api-extractor': 7.38.3
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -320,7 +325,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server-previous': /@fluidframework/server-local-server/2.0.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
@@ -449,7 +454,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/protocol-base-previous': /@fluidframework/protocol-base/2.0.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@types/assert': 1.5.6
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
@@ -785,7 +790,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/debug': ^4.1.5
       '@types/jsrsasign': ^8.0.8
-      '@types/jwt-decode': ^2.2.1
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       axios: ^1.6.2
@@ -798,7 +802,7 @@ importers:
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
       jsrsasign: ^10.5.25
-      jwt-decode: ^3.0.0
+      jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
       querystring: ^0.2.0
@@ -816,7 +820,7 @@ importers:
       debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 10.8.6
-      jwt-decode: 3.1.2
+      jwt-decode: 4.0.0
       querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 9.0.0
@@ -826,10 +830,9 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-client-previous': /@fluidframework/server-services-client/2.0.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@types/debug': 4.1.8
       '@types/jsrsasign': 8.0.13
-      '@types/jwt-decode': 2.2.1
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       axios-mock-adapter: 1.21.5_axios@1.6.2
@@ -1067,6 +1070,7 @@ importers:
       eslint: ~8.27.0
       events: ^3.1.0
       express: ^4.17.3
+      fast-redact: ^3.3.0
       ioredis: ^5.2.3
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -1096,6 +1100,7 @@ importers:
       body-parser: 1.20.2
       debug: 4.3.4
       events: 3.3.0
+      fast-redact: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
       nconf: 0.12.0
@@ -1441,7 +1446,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 2.0.0-internal.7.0.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.18.4
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.18.4
       '@types/compression': 1.7.3
       '@types/cookie-parser': 1.4.3
       '@types/cors': 2.8.14
@@ -2294,7 +2299,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@4.5.5
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@4.5.5
       '@oclif/plugin-commands': 3.0.3
@@ -2360,7 +2365,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-tools': 0.26.1_@types+node@18.17.6
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 3.0.3
@@ -2426,7 +2431,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@4.5.5
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@4.5.5
       '@oclif/plugin-commands': 3.0.3
@@ -2492,7 +2497,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-tools': 0.26.1_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/bundle-size-tools': 0.26.1_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 3.0.3
@@ -2949,11 +2954,11 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      assert: 2.0.0
-      async: 3.2.4
+      assert: 2.1.0
+      async: 3.2.5
       events: 3.3.0
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -2966,11 +2971,11 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      assert: 2.0.0
-      async: 3.2.4
+      assert: 2.1.0
+      async: 3.2.5
       events: 3.3.0
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -2988,19 +2993,19 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      '@types/semver': 7.5.0
-      assert: 2.0.0
-      async: 3.2.4
+      '@types/semver': 7.5.5
+      assert: 2.1.0
+      async: 3.2.5
       axios: 0.26.1
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
-      nconf: 0.12.0
-      semver: 7.5.3
+      nconf: 0.12.1
+      semver: 7.5.4
       sha.js: 2.4.11
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -3030,7 +3035,7 @@ packages:
       nconf: 0.12.1
       semver: 7.5.4
       sha.js: 2.4.11
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -3060,7 +3065,7 @@ packages:
       nconf: 0.12.1
       semver: 7.5.4
       sha.js: 2.4.11
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -3080,7 +3085,7 @@ packages:
       debug: 4.3.4
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -3097,18 +3102,18 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      '@types/debug': 4.1.8
-      '@types/double-ended-queue': 2.1.2
-      '@types/lodash': 4.14.195
-      '@types/node': 18.17.6
+      '@types/debug': 4.1.12
+      '@types/double-ended-queue': 2.1.6
+      '@types/lodash': 4.14.201
+      '@types/node': 18.18.9
       '@types/ws': 6.0.4
-      assert: 2.0.0
+      assert: 2.1.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
       ws: 7.5.9
     transitivePeerDependencies:
       - bufferutil
@@ -3129,7 +3134,7 @@ packages:
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.6
       '@types/lodash': 4.14.201
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       '@types/ws': 6.0.4
       assert: 2.1.0
       debug: 4.3.4
@@ -3137,7 +3142,7 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
       ws: 7.5.9
     transitivePeerDependencies:
       - bufferutil
@@ -3171,12 +3176,12 @@ packages:
       express: 4.18.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
-      jsonwebtoken: 9.0.0
+      jsonwebtoken: 9.0.2
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
       winston: 3.9.0
       ws: 7.5.9
     transitivePeerDependencies:
@@ -3215,7 +3220,7 @@ packages:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
       sillyname: 0.1.0
       uuid: 9.0.1
@@ -3249,7 +3254,7 @@ packages:
       commander: 2.20.3
       express: 4.18.2
       ioredis: 5.3.2
-      nconf: 0.12.0
+      nconf: 0.12.1
       winston: 3.9.0
     transitivePeerDependencies:
       - aws-crt
@@ -3274,7 +3279,7 @@ packages:
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3294,7 +3299,7 @@ packages:
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3307,11 +3312,11 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      '@types/nconf': 0.10.3
-      '@types/node': 18.17.6
+      '@types/nconf': 0.10.6
+      '@types/node': 18.18.9
       debug: 4.3.4
       events: 3.3.0
-      nconf: 0.12.0
+      nconf: 0.12.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3325,7 +3330,7 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
       '@types/nconf': 0.10.6
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       debug: 4.3.4
       events: 3.3.0
       nconf: 0.12.1
@@ -3342,7 +3347,7 @@ packages:
       '@fluidframework/server-services-telemetry': 2.0.2
       events: 3.3.0
       kafka-node: 5.0.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -3357,7 +3362,7 @@ packages:
       '@fluidframework/server-services-telemetry': 2.0.2
       events: 3.3.0
       kafka-node: 5.0.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -3371,8 +3376,8 @@ packages:
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
       events: 3.3.0
-      nconf: 0.12.0
-      node-rdkafka: 2.16.1
+      nconf: 0.12.1
+      node-rdkafka: 2.18.0
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -3386,7 +3391,7 @@ packages:
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
       events: 3.3.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       node-rdkafka: 2.18.0
       sillyname: 0.1.0
     transitivePeerDependencies:
@@ -3427,14 +3432,14 @@ packages:
       events: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       notepack.io: 2.3.0
       querystring: 0.2.1
       serialize-error: 8.1.0
-      socket.io: 4.6.2
+      socket.io: 4.7.2
       socket.io-adapter: 2.5.2
       socket.io-parser: 4.2.4
-      uuid: 9.0.0
+      uuid: 9.0.1
       winston: 3.9.0
     transitivePeerDependencies:
       - bufferutil
@@ -3458,7 +3463,7 @@ packages:
       events: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
-      nconf: 0.12.0
+      nconf: 0.12.1
       notepack.io: 2.3.0
       querystring: 0.2.1
       serialize-error: 8.1.0
@@ -3480,7 +3485,7 @@ packages:
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     dev: true
 
   /@fluidframework/server-services-telemetry/2.0.2:
@@ -3490,7 +3495,7 @@ packages:
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
-      uuid: 9.0.0
+      uuid: 9.0.1
     dev: true
 
   /@fluidframework/server-services-utils/2.0.0:
@@ -3504,15 +3509,15 @@ packages:
       express: 4.18.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
-      jsonwebtoken: 9.0.0
+      jsonwebtoken: 9.0.2
       morgan: 1.10.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
       sillyname: 0.1.0
       split: 1.0.1
-      uuid: 9.0.0
+      uuid: 9.0.1
       winston: 3.9.0
-      winston-transport: 4.5.0
+      winston-transport: 4.6.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3530,7 +3535,7 @@ packages:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
       morgan: 1.10.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       serialize-error: 8.1.0
       sillyname: 0.1.0
       split: 1.0.1
@@ -3561,10 +3566,10 @@ packages:
       ioredis: 5.3.2
       lru-cache: 6.0.0
       mongodb: 4.17.0
-      nconf: 0.12.0
-      socket.io: 4.6.2
+      nconf: 0.12.1
+      socket.io: 4.7.2
       telegrafjs: 0.1.3
-      uuid: 9.0.0
+      uuid: 9.0.1
       winston: 3.9.0
     transitivePeerDependencies:
       - aws-crt
@@ -3593,7 +3598,7 @@ packages:
       ioredis: 5.3.2
       lru-cache: 6.0.0
       mongodb: 4.17.0
-      nconf: 0.12.0
+      nconf: 0.12.1
       socket.io: 4.7.2
       telegrafjs: 0.1.3
       uuid: 9.0.1
@@ -3615,12 +3620,12 @@ packages:
       '@fluidframework/server-services-client': 2.0.2
       '@fluidframework/server-services-core': 2.0.2
       '@fluidframework/server-services-telemetry': 2.0.2
-      assert: 2.0.0
+      assert: 2.1.0
       debug: 4.3.4
       events: 3.3.0
       lodash: 4.17.21
       string-hash: 1.1.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3640,7 +3645,7 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       string-hash: 1.1.3
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -4625,7 +4630,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.38.3:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:
@@ -4644,8 +4649,9 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
-  /@microsoft/api-extractor/7.38.3_@types+node@18.17.6:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:
@@ -4664,8 +4670,9 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
-  /@microsoft/api-extractor/7.38.3_@types+node@18.18.4:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.18.4:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:
@@ -4684,6 +4691,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
@@ -6735,7 +6743,7 @@ packages:
   /@types/connect/3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
     dev: true
 
   /@types/cookie-parser/1.4.3:
@@ -6766,7 +6774,7 @@ packages:
   /@types/cors/2.8.16:
     resolution: {integrity: sha512-Trx5or1Nyg1Fq138PCuWqoApzvoSLWzZ25ORBiHMbbUT42g578lH1GT4TwYDbiUOLFuDsCkfLneT2105fsFWGg==}
     dependencies:
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
 
   /@types/debug/4.1.12:
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
@@ -6785,6 +6793,7 @@ packages:
 
   /@types/double-ended-queue/2.1.2:
     resolution: {integrity: sha512-iAjbBa3X4UQtYxcCsAr0YaZMRwyC79q4KHui0XtEN7GGLJA4fzD116KUYXXZKskaOYSchnaOFT/a8zSlEx3P9Q==}
+    dev: false
 
   /@types/double-ended-queue/2.1.6:
     resolution: {integrity: sha512-y8BMSZCr8vP861n9I5gCXoj8j7Lmk1MFip/ZCxArEqDXc8l0Ep4czaAluZOVSDLlQ9ZqAMCAaN/8SxjXso2OmQ==}
@@ -6837,7 +6846,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.18.4
+      '@types/node': 18.18.9
     dev: true
 
   /@types/http-cache-semantics/4.0.1:
@@ -6882,10 +6891,6 @@ packages:
 
   /@types/jsrsasign/8.0.13:
     resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
-    dev: true
-
-  /@types/jwt-decode/2.2.1:
-    resolution: {integrity: sha512-aWw2YTtAdT7CskFyxEX2K21/zSDStuf/ikI3yBqmwpwJF0pS+/IX5DWv+1UFffZIbruP6cnT9/LAJV1gFwAT1A==}
     dev: true
 
   /@types/keyv/3.1.4:
@@ -6978,7 +6983,6 @@ packages:
     resolution: {integrity: sha512-0f5klcuImLnG4Qreu9hPj/rEfFq6YRc5n2mAjSsH+ec/mJL+3voBH0+8T7o8RpFjH7ovc+TRsL/c7OYIQsPTfQ==}
     dependencies:
       undici-types: 5.26.5
-    dev: true
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -7020,14 +7024,14 @@ packages:
     resolution: {integrity: sha512-Cwo8LE/0rnvX7kIIa3QHCkcuF21c05Ayb0ZfxPiv0W8VRiZiNW/WuRupHKpqqGVGf7SUA44QSOUKaEd9lIrd/Q==}
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
     dev: true
 
   /@types/serve-static/1.15.1:
     resolution: {integrity: sha512-NUo5XNiAdULrJENtJXZZ3fHtfMolzZwczzBbnAeBbqBwG+LaG6YaJtuwzwGSQZ2wsCrxjEhNNjAkKigy3n8teQ==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
     dev: true
 
   /@types/sinon/9.0.11:
@@ -7054,7 +7058,7 @@ packages:
     resolution: {integrity: sha512-LOWgpacIV8GHhrsQU+QMZuomfqXiqzz3ILLkCtKx3Us6AmomFViuzKT9D693QTKgyut2oCytMG8/efOop+DB+w==}
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
     dev: true
 
   /@types/supertest/2.0.12:
@@ -7083,7 +7087,7 @@ packages:
   /@types/whatwg-url/8.2.2:
     resolution: {integrity: sha512-FtQu10RWgn3D9U4aazdwIE2yzphmTJREDqNdODHrbrZmmMqI0vMheC/6NE/J1Yveaj8H+ela+YwWTjq5PGmuhA==}
     dependencies:
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       '@types/webidl-conversions': 7.0.3
 
   /@types/ws/6.0.4:
@@ -8012,6 +8016,7 @@ packages:
       is-nan: 1.3.2
       object-is: 1.1.5
       util: 0.12.5
+    dev: false
 
   /assert/2.1.0:
     resolution: {integrity: sha512-eLHpSK/Y4nhMJ07gDaAzoX/XAKS8PSaojml3M0DM4JpV1LAi5JOJ/p6H/XWrl8L+DzVEvVCW1z3vWAaB9oTsQw==}
@@ -8450,7 +8455,7 @@ packages:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -8988,7 +8993,7 @@ packages:
     dependencies:
       colors: 0.6.2
       eyes: 0.1.8
-      winston: 0.8.0
+      winston: 0.8.3
     dev: true
 
   /cliui/6.0.0:
@@ -10132,6 +10137,7 @@ packages:
   /engine.io-parser/5.0.7:
     resolution: {integrity: sha512-P+jDFbvK6lE3n1OL+q9KuzdOFWkkZ/cMV9gol/SbVfpyqfvrfrFTOFJ6fQm2VC3PZHlU3QPhVwmbsCnauHF2MQ==}
     engines: {node: '>=10.0.0'}
+    dev: false
 
   /engine.io-parser/5.2.1:
     resolution: {integrity: sha512-9JktcM3u18nU9N2Lz3bWeBgxVgOKpw7yhRaoxQA3FUDZzzw+9WlA6p4G4u0RixNkg14fH7EfEc/RhpurtiROTQ==}
@@ -10144,7 +10150,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.16
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
@@ -10156,6 +10162,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: false
 
   /engine.io/6.5.4:
     resolution: {integrity: sha512-KdVSDKhVKyOi+r5uEabrDLZw2qXStVvCsEB/LN3mw4WFi6Gx50jTyuxYVCwAAC0U46FdnzP/ScKRBTXb/NiEOg==}
@@ -10163,7 +10170,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.16
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
@@ -10326,6 +10333,7 @@ packages:
 
   /es6-object-assign/1.1.0:
     resolution: {integrity: sha512-MEl9uirslVwqQU369iHNWZXsI8yaZYGg/D65aOgZkeyFJwHYSxilf7rQzXKI7DdDuBPrBXbfk3sl9hJhmd5AUw==}
+    dev: false
 
   /es6-promise/4.2.8:
     resolution: {integrity: sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==}
@@ -11259,6 +11267,11 @@ packages:
   /fast-memoize/2.5.2:
     resolution: {integrity: sha512-Ue0LwpDYErFbmNnZSF0UH6eImUwDmogUO1jyE+JbN2gsQz/jICm1Ve7t9QT0rNSsfJt+Hs4/S3GnsDVjL4HVrw==}
     dev: true
+
+  /fast-redact/3.3.0:
+    resolution: {integrity: sha512-6T5V1QK1u4oF+ATxs1lWUmlEk6P2T9HqJG3e2DnHOdVgZy2rFJBoEnrIedcTXlkAHU/zKC+7KETJ+KGGKwxgMQ==}
+    engines: {node: '>=6'}
+    dev: false
 
   /fast-xml-parser/4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}
@@ -13159,7 +13172,7 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      async: 3.2.4
+      async: 3.2.5
       chalk: 4.1.2
       filelist: 1.0.4
       minimatch: 3.1.2
@@ -13169,7 +13182,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.17.6
+      '@types/node': 18.18.9
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
@@ -13334,6 +13347,7 @@ packages:
       lodash: 4.17.21
       ms: 2.1.3
       semver: 7.5.4
+    dev: false
 
   /jsonwebtoken/9.0.2:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
@@ -13433,6 +13447,12 @@ packages:
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: true
+
+  /jwt-decode/4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
+    dev: false
 
   /kafka-node/5.0.0:
     resolution: {integrity: sha512-dD2ga5gLcQhsq1yNoQdy1MU4x4z7YnXM5bcG9SdQuiNr5KKuAmXixH1Mggwdah5o7EfholFbcNDPSVA6BIfaug==}
@@ -13914,7 +13934,7 @@ packages:
       fecha: 4.2.3
       ms: 2.1.3
       safe-stable-stringify: 2.4.3
-      triple-beam: 1.3.0
+      triple-beam: 1.4.1
 
   /logform/2.6.0:
     resolution: {integrity: sha512-1ulHeNPp6k/LD8H91o7VYFBng5i1BDE7HoKxVbZiGFidS1Rj65qcywLxX+pVfAPoQJEjRdvKcusKwOupHCVOVQ==}
@@ -14740,6 +14760,7 @@ packages:
       ini: 2.0.0
       secure-keys: 1.0.0
       yargs: 16.2.0
+    dev: false
 
   /nconf/0.12.1:
     resolution: {integrity: sha512-p2cfF+B3XXacQdswUYWZ0w6Vld0832A/tuqjLBu3H1sfUcby4N2oVbGhyuCkZv+t3iY3aiFEj7gZGqax9Q2c1w==}
@@ -14901,6 +14922,7 @@ packages:
     dependencies:
       bindings: 1.5.0
       nan: 2.17.0
+    dev: false
 
   /node-rdkafka/2.18.0:
     resolution: {integrity: sha512-jYkmO0sPvjesmzhv1WFOO4z7IMiAFpThR6/lcnFDWgSPkYL95CtcuVNo/R5PpjujmqSgS22GMkL1qvU4DTAvEQ==}
@@ -17629,6 +17651,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: false
 
   /socket.io/4.7.2:
     resolution: {integrity: sha512-bvKVS29/I5fl2FGLNHuXlQaUH/BlzX1IN6S+NKLNZpBsPZIDH+90eQmCs2Railn4YUiww4SzUedJ6+uzwFnKLw==}
@@ -18492,7 +18515,6 @@ packages:
   /triple-beam/1.4.1:
     resolution: {integrity: sha512-aZbgViZrg1QNcG+LULa7nhZpJTZSLm/mXnHXnbAbjmN5aSa0y7V+wvv6+4WaBtpISJzThKy+PIPxc1Nq1EJ9mg==}
     engines: {node: '>= 14.0.0'}
-    dev: true
 
   /ts-api-utils/1.0.3_typescript@4.5.5:
     resolution: {integrity: sha512-wNMeqtMz5NtwpT/UZGY5alT+VoKdSsOOP/kqHFcUW1P/VRhH2wJ48+DN2WwUliNbQ976ETwDL0Ifd2VVvgonvg==}
@@ -18913,7 +18935,6 @@ packages:
 
   /undici-types/5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-    dev: true
 
   /union-value/1.0.1:
     resolution: {integrity: sha512-tJfXmxMeWYnczCVs7XAEvIV7ieppALdyepWMkHkwciRpZraG/xwT+s2JN8+pr1+8jCRf80FFzvr+MpQeeoF4Xg==}
@@ -19158,6 +19179,7 @@ packages:
   /uuid/9.0.0:
     resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
+    dev: false
 
   /uuid/9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}

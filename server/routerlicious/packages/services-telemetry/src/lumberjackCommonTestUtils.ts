@@ -14,12 +14,18 @@ import {
 
 // TestLumberjack allows us to run unit tests on Lumberjack by
 // adding the reset() method
+/**
+ * @internal
+ */
 export class TestLumberjack extends Lumberjack {
 	public static reset() {
 		Lumberjack._instance = undefined;
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestSchemaValidator implements ILumberjackSchemaValidator {
 	constructor(private readonly passResult) {}
 	public validate(props: Map<string, any>): ILumberjackSchemaValidationResult {
@@ -30,14 +36,23 @@ export class TestSchemaValidator implements ILumberjackSchemaValidator {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestEngine1 implements ILumberjackEngine {
 	public emit(lumber: Lumber) {}
 }
 
+/**
+ * @internal
+ */
 export class TestEngine2 implements ILumberjackEngine {
 	public emit(lumber: Lumber) {}
 }
 
+/**
+ * @internal
+ */
 export class TestFormatter implements ILumberFormatter {
 	public transform(lumber: Lumber) {}
 }

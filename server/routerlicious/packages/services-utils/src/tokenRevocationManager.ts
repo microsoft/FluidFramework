@@ -11,6 +11,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 
+/**
+ * @internal
+ */
 export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socket id to socket object
 	private readonly socketIdToSocketMap: Map<string, IWebSocket>;
@@ -79,6 +82,9 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 }
 
+/**
+ * @internal
+ */
 export class DummyRevokedTokenChecker implements IRevokedTokenChecker {
 	public async isTokenRevoked(
 		tenantId: string,
@@ -90,6 +96,9 @@ export class DummyRevokedTokenChecker implements IRevokedTokenChecker {
 	}
 }
 
+/**
+ * @internal
+ */
 export class DummyTokenRevocationManager implements ITokenRevocationManager {
 	public async start() {
 		// Lumberjack.debug(`DummyTokenRevocationManager started`);

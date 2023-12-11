@@ -14,14 +14,14 @@ import {
 import {
 	createAndAttachContainer,
 	createDocumentId,
+	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -38,7 +38,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 // REVIEW: enable compat testing?
-describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
+describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider) => {
 	const packageV1: ICodeProposalTestPackage = {
 		name: "test",
 		version: 1,
@@ -194,7 +194,8 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

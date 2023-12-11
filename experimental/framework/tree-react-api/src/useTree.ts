@@ -8,6 +8,7 @@ import React from "react";
 
 /**
  * React Hook to trigger invalidation of the current component if anything in the document changes.
+ * @internal
  */
 export function useTreeContext(document: TreeContext): void {
 	// This proof-of-concept implementation allocates a state variable this is modified
@@ -26,6 +27,7 @@ export function useTreeContext(document: TreeContext): void {
 /**
  * React Hook to trigger invalidation of the current component if anything in the provided subtree changes.
  * This does NOT include if this subtree is moved into a different parent!
+ * @internal
  */
 export function useSubtree(tree: FlexTreeNode): void {
 	// This proof-of-concept implementation allocates a state variable this is modified

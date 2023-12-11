@@ -4,14 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, RevisionMetadataSource } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
 	Changeset,
 	Mark,
 	MarkList,
-	ReturnFrom,
 	NoopMarkType,
 	MoveOut,
 	NoopMark,
@@ -19,14 +18,14 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
-	MoveSource,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
 	extractMarkEffect,
 	getDetachOutputId,
 	getEndpoint,
+	getInputCellId,
 	getOutputCellId,
 	isAttach,
 	isDetach,
@@ -60,19 +59,6 @@ export function invert<TNodeChange>(
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
 		revisionMetadata,
-	);
-}
-
-export function amendInvert<TNodeChange>(
-	invertedChange: Changeset<TNodeChange>,
-	originalRevision: RevisionTag | undefined,
-	genId: IdAllocator,
-	crossFieldManager: CrossFieldManager,
-): Changeset<TNodeChange> {
-	return amendMarkList(
-		invertedChange,
-		originalRevision,
-		crossFieldManager as CrossFieldManager<TNodeChange>,
 	);
 }
 
@@ -134,7 +120,7 @@ function invertMark<TNodeChange>(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							detachIdOverride: mark.cellId,
+							detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					  };
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
@@ -153,8 +139,7 @@ function invertMark<TNodeChange>(
 			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
 			return [inverse];
 		}
-		case "MoveOut":
-		case "ReturnFrom": {
+		case "MoveOut": {
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,
@@ -197,15 +182,15 @@ function invertMark<TNodeChange>(
 					detach: {
 						type: "Delete",
 						id: mark.id,
-						detachIdOverride: mark.cellId,
+						detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
 					},
 				};
 			}
 			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
-				type: "ReturnFrom",
+			const invertedMark: CellMark<MoveOut, TNodeChange> = {
+				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
 			};
@@ -322,26 +307,8 @@ function invertMark<TNodeChange>(
 	}
 }
 
-function amendMarkList<TNodeChange>(
-	marks: MarkList<TNodeChange>,
-	revision: RevisionTag | undefined,
-	crossFieldManager: CrossFieldManager<TNodeChange>,
-): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>();
-
-	for (const mark of marks) {
-		if (mark.type === "MoveOut" || mark.type === "ReturnFrom") {
-			factory.push(...applyMovedChanges(mark, revision, crossFieldManager));
-		} else {
-			factory.push(mark);
-		}
-	}
-
-	return factory.list;
-}
-
 function applyMovedChanges<TNodeChange>(
-	mark: CellMark<MoveOut | ReturnFrom, TNodeChange>,
+	mark: CellMark<MoveOut, TNodeChange>,
 	revision: RevisionTag | undefined,
 	manager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
@@ -358,7 +325,7 @@ function applyMovedChanges<TNodeChange>(
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
 			entry.value !== undefined
-				? withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
+				? withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(
 						mark1,
 						entry.value,
 				  )
@@ -369,10 +336,7 @@ function applyMovedChanges<TNodeChange>(
 
 	if (entry.value !== undefined) {
 		return [
-			withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
-				mark,
-				entry.value,
-			),
+			withNodeChange<CellMark<MoveOut, TNodeChange>, MoveOut, TNodeChange>(mark, entry.value),
 		];
 	}
 

@@ -13,7 +13,7 @@ import {
 	ITreeCursorSynchronous,
 } from "../../core";
 import { JsonCompatible } from "../../util";
-import { CursorAdapter, isPrimitiveValue, stackTreeNodeCursor } from "../../feature-libraries";
+import { CursorAdapter, isFluidHandle, stackTreeNodeCursor } from "../../feature-libraries";
 import { leaf } from "../leafDomain";
 import { jsonArray, jsonObject } from "./jsonDomainSchema";
 
@@ -21,7 +21,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
 		node !== null && typeof node === "object"
 			? undefined // arrays and objects have no defined value
-			: node, // null, boolean, numbers, and strings are their own value
+			: node, // null, boolean, numbers, and strings are their own values
 	type: (node: JsonCompatible) => {
 		const type = typeof node;
 
@@ -50,10 +50,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				} else if (Array.isArray(node)) {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
-					return (Object.keys(node) as FieldKey[]).filter((key) => {
-						const value = node[key];
-						return !Array.isArray(value) || value.length !== 0;
-					});
+					return Object.keys(node) as FieldKey[];
 				}
 			default:
 				return [];
@@ -91,7 +88,6 @@ const adapter: CursorAdapter<JsonCompatible> = {
  * Used to read a Jsonable tree for testing and benchmarking.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
- * @alpha
  */
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(adapter, root);
@@ -100,7 +96,6 @@ export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
 /**
  * Extract a JS object tree from the contents of the given ITreeCursor.
  * Assumes that ITreeCursor contains only unaugmented JsonTypes.
- * @alpha
  */
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;
@@ -109,8 +104,9 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case leaf.number.name:
 		case leaf.boolean.name:
 		case leaf.string.name:
-			assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
-			return reader.value as JsonCompatible;
+			assert(reader.value !== undefined, "out of schema: missing value");
+			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			return reader.value;
 		case jsonArray.name: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);

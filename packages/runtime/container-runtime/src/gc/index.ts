@@ -7,12 +7,12 @@ export { GarbageCollector } from "./garbageCollection";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
-	disableSweepLogKey,
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
-	gcThrowOnTombstoneLoadOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
@@ -24,6 +24,8 @@ export {
 	IGCMetadata,
 	IGCResult,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
 	runGCKey,
@@ -34,6 +36,7 @@ export {
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
+	GarbageCollectionMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

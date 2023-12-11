@@ -5,20 +5,25 @@
 
 import { strict as assert } from "assert";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange, tagRollbackInverse } from "../core";
-import { defaultRevisionMetadataFromChanges } from "./utils";
-
+import { fail } from "../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema";
+import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils";
 import {
 	FieldStateTree,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
 	BoundFieldChangeRebaser,
 	makeIntentionMinter,
+	NamedChangeset,
 } from "./exhaustiveRebaserUtils";
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;
+	groupSubSuites?: boolean;
 	numberOfEditsToRebase?: number;
 	numberOfEditsToRebaseOver?: number;
+	numberOfEditsToVerifyAssociativity?: number;
 }
 
 const defaultSuiteOptions: Required<ExhaustiveSuiteOptions> = {
@@ -26,45 +31,73 @@ const defaultSuiteOptions: Required<ExhaustiveSuiteOptions> = {
 	 * Some FieldKinds don't pass this suite and can override this option to skip it.
 	 */
 	skipRebaseOverCompose: false,
+	/**
+	 * Runs sub-suites as an individual test to reduce test discovery time
+	 */
+	groupSubSuites: false,
 	numberOfEditsToRebase: 2,
 	numberOfEditsToRebaseOver: 2,
+	numberOfEditsToVerifyAssociativity: 4,
 };
+
+/**
+ * Rebases `change` over all edits in `rebasePath`.
+ * @param rebase - The rebase function to use.
+ * @param change - The change to rebase
+ * @param rebasePath - The edits to rebase over.
+ * Must contain all the prior edits from the branch that `change` comes from.
+ * For example, if `change` is B in branch [A, B, C], being rebased over edits [X, Y],
+ * then `rebasePath` must be [A⁻¹, X, Y, A'].
+ */
+function rebaseTagged<TChangeset>(
+	rebase: BoundFieldChangeRebaser<TChangeset>["rebase"],
+	change: TaggedChange<TChangeset>,
+	rebasePath: TaggedChange<TChangeset>[],
+): TaggedChange<TChangeset> {
+	let currChange = change;
+	const revisionInfo = defaultRevInfosFromChanges(rebasePath);
+	for (const base of rebasePath) {
+		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]);
+		currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
+	}
+
+	return currChange;
+}
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
-	{ rebase, rebaseComposed, invert, compose }: BoundFieldChangeRebaser<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 	options?: ExhaustiveSuiteOptions,
 ) {
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const definedOptions = { ...defaultSuiteOptions, ...options };
 
-	function rebaseTagged(
-		change: TaggedChange<TChangeset>,
-		...baseChanges: TaggedChange<TChangeset>[]
-	): TaggedChange<TChangeset> {
-		let currChange = change;
-		for (const base of baseChanges) {
-			currChange = tagChange(rebase(currChange.change, base), currChange.revision);
-		}
-
-		return currChange;
-	}
 	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
 	// by:
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const { numberOfEditsToRebaseOver, numberOfEditsToRebase } = definedOptions;
+	const {
+		numberOfEditsToRebaseOver,
+		numberOfEditsToRebase,
+		numberOfEditsToVerifyAssociativity,
+		groupSubSuites,
+	} = definedOptions;
 
 	// Skip the "Rebase over compose" suite if specified to in the suite options.
 	const rebaseOverComposeDescribe = definedOptions.skipRebaseOverCompose
 		? describe.skip
 		: describe;
 
+	const [outerFixture, innerFixture] = groupSubSuites
+		? [it, (title: string, fn: () => void) => fn()]
+		: [describe, it];
+
 	rebaseOverComposeDescribe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
-			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const localEdits = Array.from(
 					generatePossibleSequenceOfEdits(
 						initialState,
@@ -89,24 +122,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
-						it(title, () => {
-							const editsToRebaseOver = namedEditsToRebaseOver.map(
-								({ changeset }) => changeset,
-							);
-							const rebaseWithoutCompose = rebaseTagged(
+						innerFixture(title, () => {
+							rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 								edit,
-								...editsToRebaseOver,
-							).change;
-							const metadata = defaultRevisionMetadataFromChanges([
-								...editsToRebaseOver,
-								edit,
-							]);
-							const rebaseWithCompose = rebaseComposed(
-								metadata,
-								edit.change,
-								...editsToRebaseOver,
+								namedEditsToRebaseOver,
+								fieldRebaser,
 							);
-							assert.deepEqual(rebaseWithCompose, rebaseWithoutCompose);
 						});
 					}
 				}
@@ -116,7 +137,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 	describe("Composed sandwich rebase over single edit", () => {
 		for (const initialState of initialStates) {
-			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const intentionMinter = makeIntentionMinter();
 				const localEdits = Array.from(
 					generatePossibleSequenceOfEdits(
@@ -144,69 +165,213 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						it(title, () => {
+						innerFixture(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
-							const inverses = sourceEdits.map((change) =>
+							const rollbacks = sourceEdits.map((change) =>
 								tagRollbackInverse(
-									invert(change),
+									fieldRebaser.invert(change),
 									`rollback-${change.revision}` as RevisionTag,
 									change.revision,
 								),
 							);
-							inverses.reverse();
+							rollbacks.reverse();
 
-							const rebasedEditsWithoutCompose: TaggedChange<TChangeset>[] = [];
-							const rebasedEditsWithCompose: TaggedChange<TChangeset>[] = [];
+							const rebasedEditsWithoutCompose = sandwichRebaseWithoutCompose(
+								sourceEdits,
+								rollbacks,
+								editToRebaseOver,
+								fieldRebaser,
+							);
 
-							for (let i = 0; i < sourceEdits.length; i++) {
-								const edit = sourceEdits[i];
-								const editsToRebaseOver = [
-									...inverses.slice(sourceEdits.length - i),
-									editToRebaseOver,
-									...rebasedEditsWithoutCompose,
-								];
-								rebasedEditsWithoutCompose.push(
-									rebaseTagged(edit, ...editsToRebaseOver),
-								);
-							}
-
-							let currentComposedEdit = editToRebaseOver;
-							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
-							const allTaggedEdits = [...inverses, editToRebaseOver];
-							for (let i = 0; i < sourceEdits.length; i++) {
-								let metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-								const edit = sourceEdits[i];
-								const rebasedEdit = tagChange(
-									rebaseComposed(metadata, edit.change, currentComposedEdit),
-									edit.revision,
-								);
-								rebasedEditsWithCompose.push(rebasedEdit);
-								allTaggedEdits.push(rebasedEdit);
-								metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-								currentComposedEdit = makeAnonChange(
-									compose(
-										[
-											inverses[sourceEdits.length - i - 1],
-											currentComposedEdit,
-											rebasedEdit,
-										],
-										metadata,
-									),
-								);
-							}
+							const rebasedEditsWithCompose = sandwichRebaseWithCompose(
+								sourceEdits,
+								rollbacks,
+								editToRebaseOver,
+								fieldRebaser,
+							);
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-								assert.deepEqual(
-									rebasedEditsWithoutCompose[i].change,
-									rebasedEditsWithCompose[i].change,
+								assertDeepEqual(
+									rebasedEditsWithoutCompose[i],
+									rebasedEditsWithCompose[i],
 								);
 							}
+
+							// TODO: consider testing the compose associativity with the `rebasedEditsWithoutCompose` as well.
+							const allTaggedEdits = [
+								...rollbacks,
+								editToRebaseOver,
+								...rebasedEditsWithCompose,
+							];
+							verifyComposeAssociativity(allTaggedEdits, fieldRebaser);
 						});
 					}
 				}
 			});
 		}
 	});
+
+	describe("Compose associativity", () => {
+		for (const initialState of initialStates) {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					generateChildStates,
+					numberOfEditsToVerifyAssociativity,
+					"rev-",
+				)) {
+					const title = `for ${JSON.stringify(
+						namedSourceEdits.map(({ description }) => description),
+					)}`;
+
+					// Note that this test case doesn't verify associativity of rollback inverses.
+					// That's covered some by "Composed sandwich rebase over single edit"
+					innerFixture(title, () => {
+						const edits = namedSourceEdits.map(({ changeset }) => changeset);
+						verifyComposeAssociativity(edits, fieldRebaser);
+					});
+				}
+			});
+		}
+	});
+}
+
+function sandwichRebaseWithCompose<TChangeset>(
+	sourceEdits: TaggedChange<TChangeset>[],
+	rollbacks: TaggedChange<TChangeset>[],
+	editToRebaseOver: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+): TaggedChange<TChangeset>[] {
+	const rebasedEditsWithCompose: TaggedChange<TChangeset>[] = [];
+	let compositionScope: TaggedChange<TChangeset>[] = [editToRebaseOver];
+	let currentComposedEdit = editToRebaseOver;
+	// This needs to be used to pass an updated RevisionMetadataSource to rebase.
+	for (let i = 0; i < sourceEdits.length; i++) {
+		const edit = sourceEdits[i];
+		const rebasePath = [
+			...rollbacks.slice(sourceEdits.length - i),
+			editToRebaseOver,
+			...sourceEdits.slice(0, i),
+		];
+		const rebaseMetadata = rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges(rebasePath),
+			[editToRebaseOver.revision],
+		);
+		const rebasedEdit = tagChange(
+			fieldRebaser.rebaseComposed(rebaseMetadata, edit.change, currentComposedEdit),
+			edit.revision,
+		);
+		rebasedEditsWithCompose.push(rebasedEdit);
+		compositionScope = [
+			rollbacks[sourceEdits.length - i - 1],
+			...compositionScope,
+			rebasedEdit,
+		];
+		const composeMetadata = defaultRevisionMetadataFromChanges(compositionScope);
+		currentComposedEdit = makeAnonChange(
+			fieldRebaser.compose(
+				[rollbacks[sourceEdits.length - i - 1], currentComposedEdit, rebasedEdit],
+				composeMetadata,
+			),
+		);
+	}
+	return rebasedEditsWithCompose;
+}
+
+function sandwichRebaseWithoutCompose<TChangeset>(
+	sourceEdits: TaggedChange<TChangeset>[],
+	rollbacks: TaggedChange<any>[],
+	editToRebaseOver: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+): TaggedChange<TChangeset>[] {
+	const rebasedEditsWithoutCompose: TaggedChange<TChangeset>[] = [];
+	for (let i = 0; i < sourceEdits.length; i++) {
+		const edit = sourceEdits[i];
+		const rebasePath = [
+			...rollbacks.slice(sourceEdits.length - i),
+			editToRebaseOver,
+			...rebasedEditsWithoutCompose,
+		];
+		rebasedEditsWithoutCompose.push(rebaseTagged(fieldRebaser.rebase, edit, rebasePath));
+	}
+	return rebasedEditsWithoutCompose;
+}
+
+function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	namedEditsToRebaseOver: NamedChangeset<TChangeset>[],
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
+
+	// Rebase over each base edit individually
+	const rebaseWithoutCompose = rebaseTagged(fieldRebaser.rebase, edit, editsToRebaseOver).change;
+
+	// Rebase over the composition of base edits
+	const metadata = rebaseRevisionMetadataFromInfo(
+		defaultRevInfosFromChanges(editsToRebaseOver),
+		editsToRebaseOver.map(({ revision }) => revision),
+	);
+	const rebaseWithCompose = fieldRebaser.rebaseComposed(
+		metadata,
+		edit.change,
+		...editsToRebaseOver,
+	);
+
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assertDeepEqual(
+		tagChange(rebaseWithCompose, edit.revision),
+		tagChange(rebaseWithoutCompose, edit.revision),
+	);
+}
+
+function verifyComposeAssociativity<TChangeset>(
+	edits: TaggedChange<TChangeset>[],
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const metadata = defaultRevisionMetadataFromChanges(edits);
+	const singlyComposed = makeAnonChange(fieldRebaser.compose(edits, metadata));
+	const leftPartialCompositions: TaggedChange<TChangeset>[] = [
+		edits.at(0) ?? fail("Expected at least one edit"),
+	];
+	for (let i = 1; i < edits.length; i++) {
+		leftPartialCompositions.push(
+			makeAnonChange(
+				fieldRebaser.compose(
+					[
+						leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+						edits[i],
+					],
+					metadata,
+				),
+			),
+		);
+	}
+
+	const rightPartialCompositions: TaggedChange<TChangeset>[] = [
+		edits.at(-1) ?? fail("Expected at least one edit"),
+	];
+	for (let i = edits.length - 2; i >= 0; i--) {
+		rightPartialCompositions.push(
+			makeAnonChange(
+				fieldRebaser.compose(
+					[
+						edits[i],
+						rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+					],
+					metadata,
+				),
+			),
+		);
+	}
+
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assertDeepEqual(leftPartialCompositions.at(-1), singlyComposed);
+	assertDeepEqual(rightPartialCompositions.at(-1), singlyComposed);
+}
+
+function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {
+	return fieldRebaser.assertEqual ?? ((a, b) => assert.deepEqual(a, b));
 }

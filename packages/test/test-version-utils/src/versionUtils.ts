@@ -103,6 +103,9 @@ async function removeInstalled(version: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export function resolveVersion(requested: string, installed: boolean) {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
@@ -170,6 +173,9 @@ async function ensureModulePath(version: string, modulePath: string) {
 	}
 }
 
+/**
+ * @internal
+ */
 export async function ensureInstalled(
 	requested: string,
 	packageList: string[],
@@ -259,6 +265,9 @@ export async function ensureInstalled(
 	}
 }
 
+/**
+ * @internal
+ */
 export function checkInstalled(requested: string) {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
@@ -271,8 +280,47 @@ export function checkInstalled(requested: string) {
 	);
 }
 
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
-	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
+/**
+ * @internal
+ */
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgJson: { main?: string; exports?: string | Record<string, string> } = JSON.parse(
+		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
+	);
+	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
+	let primaryExport: string;
+	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
+		if (typeof pkgJson.exports === "string") {
+			primaryExport = pkgJson.exports;
+		} else {
+			primaryExport = pkgJson.exports["."];
+			if (primaryExport === undefined) {
+				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			}
+		}
+	} else {
+		if (pkgJson.main === undefined) {
+			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		primaryExport = pkgJson.main;
+	}
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
+};
 
 /**
  *
@@ -299,6 +347,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  * ```typescript
  * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
  * ```
+ *
+ * @internal
  */
 export function getRequestedVersion(
 	baseVersion: string,
@@ -411,6 +461,9 @@ function internalSchema(publicVersion: string, internalVersion: string, requeste
 	}.0.0`;
 }
 
+/**
+ * @internal
+ */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
 	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
 	return (

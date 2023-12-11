@@ -171,3 +171,12 @@ export {
 	TreeViewRange,
 	TraitLocation,
 } from './TreeView';
+
+export {
+	type IMigrationEvent,
+	type IShim,
+	MigrationShim,
+	MigrationShimFactory,
+	SharedTreeShim,
+	SharedTreeShimFactory,
+} from './migration-shim';

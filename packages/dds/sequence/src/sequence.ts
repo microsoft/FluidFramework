@@ -98,7 +98,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @public
+ * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -116,7 +116,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @public
+ * @alpha
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -137,7 +137,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * An application using SharedString which explicitly wants to opt in to allowing reentrancy anyway can set `sharedStringPreventReentrancy`
 	 * on the data store options to `false`.
-	 * @internal
 	 */
 	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
 

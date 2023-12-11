@@ -3,72 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, JsonableTree, RevisionTag } from "../../core";
+import { ChangeAtomId } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
-export type NodeUpdate =
-	| {
-			set: JsonableTree;
-			/**
-			 * ID associated with the creation of the new tree.
-			 */
-			buildId: ChangeAtomId;
-			changes?: NodeChangeset;
-	  }
-	| {
-			/**
-			 * The change being reverted.
-			 */
-			revert: ChangeAtomId;
-			changes?: NodeChangeset;
-	  };
+/**
+ * Uniquely identifies a register within the scope of this changeset.
+ * The sentinel value "self" is used for the active register, which is a universally shared register
+ * (as in, any changeset referring to "self" refers to the register containing the active value of the field).
+ *
+ * See the model description in {@link OptionalChangeset} for more details.
+ */
+export type RegisterId = ChangeAtomId | "self";
 
-export interface OptionalFieldChange {
-	/**
-	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-	 * Globally unique across all changesets when paired with the changeset's revision tag.
-	 */
-	readonly id: ChangesetLocalId;
-
-	/**
-	 * When populated, indicates the revision that this field change is associated with.
-	 * Is left undefined when the revision is the same as that of the whole changeset
-	 * (which would also be undefined in the case of an anonymous changeset).
-	 */
-	readonly revision?: RevisionTag;
-
-	/**
-	 * The new content for the trait. If undefined, the trait will be cleared.
-	 */
-	newContent?: NodeUpdate;
-
-	/**
-	 * Whether the field was empty in the state this change is based on.
-	 */
-	wasEmpty: boolean;
-}
-
+/**
+ * Changes to an optional field.
+ *
+ * The model used is that optional field consists of a collection of "registers" with one designated as the "active" register.
+ * In a given change input or output context, registers may hold 0 or 1 nodes.
+ * Each register is identified using a {@link RegisterId}.
+ * The active register holds the current value of the field, and other registers hold detached roots.
+ */
 export interface OptionalChangeset {
 	/**
-	 * If defined, specifies the new content for the field.
+	 * Each entry signifies the intent to move a node from `src` to `dst`.
+	 *
+	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
+	 * As such, changesets should not contain duplicated src or dst entries (lest they populate the same register twice,
+	 * or try to move a node to two different places).
+	 *
+	 * The third entry specifies whether the "intent" of the move is to target a specific source register ("cellTargeting") OR to
+	 * target the node that currently happens to occupy some source register ("nodeTargeting").
+	 * This is relevant when considering how changes should be rebased.
+	 *
+	 * Rebasing logic should only generate moves whose `src` is an occupied register.
 	 */
-	fieldChange?: OptionalFieldChange;
+	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
 
 	/**
-	 * Changes to nodes which occupied this field prior to this changeset at some point.
+	 * Nested changes to nodes that occupy registers.
 	 *
-	 * `deletedBy` refers to the revision which deleted the node (via a `fieldChange`, replacing the contents of the field
-	 * and thus resetting any nested changes).
-	 * "self" is a sentinel value for the revision of the current changeset.
-	 * Thus, the childChange for "self" refers to:
-	 * - the node this changeset removes, if it involves a field change
-	 * - the node currently occupying this field, if it does not involve a field change
-	 *
-	 * @privateRemarks - Indexing by the revision which deleted the node rather than the one that inserted the node is necessary to support rebase.
-	 * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
-	 * original base revision (as 'start' no longer semantically refers to the correct place).
-	 *
-	 * TODO: This isn't really `deletedBy` as it is so much `contentBefore`, i.e. similar semantics to how childChange worked before.
+	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
-	childChanges?: [deletedBy: ChangeAtomId | "self", childChange: NodeChangeset][];
+	childChanges: [register: RegisterId, childChange: NodeChangeset][];
+
+	/**
+	 * Set iff:
+	 * 1. This change intends to populate a register (call it `foo`)
+	 * 2. That register is currently unoccupied
+	 *
+	 * In such cases, this changeset should not include a move with source `foo`, since `foo` is empty.
+	 * However, if this changeset is then rebased over a change which populates `foo`, the rebased changeset must now empty `foo`.
+	 * This reserved id is used as the destination of that emptying move.
+	 */
+	reservedDetachId?: RegisterId;
 }

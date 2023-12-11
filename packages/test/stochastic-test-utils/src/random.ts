@@ -42,6 +42,8 @@ export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: nu
 /**
  * Construct a new IRandom instance, optionally seeding it with up to four 32b integers.
  * If no seeds are provided, the PRNG is non-deterministically seeded using Math.random().
+ *
+ * @internal
  */
 export function makeRandom(
 	...seed:

@@ -44,9 +44,8 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isPrimitiveValue,
+	isTreeValue,
 	getPrimaryField,
-	PrimitiveValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -60,13 +59,14 @@ export {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 	cursorsForTypedFieldData,
-	FieldGenerator,
-	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
-	assertAllowedValue,
-	isFluidHandle,
+	getPossibleTypes,
 } from "./contextuallyTyped";
+
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
 
 export { ForestSummarizer } from "./forestSummarizer";
 export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
@@ -98,7 +98,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
@@ -114,21 +114,18 @@ export {
 	CrossFieldManager,
 	CrossFieldTarget,
 	FieldKind,
-	Multiplicity,
 	FullSchemaPolicy,
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	RevisionIndexer,
-	RevisionMetadataSource,
-	RevisionInfo,
 	HasFieldChanges,
-	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
-	RemovedTreesFromChild,
+	RelevantRemovedRootsFromChild,
 } from "./modular-schema";
+
+export { Multiplicity } from "./multiplicity";
 
 export {
 	TreeNodeSchema,
@@ -158,6 +155,12 @@ export {
 	MapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
+	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	NormalizeObjectNodeFields,
+	NormalizeField as NormalizeFieldSchema,
+	Fields,
 } from "./typed-schema";
 
 export {
@@ -173,7 +176,13 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
+export {
+	mapRootChanges,
+	mapFieldChanges,
+	mapFieldsChanges,
+	mapMark,
+	mapMarkList,
+} from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -214,6 +223,8 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
+	intoDelta,
+	relevantRemovedRoots,
 } from "./default-schema";
 
 export {
@@ -221,7 +232,6 @@ export {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	InternalEditableTreeTypes,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeOptionalField,
@@ -241,20 +251,44 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	FlexTreeTyped,
 	Context,
 	TreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	isFlexTreeNode,
+
+	// Internal
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
+	IsArrayOfOne,
+	FlexibleNodeSubSequence,
+	flexTreeMarker,
+	FlexTreeEntityKind,
+	NodeKeys,
 } from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-export { SchemaAware };
+export {
+	InsertableFlexNode,
+	InsertableFlexField,
+	AllowedTypesToFlexInsertableTree,
+	ApplyMultiplicity,
+
+	// Internal
+	CollectOptions,
+	TypedFields,
+	UnbrandedName,
+	EmptyObject,
+} from "./schema-aware";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";

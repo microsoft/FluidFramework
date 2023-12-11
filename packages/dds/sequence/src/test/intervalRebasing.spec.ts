@@ -14,7 +14,7 @@ import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness, IntervalType } from "../intervals";
 import { Side } from "../intervalCollection";
-import { assertConsistent, Client } from "./intervalUtils";
+import { assertConsistent, Client } from "./intervalTestUtils";
 
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,

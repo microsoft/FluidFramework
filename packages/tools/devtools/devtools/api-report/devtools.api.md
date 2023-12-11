@@ -10,7 +10,7 @@ import { HasContainerKey } from '@fluid-experimental/devtools-core';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 
-// @public
+// @internal
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
 }
@@ -19,7 +19,7 @@ export { ContainerKey }
 
 export { DevtoolsLogger }
 
-// @public
+// @internal
 export interface DevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
@@ -27,13 +27,13 @@ export interface DevtoolsProps {
 
 export { HasContainerKey }
 
-// @public
+// @internal
 export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-// @public (undocumented)
+// @internal
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
 ```

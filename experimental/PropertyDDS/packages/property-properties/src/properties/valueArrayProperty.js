@@ -23,6 +23,7 @@ const { BaseProperty } = require("./baseProperty");
 
 /**
  * An array property which stores primitive values
+ * @internal
  */
 export class ValueArrayProperty extends ArrayProperty {
 	/**

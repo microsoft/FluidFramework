@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { List, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
-// eslint-disable-next-line import/no-deprecated
 import { addProperties, PropertySet } from "./properties";
 import {
 	refHasTileLabels,
-	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabels,
 	ReferencePosition,
 	refTypeIncludesFlag,
@@ -22,6 +22,7 @@ import {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @alpha
  */
 export const SlidingPreference = {
 	/**
@@ -37,6 +38,7 @@ export const SlidingPreference = {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @alpha
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
@@ -62,6 +64,7 @@ function _validateReferenceType(refType: ReferenceType) {
 }
 /**
  * @sealed
+ * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
 	callbacks?: Partial<
@@ -133,7 +136,6 @@ class LocalReference implements LocalReferencePosition {
 	}
 
 	public addProperties(newProps: PropertySet, op?: ICombiningOp) {
-		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps, op);
 	}
 
@@ -154,6 +156,9 @@ class LocalReference implements LocalReferencePosition {
 	}
 }
 
+/**
+ * @internal
+ */
 export function createDetachedLocalReferencePosition(
 	refType?: ReferenceType,
 ): LocalReferencePosition {
@@ -203,6 +208,7 @@ export function* filterLocalReferencePositions(
 
 /**
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * @alpha
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment) {
@@ -224,16 +230,12 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public hierRefCount: number = 0;
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
-	/**
-	 *
-	 * @internal
-	 */
+	/***/
 	constructor(
 		/** Segment this `LocalReferenceCollection` is associated to. */
 		private readonly segment: ISegment,
@@ -247,7 +249,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public [Symbol.iterator]() {
 		const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
@@ -287,7 +288,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public clear() {
 		this.refCount = 0;
@@ -312,7 +312,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public get empty() {
 		return this.refCount === 0;
@@ -320,7 +319,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public createLocalRef(
 		offset: number,
@@ -339,7 +337,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addLocalRef(lref: LocalReferencePosition, offset: number) {
 		assertLocalReferences(lref);
@@ -357,7 +354,6 @@ export class LocalReferenceCollection {
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount++;
 			}
@@ -367,7 +363,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
 		if (this.has(lref)) {
@@ -377,7 +372,6 @@ export class LocalReferenceCollection {
 			node?.list?.remove(node);
 
 			lref.link(lref.getSegment(), lref.getOffset(), undefined);
-			// eslint-disable-next-line import/no-deprecated
 			if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
@@ -396,7 +390,6 @@ export class LocalReferenceCollection {
 	 * will be incorrect.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public append(other: LocalReferenceCollection) {
 		if (!other || other.empty) {
@@ -421,7 +414,6 @@ export class LocalReferenceCollection {
 	 * Returns true of the local reference is in the collection, otherwise false.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public has(lref: ReferencePosition): boolean {
 		if (
@@ -464,7 +456,6 @@ export class LocalReferenceCollection {
 	 * before splitting.
 	 *
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public split(offset: number, splitSeg: ISegment) {
 		if (!this.empty) {
@@ -477,7 +468,6 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
-				// eslint-disable-next-line import/no-deprecated
 				if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 					this.hierRefCount--;
 					localRefs.hierRefCount++;
@@ -493,7 +483,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const beforeRefs = this.refsByOffset[0]?.before ?? new List();
@@ -516,7 +505,6 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}
@@ -530,7 +518,6 @@ export class LocalReferenceCollection {
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const lastOffset = this.segment.cachedLength - 1;
@@ -550,7 +537,6 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
-					// eslint-disable-next-line import/no-deprecated
 					if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
 						this.hierRefCount++;
 					}
@@ -565,7 +551,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public isAfterTombstone(lref: LocalReferencePosition) {
 		const after = this.refsByOffset[lref.getOffset()]?.after;
@@ -578,7 +563,6 @@ export class LocalReferenceCollection {
 
 	/**
 	 * @remarks This method should only be called by mergeTree.
-	 * @internal
 	 */
 	public walkReferences(
 		visitor: (lref: LocalReferencePosition) => boolean | void | undefined,

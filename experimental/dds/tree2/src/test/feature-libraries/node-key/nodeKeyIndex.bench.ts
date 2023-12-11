@@ -74,17 +74,17 @@ describe("Node Key Index Benchmarks", () => {
 				view: TreeContext,
 				nodeKey?: LocalNodeKey,
 			):
-				| SchemaAware.TypedNode<typeof nodeWithKeySchema, ApiMode.Simple>
-				| SchemaAware.TypedNode<typeof nodeSchema, ApiMode.Simple> {
+				| SchemaAware.TypedNode<typeof nodeWithKeySchema>
+				| SchemaAware.TypedNode<typeof nodeSchema> {
 				if (nodeKey !== undefined) {
 					return {
 						[typeNameSymbol]: nodeWithKeySchema.name,
 						[nodeKeyFieldKey]: view.nodeKeys.stabilize(nodeKey),
-					} satisfies SchemaAware.TypedNode<typeof nodeWithKeySchema, ApiMode.Simple>;
+					} satisfies SchemaAware.TypedNode<typeof nodeWithKeySchema>;
 				}
 				return {
 					[typeNameSymbol]: nodeSchema.name,
-				} satisfies SchemaAware.TypedNode<typeof nodeSchema, ApiMode.Simple>;
+				} satisfies SchemaAware.TypedNode<typeof nodeSchema>;
 			}
 
 			for (const keyDensityPercentage of [5, 50, 100]) {

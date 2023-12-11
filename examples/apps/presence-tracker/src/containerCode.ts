@@ -7,9 +7,10 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Signaler } from "@fluid-experimental/data-objects";
+import { createServiceAudience } from "@fluidframework/fluid-static";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
-import { MockAudience } from "./Audience";
+import { createMockServiceMember } from "./Audience";
 
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;
@@ -43,7 +44,10 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		const signaler = await getDataStoreEntryPoint<Signaler>(runtime, signalerId);
 
-		const audience = new MockAudience(container);
+		const audience = createServiceAudience({
+			container,
+			createServiceMember: createMockServiceMember,
+		});
 
 		const focusTracker = new FocusTracker(container, audience, signaler);
 

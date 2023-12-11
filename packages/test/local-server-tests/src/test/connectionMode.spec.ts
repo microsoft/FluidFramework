@@ -10,7 +10,6 @@ import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -102,7 +101,7 @@ describe("Logging Last Connection Mode ", () => {
 
 		// Create the first container, component and DDSes.
 		container = await createContainer();
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

@@ -800,6 +800,7 @@ declare function get_old_InterfaceDeclaration_IGCStats():
 declare function use_current_InterfaceDeclaration_IGCStats(
     use: TypeOnly<current.IGCStats>): void;
 use_current_InterfaceDeclaration_IGCStats(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCStats());
 
 /*

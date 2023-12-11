@@ -1,12 +1,16 @@
 // Base API-Extractor config for build-tools
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json",
+	"extends": "../common/build/build-common/api-extractor-base.json",
 
-	// TODO: Consider enabling these in the future.
 	"messages": {
 		"extractorMessageReporting": {
+			// TODO: Consider enabling this in the future.
 			"ae-missing-release-tag": {
+				"logLevel": "none"
+			},
+			// TODO: Add missing documentation and remove this rule override
+			"ae-undocumented": {
 				"logLevel": "none"
 			}
 		}

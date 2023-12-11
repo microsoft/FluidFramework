@@ -21,7 +21,7 @@ import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 /**
- * @public
+ * @internal
  */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,

@@ -9,6 +9,22 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
 
 /**
+ * @internal
+ */
+export function createServiceAudience<M extends IMember = IMember>(props: {
+	container: IContainer;
+	createServiceMember: (audienceMember: IClient) => M;
+}): IServiceAudience<M> {
+	// todo: once ServiceAudience isn't exported, we can remove abstract from it, and just use that here
+	const c = class NewServiceAudience extends ServiceAudience<M> {
+		protected createServiceMember(audienceMember: IClient) {
+			return props.createServiceMember(audienceMember);
+		}
+	};
+	return new c(props.container);
+}
+
+/**
  * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
  *
  * @remarks
@@ -17,6 +33,8 @@ import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./typ
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
+ * @deprecated use {@link createServiceAudience} and {@link IServiceAudience} instead
+ * @internal
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>

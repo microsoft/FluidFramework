@@ -1733,6 +1733,9 @@ const MESSAGE_CONSTANTS = {
 	...ServerError,
 };
 
+/**
+ * @internal
+ */
 export const constants = {
 	MSG: MESSAGE_CONSTANTS,
 	PROPERTY_PATH_DELIMITER,

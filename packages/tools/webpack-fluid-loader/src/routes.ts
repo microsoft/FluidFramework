@@ -31,6 +31,7 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 /**
  * @returns A portion of a webpack config needed to add support for the
  * webpack-dev-server to use the webpack-fluid-loader.
+ * @internal
  */
 export function devServerConfig(baseDir: string, env: RouteOptions) {
 	return {
@@ -51,12 +52,18 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 	};
 }
 
+/**
+ * @internal
+ */
 export const before = (app: express.Application) => {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
 	app.get("/", (req, res) => res.redirect("/new"));
 };
 
+/**
+ * @internal
+ */
 export const after = (
 	app: express.Application,
 	server: WebpackDevServer,

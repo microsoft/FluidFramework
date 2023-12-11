@@ -28,8 +28,8 @@ export {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-	encodeNestedMap,
-	decodeNestedMap,
+	nestedMapToFlatList,
+	nestedMapFromFlatList,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
@@ -66,6 +66,7 @@ export {
 	makeArray,
 	mapIterable,
 	Mutable,
+	Populated,
 	RecursiveReadonly,
 	zipIterables,
 	Assume,
@@ -83,6 +84,7 @@ export {
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareStrings,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

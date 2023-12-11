@@ -24,10 +24,12 @@ export {
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
+	IDocumentIdStrategy,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider";
 export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
 export {
@@ -37,5 +39,9 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { waitForContainerConnection } from "./containerUtils";
+export {
+	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "./containerUtils";
 export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";

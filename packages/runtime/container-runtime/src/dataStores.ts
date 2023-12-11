@@ -40,6 +40,7 @@ import {
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
+	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
@@ -573,11 +574,16 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer works only with clients with no local changes. A data store in attaching
-					// state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x588 /* Local data store detected in attaching state during summarize */,
-					);
+					// state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					if (context.attachState === AttachState.Attaching) {
+						// Formerly assert 0x588
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state during summarize",
+							"summarize",
+						);
+						throw error;
+					}
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -675,11 +681,17 @@ export class DataStores implements IDisposable {
 			Array.from(this.contexts)
 				.filter(([_, context]) => {
 					// Summarizer client and hence GC works only with clients with no local changes. A data store in
-					// attaching state indicates an op was sent to attach a local data store.
-					assert(
-						context.attachState !== AttachState.Attaching,
-						0x589 /* Local data store detected in attaching state while running GC */,
-					);
+					// attaching state indicates an op was sent to attach a local data store, and the the attach op
+					// had not yet round tripped back to the client.
+					// Formerly assert 0x589
+					if (context.attachState === AttachState.Attaching) {
+						const error = DataProcessingError.create(
+							"Local data store detected in attaching state while running GC",
+							"getGCData",
+						);
+						throw error;
+					}
+
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
@@ -699,7 +711,7 @@ export class DataStores implements IDisposable {
 	 * After GC has run, called to notify this Container's data stores of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all data stores in this Container.
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]) {
 		// Get a map of data store ids to routes used in it.
 		const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -721,7 +733,7 @@ export class DataStores implements IDisposable {
 	 * This is called to update objects whose routes are unused. The unused objects are deleted.
 	 * @param unusedRoutes - The routes that are unused in all data stores in this Container.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]) {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
 		for (const route of unusedRoutes) {
 			const pathParts = route.split("/");
 			// Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -744,7 +756,7 @@ export class DataStores implements IDisposable {
 	 * be deleted.
 	 * @returns The routes of data stores and its objects that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
 		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
@@ -753,23 +765,25 @@ export class DataStores implements IDisposable {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
-			// TODO: GC:Validation - Skip any routes already deleted
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
 			if (pathParts.length > 2) {
 				continue;
 			}
 
-			if (!this.contexts.has(dataStoreId)) {
+			const dataStoreContext = this.contexts.get(dataStoreId);
+			if (dataStoreContext === undefined) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedDataStoreNotFound",
-					dataStoreId,
+					...tagCodeArtifacts({ id: dataStoreId }),
+					details: {
+						alreadyDeleted: this.isDataStoreDeleted(dataStoreId),
+					},
 				});
+				continue;
 			}
 
-			const dataStore = this.contexts.get(dataStoreId);
-			assert(dataStore !== undefined, 0x571 /* Attempting to delete unknown dataStore */);
-			dataStore.delete();
+			dataStoreContext.delete();
 
 			// Delete the contexts of sweep ready data stores.
 			this.contexts.delete(dataStoreId);
@@ -784,7 +798,7 @@ export class DataStores implements IDisposable {
 	 * scenarios with accessing deleted content without actually deleting content from summaries.
 	 * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const tombstonedDataStoresSet: Set<string> = new Set();
 		for (const route of tombstonedRoutes) {
 			const pathParts = route.split("/");

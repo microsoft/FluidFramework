@@ -11,8 +11,7 @@ import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
  * {@link DevtoolsPanel} input props.
- *
- * @public
+ * @internal
  */
 export interface DevtoolsPanelProps {
 	/**
@@ -43,8 +42,7 @@ export interface DevtoolsPanelProps {
  * Top-level view for the Fluid Devtools.
  *
  * @remarks Initializes the message relay context required by internal components.
- *
- * @public
+ * @internal
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	const { usageTelemetryLogger, messageRelay, unloadCallback } = props;

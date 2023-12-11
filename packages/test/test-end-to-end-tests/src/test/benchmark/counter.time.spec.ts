@@ -4,7 +4,6 @@
  */
 
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -12,7 +11,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 
 const counterId = "counterKey";
@@ -22,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("SharedCounter - runtime benchmarks", (getTestObjectProvider) => {
+describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const counters: ISharedCounter[] = [];
 
@@ -31,17 +30,17 @@ describeNoCompat("SharedCounter - runtime benchmarks", (getTestObjectProvider) =
 
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		counters[0] = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		counters[1] = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		counters[2] = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
 		await provider.ensureSynchronized();

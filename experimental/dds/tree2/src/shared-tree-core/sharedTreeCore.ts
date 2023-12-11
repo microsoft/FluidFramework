@@ -26,6 +26,7 @@ import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
 import { SeqNumber } from "./editManagerFormat";
 import { DecodedMessage } from "./messageTypes";
 import { makeMessageCodec } from "./messageCodecs";
+import { RevisionTagCodec } from "./revisionTagCodecs";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -100,7 +101,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
 		this.editManager = new EditManager(changeFamily, localSessionId);
-		this.editManager.localBranch.on("change", (args) => {
+		this.editManager.localBranch.on("afterChange", (args) => {
 			const { type } = args;
 			switch (type) {
 				case "append":
@@ -122,8 +123,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 		});
 
+		const revisionTagCodec = new RevisionTagCodec();
 		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, options),
+			new EditManagerSummarizer(this.editManager, revisionTagCodec, options),
 			...summarizables,
 		];
 		assert(
@@ -133,6 +135,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs.resolve(formatVersion).json,
+			new RevisionTagCodec(),
 			options,
 		);
 	}

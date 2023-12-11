@@ -48,11 +48,19 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
+	makeMitigatedChangeFamily,
 } from "../feature-libraries";
-import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
-import { TreeView, type ITree } from "./simpleTree";
+import {
+	ITree,
+	TreeConfiguration,
+	WrapperTreeView as ClassWrapperTreeView,
+	toFlexConfig,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	TreeView,
+} from "../class-tree";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
@@ -101,7 +109,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITree.schematize}, but returns a more powerful type exposing more package internal information.
+	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
 	 * @privateRemarks
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
@@ -169,7 +177,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -178,10 +186,32 @@ export class SharedTree
 			options.summaryEncodeType,
 			options,
 		);
-		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
-		const changeFamily = new DefaultChangeFamily(options);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
+		const defaultChangeFamily = new DefaultChangeFamily(options);
+		const changeFamily = makeMitigatedChangeFamily(
+			defaultChangeFamily,
+			DefaultChangeFamily.emptyChange,
+			(error: unknown) => {
+				// TODO:6344 Add telemetry for these errors.
+				// Rethrowing the error has a different effect depending on the context in which the
+				// ChangeFamily was invoked:
+				// - If the ChangeFamily was invoked as part of incoming op processing, rethrowing the error
+				// will cause the runtime to disconnect the client, log a severe error, and not reconnect.
+				// This will not cause the host application to crash because it is not on the stack at that time.
+				// TODO: let the host application know that the client is now disconnected.
+				// - If the ChangeFamily was invoked as part of dealing with a local change, rethrowing the
+				// error will cause the host application to crash. This is not ideal, but is better than
+				// letting the application either send an invalid change to the server or allowing the
+				// application to continue working when its local branches contain edits that cannot be
+				// reflected in its views.
+				// The best course of action for a host application in such a state is to restart.
+				// TODO: let the host application know about this situation and provide a way to
+				// programmatically reload the SharedTree container.
+				throw error;
+			},
+		);
 		super(
-			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
+			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			id,
@@ -193,13 +223,14 @@ export class SharedTree
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
+			changeFamily,
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			events: this._events,
-			removedTrees,
+			removedRoots,
 		});
 	}
 
@@ -318,11 +349,12 @@ export class SharedTree
 		);
 	}
 
-	public schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
-		const view = this.schematizeInternal(config);
-		return new WrapperTreeView(view);
+	public schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+		const flexConfig = toFlexConfig(config);
+		const view = this.schematizeInternal(flexConfig);
+		return new ClassWrapperTreeView(view);
 	}
 
 	/**
@@ -430,28 +462,5 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
-	}
-}
-
-/**
- * Implementation of TreeView wrapping a FlexTreeView.
- */
-export class WrapperTreeView<
-	in out TRoot extends TreeFieldSchema,
-	TView extends FlexTreeView<TRoot>,
-> implements TreeView<TreeField<TRoot>>
-{
-	public constructor(public readonly view: TView) {}
-
-	public [disposeSymbol](): void {
-		this.view[disposeSymbol]();
-	}
-
-	public get events(): ISubscribable<CheckoutEvents> {
-		return this.view.checkout.events;
-	}
-
-	public get root(): TreeRoot<TreeSchema<TRoot>> {
-		return getProxyForField(this.view.editableTree);
 	}
 }

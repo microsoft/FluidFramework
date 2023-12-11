@@ -12,8 +12,7 @@ import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 
 /**
  * The configuration object for the {@link FluidAppInsightsLogger}
- *
- * @public
+ * @internal
  */
 export interface FluidAppInsightsLoggerConfig {
 	/**
@@ -46,8 +45,7 @@ export interface FluidAppInsightsLoggerConfig {
 
 /**
  * A filter used to match against the category of a telemetry event
- *
- * @public
+ * @internal
  */
 export interface CategoryFilter {
 	/**
@@ -58,8 +56,7 @@ export interface CategoryFilter {
 
 /**
  * A filter used to match against the namespaces of a telemetry event
- *
- * @public
+ * @internal
  */
 export interface NamespaceFilter {
 	/**
@@ -96,9 +93,6 @@ export interface NamespaceFilter {
  * 3. If only `categories` or a `namespace` is provided, the event should just match the with whatever was defined.
  *
  * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
- *
- * @public
- *
  * @example
  * With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be sent despite matching the first, less specific filter because it did not match the second filter which was the most relevant and specific
  * ```
@@ -118,6 +112,7 @@ export interface NamespaceFilter {
  *			},
  *		});
  * ```
+ * @internal
  */
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
@@ -128,7 +123,7 @@ export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter
  * or else logging will not occur.
  *
  * @sealed
- * @public
+ * @internal
  */
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**

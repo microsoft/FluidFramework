@@ -8,7 +8,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
 /**
- * @public
+ * @internal
  */
 export function logNetworkFailure(
 	logger: ITelemetryLoggerExt,

@@ -14,6 +14,9 @@ import { serializeError } from "serialize-error";
 
 // Lumberjack engine based on Winston. It processes the data
 // captured in a Lumber instance and sends it through Winston.
+/**
+ * @internal
+ */
 export class WinstonLumberjackEngine implements ILumberjackEngine {
 	public emit(lumber: Lumber<string>) {
 		try {

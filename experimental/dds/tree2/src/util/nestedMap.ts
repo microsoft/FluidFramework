@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { MapGetSet } from "./utils";
+
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
  * As it is a nested map, size() will return the number of distinct key1s.
@@ -67,13 +69,15 @@ export function setInNestedMap<Key1, Key2, Value>(
 }
 
 /**
- * Sets the value at (key1, key2) in map to value if not already present.
- * Returns the value at (key1, key2) after setting it.
+ * Sets the value at `key` in map to value if not already present.
+ * Returns the value at `key` after setting it.
  * This is equivalent to a get or default that adds the default to the map.
- *
- * @alpha
  */
-export function getOrAddInMap<Key, Value>(map: Map<Key, Value>, key: Key, value: Value): Value {
+export function getOrAddInMap<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
 	const currentValue = map.get(key);
 	if (currentValue !== undefined) {
 		return currentValue;
@@ -162,25 +166,28 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
 }
 
 /**
- * Encodes a NestedMap as a string.
+ * Converts a nested map to a flat list of triplets.
  */
-export function encodeNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>): string {
-	const encoded: [Key1, Key2, Value][] = [];
+export function nestedMapToFlatList<Key1, Key2, Value>(
+	map: NestedMap<Key1, Key2, Value>,
+): [Key1, Key2, Value][] {
+	const list: [Key1, Key2, Value][] = [];
 	map.forEach((innerMap, key1) => {
 		innerMap.forEach((val, key2) => {
-			encoded.push([key1, key2, val]);
+			list.push([key1, key2, val]);
 		});
 	});
-	return JSON.stringify(encoded);
+	return list;
 }
 
 /**
- * Decodes a NestedMap from a string.
+ * Builds a nested map from a flat list of triplets.
  */
-export function decodeNestedMap<Key1, Key2, Value>(encoded: string): NestedMap<Key1, Key2, Value> {
-	const decoded: [Key1, Key2, Value][] = JSON.parse(encoded);
+export function nestedMapFromFlatList<Key1, Key2, Value>(
+	list: readonly (readonly [Key1, Key2, Value])[],
+): NestedMap<Key1, Key2, Value> {
 	const map = new Map<Key1, Map<Key2, Value>>();
-	for (const [key1, key2, val] of decoded) {
+	for (const [key1, key2, val] of list) {
 		getOrAddInMap(map, key1, new Map<Key2, Value>()).set(key2, val);
 	}
 	return map;

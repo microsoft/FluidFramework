@@ -5,8 +5,9 @@
 
 import { Assume } from "../util";
 import { ObjectNodeSchema, TreeNodeSchemaBase } from "../feature-libraries";
-import { createRawObjectProxy } from "./proxies";
-import { TypedNode, TreeObjectNode } from "./types";
+import { createRawNodeProxy } from "./proxies";
+import { TreeObjectNode } from "./types";
+import { InsertableTypedNode } from "./insertable";
 
 /**
  * Adds a factory function (`create`) to the given schema so that it satisfies the {@link TreeObjectFactory} interface.
@@ -15,8 +16,8 @@ export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 	schema: TSchema,
 ): FactoryTreeSchema<TSchema> {
 	return Object.defineProperty(schema, "create", {
-		value: (content: TypedNode<TSchema, "javaScript">): TreeObjectNode<TSchema> =>
-			createRawObjectProxy(schema, content),
+		value: (content: InsertableTypedNode<TSchema>): TreeObjectNode<TSchema> =>
+			createRawNodeProxy(schema, content, false),
 		configurable: true,
 		enumerable: true,
 	}) as FactoryTreeSchema<TSchema>;
@@ -24,7 +25,6 @@ export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 
 /**
  * Creates `{@link TreeObjectNode}`s of the given schema type via a `create` method.
- * @alpha
  */
 export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 	/**
@@ -35,13 +35,12 @@ export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 	 * It may not be read, mutated or queried in any way.
 	 */
 	create(
-		content: TypedNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">,
+		content: InsertableTypedNode<Assume<TSchema, ObjectNodeSchema>>,
 	): TreeObjectNode<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 /**
  * A {@link TreeNodeSchema} which is also a {@link TreeObjectFactory}.
- * @alpha
  */
 export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema &
 	TreeObjectFactory<TSchema>;

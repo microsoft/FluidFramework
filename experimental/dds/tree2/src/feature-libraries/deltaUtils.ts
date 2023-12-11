@@ -3,11 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, Delta, FieldKey, makeDetachedNodeId } from "../core";
+import {
+	ChangeAtomId,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaRoot,
+	FieldKey,
+	RevisionTag,
+	makeDetachedNodeId,
+} from "../core";
 import { Mutable } from "../util";
 
-export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNodeId {
-	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
+export function nodeIdFromChangeAtom(
+	changeAtom: ChangeAtomId,
+	fallbackRevision?: RevisionTag,
+): DeltaDetachedNodeId {
+	return makeDetachedNodeId(changeAtom.revision ?? fallbackRevision, changeAtom.localId);
+}
+
+/**
+ * Converts a `Delta.Root` whose tree content is represented with by `TIn` instances
+ * into a `Delta.Root`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertDeltaEqual}.
+ * @param root - The delta to convert. Not mutated.
+ * @param func - The functions used to map tree content.
+ */
+export function mapRootChanges<TIn, TOut>(
+	root: DeltaRoot<TIn>,
+	func: (tree: TIn) => TOut,
+): DeltaRoot<TOut> {
+	const out: Mutable<DeltaRoot<TOut>> = {};
+	if (root.fields !== undefined) {
+		out.fields = mapFieldsChanges(root.fields, func);
+	}
+	if (root.build !== undefined) {
+		out.build = root.build.map(({ id, trees }) => ({
+			id,
+			trees: trees.map(func),
+		}));
+	}
+	return out;
 }
 
 /**
@@ -21,10 +61,10 @@ export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNo
  * @param func - The functions used to map tree content.
  */
 export function mapFieldsChanges<TIn, TOut>(
-	fields: Delta.FieldMap<TIn>,
+	fields: DeltaFieldMap<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.FieldMap<TOut> {
-	const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
+): DeltaFieldMap<TOut> {
+	const out: Map<FieldKey, DeltaFieldChanges<TOut>> = new Map();
 	for (const [k, v] of fields) {
 		out.set(k, mapFieldChanges(v, func));
 	}
@@ -42,10 +82,10 @@ export function mapFieldsChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapFieldChanges<TIn, TOut>(
-	fieldChanges: Delta.FieldChanges<TIn>,
+	fieldChanges: DeltaFieldChanges<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.FieldChanges<TOut> {
-	const out: Mutable<Delta.FieldChanges<TOut>> = {};
+): DeltaFieldChanges<TOut> {
+	const out: Mutable<DeltaFieldChanges<TOut>> = {};
 	if (fieldChanges.local !== undefined) {
 		out.local = mapMarkList(fieldChanges.local, func);
 	}
@@ -78,10 +118,10 @@ export function mapFieldChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMarkList<TIn, TOut>(
-	list: readonly Delta.Mark<TIn>[],
+	list: readonly DeltaMark<TIn>[],
 	func: (tree: TIn) => TOut,
-): Delta.Mark<TOut>[] {
-	return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
+): DeltaMark<TOut>[] {
+	return list.map((mark: DeltaMark<TIn>) => mapMark(mark, func));
 }
 
 /**
@@ -95,10 +135,10 @@ export function mapMarkList<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMark<TIn, TOut>(
-	mark: Delta.Mark<TIn>,
+	mark: DeltaMark<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.Mark<TOut> {
-	const out: Mutable<Delta.Mark<TOut>> = { count: mark.count };
+): DeltaMark<TOut> {
+	const out: Mutable<DeltaMark<TOut>> = { count: mark.count };
 	if (mark.fields !== undefined) {
 		out.fields = mapFieldsChanges(mark.fields, func);
 	}
