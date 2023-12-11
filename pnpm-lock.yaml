@@ -106,7 +106,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      axios: ^0.26.0
+      axios: ^1.6.2
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -132,7 +132,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-services-client': 3.0.0-220558
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
-      axios: 0.26.1
+      axios: 1.6.2
     devDependencies:
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
       '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
@@ -252,7 +252,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/uuid': ^9.0.2
       assert: ^2.0.0
-      axios: ^0.26.0
+      axios: ^1.6.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -283,7 +283,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       assert: 2.1.0
-      axios: 0.26.1
+      axios: 1.6.2
       events: 3.3.0
       fluid-framework: link:../../../packages/framework/fluid-framework
       uuid: 9.0.1
@@ -4723,7 +4723,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      axios: ^0.26.0
+      axios: ^1.6.2
       buffer: ^6.0.3
       chai: ^4.2.0
       cross-env: ^7.0.3
@@ -4754,7 +4754,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
-      axios: 0.26.1
+      axios: 1.6.2
       buffer: 6.0.3
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
@@ -7733,7 +7733,7 @@ importers:
       '@types/sinon': ^7.0.13
       '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
-      axios: ^0.26.0
+      axios: ^1.6.2
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7784,7 +7784,7 @@ importers:
       '@types/sinon': 7.5.2
       '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
-      axios: 0.26.1
+      axios: 1.6.2
       c8: 7.14.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8900,7 +8900,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      axios: ^0.26.0
+      axios: ^1.6.2
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8925,7 +8925,7 @@ importers:
       '@fluidframework/protocol-base': 3.0.0-220558
       '@fluidframework/protocol-definitions': 3.1.0-220363
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      axios: 0.26.1
+      axios: 1.6.2
       lz4js: 0.2.0
       url: 0.11.3
       uuid: 9.0.1
@@ -10001,7 +10001,7 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^18.19.0
       agentkeepalive: ^4.5.0
-      axios: ^0.26.0
+      axios: ^1.6.2
       c8: ^7.7.1
       copyfiles: ^2.4.1
       eslint: ~8.50.0
@@ -10029,7 +10029,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       agentkeepalive: 4.5.0
-      axios: 0.26.1
+      axios: 1.6.2
       semver: 7.5.4
       uuid: 9.0.1
     devDependencies:
@@ -11338,7 +11338,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
-      axios: ^0.26.0
+      axios: ^1.6.2
       buffer: ^6.0.3
       c8: ^7.7.1
       cross-env: ^7.0.3
@@ -11380,7 +11380,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       '@fluidframework/view-interfaces': link:../../framework/view-interfaces
-      axios: 0.26.1
+      axios: 1.6.2
       buffer: 6.0.3
       express: 4.18.2
       isomorphic-fetch: 3.0.0
@@ -24277,7 +24277,6 @@ packages:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
-    dev: true
 
   /axios/1.6.2_debug@4.3.4:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}

@@ -70,7 +70,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-services-client": "^3.0.0-220558",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^0.26.0"
+		"axios": "^1.6.2"
 	},
 	"devDependencies": {
 		"@fluid-experimental/tree2": "workspace:~",
