@@ -8,6 +8,7 @@ import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
 import { MergeTree } from "./mergeTree";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	compareNumbers,
 	IMergeBlock,
@@ -285,6 +286,7 @@ export class PartialSequenceLengths {
 	 */
 	public static combine(
 		block: IMergeBlock,
+		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
 		recur = false,
 		computeLocalPartials = false,
@@ -373,6 +375,7 @@ export class PartialSequenceLengths {
 	 */
 	private static fromLeaves(
 		block: IMergeBlock,
+		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
 		computeLocalPartials: boolean,
 	): PartialSequenceLengths {
@@ -902,6 +905,7 @@ export class PartialSequenceLengths {
 		node: IMergeBlock,
 		seq: number,
 		clientId: number,
+		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
 	) {
 		let seqSeglen = 0;
@@ -1126,6 +1130,7 @@ export class PartialSequenceLengths {
 	}
 
 	// Clear away partial sums for sequence numbers earlier than the current window
+	// eslint-disable-next-line import/no-deprecated
 	private zamboni(segmentWindow: CollaborationWindow) {
 		this.minLength += this.partialLengths.copyDown(segmentWindow.minSeq);
 		this.minSeq = segmentWindow.minSeq;

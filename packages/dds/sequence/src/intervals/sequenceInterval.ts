@@ -99,7 +99,7 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
- * @internal
+ * @alpha
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**

@@ -21,7 +21,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
- * @internal
+ * @alpha
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -47,7 +47,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type SharedStringSegment = TextSegment | Marker;
 
@@ -59,7 +59,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @internal
+ * @alpha
  */
 export class SharedString
 	extends SharedSegmentSequence<SharedStringSegment>

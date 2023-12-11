@@ -20,6 +20,7 @@ import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	compareStrings,
 	IMoveInfo,
@@ -27,6 +28,7 @@ import {
 	ISegment,
 	ISegmentAction,
 	Marker,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "./mergeTreeNodes";
 import {
@@ -50,6 +52,7 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 } from "./ops";
 import { PropertySet } from "./properties";
@@ -93,8 +96,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- *
- * @internal
+ * @alpha
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -118,8 +120,7 @@ export interface IClientEvents {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
- *
- * @internal
+ * @alpha
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -162,12 +163,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
 			return node?.data;
 		}
+		// eslint-disable-next-line import/no-deprecated
 		const taken: SegmentGroup[] = new Array(Math.min(count, pending.length));
 		for (let i = taken.length - 1; i >= 0; i--) {
 			taken[i] = node!.data;
@@ -224,6 +227,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param start - The inclusive start of the range to obliterate
 	 * @param end - The exclusive end of the range to obliterate
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(start, end);
 		this.applyObliterateRangeOp({ op: obliterateOp });
@@ -345,6 +349,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public getCollabWindow(): CollaborationWindow {
 		return this._mergeTree.collabWindow;
 	}
@@ -427,6 +432,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Revert an op
 	 */
 	public rollback?(op: any, localOpMetadata: unknown) {
+		// eslint-disable-next-line import/no-deprecated
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
 
@@ -543,6 +549,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeAnnotateMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
+			// eslint-disable-next-line import/no-deprecated
 			| IMergeTreeObliterateMsg,
 		clientArgs: IMergeTreeClientSequenceArgs,
 	): IIntegerRange {
@@ -709,6 +716,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
+		// eslint-disable-next-line import/no-deprecated
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
@@ -722,6 +730,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// if this is an obliterate op, keep all segments in same segment group
+		// eslint-disable-next-line import/no-deprecated
 		const obliterateSegmentGroup: SegmentGroup = {
 			segments: [],
 			localSeq: segmentGroup.localSeq,
@@ -832,6 +841,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					opList.push(newOp);
 				}
 			} else if (newOp) {
+				// eslint-disable-next-line import/no-deprecated
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
@@ -887,11 +897,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
 	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+		// eslint-disable-next-line import/no-deprecated
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
 		const stashed = true;
 		switch (op.type) {
@@ -974,6 +988,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private lastNormalizationRefSeq = 0;
 
+	// eslint-disable-next-line import/no-deprecated
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 
 	/**
@@ -984,9 +999,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	public regeneratePendingOp(
 		resetOp: IMergeTreeOp,
+		// eslint-disable-next-line import/no-deprecated
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
+			// eslint-disable-next-line import/no-deprecated
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {

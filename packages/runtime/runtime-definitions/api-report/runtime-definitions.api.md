@@ -39,7 +39,7 @@ export interface AttributionInfo {
     user: IUser;
 }
 
-// @internal
+// @alpha
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @internal (undocumented)
@@ -73,7 +73,7 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @internal
+// @alpha
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
@@ -434,7 +434,7 @@ export interface ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
-// @internal
+// @alpha
 export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
@@ -446,7 +446,7 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 // @alpha
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
-// @internal
+// @alpha
 export interface OpAttributionKey {
     seq: number;
     type: "op";

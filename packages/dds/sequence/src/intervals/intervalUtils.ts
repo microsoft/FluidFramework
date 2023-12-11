@@ -17,7 +17,7 @@ import { SequencePlace, Side } from "../intervalCollection";
 
 /**
  * Basic interval abstraction
- * @internal
+ * @alpha
  */
 export interface IInterval {
 	/**
@@ -84,7 +84,7 @@ export const IntervalOpType = {
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 /**
- * @internal
+ * @alpha
  */
 export enum IntervalType {
 	Simple = 0x0,
@@ -107,7 +107,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
- * @internal
+ * @alpha
  */
 export interface ISerializedInterval {
 	/**
@@ -135,7 +135,7 @@ export interface ISerializedInterval {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
@@ -237,7 +237,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
- * @internal
+ * @alpha
  */
 export const IntervalStickiness = {
 	/**
@@ -269,8 +269,7 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
- *
- * @internal
+ * @alpha
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 

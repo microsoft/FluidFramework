@@ -12,7 +12,7 @@ import {
 import { ISegment } from "./mergeTreeNodes";
 
 /**
- * @internal
+ * @alpha
  */
 export interface SequenceOffsets {
 	/**
@@ -33,7 +33,7 @@ export interface SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
 	channels?: { [name: string]: SequenceOffsets };
@@ -42,7 +42,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -53,7 +53,7 @@ export interface IAttributionCollectionSpec<T> {
 }
 
 /**
- * @internal
+ * @alpha
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
@@ -75,7 +75,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollection<T> {
 	/**
