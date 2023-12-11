@@ -161,9 +161,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
 
+							const change1NoLineage = withoutLineage(change1.change);
 							const r2NoLineage = withoutLineage(r2.change);
 							// We do not expect exact equality because r2 may have accumulated some lineage.
-							assert.deepEqual(r2NoLineage, change1.change);
+							assert.deepEqual(r2NoLineage, change1NoLineage);
 						}
 					}
 				});
@@ -206,7 +207,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							assert.deepEqual(withoutLineage(r2.change), change1.change);
+							const change1NoLineage = withoutLineage(change1.change);
+							assert.deepEqual(withoutLineage(r2.change), change1NoLineage);
 						}
 					}
 				});
