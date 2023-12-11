@@ -390,12 +390,15 @@ export class DataStores implements IDisposable {
 
 	public resubmitDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
-		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
-		// corruption in case the data store that submitted the op is deleted.
+		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
+		// deleted data store, it can otherwise lead to inconsistent state when compared to other clients.
 		if (
 			this.checkAndLogIfDeleted(envelope.address, context, "Changed", "resubmitDataStoreOp")
 		) {
-			return;
+			throw new DataCorruptionError("Context is deleted!", {
+				callSite: "resubmitDataStoreOp",
+				...tagCodeArtifacts({ id: envelope.address }),
+			});
 		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
 		context.reSubmit(envelope.contents, localOpMetadata);
@@ -403,12 +406,15 @@ export class DataStores implements IDisposable {
 
 	public rollbackDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
-		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
-		// corruption in case the data store that submitted the op is deleted.
+		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
+		// deleted data store, it can otherwise lead to inconsistent state when compared to other clients.
 		if (
 			this.checkAndLogIfDeleted(envelope.address, context, "Changed", "rollbackDataStoreOp")
 		) {
-			return;
+			throw new DataCorruptionError("Context is deleted!", {
+				callSite: "rollbackDataStoreOp",
+				...tagCodeArtifacts({ id: envelope.address }),
+			});
 		}
 		assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
 		context.rollback(envelope.contents, localOpMetadata);
