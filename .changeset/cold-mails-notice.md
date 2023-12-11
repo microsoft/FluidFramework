@@ -4,4 +4,8 @@
 "@fluidframework/sequence": major
 ---
 
-Enable noImplicitAny in merge-tree, sequence, and matrix. This changes the return types of some functions from any to void. This does not represent a logic change and only serves to make the typing of these functions more accurate.
+sequence, matrix: Some function return types are now void instead of any
+
+The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
+the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the
+typing of these functions more accurate.
