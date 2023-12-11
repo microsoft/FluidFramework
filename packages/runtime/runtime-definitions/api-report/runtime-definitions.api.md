@@ -8,6 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -20,6 +21,7 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { initialClusterCapacity } from '@fluidframework/id-compressor';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -31,6 +33,13 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
+import { OpSpaceCompressedId } from '@fluidframework/id-compressor';
+import { SerializedIdCompressor } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
+import { SessionId } from '@fluidframework/id-compressor';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import { StableId } from '@fluidframework/id-compressor';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
@@ -166,6 +175,8 @@ export interface IDataStore {
     request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
+
+export { IdCreationRange }
 
 // @internal
 export interface IEnvelope {
@@ -314,6 +325,8 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
+export { initialClusterCapacity }
+
 // @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
@@ -442,6 +455,20 @@ export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
+
+export { OpSpaceCompressedId }
+
+export { SerializedIdCompressor }
+
+export { SerializedIdCompressorWithNoSession }
+
+export { SerializedIdCompressorWithOngoingSession }
+
+export { SessionId }
+
+export { SessionSpaceCompressedId }
+
+export { StableId }
 
 // @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

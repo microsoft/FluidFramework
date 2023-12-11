@@ -77,4 +77,40 @@ export {
 	 * @deprecated Import from `@fluidframework/id-compressor` instead.
 	 */
 	IIdCompressorCore,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	IdCreationRange,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	OpSpaceCompressedId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	SerializedIdCompressor,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	SerializedIdCompressorWithNoSession,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	SerializedIdCompressorWithOngoingSession,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	SessionId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	SessionSpaceCompressedId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	StableId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	initialClusterCapacity,
 } from "@fluidframework/id-compressor";

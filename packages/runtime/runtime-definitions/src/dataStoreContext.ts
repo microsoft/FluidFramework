@@ -31,6 +31,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
@@ -42,7 +43,6 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Runtime flush mode handling

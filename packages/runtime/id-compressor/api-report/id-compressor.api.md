@@ -6,6 +6,9 @@
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
+// @internal
+export function assertIsStableId(stableId: string): StableId;
+
 // @alpha
 export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
@@ -14,6 +17,15 @@ export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBase
 
 // @alpha
 export function createSessionId(): SessionId;
+
+// @alpha
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession): IIdCompressor & IIdCompressorCore;
+
+// @alpha
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IIdCompressor & IIdCompressorCore;
+
+// @internal
+export function generateStableId(): StableId;
 
 // @alpha
 export interface IdCreationRange {
@@ -48,6 +60,9 @@ export interface IIdCompressorCore {
 
 // @internal
 export const initialClusterCapacity = 512;
+
+// @internal
+export function isStableId(str: string): str is StableId;
 
 // @alpha
 export type OpSpaceCompressedId = number & {
