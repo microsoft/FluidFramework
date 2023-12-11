@@ -72,6 +72,10 @@ export {
 	/**
 	 * @deprecated Import from `@fluidframework/id-compressor` instead.
 	 */
+	IdCompressor,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
 	IIdCompressor,
 	/**
 	 * @deprecated Import from `@fluidframework/id-compressor` instead.

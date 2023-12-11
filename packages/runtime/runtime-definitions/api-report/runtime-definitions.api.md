@@ -8,6 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IdCompressor } from '@fluidframework/id-compressor';
 import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
@@ -175,6 +176,8 @@ export interface IDataStore {
     request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
+
+export { IdCompressor }
 
 export { IdCreationRange }
 
