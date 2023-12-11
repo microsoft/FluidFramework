@@ -1104,6 +1104,23 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(composed, expected);
 	});
 
+	it("move-in+delete ○ modify", () => {
+		const changes = TestChange.mint([], 42);
+		const [mo, mi] = Mark.move(1, { revision: tag1, localId: brand(1) });
+		const attachDetach = Mark.attachAndDetach(
+			mi,
+			Mark.delete(1, { revision: tag2, localId: brand(2) }),
+		);
+		const base = makeAnonChange([mo, attachDetach]);
+		const modify = tagChange(
+			[Mark.modify(changes, { revision: tag2, localId: brand(2) })],
+			tag3,
+		);
+		const actual = shallowCompose([base, modify]);
+		const expected = [{ ...mo, changes }, attachDetach];
+		assert.deepEqual(actual, expected);
+	});
+
 	it("effect management for [move, modify, move]", () => {
 		const changes = TestChange.mint([], 42);
 		const [mo, mi] = Mark.move(1, brand(0));

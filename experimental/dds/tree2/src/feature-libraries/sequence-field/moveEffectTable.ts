@@ -97,6 +97,17 @@ export function isMoveIn(effect: MarkEffect): effect is MoveIn {
 	return effect.type === "MoveIn";
 }
 
+export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
+	switch (effect.type) {
+		case "MoveIn":
+			return effect;
+		case "AttachAndDetach":
+			return getMoveIn(effect.attach);
+		default:
+			return undefined;
+	}
+}
+
 function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
 	if (effect.basis === newBasis) {
 		return effect;
