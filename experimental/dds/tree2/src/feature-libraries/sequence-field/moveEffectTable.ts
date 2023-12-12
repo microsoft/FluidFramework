@@ -226,17 +226,37 @@ function updateEndpoint(
 }
 
 export function applyMoveEffectsToMark<T>(
-	inputMark: Mark<T>,
+	mark: Mark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T>[] {
-	const inputQueue = [inputMark];
-	const pass1: Mark<T>[] = [];
-	while (inputQueue.length > 0) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let mark = inputQueue.shift()!;
+	return applyMoveEffectsToActiveMarks<T>(
+		applyMoveEffectsToVestigialMarks<T>(
+			[mark],
+			effects,
+			revision,
+			consumeEffect,
+			composeChildren,
+		),
+		revision,
+		effects,
+		consumeEffect,
+		composeChildren,
+	);
+}
+
+function applyMoveEffectsToVestigialMarks<T>(
+	inputQueue: Mark<T>[],
+	effects: MoveEffectTable<T>,
+	revision: RevisionTag | undefined,
+	consumeEffect: boolean,
+	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+): Mark<T>[] {
+	const outputQueue: Mark<T>[] = [];
+	let mark = inputQueue.shift();
+	while (mark !== undefined) {
 		const vestige = tryGetVestigialEndpoint(mark);
 		if (vestige !== undefined) {
 			const effect = getMoveEffect(
@@ -252,7 +272,7 @@ export function applyMoveEffectsToMark<T>(
 				inputQueue.push(secondMark);
 			}
 
-			pass1.push(
+			outputQueue.push(
 				applyMoveEffectsToSource(
 					mark,
 					vestige,
@@ -264,18 +284,28 @@ export function applyMoveEffectsToMark<T>(
 				),
 			);
 		} else {
-			pass1.push(mark);
+			outputQueue.push(mark);
 		}
+		mark = inputQueue.shift();
 	}
-	const pass2: Mark<T>[] = [];
-	while (pass1.length > 0) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let mark = pass1.shift()!;
+	return outputQueue;
+}
+
+function applyMoveEffectsToActiveMarks<T>(
+	inputQueue: Mark<T>[],
+	revision: RevisionTag | undefined,
+	effects: MoveEffectTable<T>,
+	consumeEffect: boolean,
+	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+) {
+	const outputQueue: Mark<T>[] = [];
+	let mark = inputQueue.shift();
+	while (mark !== undefined) {
 		if (isAttachAndDetachEffect(mark)) {
 			if (isMoveIn(mark.attach)) {
 				if (isMoveOut(mark.detach)) {
 					// Move effects should not be applied to intermediate move locations.
-					pass2.push(mark);
+					outputQueue.push(mark);
 				} else {
 					const attachRevision = mark.attach.revision ?? revision;
 					const effect = getMoveEffect(
@@ -291,7 +321,7 @@ export function applyMoveEffectsToMark<T>(
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
 						updatedAttach = firstMark.attach as MoveIn;
-						pass1.push(secondMark);
+						inputQueue.push(secondMark);
 					} else {
 						updatedAttach = { ...mark.attach };
 					}
@@ -302,7 +332,7 @@ export function applyMoveEffectsToMark<T>(
 						effects,
 						consumeEffect,
 					);
-					pass2.push({
+					outputQueue.push({
 						...mark,
 						attach: updatedAttach,
 					});
@@ -320,7 +350,7 @@ export function applyMoveEffectsToMark<T>(
 				if (effect.length < mark.count) {
 					const [firstMark, secondMark] = splitMark(mark, effect.length);
 					mark = firstMark;
-					pass1.push(secondMark);
+					inputQueue.push(secondMark);
 				}
 
 				const newMark = cloneMark(mark);
@@ -348,9 +378,9 @@ export function applyMoveEffectsToMark<T>(
 					newMark.changes = composeChildren(mark.changes, newChanges);
 				}
 
-				pass2.push(newMark);
+				outputQueue.push(newMark);
 			} else {
-				pass2.push(mark);
+				outputQueue.push(mark);
 			}
 		} else if (isMoveMark(mark)) {
 			const type = mark.type;
@@ -367,10 +397,10 @@ export function applyMoveEffectsToMark<T>(
 					if (effect.length < mark.count) {
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
-						pass1.push(secondMark);
+						inputQueue.push(secondMark);
 					}
 
-					pass2.push(
+					outputQueue.push(
 						applyMoveEffectsToSource(
 							mark,
 							{ revision: mark.revision, localId: mark.id },
@@ -395,7 +425,7 @@ export function applyMoveEffectsToMark<T>(
 					if (effect.length < mark.count) {
 						const [firstMark, secondMark] = splitMark(mark, effect.length);
 						mark = firstMark;
-						pass1.push(secondMark);
+						inputQueue.push(secondMark);
 					}
 
 					const newMark = cloneMark(mark);
@@ -406,17 +436,18 @@ export function applyMoveEffectsToMark<T>(
 						effects,
 						consumeEffect,
 					);
-					pass2.push(newMark);
+					outputQueue.push(newMark);
 					break;
 				}
 				default:
 					unreachableCase(type);
 			}
 		} else {
-			pass2.push(mark);
+			outputQueue.push(mark);
 		}
+		mark = inputQueue.shift();
 	}
-	return pass2;
+	return outputQueue;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
