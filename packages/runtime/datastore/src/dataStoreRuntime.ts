@@ -446,7 +446,7 @@ export class FluidDataStoreRuntime
 
 		this.verifyNotClosed();
 
-		assert(!this.contexts.has(id), "addChannel() with existing ID");
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
 
 		const type = channel.attributes.type;
 		const factory = this.sharedObjectRegistry.get(channel.attributes.type);

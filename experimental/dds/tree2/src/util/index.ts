@@ -66,6 +66,7 @@ export {
 	makeArray,
 	mapIterable,
 	Mutable,
+	Populated,
 	RecursiveReadonly,
 	zipIterables,
 	Assume,
@@ -83,6 +84,7 @@ export {
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareStrings,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
