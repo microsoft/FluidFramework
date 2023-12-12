@@ -169,6 +169,18 @@ export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
 }
 
 /**
+ * Get a TreeChunk for the current field (and its children) of cursor.
+ * Like {@link chunkField}, but forces the results into a single TreeChunk.
+ */
+export function chunkFieldSingle(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
+	const chunks = chunkField(cursor, policy);
+	if (chunks.length === 1) {
+		return chunks[0];
+	}
+	return new SequenceChunk(chunks);
+}
+
+/**
  * Get a BasicChunk for the current node (and its children) of cursor.
  * This will copy if needed, and add refs to existing chunks which hold the data.
  */

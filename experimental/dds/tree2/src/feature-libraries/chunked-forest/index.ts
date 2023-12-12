@@ -5,7 +5,14 @@
 
 export { uniformChunk, ChunkShape } from "./uniformChunk";
 export { TreeChunk, dummyRoot } from "./chunk";
-export { chunkTree, defaultChunkPolicy, makeTreeChunker, IChunker } from "./chunkTree";
+export {
+	chunkTree,
+	defaultChunkPolicy,
+	makeTreeChunker,
+	IChunker,
+	chunkFieldSingle,
+	chunkField,
+} from "./chunkTree";
 export { buildChunkedForest } from "./chunkedForest";
 export {
 	EncodedFieldBatch,

@@ -32,7 +32,6 @@ import {
 	DeltaDetachedNodeBuild,
 	DeltaRoot,
 	ITreeCursorSynchronous,
-	mapCursorField,
 	DeltaDetachedNodeId,
 } from "../../core";
 import { RevisionTagCodec } from "../../shared-tree-core";

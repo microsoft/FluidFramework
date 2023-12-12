@@ -90,7 +90,13 @@ function testDecode(
 	// used to roundtrip handles in this case either, as doing so changes the
 	// contents of the handle compared to the original object. avoid the below
 	// roundtripping in that case.
-	if (chunk.data.some(isFluidHandle)) {
+	function hasHandle(data: unknown): boolean {
+		if (Array.isArray(data)) {
+			return data.some(hasHandle);
+		}
+		return isFluidHandle(data);
+	}
+	if (hasHandle(chunk.data)) {
 		return chunk;
 	}
 
