@@ -79,7 +79,7 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server.
- * @internal
+ * @alpha
  */
 export interface IConnected {
 	/**

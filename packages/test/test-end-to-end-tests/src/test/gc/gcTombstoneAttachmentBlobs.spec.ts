@@ -263,7 +263,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 			],

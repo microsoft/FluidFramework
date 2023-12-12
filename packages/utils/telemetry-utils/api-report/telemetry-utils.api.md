@@ -73,7 +73,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 // @internal (undocumented)
 export const disconnectedEventName = "disconnected";
 
-// @internal
+// @alpha
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
@@ -438,6 +438,9 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
     // (undocumented)
     readonly errorType: "usageError";
 }
+
+// @internal
+export function validatePrecondition(condition: boolean, message: string, props?: ITelemetryBaseProperties): asserts condition;
 
 // @internal
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;

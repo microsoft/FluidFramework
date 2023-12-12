@@ -65,8 +65,6 @@ import {
 	mapRootChanges,
 } from "../feature-libraries";
 import {
-	InvalidationToken,
-	SimpleObservingDependent,
 	moveToDetachedField,
 	mapCursorField,
 	JsonableTree,
@@ -114,8 +112,6 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
-// eslint-disable-next-line import/no-internal-modules
-import { WrapperTreeView } from "../shared-tree/sharedTree";
 
 // Testing utilities
 
@@ -150,6 +146,9 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
  * @param object - The object to freeze.
  */
 export function deepFreeze<T>(object: T): void {
+	if (object === undefined || object === null) {
+		return;
+	}
 	if (object instanceof Map) {
 		for (const [key, value] of object.entries()) {
 			deepFreeze(key);
@@ -173,13 +172,6 @@ export function deepFreeze<T>(object: T): void {
 		}
 	}
 	Object.freeze(object);
-}
-
-export class MockDependent extends SimpleObservingDependent {
-	public readonly tokens: (InvalidationToken | undefined)[] = [];
-	public constructor(name: string = "MockDependent") {
-		super((token) => this.tokens.push(token), name);
-	}
 }
 
 /**
@@ -639,22 +631,6 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	);
 }
 
-export function treeViewWithContent<TRoot extends TreeFieldSchema>(
-	content: TreeContent<TRoot>,
-	args?: {
-		events?: ISubscribable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
-	},
-): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
-	const view: WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> = new WrapperTreeView(
-		flexTreeViewWithContent(content, args),
-	);
-	return view;
-}
-
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
 	initializeForest(
@@ -668,7 +644,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function treeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;

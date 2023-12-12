@@ -5,7 +5,6 @@
 
 import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { Multiplicity } from "../modular-schema";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -19,6 +18,7 @@ import {
 	LazyItem,
 } from "../typed-schema";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
+import { Multiplicity } from "../multiplicity";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -111,7 +111,7 @@ export type InsertableFlexNode<TSchema extends TreeNodeSchema> = FlattenKeys<
 		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
 			? TypedFields<TFields>
 			: TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema>
-			? { "": InsertableFlexField<TField> }
+			? InsertableFlexField<TField>
 			: TSchema extends MapNodeSchema<string, infer TField extends TreeFieldSchema>
 			? {
 					readonly [P in string]: InsertableFlexField<TField>;

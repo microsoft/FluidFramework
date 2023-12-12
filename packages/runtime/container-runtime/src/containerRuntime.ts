@@ -47,6 +47,7 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	UsageError,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -87,12 +88,14 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import type {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/id-compressor";
 import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -194,6 +197,7 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
+	ContainerRuntimeGCMessage,
 } from "./messageTypes";
 
 /**
@@ -909,16 +913,18 @@ export class ContainerRuntime
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
-			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
+				"@fluidframework/id-compressor"
+			);
 
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
 			} else {
-				idCompressor = IdCompressor.create(logger);
+				idCompressor = createIdCompressor(logger);
 			}
 		}
 
@@ -1447,6 +1453,7 @@ export class ContainerRuntime
 			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
 			// delta manager would always return false for summarizer client.
 			activeConnection: () => this.innerDeltaManager.active,
+			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -2082,6 +2089,9 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never have stashed ops.
+				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -2334,6 +2344,9 @@ export class ContainerRuntime
 				) {
 					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				}
+				break;
+			case ContainerMessageType.GC:
+				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
@@ -2632,18 +2645,28 @@ export class ContainerRuntime
 	}
 
 	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
-		// For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
-		// Ultimately we should have no special-cases from the ContainerRuntime's perspective.
-		if (type === ContainerMessageType.Attach) {
-			const attachMessage = contents as InboundAttachMessage;
-			if (attachMessage.id === agentSchedulerId) {
+		// Certain container runtime messages should not mark the container dirty such as the old built-in
+		// AgentScheduler and Garbage collector messages.
+		switch (type) {
+			case ContainerMessageType.Attach: {
+				const attachMessage = contents as InboundAttachMessage;
+				if (attachMessage.id === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
+				const envelope = contents;
+				if (envelope.address === agentSchedulerId) {
+					return false;
+				}
+				break;
+			}
+			case ContainerMessageType.GC: {
 				return false;
 			}
-		} else if (type === ContainerMessageType.FluidDataStoreOp) {
-			const envelope = contents;
-			if (envelope.address === agentSchedulerId) {
-				return false;
-			}
+			default:
+				break;
 		}
 		return true;
 	}
@@ -2874,7 +2897,7 @@ export class ContainerRuntime
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
 	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
 		// summarizing is required and asserted by the the summarizer node. We are the root and are
 		// always referenced, so the used routes is only self-route (empty string).
@@ -2888,7 +2911,7 @@ export class ContainerRuntime
 	 * This is called to update objects whose routes are unused.
 	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
 	 */
-	public updateUnusedRoutes(unusedRoutes: string[]) {
+	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
 		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
@@ -2898,7 +2921,7 @@ export class ContainerRuntime
 	/**
 	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
-	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
+	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
@@ -2907,7 +2930,7 @@ export class ContainerRuntime
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 * @returns The routes of nodes that were deleted.
 	 */
-	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
+	public deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[] {
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
@@ -2919,7 +2942,7 @@ export class ContainerRuntime
 	 * This is called to update objects that are tombstones.
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
@@ -2979,7 +3002,7 @@ export class ContainerRuntime
 	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
-	private getDataStoreAndBlobManagerRoutes(routes: string[]) {
+	private getDataStoreAndBlobManagerRoutes(routes: readonly string[]) {
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
@@ -3062,10 +3085,10 @@ export class ContainerRuntime
 			);
 		}
 
-		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
-		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
-		// within the timeout, check if it should be failed or can continue.
-		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
+		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
+		// saved within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.isDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
@@ -3087,7 +3110,7 @@ export class ContainerRuntime
 			// happens, whether we attempted to wait for these ops to be acked and what was the result.
 			summaryNumberLogger.sendTelemetryEvent({
 				eventName: "PendingOpsWhileSummarizing",
-				saved: this.hasPendingMessages() ? false : true,
+				saved: !this.isDirty,
 				timeout: pendingOpsTimeout,
 				countBefore,
 				countAfter: this.pendingMessagesCount,
@@ -3376,7 +3399,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
 	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
@@ -3392,7 +3415,7 @@ export class ContainerRuntime
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
 	): Promise<IBaseSummarizeResult | undefined> {
-		if (!this.hasPendingMessages()) {
+		if (!this.isDirty) {
 			return;
 		}
 
@@ -3740,6 +3763,7 @@ export class ContainerRuntime
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
+	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 * @param message - The original LocalContainerRuntimeMessage.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
@@ -3768,6 +3792,9 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
 				break;
+			case ContainerMessageType.GC:
+				// GC op is only sent in summarizer which should never reconnect.
+				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version

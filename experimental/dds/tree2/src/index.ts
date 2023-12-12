@@ -4,13 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
 	EmptyKey,
 	FieldKey,
 	TreeType,
@@ -266,12 +259,20 @@ export {
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
 	NodeFromSchema,
+	TreeMapNode,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+
+	// experimental @alpha APIs:
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 } from "./class-tree";
-export { TreeFactory, TreeOptions } from "./treeFactory";
+export { SharedTree, TreeFactory, TreeOptions } from "./treeFactory";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";

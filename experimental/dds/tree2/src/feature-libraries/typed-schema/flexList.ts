@@ -94,6 +94,7 @@ export type NormalizedFlexList<Item> = readonly Item[];
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
 /**
+ * Get the `Item` type from a `LazyItem<Item>`.
  * @beta
  */
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result

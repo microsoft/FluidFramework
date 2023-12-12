@@ -151,7 +151,7 @@ export interface IScribe {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IDocument {
 	// Schema version
@@ -185,7 +185,7 @@ export interface IDocument {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ICheckpoint {
 	_id: string;

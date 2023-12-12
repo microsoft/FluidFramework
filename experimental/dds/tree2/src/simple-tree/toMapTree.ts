@@ -5,6 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 import {
 	type FieldKey,
@@ -102,7 +103,7 @@ export function nodeDataToMapTree(
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): MapTree {
-	assert(data !== undefined, "Cannot map undefined tree.");
+	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
 	if (data === null) {
 		return valueToMapTree(data, context, typeSet);
@@ -147,7 +148,7 @@ export function fieldDataToMapTrees(
 	if (data === undefined) {
 		assert(
 			multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
-			"`undefined` provided for a field that does not support `undefined`",
+			0x847 /* `undefined` provided for a field that does not support `undefined` */,
 		);
 		return [];
 	}
@@ -155,7 +156,7 @@ export function fieldDataToMapTrees(
 	const typeSet = fieldSchema.types;
 
 	if (multiplicity === Multiplicity.Sequence) {
-		assert(Array.isArray(data), "Expected an array as sequence input.");
+		assert(Array.isArray(data), 0x848 /* Expected an array as sequence input. */);
 		const children = Array.from(data, (child) => {
 			// We do not support undefined sequence entries.
 			// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
@@ -173,7 +174,7 @@ export function fieldDataToMapTrees(
 	}
 	assert(
 		multiplicity === Multiplicity.Single || multiplicity === Multiplicity.Optional,
-		"A single value was provided for an unsupported field",
+		0x849 /* A single value was provided for an unsupported field */,
 	);
 	return [nodeDataToMapTree(data, context, typeSet)];
 }
@@ -190,7 +191,7 @@ function valueToMapTree(
 	const schema = getSchema(context, type);
 	assert(
 		allowsValue(schema.leafValue, mappedValue),
-		"Unsupported schema for provided primitive.",
+		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
 	return {
@@ -246,7 +247,7 @@ function arrayToMapTree(
 	const primaryField = getPrimaryField(schema);
 	assert(
 		primaryField !== undefined,
-		"Array data reported comparable with the schema without a primary field.",
+		0x84b /* Array data reported comparable with the schema without a primary field. */,
 	);
 
 	const mappedChildren = fieldDataToMapTrees(data, context, primaryField.schema);
@@ -272,7 +273,7 @@ function mapToMapTree(
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
-		assert(!fields.has(brand(key)), "Keys should not be duplicated");
+		assert(!fields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (value !== undefined) {
@@ -301,7 +302,7 @@ function recordToMapTree(
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
 	for (const key of keys) {
-		assert(!fields.has(key), "Keys should not be duplicated");
+		assert(!fields.has(key), 0x84d /* Keys should not be duplicated */);
 		const value = data[key];
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
@@ -324,14 +325,35 @@ function getType(
 	typeSet: TreeTypeSet,
 ): TreeNodeSchemaIdentifier {
 	const possibleTypes = getPossibleTypes(context, typeSet, data as ContextuallyTypedNodeData);
-	assert(possibleTypes.length !== 0, "data is incompatible with all types allowed by the schema");
 	assert(
+		possibleTypes.length !== 0,
+		0x84e /* data is incompatible with all types allowed by the schema */,
+	);
+	checkInput(
 		possibleTypes.length === 1,
-		"data is compatible with more than one type allowed by the schema",
+		() =>
+			`The provided data is compatible with more than one type allowed by the schema.
+The set of possible types is ${JSON.stringify([...possibleTypes], undefined)}.
+Explicitly construct an unhydrated node of the desired type to disambiguate.
+For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
 	return possibleTypes[0];
 }
 
 function getSchema(context: TreeDataContext, type: TreeNodeSchemaIdentifier): TreeNodeStoredSchema {
 	return context.schema.nodeSchema.get(type) ?? fail("Requested type does not exist in schema.");
+}
+
+/**
+ * An invalid tree has been provided, presumably by the user of this package.
+ * Throw and an error that properly preserves the message (unlike asserts which will get hard to read short codes intended for package internal logic errors).
+ */
+function invalidInput(message: string): never {
+	throw new UsageError(message);
+}
+
+function checkInput(condition: boolean, message: string | (() => string)): asserts condition {
+	if (!condition) {
+		invalidInput(typeof message === "string" ? message : message());
+	}
 }

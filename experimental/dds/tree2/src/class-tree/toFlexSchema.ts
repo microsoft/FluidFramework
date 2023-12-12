@@ -18,9 +18,14 @@ import {
 	ObjectNodeSchema as FlexObjectNodeSchema,
 	schemaIsLeaf,
 } from "../feature-libraries";
-import { brand, fail, getOrCreate, isReadonlyArray, mapIterable } from "../util";
+import { brand, fail, isReadonlyArray, mapIterable } from "../util";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList";
-import { extractFactoryContent, getClassSchema, simpleSchemaSymbol } from "../simple-tree/proxies";
+import {
+	InsertableContent,
+	extractFactoryContent,
+	getClassSchema,
+	simpleSchemaSymbol,
+} from "../simple-tree/proxies";
 import { AllowedUpdateType, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree";
 import { cursorFromNodeData } from "../simple-tree/toMapTree";
@@ -47,7 +52,7 @@ export function cursorFromUnhydratedRoot(
 	schema: TreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree);
+	const data = extractFactoryContent(tree as InsertableContent);
 	return (
 		cursorFromNodeData(data.content, { schema }, schema.rootFieldSchema.types) ??
 		fail("failed to decode tree")
@@ -66,27 +71,34 @@ export function toFlexConfig(config: TreeConfiguration): InitializeAndSchematize
 	};
 }
 
+interface SchemaInfo {
+	toFlex: () => FlexTreeNodeSchema;
+	original: TreeNodeSchema;
+}
+
+type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
+
 /**
  * Generate a {@link TreeSchema} with `root` as the root field.
  *
  * This also has the side effect of populating the cached view schema on the class based schema.
  */
 export function toFlexSchema(root: ImplicitFieldSchema): TreeSchema {
-	const schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema> = new Map();
+	const schemaMap: SchemaMap = new Map();
 	const field = convertField(schemaMap, root);
 	const nodeSchema = new Map(
 		mapIterable(schemaMap, ([key, value]) => {
-			const schema = value();
+			const schema = value.toFlex();
 			const classSchema = getClassSchema(schema);
 			if (classSchema === undefined) {
-				assert(schemaIsLeaf(schema), "invalid leaf");
+				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
 				assert(
 					cachedFlexSchemaFromClassSchema(classSchema) === schema,
-					"mismatched schema",
+					0x83f /* mismatched schema */,
 				);
 			}
-			return [key, value()];
+			return [key, schema];
 		}),
 	);
 
@@ -113,7 +125,7 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
 export function convertField(
-	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,
+	schemaMap: SchemaMap,
 	schema: ImplicitFieldSchema,
 ): FlexTreeFieldSchema {
 	let kind: FlexFieldKind;
@@ -138,7 +150,7 @@ const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
  * Normalizes an {@link ImplicitAllowedTypes} into an {@link AllowedTypes}.
  */
 export function convertAllowedTypes(
-	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,
+	schemaMap: SchemaMap,
 	schema: ImplicitAllowedTypes,
 ): FlexAllowedTypes {
 	if (isReadonlyArray(schema)) {
@@ -158,11 +170,23 @@ const builder = { name: "simple schema" };
  * all referenced types are added to it before this function returns.
  */
 export function convertNodeSchema(
-	schemaMap: Map<TreeNodeSchemaIdentifier, () => FlexTreeNodeSchema>,
+	schemaMap: SchemaMap,
 	schema: TreeNodeSchema,
 ): () => FlexTreeNodeSchema {
-	// TODO: nice error if multiple schema have the same identifier
-	const final = getOrCreate(schemaMap, schema.identifier, () => () => {
+	const fromMap = schemaMap.get(brand(schema.identifier));
+	if (fromMap !== undefined) {
+		if (fromMap.original !== schema) {
+			// Use JSON.stringify to quote and escape string.
+			throw new Error(
+				`Multiple schema encountered with the identifier ${JSON.stringify(
+					schema.identifier,
+				)}. Remove or rename them to avoid the collision.`,
+			);
+		}
+		return fromMap.toFlex;
+	}
+
+	const toFlex = () => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {
@@ -170,7 +194,7 @@ export function convertNodeSchema(
 				const cached =
 					cachedFlexSchemaFromClassSchema(schema) ??
 					fail("leaf schema should be pre-cached");
-				assert(schemaIsLeaf(cached), "expected leaf");
+				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
 			case NodeKind.Map: {
@@ -216,13 +240,13 @@ export function convertNodeSchema(
 			default:
 				unreachableCase(kind);
 		}
-		assert(out instanceof FlexTreeNodeSchemaBase, "invalid schema produced");
+		assert(out instanceof FlexTreeNodeSchemaBase, 0x841 /* invalid schema produced */);
 		{
 			const cached = cachedFlexSchemaFromClassSchema(schema);
 			if (cached !== undefined) {
 				assert(
 					cachedFlexSchemaFromClassSchema(schema) === out,
-					"incorrect flexSchemaSymbol",
+					0x842 /* incorrect flexSchemaSymbol */,
 				);
 			} else {
 				setFlexSchemaFromClassSchema(schema, out);
@@ -230,8 +254,9 @@ export function convertNodeSchema(
 		}
 		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
-	});
-	return final;
+	};
+	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
+	return toFlex;
 }
 
 /**
