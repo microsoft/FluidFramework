@@ -17,6 +17,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
  * Create a container runtime factory class that allows you to set runtime options
+ * @internal
  */
 export const createTestContainerRuntimeFactory = (
 	containerRuntimeCtor: typeof ContainerRuntime,
@@ -52,6 +53,8 @@ export const createTestContainerRuntimeFactory = (
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 			// Validate we can load root data stores.
 			// We should be able to load any data store that was created in initializeFirstTime!
+			// Note: We use the deprecated `getRootDataStore` from v1.X here to allow for cross-major version compat
+			// testing. Can be removed when we no longer support v1.X.
 			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
 				runtime.getRootDataStore("default"));
 		}
@@ -60,27 +63,54 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			const runtime: ContainerRuntime = await containerRuntimeCtor.load(
+			if (containerRuntimeCtor.loadRuntime === undefined) {
+				// Note: We use the deprecated `load` from v1.X here to allow for cross-major version compat testing.
+				// Can be removed when we no longer support v1.X.
+				return containerRuntimeCtor.load(
+					context,
+					[
+						["default", Promise.resolve(this.dataStoreFactory)],
+						[this.type, Promise.resolve(this.dataStoreFactory)],
+					],
+					buildRuntimeRequestHandler(
+						defaultRouteRequestHandler("default"),
+						...this.requestHandlers,
+					),
+					this.runtimeOptions,
+					context.scope,
+					existing,
+				);
+			}
+			const provideEntryPoint = async (runtime: IContainerRuntime) => {
+				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			};
+			return containerRuntimeCtor.loadRuntime({
 				context,
-				[
+				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
-				buildRuntimeRequestHandler(
+				requestHandler: buildRuntimeRequestHandler(
 					defaultRouteRequestHandler("default"),
 					...this.requestHandlers,
 				),
-				this.runtimeOptions,
-				context.scope,
+				provideEntryPoint,
+				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
+				initializeEntryPoint: provideEntryPoint,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
 				existing,
-			);
-
-			return runtime;
+			} as any);
 		}
 	};
 };
 
 /**
  * A container runtime factory that allows you to set runtime options
+ * @internal
  */
 export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);

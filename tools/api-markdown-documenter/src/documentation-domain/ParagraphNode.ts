@@ -33,6 +33,8 @@ import { createNodesFromPlainText } from "./Utilities";
  * 	Some more content...
  * </p>
  * ```
+ *
+ * @public
  */
 export class ParagraphNode
 	extends DocumentationParentNodeBase

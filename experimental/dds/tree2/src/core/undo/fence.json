@@ -1,5 +1,0 @@
-{
-	"tags": ["undo"],
-	"exports": ["index"],
-	"imports": ["change-family", "rebase", "repair", "tree"]
-}

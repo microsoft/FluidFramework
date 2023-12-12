@@ -3,25 +3,17 @@
  * Licensed under the MIT License.
  */
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "node:assert";
-import * as semver from "semver";
 
 import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
-import { Logger, defaultLogger } from "../common/logging";
-import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
 import { fatal } from "./utils";
-import { ReferenceVersionBag, VersionBag } from "./versionBag";
-
-function prereleaseSatisfies(packageVersion: string, range: string) {
-	// Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
-	return semver.satisfies(`${packageVersion}-zzz`, range);
-}
+import { VersionBag } from "./versionBag";
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
@@ -33,164 +25,20 @@ export class Context {
 
 	private readonly timer: Timer;
 	private readonly newBranches: string[] = [];
-	private readonly newTags: string[] = [];
 
 	constructor(
 		public readonly gitRepo: GitRepo,
 		public readonly originRemotePartialUrl: string,
 		public readonly originalBranchName: string,
-		private readonly logger: Logger = defaultLogger,
 	) {
 		this.timer = new Timer(commonOptions.timer);
 
 		// Load the package
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, logger);
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot);
 		this.timer.time("Package scan completed");
 
 		this.fullPackageMap = this.repo.createPackageMap();
 		this.rootFluidBuildConfig = getFluidBuildConfig(this.repo.resolvedRoot);
-	}
-
-	private reloadPackageJson() {
-		this.repo.reload();
-	}
-
-	/**
-	 * Returns a {@link VersionBag} of all packages in the repo.
-	 *
-	 * @param reloadPackageJson - If true, the package.json for each package will be reloaded. Otherwise the cached
-	 * in-memory values will be used.
-	 *
-	 * @deprecated
-	 */
-	public collectVersions(reloadPackageJson = false): VersionBag {
-		if (reloadPackageJson) {
-			this.reloadPackageJson();
-		}
-		const versions = new VersionBag();
-
-		this.repo.packages.packages.forEach((pkg) => {
-			if (pkg.packageJson.private && pkg.monoRepo === undefined) {
-				return;
-			}
-			versions.add(pkg, pkg.version);
-		});
-
-		return versions;
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public async collectVersionInfo(releaseGroup: string): Promise<ReferenceVersionBag> {
-		this.logger.info("  Resolving published dependencies");
-
-		const depVersions = new ReferenceVersionBag(
-			this.repo.resolvedRoot,
-			this.fullPackageMap,
-			this.collectVersions(),
-		);
-		const pendingDepCheck: Package[] = [];
-		const processMonoRepo = (monoRepo: MonoRepo) => {
-			pendingDepCheck.push(...monoRepo.packages);
-			// Fake these for printing.
-			const firstClientPackage = monoRepo.packages[0];
-			depVersions.add(firstClientPackage, firstClientPackage.version);
-		};
-
-		if (isMonoRepoKind(releaseGroup)) {
-			const repoKind = releaseGroup;
-			if (repoKind === MonoRepoKind.Server) {
-				assert(
-					this.repo.releaseGroups.get(MonoRepoKind.Server),
-					"Attempted to collect server info on a Fluid repo with no server directory",
-				);
-			}
-			processMonoRepo(this.repo.releaseGroups.get(repoKind)!);
-		} else {
-			const pkg = this.fullPackageMap.get(releaseGroup);
-			if (!pkg) {
-				fatal(`Can't find package ${releaseGroup} to release`);
-			}
-			pendingDepCheck.push(pkg);
-			depVersions.add(pkg, pkg.version);
-		}
-
-		const publishedPackageDependenciesPromises: Promise<void>[] = [];
-		// eslint-disable-next-line no-constant-condition
-		while (true) {
-			const pkg = pendingDepCheck.pop();
-			if (!pkg) {
-				break;
-			}
-			for (const { name: dep, version, dev } of pkg.combinedDependencies) {
-				// Find the package in the repo
-				const depBuildPackage = this.fullPackageMap.get(dep);
-				// TODO: special casing tools to not be considered for release
-				if (depBuildPackage && depBuildPackage.group !== "tools") {
-					if (ReferenceVersionBag.checkPrivate(pkg, depBuildPackage, dev)) {
-						continue;
-					}
-
-					if (MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo)) {
-						// If it is the same repo, there are all related, and we would have added them to the pendingDepCheck as a set already.
-						// Just verify that the two package has the same version and the dependency has the same version
-						if (pkg.version !== depBuildPackage.version) {
-							fatal(
-								`Inconsistent package version within ${pkg.monoRepo?.kind} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`,
-							);
-						}
-						if (version !== `^${depBuildPackage.version}`) {
-							fatal(
-								`Inconsistent version dependency within ${pkg.monoRepo?.kind} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`,
-							);
-						}
-						continue;
-					}
-					const depVersion = depBuildPackage.version;
-					const reference = `${pkg.name}@local`;
-					// Check if the version in the repo is compatible with the version described in the dependency.
-
-					if (prereleaseSatisfies(depBuildPackage.version, version)) {
-						if (!depVersions.get(depBuildPackage)) {
-							this.logger.verbose(
-								`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`,
-							);
-							if (depBuildPackage.monoRepo) {
-								pendingDepCheck.push(...depBuildPackage.monoRepo.packages);
-							} else {
-								pendingDepCheck.push(depBuildPackage);
-							}
-						}
-						depVersions.add(depBuildPackage, depVersion, dev, reference);
-					} else {
-						publishedPackageDependenciesPromises.push(
-							depVersions.collectPublishedPackageDependencies(
-								depBuildPackage,
-								version,
-								dev,
-								reference,
-							),
-						);
-					}
-				}
-			}
-		}
-		await Promise.all(publishedPackageDependenciesPromises);
-
-		return depVersions;
-	}
-
-	/**
-	 * Given a release group to bump, this function determines whether any of its dependencies should be bumped to new
-	 * versions based on the latest published versions on npm.
-	 *
-	 * @deprecated
-	 */
-	public async collectBumpInfo(releaseGroup: string) {
-		const depVersions = await this.collectVersionInfo(releaseGroup);
-		depVersions.printRelease();
-		return depVersions;
 	}
 
 	/**
@@ -202,19 +50,6 @@ export class Context {
 		}
 		await this.gitRepo.createBranch(branchName);
 		this.newBranches.push(branchName);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public async cleanUp() {
-		await this.gitRepo.switchBranch(this.originalBranchName);
-		for (const branch of this.newBranches) {
-			await this.gitRepo.deleteBranch(branch);
-		}
-		for (const tag of this.newTags) {
-			await this.gitRepo.deleteTag(tag);
-		}
 	}
 
 	/**

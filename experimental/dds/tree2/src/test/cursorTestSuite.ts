@@ -6,10 +6,9 @@
 import { strict as assert } from "assert";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	prefixPath,
 	prefixFieldPath,
-	SchemaBuilder,
 	Any,
 } from "../feature-libraries";
 import {
@@ -24,37 +23,37 @@ import {
 	compareFieldUpPaths,
 	FieldUpPath,
 	PathRootPrefix,
-	ValueSchema,
 } from "../core";
 import { brand } from "../util";
+import { SchemaBuilder, leaf } from "../domains";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
-const schemaBuilder = new SchemaBuilder("Cursor Test Suite");
-const leaf = schemaBuilder.leaf("Leaf", ValueSchema.Serializable);
-export const emptySchema = schemaBuilder.struct("Empty Struct", {});
-const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
-const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
-export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
-// Struct with fixed shape
-export const structSchema = schemaBuilder.struct("struct", {
-	child: SchemaBuilder.fieldValue(leaf),
+const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
+
+export const emptySchema = schemaBuilder.object("Empty object", {});
+const emptySchema2 = schemaBuilder.object("Empty object 2", {});
+const emptySchema3 = schemaBuilder.object("Empty object 3", {});
+export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.sequence(Any));
+// object with fixed shape
+export const objectSchema = schemaBuilder.object("object", {
+	child: leaf.number,
 });
 
-export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+export const testTreeSchema = schemaBuilder.intoSchema(SchemaBuilder.sequence(Any));
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],
-	["true boolean", { type: leaf.name, value: true }],
-	["false boolean", { type: leaf.name, value: false }],
-	["integer", { type: leaf.name, value: Number.MIN_SAFE_INTEGER - 1 }],
-	["string", { type: leaf.name, value: "test" }],
-	["string with escaped characters", { type: leaf.name, value: '\\"\b\f\n\r\t' }],
-	["string with emoticon", { type: leaf.name, value: "😀" }],
+	["true boolean", { type: leaf.boolean.name, value: true }],
+	["false boolean", { type: leaf.boolean.name, value: false }],
+	["integer", { type: leaf.number.name, value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: leaf.string.name, value: "test" }],
+	["string with escaped characters", { type: leaf.string.name, value: '\\"\b\f\n\r\t' }],
+	["string with emoticon", { type: leaf.string.name, value: "😀" }],
 	[
 		"field",
 		{
 			type: mapSchema.name,
-			fields: { x: [{ type: emptySchema.name }, { type: leaf.name, value: 6 }] },
+			fields: { x: [{ type: emptySchema.name }, { type: leaf.number.name, value: 6 }] },
 		},
 	],
 	[
@@ -91,7 +90,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{
 						type: mapSchema.name,
 						fields: {
-							c: [{ type: leaf.name, value: 6 }],
+							c: [{ type: leaf.number.name, value: 6 }],
 						},
 					},
 				],
@@ -116,13 +115,13 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 		},
 	],
 	[
-		"fixed shape struct",
+		"fixed shape object",
 		{
-			type: structSchema.name,
+			type: objectSchema.name,
 			fields: {
 				child: [
 					{
-						type: leaf.name,
+						type: leaf.number.name,
 						value: 1,
 					},
 				],
@@ -130,18 +129,18 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 		},
 	],
 	[
-		"nested struct",
+		"nested object",
 		{
 			type: mapSchema.name,
 			fields: {
 				X: [
 					{ type: emptySchema2.name },
 					{
-						type: structSchema.name,
+						type: objectSchema.name,
 						fields: {
 							child: [
 								{
-									type: leaf.name,
+									type: leaf.number.name,
 									value: 1,
 								},
 							],
@@ -164,7 +163,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 					{ type: emptySchema3.name },
 					{ type: emptySchema3.name },
 					{ type: emptySchema3.name },
-					{ type: leaf.name, value: 1 },
+					{ type: leaf.number.name, value: 1 },
 					{ type: emptySchema3.name },
 				],
 			},
@@ -195,7 +194,7 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
 ): void {
 	function dataFromJsonableTree(data: JsonableTree): TData {
 		// Use text cursor to provide input data
-		return dataFromCursor(singleTextCursor(data));
+		return dataFromCursor(cursorForJsonableTreeNode(data));
 	}
 
 	testTreeCursor<TData, TCursor>({
@@ -510,7 +509,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				it("first node in a root field", () => {
 					const cursor = factory({
 						type: mapSchema.name,
-						fields: { key: [{ type: leaf.name, value: 0 }] },
+						fields: { key: [{ type: leaf.number.name, value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
@@ -526,8 +525,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						type: mapSchema.name,
 						fields: {
 							key: [
-								{ type: leaf.name, value: 0 },
-								{ type: leaf.name, value: 1 },
+								{ type: leaf.number.name, value: 0 },
+								{ type: leaf.number.name, value: 1 },
 							],
 						},
 					});

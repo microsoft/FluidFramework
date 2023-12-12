@@ -8,13 +8,11 @@
 
 import { IDataStore } from "../../dataStoreContext";
 
-
 declare const dataStore: IDataStore;
 
-// This is ok
-dataStore.request({ url: "/" });
-
 // These are deprecated
+// eslint-disable-next-line deprecation/deprecation
+dataStore.request({ url: "/" });
 // eslint-disable-next-line deprecation/deprecation
 dataStore.request({ url: "/", headers: { shouldBeDeprecated: true } });
 // eslint-disable-next-line deprecation/deprecation

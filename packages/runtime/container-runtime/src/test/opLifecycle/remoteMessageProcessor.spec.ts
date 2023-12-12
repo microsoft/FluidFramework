@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	IMessageProcessingResult,
 	OpDecompressor,
@@ -51,33 +52,15 @@ describe("RemoteMessageProcessor", () => {
 		new RemoteMessageProcessor(
 			mockSpliter as OpSplitter,
 			mockDecompressor as OpDecompressor,
-			new OpGroupingManager(false),
+			new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: Infinity,
+					reentrantBatchGroupingEnabled: false,
+				},
+				new MockLogger(),
+			),
 		);
-
-	it("Always processing a shallow copy of the message", () => {
-		const messageProcessor = getMessageProcessor();
-		const contents = {
-			contents: { key: "value" },
-			type: ContainerMessageType.FluidDataStoreOp,
-		};
-		const message = {
-			contents,
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
-		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
-
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
-
-		delete documentMessage.metadata;
-		assert.ok(result.metadata);
-
-		assert.strictEqual(result.contents, contents.contents);
-		assert.strictEqual(result.type, contents.type);
-	});
 
 	it("Invokes internal processors in order", () => {
 		const messageProcessor = getMessageProcessor();

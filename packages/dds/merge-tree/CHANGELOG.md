@@ -1,5 +1,106 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Deprecate BaseSegment.ack, Client, CollaborationWindow, compareNumbers, compareStrings, createAnnotateMarkerOp, createAnnotateRangeOp, createInsertOp, createInsertSegmentOp, createRemoveRangeOp, IConsensusInfo, IConsensusValue, IMarkerModifiedAction, IMergeTreeTextHelper, ISegment.ack, LocalClientId, MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, NonCollabClient, SegmentAccumulator, SegmentGroup, SegmentGroupCollection.dequeue, SegmentGroupCollection.enqueue, SegmentGroupCollection.pop, SortedSegmentSet, SortedSegmentSetItem, SortedSet, toRemovalInfo, TreeMaintenanceSequenceNumber, UnassignedSequenceNumber, UniversalSequenceNumber ([#17952](https://github.com/microsoft/FluidFramework/issues/17952)) [b762798c48](https://github.com/microsoft/FluidFramework/commits/b762798c48ec581202fb5335e907637b8482edcc)
+
+    This functionality was not intended for export and will be removed in a future release.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   merge-tree: Deprecate Stack, clone, combine, createMap, extend, extendIfUndefined, and matchProperties ([#17650](https://github.com/microsoft/FluidFramework/issues/17650)) [2b12bc7e59](https://github.com/microsoft/FluidFramework/commits/2b12bc7e59f7825a222ad33b7faff17477d0fa66)
+
+    The following classes and functions have been deprecated. They were not intended for public export and will be removed
+    in a future release.
+
+    -   Stack
+    -   clone
+    -   combine
+    -   createMap
+    -   extend
+    -   extendIfUndefined
+    -   matchProperties
+
+-   merge-tree: Deprecate IntervalType.Nest, internedSpaces, RangeStackMap, refGetRangeLabels, refHasRangeLabel, and refHasRangeLabels ([#17555](https://github.com/microsoft/FluidFramework/issues/17555)) [e4c11874ef](https://github.com/microsoft/FluidFramework/commits/e4c11874ef7c62b7cde7c282bc7997519d35fbbc)
+
+    The following classes and functions have been deprecated. The functionality has poor test coverage and is largely
+    unused. They will be removed in a future release.
+
+    -   IntervalType.Nest
+    -   internedSpaces
+    -   RangeStackMap
+    -   refGetRangeLabels
+    -   refHasRangeLabel
+    -   refHasRangeLabels
+
+## 2.0.0-internal.7.0.0
+
+### Major Changes
+
+-   sequence: New API for specifying spatial positioning of intervals [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Previously intervals were specified with only an index. Now the model is a bit more nuanced in that you can specify positions that lie before or after a given index. This makes it more clear how interval endpoints should interact with changes to the sequence. See the docs for SequencePlace for additional context.
+
+-   Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    This included the following changes from the protocol-definitions release:
+
+    -   Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+        submitted by clients to the server and the resulting signals sent from the server to clients.
+        -   A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+            been added, which will be the typing for signals sent from the client to the server. Both extend a new
+            ISignalMessageBase interface that contains common members.
+    -   The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+
+-   Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    Dependencies on the following Fluid server package have been updated to version 2.0.1:
+
+    -   @fluidframework/gitresources: 2.0.1
+    -   @fluidframework/server-kafka-orderer: 2.0.1
+    -   @fluidframework/server-lambdas: 2.0.1
+    -   @fluidframework/server-lambdas-driver: 2.0.1
+    -   @fluidframework/server-local-server: 2.0.1
+    -   @fluidframework/server-memory-orderer: 2.0.1
+    -   @fluidframework/protocol-base: 2.0.1
+    -   @fluidframework/server-routerlicious: 2.0.1
+    -   @fluidframework/server-routerlicious-base: 2.0.1
+    -   @fluidframework/server-services: 2.0.1
+    -   @fluidframework/server-services-client: 2.0.1
+    -   @fluidframework/server-services-core: 2.0.1
+    -   @fluidframework/server-services-ordering-kafkanode: 2.0.1
+    -   @fluidframework/server-services-ordering-rdkafka: 2.0.1
+    -   @fluidframework/server-services-ordering-zookeeper: 2.0.1
+    -   @fluidframework/server-services-shared: 2.0.1
+    -   @fluidframework/server-services-telemetry: 2.0.1
+    -   @fluidframework/server-services-utils: 2.0.1
+    -   @fluidframework/server-test-utils: 2.0.1
+    -   tinylicious: 2.0.1
+
+-   Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+
+-   sequence: Remove the mergeTreeUseNewLengthCalculations flag [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+
+    The `mergeTreeUseNewLengthCalculations` flag has been removed, because the feature was enabled by default in 2.0.0-internal.6.0.0.
+
+## 2.0.0-internal.6.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.3.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes

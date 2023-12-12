@@ -9,7 +9,6 @@ import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../.
 import {
 	GraphCommit,
 	RevisionTag,
-	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -19,11 +18,11 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 import { noopValidator } from "../../codec";
+import { createTestUndoRedoStacks } from "../utils";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 
@@ -159,6 +158,7 @@ describe("Branches", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
 		const child = parent.fork();
+		const stacks = createTestUndoRedoStacks(child);
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -172,6 +172,15 @@ describe("Branches", () => {
 		child.rebaseOnto(parent);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
+
+		// It should still be possible to revert the the child branch's revertibles
+		assert.equal(stacks.undoStack.length, 2);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		stacks.undoStack.pop()!.revert();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		stacks.undoStack.pop()!.revert();
+
+		stacks.unsubscribe();
 	});
 
 	it("emit a change event after each change", () => {
@@ -185,9 +194,9 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Ensure that the change event is emitted once for each change applied
 		change(branch);
-		assert.equal(changeEventCount, 1);
-		change(branch);
 		assert.equal(changeEventCount, 2);
+		change(branch);
+		assert.equal(changeEventCount, 4);
 	});
 
 	it("emit a change event after rebasing", () => {
@@ -205,7 +214,7 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Rebase the parent onto the child and ensure another change event is emitted
 		parent.rebaseOnto(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("do not emit a change event after a rebase with no effect", () => {
@@ -237,10 +246,10 @@ describe("Branches", () => {
 		// Apply changes to both branches
 		change(parent);
 		change(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 		// Merge the child into the parent and ensure another change event is emitted
 		parent.merge(child);
-		assert.equal(changeEventCount, 2);
+		assert.equal(changeEventCount, 4);
 	});
 
 	it("do not emit a change event after a merge with no effect", () => {
@@ -254,10 +263,10 @@ describe("Branches", () => {
 		const child = parent.fork();
 		// Apply a change to the parent
 		change(parent);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 		// Merge the child into the parent and ensure no change is emitted since the child has no new commits
 		parent.merge(child);
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("emit correct change events during and after committing a transaction", () => {
@@ -275,14 +284,14 @@ describe("Branches", () => {
 		branch.startTransaction();
 		// Ensure that the correct change is emitted when applying changes in a transaction
 		change(branch);
-		assert.equal(changeEventCount, 1);
-		change(branch);
 		assert.equal(changeEventCount, 2);
+		change(branch);
+		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 0);
 		// Commit the transaction. No change event should be emitted since the commits, though squashed, are still equivalent
 		branch.commitTransaction();
-		assert.equal(changeEventCount, 2);
-		assert.equal(replaceEventCount, 1);
+		assert.equal(changeEventCount, 4);
+		assert.equal(replaceEventCount, 2);
 	});
 
 	it("do not emit a change event after committing an empty transaction", () => {
@@ -314,7 +323,7 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 		// Abort the transaction. A new change event should be emitted since the state rolls back to before the transaction
 		branch.abortTransaction();
-		assert.equal(changeEventCount, 1);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("do not emit a change event after aborting an empty transaction", () => {
@@ -500,74 +509,6 @@ describe("Branches", () => {
 		});
 	});
 
-	it("error if undo is called with no undo redo manager", () => {
-		const branch = create();
-		assert.throws(
-			() => branch.undo(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Must construct branch with an `UndoRedoManager` in order to undo.",
-				),
-		);
-	});
-
-	it("error if redo is called with no undo redo manager", () => {
-		const branch = create();
-		assert.throws(
-			() => branch.redo(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Must construct branch with an `UndoRedoManager` in order to redo.",
-				),
-		);
-	});
-
-	it("can rebase a non-revertible branch onto a revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(revertibleBranch);
-		branch.rebaseOnto(revertibleBranch);
-		assert.equal(branch.getHead(), revertibleBranch.getHead());
-	});
-
-	it("error when rebasing a revertible branch onto a non-revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(branch);
-		assert.throws(
-			() => revertibleBranch.rebaseOnto(branch),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Cannot rebase a revertible branch onto a non-revertible branch",
-				),
-		);
-	});
-
-	it("can merge a revertible branch into a non-revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(revertibleBranch);
-		branch.merge(revertibleBranch);
-		assert.equal(branch.getHead(), revertibleBranch.getHead());
-	});
-
-	it("error when merging a non-revertible branch into a revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(branch);
-		assert.throws(
-			() => revertibleBranch.merge(branch),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Cannot merge a non-revertible branch into a revertible branch",
-				),
-		);
-	});
-
 	describe("transitive fork event", () => {
 		/** Creates forks at various "depths" and returns the number of forks created */
 		function forkTransitive<T extends { fork(): T }>(forkable: T): number {
@@ -619,25 +560,19 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(
-			initCommit,
-			defaultChangeFamily,
-			new MockRepairDataStoreProvider(),
-		);
-		if (onChange !== undefined) {
-			branch.on("change", onChange);
-		}
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		let head = branch.getHead();
+		branch.on("beforeChange", (c) => {
+			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
+			assert.equal(branch.getHead(), head);
+			onChange?.(c);
+		});
+		branch.on("afterChange", (c) => {
+			head = branch.getHead();
+			onChange?.(c);
+		});
 
 		return branch;
-	}
-
-	function createRevertible(from: DefaultBranch): DefaultBranch {
-		return new SharedTreeBranch(
-			from.getHead(),
-			defaultChangeFamily,
-			new MockRepairDataStoreProvider(),
-			UndoRedoManager.create(defaultChangeFamily),
-		);
 	}
 
 	let changeValue = 0;
@@ -647,7 +582,7 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
+		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value: changeValue });
 		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}

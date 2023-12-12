@@ -13,6 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
+ * @internal
  */
 export const DriverErrorTypes = {
 	// Inherit base error types
@@ -98,14 +99,23 @@ export const DriverErrorTypes = {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked: "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError: "outOfStorageError",
 } as const;
-export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
+/**
+ * @internal
+ */
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 /**
  * Driver Error types
  * Lists types that are likely to be used by all drivers
  *
  * @deprecated Use {@link (DriverErrorTypes:type)} instead.
+ * @alpha
  */
 export enum DriverErrorType {
 	/**
@@ -204,6 +214,11 @@ export enum DriverErrorType {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked = "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError = "outOfStorageError",
 }
 
 /**
@@ -214,6 +229,7 @@ export enum DriverErrorType {
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
+ * @alpha
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
@@ -221,6 +237,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 
 /**
  * Base interface for all errors and warnings
+ * @alpha
  */
 export interface IDriverErrorBase {
 	/**
@@ -252,22 +269,34 @@ export interface IDriverErrorBase {
 	endpointReached?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IThrottlingWarning extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.throttlingError;
 	readonly retryAfterSeconds: number;
 }
 
+/**
+ * @internal
+ */
 export interface IGenericNetworkError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.genericNetworkError;
 	readonly statusCode?: number;
 }
 
+/**
+ * @internal
+ */
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.authorizationError;
 	readonly claims?: string;
 	readonly tenantId?: string;
 }
 
+/**
+ * @internal
+ */
 export interface ILocationRedirectionError extends IDriverErrorBase {
 	readonly errorType: DriverErrorType.locationRedirection;
 	readonly redirectUrl: IResolvedUrl;
@@ -276,6 +305,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
+ * @internal
  */
 export interface IDriverBasicError extends IDriverErrorBase {
 	readonly errorType:
@@ -290,10 +320,14 @@ export interface IDriverBasicError extends IDriverErrorBase {
 		| DriverErrorType.fileOverwrittenInStorage
 		| DriverErrorType.fluidInvalidSchema
 		| DriverErrorType.usageError
-		| DriverErrorType.fileIsLocked;
+		| DriverErrorType.fileIsLocked
+		| DriverErrorType.outOfStorageError;
 	readonly statusCode?: number;
 }
 
+/**
+ * @internal
+ */
 export type DriverError =
 	| IThrottlingWarning
 	| IGenericNetworkError

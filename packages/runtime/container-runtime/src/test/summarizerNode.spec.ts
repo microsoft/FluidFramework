@@ -137,7 +137,7 @@ describe("Runtime", () => {
 			const summaryRefSeq = 123;
 			const fakeOp = (sequenceNumber: number): ISequencedDocumentMessage =>
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				({ sequenceNumber } as ISequencedDocumentMessage);
+				({ sequenceNumber }) as ISequencedDocumentMessage;
 
 			const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
 			const protocolTree: ISnapshotTree = {

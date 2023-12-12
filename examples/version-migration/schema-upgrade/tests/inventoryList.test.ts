@@ -103,6 +103,15 @@ describe("inventoryList", () => {
 				page.waitForSelector("#sbs-left .migration-status"),
 				page.waitForSelector("#sbs-right .migration-status"),
 			]);
+
+			// Force the containers into write mode
+			await expect(page).toClick(
+				"#sbs-right > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
+			);
+			await expect(page).toClick(
+				"#sbs-left > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
+			);
+
 			const leftContainsOne = await page.evaluate(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[0]?.textContent?.includes("one") === true;

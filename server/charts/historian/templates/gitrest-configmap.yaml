@@ -18,6 +18,15 @@ data:
             "level": "verbose",
             "timestamp": false
         },
+        "lumberjack": {
+            "options": {
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
+            }
+        },
+        "config": {
+            "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+        },
         "requestSizeLimit": "1gb",
         "storageDir": {
             "baseDir": "/home/node/documents",
@@ -58,5 +67,10 @@ data:
             "maxRetriesPerRequest": "{{ .Values.gitrest.redis.maxRetriesPerRequest }}",
             "enableAutoPipelining": "{{ .Values.gitrest.redis.enableAutoPipelining }}",
             "enableOfflineQueue": "{{ .Values.gitrest.redis.enableOfflineQueue }}"
+        },
+        "system": {
+            "httpServer": {
+                "connectionTimeoutMs": {{ .Values.gitrest.system.httpServer.connectionTimeoutMs }}
+            }
         }
     }

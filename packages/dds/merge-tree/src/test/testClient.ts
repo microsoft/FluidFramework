@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ISequencedDocumentMessage,
@@ -320,7 +320,6 @@ export class TestClient extends Client {
 			referenceSequenceNumber: refSeq,
 			sequenceNumber: seq,
 			timestamp: Date.now(),
-			term: 1,
 			traces: [],
 			type: MessageType.Operation,
 		};

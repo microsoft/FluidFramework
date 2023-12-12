@@ -8,15 +8,15 @@ import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
-	Multiplicity,
+	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema";
-import { brand, fail } from "../../../util";
+import { Mutable, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
-import { Delta } from "../../../core";
+import { DeltaFieldChanges, makeDetachedNodeId } from "../../../core";
+import { Multiplicity } from "../../../feature-libraries";
 
 /**
  * Picks the last value written.
@@ -81,20 +81,25 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: ({ change }, deltaFromChild) =>
-		change === 0
-			? []
-			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
-			  ],
+	intoDelta: ({ change, revision }): DeltaFieldChanges => {
+		const delta: Mutable<DeltaFieldChanges> = {};
+		if (change !== 0) {
+			// This is an arbitrary number for testing.
+			const changeId = makeDetachedNodeId(revision, 424242);
+			const buildId = makeDetachedNodeId(revision, 424243);
+			delta.build = [{ id: buildId, trees: [singleJsonCursor(change.new)] }];
+			delta.local = [{ count: 1, attach: buildId, detach: changeId }];
+		}
+		return delta;
+	},
 
+	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
 };
 
-export const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
+export const valueField = new FieldKindWithEditor(
+	"Value",
+	Multiplicity.Single,
 	valueHandler,
 	(a, b) => false,
 	new Set(),

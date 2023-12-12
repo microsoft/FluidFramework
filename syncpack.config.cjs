@@ -31,10 +31,7 @@ module.exports = {
 		// Items should be removed from here when possible.
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: [
-				"@fluidframework/build-tools>npm-package-json-lint@^6.0.0",
-				"@oclif/core",
-			],
+			dependencies: ["@oclif/core"],
 			dependencyTypes: ["pnpmOverrides"],
 			packages: ["**"],
 			range: "~",
@@ -84,11 +81,11 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
+			label: "Deps in pnpm overrides can use whatever dependency ranges they need",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
 			packages: ["**"],
-			range: "^",
+			isIgnored: true,
 		},
 
 		{
@@ -129,6 +126,9 @@ module.exports = {
 
 				// Required due to use of "unstable" tree component APIs
 				"@fluentui/react-components",
+
+				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
+				"@cerner/duplicate-package-checker-webpack-plugin",
 			],
 			packages: ["**"],
 			range: "~",
@@ -194,6 +194,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",
@@ -202,6 +203,7 @@ module.exports = {
 				"@fluid-example/**",
 				"@fluid-experimental/**",
 				"@fluid-internal/**",
+				"@fluid-private/**",
 				"@fluid-tools/**",
 				"@fluidframework/**",
 				"fluid-framework",

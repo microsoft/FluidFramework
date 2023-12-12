@@ -1,5 +1,0 @@
-{
-	"tags": ["sequence-field"],
-	"exports": ["index"],
-	"imports": ["codec", "core", "feature-libraries", "util", "modular-schema"]
-}

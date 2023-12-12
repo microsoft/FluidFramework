@@ -8,6 +8,7 @@
  * - indefinite: entries don't expire and must be explicitly removed
  * - absolute: entries expire after the given duration in MS, even if accessed multiple times in the mean time
  * - sliding: entries expire after the given duration in MS of inactivity (i.e. get resets the clock)
+ * @alpha
  */
 export type PromiseCacheExpiry =
 	| {
@@ -20,12 +21,19 @@ export type PromiseCacheExpiry =
 
 /**
  * Options for configuring the {@link PromiseCache}
+ * @alpha
  */
 export interface PromiseCacheOptions {
-	/** Common expiration policy for all items added to this cache */
+	/**
+	 * Common expiration policy for all items added to this cache
+	 */
 	expiry?: PromiseCacheExpiry;
-	/** If the stored Promise is rejected with a particular error, should the given key be removed? */
-	removeOnError?: (e: any) => boolean;
+	/**
+	 * If the stored Promise is rejected with a particular error, should the given key be removed?
+	 */
+	// TODO: Use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	removeOnError?: (error: any) => boolean;
 }
 
 /**
@@ -35,7 +43,7 @@ export interface PromiseCacheOptions {
 class GarbageCollector<TKey> {
 	private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
-	constructor(
+	public constructor(
 		private readonly expiry: PromiseCacheExpiry,
 		private readonly cleanup: (key: TKey) => void,
 	) {}
@@ -81,19 +89,20 @@ class GarbageCollector<TKey> {
 /**
  * A specialized cache for async work, allowing you to safely cache the promised result of some async work
  * without fear of running it multiple times or losing track of errors.
+ * @alpha
  */
 export class PromiseCache<TKey, TResult> {
 	private readonly cache = new Map<TKey, Promise<TResult>>();
 	private readonly gc: GarbageCollector<TKey>;
 
-	private readonly removeOnError: (error: any) => boolean;
+	private readonly removeOnError: (error: unknown) => boolean;
 
 	/**
 	 * Create the PromiseCache with the given options, with the following defaults:
 	 *
 	 * expiry: indefinite, removeOnError: true for all errors
 	 */
-	constructor({
+	public constructor({
 		expiry = { policy: "indefinite" },
 		removeOnError = (): boolean => true,
 	}: PromiseCacheOptions = {}) {

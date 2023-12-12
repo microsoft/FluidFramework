@@ -20,7 +20,7 @@ import {
 	performFuzzActions,
 	Reducer,
 	take,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,

@@ -6,7 +6,7 @@
 import {
 	Button,
 	Combobox,
-	ComboboxProps,
+	type ComboboxProps,
 	CounterBadge,
 	createTableColumn,
 	DataGrid,
@@ -16,11 +16,11 @@ import {
 	DataGridHeaderCell,
 	DataGridRow,
 	Dropdown,
-	DropdownProps,
+	type DropdownProps,
 	makeStyles,
 	Option,
 	shorthands,
-	TableColumnDefinition,
+	type TableColumnDefinition,
 	tokens,
 } from "@fluentui/react-components";
 import React, { useState, useRef } from "react";
@@ -29,9 +29,9 @@ import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
 	handleIncomingMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	ITimestampedTelemetryEvent,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
@@ -198,14 +198,14 @@ export function TelemetryView(): React.ReactElement {
 					</Button>
 				</div>
 			</div>
-			{telemetryEvents !== undefined ? (
+			{telemetryEvents === undefined ? (
+				<Waiting label={"Waiting for Telemetry events"} />
+			) : (
 				<FilteredTelemetryView
 					telemetryEvents={telemetryEvents}
 					setIndex={setSelectedIndex}
 					index={selectedIndex}
 				/>
-			) : (
-				<Waiting label={"Waiting for Telemetry events"} />
 			)}
 		</div>
 	);
@@ -384,7 +384,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	}
 
 	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
-		const category = data.optionText !== undefined ? data.optionText : "";
+		const category = data.optionText ?? "";
 		setSelectedCategory(category);
 		const categories: string[] = [];
 		categories.push(category);
@@ -420,14 +420,18 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
 		if (themeInfo?.name !== ThemeOption.HighContrast) {
 			switch (eventCategory) {
-				case "generic":
+				case "generic": {
 					return tokens.colorPaletteGreenForeground1;
-				case "performance":
+				}
+				case "performance": {
 					return tokens.colorPaletteBlueForeground2;
-				case "error":
+				}
+				case "error": {
 					return tokens.colorPaletteRedBackground3;
-				default:
+				}
+				default: {
 					return tokens.colorNeutralBackground1;
+				}
 			}
 		}
 	};
@@ -441,7 +445,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			matchingOption = eventNameOptions.includes(data.optionText);
 		}
 		if (matchingOption) {
-			const search = data.optionText !== undefined ? data.optionText : "";
+			const search = data.optionText ?? "";
 			setCustomSearch(search);
 			usageLogger?.sendTelemetryEvent({
 				eventName: "TelemetryEventNameFilter",
@@ -461,15 +465,15 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	}
 
 	const items: Item[] =
-		filteredTelemetryEvents !== undefined
-			? filteredTelemetryEvents?.map((message) => {
+		filteredTelemetryEvents === undefined
+			? []
+			: filteredTelemetryEvents?.map((message) => {
 					return {
 						category: message.logContent.category,
 						eventName: message.logContent.eventName,
 						information: JSON.stringify(message.logContent, undefined, 2),
 					};
-			  }, [])
-			: [];
+			  }, []);
 
 	const columns: TableColumnDefinition<Item>[] = [
 		createTableColumn<Item>({

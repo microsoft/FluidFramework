@@ -6,7 +6,7 @@
 import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -41,7 +41,10 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	 * @param shape - describes the semantics and layout of `values`.
 	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
 	 */
-	public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+	public constructor(
+		public shape: ChunkShape,
+		public values: TreeValue[],
+	) {
 		super();
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
@@ -89,7 +92,7 @@ export class TreeShape {
 	public readonly positions: readonly NodePositionInfo[];
 
 	public constructor(
-		public readonly type: TreeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
 	) {
@@ -447,9 +450,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
 	}
 
-	public get chunkStart(): number {
-		return 0;
-	}
+	public readonly chunkStart: number = 0;
 
 	public get chunkLength(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
@@ -512,7 +513,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.mode = CursorLocationType.Fields;
 	}
 
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.nodeInfo(CursorLocationType.Nodes).shape.type;
 	}
 

@@ -131,7 +131,7 @@ export interface FluidReleaseStateHandlerData {
 	 * A function that the state handlers can call to exit the application if needed. If this is undefined then the
 	 * handler function will not exit the app itself.
 	 */
-	exitFunc: (code?: number) => void;
+	exitFunc: (code: number) => void;
 }
 
 /**
@@ -148,48 +148,47 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		data: FluidReleaseStateHandlerData,
 	): Promise<boolean> {
 		let superShouldHandle = false;
-		let result = false;
 
 		switch (state) {
 			case "AskForReleaseType": {
-				result = await askForReleaseType(state, machine, testMode, log, data);
+				await askForReleaseType(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckShouldRunOptionalChecks": {
-				result = await checkShouldRunOptionalChecks(state, machine, testMode, log, data);
+				await checkShouldRunOptionalChecks(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckValidReleaseGroup": {
-				result = await checkValidReleaseGroup(state, machine, testMode, log, data);
+				await checkValidReleaseGroup(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckPolicy": {
-				result = await checkPolicy(state, machine, testMode, log, data);
+				await checkPolicy(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckAssertTagging": {
-				result = await checkAssertTagging(state, machine, testMode, log, data);
+				await checkAssertTagging(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckHasRemote": {
-				result = await checkHasRemote(state, machine, testMode, log, data);
+				await checkHasRemote(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckBranchUpToDate": {
-				result = await checkBranchUpToDate(state, machine, testMode, log, data);
+				await checkBranchUpToDate(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckNoPrereleaseDependencies3":
 			case "CheckNoPrereleaseDependencies2":
 			case "CheckNoPrereleaseDependencies": {
-				result = await checkNoPrereleaseDependencies(state, machine, testMode, log, data);
+				await checkNoPrereleaseDependencies(state, machine, testMode, log, data);
 				break;
 			}
 
@@ -211,44 +210,38 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 			case "CheckBranchName":
 			case "CheckBranchName2":
 			case "CheckBranchName3": {
-				result = await checkBranchName(state, machine, testMode, log, data);
+				await checkBranchName(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckDoesReleaseFromReleaseBranch":
 			case "CheckDoesReleaseFromReleaseBranch2":
 			case "CheckDoesReleaseFromReleaseBranch3": {
-				result = await checkDoesReleaseFromReleaseBranch(
-					state,
-					machine,
-					testMode,
-					log,
-					data,
-				);
+				await checkDoesReleaseFromReleaseBranch(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckDependenciesInstalled": {
-				result = await checkDependenciesInstalled(state, machine, testMode, log, data);
+				await checkDependenciesInstalled(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckMainNextIntegrated": {
-				result = await checkMainNextIntegrated(state, machine, testMode, log, data);
+				await checkMainNextIntegrated(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckOnReleaseBranch":
 			case "CheckOnReleaseBranch2":
 			case "CheckOnReleaseBranch3": {
-				result = await checkOnReleaseBranch(state, machine, testMode, log, data);
+				await checkOnReleaseBranch(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckReleaseIsDone":
 			case "CheckReleaseIsDone2":
 			case "CheckReleaseIsDone3": {
-				result = await checkReleaseIsDone(state, machine, testMode, log, data);
+				await checkReleaseIsDone(state, machine, testMode, log, data);
 				break;
 			}
 
@@ -257,77 +250,71 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 			case "CheckReleaseGroupIsBumpedMinor2":
 			case "CheckReleaseGroupIsBumpedPatch":
 			case "CheckReleaseGroupIsBumpedPatch2": {
-				result = await checkReleaseGroupIsBumped(state, machine, testMode, log, data);
+				await checkReleaseGroupIsBumped(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckTypeTestGenerate":
 			case "CheckTypeTestGenerate2": {
-				result = await checkTypeTestGenerate(state, machine, testMode, log, data);
+				await checkTypeTestGenerate(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckTypeTestPrepare":
 			case "CheckTypeTestPrepare2": {
-				result = await checkTypeTestPrepare(state, machine, testMode, log, data);
+				await checkTypeTestPrepare(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "DoReleaseGroupBump": {
-				result = await doReleaseGroupBump(state, machine, testMode, log, data);
+				await doReleaseGroupBump(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "DoBumpReleasedDependencies": {
-				result = await doBumpReleasedDependencies(state, machine, testMode, log, data);
+				await doBumpReleasedDependencies(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckReleaseBranchExists": {
-				result = await checkReleaseBranchExists(state, machine, testMode, log, data);
+				await checkReleaseBranchExists(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckShouldCommitBump":
 			case "CheckShouldCommitDeps": {
-				result = await checkShouldCommit(state, machine, testMode, log, data);
+				await checkShouldCommit(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "CheckShouldCommitReleasedDepsBump": {
-				result = await checkShouldCommitReleasedDepsBump(
-					state,
-					machine,
-					testMode,
-					log,
-					data,
-				);
+				await checkShouldCommitReleasedDepsBump(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToCreateReleaseBranch": {
-				result = await promptToCreateReleaseBranch(state, machine, testMode, log, data);
+				await promptToCreateReleaseBranch(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToIntegrateNext": {
-				result = await promptToIntegrateNext(state, machine, testMode, log, data);
+				await promptToIntegrateNext(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToRelease": {
-				result = await promptToRelease(state, machine, testMode, log, data);
+				await promptToRelease(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToPRDeps":
 			case "PromptToPRReleasedDepsBump": {
-				result = await promptToPRDeps(state, machine, testMode, log, data);
+				await promptToPRDeps(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToPRBump": {
-				result = await promptToPRBump(state, machine, testMode, log, data);
+				await promptToPRBump(state, machine, testMode, log, data);
 				break;
 			}
 
@@ -335,23 +322,22 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 			case "PromptToCommitDeps":
 			case "PromptToCommitPolicy":
 			case "PromptToCommitReleasedDepsBump": {
-				result = await promptToCommitChanges(state, machine, testMode, log, data);
+				await promptToCommitChanges(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToReleaseDeps": {
-				result = await promptToReleaseDeps(state, machine, testMode, log, data);
+				await promptToReleaseDeps(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToRunMinorReleaseCommand": {
-				result = await promptToRunMinorReleaseCommand(state, machine, testMode, log, data);
+				await promptToRunMinorReleaseCommand(state, machine, testMode, log, data);
 				break;
 			}
 
 			case "PromptToRunTypeTests": {
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				result = await promptToRunTypeTests(state, machine, testMode, log, data);
+				await promptToRunTypeTests(state, machine, testMode, log, data);
 				break;
 			}
 
@@ -364,10 +350,6 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 				superShouldHandle = true;
 			}
 		}
-
-		// if (testMode && localHandled !== true) {
-		//     return false;
-		// }
 
 		if (superShouldHandle === true) {
 			const superHandled = await super.handleState(state, machine, testMode, log, data);

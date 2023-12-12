@@ -257,12 +257,12 @@ export class OdspDocumentService implements IDocumentService {
 	 * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
 	 * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
 	 * import this later on when required.
-	 * @returns - delta stream object.
+	 * @returns The delta stream object.
 	 */
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
 		const module = await import(
-			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream"
+			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
 			.then((m) => {
 				this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { Static, TSchema, Type } from "@sinclair/typebox";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
@@ -24,20 +24,9 @@ export type ShapeIndex = Static<typeof ShapeIndex>;
 
 export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 
-/**
- * Options to configure a TypeBox schema as a discriminated union that is simple to validate data against.
- *
- * See DiscriminatedUnionDispatcher for more information on this pattern.
- */
-export const unionOptions: ObjectOptions = {
-	additionalProperties: false,
-	minProperties: 1,
-	maxProperties: 1,
-};
-
 const EncodedChunkBase = Type.Object(
 	{
-		version: Type.String(),
+		version: Type.Number(),
 		identifiers: Type.Array(Type.String()),
 		// TreeValues mixed with indexes into "shapes" and occasional lengths (for specific shapes that require them).
 		data: Type.Array(Type.Any()),
@@ -51,7 +40,7 @@ const EncodedChunkBase = Type.Object(
  * @param shape - schema for union of shape format, see {@link DiscriminatedUnionDispatcher}.
  */
 export const EncodedChunkGeneric = <TShapeSchema extends TSchema>(
-	version: string,
+	version: number,
 	shape: TShapeSchema,
 ) =>
 	Type.Composite(

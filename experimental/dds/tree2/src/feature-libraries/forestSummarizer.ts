@@ -11,16 +11,26 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
+	applyDelta,
+	DeltaFieldChanges,
+	FieldKey,
 	IEditableForest,
-	initializeForest,
-	ITreeSubscriptionCursor,
-	JsonableTree,
+	ITreeCursorSynchronous,
+	makeDetachedFieldIndex,
 	mapCursorField,
-	moveToDetachedField,
+	mapCursorFields,
+	StoredSchemaCollection,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { idAllocatorFromMaxId } from "../util";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../codec";
+import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
+import { FullSchemaPolicy } from "./modular-schema";
+import { TreeCompressionStrategy } from "./treeCompressionUtils";
+import { Format } from "./forestSummarizerFormat";
+import { makeForestSummarizerCodec } from "./forestSummarizerCodec";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -33,10 +43,24 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly cursor: ITreeSubscriptionCursor;
+	private readonly schema: StoredSchemaCollection;
+	private readonly policy: FullSchemaPolicy;
+	private readonly encodeType: TreeCompressionStrategy;
+	private readonly codec: IJsonCodec<[FieldKey, EncodedChunk][], Format>;
+	private readonly options: ICodecOptions;
 
-	public constructor(private readonly forest: IEditableForest) {
-		this.cursor = this.forest.allocateCursor();
+	public constructor(
+		private readonly forest: IEditableForest,
+		schema: StoredSchemaCollection,
+		policy: FullSchemaPolicy,
+		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+		options?: ICodecOptions,
+	) {
+		this.schema = schema;
+		this.policy = policy;
+		this.encodeType = encodeType;
+		this.options = options ?? { jsonValidator: noopValidator };
+		this.codec = makeForestSummarizerCodec(this.options);
 	}
 
 	/**
@@ -47,12 +71,13 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		// TODO: maybe assert there are no other roots
-		// (since we don't save them, and they should not exist outside transactions).
-		moveToDetachedField(this.forest, this.cursor);
-		const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
-		this.cursor.clear();
-		return stringify(roots);
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
+		// TODO: Encode all detached fields in one operation for better performance and compression
+		const fields: [FieldKey, EncodedChunk][] = mapCursorFields(rootCursor, (cursor) => [
+			rootCursor.getFieldKey(),
+			encodeSummary(cursor, this.schema, this.policy, this.encodeType),
+		]);
+		return stringify(this.codec.encode(fields));
 	}
 
 	public getAttachSummary(
@@ -90,8 +115,54 @@ export class ForestSummarizer implements Summarizable {
 		if (await services.contains(treeBlobKey)) {
 			const treeBuffer = await services.readBlob(treeBlobKey);
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
-			const jsonableTree = parse(treeBufferString) as JsonableTree[];
-			initializeForest(this.forest, jsonableTree.map(singleTextCursor));
+			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
+			// forest summary format.
+			const fields = this.codec.decode(parse(treeBufferString) as Format);
+			const allocator = idAllocatorFromMaxId();
+			const fieldChanges: [FieldKey, DeltaFieldChanges][] = fields.map(
+				([fieldKey, content]) => {
+					const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
+						cursor.fork(),
+					);
+					const buildId = { minor: allocator.allocate(nodeCursors.length) };
+
+					return [
+						fieldKey,
+						{
+							build: [
+								{
+									id: buildId,
+									trees: nodeCursors,
+								},
+							],
+							local: [{ count: nodeCursors.length, attach: buildId }],
+						},
+					];
+				},
+			);
+
+			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+			applyDelta(
+				{ fields: new Map(fieldChanges) },
+				this.forest,
+				makeDetachedFieldIndex("init"),
+			);
 		}
+	}
+}
+
+function encodeSummary(
+	cursor: ITreeCursorSynchronous,
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	encodeType: TreeCompressionStrategy,
+): EncodedChunk {
+	switch (encodeType) {
+		case TreeCompressionStrategy.Compressed:
+			return schemaCompressedEncode(schema, policy, cursor);
+		case TreeCompressionStrategy.Uncompressed:
+			return uncompressedEncode(cursor);
+		default:
+			unreachableCase(encodeType);
 	}
 }

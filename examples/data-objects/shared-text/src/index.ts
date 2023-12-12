@@ -13,6 +13,9 @@ import { SharedTextReactView } from "./view";
 const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) =>
 	React.createElement(SharedTextReactView, { sharedTextDataObject });
 
+/**
+ * @internal
+ */
 export const fluidExport = new ContainerViewRuntimeFactory(
 	SharedTextDataObject.factory,
 	sharedTextViewCallback,

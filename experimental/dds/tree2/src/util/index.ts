@@ -21,18 +21,21 @@ export {
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
+	forEachInNestedMap,
 	NestedMap,
 	SizedNestedMap,
+	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	nestedMapToFlatList,
+	nestedMapFromFlatList,
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
 export { TransactionResult } from "./transactionResult";
 export {
 	areSafelyAssignable,
-	Bivariant,
 	Contravariant,
 	Covariant,
 	eitherIsAny,
@@ -63,16 +66,25 @@ export {
 	makeArray,
 	mapIterable,
 	Mutable,
+	Populated,
 	RecursiveReadonly,
 	zipIterables,
 	Assume,
 	assertValidIndex,
+	assertValidRange,
 	assertNonNegativeSafeInteger,
 	generateStableId,
 	useDeterministicStableId,
+	useAsyncDeterministicStableId,
 	objectToMap,
 	oneFromSet,
 	Named,
+	disposeSymbol,
+	IDisposable,
+	capitalize,
+	assertValidRangeIndices,
+	transformObjectMap,
+	compareStrings,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -95,4 +107,19 @@ export {
 	brandedSlot,
 } from "./brandedMap";
 
-export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+export {
+	getFirstEntryFromRangeMap,
+	getFromRangeMap,
+	RangeEntry,
+	RangeMap,
+	RangeQueryResult,
+	setInRangeMap,
+} from "./rangeMap";
+
+export {
+	IdAllocator,
+	idAllocatorFromMaxId,
+	idAllocatorFromState,
+	IdAllocationState,
+	fakeIdAllocator,
+} from "./idAllocator";

@@ -96,9 +96,8 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		let gcDataStore: LoadTestDataStore | undefined;
 		if (!root.has(gcDataStoreIdKey)) {
 			// The data store for this pair doesn't exist, create it and store its url.
-			gcDataStore = await loadTestDataStoreInstantiationFactory.createInstance(
-				containerRuntime,
-			);
+			gcDataStore =
+				await loadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
 			// Force the new data store to be attached.
 			root.set("Fake", gcDataStore.handle);
 			root.delete("Fake");
@@ -107,7 +106,9 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		// If we did not create the data store above, load it by getting its url.
 		if (gcDataStore === undefined) {
 			const gcDataStoreId = root.get(gcDataStoreIdKey);
-			const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+			const response = await (containerRuntime as ContainerRuntime).resolveHandle({
+				url: `/${gcDataStoreId}`,
+			});
 			if (response.status !== 200 || response.mimeType !== "fluid/object") {
 				throw new Error("GC data store not available");
 			}
@@ -507,9 +508,6 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 			this.runtime,
 			this.context.containerRuntime,
 		);
-
-		const leaderElection = new LeaderElection(this.runtime);
-		leaderElection.setupLeaderElection();
 
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.

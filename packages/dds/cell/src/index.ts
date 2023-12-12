@@ -10,7 +10,7 @@
  */
 
 export { SharedCell } from "./cell";
-export {
+export type {
 	ISharedCell,
 	ISharedCellEvents,
 	ICellOptions,

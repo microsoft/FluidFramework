@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData } from "@fluid-experimental/tree2";
 import { BubbleWrapper } from "./bubble";
 import { Client, FlexBubble } from "./schema";
 
@@ -33,22 +32,13 @@ export class ClientWrapper implements IClient {
 	}
 
 	public increaseBubbles(bubble: FlexBubble) {
-		const bubbles = this.clientTreeProxy.bubbles;
-		// TODO: better API
-		bubbles.insertNodes(
-			bubbles.length,
-			cursorFromContextualData(
-				{ schema: bubbles.context.schema, fieldSource: () => undefined },
-				bubbles.fieldSchema.types,
-				bubble,
-			),
-		);
+		this.clientTreeProxy.bubbles.insertAtEnd([bubble]);
 	}
 
 	public decreaseBubbles() {
 		const bubbles = this.clientTreeProxy.bubbles;
 		if (bubbles.length > 1) {
-			bubbles.removeNodes(bubbles.length - 1);
+			bubbles.removeAt(bubbles.length - 1);
 		}
 	}
 }

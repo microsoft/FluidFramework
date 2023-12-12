@@ -10,7 +10,7 @@ import {
 	ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration";
-import { doesItemRequireOwnDocument } from "./ApiItemUtilities";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 
@@ -22,19 +22,21 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * The generated nodes' {@link DocumentNode.filePath}s are determined by the provided output path and the
+ * The generated nodes' {@link DocumentNode.documentPath}s are determined by the provided output path and the
  * following configuration properties:
  *
  * - {@link DocumentationSuiteOptions.documentBoundaries}
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ *
+ * @public
  */
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
 ): DocumentNode[] {
-	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const { apiModel, logger, skipPackage } = config;
+	const completeConfig = getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const { apiModel, logger, skipPackage } = completeConfig;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -44,7 +46,7 @@ export function transformApiModel(
 	const documents: Map<ApiItem, DocumentNode> = new Map<ApiItem, DocumentNode>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
-	documents.set(apiModel, createDocumentForApiModel(apiModel, config));
+	documents.set(apiModel, createDocumentForApiModel(apiModel, completeConfig));
 
 	const packages = apiModel.packages;
 
@@ -81,13 +83,13 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, config),
+				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, completeConfig),
 			);
 
-			const packageDocumentItems = getDocumentItems(entryPoint, config);
+			const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
 			for (const apiItem of packageDocumentItems) {
 				if (!documents.has(apiItem)) {
-					documents.set(apiItem, apiItemToDocument(apiItem, config));
+					documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
 				}
 			}
 		} else {
@@ -96,16 +98,23 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
+				createDocumentForMultiEntryPointPackage(
+					packageItem,
+					packageEntryPoints,
+					completeConfig,
+				),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
-				documents.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
+				documents.set(
+					entryPoint,
+					createDocumentForApiEntryPoint(entryPoint, completeConfig),
+				);
 
-				const packageDocumentItems = getDocumentItems(entryPoint, config);
+				const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
 				for (const apiItem of packageDocumentItems) {
 					if (!documents.has(apiItem)) {
-						documents.set(apiItem, apiItemToDocument(apiItem, config));
+						documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
 					}
 				}
 			}
@@ -131,7 +140,10 @@ function getDocumentItems(
 
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
-		if (doesItemRequireOwnDocument(childItem, documentBoundaries)) {
+		if (
+			shouldItemBeIncluded(childItem, config) &&
+			doesItemRequireOwnDocument(childItem, documentBoundaries)
+		) {
 			result.push(childItem);
 		}
 		result.push(...getDocumentItems(childItem, config));
@@ -199,7 +211,7 @@ function createDocumentForSingleEntryPointPackage(
 	);
 
 	// Wrap entry-point contents with package-level docs
-	sections.push(...config.createChildContentSections(apiPackage, entryPointSections, config));
+	sections.push(...config.createDefaultLayout(apiPackage, entryPointSections, config));
 
 	logger.verbose(`Package document rendered successfully.`);
 

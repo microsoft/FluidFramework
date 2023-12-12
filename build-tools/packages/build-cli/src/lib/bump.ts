@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Context, MonoRepo, Logger, Package, VersionBag } from "@fluidframework/build-tools";
+import { Context, MonoRepo, Logger, Package } from "@fluidframework/build-tools";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
 	VersionChangeType,
 	VersionScheme,
-	bumpRange,
 	bumpVersionScheme,
 	isVersionBumpType,
-	isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
-import * as semver from "semver";
 
 import { setVersion } from "./package";
 

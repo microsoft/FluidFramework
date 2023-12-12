@@ -14,7 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection } from "../intervalCollection";
-import { IntervalType, SequenceInterval } from "../intervals";
+import { SequenceInterval } from "../intervals";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -87,7 +87,7 @@ describe("SharedString interval collection event spec", () => {
 		});
 
 		it("is emitted on initial local add but not ack of that add", () => {
-			collection.add(0, 1, IntervalType.SlideOnRemove);
+			collection.add({ start: 0, end: 1 });
 			assert.equal(eventLog.length, 1);
 			{
 				const [{ interval, local, op }] = eventLog;
@@ -101,7 +101,7 @@ describe("SharedString interval collection event spec", () => {
 
 		it("is emitted on ack of a remote add", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
-			collection2.add(0, 1, IntervalType.SlideOnRemove);
+			collection2.add({ start: 0, end: 1 });
 			assert.equal(eventLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
@@ -128,7 +128,7 @@ describe("SharedString interval collection event spec", () => {
 					op,
 				}),
 			);
-			const interval = collection.add(0, 1, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 0, end: 1 });
 			intervalId = interval.getIntervalId() ?? assert.fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
@@ -188,7 +188,7 @@ describe("SharedString interval collection event spec", () => {
 					slide,
 				}),
 			);
-			const _intervalId = collection.add(0, 1, IntervalType.SlideOnRemove).getIntervalId();
+			const _intervalId = collection.add({ start: 0, end: 1 }).getIntervalId();
 			assert(_intervalId);
 			intervalId = _intervalId;
 			containerRuntimeFactory.processAllMessages();
@@ -233,6 +233,21 @@ describe("SharedString interval collection event spec", () => {
 			assert.equal(eventLog.length, 0);
 		});
 
+		it("is emitted on change of properties and endpoints", () => {
+			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ interval, previousEndpoints, local, op, slide }] = eventLog;
+				assert.deepEqual(interval, { start: 2, end: 3 });
+				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+				assert.equal(local, true);
+				assert.equal(op, undefined);
+				assert.equal(slide, false);
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+		});
+
 		describe("is emitted on a change due to an endpoint sliding", () => {
 			it("on ack of a segment remove containing a ref", () => {
 				sharedString.removeRange(1, 3);
@@ -253,7 +268,7 @@ describe("SharedString interval collection event spec", () => {
 
 			it("on ack of an add to a concurrently removed segment", () => {
 				sharedString2.removeRange(3, sharedString2.getLength());
-				collection.add(4, 4, IntervalType.SlideOnRemove);
+				collection.add({ start: 4, end: 4 });
 				assert.equal(eventLog.length, 0);
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
@@ -308,7 +323,7 @@ describe("SharedString interval collection event spec", () => {
 			);
 			intervalId =
 				collection
-					.add(0, 1, IntervalType.SlideOnRemove, { initialProp: "baz" })
+					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
 					.getIntervalId() ?? fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
@@ -358,6 +373,19 @@ describe("SharedString interval collection event spec", () => {
 				assert.equal((op?.contents as { type?: unknown }).type, "act");
 				assert.deepEqual(deltas, { applies: null });
 			}
+		});
+		it("is emitted on change of properties and endpoints", () => {
+			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ id, deltas, local, op }] = eventLog;
+				assert.equal(id, intervalId);
+				assert.equal(local, true);
+				assert.equal(op, undefined);
+				assert.deepEqual(deltas, { foo: null });
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
 		});
 	});
 });

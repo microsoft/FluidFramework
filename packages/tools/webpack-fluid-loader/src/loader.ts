@@ -364,19 +364,41 @@ export async function start(
 	}
 }
 
-async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
-	const response = await container.request({
-		headers: {
-			mountableView: true,
-		},
-		url,
-	});
+/**
+ * Webpack Fluid Loader assumes/knows the shape of the entryPoint
+ */
+interface IFluidMountableViewEntryPoint {
+	getDefaultDataObject(): Promise<FluidObject>;
+	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+}
 
-	if (response.status !== 200 || !(response.mimeType === "fluid/object")) {
-		return false;
+async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
+	const entryPoint = await container.getEntryPoint();
+
+	let fluidObject: FluidObject<IFluidMountableView>;
+	if (
+		entryPoint === undefined ||
+		(entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView === undefined
+	) {
+		const response = await container.request({
+			headers: {
+				mountableView: true,
+			},
+			url,
+		});
+
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			return false;
+		}
+
+		fluidObject = response.value;
+	} else {
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView(
+			// Remove starting "//"
+			url.slice(2),
+		);
 	}
 
-	const fluidObject: FluidObject<IFluidMountableView> = response.value;
 	if (fluidObject === undefined) {
 		return;
 	}

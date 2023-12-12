@@ -134,7 +134,7 @@ describe("ConnectionStateHandler Tests", () => {
 		};
 
 		protocolHandler = new ProtocolHandler(
-			{ minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }, // attributes
+			{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
 			{ members: [], proposals: [], values: [] }, // quorumSnapshot
 			(key, value) => 0, // sendProposal
 			new Audience(),

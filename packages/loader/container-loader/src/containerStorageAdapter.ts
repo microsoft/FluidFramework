@@ -79,14 +79,14 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		this.disposed = true;
 	}
 
-	public async connectToService(service: IDocumentService): Promise<void> {
+	public connectToService(service: IDocumentService): void {
 		if (!(this._storageService instanceof BlobOnlyStorage)) {
 			return;
 		}
 
-		const storageService = await service.connectToStorage();
+		const storageServiceP = service.connectToStorage();
 		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
-			storageService,
+			storageServiceP,
 			this.logger,
 		));
 
@@ -99,12 +99,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 				this.addProtocolSummaryIfMissing,
 			);
 		}
-
-		// ensure we did not lose that policy in the process of wrapping
-		assert(
-			storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,
-			0x0e0 /* "lost minBlobSize policy" */,
-		);
 	}
 
 	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
@@ -112,7 +106,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	}
 
 	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+		for (const [id, value] of Object.entries(snapshotTree.blobsContents ?? {})) {
 			this.blobContents[id] = value;
 		}
 		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
@@ -308,7 +302,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
-		const blob = tree.blobsContents[id];
+		const blob = tree.blobsContents?.[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
@@ -321,7 +315,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
-	const blob = tree.blobsContents[id];
+	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");

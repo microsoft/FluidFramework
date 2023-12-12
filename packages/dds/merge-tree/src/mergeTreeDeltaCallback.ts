@@ -8,6 +8,9 @@ import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops";
 import { PropertySet } from "./properties";
 import { ISegment } from "./mergeTreeNodes";
 
+/**
+ * @alpha
+ */
 export type MergeTreeDeltaOperationType =
 	| typeof MergeTreeDeltaType.ANNOTATE
 	| typeof MergeTreeDeltaType.INSERT
@@ -18,6 +21,7 @@ export type MergeTreeDeltaOperationType =
  * Maintenance events correspond to structural segment changes or acks of pending segments.
  *
  * Note: these values are assigned negative integers to avoid clashing with `MergeTreeDeltaType`.
+ * @alpha
  */
 export const MergeTreeMaintenanceType = {
 	/**
@@ -46,11 +50,20 @@ export const MergeTreeMaintenanceType = {
 	 */
 	ACKNOWLEDGED: -4,
 } as const;
+/**
+ * @alpha
+ */
 export type MergeTreeMaintenanceType =
-	typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
+/**
+ * @alpha
+ */
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
 > {
@@ -58,11 +71,17 @@ export interface IMergeTreeDeltaCallbackArgs<
 	readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeSegmentDelta {
 	segment: ISegment;
 	propertyDeltas?: PropertySet;
 }
 
+/**
+ * @alpha
+ */
 export interface IMergeTreeDeltaOpArgs {
 	/**
 	 * The group op which contains the operation
@@ -86,21 +105,35 @@ export interface IMergeTreeDeltaOpArgs {
 	readonly stashed?: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeClientSequenceArgs {
 	readonly clientId: number;
 	readonly referenceSequenceNumber: number;
 	readonly sequenceNumber: number;
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
+ */
 export type MergeTreeDeltaCallback = (
 	opArgs: IMergeTreeDeltaOpArgs,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 ) => void;
 
+/**
+ * @alpha
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
+ */
 export type MergeTreeMaintenanceCallback = (
 	MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 	opArgs: IMergeTreeDeltaOpArgs | undefined,

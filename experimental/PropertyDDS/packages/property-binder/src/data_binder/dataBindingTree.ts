@@ -758,11 +758,12 @@ export class DataBindingTree {
 
 			// The fact that paths with collections are stored in new nodes should be transparent to the user
 			// of DataBindingTree. So we also have to return the nodes stored in any ArrayNodes or MapNodes we may have.
-			that._childNodes[key]
-				.getChildren()
-				.forEach(function (childInfo: { path: string; node: any }) {
-					children[key + childInfo.path] = childInfo.node;
-				});
+			that._childNodes[key].getChildren().forEach(function (childInfo: {
+				path: string;
+				node: any;
+			}) {
+				children[key + childInfo.path] = childInfo.node;
+			});
 		});
 
 		return children;

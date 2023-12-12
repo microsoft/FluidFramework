@@ -34,8 +34,8 @@ So if I wanted an object with an optional `IFoo` and a required `IBar` I would g
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 
@@ -166,8 +166,8 @@ If I wanted an object with an optional `IFoo` and a required `IBar` I would get 
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 
@@ -255,8 +255,7 @@ check the current container then look in the parent.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

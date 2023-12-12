@@ -39,6 +39,7 @@ import { LocalWebSocketServer } from "./localWebSocketServer";
 
 /**
  * Items needed for handling deltas.
+ * @alpha
  */
 export interface ILocalDeltaConnectionServer {
 	webSocketServer: IWebSocketServer;
@@ -57,6 +58,7 @@ export interface ILocalDeltaConnectionServer {
 
 /**
  * Implementation of local delta connection server.
+ * @internal
  */
 export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 	/**
@@ -182,10 +184,14 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			};
 			socket.on("op", earlyOpHandler);
 
-			const earlySignalHandler = (msg: ISignalMessage) => {
+			const earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
 				this.logger.info("Queued early signals");
 				Lumberjack.info("Queued early signals");
-				queuedSignals.push(msg);
+				if (Array.isArray(msg)) {
+					queuedSignals.push(...msg);
+				} else {
+					queuedSignals.push(msg);
+				}
 			};
 			socket.on("signal", earlySignalHandler);
 

@@ -9,10 +9,11 @@ import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./state";
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
-	public static get Name() {
-		return "@fluid-example/bubblebench-ot";
-	}
+	public static readonly Name = "@fluid-example/bubblebench-ot";
 	private maybeTree?: SharedJson1 = undefined;
 	private maybeAppState?: AppState = undefined;
 
@@ -68,6 +69,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

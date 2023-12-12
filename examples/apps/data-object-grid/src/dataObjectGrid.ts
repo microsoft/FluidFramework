@@ -73,9 +73,7 @@ export interface IDataObjectGridItem {
  * DataObjectGrid manages multiple subcomponents and their layouts.
  */
 export class DataObjectGrid extends DataObject implements IDataObjectGrid {
-	public static get ComponentName() {
-		return "@fluid-example/data-object-grid";
-	}
+	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
 	private static readonly factory = new DataObjectFactory(
 		DataObjectGrid.ComponentName,

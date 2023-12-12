@@ -13,15 +13,11 @@ import {
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
-	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-
-// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-export const OnlyValidTermValue = 1 as const;
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
@@ -32,6 +28,7 @@ export enum SignalType {
 
 /**
  * Function to be used for creating a protocol handler.
+ * @alpha
  */
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
@@ -39,6 +36,9 @@ export type ProtocolHandlerBuilder = (
 	sendProposal: (key: string, value: any) => number,
 ) => IProtocolHandler;
 
+/**
+ * @alpha
+ */
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;
 	processSignal(message: ISignalMessage);
@@ -75,11 +75,11 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		message: ISequencedDocumentMessage,
 		local: boolean,
 	): IProcessMessageResult {
-		const client: ISequencedClient | undefined = this.quorum.getMember(message.clientId);
-
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
 		if (message.clientId != null) {
+			const client = this.quorum.getMember(message.clientId);
+
 			if (client === undefined && message.type !== MessageType.ClientJoin) {
 				// pre-0.58 error message: messageClientIdMissingFromQuorum
 				throw new Error("Remote message's clientId is missing from the quorum");

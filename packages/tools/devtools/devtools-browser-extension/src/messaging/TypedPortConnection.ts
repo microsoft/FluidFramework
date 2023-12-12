@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core";
+import { type ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core";
 
 /**
  * A {@link chrome.runtime.Port} with specific types which it expects to send and receive.
  *
  * @typeParam TSend - The type of message sent to this port connection.
  * @typeParam TReceive - The type of message received by this port connection.
+ * @internal
  */
 export interface TypedPortConnection<
 	TSend extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,

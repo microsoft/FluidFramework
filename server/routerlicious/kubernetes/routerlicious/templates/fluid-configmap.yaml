@@ -19,6 +19,16 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "config": {
+            "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.config.secretNamesToRedactInConfigDump }}
+        },
+        "lumberjack": {
+            "options": {
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }},
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
+            }
+        },
         "mongo": {
             "operationsDbEndpoint": "{{ .Values.mongodb.operationsDbEndpoint }}",
             "globalDbEndpoint": "{{ .Values.mongodb.globalDbEndpoint }}",
@@ -159,7 +169,7 @@ data:
         },
         "system": {
             "httpServer": {
-                "connectionTimeout": {{ .Values.system.httpServer.connectionTimeout }}
+                "connectionTimeoutMs": {{ .Values.system.httpServer.connectionTimeoutMs }}
             },
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
@@ -199,12 +209,6 @@ data:
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
-        },
-        "paparazzi": {
-            "queue": "paparazziQueue"
-        },
-        "rabbitmq": {
-            "connectionString": "{{ .Values.rabbitmq.connectionString }}"
         },
         "riddler": {
             "port": 5000

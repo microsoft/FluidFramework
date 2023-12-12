@@ -7,8 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
-	SimpleObservingDependent,
-	SchemaData,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
@@ -17,14 +16,14 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TypedSchemaCollection,
-	SchemaAware,
-	FieldSchema,
+	TreeSchema,
+	TreeFieldSchema,
 	ViewSchema,
+	InsertableFlexField,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
-import { ViewEvents } from "./sharedTreeView";
+import { CheckoutEvents } from "./treeCheckout";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -40,7 +39,7 @@ import { ViewEvents } from "./sharedTreeView";
  */
 export function initializeContent(
 	storedSchema: StoredSchemaRepository,
-	schema: TypedSchemaCollection,
+	schema: TreeSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
@@ -49,7 +48,7 @@ export function initializeContent(
 	const rootKind = rootSchema.kind.identifier;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
-	let incrementalSchemaUpdate: SchemaData;
+	let incrementalSchemaUpdate: TreeStoredSchema;
 	if (
 		rootKind === FieldKinds.sequence.identifier ||
 		rootKind === FieldKinds.optional.identifier
@@ -57,10 +56,10 @@ export function initializeContent(
 		// These kinds are known to tolerate empty, so use the schema as is:
 		incrementalSchemaUpdate = schema;
 	} else {
-		assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
+		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
-			treeSchema: schema.treeSchema,
+			nodeSchema: schema.nodeSchema,
 			rootFieldSchema: {
 				kind: FieldKinds.optional,
 				types: rootSchema.types,
@@ -99,7 +98,7 @@ export function initializeContent(
  * - Better error for change to invalid schema approach than throwing on later event.
  */
 export function schematize(
-	events: ISubscribable<ViewEvents>,
+	events: ISubscribable<CheckoutEvents>,
 	storedSchema: StoredSchemaRepository,
 	config: SchematizeConfiguration,
 ): void {
@@ -139,7 +138,32 @@ export function schematize(
 			}
 		}
 	}
+	afterSchemaChanges(events, storedSchema, () => {
+		const compatibility = viewSchema.checkCompatibility(storedSchema);
+		if (compatibility.read !== Compatibility.Compatible) {
+			fail(
+				"Stored schema changed to one that permits data incompatible with the view schema",
+			);
+		}
 
+		if (compatibility.write !== Compatibility.Compatible) {
+			// TODO: support readonly mode in this case.
+			fail(
+				"Stored schema changed to one that does not support all data allowed by view schema",
+			);
+		}
+		return true;
+	});
+}
+
+/**
+ * @param callback - run after a schema change. If returns true, will run after next change as well.
+ */
+export function afterSchemaChanges(
+	events: ISubscribable<CheckoutEvents>,
+	storedSchema: StoredSchemaRepository,
+	callback: () => boolean,
+): void {
 	// Callback to cleanup afterBatch schema checking.
 	// Set only when such a callback is pending.
 	let afterBatchCheck: undefined | (() => void);
@@ -149,37 +173,25 @@ export function schematize(
 	// 1. Ensure errors in response to edits like this crash app and report telemetry.
 	// 2. Replace these (and the above) exception based errors with
 	// out of schema handlers which update the schematized view of the tree instead of throwing.
-	storedSchema.registerDependent(
-		new SimpleObservingDependent(() => {
-			// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
-			// This avoids erroring about invalid schema in the middle of a batch of changes.
-			// TODO:
-			// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
-			// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
-			// When batching properly handles schema edits, this documentation and related tests should be updated.
-			// TODO:
-			// This seems like the correct policy, but more clarity on how schematized views are updating during batches is needed.
-			afterBatchCheck ??= events.on("afterBatch", () => {
-				assert(afterBatchCheck !== undefined, 0x728 /* unregistered event ran */);
-				afterBatchCheck();
-				afterBatchCheck = undefined;
+	const unregister = storedSchema.on("afterSchemaChange", () => {
+		// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
+		// This avoids erroring about invalid schema in the middle of a batch of changes.
+		// TODO:
+		// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
+		// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
+		// When batching properly handles schema edits, this documentation and related tests should be updated.
+		// TODO:
+		// With the the updated incremental batch application policy, this behavior is not valid.
+		afterBatchCheck ??= events.on("afterBatch", () => {
+			assert(afterBatchCheck !== undefined, 0x728 /* unregistered event ran */);
+			afterBatchCheck();
+			afterBatchCheck = undefined;
 
-				const compatibility = viewSchema.checkCompatibility(storedSchema);
-				if (compatibility.read !== Compatibility.Compatible) {
-					fail(
-						"Stored schema changed to one that permits data incompatible with the view schema",
-					);
-				}
-
-				if (compatibility.write !== Compatibility.Compatible) {
-					// TODO: support readonly mode in this case.
-					fail(
-						"Stored schema changed to one that does not support all data allowed by view schema",
-					);
-				}
-			});
-		}),
-	);
+			if (!callback()) {
+				unregister();
+			}
+		});
+	});
 }
 
 /**
@@ -187,11 +199,11 @@ export function schematize(
  *
  * @alpha
  */
-export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TypedSchemaCollection<TRoot>;
+	readonly schema: TreeSchema<TRoot>;
 }
 
 /**
@@ -199,14 +211,14 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
  *
  * @alpha
  */
-export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
+export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
+		| InsertableFlexField<TRoot>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }
@@ -216,7 +228,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
+export interface SchematizeConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
@@ -229,6 +241,19 @@ export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema
  *
  * @alpha
  */
-export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
-	extends TreeContent<TRoot>,
+export interface InitializeAndSchematizeConfiguration<
+	TRoot extends TreeFieldSchema = TreeFieldSchema,
+> extends TreeContent<TRoot>,
 		SchematizeConfiguration<TRoot> {}
+
+/**
+ * Options used to initialize (if needed) and schematize a `SharedTree`.
+ * @remarks
+ * Using this builder improves type safety and error quality over just constructing the configuration as a object.
+ * @alpha
+ */
+export function buildTreeConfiguration<T extends TreeFieldSchema>(
+	config: InitializeAndSchematizeConfiguration<T>,
+): InitializeAndSchematizeConfiguration<T> {
+	return config;
+}

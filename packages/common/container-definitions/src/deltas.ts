@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IEvent,
+	IErrorEvent,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
@@ -16,6 +22,7 @@ import {
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
+ * @alpha
  */
 export interface IConnectionDetails {
 	clientId: string;
@@ -37,6 +44,7 @@ export interface IConnectionDetails {
 
 /**
  * Contract supporting delivery of outbound messages to the server
+ * @alpha
  */
 export interface IDeltaSender {
 	/**
@@ -47,11 +55,13 @@ export interface IDeltaSender {
 
 /**
  * Events emitted by {@link IDeltaManager}.
+ * @alpha
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
 	 * @deprecated No replacement API recommended.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: "prepareSend", listener: (messageBuffer: any[]) => void);
 
 	/**
@@ -114,35 +124,58 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `readonly`: Whether or not the delta manager is now read-only.
 	 */
-	(event: "readonly", listener: (readonly: boolean) => void);
+	(
+		event: "readonly",
+		listener: (
+			readonly: boolean,
+			readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+		) => void,
+	);
 }
 
 /**
  * Manages the transmission of ops between the runtime and storage.
+ * @alpha
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
-	/** The queue of inbound delta messages */
+	/**
+	 * The queue of inbound delta messages
+	 */
 	readonly inbound: IDeltaQueue<T>;
 
-	/** The queue of outbound delta messages */
+	/**
+	 * The queue of outbound delta messages
+	 */
 	readonly outbound: IDeltaQueue<U[]>;
 
-	/** The queue of inbound delta signals */
+	/**
+	 * The queue of inbound delta signals
+	 */
 	readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
-	/** The current minimum sequence number */
+	/**
+	 * The current minimum sequence number
+	 */
 	readonly minimumSequenceNumber: number;
 
-	/** The last sequence number processed by the delta manager */
+	/**
+	 * The last sequence number processed by the delta manager
+	 */
 	readonly lastSequenceNumber: number;
 
-	/** The last message processed by the delta manager */
+	/**
+	 * The last message processed by the delta manager
+	 */
 	readonly lastMessage: ISequencedDocumentMessage | undefined;
 
-	/** The latest sequence number the delta manager is aware of */
+	/**
+	 * The latest sequence number the delta manager is aware of
+	 */
 	readonly lastKnownSeqNumber: number;
 
-	/** The initial sequence number set when attaching the op handler */
+	/**
+	 * The initial sequence number set when attaching the op handler
+	 */
 	readonly initialSequenceNumber: number;
 
 	/**
@@ -151,29 +184,44 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	 */
 	readonly hasCheckpointSequenceNumber: boolean;
 
-	/** Details of client */
+	/**
+	 * Details of client
+	 */
 	readonly clientDetails: IClientDetails;
 
-	/** Protocol version being used to communicate with the service */
+	/**
+	 * Protocol version being used to communicate with the service
+	 */
 	readonly version: string;
 
-	/** Max message size allowed to the delta manager */
+	/**
+	 * Max message size allowed to the delta manager
+	 */
 	readonly maxMessageSize: number;
 
-	/** Service configuration provided by the service. */
+	/**
+	 * Service configuration provided by the service.
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 
-	/** Flag to indicate whether the client can write or not. */
+	/**
+	 * Flag to indicate whether the client can write or not.
+	 */
 	readonly active: boolean;
 
 	readonly readOnlyInfo: ReadOnlyInfo;
 
-	/** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
-	submitSignal(content: any): void;
+	/**
+	 * Submit a signal to the service to be broadcast to other connected clients, but not persisted
+	 */
+	// TODO: use `unknown` instead (API breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 /**
  * Events emitted by {@link IDeltaQueue}.
+ * @alpha
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
@@ -216,6 +264,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 
 /**
  * Queue of ops to be sent to or processed from storage
+ * @alpha
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
@@ -263,19 +312,35 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 	waitTillProcessingDone(): Promise<{ count: number; duration: number }>;
 }
 
+/**
+ * @alpha
+ */
 export type ReadOnlyInfo =
 	| {
 			readonly readonly: false | undefined;
 	  }
 	| {
 			readonly readonly: true;
-			/** read-only because forceReadOnly() was called */
+
+			/**
+			 * Read-only because `forceReadOnly()` was called.
+			 */
 			readonly forced: boolean;
-			/** read-only because client does not have write permissions for document */
+
+			/**
+			 * Read-only because client does not have write permissions for document.
+			 */
 			readonly permissions: boolean | undefined;
-			/** read-only with no delta stream connection */
+
+			/**
+			 * Read-only with no delta stream connection.
+			 */
 			readonly storageOnly: boolean;
-			/** extra info on why connection to delta stream is not possible. This info might be provided
-			 * if storageOnly is set to true */
+
+			/**
+			 * Extra info on why connection to delta stream is not possible.
+			 *
+			 * @remarks This info might be provided if {@link ReadOnlyInfo.storageOnly} is set to `true`.
+			 */
 			readonly storageOnlyReason?: string;
 	  };

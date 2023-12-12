@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, UpPath } from "../../../core";
+import { FieldKey, JsonableTree } from "../../../core";
+import { DownPath } from "../../../feature-libraries";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -24,7 +25,7 @@ export interface UndoRedo {
 	contents: FuzzUndoRedoType;
 }
 
-export type FuzzFieldChange = FuzzInsert | FuzzDelete;
+export type FuzzFieldChange = FuzzInsert | FuzzDelete | FuzzMove;
 
 export interface FieldEdit {
 	type: "fieldEdit";
@@ -33,31 +34,65 @@ export interface FieldEdit {
 
 export interface FuzzInsert {
 	type: "insert";
-	parent: UpPath | undefined;
-	field: FieldKey;
+	/**
+	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 */
+	parent: DownPath | undefined;
+	/**
+	 * Key on the parent node corresponding to this field.
+	 */
+	key: FieldKey;
+	/**
+	 * Index to insert within the field.
+	 */
 	index: number;
-	value: number;
+	value: JsonableTree;
 }
 
-export type FieldEditTypes = SequenceFieldEdit | ValueFieldEdit | OptionalFieldEdit;
+export interface FuzzSet {
+	type: "set";
+	/**
+	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 */
+	parent: DownPath | undefined;
+	/**
+	 * Key on the parent node corresponding to this field.
+	 */
+	key: FieldKey;
+	/**
+	 * @privateRemarks - Optional fields use {@link FuzzDelete} to mean "delete the field's contents" rather than
+	 * a `FuzzSet` with undefined value, hence why this property is required.
+	 */
+	value: JsonableTree;
+}
+
+export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: FuzzInsert | FuzzDelete;
+	edit: FuzzInsert | FuzzDelete | FuzzMove;
 }
 
-export interface ValueFieldEdit {
-	type: "value";
-	edit: FuzzDelete;
+export interface RequiredFieldEdit {
+	type: "required";
+	edit: FuzzSet;
 }
 
 export interface OptionalFieldEdit {
 	type: "optional";
-	edit: FuzzInsert | FuzzDelete;
+	edit: FuzzSet | FuzzDelete;
 }
 
 export interface FuzzDelete extends NodeRangePath {
 	type: "delete";
+}
+
+export interface FuzzMove extends NodeRangePath {
+	type: "move";
+	/**
+	 * The index (pre-move) to move the sequence to.
+	 */
+	dstIndex: number;
 }
 
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;
@@ -92,7 +127,7 @@ export interface Synchronize {
 }
 
 export interface NodeRangePath {
-	firstNode: UpPath;
+	firstNode: DownPath;
 	count: number;
 }
 

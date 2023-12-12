@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages";
+import { type IEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages";
 
 /**
  * Events emitted by {@link IMessageRelay}.

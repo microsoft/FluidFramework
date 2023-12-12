@@ -1,6 +1,21 @@
 {
 	"documents": [
 		{
+			"testTitle": "Matrix 400k cells (10k x 40 - 100 bytes each)",
+			"documentType": "DocumentMatrixPlain",
+			"documentTypeInfo": {
+				"rowSize": 10000,
+				"columnSize": 40,
+				"beginRow": 0,
+				"endRow": 9999,
+				"beginColumn": 0,
+				"endColumn": 39,
+				"stringSize": 100
+			},
+			"minSampleCount": 1,
+			"supportedEndpoints": ["local", "odsp"]
+		},
+		{
 			"testTitle": "Matrix 20k cells (100 x 200 - 100 bytes each)",
 			"documentType": "DocumentMatrixPlain",
 			"documentTypeInfo": {

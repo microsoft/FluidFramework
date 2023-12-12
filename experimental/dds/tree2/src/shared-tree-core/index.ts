@@ -7,11 +7,10 @@ export {
 	SharedTreeBranch,
 	SharedTreeBranchChange,
 	SharedTreeBranchEvents,
+	getChangeReplaceType,
 } from "./branch";
 
 export {
-	ChangeEvents,
-	ISharedTreeCoreEvents,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
@@ -23,4 +22,11 @@ export { TransactionStack } from "./transactionStack";
 export { makeEditManagerCodec } from "./editManagerCodecs";
 export { EditManagerSummarizer } from "./editManagerSummarizer";
 export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
-export { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
+export {
+	Commit,
+	SeqNumber,
+	SequencedCommit,
+	SummarySessionBranch,
+	EncodedCommit,
+} from "./editManagerFormat";
+export { RevisionTagCodec } from "./revisionTagCodecs";

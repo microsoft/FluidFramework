@@ -21,18 +21,19 @@
  * @packageDocumentation
  */
 
-export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
-export {
+export type { AudienceClientMetadata } from "./AudienceMetadata";
+export { MemberChangeKind } from "./AudienceMetadata";
+export type {
 	ContainerKey,
-	EditType,
 	FluidObjectId,
 	HasContainerKey,
 	HasFluidObjectId,
 } from "./CommonInterfaces";
+export { EditType } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
-export { ContainerDevtoolsProps } from "./ContainerDevtools";
-export { ContainerStateMetadata } from "./ContainerMetadata";
-export {
+export type { ContainerDevtoolsProps } from "./ContainerDevtools";
+export type { ContainerStateMetadata } from "./ContainerMetadata";
+export type {
 	Edit,
 	EditData,
 	EditSharedObject,
@@ -50,21 +51,30 @@ export {
 	VisualChildNode,
 	VisualNode,
 	VisualNodeBase,
-	VisualNodeKind,
 	VisualTreeNode,
 	VisualValueNode,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
-export { IFluidDevtools } from "./IFluidDevtools";
+export { VisualNodeKind } from "./data-visualization";
+export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
+export type { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
-export { FluidDevtoolsProps, initializeDevtools } from "./FluidDevtools";
-export {
+export type { FluidDevtoolsProps } from "./FluidDevtools";
+export { initializeDevtools } from "./FluidDevtools";
+export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
+export type {
+	IDevtoolsMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
+	ISourcedDevtoolsMessage,
+	InboundHandlers,
+	MessageLoggingOptions,
+} from "./messaging";
 export {
 	AudienceSummary,
 	CloseContainer,
@@ -87,17 +97,11 @@ export {
 	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
-	IDevtoolsMessage,
-	IMessageRelay,
-	IMessageRelayEvents,
-	ISourcedDevtoolsMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
-	InboundHandlers,
 	isDevtoolsMessage,
-	MessageLoggingOptions,
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,
 } from "./messaging";
-export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

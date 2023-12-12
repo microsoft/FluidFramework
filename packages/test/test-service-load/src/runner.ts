@@ -4,14 +4,13 @@
  */
 
 import commander from "commander";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ITestDriver,
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
@@ -20,7 +19,15 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
+import {
+	configProvider,
+	createCodeLoader,
+	createLogger,
+	createTestDriver,
+	getProfile,
+	globalConfigurations,
+	safeExit,
+} from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
@@ -106,7 +113,8 @@ async function main() {
 			profile: profileName,
 			workLoadPath,
 		},
-		random.pick([LogLevel.verbose, LogLevel.default]),
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
 	);
 
 	// this will enabling capturing the full stack for errors
@@ -228,13 +236,14 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			const testConfiguration = configurations[runConfig.runId % configurations.length];
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
 					loaderOptions: runConfig.loaderConfig,
 					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
 					logLevel: runConfig.logger.minLogLevel,
-					configurations: configurations[runConfig.runId % configurations.length],
+					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
 			const codeLoader = await createCodeLoader(
@@ -247,11 +256,7 @@ async function runnerProcess(
 				codeLoader,
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
-				configProvider: {
-					getRawConfig(name) {
-						return configurations[runConfig.runId % configurations.length][name];
-					},
-				},
+				configProvider: configProvider(testConfiguration),
 			});
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
@@ -260,7 +265,7 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
-			const test = await requestFluidObject<ITestRunner>(container, "/");
+			const test = (await container.getEntryPoint()) as ITestRunner;
 			assert(test.ITestRunner !== undefined, "Test runner doesn't implement ITestRunner");
 
 			// Retain old behavior of runtime being disposed on container close
@@ -364,9 +369,8 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(
-					container.resolvedUrl,
-				)?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(container.resolvedUrl)
+					?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);

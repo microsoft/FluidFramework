@@ -11,7 +11,7 @@ Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian] [-p] [--json]
+  $ flub info [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian] [-p]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.

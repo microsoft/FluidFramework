@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import Axios from "axios";
+import Axios, { AxiosHeaders } from "axios";
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { CorrelationIdHeaderName } from "../constants";
@@ -30,7 +30,7 @@ describe("BasicRestWrapper", () => {
 				new Promise<R>((resolve, reject) => {
 					requestOptions = options;
 					const response: AxiosResponse<T> = {
-						config: {},
+						config: { headers: new AxiosHeaders() },
 						data: {} as T,
 						headers: {},
 						request: options.responseType,

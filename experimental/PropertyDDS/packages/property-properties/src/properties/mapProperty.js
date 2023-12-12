@@ -26,6 +26,7 @@ const PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
 /**
  * A MapProperty is a collection class that can contain an dictionary that maps from strings to properties.
+ * @internal
  */
 export class MapProperty extends IndexedCollectionBaseProperty {
 	/**
@@ -182,6 +183,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * Returns an object with all the nested values contained in this property.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   'firstString': {
@@ -197,11 +199,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 		var result = {};
 		for (var i = 0; i < ids.length; i++) {
 			var child = this.get(ids[i]);
-			if (child.isPrimitiveType()) {
-				result[ids[i]] = this.get(ids[i]).getValue();
-			} else {
-				result[ids[i]] = child.getValues();
-			}
+			result[ids[i]] = child.isPrimitiveType()
+				? this.get(ids[i]).getValue()
+				: child.getValues();
 		}
 		return result;
 	}

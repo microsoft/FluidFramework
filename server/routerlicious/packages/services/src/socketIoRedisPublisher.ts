@@ -9,6 +9,9 @@ import * as core from "@fluidframework/server-services-core";
 import * as Redis from "ioredis";
 import { Emitter as SocketIoEmitter } from "@socket.io/redis-emitter";
 
+/**
+ * @internal
+ */
 export class SocketIoRedisTopic implements core.ITopic {
 	constructor(private readonly topic: any) {}
 
@@ -17,6 +20,9 @@ export class SocketIoRedisTopic implements core.ITopic {
 	}
 }
 
+/**
+ * @internal
+ */
 export class SocketIoRedisPublisher implements core.IPublisher {
 	private readonly redisClient: Redis.Redis;
 	private readonly io: any;

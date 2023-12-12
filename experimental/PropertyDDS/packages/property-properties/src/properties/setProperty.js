@@ -20,6 +20,7 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
 /**
  * A SetProperty is a collection class that can contain an unordered set of properties. These properties
  * must derive from NamedProperty and their URN is used to identify them within the set.
+ * @internal
  */
 export class SetProperty extends IndexedCollectionBaseProperty {
 	/**
@@ -62,8 +63,8 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	 * ```json
 	 * {
 	 *   position: {
-	 *    x: 2,
-	 *    y: 5
+	 *     x: 2,
+	 *     y: 5
 	 *   }
 	 * }
 	 * ```
@@ -73,14 +74,10 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 		var result = {};
 		for (var i = 0; i < ids.length; i++) {
 			var child = this.get(ids[i]);
-			if (
-				child instanceof Property.ValueProperty ||
-				child instanceof Property.StringProperty
-			) {
-				result[ids[i]] = this.get(ids[i]).getValue();
-			} else {
-				result[ids[i]] = child.getValues();
-			}
+			result[ids[i]] =
+				child instanceof Property.ValueProperty || child instanceof Property.StringProperty
+					? this.get(ids[i]).getValue()
+					: child.getValues();
 		}
 		return result;
 	}

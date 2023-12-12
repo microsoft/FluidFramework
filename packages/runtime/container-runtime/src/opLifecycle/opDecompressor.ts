@@ -50,14 +50,6 @@ export class OpDecompressor {
 		) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
-			if (message.compression) {
-				// lz4 is the only supported compression algorithm for now
-				assert(
-					message.compression === CompressionAlgorithms.lz4,
-					0x4b9 /* lz4 is currently the only supported compression algorithm */,
-				);
-			}
-
 			this.activeBatch = true;
 
 			const contents = IsoBuffer.from(

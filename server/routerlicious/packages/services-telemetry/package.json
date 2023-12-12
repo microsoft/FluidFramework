@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-telemetry",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Fluid server telemetry utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,21 +17,21 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test/*.spec.js",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"test": "mocha --recursive \"dist/test/*.spec.js\"",
+		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -52,42 +52,32 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/common-utils": "^3.0.0",
 		"json-stringify-safe": "^5.0.1",
 		"path-browserify": "^1.0.1",
 		"serialize-error": "^8.1.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@0.1040.1000",
+		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@2.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
+		"c8": "^7.7.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
-		"prettier": "~2.6.2",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_Lumber": {
-				"backCompat": false
-			},
-			"EnumDeclaration_LumberEventName": {
-				"backCompat": false
-			},
-			"EnumDeclaration_CommonProperties": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

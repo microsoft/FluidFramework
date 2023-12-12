@@ -16,36 +16,17 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	IFluidSerializer,
-	ISharedObjectEvents,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import {
-	ChangeFamily,
-	Delta,
-	ChangeFamilyEditor,
-	IRepairDataStoreProvider,
-	GraphCommit,
-} from "../core";
+import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
-import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
 import { SeqNumber } from "./editManagerFormat";
 import { DecodedMessage } from "./messageTypes";
 import { makeMessageCodec } from "./messageCodecs";
-
-/**
- * The events emitted by a {@link SharedTreeCore}
- *
- * TODO: Add/remove events
- */
-export interface ISharedTreeCoreEvents {
-	updated: () => void;
-}
+import { RevisionTagCodec } from "./revisionTagCodecs";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -53,40 +34,12 @@ const formatVersion = 0;
 const summarizablesTreeKey = "indexes";
 
 /**
- * Events which result from the state of the tree changing.
- * These are for internal use by the tree.
- */
-export interface ChangeEvents<TChangeset> {
-	/**
-	 * @param change - change that was just sequenced.
-	 * @param derivedFromLocal - iff provided, change was a local change (from this session)
-	 * which is now sequenced (and thus no longer local).
-	 */
-	newSequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
-
-	/**
-	 * @param change - change that was just applied locally.
-	 */
-	newLocalChange: (change: TChangeset) => void;
-
-	/**
-	 * @param changeDelta - composed changeset from previous local state
-	 * (state after all sequenced then local changes are accounted for) to current local state.
-	 * May involve effects of a new sequenced change (including rebasing of local changes onto it),
-	 * or a new local change. Called after either sequencedChange or newLocalChange.
-	 */
-	newLocalState: (changeDelta: Delta.Root) => void;
-}
-
-/**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
  *
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
-	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
-> {
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
@@ -101,11 +54,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
-	 * Provides internal events that result from changes to the tree
-	 */
-	protected readonly changeEvents = createEmitter<ChangeEvents<TChange>>();
-
-	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
@@ -116,7 +64,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
-	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * @remarks Since there is currently only one format, this can just be cached on the class.
 	 * With more write formats active, it may make sense to keep around the "usual" format codec
 	 * (the one for the current persisted configuration) and resolve codecs for different versions
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
@@ -135,8 +83,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	public constructor(
 		summarizables: readonly Summarizable[],
-		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		// Base class arguments
 		id: string,
@@ -153,20 +100,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
-		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
-		this.editManager.on("newTrunkHead", (head) => {
-			this.changeEvents.emit("newSequencedChange", head.change);
-		});
-
-		this.editManager.localBranch.on("change", (args) => {
-			const { type, change } = args;
+		this.editManager = new EditManager(changeFamily, localSessionId);
+		this.editManager.localBranch.on("afterChange", (args) => {
+			const { type } = args;
 			switch (type) {
 				case "append":
 					for (const c of args.newCommits) {
 						if (!this.getLocalBranch().isTransacting()) {
 							this.submitCommit(c);
 						}
-						this.changeEvents.emit("newLocalChange", c.change);
 					}
 					break;
 				case "replace":
@@ -179,14 +121,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				default:
 					break;
 			}
-
-			if (change !== undefined) {
-				this.changeEvents.emit("newLocalState", this.changeFamily.intoDelta(change));
-			}
 		});
 
+		const revisionTagCodec = new RevisionTagCodec();
 		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, options),
+			new EditManagerSummarizer(this.editManager, revisionTagCodec, options),
 			...summarizables,
 		];
 		assert(
@@ -194,7 +133,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			new RevisionTagCodec(),
+			options,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -231,7 +174,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
-		this.editManager.afterSummaryLoad();
 	}
 
 	/**
@@ -265,7 +207,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			sessionId: this.editManager.localSessionId,
 		});
-		this.submitLocalMessage(message);
+		this.submitLocalMessage(this.serializer.encode(message, this.handle));
 	}
 
 	protected processCore(
@@ -273,7 +215,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { commit, sessionId } = this.messageCodec.decode(message.contents);
+		const contents: unknown = this.serializer.decode(message.contents);
+		const { commit, sessionId } = this.messageCodec.decode(contents);
 
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
@@ -282,22 +225,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
-	}
-
-	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public undo(): void {
-		this.editManager.localBranch.undo();
-	}
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public redo(): void {
-		this.editManager.localBranch.redo();
 	}
 
 	/**

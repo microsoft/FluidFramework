@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IRandom, makeRandom, describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { IRandom, makeRandom, describeFuzz } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";

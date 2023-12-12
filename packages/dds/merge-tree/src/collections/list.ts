@@ -41,7 +41,10 @@ class HeadNode<T> {
 const DeadHead = new HeadNode<any>(undefined);
 
 class DataNode<T> extends HeadNode<T> implements ListNode<T> {
-	constructor(headNode: HeadNode<T>, public readonly data: T) {
+	constructor(
+		headNode: HeadNode<T>,
+		public readonly data: T,
+	) {
 		super(undefined);
 		this.headNode = headNode;
 	}

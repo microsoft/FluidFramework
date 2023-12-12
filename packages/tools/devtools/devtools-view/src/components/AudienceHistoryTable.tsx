@@ -24,7 +24,7 @@ import {
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper";
 import { clientIdTooltipText } from "./TooltipTexts";
-import { TransformedAudienceHistoryData } from "./AudienceView";
+import { type TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
 
 const audienceStyles = makeStyles({

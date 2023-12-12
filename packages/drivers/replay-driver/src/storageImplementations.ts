@@ -26,12 +26,16 @@ import { ReadDocumentStorageServiceBase } from "./replayController";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file
+ * @internal
  */
 export interface IFileSnapshot {
 	tree: ITree;
 	commits: { [key: string]: ITree };
 }
 
+/**
+ * @internal
+ */
 export class FileSnapshotReader
 	extends ReadDocumentStorageServiceBase
 	implements IDocumentStorageService
@@ -72,6 +76,7 @@ export class FileSnapshotReader
 			return this.docTree;
 		}
 		if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
 
@@ -99,6 +104,9 @@ export class FileSnapshotReader
 	}
 }
 
+/**
+ * @internal
+ */
 export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 	protected docId?: string;
 
@@ -133,6 +141,9 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OpStorage extends ReadDocumentStorageServiceBase {
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
@@ -169,6 +180,9 @@ export class StaticStorageDocumentService implements IDocumentService {
 	}
 }
 
+/**
+ * @internal
+ */
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
 	public constructor(protected readonly storage: IDocumentStorageService) {}
 

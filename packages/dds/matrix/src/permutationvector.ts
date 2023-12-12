@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -404,6 +406,7 @@ export class PermutationVector extends Client {
 		const s: string[] = [];
 
 		this.walkSegments((segment) => {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			s.push(`${segment}`);
 			return true;
 		});

@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { PactMap } from "../pactMap";
 import { PactMapFactory } from "../pactMapFactory";
-import { IPactMap } from "../interfaces";
+import { type IPactMap } from "../interfaces";
 
 function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
 	// Create and connect a PactMap.

@@ -9,8 +9,8 @@ import structuredClone from "@ungap/structured-clone";
 import {
 	generateStableId as runtimeGenerateStableId,
 	assertIsStableId,
-} from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+	StableId,
+} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
@@ -31,6 +31,14 @@ export type RecursiveReadonly<T> = {
  * Remove `readonly` from all fields.
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+/**
+ * Make all field required and omits fields whose ony valid value would be `undefined`.
+ * This is analogous to `Required<T>` except it tolerates 'optional undefined'.
+ */
+export type Populated<T> = {
+	[P in keyof T as Exclude<P, T[P] extends undefined ? P : never>]-?: T[P];
+};
 
 /**
  * Casts a readonly object to a mutable one.
@@ -228,7 +236,7 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
- * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
  * of alternatives.
  *
  * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
@@ -247,6 +255,22 @@ export function isJsonObject(
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Verifies that the supplied indices are valid within the supplied array.
+ * @param startIndex - The starting index in the range. Must be in [0, length).
+ * @param endIndex - The ending index in the range. Must be within (start, length].
+ * @param array - The array the indices refer to
+ */
+export function assertValidRangeIndices(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+) {
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
+	assertValidIndex(startIndex, array, false);
+	assertValidIndex(endIndex, array, true);
+}
+
 export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
@@ -258,6 +282,16 @@ export function assertValidIndex(
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
+}
+
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
+	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
 export function assertNonNegativeSafeInteger(index: number) {
@@ -277,7 +311,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  *
  * @alpha
  */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 /**
  * The counter used to generate deterministic stable ids for testing purposes.
@@ -288,11 +322,11 @@ let deterministicStableIdCount: number | undefined;
  * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
  * Used to make test logic that uses {@link generateStableId} deterministic.
  *
- * @remarks
- * Only use this function for testing purposes.
+ * @remarks Only use this function for testing purposes.
  *
  * @example
- * ```ts
+ *
+ * ```typescript
  * function f() {
  *    const id = generateStableId();
  *    ...
@@ -308,6 +342,21 @@ export function useDeterministicStableId<T>(f: () => T): T {
 	deterministicStableIdCount = 1;
 	try {
 		return f();
+		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
+		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
+	} finally {
+		deterministicStableIdCount = undefined;
+	}
+}
+
+export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
+	assert(
+		deterministicStableIdCount === undefined,
+		0x79f /* useAsyncDeterministicStableId cannot be nested */,
+	);
+	deterministicStableIdCount = 1;
+	try {
+		return await f();
 		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
 		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
 	} finally {
@@ -358,7 +407,36 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 }
 
 /**
+ * Convert an object used as a map into a new object used like a map.
+ *
+ * @remarks
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
+ */
+export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+	objectMap: Record<MapKey, MapValue>,
+	transformer: (value: MapValue, key: MapKey) => NewMapValue,
+): Record<MapKey, MapValue> {
+	const output: Record<MapKey, MapValue> = Object.create(null);
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		Object.defineProperty(output, key, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: transformer(element, key as MapKey),
+		});
+	}
+	return output;
+}
+
+/**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @alpha
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -379,4 +457,57 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
  */
 export interface Named<TName> {
 	readonly name: TName;
+}
+
+/**
+ * Placeholder for `Symbol.dispose`.
+ *
+ * Replace this with `Symbol.dispose` when it is available.
+ * @beta
+ */
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
+
+/**
+ * An object with an explicit lifetime that can be ended.
+ * @privateRemarks
+ * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ * @beta
+ */
+export interface IDisposable {
+	/**
+	 * Call to end the lifetime of this object.
+	 *
+	 * It is invalid to use this object after this,
+	 * except for operations which explicitly document they are valid after disposal.
+	 *
+	 * @remarks
+	 * May cleanup resources retained by this object.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 *
+	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
+	 * but this can vary between implementations.
+	 */
+	[disposeSymbol](): void;
+}
+
+/**
+ * Capitalize a string.
+ */
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+	// To avoid splitting characters which are made of multiple UTF-16 code units,
+	// use iteration instead of indexing to separate the first character.
+	const iterated = s[Symbol.iterator]().next();
+	if (iterated.done === true) {
+		// Empty string case.
+		return "" as Capitalize<S>;
+	}
+
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+	return a > b ? 1 : a === b ? 0 : -1;
 }

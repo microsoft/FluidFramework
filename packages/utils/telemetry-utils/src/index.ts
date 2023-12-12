@@ -5,11 +5,9 @@
 export {
 	createChildMonitoringContext,
 	MonitoringContext,
-	IConfigProviderBase,
 	sessionStorageConfigProvider,
 	mixinMonitoringContext,
 	IConfigProvider,
-	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
 export {
@@ -18,6 +16,7 @@ export {
 	extractSafePropertiesFromMessage,
 	GenericError,
 	UsageError,
+	validatePrecondition,
 } from "./error";
 export {
 	extractLogSafeErrorProperties,
@@ -31,6 +30,7 @@ export {
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
 	normalizeError,
+	overwriteStack,
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging";
@@ -55,6 +55,7 @@ export {
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
+	MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
@@ -67,7 +68,7 @@ export {
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
-export { logIfFalse } from "./utils";
+export { logIfFalse, createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils";
 export {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
@@ -77,4 +78,24 @@ export {
 	ITelemetryLoggerExt,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";
+
+/**
+ * Types supported by {@link IConfigProviderBase}.
+ * @deprecated Use ConfigTypes from fluidFramework/core-interfaces
+ *
+ * @internal
+ */
+export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+
+/**
+ * Base interface for providing configurations to enable/disable/control features.
+ *
+ * @deprecated Use IConfigProviderBase from fluidFramework/core-interfaces
+ *
+ * @internal
+ */
+export interface IConfigProviderBase {
+	getRawConfig(name: string): ConfigTypes;
+}

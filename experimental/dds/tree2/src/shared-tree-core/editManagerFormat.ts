@@ -5,7 +5,13 @@
 
 import { TSchema, Type, ObjectOptions } from "@sinclair/typebox";
 import { Brand, brandedNumberType } from "../util";
-import { SessionId, SessionIdSchema, RevisionTag, RevisionTagSchema } from "../core";
+import {
+	SessionId,
+	SessionIdSchema,
+	RevisionTag,
+	RevisionTagSchema,
+	EncodedRevisionTag,
+} from "../core";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -17,6 +23,13 @@ export interface Commit<TChangeset> {
 	readonly sessionId: SessionId;
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type EncodedCommit<TChangeset> = {
+	readonly revision: EncodedRevisionTag;
+	readonly change: TChangeset;
+	readonly sessionId: SessionId;
+};
+
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
@@ -26,7 +39,7 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		sessionId: SessionIdSchema,
 	});
 /**
- * @privateRemarks - Commits are generally encoded from `GraphCommit`s, which often contain extra data.
+ * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
  */
 const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>

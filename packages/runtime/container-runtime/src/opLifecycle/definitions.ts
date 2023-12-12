@@ -5,7 +5,8 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { CompressionAlgorithms, ContainerMessageType } from "..";
+import { CompressionAlgorithms } from "..";
+import { ContainerMessageType } from "../messageTypes";
 
 /**
  * Batch message type used internally by the runtime
@@ -51,6 +52,9 @@ export interface IBatchCheckpoint {
 	rollback: (action: (message: BatchMessage) => void) => void;
 }
 
+/**
+ * @internal
+ */
 export interface IChunkedOp {
 	chunkId: number;
 	totalChunks: number;

@@ -78,7 +78,7 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme;
 export function isWorkspaceRange(r: any): r is WorkspaceRange;
 
 // @public
-export type RangeOperator = typeof RangeOperators[number];
+export type RangeOperator = (typeof RangeOperators)[number];
 
 // @public
 export const RangeOperators: readonly ["^", "~", ""];
@@ -114,7 +114,7 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
 export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
 
 // @public
-export type WorkspaceRange = typeof WorkspaceRanges[number];
+export type WorkspaceRange = (typeof WorkspaceRanges)[number];
 
 // @public
 export const WorkspaceRanges: readonly ["workspace:*", "workspace:^", "workspace:~"];

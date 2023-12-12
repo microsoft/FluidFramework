@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import {
-	CachedConfigProvider,
-	ConfigTypes,
-	IConfigProviderBase,
-	inMemoryConfigProvider,
-} from "../config";
+import { strict as assert } from "node:assert";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { CachedConfigProvider, inMemoryConfigProvider } from "../config";
 import { TelemetryDataTag } from "../logger";
 import { MockLogger } from "../mockLogger";
 
@@ -222,7 +218,7 @@ describe("Config", () => {
 			// The point here is to use `getSetting`
 			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
-			return val === null ? undefined : val;
+			return val ?? undefined;
 		}
 
 		getSetting<T extends SettingType>(

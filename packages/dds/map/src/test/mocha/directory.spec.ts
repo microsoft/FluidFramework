@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -749,12 +749,11 @@ describe("Directory", () => {
 
 				// Now load another directory to send op from that.
 				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
-				const containerRuntime3 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
 				const services3 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services3.deltaConnection = containerRuntime3.createDeltaConnection();
+				services3.deltaConnection = dataStoreRuntime3.createDeltaConnection();
 
 				const directory3 = new SharedDirectory(
 					"directory3",
@@ -1920,7 +1919,7 @@ describe("Directory", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
 			public get sharedObject(): SharedDirectory {
 				// Return the remote SharedDirectory because we want to verify its summary data.
@@ -1928,14 +1927,14 @@ describe("Directory", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
 			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
 			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const subMapId1 = `subMap-${++this.subMapCount}`;
@@ -1955,7 +1954,7 @@ describe("Directory", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
 			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
@@ -1977,7 +1976,7 @@ describe("Directory", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const fooDirectory =

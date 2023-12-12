@@ -4,9 +4,9 @@
  */
 
 import { JSDOM } from "jsdom";
-import { SinonSandbox } from "sinon";
+import { type SinonSandbox } from "sinon";
 
-import { Globals } from "../Globals";
+import { type Globals } from "../Globals";
 
 /**
  * Wait for a listener to be registered for the specified event.

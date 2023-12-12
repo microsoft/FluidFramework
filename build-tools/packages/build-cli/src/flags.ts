@@ -69,7 +69,7 @@ export const releaseGroupWithAllFlag = Flags.custom<ReleaseGroup | "all">({
 export const packageSelectorFlag = Flags.custom({
 	char: "p",
 	description:
-		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
+		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/benchmark and benchmark are valid.",
 	multiple: false,
 });
 
@@ -160,6 +160,7 @@ export const testModeFlag = Flags.boolean({
  * You must use these flags in your command logic in order for them to have any effect.
  *
  * @example
+ *
  * All of the check flags can be used like this:
  *
  * ```
@@ -169,6 +170,7 @@ export const testModeFlag = Flags.boolean({
  * ```
  *
  * @example
+ *
  * You can also use them individually like so:
  *
  * ```

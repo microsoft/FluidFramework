@@ -6,6 +6,6 @@
 "use strict";
 
 const packageDir = `${__dirname}/../..`;
-const getFluidTestMochaConfig = require("@fluid-internal/test-version-utils/mocharc-common.cjs");
-const config = getFluidTestMochaConfig(packageDir, ["source-map-support/register"]);
+const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common.cjs");
+const config = getFluidTestMochaConfig(packageDir);
 module.exports = config;

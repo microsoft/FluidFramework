@@ -48,7 +48,7 @@ describe("filterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-internal/readme-command",
+			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -89,7 +89,7 @@ describe("filterPackages", async () => {
 		const packages = await getBuildToolsPackages();
 		const filters: PackageFilterOptions = {
 			private: undefined,
-			scope: ["@fluidframework", "@fluid-internal"],
+			scope: ["@fluidframework", "@fluid-private"],
 			skipScope: undefined,
 		};
 		const actual = filterPackages(packages, filters);
@@ -97,7 +97,7 @@ describe("filterPackages", async () => {
 		expect(names).to.be.equalTo([
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-internal/readme-command",
+			"@fluid-private/readme-command",
 		]);
 	});
 
@@ -106,7 +106,7 @@ describe("filterPackages", async () => {
 		const filters: PackageFilterOptions = {
 			private: undefined,
 			scope: undefined,
-			skipScope: ["@fluidframework", "@fluid-internal"],
+			skipScope: ["@fluidframework", "@fluid-private"],
 		};
 		const actual = filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
@@ -146,7 +146,7 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-internal/readme-command",
+			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -175,10 +175,9 @@ describe("selectAndFilterPackages", async () => {
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-internal/getkeys",
 			"@fluidframework/test-tools",
-			"tinylicious",
 		]);
 	});
 
@@ -203,7 +202,7 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-tools/build-cli",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
-			"@fluid-internal/readme-command",
+			"@fluid-private/readme-command",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -225,6 +224,7 @@ describe("selectAndFilterPackages", async () => {
 		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const dirs = selected.map((p) => context.repo.relativeToRepo(p.directory));
 
+		expect(selected.length).to.equal(1);
 		expect(dirs).to.be.containingAllOf(["build-tools"]);
 	});
 
@@ -271,7 +271,7 @@ describe("selectAndFilterPackages", async () => {
 		const { filtered } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).to.be.equalTo(["@fluid-internal/readme-command"]);
+		expect(names).to.be.equalTo(["@fluid-private/readme-command"]);
 	});
 
 	it("select release group, filter non-private", async () => {
@@ -330,7 +330,7 @@ describe("selectAndFilterPackages", async () => {
 		const filters: PackageFilterOptions = {
 			private: undefined,
 			scope: undefined,
-			skipScope: ["@fluid-tools", "@fluid-internal"],
+			skipScope: ["@fluid-tools", "@fluid-private"],
 		};
 
 		const { filtered } = selectAndFilterPackages(context, selectionOptions, filters);

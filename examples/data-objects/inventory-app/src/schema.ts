@@ -3,24 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("inventory app");
-export const float64 = builder.leaf("number", ValueSchema.Number);
-export const string = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaFactory("com.contoso.app.inventory");
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.value, string),
-	quantity: SchemaBuilder.field(FieldKinds.value, float64),
-});
+export class Part extends builder.object("Part", {
+	name: builder.string,
+	quantity: builder.number,
+}) {}
+export class Inventory extends builder.object("Inventory", {
+	parts: builder.list(Part),
+}) {}
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.field(FieldKinds.sequence, part),
-});
-
-export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
-export type RootField = SchemaAware.TypedField<typeof rootField>;
-
-export const schema = builder.intoDocumentSchema(rootField);
-
-export type Inventory = SchemaAware.TypedNode<typeof inventory>;
+export const treeConfiguration = new TreeConfiguration(
+	Inventory,
+	() =>
+		new Inventory({
+			parts: [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		}),
+);

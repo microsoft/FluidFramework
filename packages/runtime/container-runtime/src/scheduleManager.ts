@@ -271,6 +271,7 @@ class ScheduleManagerCore {
 					{
 						runtimeVersion: pkgVersion,
 						batchClientId:
+							// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
@@ -306,6 +307,7 @@ class ScheduleManagerCore {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
 				batchClientId:
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),

@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import sha1 from "sha.js/sha1";
-// eslint-disable-next-line import/no-internal-modules
-import sha256 from "sha.js/sha256";
-import { IsoBuffer } from "./bufferNode";
+import { sha1, sha256 } from "sha.js";
+
+import type { IsoBuffer } from "./bufferNode";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and
@@ -39,6 +37,7 @@ export async function hashFile(
 			break;
 		}
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	return engine.update(file).digest(hashEncoding) as string;
 }
 
@@ -53,7 +52,8 @@ export async function hashFile(
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
+	// eslint-disable-next-line unicorn/prefer-code-point
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
 	const engine = new sha1();
-	return engine.update(filePrefix).update(file).digest("hex") as string;
+	return engine.update(filePrefix).update(file).digest("hex");
 }

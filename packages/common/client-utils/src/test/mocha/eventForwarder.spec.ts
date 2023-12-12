@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import { strict as assert } from "node:assert";
+import { EventEmitter } from "node:events";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
 import { EventForwarder } from "../..";
 
@@ -27,7 +27,6 @@ describe("Loader", () => {
 				});
 
 				afterEach(() => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (!forwarder.disposed) {
 						forwarder.dispose();
 					}

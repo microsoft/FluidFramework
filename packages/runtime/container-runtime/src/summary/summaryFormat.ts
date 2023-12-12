@@ -84,6 +84,10 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
 	return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
+
+/**
+ * @alpha
+ */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
@@ -98,6 +102,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly idCompressorEnabled?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ICreateContainerMetadata {
 	/** Runtime version of the container when it was first created */
 	createContainerRuntimeVersion?: string;
@@ -105,7 +112,10 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
-/** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
+/**
+ * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
+ * @alpha
+ */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
 	| "clientId"
@@ -187,7 +197,9 @@ export const dataStoreAttributesBlobName = ".component";
  * @param summarizeResult - Summary tree and stats to modify
  *
  * @example
+ *
  * Converts from:
+ *
  * ```typescript
  * {
  *     type: SummaryType.Tree,
@@ -208,6 +220,7 @@ export const dataStoreAttributesBlobName = ".component";
  *     },
  * }
  * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {

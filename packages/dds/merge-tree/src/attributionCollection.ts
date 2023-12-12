@@ -17,11 +17,14 @@ import { ISegment } from "./mergeTreeNodes";
 export interface SequenceOffsets {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
-	 * Ex: if seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
+	 *
+	 * @example
+	 *
+	 * If seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
 	 * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
 	 * 3 and the length of the string was inserted at seq 46.
 	 *
-	 * @remarks - We use null here rather than undefined as round-tripping through JSON converts
+	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
 	seqs: (number | AttributionKey | null)[];
@@ -38,7 +41,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
 	root: Iterable<{ offset: number; key: T | null }>;
@@ -51,9 +54,7 @@ export interface IAttributionCollectionSpec<T> {
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
-	/**
-	 * @internal
-	 */
+	/***/
 	serializeAttributionCollections(
 		segments: Iterable<{
 			attribution?: IAttributionCollection<AttributionKey>;
@@ -63,7 +64,6 @@ export interface IAttributionCollectionSerializer {
 
 	/**
 	 * Populates attribution information on segments using the provided summary.
-	 * @internal
 	 */
 	populateAttributionCollections(
 		segments: Iterable<ISegment>,
@@ -93,17 +93,16 @@ export interface IAttributionCollection<T> {
 	 * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
 	 * `i+1`th offset.
 	 * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
-	 * @internal
 	 */
 	getAll(): IAttributionCollectionSpec<T>;
 
-	/** @internal */
+	/***/
 	splitAt(pos: number): IAttributionCollection<T>;
 
-	/** @internal */
+	/***/
 	append(other: IAttributionCollection<T>): void;
 
-	/** @internal */
+	/***/
 	clone(): IAttributionCollection<T>;
 
 	/**
@@ -112,7 +111,6 @@ export interface IAttributionCollection<T> {
 	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
 	 * channel and 4 other channels, it should call `.update` 5 times).
 	 * @param channel - Updated collection for that channel.
-	 * @internal
 	 */
 	update(name: string | undefined, channel: IAttributionCollection<T>);
 }
@@ -157,7 +155,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
@@ -192,7 +193,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	private get(index: number): AttributionKey | undefined {
 		const key = this.keys[index];
-		return key !== null ? key : undefined;
+		return key ?? undefined;
 	}
 
 	public get length(): number {

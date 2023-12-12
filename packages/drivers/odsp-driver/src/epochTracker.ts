@@ -43,6 +43,9 @@ import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
+/**
+ * @alpha
+ */
 export type FetchType =
 	| "blob"
 	| "createBlob"
@@ -56,6 +59,9 @@ export type FetchType =
 	| "push"
 	| "versions";
 
+/**
+ * @alpha
+ */
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
@@ -77,6 +83,7 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
+ * @alpha
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -594,6 +601,9 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 	}
 }
 
+/**
+ * @alpha
+ */
 export interface ICacheAndTracker {
 	cache: IOdspCache;
 	epochTracker: EpochTracker;

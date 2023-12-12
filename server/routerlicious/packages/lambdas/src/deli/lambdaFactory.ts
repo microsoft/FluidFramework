@@ -31,6 +31,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -51,6 +52,9 @@ const getDefaultCheckpoint = (): IDeliState => {
 	};
 };
 
+/**
+ * @internal
+ */
 export class DeliLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
@@ -65,8 +69,6 @@ export class DeliLambdaFactory
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
-		private readonly restartOnCheckpointFailure: boolean,
-		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -126,6 +128,11 @@ export class DeliLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			sessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 		} catch (error) {
@@ -217,8 +224,6 @@ export class DeliLambdaFactory
 			sessionMetric,
 			sessionStartMetric,
 			this.checkpointService,
-			this.restartOnCheckpointFailure,
-			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		deliLambda.on("close", (closeType) => {
@@ -248,7 +253,10 @@ export class DeliLambdaFactory
 							3 /* maxRetries */,
 							1000 /* retryAfterMs */,
 							getLumberBaseProperties(documentId, tenantId),
-							(error) => error.code === 11000 /* shouldIgnoreError */,
+							(error) =>
+								error.code === 11000 ||
+								error.message?.toString()?.indexOf("E11000 duplicate key") >=
+									0 /* shouldIgnoreError */,
 							(error) => true /* shouldRetry */,
 						);
 
@@ -260,13 +268,14 @@ export class DeliLambdaFactory
 						return;
 					}
 					const filter = { documentId, tenantId, session: { $exists: true } };
+					const keepSessionActive = this.checkpointService.getGlobalCheckpointFailed();
 					const data = {
 						"session.isSessionAlive": false,
-						"session.isSessionActive": false,
+						"session.isSessionActive": keepSessionActive,
 						"lastAccessTime": Date.now(),
 					};
 					await this.documentRepository.updateOne(filter, data, undefined);
-					const message = `Marked session alive and active as false for closeType:
+					const message = `Marked session alive as false and active as ${keepSessionActive} for closeType:
                         ${JSON.stringify(closeType)}`;
 
 					context.log?.info(message, { messageMetaData });

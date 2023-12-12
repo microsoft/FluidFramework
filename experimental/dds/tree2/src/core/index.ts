@@ -4,20 +4,6 @@
  */
 
 export {
-	Dependee,
-	Dependent,
-	NamedComputation,
-	ObservingDependent,
-	InvalidationToken,
-	recordDependency,
-	SimpleDependee,
-	cachedValue,
-	ICachedValue,
-	DisposingDependee,
-	SimpleObservingDependent,
-} from "./dependency-tracking";
-
-export {
 	EmptyKey,
 	TreeType,
 	Value,
@@ -25,6 +11,13 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldUpPath,
 	Anchor,
 	RootField,
@@ -35,7 +28,6 @@ export {
 	GenericTreeNode,
 	JsonableTree,
 	EncodedJsonableTree,
-	Delta,
 	rootFieldKey,
 	rootField,
 	ITreeCursor,
@@ -50,13 +42,19 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	combineVisitors,
+	announceDelta,
+	applyDelta,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	PathVisitor,
 	SparseNode,
 	getDescendant,
@@ -68,7 +66,12 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
-	isSkipMark,
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,
@@ -81,6 +84,20 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	DetachedFieldIndex,
+	ForestRootId,
+	getDetachedFieldContainingPath,
+	aboveRootPlaceholder,
+	DeltaRoot,
+	DeltaProtoNode,
+	DeltaMark,
+	DeltaDetachedNodeId,
+	DeltaFieldMap,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
+	DeltaFieldChanges,
 } from "./tree";
 
 export {
@@ -101,34 +118,29 @@ export {
 export {
 	FieldKey,
 	FieldKeySchema,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	PrimitiveValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	fieldSchema,
-	TreeSchemaBuilder,
-	emptyMap,
-	emptySet,
-	treeSchema,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
-	cloneSchemaData,
+	StoredSchemaCollection,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
+	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
@@ -139,6 +151,7 @@ export {
 	RevisionTagSchema,
 	ChangesetLocalId,
 	ChangeAtomId,
+	ChangeAtomIdMap,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -151,7 +164,14 @@ export {
 	mintCommit,
 	mintRevisionTag,
 	rebaseBranch,
+	BranchRebaseResult,
 	rebaseChange,
+	rebaseChangeOverChanges,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	RevisionInfo,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 } from "./rebase";
 
 export {
@@ -162,6 +182,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
-
-export { UndoRedoManager, LocalCommitSource } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";

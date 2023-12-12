@@ -4,10 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
-import { fail } from "../../util";
-import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { Mutable } from "../../util";
+import {
+	ChangeRebaser,
+	RevisionInfo,
+	RevisionMetadataSource,
+	TaggedChange,
+	tagRollbackInverse,
+} from "./changeRebaser";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -51,6 +56,21 @@ export interface RebasedCommits<TChange> {
 	sourceCommits: GraphCommit<TChange>[];
 }
 
+export interface BranchRebaseResult<TChange> {
+	/**
+	 * The head of a rebased source branch.
+	 */
+	readonly newSourceHead: GraphCommit<TChange>;
+	/**
+	 * A thunk that computes the cumulative change to the source branch (undefined if no change occurred)
+	 */
+	readonly sourceChange: TChange | undefined;
+	/**
+	 * Details about how the commits on the source branch changed
+	 */
+	readonly commits: RebasedCommits<TChange>;
+}
+
 /**
  * Rebases a source branch onto another commit in a target branch.
  *
@@ -58,13 +78,9 @@ export interface RebasedCommits<TChange> {
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is must be passed in
- * in order to update the repair data of the rebased commits. A branch may not have an {@link IRepairDataStoreProvider} if it
- * does not need to maintain repair data.
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. For example:
@@ -83,14 +99,9 @@ export interface RebasedCommits<TChange> {
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-];
+): BranchRebaseResult<TChange>;
 
 /**
  * Rebases a source branch onto another commit in a target branch.
@@ -99,14 +110,10 @@ export function rebaseBranch<TChange>(
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is must be passed in
- * in order to update the repair data of the rebased commits. A branch may not have an {@link IRepairDataStoreProvider} if it
- * does not need to maintain repair data.
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
- * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
- * and details about how the commits on the source branch changed
+ * @returns a {@link BranchRebaseResult}
  * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
  * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
  * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
@@ -132,26 +139,16 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-];
+): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
-): [
-	newSourceHead: GraphCommit<TChange>,
-	sourceChange: TChange | undefined,
-	commits: RebasedCommits<TChange>,
-] {
+): BranchRebaseResult<TChange> {
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -168,11 +165,11 @@ export function rebaseBranch<TChange>(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
 			0x676 /* target commit is not in target branch */,
 		);
-		return [
-			sourceHead,
-			undefined,
-			{ deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
-		];
+		return {
+			newSourceHead: sourceHead,
+			sourceChange: undefined,
+			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+		};
 	}
 
 	// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
@@ -187,7 +184,7 @@ export function rebaseBranch<TChange>(
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
-		} else if (i >= targetCommitIndex) {
+		} else if (i > targetCommitIndex) {
 			break;
 		}
 	}
@@ -219,79 +216,55 @@ export function rebaseBranch<TChange>(
 		for (const c of sourcePath) {
 			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
-		return [
-			sourceCommits[sourceCommits.length - 1] ?? newBase,
-			undefined,
-			{
+		return {
+			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
+			sourceChange: undefined,
+			commits: {
 				deletedSourceCommits,
 				targetCommits,
 				sourceCommits,
 			},
-		];
+		};
 	}
 
+	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
+	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
 	const inverses: TaggedChange<TChange>[] = [];
-	if (sourcePath.length !== 0) {
-		// Clone the original repair data store provider so that it can be modified without affecting the original.
-		const repairDataStoreProviderClone = sourceRepairDataStoreProvider?.clone();
-		const nonTaggedInverses: TChange[] = [];
-		// Revert changes from the source path to get to the new base
-		for (let i = sourcePath.length - 1; i >= 0; i--) {
-			const c = sourcePath[i];
-			const inverse = changeRebaser.invert(c, true, c.repairData);
-			nonTaggedInverses.push(inverse);
-			repairDataStoreProviderClone?.applyChange(inverse);
+	for (const c of sourcePath) {
+		if (sourceSet.has(c.revision)) {
+			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
+				...inverses,
+				...targetRebasePath,
+			]);
+			newHead = {
+				revision: c.revision,
+				change,
+				parent: newHead,
+			};
+			sourceCommits.push(newHead);
+			targetRebasePath.push({ ...c, change });
 		}
-
-		if (repairDataStoreProviderClone !== undefined) {
-			// Apply the changes in the target rebase path
-			for (const c of targetRebasePath) {
-				repairDataStoreProviderClone.applyChange(c.change);
-			}
-		}
-
-		// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
-		// rebase forwards over the rest of the commits up to the new base before advancing the new base.
-		for (const c of sourcePath) {
-			if (sourceSet.has(c.revision)) {
-				const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-					...inverses,
-					...targetRebasePath,
-				]);
-				const repairData = repairDataStoreProviderClone?.createRepairData();
-				repairData?.capture(change, c.revision);
-				newHead = {
-					revision: c.revision,
-					change,
-					parent: newHead,
-					repairData,
-				};
-				sourceCommits.push(newHead);
-				targetRebasePath.push({ ...c, change });
-				repairDataStoreProviderClone?.applyChange(change);
-			}
-
-			inverses.unshift(
-				tagRollbackInverse(
-					nonTaggedInverses.pop() ??
-						fail("The commits in source path should not be modified."),
-					mintRevisionTag(),
-					c.revision,
-				),
-			);
-		}
+		inverses.unshift(
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+		);
 	}
 
-	return [
-		newHead,
-		changeRebaser.compose([...inverses, ...targetRebasePath]),
-		{
+	let netChange: TChange | undefined;
+	return {
+		newSourceHead: newHead,
+		get sourceChange() {
+			if (netChange === undefined) {
+				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
+			}
+			return netChange;
+		},
+		commits: {
 			deletedSourceCommits,
 			targetCommits,
 			sourceCommits,
 		},
-	];
+	};
 }
 
 /**
@@ -317,33 +290,80 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const changeRebasedToRef = sourcePath.reduceRight(
-		(newChange, branchCommit) =>
-			changeRebaser.rebase(
-				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData, true),
-			),
-		change,
-	);
-
-	return targetPath.reduce((a, b) => changeRebaser.rebase(a, b), changeRebasedToRef);
+	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	inverses.reverse();
+	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
 
-function rebaseChangeOverChanges<TChange>(
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index >= 0 ? index : undefined;
+	};
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+	};
+
+	const hasRollback = (revision: RevisionTag): boolean => {
+		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+	};
+
+	return { getIndex, tryGetInfo, hasRollback };
+}
+
+export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
+	const revisionMetadata = revisionMetadataSourceFromInfo(
+		getRevInfoFromTaggedChanges(changesToRebaseOver),
+	);
+
+	return changesToRebaseOver.reduce(
+		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		changeToRebase,
+	);
+}
+
+// TODO: Deduplicate
+function getRevInfoFromTaggedChanges(changes: TaggedChange<unknown>[]): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return revInfos;
+}
+
+// TODO: Deduplicate
+function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }
 
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
-	repairData?: ReadonlyRepairDataStore,
 	cache?: boolean,
 ): TaggedChange<TChange> {
-	const inverse = commit.inverse ?? changeRebaser.invert(commit, true, repairData);
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
 	if (cache === true && commit.inverse === undefined) {
 		commit.inverse = inverse;
 	}
@@ -379,8 +399,10 @@ export function findAncestor<T extends { parent?: T }>(
  * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   id: string;
  *   parent?: Parented;
@@ -430,8 +452,10 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
  * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   parent?: Parented;
  * }

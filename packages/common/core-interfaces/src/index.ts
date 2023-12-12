@@ -42,7 +42,7 @@ export {
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage";
 
-// Typescript forgets the index signature when customers augment IRequestHeader if we export *.
+// TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
 export {
@@ -62,16 +62,20 @@ export {
 
 export type {
 	ILoggingError,
-	ITaggedTelemetryPropertyType,
+	ITaggedTelemetryPropertyType, // deprecated
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-	TelemetryEventPropertyType,
+	ITelemetryBaseProperties,
+	ITelemetryErrorEvent, // deprecated
+	ITelemetryGenericEvent, // deprecated
+	ITelemetryLogger, // deprecated
+	ITelemetryPerformanceEvent, // deprecated
+	ITelemetryProperties, // deprecated
+	Tagged,
+	TelemetryEventCategory, // deprecated
+	TelemetryBaseEventPropertyType,
+	TelemetryEventPropertyType, // deprecated
 } from "./logger";
 export { LogLevel } from "./logger";
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export { ConfigTypes, IConfigProviderBase } from "./config";

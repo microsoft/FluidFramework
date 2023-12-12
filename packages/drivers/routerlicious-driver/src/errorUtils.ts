@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import {
+	DriverError,
+	IDriverErrorBase,
+	DriverErrorTypes,
+} from "@fluidframework/driver-definitions";
 import {
 	NonRetryableError,
 	GenericNetworkError,
@@ -16,6 +20,29 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 /**
  * Routerlicious Error types
  * Different error types that may be thrown by the routerlicious driver
+ * @internal
+ */
+export const RouterliciousErrorTypes = {
+	// Inherit base driver error types
+	...DriverErrorTypes,
+
+	/**
+	 * SSL Certificate Error.
+	 */
+	sslCertError: "sslCertError",
+} as const;
+/**
+ * @internal
+ */
+export type RouterliciousErrorTypes =
+	(typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
+
+/**
+ * Routerlicious Error types
+ * Different error types that may be thrown by the routerlicious driver
+ *
+ * @deprecated Use {@link (RouterliciousErrorTypes:variable)} instead.
+ * @internal
  */
 export enum RouterliciousErrorType {
 	/**
@@ -23,6 +50,9 @@ export enum RouterliciousErrorType {
 	 */
 	fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
 
+	/**
+	 * SSL Certificate Error.
+	 */
 	sslCertError = "sslCertError",
 }
 

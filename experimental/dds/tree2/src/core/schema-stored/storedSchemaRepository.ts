@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Dependee, SimpleDependee } from "../dependency-tracking";
+import BTree from "sorted-btree";
 import { createEmitter, ISubscribable } from "../../events";
+import { compareStrings } from "../../util";
 import {
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	TreeStoredSchema,
-	SchemaData,
 	storedEmptyFieldSchema,
 } from "./schema";
 
@@ -23,12 +25,12 @@ export interface SchemaEvents {
 	/**
 	 * Schema change is about to be applied.
 	 */
-	beforeSchemaChange(newSchema: SchemaData): void;
+	beforeSchemaChange(newSchema: TreeStoredSchema): void;
 
 	/**
 	 * Schema change was just applied.
 	 */
-	afterSchemaChange(newSchema: SchemaData): void;
+	afterSchemaChange(newSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -37,30 +39,29 @@ export interface SchemaEvents {
  * TODO: could implement more fine grained dependency tracking.
  * @alpha
  */
-export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
+export interface StoredSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
 	 */
-	update(newSchema: SchemaData): void;
+	update(newSchema: TreeStoredSchema): void;
 }
 
 /**
  * StoredSchemaRepository for in memory use:
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
-export class InMemoryStoredSchemaRepository
-	extends SimpleDependee
-	implements StoredSchemaRepository
-{
-	protected readonly data: MutableSchemaData;
-	private readonly events = createEmitter<SchemaEvents>();
+export class InMemoryStoredSchemaRepository implements StoredSchemaRepository {
+	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	protected rootFieldSchemaData: TreeFieldStoredSchema;
+	protected readonly events = createEmitter<SchemaEvents>();
 
 	/**
-	 * For now, the schema are just scored in maps.
-	 * There are a couple reasons we might not want this simple solution long term:
-	 * 1. We might want an easy/fast copy.
-	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
+	 * Copies in the provided schema. If `data` is an InMemoryStoredSchemaRepository, it will be cheap-cloned.
+	 * Otherwise, it will be deep-cloned.
+	 *
+	 * We might not want to store schema in maps long term, as we might want a way to reserve a
+	 * large space of schema IDs within a schema.
 	 * The way mapFields has been structured mitigates the need for this, but it still might be useful.
 	 *
 	 * (ex: someone using data as field identifiers might want to
@@ -68,54 +69,78 @@ export class InMemoryStoredSchemaRepository
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
-	public constructor(data?: SchemaData) {
-		super("StoredSchemaRepository");
-		this.data = cloneSchemaData(data ?? defaultSchemaData);
+	public constructor(data?: TreeStoredSchema) {
+		this.rootFieldSchemaData = storedEmptyFieldSchema;
+		this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
+			[],
+			compareStrings,
+		);
+		if (data !== undefined) {
+			this.cloneData(data);
+		}
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public get rootFieldSchema(): FieldStoredSchema {
-		return this.data.rootFieldSchema;
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+		// Btree implements iterator, but not in a type-safe way
+		return this.nodeSchemaData as unknown as ReadonlyMap<
+			TreeNodeSchemaIdentifier,
+			TreeNodeStoredSchema
+		>;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
-		return this.data.treeSchema;
+	public get rootFieldSchema(): TreeFieldStoredSchema {
+		return this.rootFieldSchemaData;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-
-		this.data.rootFieldSchema = newSchema.rootFieldSchema;
-
-		this.data.treeSchema.clear();
-		for (const [name, schema] of newSchema.treeSchema) {
-			this.data.treeSchema.set(name, schema);
-		}
-		this.invalidateDependents();
+		// In the future, we could use btree's delta functionality to do a more efficient update
+		this.cloneData(newSchema);
 		this.events.emit("afterSchemaChange", newSchema);
 	}
+
+	private cloneData(data: TreeStoredSchema): void {
+		if (data instanceof InMemoryStoredSchemaRepository) {
+			this.rootFieldSchemaData = data.rootFieldSchema;
+			this.nodeSchemaData = data.nodeSchemaData.clone();
+		} else {
+			this.rootFieldSchemaData = cloneFieldSchemaData(data.rootFieldSchema);
+			this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
+		}
+	}
 }
 
-export interface MutableSchemaData extends SchemaData {
-	rootFieldSchema: FieldStoredSchema;
-	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
+export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
+	return data.nodeSchema.size === 0;
 }
 
-export function schemaDataIsEmpty(data: SchemaData): boolean {
-	return data.treeSchema.size === 0;
+function cloneNodeSchemaData(
+	nodeSchema: StoredSchemaCollection["nodeSchema"],
+): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [];
+	for (const [name, schema] of nodeSchema.entries()) {
+		entries.push([
+			name,
+			{
+				mapFields:
+					schema.mapFields === undefined
+						? undefined
+						: cloneFieldSchemaData(schema.mapFields),
+				objectNodeFields: new Map(schema.objectNodeFields),
+				leafValue: schema.leafValue,
+			},
+		]);
+	}
+	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
 }
 
-export const defaultSchemaData: SchemaData = {
-	treeSchema: new Map(),
-	rootFieldSchema: storedEmptyFieldSchema,
-};
-
-export function cloneSchemaData(data: SchemaData): MutableSchemaData {
+function cloneFieldSchemaData(fieldSchema: TreeFieldStoredSchema): TreeFieldStoredSchema {
 	return {
-		treeSchema: new Map(data?.treeSchema ?? []),
-		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
+		kind: fieldSchema.kind,
+		types: fieldSchema.types === undefined ? undefined : new Set(fieldSchema.types),
 	};
 }

@@ -9,6 +9,9 @@ import { IntervalIndex } from "./intervalIndex";
 
 const reservedIntervalIdKey = "intervalId";
 
+/**
+ * @internal
+ */
 export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval>,
 		Iterable<TInterval> {
@@ -19,7 +22,7 @@ export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
 class IdIntervalIndex<TInterval extends ISerializableInterval>
 	implements IIdIntervalIndex<TInterval>, Iterable<TInterval>
 {
-	private readonly intervalIdMap: Map<string, TInterval> = new Map();
+	private readonly intervalIdMap = new Map<string, TInterval>();
 
 	public add(interval: TInterval) {
 		const id = interval.getIntervalId();
@@ -51,6 +54,9 @@ class IdIntervalIndex<TInterval extends ISerializableInterval>
 	}
 }
 
+/**
+ * @internal
+ */
 export function createIdIntervalIndex<
 	TInterval extends ISerializableInterval,
 >(): IIdIntervalIndex<TInterval> {

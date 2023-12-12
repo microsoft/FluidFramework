@@ -1,19 +1,25 @@
 version: "3.4"
 services:
   proxy:
+    platform: linux/arm64/v8
     image: nginx:latest
     depends_on:
       - "alfred"
       - "historian"
+      - "nexus"
     volumes:
       - ./routerlicious/nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "3003:3003"
+      - "3002:3002"
       - "3001:3001"
   alfred:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
     expose:
       - "3000"
     command: node packages/routerlicious/dist/alfred/www.js
@@ -25,10 +31,31 @@ services:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules
     restart: on-failure
-  deli:
+  nexus:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/nexus/www.js
+    environment:
+      - DEBUG=fluid:*
+      - NODE_ENV=development
+      - IS_FLUID_SERVER=true
+    volumes:
+      - ./routerlicious:/usr/src/server
+      - /usr/src/server/node_modules
+    restart: on-failure
+  deli:
+    platform: linux/amd64
+    build:
+      context: ./routerlicious
+      target: runner
+      additional_contexts:
+        root: ..
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
     environment:
       - DEBUG=fluid:*
@@ -39,9 +66,12 @@ services:
       - /usr/src/server/node_modules
     restart: on-failure
   scriptorium:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
     command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
     environment:
       - DEBUG=fluid:*
@@ -52,9 +82,12 @@ services:
       - /usr/src/server/node_modules
     restart: on-failure
   copier:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
     command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
     environment:
       - DEBUG=fluid:*
@@ -65,9 +98,12 @@ services:
       - /usr/src/server/node_modules
     restart: on-failure
   scribe:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
     command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
     environment:
       - DEBUG=fluid:*
@@ -78,9 +114,12 @@ services:
       - /usr/src/server/node_modules
     restart: on-failure
   riddler:
+    platform: linux/amd64
     build:
       context: ./routerlicious
       target: runner
+      additional_contexts:
+        root: ..
     depends_on:
       - "gitrest"
     ports:
@@ -95,6 +134,7 @@ services:
       - /usr/src/server/node_modules
     restart: on-failure
   historian:
+    platform: linux/amd64
     build:
       context: ./historian
       target: runner
@@ -108,6 +148,7 @@ services:
       - ./historian:/home/node/server
     restart: on-failure
   gitrest:
+    platform: linux/amd64
     build:
       context: ./gitrest
       target: runner
@@ -121,6 +162,7 @@ services:
       - /home/node/server/node_modules
     restart: on-failure
   git:
+    platform: linux/amd64
     image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest
     ports:
       - "3022:22"
@@ -128,11 +170,13 @@ services:
       - git:/home/git
     restart: on-failure
   zookeeper:
+    platform: linux/amd64
     image: wurstmeister/zookeeper:latest
     ports:
       - "2181:2181"
     restart: on-failure
   kafka:
+    platform: linux/arm64/v8
     image: wurstmeister/kafka:2.11-1.1.1
     ports:
       - "9092:9092"
@@ -144,11 +188,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     restart: on-failure
   redis:
+    platform: linux/arm64/v8
     image: "redis:alpine"
   mongodb:
+    platform: linux/arm64/v8
     image: "mongo:4"
-  rabbitmq:
-    image: "rabbitmq:alpine"
 volumes:
   git:
     driver: local

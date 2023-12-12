@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IRoom,
+	IRuntimeSignalEnvelope,
+} from "@fluidframework/server-lambdas";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -15,6 +21,7 @@ import {
 	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
+	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
@@ -41,6 +48,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -129,6 +137,42 @@ export function create(
 		},
 	);
 
+	router.post(
+		"/:tenantId/:id/broadcast-signal",
+		validateRequestParams("tenantId", "id"),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config),
+		async (request, response) => {
+			const tenantId = getParam(request.params, "tenantId");
+			const documentId = getParam(request.params, "id");
+			const signalContent = request?.body?.signalContent;
+			if (!isValidSignalEnvelope(signalContent)) {
+				response
+					.status(400)
+					.send(
+						`signalContent should contain 'contents.content' and 'contents.type' keys.`,
+					);
+				return;
+			}
+			if (!collaborationSessionEventEmitter) {
+				response
+					.status(500)
+					.send(`No emitter configured for the broadcast-signal endpoint.`);
+				return;
+			}
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+				response.status(200).send("OK");
+				return;
+			} catch (error) {
+				response.status(500).send(error);
+				return;
+			}
+		},
+	);
+
 	return router;
 }
 
@@ -169,6 +213,12 @@ function sendJoin(
 		};
 		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
 	});
+}
+
+function isValidSignalEnvelope(
+	input: Partial<IRuntimeSignalEnvelope>,
+): input is IRuntimeSignalEnvelope {
+	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
 }
 
 function sendLeave(

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IRouterliciousDriverPolicies {
 	/**
 	 * Enable prefetching entire snapshot tree into memory before it is loaded by the runtime.
@@ -19,14 +22,6 @@ export interface IRouterliciousDriverPolicies {
 	 * Default: 100
 	 */
 	maxConcurrentOrdererRequests: number;
-	/**
-	 * Give hosts the option to change blob aggregation behavior to suit their needs.
-	 * Larger number means fewer blob individual requests, but less blob-deduping.
-	 * Smaller number means more blob individual requests, but more blob-deduping.
-	 * Setting to `undefined` disables blob aggregration.
-	 * Default: undefined
-	 */
-	aggregateBlobsSmallerThanBytes: number | undefined;
 	/**
 	 * Enable uploading entire summary tree as a IWholeSummaryPayload to storage.
 	 * Default: false

@@ -15,22 +15,25 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerSchema,
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	IFluidContainer,
 	IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
-import { TinyliciousAudience } from "./TinyliciousAudience";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
  * See {@link https://fluidframework.com/docs/testing/tinylicious/}
+ * @internal
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -56,8 +59,10 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -70,7 +75,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -87,7 +92,10 @@ export class TinyliciousClient {
 			return container.resolvedUrl.id;
 		};
 
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 
 		const services = this.getContainerServices(container);
@@ -100,17 +108,20 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer(
+	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: TContainerSchema,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -118,12 +129,17 @@ export class TinyliciousClient {
 	// #region private
 	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
-			audience: new TinyliciousAudience(container),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createTinyliciousAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema) {
-		const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema) {
+		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: containerRuntimeFactory },
@@ -151,6 +167,17 @@ export class TinyliciousClient {
 		});
 
 		return loader;
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> | undefined =
+			await container.getEntryPoint();
+		assert(rootDataObject !== undefined, 0x862 /* entryPoint must exist */);
+		// ! This "if" is needed for back-compat (older instances of IRootDataObject may not have the IRootDataObject property)
+		if (rootDataObject.IRootDataObject === undefined) {
+			return rootDataObject as IRootDataObject;
+		}
+		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }

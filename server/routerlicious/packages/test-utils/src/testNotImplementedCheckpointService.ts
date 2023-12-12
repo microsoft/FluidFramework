@@ -12,9 +12,16 @@ import {
 
 const defaultErrorMsg = "Method not implemented. Provide your own mock.";
 
+/**
+ * @internal
+ */
 export class TestNotImplementedCheckpointService implements ICheckpointService {
-	localCheckpointEnabled: boolean = false;
-
+	getGlobalCheckpointFailed(): boolean {
+		throw new Error(defaultErrorMsg);
+	}
+	getLocalCheckpointEnabled(): boolean {
+		throw new Error(defaultErrorMsg);
+	}
 	async writeCheckpoint(
 		documentId: string,
 		tenantId: string,

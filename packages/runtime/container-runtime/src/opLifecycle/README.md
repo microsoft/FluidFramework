@@ -1,5 +1,19 @@
 # Configs and feature gates for solving the 1MB limit.
 
+## Table of contents
+
+-   [Introduction](#introduction)
+    -   [How batching works](#how-batching-works)
+-   [Compression](#compression)
+-   [Grouped batching](#grouped-batching)
+    -   [Risks](#risks)
+-   [Chunking for compression](#chunking-for-compression)
+-   [Disabling in case of emergency](#disabling-in-case-of-emergency)
+-   [Example configs](#example-configs)
+-   [Note about performance and latency](#note-about-performance-and-latency)
+-   [How it works](#how-it-works)
+-   [How grouped batching works](#how-grouped-batching-works)
+
 ## Introduction
 
 There is a current limitation regarding the size of the payload a Fluid client can send and receive. [The limit is 1MB per payload](https://github.com/microsoft/FluidFramework/issues/9023) and it is currently enforced explicitly with the `BatchTooLarge` error which closes the container.
@@ -8,17 +22,35 @@ There are two features which can be used to work around this size limit, batch c
 
 By default, the runtime is configured with a max batch size of `716800` bytes, which is lower than the 1MB limit. The reason for the lower value is to account for possible overhead from the op envelope and metadata.
 
-## Table of contents
+### How batching works
 
--   [Introduction](#introduction)
-    -   [Compression](#compression)
-    -   [Grouped batching](#grouped-batching)
-        -   [Risks](#risks)
-    -   [Chunking for compression](#chunking-for-compression)
-    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
-    -   [Example configs](#example-configs)
-    -   [How it works](#how-it-works)
-    -   [How grouped batching works](#how-grouped-batching-works)
+Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches are never interleaved, nested or interrupted and they are processed in isolation without interleaving of ops from other clients.
+
+The way batches are formed is governed by the `FlushMode` setting of the `ContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
+
+```
+export enum FlushMode {
+    /**
+     * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
+     */
+    Immediate,
+
+    /**
+     * When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
+     * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
+     */
+    TurnBased,
+}
+```
+
+What this means is that `FlushMode.Immediate` will send each op in its own payload to the server, while `FlushMode.TurnBased` will accumulate all ops in a single JS turn and send them together in the same payload. Technically, `FlushMode.Immediate` can be simulated with `FlushMode.TurnBased` by interrupting the JS turn after producing only one op (for example by pausing the execution to wait on a promise). Therefore, for all intents and purposes, `FlushMode.Immediate` enables all batches to have only one op.
+
+**By default, Fluid uses `FlushMode.TurnBased`** as:
+
+-   it is more efficient from an I/O perspective (batching ops overall decrease the number of payloads sent to the server)
+-   reduces concurrency related bugs, as it ensures that all ops generated within the same JS turn are also applied by all other clients within a single JS turn. Clients using the same pattern can safely assume ops will be applied exactly as they are observed locally. The alternative would be for ops to be both produced and applied with interruptions (which may involve processing input or rendering), invalidating the state based off which the changes were produced.
+
+As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into the 1MB socket limit.
 
 ## Compression
 
@@ -28,6 +60,8 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 -   `minimumBatchSizeInBytes` – the minimum size of the batch for which compression should kick in. If the payload is too small, compression may not yield too many benefits. To target the original 1MB issue, a good value here would be to match the default maxBatchSizeInBytes (972800), however, experimentally, a good lower value could be at around 614400 bytes. Setting this value to `Number.POSITIVE_INFINITY` will disable compression.
 -   `compressionAlgorithm` – currently, only `lz4` is supported.
+
+Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
 ## Grouped batching
 
@@ -71,6 +105,8 @@ If all prerequisites in the previous section are met, enabling the feature can b
 
 In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
 
+Grouped batching is only relevant for `FlushMode.TurnBased` as it only targets the number of ops in a batch. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+
 ## Chunking for compression
 
 **Op chunking for compression targets payloads which exceed the max batch size after compression.** So, only payloads which are already compressed. By default, the feature is enabled.
@@ -78,6 +114,8 @@ In case of emergency grouped batching can be disabled at runtime, using feature 
 The `IContainerRuntimeOptions.chunkSizeInBytes` property is the only configuration for chunking and it represents the size of the chunked ops, when chunking is necessary. When chunking is performed, the large op is split into smaller ops (chunks). This config represents both the size of the chunks and the threshold for the feature to activate. The value enables a trade-off between large chunks / few ops and small chunks / many ops. A good value for this would be at around 204800. Setting this value to `Number.POSITIVE_INFINITY` will disable chunking.
 
 This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `IContainerRuntimeOptions.chunkSizeInBytes`.
+
+Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Chunking is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
 ## Disabling in case of emergency
 
@@ -102,32 +140,19 @@ By default, the runtime is configured with the following values related to compr
     }
 ```
 
-To use compression but disable chunking:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        chunkSizeInBytes: Number.POSITIVE_INFINITY,
-    }
-```
-
-To disable compression (will also disable chunking, as chunking works only for compressed batches):
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        compressionOptions: {
-            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-            compressionAlgorithm: CompressionAlgorithms.lz4,
-        },
-    }
-```
-
-To enable grouped batching:
+To enable grouped batching, use the following property:
 
 ```
     const runtimeOptions: IContainerRuntimeOptions = {
         enableGroupedBatching: true,
     }
 ```
+
+## Note about performance and latency
+
+In terms of performance and impact on latency, the results greatly depend on payload size, payload structure, network speed and CPU speed. Therefore, customers must perform the required measurements and adjust the settings according to their scenarios.
+
+In general, compression offers a trade-off between higher compute costs, lower bandwidth consumption and lower storage requirements, while chunking slightly increases latency due to the overhead of splitting an op, sending the chunks and reconstructing them on each client. Grouped batching heavily decreases the number of ops observed by the server and slightly decreases the bandwidth requirements as it merges all the ops in a batch into a single op and also eliminates the op envelope overhead.
 
 ## How it works
 
@@ -212,8 +237,6 @@ On the receiving end, the client will accumulate chunks 1 and 2 and keep them in
 
 ## How grouped batching works
 
-**Note: There are plans to replace empty ops with something more efficient when doing grouped batching AB#4092**
-
 Given the following baseline batch:
 
 ```
@@ -223,68 +246,70 @@ Given the following baseline batch:
 +---------------+---------------+---------------+---------------+---------------+
 ```
 
-Compressed batch:
-
-```
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1               | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty |
-| Compression: 'lz4' |                 |                 |                 |                 |
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-```
-
 Grouped batch:
 
 ```
-+---------------------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +--------------------+-----------------+-----------------+-----------------+-----------------+ |
-| SeqNum: 1                        | Op 1               | Op 2            | Op 3            | Op 4            | Op 5            | |
-| Type: "groupedBatch"             | Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty | |
-|                                  | Compression: 'lz4' |                 |                 |                 |                 | |
-|                                  +--------------------+-----------------+-----------------+-----------------+-----------------+ |
-+---------------------------------------------------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
+|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Compressed batch:
+
+```
++-------------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +------------------------------------------------------------------------------------+ |
+| Compression: 'lz4'               | Type: "groupedBatch"                                                               | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
+|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  +------------------------------------------------------------------------------------+ |
++-------------------------------------------------------------------------------------------------------------------------+
 ```
 
 Can produce the following chunks:
 
 ```
-+-------------------------------------------------+
-| Chunk 1/2    Contents: +----------------------+ |
-| SeqNum: 1              |  +-----------------+ | |
-|                        |  | Contents: "abc" | | |
-|                        |  +-----------------+ | |
-|                        +----------------------+ |
-+-------------------------------------------------+
++------------------------------------------------+
+| Chunk 1/2    Contents: +---------------------+ |
+|                        | +-----------------+ | |
+|                        | | Contents: "abc" | | |
+|                        | +-----------------+ | |
+|                        +---------------------+ |
++------------------------------------------------+
 ```
 
 ```
-+--------------------------------------------------------------------------------------------------------------------------+
-| Chunk 2/2    Contents: +---------------------------------------------------------------------------------------------+ | |
-| SeqNum: 2              |  +----------------+-----------------+-----------------+-----------------+-----------------+ | | |
-|                        |  | Contents: "de" | Contents: empty | Contents: empty | Contents: empty | Contents: empty | | | |
-|                        |  +----------------+-----------------+-----------------+-----------------+-----------------+ | | |
-|                        +---------------------------------------------------------------------------------------------+ | |
-+--------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------+
+| Chunk 2/2    Contents: +--------------------+ |
+|                        | +----------------+ | |
+|                        | | Contents: "de" | | |
+|                        | +----------------+ | |
+|                        +--------------------+ |
++-----------------------------------------------+
 ```
 
 -   Send to service
 -   Service acks ops sent
 -   Receive chunks from service
--   Recompile to the grouped batch step
+-   Recompile to the compression step
+
+Decompressed batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
+| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
 
 Ungrouped batch:
-
-```
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1               | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "abcde"  | Contents: empty | Contents: empty | Contents: empty | Contents: empty |
-| SeqNum: 2          | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
-| ClientSeqNum: 1    | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
-| Compression: 'lz4' |                 |                 |                 |                 |
-+--------------------+-----------------+-----------------+-----------------+-----------------+
-```
-
-Uncompressed batch:
 
 ```
 +-----------------+-----------------+-----------------+-----------------+-----------------+

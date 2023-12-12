@@ -11,8 +11,13 @@ import {
 	compareUpPaths,
 	clonePath,
 	compareFieldUpPaths,
+	rootFieldKey,
+	rootField,
 } from "../../core";
 import { brand } from "../../util";
+// This import is targeting the code being tested
+// eslint-disable-next-line import/no-internal-modules
+import { getDetachedFieldContainingPath } from "../../core/tree/pathTree";
 
 const rootKey = brand<FieldKey>("root");
 const fooKey = brand<FieldKey>("foo");
@@ -135,5 +140,30 @@ describe("pathTree", () => {
 		assert(
 			!compareFieldUpPaths({ field: fooKey, parent: root }, { field: fooKey, parent: child }),
 		);
+	});
+
+	describe("getDetachedFieldContainingPath", () => {
+		it("returns the DetachedField of a simple path", () => {
+			const path: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const detachedField = getDetachedFieldContainingPath(path);
+			assert.equal(detachedField, rootField);
+		});
+		it("returns the DetachedField of a nested path", () => {
+			const path: UpPath = {
+				parent: {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				},
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const detachedField = getDetachedFieldContainingPath(path);
+			assert.equal(detachedField, rootField);
+		});
 	});
 });

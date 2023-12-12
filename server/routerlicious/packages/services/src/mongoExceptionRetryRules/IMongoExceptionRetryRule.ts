@@ -18,7 +18,10 @@ export abstract class BaseMongoExceptionRetryRule implements IMongoExceptionRetr
 	}
 
 	private readonly overrideRetryDecision?: boolean;
-	constructor(public readonly ruleName: string, retryRuleOverride: Map<string, boolean>) {
+	constructor(
+		public readonly ruleName: string,
+		retryRuleOverride: Map<string, boolean>,
+	) {
 		this.overrideRetryDecision = retryRuleOverride.get(ruleName);
 	}
 }

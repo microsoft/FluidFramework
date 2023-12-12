@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions";
 import {
-	currentGCVersion,
+	nextGCVersion,
 	gcStateBlobKey,
 	GCSummaryStateTracker,
 	GCVersion,
@@ -191,8 +191,8 @@ describe("GCSummaryStateTracker tests", () => {
 				{
 					shouldRunGC: true,
 					tombstoneMode: true,
-					gcVersionInBaseSnapshot: currentGCVersion,
-					gcVersionInEffect: currentGCVersion,
+					gcVersionInBaseSnapshot: nextGCVersion,
+					gcVersionInEffect: nextGCVersion,
 				},
 				false /* wasGCRunInBaseSnapshot */,
 			);
@@ -313,14 +313,20 @@ describe("GCSummaryStateTracker tests", () => {
 			attachmentBlobCount: 0,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 0,
+			lifetimeNodeCount: 0,
+			lifetimeDataStoreCount: 0,
+			lifetimeAttachmentBlobCount: 0,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		const summaryStateTracker = new GCSummaryStateTracker(
 			{
 				shouldRunGC: true,
 				tombstoneMode: true,
-				gcVersionInBaseSnapshot: currentGCVersion,
-				gcVersionInEffect: currentGCVersion,
+				gcVersionInBaseSnapshot: nextGCVersion,
+				gcVersionInEffect: nextGCVersion,
 			},
 			false /* wasGCRunInBaseSnapshot */,
 		);

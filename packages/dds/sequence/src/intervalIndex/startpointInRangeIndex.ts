@@ -2,10 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
-import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	IntervalType,
+	SequenceInterval,
+	sequenceIntervalHelpers,
+} from "../intervals";
+import { SharedString } from "../sharedString";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
 
@@ -13,31 +20,27 @@ import { HasComparisonOverride, compareOverrideables, forceCompare } from "./int
  * Collection of intervals.
  *
  * Provide additional APIs to support efficiently querying a collection of intervals whose startpoints fall within a specified range.
+ * @internal
  */
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
 	/**
 	 * @returns an array of all intervals contained in this collection whose startpoints locate in the range [start, end] (includes both ends)
 	 */
-	findIntervalsWithStartpointInRange(start: number, end: number);
+	findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
-class StartpointInRangeIndex<TInterval extends ISerializableInterval>
+export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 	implements IStartpointInRangeIndex<TInterval>
 {
 	private readonly intervalTree;
 
 	constructor(
-		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly client: Client,
+		private readonly helpers: IIntervalHelpers<TInterval>,
 	) {
 		this.intervalTree = new RedBlackTree<TInterval, TInterval>((a: TInterval, b: TInterval) => {
-			assert(
-				typeof helpers.compareStarts === "function",
-				0x6d1 /* compareStarts does not exist in the helpers */,
-			);
-
-			const compareStartsResult = helpers.compareStarts(a, b);
+			const compareStartsResult = a.compareStart(b);
 			if (compareStartsResult !== 0) {
 				return compareStartsResult;
 			}
@@ -66,7 +69,7 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		this.intervalTree.remove(interval);
 	}
 
-	public findIntervalsWithStartpointInRange(start: number, end: number) {
+	public findIntervalsWithStartpointInRange(start: number, end: number): TInterval[] {
 		if (start <= 0 || start > end || this.intervalTree.isEmpty()) {
 			return [];
 		}
@@ -100,10 +103,12 @@ class StartpointInRangeIndex<TInterval extends ISerializableInterval>
 		return results;
 	}
 }
-
-export function createStartpointInRangeIndex<TInterval extends ISerializableInterval>(
-	helpers: IIntervalHelpers<TInterval>,
-	client: Client,
-): IStartpointInRangeIndex<TInterval> {
-	return new StartpointInRangeIndex<TInterval>(helpers, client);
+/**
+ * @internal
+ */
+export function createStartpointInRangeIndex(
+	sharedString: SharedString,
+): IStartpointInRangeIndex<SequenceInterval> {
+	const client = (sharedString as unknown as { client: Client }).client;
+	return new StartpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

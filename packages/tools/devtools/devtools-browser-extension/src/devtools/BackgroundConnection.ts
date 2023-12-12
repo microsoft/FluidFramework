@@ -5,10 +5,10 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	IDevtoolsMessage,
-	ISourcedDevtoolsMessage,
-	IMessageRelay,
-	IMessageRelayEvents,
+	type IDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
+	type IMessageRelay,
+	type IMessageRelayEvents,
 	isDevtoolsMessage,
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
@@ -16,11 +16,11 @@ import {
 import { browser } from "../Globals";
 import {
 	devToolsInitAcknowledgementType,
-	DevToolsInitMessage,
+	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
 	postMessageToPort,
-	TypedPortConnection,
+	type TypedPortConnection,
 } from "../messaging";
 import {
 	devtoolsScriptMessageLoggingOptions,

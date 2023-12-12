@@ -14,10 +14,9 @@ Checks that all packages have the same version set in package.json. The packages
 
 ```
 USAGE
-  $ flub check buildVersion [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+  $ flub check buildVersion [-v | --quiet] [--version <value> | --path <value>] [--fix] [--concurrency <value>] [--all |
+    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
-    [--version <value> | --path <value>] [--fix]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -58,13 +57,15 @@ DESCRIPTION
   criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.
 ```
 
+_See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
 ## `flub check changeset`
 
 Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.
 
 ```
 USAGE
-  $ flub check changeset -b <value> [-v | --quiet] [--json]
+  $ flub check changeset -b <value> [--json] [-v | --quiet]
 
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.
@@ -85,6 +86,8 @@ EXAMPLES
 
     $ flub check changeset -b next
 ```
+
+_See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
 
 ## `flub check layers`
 
@@ -108,6 +111,8 @@ DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
 ```
 
+_See code: [src/commands/check/layers.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/layers.ts)_
+
 ## `flub check policy`
 
 Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
@@ -118,9 +123,9 @@ USAGE
     | -f | ]
 
 FLAGS
-  -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple
+  -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple
                                    handlers.
-  -d, --handler=<value>            Filter handler names by <regex>.
+  -d, --handler=<value>            Filter policy handler names by <regex>.
   -e, --exclusions=<value>         Path to the exclusions.json file.
   -f, --fix                        Fix errors if possible.
   -p, --path=<value>               Filter file paths by <regex>.
@@ -135,3 +140,5 @@ DESCRIPTION
   Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
   assert tagging, etc.
 ```
+
+_See code: [src/commands/check/policy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/policy.ts)_

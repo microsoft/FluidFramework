@@ -4,10 +4,6 @@
  */
 
 export {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
-	IContainerRuntimeMessageCompatDetails,
-	CompatModeBehavior,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -27,9 +23,27 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	TEST_requestSummarizer,
 } from "./containerRuntime";
+export {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
+	CompatModeBehavior,
+	RecentlyAddedContainerRuntimeMessageDetails,
+} from "./messageTypes";
+export { IBlobManagerLoadInfo } from "./blobManager";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCRuntimeOptions, IGCStats } from "./gc";
+export {
+	GCNodeType,
+	IGCMetadata,
+	GCFeatureMatrix,
+	GCVersion,
+	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
+	IGCStats,
+} from "./gc";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -45,6 +59,8 @@ export {
 	IBroadcastSummaryResult,
 	ICancellationToken,
 	IConnectableRuntime,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
@@ -53,6 +69,7 @@ export {
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,
+	ISerializedElection,
 	ISummarizeOptions,
 	ISummarizerEvents,
 	ISummarizerInternalsProvider,
@@ -65,6 +82,7 @@ export {
 	ISummary,
 	ISummaryCollectionOpEvents,
 	ISummaryAckMessage,
+	ISummaryMetadataMessage,
 	ISummaryNackMessage,
 	ISummaryOpMessage,
 	OpActionEventListener,
@@ -75,5 +93,21 @@ export {
 	IRetriableFailureResult,
 	ISummarizeEventProps,
 } from "./summary";
-export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
+
+// Re-exports for backwards compatibility.
+// Will be removed in the future.
+export {
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	assertIsStableId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	generateStableId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	isStableId,
+} from "@fluidframework/id-compressor";

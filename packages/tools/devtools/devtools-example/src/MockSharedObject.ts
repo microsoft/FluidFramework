@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannelAttributes } from "@fluidframework/datastore-definitions";
+import type { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 /**

@@ -7,6 +7,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
@@ -17,7 +18,7 @@ import { assert } from "@fluidframework/core-utils";
 import * as MergeTree from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
-import random from "random-js";
+import { MersenneTwister19937, integer } from "random-js";
 import { createIntervalIndex } from "../intervalCollection";
 import { IntervalTree } from "../intervalTree";
 import { SequenceInterval, IntervalType, Interval } from "../intervals";
@@ -77,8 +78,7 @@ export function propertyCopy() {
 }
 
 function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 	const bookmarks = <SequenceInterval[]>[];
 	const len = client.mergeTree.getLength(
 		MergeTree.UniversalSequenceNumber,
@@ -86,8 +86,8 @@ function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 	);
 	const maxRangeLen = Math.min(Math.floor(len / 100), 30);
 	for (let i = 0; i < bookmarkCount; i++) {
-		let pos1 = random.integer(0, len - 1)(mt);
-		const rangeLen = random.integer(0, maxRangeLen)(mt);
+		let pos1 = integer(0, len - 1)(mt);
+		const rangeLen = integer(0, maxRangeLen)(mt);
 		let pos2 = pos1 + rangeLen;
 		if (pos2 >= len) {
 			pos2 = len - 2;
@@ -126,15 +126,14 @@ function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 }
 
 function makeReferences(client: MergeTree.TestClient, referenceCount: number) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 	const refs = <MergeTree.LocalReferencePosition[]>[];
 	const len = client.mergeTree.getLength(
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.NonCollabClient,
 	);
 	for (let i = 0; i < referenceCount; i++) {
-		const pos = random.integer(0, len - 1)(mt);
+		const pos = integer(0, len - 1)(mt);
 		const segoff = client.getContainingSegment(pos);
 		if (segoff?.segment) {
 			const baseSegment = <MergeTree.BaseSegment>segoff.segment;
@@ -156,11 +155,10 @@ function makeReferences(client: MergeTree.TestClient, referenceCount: number) {
 }
 
 export function TestPack(verbose = true) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-	const smallSegmentCountDistribution = random.integer(1, 4);
+	const mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const smallSegmentCountDistribution = integer(1, 4);
 	const randSmallSegmentCount = () => smallSegmentCountDistribution(mt);
-	const textLengthDistribution = random.integer(1, 5);
+	const textLengthDistribution = integer(1, 5);
 	const randTextLength = () => textLengthDistribution(mt);
 	const zedCode = 48;
 	function randomString(len: number, c: string) {
@@ -347,7 +345,7 @@ export function TestPack(verbose = true) {
 			const cliMsgCount = client.getMessageCount();
 			const countToApply: number = all
 				? cliMsgCount
-				: random.integer(Math.floor((2 * cliMsgCount) / 3), cliMsgCount)(mt);
+				: integer(Math.floor((2 * cliMsgCount) / 3), cliMsgCount)(mt);
 			client.applyMessages(countToApply);
 		}
 
@@ -355,7 +353,7 @@ export function TestPack(verbose = true) {
 			const svrMsgCount = server.getMessageCount();
 			const countToApply: number = all
 				? svrMsgCount
-				: random.integer(Math.floor((2 * svrMsgCount) / 3), svrMsgCount)(mt);
+				: integer(Math.floor((2 * svrMsgCount) / 3), svrMsgCount)(mt);
 			return server.applyMessages(countToApply);
 		}
 
@@ -366,7 +364,7 @@ export function TestPack(verbose = true) {
 				String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)),
 			);
 			const preLen = client.getLength();
-			const pos = random.integer(0, preLen)(mt);
+			const pos = integer(0, preLen)(mt);
 			if (includeMarkers) {
 				const markerOp = client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile, {
 					[MergeTree.reservedTileLabelsKey]: "test",
@@ -385,7 +383,7 @@ export function TestPack(verbose = true) {
 		function randomSpateOfRemoves(client: MergeTree.TestClient) {
 			const dlen = randTextLength();
 			const preLen = client.getLength();
-			const pos = random.integer(0, preLen)(mt);
+			const pos = integer(0, preLen)(mt);
 			const op = client.removeRangeLocal(pos, pos + dlen);
 			testServer.enqueueMsg(client.makeOpMessage(op));
 			if (MergeTree.TestClient.useCheckQ) {
@@ -553,16 +551,15 @@ export function TestPack(verbose = true) {
 				}
 				refReadTime += elapsedMicroseconds(clockStart);
 				if (testOrdinals) {
-					const mt2 = random.engines.mt19937();
-					mt2.seedWithArray([0xdeadbeef, 0xfeedbed]);
+					const mt2 = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 					const checkRange = <number[][]>[];
 					const len = testServer.mergeTree.getLength(
 						MergeTree.UniversalSequenceNumber,
 						testServer.getClientId(),
 					);
 					for (let i = 0; i < rangeChecksPerRound; i++) {
-						const e = random.integer(0, len - 2)(mt2);
-						const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt2);
+						const e = integer(0, len - 2)(mt2);
+						const rangeSize = integer(1, Math.min(1000, len - 2))(mt2);
 						let b = e - rangeSize;
 						if (b < 0) {
 							b = 0;
@@ -596,8 +593,7 @@ export function TestPack(verbose = true) {
 					}
 				}
 				if (measureRanges) {
-					const mt2 = random.engines.mt19937();
-					mt2.seedWithArray([0xdeadbeef, 0xfeedbed]);
+					const mt2 = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 					const len = testServer.mergeTree.getLength(
 						MergeTree.UniversalSequenceNumber,
 						testServer.getClientId(),
@@ -607,7 +603,7 @@ export function TestPack(verbose = true) {
 					const checkPosRanges = <SequenceInterval[]>[];
 					const checkRangeRanges = <SequenceInterval[]>[];
 					for (let i = 0; i < posChecksPerRound; i++) {
-						checkPos[i] = random.integer(0, len - 2)(mt2);
+						checkPos[i] = integer(0, len - 2)(mt2);
 						const segoff1 = testServer.getContainingSegment(checkPos[i]);
 						const segoff2 = testServer.getContainingSegment(checkPos[i] + 1);
 						if (segoff1?.segment && segoff2?.segment) {
@@ -634,8 +630,8 @@ export function TestPack(verbose = true) {
 						}
 					}
 					for (let i = 0; i < rangeChecksPerRound; i++) {
-						const e = random.integer(0, len - 2)(mt2);
-						const rangeSize = random.integer(1, Math.min(1000, len - 2))(mt2);
+						const e = integer(0, len - 2)(mt2);
+						const rangeSize = integer(1, Math.min(1000, len - 2))(mt2);
 						let b = e - rangeSize;
 						if (b < 0) {
 							b = 0;
@@ -1184,12 +1180,11 @@ export function mergeTreeCheckedTest() {
 	const insertCount = 2000;
 	const removeCount = 1400;
 	const largeRemoveCount = 20;
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 	const imin = 1;
 	const imax = 9;
-	const distribution = random.integer(imin, imax);
-	const largeDistribution = random.integer(10, 1000);
+	const distribution = integer(imin, imax);
+	const largeDistribution = integer(10, 1000);
 	const randInt = () => distribution(mt);
 	const randLargeInt = () => largeDistribution(mt);
 	function randomString(len: number, c: string) {
@@ -1210,7 +1205,7 @@ export function mergeTreeCheckedTest() {
 			MergeTree.UniversalSequenceNumber,
 			MergeTree.LocalClientId,
 		);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = integer(0, preLen)(mt);
 		if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
 			console.log(
 				`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(
@@ -1244,7 +1239,7 @@ export function mergeTreeCheckedTest() {
 			MergeTree.UniversalSequenceNumber,
 			MergeTree.LocalClientId,
 		);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = integer(0, preLen)(mt);
 		// Console.log(itree.toString());
 		if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
 			console.log(
@@ -1278,7 +1273,7 @@ export function mergeTreeCheckedTest() {
 			MergeTree.UniversalSequenceNumber,
 			MergeTree.LocalClientId,
 		);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = integer(0, preLen)(mt);
 		// Console.log(itree.toString());
 		if (i & 1) {
 			if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
@@ -1328,7 +1323,7 @@ export function mergeTreeCheckedTest() {
 			MergeTree.UniversalSequenceNumber,
 			MergeTree.LocalClientId,
 		);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = integer(0, preLen)(mt);
 		if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
 			console.log(
 				`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(
@@ -1362,7 +1357,7 @@ export function mergeTreeCheckedTest() {
 			MergeTree.UniversalSequenceNumber,
 			MergeTree.LocalClientId,
 		);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = integer(0, preLen)(mt);
 		// Console.log(itree.toString());
 		if (i & 1) {
 			if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
@@ -1406,14 +1401,13 @@ export function mergeTreeCheckedTest() {
 }
 
 export class RandomPack {
-	mt: Random.MT19937;
+	mt: MersenneTwister19937;
 	constructor() {
-		this.mt = random.engines.mt19937();
-		this.mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+		this.mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 	}
 
 	randInteger(min: number, max: number) {
-		return random.integer(min, max)(this.mt);
+		return integer(min, max)(this.mt);
 	}
 
 	randString(wordCount: number) {
@@ -1468,7 +1462,10 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(public name: string, public children: DocumentNode[]) {}
+	constructor(
+		public name: string,
+		public children: DocumentNode[],
+	) {}
 
 	addToMergeTree(client: MergeTree.TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {
@@ -1700,13 +1697,12 @@ export class DocumentTree {
 }
 
 export function intervalTest() {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const mt = MersenneTwister19937.seedWithArray([0xdeadbeef, 0xfeedbed]);
 	const imin = 0;
 	const imax = 10000000;
 	const intCount = 50000;
 	const arr = [] as Interval[];
-	const distribution = random.integer(imin, imax);
+	const distribution = integer(imin, imax);
 	const randInt = () => distribution(mt);
 	const intervalIndex = createIntervalIndex();
 

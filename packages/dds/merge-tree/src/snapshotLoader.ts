@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { bufferToString } from "@fluid-internal/client-utils";
@@ -101,7 +102,7 @@ export class SnapshotLoader {
 					? this.client.getOrAddShortClientId(spec.client)
 					: NonCollabClient;
 
-			seg.seq = spec.seq !== undefined ? spec.seq : UniversalSequenceNumber;
+			seg.seq = spec.seq ?? UniversalSequenceNumber;
 
 			if (spec.removedSeq !== undefined) {
 				seg.removedSeq = spec.removedSeq;
@@ -162,9 +163,8 @@ export class SnapshotLoader {
 
 				// TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
 				//       (See https://github.com/microsoft/FluidFramework/issues/84)
-				/* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
-					? chunk.headerMetadata.minSequenceNumber
-					: chunk.headerMetadata.sequenceNumber,
+				/* minSeq: */ chunk.headerMetadata.minSequenceNumber ??
+					chunk.headerMetadata.sequenceNumber,
 				/* currentSeq: */ chunk.headerMetadata.sequenceNumber,
 			);
 		}

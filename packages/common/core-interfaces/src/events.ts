@@ -5,6 +5,7 @@
 
 /**
  * Base interface for event emitters.
+ * @alpha
  */
 export interface IEvent {
 	/**
@@ -23,6 +24,7 @@ export interface IEvent {
 
 /**
  * Base interface for error event emitters.
+ * @alpha
  */
 export interface IErrorEvent extends IEvent {
 	/**
@@ -36,6 +38,7 @@ export interface IErrorEvent extends IEvent {
 
 /**
  * Base interface for event providers.
+ * @alpha
  */
 export interface IEventProvider<TEvent extends IEvent> {
 	/**
@@ -58,6 +61,7 @@ export interface IEventProvider<TEvent extends IEvent> {
  * Allows an interface to extend interfaces that already extend an {@link IEventProvider}.
  *
  * @example
+ *
  * ``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
@@ -73,8 +77,9 @@ export interface IEventProvider<TEvent extends IEvent> {
  *  b: boolean;
  * };
  * ```
- * interface B will now extend interface A and its events
  *
+ * interface B will now extend interface A and its events
+ * @alpha
  */
 export type ExtendEventProvider<
 	TBaseEvent extends IEvent,
@@ -96,12 +101,14 @@ export type ExtendEventProvider<
 
 /**
  * The placeholder type that should be used instead of `this` in events.
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
 
 /**
  * Does the type replacement by changing types of {@link IEventThisPlaceHolder} to `TThis`
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[]
@@ -111,6 +118,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 /**
  * Transforms the event overload by replacing {@link IEventThisPlaceHolder} with `TThis` in the event listener
  * arguments and having the overload return `TTHis` as well
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TransformedEvent<TThis, E, A extends any[]> = (
@@ -126,6 +134,7 @@ export type TransformedEvent<TThis, E, A extends any[]> = (
  * It currently supports the max of 15 event overloads which is more than we use anywhere.
  * At more than 15 overloads we start to hit {@link https://github.com/microsoft/TypeScript/issues/37209 | TS2589}.
  * If we need to move beyond 15 we should evaluate using a mapped type pattern like `{"event":(listenerArgs)=>void}`
+ * @alpha
  */
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	(event: infer E0, listener: (...args: infer A0) => void);

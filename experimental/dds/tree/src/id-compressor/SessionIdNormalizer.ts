@@ -339,7 +339,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		firstAlignedLocal: LocalCompressedId,
 		lastAlignedLocal: LocalCompressedId,
 		lastAlignedFinal: FinalCompressedId,
-		lastFinalRange: FinalRange<TRangeObject>
+		lastFinalRange: FinalRange<TRangeObject>,
 	] {
 		const isSingle = isSingleRange(finalRanges);
 		let lastFinalRange: FinalRange<TRangeObject>;
@@ -466,7 +466,7 @@ export class SessionIdNormalizer<TRangeObject> {
 type FinalRange<TRangeObject> = [
 	firstFinal: FinalCompressedId,
 	lastFinal: FinalCompressedId,
-	rangeObject: TRangeObject
+	rangeObject: TRangeObject,
 ];
 
 type FinalRangesMap<TRangeObject> = AppendOnlyDoublySortedMap<

@@ -8,7 +8,6 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -22,7 +21,7 @@ import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -168,13 +167,13 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedString.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			this.dataObjectFactory,
-			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-			undefined,
-			undefined,
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: this.dataObjectFactory,
+			registryEntries: [
+				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
+			],
 			runtimeOptions,
-		);
+		});
 
 		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
@@ -198,7 +197,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			configProvider: configProvider(featureGates),
 		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
 		await this.ensureContainerConnectedWriteMode(this._mainContainer);

@@ -8,7 +8,10 @@ import { IntervalTree } from "../intervalTree";
 import { IInterval } from "../intervals";
 
 class TestInterval implements IInterval {
-	constructor(public start: number, public end: number) {}
+	constructor(
+		public start: number,
+		public end: number,
+	) {}
 
 	public clone() {
 		return new TestInterval(this.start, this.end);

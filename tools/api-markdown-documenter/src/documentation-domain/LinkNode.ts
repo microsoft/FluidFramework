@@ -21,6 +21,8 @@ import { PlainTextNode } from "./PlainTextNode";
  * ```html
  * <a href="https://fluidframework.com/">Fluid Framework</a>
  * ```
+ *
+ * @public
  */
 export class LinkNode
 	extends DocumentationParentNodeBase<SingleLineDocumentationNode>

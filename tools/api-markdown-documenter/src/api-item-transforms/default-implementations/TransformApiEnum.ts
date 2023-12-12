@@ -5,9 +5,10 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import { DocumentationNode, SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../ApiItemUtilities";
+import { filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createMemberTables, wrapInSection } from "../helpers";
+import { filterChildMembers } from "../ApiItemTransformUtilities";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -19,9 +20,8 @@ export function transformApiEnum(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const hasAnyChildren = apiEnum.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiEnum, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const flags = filterByKind(apiEnum.members, [ApiItemKind.EnumMember]).map(
 			(apiItem) => apiItem as ApiEnumMember,
@@ -53,5 +53,5 @@ export function transformApiEnum(
 		}
 	}
 
-	return config.createChildContentSections(apiEnum, sections, config);
+	return config.createDefaultLayout(apiEnum, sections, config);
 }

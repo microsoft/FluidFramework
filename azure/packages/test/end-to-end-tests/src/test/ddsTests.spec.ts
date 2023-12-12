@@ -10,6 +10,7 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
@@ -39,10 +40,12 @@ describe("Fluid data updates", () => {
 		const { container: newContainer } = await client.createContainer(schema);
 		const containerId = await newContainer.attach();
 
-		await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (newContainer.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const resources = client.getContainer(containerId, schema);
 		await assert.doesNotReject(
@@ -68,10 +71,12 @@ describe("Fluid data updates", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const initialObjectsCreate = container.initialObjects;
 		const map1Create = initialObjectsCreate.map1 as SharedMap;
@@ -99,10 +104,12 @@ describe("Fluid data updates", () => {
 		const { container } = await client.createContainer(doSchema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const initialObjectsCreate = container.initialObjects;
 		assert(
@@ -144,10 +151,12 @@ describe("Fluid data updates", () => {
 		const { container } = await client.createContainer(doSchema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const initialObjectsCreate = container.initialObjects;
 		assert(
@@ -202,10 +211,12 @@ describe("Fluid data updates", () => {
 
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-			durationMs: connectTimeoutMs,
-			errorMsg: "container connect() timeout",
-		});
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		const { container: containerGet } = await client.getContainer(containerId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;

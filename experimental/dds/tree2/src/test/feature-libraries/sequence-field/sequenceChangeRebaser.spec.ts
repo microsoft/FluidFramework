@@ -4,29 +4,37 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
+	makeAnonChange,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	RevisionInfo,
 } from "../../../core";
+import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
-import { deepFreeze, isDeltaVisible } from "../../utils";
-import { brand } from "../../../util";
+import { deepFreeze } from "../../utils";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import {
 	compose,
-	composeAnonChanges,
 	invert,
+	rebaseOverChanges,
+	rebaseOverComposition,
 	rebaseTagged,
-	toDelta,
+	withNormalizedLineage,
 	withoutLineage,
+	rebase,
+	prune,
 } from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
+// TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -45,18 +53,30 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
 	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
 	[
-		"MInsert",
-		(i) =>
-			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
+		"NestedChangeUnderRemovedNode",
+		(i, max) => [
+			...(i > 0 ? [{ count: i }] : []),
+			Mark.modify(TestChange.mint([], 1), {
+				revision: tag1,
+				localId: brand(i),
+				adjacentCells: generateAdjacentCells(max),
+			}),
+		],
 	],
-	["Insert", (i) => Change.insert(i, 2, 42)],
+	[
+		"MInsert",
+		(i) => [
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.insert(1, brand(42), { changes: TestChange.mint([], 2) }),
+		],
+	],
+	["Insert", (i) => Change.insert(i, 2, brand(42))],
+	["NoOp", (i) => []],
 	[
 		"TransientInsert",
 		(i) => [
-			{ count: i },
-			Mark.insert([singleTextCursor({ type, value: 1 })], brand(0), {
-				transientDetach: { revision: tag1, localId: brand(0) },
-			}),
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), { cellId: { localId: brand(0) } }),
 		],
 	],
 	["Delete", (i) => Change.delete(i, 2)],
@@ -72,15 +92,13 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"TransientRevive",
 		(i) => [
-			{ count: i },
-			Mark.revive(
-				[singleTextCursor({ type, value: 1 })],
-				{
+			...(i > 0 ? [Mark.skip(i)] : []),
+			Mark.delete(1, brand(0), {
+				cellId: {
 					revision: tag1,
 					localId: brand(0),
 				},
-				{ transientDetach: { revision: tag1, localId: brand(0) } },
-			),
+			}),
 		],
 	],
 	[
@@ -93,7 +111,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"ReturnFrom",
 		(i, max) =>
 			Change.return(i, 2, 1, {
-				revision: tag4,
+				revision: tag3,
 				localId: brand(i),
 				adjacentCells: generateAdjacentCells(max),
 			}),
@@ -102,7 +120,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"ReturnTo",
 		(i, max) =>
 			Change.return(1, 2, i, {
-				revision: tag4,
+				revision: tag3,
 				localId: brand(i),
 				adjacentCells: generateAdjacentCells(max),
 			}),
@@ -119,7 +137,11 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				if (
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
 				) {
@@ -139,8 +161,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
 
+							const change1NoLineage = withoutLineage(change1.change);
+							const r2NoLineage = withoutLineage(r2.change);
 							// We do not expect exact equality because r2 may have accumulated some lineage.
-							assert.deepEqual(withoutLineage(r2.change), change1.change);
+							assert.deepEqual(r2NoLineage, change1NoLineage);
 						}
 					}
 				});
@@ -159,8 +183,12 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				if (
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
 				) {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
@@ -179,8 +207,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							const r2WithoutLineage = withoutLineage(r2.change);
-							assert.deepEqual(r2WithoutLineage, change1.change);
+							const change1NoLineage = withoutLineage(change1.change);
+							assert.deepEqual(withoutLineage(r2.change), change1NoLineage);
 						}
 					}
 				});
@@ -201,8 +229,12 @@ describe("SequenceField - Rebaser Axioms", () => {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				if (
-					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
-					(name1.startsWith("Return") || name2.startsWith("Return"))
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
+					((name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+						(name1.startsWith("Return") || name2.startsWith("Return")))
 				) {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
@@ -236,15 +268,15 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name, makeChange] of testChanges) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const change = makeChange(0, 0);
-				const taggedChange = tagChange(change, tag1);
+				const taggedChange = tagChange(change, tag5);
 				const inv = invert(taggedChange);
 				const changes = [
 					taggedChange,
-					tagRollbackInverse(inv, tag2, taggedChange.revision),
+					tagRollbackInverse(inv, tag6, taggedChange.revision),
 				];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(isDeltaVisible(delta), false);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
@@ -254,17 +286,291 @@ describe("SequenceField - Rebaser Axioms", () => {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const tracker = new SF.DetachedNodeTracker();
 				const change = makeChange(0, 0);
-				const taggedChange = tagChange(change, tag1);
-				const inv = tagRollbackInverse(invert(taggedChange), tag2, taggedChange.revision);
+				const taggedChange = tagChange(change, tag5);
+				const inv = tagRollbackInverse(invert(taggedChange), tag6, taggedChange.revision);
 				tracker.apply(taggedChange);
 				tracker.apply(inv);
 				const changes = [inv, taggedChange];
 				const actual = compose(changes);
-				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				const pruned = prune(actual);
+				assert.deepEqual(pruned, []);
 			});
 		}
 	});
+
+	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+		// TODO: Support testing changesets with node changes.
+		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
+		const shallowTestChanges = testChanges.filter(
+			(change) => !["NestedChange", "MInsert"].includes(change[0]),
+		);
+
+		const changesTargetingDetached = new Set([
+			"Revive",
+			"TransientRevive",
+			"ConflictedRevive",
+			"ReturnFrom",
+			"ReturnTo",
+			"NestedChangeUnderRemovedNode",
+		]);
+
+		const lineageFreeTestChanges = shallowTestChanges.filter(
+			(change) => !changesTargetingDetached.has(change[0]),
+		);
+
+		for (const [nameA, makeChange1] of shallowTestChanges) {
+			for (const [nameB, makeChange2] of shallowTestChanges) {
+				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
+					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
+					if (
+						changesTargetingDetached.has(nameA) &&
+						changesTargetingDetached.has(nameB)
+					) {
+						// Some of these tests are malformed as the change targeting the older cell
+						// should have lineage describing its position relative to the newer cell.
+					} else {
+						it(title, () => {
+							const a = tagChange(makeChange1(1, 1), tag5);
+							const b = tagChange(makeChange2(1, 1), tag6);
+							const c = tagChange(makeChange3(1, 1), tag7);
+							const a2 = rebaseTagged(a, b);
+							const rebasedIndividually = rebaseTagged(a2, c).change;
+							const bc = compose([b, c]);
+							const rebasedOverComposition = rebaseOverComposition(
+								a.change,
+								bc,
+								rebaseRevisionMetadataFromInfo(
+									[{ revision: tag6 }, { revision: tag7 }, { revision: tag5 }],
+									[tag6, tag7],
+								),
+							);
+
+							const normalizedComposition =
+								withNormalizedLineage(rebasedOverComposition);
+
+							const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
+							assert.deepEqual(normalizedComposition, normalizedIndividual);
+						});
+					}
+				}
+			}
+		}
+	});
+});
+
+interface NodeState {
+	/**
+	 * Unique ID associated with the node.
+	 */
+	id: number;
+	/**
+	 * The list of intentions that have been applied to this subtree.
+	 * This is used to generate new nested changes for a node.
+	 */
+	nested: number[];
+}
+
+interface TestState {
+	/**
+	 * Represents the state of the sequence field.
+	 */
+	currentState: NodeState[];
+	config: TestConfig;
+}
+
+interface TestConfig {
+	/**
+	 * The maximum length that the sequence should be as part of the test.
+	 */
+	maxLength: number;
+	/**
+	 * An array of node counts to operate on. For instance, passing [1, 3] would generate inserts, moves, and
+	 * deletes that operate on one node at a time and then 3 nodes at a time.
+	 */
+	numNodes: number[];
+	allocator: IdAllocator;
+}
+
+type SequenceFieldTestState = FieldStateTree<TestState, TestChangeset>;
+
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = function* (
+	state: SequenceFieldTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<SequenceFieldTestState> {
+	const { currentState, config } = state.content;
+
+	// TODO: support for undoing earlier edits
+	// TODO: fix bugs encountered when this is enabled
+	// Undo the most recent edit
+	// if (state.mostRecentEdit !== undefined) {
+	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
+	// 	const undoIntention = mintIntention();
+	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	yield {
+	// 		content: state.parent.content,
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(invertedEdit, tagFromIntention(undoIntention)),
+	// 			intention: undoIntention,
+	// 			description: `Undo(${state.mostRecentEdit.description})`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
+
+	for (const nodeCount of config.numNodes) {
+		// Insert nodeCount nodes
+		if (nodeCount + currentState.length <= config.maxLength) {
+			const inserted = makeArray(nodeCount, () => ({
+				id: config.allocator.allocate(),
+				nested: [],
+			}));
+			const insertedString = inserted.map((n) => n.id).join(",");
+			for (let i = 0; i <= currentState.length; i += 1) {
+				const insertIntention = mintIntention();
+				const newState = [...currentState];
+				newState.splice(i, 0, ...inserted);
+				yield {
+					content: {
+						currentState: newState,
+						config,
+					},
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.insert(i, nodeCount),
+							tagFromIntention(insertIntention),
+						),
+						intention: insertIntention,
+						description: `Add(${insertedString}@${i})`,
+					},
+					parent: state,
+				};
+			}
+		}
+
+		const maxDetachIndex = currentState.length - nodeCount;
+
+		// Delete nodeCount nodes
+		for (let iSrc = 0; iSrc <= maxDetachIndex; iSrc += 1) {
+			const stateWithoutDetached = [...currentState];
+			const detached = stateWithoutDetached.splice(iSrc, nodeCount);
+			const detachedString = detached.map((n) => n.id).join(",");
+			const deleteIntention = mintIntention();
+			yield {
+				content: {
+					currentState: stateWithoutDetached,
+					config,
+				},
+				mostRecentEdit: {
+					changeset: tagChange(
+						Change.delete(iSrc, nodeCount),
+						tagFromIntention(deleteIntention),
+					),
+					intention: deleteIntention,
+					description: `Del(${detachedString})`,
+				},
+				parent: state,
+			};
+
+			// Move nodeCount nodes
+			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
+				const moveInIntention = mintIntention();
+				const newState = [...stateWithoutDetached];
+				newState.splice(iDst - iDst < iSrc ? 0 : nodeCount, 0, ...detached);
+				yield {
+					content: {
+						currentState: newState,
+						config,
+					},
+					mostRecentEdit: {
+						changeset: tagChange(
+							Change.move(iSrc, nodeCount, iDst),
+							tagFromIntention(moveInIntention),
+						),
+						intention: moveInIntention,
+						description: `Mov(${detachedString})To${iDst}`,
+					},
+					parent: state,
+				};
+			}
+		}
+	}
+
+	// TODO: fix bugs encountered when this is enabled
+	// Made nested changes to a node
+	// for (let i = 0; i < currentState.length; i += 1) {
+	// 	const modifyIntention = mintIntention();
+	// 	const nestedChange = config.allocator.allocate();
+	// 	const newState = [...currentState];
+	// 	const node = currentState[i];
+	// 	newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
+	// 	yield {
+	// 		content: {
+	// 			currentState: newState,
+	// 			config,
+	// 		},
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(
+	// 				Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+	// 				tagFromIntention(modifyIntention),
+	// 			),
+	// 			intention: modifyIntention,
+	// 			description: `Mod(${nestedChange}on${node.id})`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
+};
+
+describe("SequenceField - State-based Rebaser Axioms", () => {
+	const allocator = idAllocatorFromMaxId();
+	const startingLength = 2;
+	const startingState: NodeState[] = makeArray(startingLength, () => ({
+		id: allocator.allocate(),
+		nested: [],
+	}));
+	runExhaustiveComposeRebaseSuite(
+		[
+			{
+				content: {
+					currentState: startingState,
+					config: { maxLength: 5, numNodes: [2], allocator },
+				},
+			},
+		],
+		generateChildStates,
+		{
+			rebase,
+			invert,
+			compose: (changes, metadata) => compose(changes, metadata),
+			rebaseComposed: (metadata, change, ...baseChanges) => {
+				const composedChanges = compose(baseChanges, metadata);
+				return rebase(change, makeAnonChange(composedChanges), metadata);
+			},
+			assertEqual: (change1, change2) => {
+				if (change1 === undefined && change2 === undefined) {
+					return true;
+				}
+
+				if (change1 === undefined || change2 === undefined) {
+					return false;
+				}
+
+				const pruned1 = prune(change1.change);
+				const pruned2 = prune(change2.change);
+
+				return assert.deepEqual(withoutLineage(pruned1), withoutLineage(pruned2));
+			},
+		},
+		{
+			groupSubSuites: false,
+			numberOfEditsToVerifyAssociativity: 3,
+			skipRebaseOverCompose: false,
+		},
+	);
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {
@@ -274,18 +580,16 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
-		assert.deepEqual(insertB3.change, insertB.change);
+		assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
 	});
 
-	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
-	// See BUG 5351
-	it.skip("(Insert, delete) ↷ adjacent insert", () => {
+	it("(Insert, delete) ↷ adjacent insert", () => {
 		const insertT = tagChange(Change.insert(0, 1), tag1);
 		const insertA = tagChange(Change.insert(0, 1), tag2);
 		const deleteB = tagChange(Change.delete(0, 1), tag3);
 		const insertA2 = rebaseTagged(insertA, insertT);
 		const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
-		const deleteB2 = rebaseTagged(deleteB, inverseA, insertT, insertA2);
+		const deleteB2 = rebaseOverChanges(deleteB, [inverseA, insertT, insertA2]);
 		assert.deepEqual(deleteB2.change, deleteB.change);
 	});
 
@@ -308,37 +612,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertX);
 		const insertB4 = rebaseTagged(insertB3, insertA2);
-		assert.deepEqual(insertB4.change, Change.insert(3, 1));
-	});
-
-	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const delABC = tagChange(Change.delete(0, 3), tag2);
-		const revABC = tagChange(Change.revive(0, 3, { revision: tag2, localId: id0 }), tag4);
-		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
-		const revABC2 = rebaseTagged(revABC, invDelABC);
-		const revABC3 = rebaseTagged(revABC2, delB);
-		const revABC4 = rebaseTagged(revABC3, delABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([delABC2, revABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
-	});
-
-	it("[Move ABC, Return ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const movABC = tagChange(Change.move(0, 3, 1), tag2);
-		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
-		const movABC2 = rebaseTagged(movABC, delB);
-		const invMovABC = invert(movABC);
-		const retABC2 = rebaseTagged(retABC, tagRollbackInverse(invMovABC, tag3, movABC2.revision));
-		const retABC3 = rebaseTagged(retABC2, delB);
-		const retABC4 = rebaseTagged(retABC3, movABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([movABC2, retABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 	});
 
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
@@ -352,8 +626,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(actual, []);
 	});
 
 	// See bug 4104
@@ -362,7 +635,128 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const moveInverse = invert(move);
 		const undo = tagChange(moveInverse, tag2);
 		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
-		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
+		const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
 		assert.deepEqual(rebasedUndo, undo);
+	});
+
+	it("delete ↷ two inverse inserts", () => {
+		// Given a branch with three changes:
+		// A: Insert x at index 0
+		// B: Insert y at index 0
+		// C: Delete y
+		// This test simulates rebasing C back to the trunk.
+
+		const changeC = tagChange([Mark.delete(1, brand(0))], tag3);
+
+		const rollbackTag2 = mintRevisionTag();
+		const changeB = tagChange([Mark.insert(1, brand(0))], tag2);
+		const inverseB = tagRollbackInverse(invert(changeB), rollbackTag2, tag2);
+
+		const rollbackTag1 = mintRevisionTag();
+		const changeA = tagChange([Mark.insert(1, brand(0))], tag1);
+		const inverseA = tagRollbackInverse(invert(changeA), rollbackTag1, tag1);
+
+		const revInfos: RevisionInfo[] = [
+			{ revision: rollbackTag2, rollbackOf: tag2 },
+			{ revision: rollbackTag1, rollbackOf: tag1 },
+			{ revision: tag1 },
+			{ revision: tag2 },
+		];
+
+		const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag2,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				},
+			}),
+		];
+		assert.deepEqual(cRebasedToTrunk.change, expected);
+	});
+
+	it("[insert, insert] ↷ insert", () => {
+		const insertT = tagChange([Mark.insert(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseOverChanges(insertA, [insertT]);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
+		const expected = [{ count: 1 }, Mark.insert(1, brand(0))];
+		assert.deepEqual(insertB2.change, expected);
+	});
+});
+
+describe("SequenceField - Sandwich composing", () => {
+	it("insert ↷ redundant delete", () => {
+		const insertA = tagChange(
+			[
+				Mark.insert(1, {
+					localId: brand(0),
+					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
+				}),
+			],
+			tag3,
+		);
+		const uninsertA = tagRollbackInverse(invert(insertA), tag4, tag3);
+		const redundantDeleteT = tagChange(
+			[Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+			tag2,
+		);
+
+		const composed = compose([uninsertA, redundantDeleteT, insertA]);
+		const expected = [
+			Mark.skip(1),
+			Mark.delete(
+				1,
+				{ revision: tag2, localId: brand(0) },
+				{ cellId: { revision: tag1, localId: brand(0) } },
+			),
+		];
+
+		assert.deepEqual(composed, expected);
+	});
+
+	it("[insert, insert] ↷ adjacent delete", () => {
+		const deleteT = tagChange([Mark.delete(1, brand(0))], tag1);
+		const insertA = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+		const insertA2 = rebaseTagged(insertA, deleteT);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, tag2);
+		const insertB = tagChange([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+		const insertB2 = rebaseOverChanges(insertB, [inverseA, deleteT, insertA2]);
+		const TAB = compose([deleteT, insertA2, insertB2]);
+		const AiTAB = compose(
+			[inverseA, makeAnonChange(TAB)],
+			[
+				{ revision: tag4, rollbackOf: tag2 },
+				{ revision: tag1 },
+				{ revision: tag2 },
+				{ revision: tag3 },
+			],
+		);
+
+		const expected = [
+			Mark.delete(1, { revision: tag1, localId: brand(0) }),
+			Mark.insert(1, {
+				revision: tag3,
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+
+		assert.deepEqual(AiTAB, expected);
+	});
+});
+
+describe("SequenceField - Composed sandwich rebasing", () => {
+	it("Nested inserts ↷ []", () => {
+		const insertA = tagChange(Change.insert(0, 2), tag1);
+		const insertB = tagChange(Change.insert(1, 1), tag2);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
+		const sandwich = compose([inverseA, insertA]);
+		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
+		assert.deepEqual(insertB2.change, insertB.change);
 	});
 });

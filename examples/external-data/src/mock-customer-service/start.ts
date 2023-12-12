@@ -14,7 +14,9 @@ import { initializeCustomerService } from "./service";
 initializeCustomerService({
 	port: customerServicePort,
 	externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
-	fluidServiceUrl: `http://localhost:${fluidServicePort}/broadcast-signal`,
+	externalDataServiceWebhookUnregistrationUrl: `http://localhost:${externalDataServicePort}/unregister-webhook`,
+	fluidServiceUrl: `http://localhost:${fluidServicePort}`,
+	// eslint-disable-next-line unicorn/prefer-top-level-await
 }).catch((error) => {
 	console.error(`There was an error initializing the mock customer service:\n${error}`);
 

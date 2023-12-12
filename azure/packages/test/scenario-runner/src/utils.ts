@@ -94,7 +94,7 @@ export function getAzureClientConnectionConfigFromEnv(): AzureClientConnectionCo
 		region: process.env.azure__fluid__relay__service__region,
 	};
 	const type =
-		partialConfig.tenantId && (partialConfig.key || partialConfig.functionUrl)
+		partialConfig.tenantId && (partialConfig.key ?? partialConfig.functionUrl)
 			? "remote"
 			: "local";
 	const useSecureTokenProvider = partialConfig.functionUrl !== undefined && !partialConfig.key;

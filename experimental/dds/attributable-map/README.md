@@ -1,5 +1,14 @@
 # @fluid-experimental/attributable-map
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Overview
 
 This experimental DDS is a copy of `SharedMap` which additionally tracks attribution information, such as the user who made an update and the timestamp of the change. Please refer to the description of [attributor](../../../packages/framework/attributor/README.md) for more details.

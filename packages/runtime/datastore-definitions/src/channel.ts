@@ -14,6 +14,9 @@ import {
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
+/**
+ * @alpha
+ */
 export interface IChannel extends IFluidLoadable {
 	/**
 	 * A readonly identifier for the channel
@@ -115,6 +118,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
+ * @alpha
  */
 export interface IDeltaHandler {
 	/**
@@ -162,6 +166,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
+ * @alpha
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -197,6 +202,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
+ * @alpha
  */
 export interface IChannelStorageService {
 	/**
@@ -217,6 +223,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
+ * @alpha
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -227,6 +234,8 @@ export interface IChannelServices {
 /**
  * Definitions of a channel factory.
  *
+ * @remarks
+ *
  * The runtime must be able to produce "channels" of the correct in-memory object type for the collaborative session.
  * Here "channels" are typically distributed data structures (DDSs).
  *
@@ -235,10 +244,13 @@ export interface IChannelServices {
  * (ops), which indicate a new instance of a channel being introduced to the collaboration session, to produce the
  * appropriate in-memory object.
  *
- * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
- * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
+ * Factories follow a common model but enable custom behavior.
  *
- * @remarks Factories follow a common model but enable custom behavior.
+ * @example
+ *
+ * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
+ * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
+ * @alpha
  */
 export interface IChannelFactory {
 	/**

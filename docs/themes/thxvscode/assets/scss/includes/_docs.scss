@@ -100,7 +100,6 @@
 	position: sticky;
 	-ms-overflow-style: none;
 	top: 70px !important;
-	height: calc(100vh - 70px);
 }
 @media (max-width: $screen-md) {
 	.docs-navbar-container {
@@ -108,7 +107,6 @@
 		position: sticky;
 		-ms-overflow-style: none;
 		top: 20px !important;
-		height: calc(100vh - 20px);
 	}
 }
 
@@ -117,10 +115,8 @@
 	overflow: -moz-scrollbars-none;
 
 	overflow-y: auto;
-	max-height: calc(100vh - 40px);
 }
 #docs-navbar > .nav {
-	max-height: calc(100vh - 140px);
 	overflow: hidden;
 }
 #docs-navbar::-webkit-scrollbar {
@@ -191,6 +187,16 @@
 	> li li > a {
 		padding: 5px 25px;
 		position: relative;
+
+		/* Increased padding for API category/group items */
+		&.api-item-kind {
+			padding: 5px 35px;
+		}
+
+		/* Further increased padding for specific API endpoints */
+		&.leaf-node {
+			padding: 5px 45px;
+		}
 	}
 
 	.docs-home {
@@ -277,7 +283,18 @@
 	font-weight: bold;
 }
 
-#docs-navbar > .nav .active .active a:before {
+#docs-navbar > .nav .active:not(.active-leaf) > .packages:before {
+	content: "";
+	position: absolute;
+	height: 7px;
+	width: 7px;
+	background-color: $link-color;
+	top: 10px;
+	left: -4px;
+	@include border-radius(100%);
+}
+
+#docs-navbar > .nav .active > .leaf-node:before {
 	content: "";
 	position: absolute;
 	height: 7px;

@@ -16,7 +16,7 @@ import {
 	performFuzzActions,
 	take,
 	makeRandom,
-} from '@fluid-internal/stochastic-test-utils';
+} from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { fail } from '../Common';
 import { isFinalId, isLocalId } from '../id-compressor';
@@ -302,7 +302,7 @@ function itWithNormalizer(title: string, itFn: (normalizer: SessionIdNormalizer<
 			prevLocal = localExpected;
 			prevFinal = finalExpected;
 
-			const sessionIdExpected = localExpected === undefined ? finalExpected : localExpected;
+			const sessionIdExpected = localExpected ?? finalExpected;
 			const sessionIdActualAll = allIds[i];
 			const sessionIdActualNormalized =
 				finalExpected === undefined ? localExpected : normalizer.getSessionSpaceId(finalExpected);

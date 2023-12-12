@@ -136,7 +136,7 @@ export abstract class InstructionalPromptWriter {
 	/**
 	 * Writes the prompt to the terminal.
 	 */
-	public async writePrompt(data: InstructionalPrompt) {
+	public async writePrompt(data: InstructionalPrompt): Promise<void> {
 		const prompt = await this.formatPrompt(data);
 
 		this.log.logHr();

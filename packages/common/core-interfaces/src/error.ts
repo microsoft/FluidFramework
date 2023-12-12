@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "./index";
+import { ITelemetryBaseProperties } from "./index";
 
 /**
  * Error types the Fluid Framework may report.
+ * @internal
  */
 export const FluidErrorTypes = {
 	/**
@@ -34,7 +35,10 @@ export const FluidErrorTypes = {
 	 */
 	usageError: "usageError",
 } as const;
-export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+/**
+ * @internal
+ */
+export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 /**
  * Base interface for all errors and warnings emitted the container.
@@ -45,6 +49,8 @@ export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorType
  * those from container-definitions. Once fully migrated, this will be a base interface for all errors and
  * warnings emitted by the Fluid Framework. Currently only the container layer is using IErrorBase.
  * Runtime and others will follow soon.
+ *
+ * @alpha
  */
 export interface IErrorBase extends Partial<Error> {
 	/**
@@ -77,26 +83,32 @@ export interface IErrorBase extends Partial<Error> {
 	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/stack | Error.stack}
 	 */
 	readonly stack?: string;
+
 	/**
-	 * Returns all properties of this error object that are either safe to log
-	 * or not explicitly tagged as containing privacy-sensitive data.
+	 * Returns all properties of this error object that are fit for logging.
+	 * Some may be tagged to indicate they contain some kind of sensitive data.
 	 */
-	getTelemetryProperties?(): ITelemetryProperties;
+	getTelemetryProperties?(): ITelemetryBaseProperties;
 }
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
+ * @internal
  */
 export interface IGenericError extends IErrorBase {
 	/**
 	 * {@inheritDoc IErrorBase.errorType}
 	 */
 	readonly errorType: typeof FluidErrorTypes.genericError;
+
+	// TODO: Use `unknown` instead (API-Breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	error?: any;
 }
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
+ * @internal
  */
 export interface IUsageError extends IErrorBase {
 	/**
@@ -107,6 +119,7 @@ export interface IUsageError extends IErrorBase {
 
 /**
  * Warning emitted when requests to storage are being throttled
+ * @internal
  */
 export interface IThrottlingWarning extends IErrorBase {
 	/**

@@ -10,14 +10,17 @@ import {
 	ChangeRebaser,
 	TaggedChange,
 	AnchorSet,
-	Delta,
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
+	RevisionTag,
+	deltaForSet,
+	DeltaFieldMap,
+	DeltaRoot,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -55,7 +58,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -162,30 +165,28 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
-		return {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Delete, count: 1 },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: change.intentions.map(String).join("|"),
-								}),
-							],
-						},
-					],
-				],
-			]),
-		};
+		const hasMajor: { major?: RevisionTag } = {};
+		if (revision !== undefined) {
+			hasMajor.major = revision;
+		}
+		const buildId = { ...hasMajor, minor: 424243 };
+		return new Map([
+			[
+				brand("foo"),
+				deltaForSet(
+					cursorForJsonableTreeNode({
+						type: brand("test"),
+						value: change.intentions.map(String).join("|"),
+					}),
+					buildId,
+					{ ...hasMajor, minor: 424242 },
+				),
+			],
+		]);
 	}
-	return { type: Delta.MarkType.Modify };
+	return new Map();
 }
 
 export interface AnchorRebaseData {
@@ -204,6 +205,7 @@ export const TestChange = {
 	rebase,
 	checkChangeList,
 	toDelta,
+	isEmpty,
 	codec,
 };
 deepFreeze(TestChange);
@@ -223,7 +225,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -233,17 +235,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		this.rebasedCount += 1;
 		return change;
 	}
 
-	public invert(change: TaggedChange<TestChange>): TestChange {
+	public override invert(change: TaggedChange<TestChange>): TestChange {
 		this.invertedCount += 1;
 		return change.change;
 	}
 
-	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+	public override compose(changes: TaggedChange<TestChange>[]): TestChange {
 		this.composedCount += changes.length;
 		return changes.length === 0 ? emptyChange : changes[0].change;
 	}
@@ -259,7 +261,7 @@ export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 		super();
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}
@@ -275,13 +277,17 @@ export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
 const rootKey: FieldKey = brand("root");
 
 /**
- * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does note represent a concrete change to a document tree.
+ * This is a hack to encode arbitrary information (the intentions) into a Delta
+ * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
-export function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
+export function asDelta(intentions: number[]): DeltaRoot {
+	return intentions.length === 0
+		? emptyDelta
+		: {
+				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
+		  };
 }
 
 export function testChangeFamilyFactory(
@@ -294,7 +300,10 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
+}
+
+export function isEmpty(change: TestChange): boolean {
+	return change.intentions.length === 0;
 }
