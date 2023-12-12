@@ -5,19 +5,6 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "node",
-			"request": "launch",
-			"name": "flub buildVersion Mocha Tests",
-			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
-			"windows": {
-				"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha.cmd",
-			},
-			// "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
-			"args": ["--forbid-only", "test/**/*.test.ts", "--grep 'beta version'"],
-			"internalConsoleOptions": "openOnSessionStart",
-		},
-		{
 			// Update /build-tools/packages/bundle-size-tools/src/utilities/gitCommands.ts to your remote (i.e. upstream instead of main)
 			// Don't forget to run `npm run bundle-analysis:collect`
 			// Reminder, update the command values
