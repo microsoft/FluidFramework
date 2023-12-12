@@ -19,21 +19,40 @@ describe("Primitives", () => {
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
-		it(`initialTree(${pretty(value)}) -> ${pretty(value)}`, () => {
-			const proxy = getRoot(schema, () => value);
-			assert.deepEqual(proxy, value, "Readback of initialTree must match expected value.");
+		// Paranoid check that the given value is in fact preserved.
+		assert.deepEqual(
+			value,
+			JSON.parse(JSON.stringify(value)),
+			`Expected ${pretty(value)} to be preserved by JSON.`,
+		);
+
+		it(`initialTree(${pretty(value)}) preserves ${typeof value} ${pretty(value)}`, () => {
+			const actual = getRoot(schema, () => value);
+			assert.deepEqual(actual, value, "Readback of initialTree must match expected value.");
 		});
+	}
+
+	function getCoercedValue(value: any): unknown {
+		const coercedValue = JSON.parse(JSON.stringify(value));
+
+		// Paranoid check that the given value is in fact coerced.
+		assert.notDeepEqual(value, coercedValue, "Expected JSON stringify/parse to coerce value.");
+
+		return coercedValue;
 	}
 
 	function checkCoerced<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
-		const coercedValue = JSON.parse(JSON.stringify(value));
-		it(`initialTree(${pretty(value)}) -> ${coercedValue}`, () => {
-			const proxy = getRoot(schema, () => value);
+		const coercedValue = getCoercedValue(value);
+
+		it(`initialTree(${pretty(
+			value,
+		)}) is coerced to ${typeof coercedValue} ${coercedValue}`, () => {
+			const actual = getRoot(schema, () => value);
 			assert.deepEqual(
-				proxy,
+				actual,
 				coercedValue,
 				"Readback of initialTree must match expected value.",
 			);
@@ -44,13 +63,16 @@ describe("Primitives", () => {
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
-		const coercedValue = JSON.parse(JSON.stringify(value));
-		it(`initialTree(${pretty(value)}) -> throws`, () => {
+		const coercedValue = getCoercedValue(value);
+
+		it(`initialTree(${pretty(
+			value,
+		)}) throws when coercion to ${typeof value}' ${coercedValue}' violates schema.`, () => {
 			assert.throws(
 				() => getRoot(schema, () => value),
 				`initialTree(${pretty(
 					value,
-				)}) must throw if coercion to '${coercedValue}' violates schema.`,
+				)}) must throw when coercion to '${coercedValue}' violates schema.`,
 			);
 		});
 	}
@@ -66,8 +88,10 @@ describe("Primitives", () => {
 	});
 
 	describe("number", () => {
-		describe("jsonable", () => {
+		describe("with schema [_.number]", () => {
 			const schema = makeSchema((_) => _.number);
+
+			// Test a handful of extreme values to sanity check that they round-trip as expected.
 			[
 				-Number.MAX_VALUE,
 				Number.MIN_SAFE_INTEGER,
@@ -77,23 +101,22 @@ describe("Primitives", () => {
 				Number.MAX_SAFE_INTEGER,
 				Number.MAX_VALUE,
 			].forEach((value) => checkExact(schema, value));
-		});
 
-		describe("disallowed without null", () => {
-			const schema = makeSchema((_) => _.number);
+			// JSON coerces non-finite numbers are coerced to 'null'.  If 'null' violates schema,
+			// this must throw a TypeError.
 			[-Infinity, NaN, Infinity].forEach((value) => {
 				checkThrows(schema, value);
 			});
-		});
 
-		describe("coerceable without null", () => {
-			const schema = makeSchema((_) => _.number);
+			// JSON coerces -0 to 0.  This succeeds because it does not change the type.
 			[-0].forEach((value) => {
 				checkCoerced(schema, value);
 			});
 		});
 
-		describe("coerceable with null", () => {
+		describe("with schema [_.number, _.null]", () => {
+			// JSON coerces non-finite numbers are coerced to 'null'.  This succeeds when 'null' is
+			// permitted by schema.
 			const schema = makeSchema((_) => [_.number, _.null]);
 			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
 		});

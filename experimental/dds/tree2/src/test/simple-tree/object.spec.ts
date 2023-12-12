@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../../class-tree";
+import { ImplicitFieldSchema, SchemaFactory, TreeFieldFromImplicitField } from "../../class-tree";
 import { getRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;
-	initialTree: () => TreeFieldFromImplicitField<TSchema>;
+	initialTree: TreeFieldFromImplicitField<TSchema>;
 }
 
 export function testObjectPrototype(proxy: object, prototype: object) {
@@ -38,7 +38,7 @@ function testObjectLike(testCases: TestCase[]) {
 		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 		describe.skip("satisfies 'deepEqual'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const proxy = getRoot(schema, initialTree);
+				const proxy = getRoot(schema, () => initialTree);
 				const real = initialTree;
 
 				it(`deepEqual(${pretty(proxy)}, ${pretty(real)})`, () => {
@@ -61,7 +61,7 @@ function testObjectLike(testCases: TestCase[]) {
 			for (const { schema, initialTree } of testCases) {
 				describe("instanceof Object", () => {
 					it(`${pretty(initialTree)} -> true`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getRoot(schema, () => initialTree);
 						assert(root instanceof Object, "object must be instanceof Object");
 					});
 				});
@@ -73,7 +73,7 @@ function testObjectLike(testCases: TestCase[]) {
 						it(`Object.getOwnPropertyDescriptor(${pretty(
 							initialTree,
 						)}, ${key}) -> ${pretty(descriptor)}`, () => {
-							const root = getRoot(schema, initialTree);
+							const root = getRoot(schema, () => initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
 								descriptor,
@@ -85,14 +85,14 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe("methods inherited from Object.prototype", () => {
 					it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getRoot(schema, () => initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 					});
 
 					it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
-						const root = getRoot(schema, initialTree);
+						const root = getRoot(schema, () => initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(asObject), false);
@@ -107,7 +107,7 @@ function testObjectLike(testCases: TestCase[]) {
 						);
 
 						it(`${key} -> ${expected}`, () => {
-							const root = getRoot(schema, initialTree);
+							const root = getRoot(schema, () => initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
 							assert.equal(asObject.propertyIsEnumerable(key), expected);
@@ -123,7 +123,7 @@ function testObjectLike(testCases: TestCase[]) {
 				const expected = fn(real);
 
 				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const proxy = getRoot(schema, initialTree);
+					const proxy = getRoot(schema, () => initialTree);
 					const actual = fn(proxy as object);
 					assert.deepEqual(actual, expected);
 				});
@@ -206,66 +206,85 @@ function testObjectLike(testCases: TestCase[]) {
 
 const tcs: TestCase[] = [
 	{
-		schema: makeSchema((_) => _.object("empty", {})),
-		initialTree: () => ({}),
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("empty", {});
+		})(),
+		initialTree: {},
 	},
 	{
-		schema: makeSchema((_) =>
-			_.object("primitives", {
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("primitives", {
 				boolean: _.boolean,
 				number: _.number,
 				string: _.string,
-			}),
-		),
-		initialTree: () => ({
+			});
+		})(),
+		initialTree: {
 			boolean: false,
-			number: 0,
+			number: Math.E,
 			string: "",
-		}),
+		},
 	},
 	{
-		schema: makeSchema((_) =>
-			_.object("optional", {
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("optional", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
 				string: _.optional(_.string),
-			}),
-		),
-		initialTree: () => ({}),
+			});
+		})(),
+		initialTree: {},
 	},
 	{
-		schema: makeSchema((_) =>
-			_.object("optional (defined)", {
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("optional (defined)", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
 				string: _.optional(_.string),
-			}),
-		),
-		initialTree: () => ({
+			});
+		})(),
+		initialTree: {
 			boolean: true,
 			number: 0,
 			string: "",
-		}),
+		},
 	},
 	{
-		schema: makeSchema((_) =>
-			_.object("outer", {
-				nested: _.object("inner", {}),
-			}),
-		),
-		initialTree: () => ({ nested: {} }),
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+
+			const inner = _.object("inner", {});
+
+			return _.object("outer", {
+				nested: inner,
+			});
+		})(),
+		initialTree: { nested: {} },
 	},
 	{
-		schema: makeSchema((_) => _.list(_.string)),
-		initialTree: () => [],
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.list(_.string);
+		})(),
+		initialTree: [],
 	},
 	{
-		schema: makeSchema((_) => _.list(_.string)),
-		initialTree: () => ["A"],
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.list(_.string);
+		})(),
+		initialTree: ["A"],
 	},
 	{
-		schema: makeSchema((_) => _.list(_.string)),
-		initialTree: () => ["A", "B"],
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.list(_.string);
+		})(),
+		initialTree: ["A", "B"],
 	},
 ];
 
@@ -385,7 +404,7 @@ describe("Object-like", () => {
 		});
 
 		describe.skip("required list", () => {
-			// const _ = new SchemaBuilder({ scope: "test" });
+			// const _ = new SchemaFactory("test");
 			// const list = _.fieldNode("List<string>", _.sequence(_.string));
 			// const parent = _.struct("parent", {
 			// 	list,
@@ -402,7 +421,7 @@ describe("Object-like", () => {
 		});
 
 		describe.skip("optional list", () => {
-			// const _ = new SchemaBuilder({ scope: "test" });
+			// const _ = new SchemaFactory("test");
 			// const list = _.fieldNode("List<string>", _.sequence(_.string));
 			// const parent = _.struct("parent", {
 			// 	list: _.optional(list),
