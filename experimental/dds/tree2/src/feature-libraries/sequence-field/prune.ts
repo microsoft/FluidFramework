@@ -6,7 +6,7 @@
 import { Changeset } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { withNodeChange } from "./utils";
-import { VestigialEndpoint, isVestigialEndpoint } from "./moveEffectTable";
+import { VestigialEndpoint, isVestigialEndpoint } from "./helperTypes";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
 

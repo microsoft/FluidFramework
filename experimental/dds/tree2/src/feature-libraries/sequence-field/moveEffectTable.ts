@@ -9,7 +9,7 @@ import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
-import { MoveMarkEffect } from "./helperTypes";
+import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -223,29 +223,6 @@ function updateEndpoint(
 			markEffect.finalEndpoint = finalDest;
 		}
 	}
-}
-
-/**
- * Some marks (noop and delete) need to be tagged with information that specifies they used to be the endpoint of a
- * move that has since been cancelled out.
- * This is needed so we can send and apply effects to such marks.
- */
-export interface VestigialEndpoint {
-	vestigialEndpoint: ChangeAtomId;
-}
-
-export type VestigialEndpointMark<T> = Mark<T> & VestigialEndpoint;
-
-function tryGetVestigialEndpoint<T>(mark: Mark<T>): ChangeAtomId | undefined {
-	const vestige = (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
-	return vestige;
-}
-
-export function isVestigialEndpoint<T>(
-	mark: Mark<T> | VestigialEndpointMark<T>,
-): mark is VestigialEndpointMark<T> {
-	const vestige = (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
-	return vestige !== undefined;
 }
 
 export function applyMoveEffectsToMark<T>(

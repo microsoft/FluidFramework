@@ -44,18 +44,15 @@ import {
 	IdRange,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
-import {
-	isMoveMark,
-	isVestigialEndpoint,
-	MoveEffectTable,
-	VestigialEndpoint,
-} from "./moveEffectTable";
+import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
+	VestigialEndpoint,
+	isVestigialEndpoint,
 } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {

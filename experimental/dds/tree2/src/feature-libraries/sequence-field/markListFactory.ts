@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isVestigialEndpoint } from "./moveEffectTable";
+import { isVestigialEndpoint } from "./helperTypes";
 import { Mark, MarkList } from "./types";
 import { isNoopMark, tryMergeMarks as tryMergeMarks } from "./utils";
 

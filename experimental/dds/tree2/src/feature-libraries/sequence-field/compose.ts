@@ -36,7 +36,6 @@ import {
 	isMoveIn,
 	isMoveOut,
 	getMoveIn,
-	VestigialEndpoint,
 } from "./moveEffectTable";
 import {
 	getInputLength,
@@ -67,7 +66,7 @@ import {
 	settleMark,
 	compareCellsFromSameRevision,
 } from "./utils";
-import { EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes";
 
 /**
  * @alpha
