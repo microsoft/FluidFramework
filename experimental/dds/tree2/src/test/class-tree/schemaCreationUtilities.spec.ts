@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime, MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { NodeFromSchema, SchemaFactory, TreeConfiguration, TreeView } from "../../class-tree";
 import { TreeFactory } from "../../treeFactory";
@@ -15,6 +15,7 @@ import {
 	adaptEnum,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../class-tree/schemaCreationUtilities";
+import { testIdCompressor } from "../utils";
 
 const schema = new SchemaFactory("test");
 
@@ -31,7 +32,10 @@ describe("schemaCreationUtilities", () => {
 		);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 		const view: TreeView<Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (true) {
@@ -98,7 +102,10 @@ describe("schemaCreationUtilities", () => {
 		);
 
 		const factory = new TreeFactory({});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 		const view: TreeView<Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (mode.value) {
@@ -127,7 +134,10 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = enumFromStrings(schema, typedObjectValues(Day));
 
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 
 		const day = Day.Today;
 
@@ -158,7 +168,10 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
 
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);

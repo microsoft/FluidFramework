@@ -136,7 +136,7 @@ function makeV0Codec<TNodeChange>(
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = decodeChangeAtomId(
@@ -165,7 +165,7 @@ function makeV0Codec<TNodeChange>(
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (detachIdOverride !== undefined) {
 				mark.detachIdOverride = decodeChangeAtomId(
@@ -183,7 +183,7 @@ function makeV0Codec<TNodeChange>(
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = decodeChangeAtomId(
@@ -201,14 +201,14 @@ function makeV0Codec<TNodeChange>(
 			}
 			return mark;
 		},
-		placeholder(encoded: Encoded.MovePlaceholder): MovePlaceholder {
+		placeholder(encoded: Encoded.MovePlaceholder, originatorId: SessionId): MovePlaceholder {
 			const { id, revision } = encoded;
 			const mark: MovePlaceholder = {
 				type: "Placeholder",
 				id,
 			};
 			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
+				mark.revision = revisionTagCodec.decode(revision, originatorId);
 			}
 			return mark;
 		},
