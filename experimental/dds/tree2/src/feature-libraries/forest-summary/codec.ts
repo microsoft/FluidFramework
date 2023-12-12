@@ -12,6 +12,9 @@ import { Context } from "../chunked-forest/codec/codecs";
 import { makeVersionedValidatedCodec } from "../versioned";
 import { Format } from "./format";
 
+/**
+ * Uses field cursors
+ */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = IJsonCodecWithContext<FieldSet, Format, Format, Context>;
 

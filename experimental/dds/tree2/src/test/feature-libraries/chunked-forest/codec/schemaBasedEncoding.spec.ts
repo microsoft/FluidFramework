@@ -259,7 +259,6 @@ describe("schemaBasedEncoding", () => {
 				const result = codec.decode(encoded);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual(resultTree, [tree]);
-				assert.equal(resultTree.length, tree.length);
 			});
 		}
 	});
