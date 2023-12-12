@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types";
+import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut, MovePlaceholder } from "./types";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
 import { MoveMarkEffect } from "./helperTypes";
 
@@ -150,7 +150,7 @@ function applyMoveEffectsToDest(
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: CellMark<MoveOut, T>,
+	mark: CellMark<MoveOut | MovePlaceholder, T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
@@ -173,7 +173,9 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	const newMark = cloneMark(mark);
-	applySourceEffects(newMark, mark.count, revision, effects, consumeEffect);
+	if (isMoveOut(newMark)) {
+		applySourceEffects(newMark, mark.count, revision, effects, consumeEffect);
+	}
 
 	if (nodeChange !== undefined) {
 		newMark.changes = nodeChange;
@@ -359,9 +361,10 @@ export function applyMoveEffectsToMark<T>(
 
 			return [newMark];
 		}
-	} else if (isMoveMark(mark)) {
+	} else if (isMoveMark(mark) || mark.type === "Placeholder") {
 		const type = mark.type;
 		switch (type) {
+			case "Placeholder":
 			case "MoveOut": {
 				const effect = getMoveEffect(
 					effects,

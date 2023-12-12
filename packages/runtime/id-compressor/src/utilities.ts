@@ -5,8 +5,8 @@
 
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils";
-import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { v4 } from "uuid";
+import { SessionId, StableId } from "./types";
 import { LocalCompressedId, NumericUuid } from "./identifiers";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
@@ -28,6 +28,7 @@ function isHexadecimalCharacter(charCode: number): boolean {
 
 /**
  * Generate a random session ID
+ * @alpha
  */
 export function createSessionId(): SessionId {
 	return assertIsStableId(v4()) as SessionId;

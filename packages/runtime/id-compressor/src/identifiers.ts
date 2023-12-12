@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { OpSpaceCompressedId, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
+import { OpSpaceCompressedId, SessionSpaceCompressedId } from "./types";
 
 /**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).
