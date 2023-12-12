@@ -1,9 +1,12 @@
 ---
 "@fluidframework/sequence": minor
-"@fluid-private/test-end-to-end-tests": minor
 ---
 
-Deprecate API `findOverlappingIntervals` from `IntervalCollection`, this functionality is moved to the `OverlappingIntervalsIndex`. Users are advised to independently attach the index to the collection and utilize the API accordingly, for instance:
+sequence: Deprecated findOverlappingIntervals API
+
+The `findOverlappingIntervals` API from `IntervalCollection` has been deprecated. This functionality is moved to the
+`OverlappingIntervalsIndex`. Users should independently attach the index to the collection and utilize the API
+accordingly, for instance:
 
 ```typescript
 const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
