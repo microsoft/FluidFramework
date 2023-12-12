@@ -3,7 +3,6 @@
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"strict": false,
-		"declarationDir": "./dist",
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
