@@ -124,8 +124,7 @@ steps:
                   done
                 fi
 
-                baseURL="${${{ parameters.feedUrl }}%/registry/}"
-                feedPromotionUrl="${baseURL}/_packaging/_apis/packaging/feeds"
+                feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
 
                 echo "Feed Promotion URL: $feedPromotionUrl"
                 response=$(curl -f -s -X PATCH \
