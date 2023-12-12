@@ -116,7 +116,7 @@ steps:
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 echo "PackageVersion: $packageVersion"
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private")
                   for scope in "${scopes[@]}"; do
                       if [[ "$packageName" == "$scope"* ]]; then
                           packageName="@${packageName/$scope-/$scope/}"
@@ -126,7 +126,7 @@ steps:
 
                 feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
 
-                echo "Feed Promotion URL: $feedPromotionUrl"
+                echo "Promoting ${packageName} to release view using: ${feedPromotionUrl}"
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \
