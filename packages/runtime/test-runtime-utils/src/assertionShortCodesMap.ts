@@ -885,7 +885,6 @@ export const shortCodeMap = {
 	"0x569": "Must provide a change composer if modifying moves",
 	"0x56e": "summary upload manager should have been initialized",
 	"0x56f": "Should be loaded only once",
-	"0x570": "Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime.",
 	"0x573": "Expected branches to be related",
 	"0x576": "branch A and branch B must be related",
 	"0x577": "Expected revision to be valid RevisionTag",
