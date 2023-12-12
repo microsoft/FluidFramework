@@ -22,7 +22,7 @@ module.exports = {
 	},
 	create(context) {
 		return {
-			ReleaseTagDeclaration(node) {
+			ClassDeclaration(node) {
 				const fileName = context.filename;
 				const sourceCode = context.sourceCode;
 				const comments = sourceCode.getCommentsAfter(node);
