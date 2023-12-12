@@ -5,7 +5,7 @@
 
 import { Changeset } from "./types";
 import { MarkListFactory } from "./markListFactory";
-import { withNodeChange } from "./utils";
+import { omitMarkEffect, withNodeChange } from "./utils";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
 
@@ -14,12 +14,14 @@ export function prune<TNodeChange>(
 	pruneNode: NodeChangePruner<TNodeChange>,
 ): Changeset<TNodeChange> {
 	const pruned = new MarkListFactory<TNodeChange>();
-	for (const mark of changeset) {
+	for (let mark of changeset) {
 		if (mark.changes !== undefined) {
-			pruned.push(withNodeChange(mark, pruneNode(mark.changes)));
-		} else {
-			pruned.push(mark);
+			mark = withNodeChange(mark, pruneNode(mark.changes));
 		}
+		if (mark.type === "Placeholder") {
+			mark = omitMarkEffect(mark);
+		}
+		pruned.push(mark);
 	}
 	return pruned.list;
 }
