@@ -42,7 +42,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint && npm run check:are-the-types-wrong",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
