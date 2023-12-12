@@ -18,6 +18,7 @@ import {
 	type ContainerKey,
 	createDevtoolsLogger,
 	type HasContainerKey,
+	type IDevtoolsLogger,
 	type IFluidDevtools,
 	initializeDevtools,
 } from "@fluid-experimental/devtools-core";
@@ -52,7 +53,7 @@ function getContainerIdFromLocation(location: Location): string {
  */
 function useContainerInfo(
 	devtools: IFluidDevtools,
-	logger: DevtoolsLogger,
+	logger: IDevtoolsLogger,
 	loader: SessionStorageModelLoader<IAppModel>,
 ): {
 	privateContainer: ContainerInfo | undefined;
