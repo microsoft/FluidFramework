@@ -40,6 +40,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 	let mainContainer: IContainer;
 	const settings = {
 		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
+		"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState": true,
 	};
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */

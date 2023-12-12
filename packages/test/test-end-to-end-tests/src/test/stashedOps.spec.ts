@@ -82,6 +82,7 @@ const testContainerConfig: ITestContainerConfig = {
 	loaderProps: {
 		configProvider: configProvider({
 			"Fluid.Container.enableOfflineLoad": true,
+			"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": true,
 		}),
 	},
 };

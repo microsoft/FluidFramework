@@ -273,7 +273,8 @@ describeCompat(
 			},
 			isHandle: boolean,
 		): Promise<string> {
-			const latestSummarySequenceNumber = latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+			const latestSummarySequenceNumber =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
@@ -404,7 +405,7 @@ describeCompat(
 				await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
 				const latestSummarySequenceNumber =
-					latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,
@@ -424,7 +425,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 
 				const latestSummarySequenceNumber =
-					latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,
@@ -446,7 +447,7 @@ describeCompat(
 				dataStoreA.root.delete("dataStoreB");
 
 				const latestSummarySequenceNumber =
-					latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,

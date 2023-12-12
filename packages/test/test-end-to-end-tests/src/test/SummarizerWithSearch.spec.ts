@@ -317,7 +317,8 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 		containerRuntime: ContainerRuntime;
 		summaryCollection: SummaryCollection;
 	}): Promise<string> {
-		const latestSummarySequenceNumber = latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+		const latestSummarySequenceNumber =
+			latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 		const summaryResult = await submitAndAckSummary(
 			provider,
 			summarizerClient,
@@ -414,7 +415,8 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 				summarizerClient2.containerRuntime.deltaManager.lastSequenceNumber;
 
 			// Submit a summary
-			const latestSummarySequenceNumber = latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
+			const latestSummarySequenceNumber =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const result = await summarizerClient2.containerRuntime.submitSummary({
 				fullTree: false,
 				refreshLatestAck: false,
@@ -470,13 +472,12 @@ describeCompat("Prepare for Summary with Search Blobs", "NoCompat", (getTestObje
 			const summarySequenceNumber =
 				summarizer2.containerRuntime.deltaManager.lastSequenceNumber;
 			// Submit a summary and wait for the summary op.
-			const latestSummarySequenceNumber = latestAckedSummary?.summaryAck.sequenceNumber ?? 0;
 			const result = await summarizer2.containerRuntime.submitSummary({
 				fullTree: false,
 				refreshLatestAck: false,
 				summaryLogger: logger,
 				cancellationToken: neverCancelledSummaryToken,
-				latestSummarySequenceNumber,
+				latestSummarySequenceNumber: summary1.summaryRefSeq,
 			});
 			assert(result.stage === "submit", "The summary was not submitted");
 			await waitForSummaryOp(summarizer2.containerRuntime);

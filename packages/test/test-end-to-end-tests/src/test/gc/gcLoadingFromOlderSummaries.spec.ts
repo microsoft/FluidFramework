@@ -38,6 +38,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	const settings = {
 		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
+		"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState": false,
 	};
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
@@ -100,6 +101,22 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	itExpects(
 		"closes the summarizer when loading from an older summary",
 		[
+			{
+				category: "error",
+				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
+			},
+			{
+				category: "error",
+				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
+			},
+			{
+				category: "error",
+				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
+			},
+			{
+				category: "error",
+				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
+			},
 			{
 				category: "error",
 				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
