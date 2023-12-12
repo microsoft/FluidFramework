@@ -103,23 +103,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		[
 			{
 				category: "error",
-				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
-			},
-			{
-				category: "error",
-				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
-			},
-			{
-				category: "error",
-				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
-			},
-			{
-				category: "error",
-				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
-			},
-			{
-				category: "error",
-				eventName: "fluid:telemetry:SummarizerNode:LatestSummarySequenceNumberMismatch",
+				eventName: "fluid:telemetry:Summarizer:Running:LatestSummarySequenceNumberMismatch",
 			},
 		],
 		async () => {

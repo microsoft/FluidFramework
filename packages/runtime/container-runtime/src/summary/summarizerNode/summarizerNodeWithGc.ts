@@ -25,6 +25,7 @@ import {
 	EscapedPath,
 	ICreateChildDetails,
 	IInitialSummary,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
@@ -238,8 +239,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryBaseLogger,
 		latestSummarySequenceNumber: number,
-		shouldValidatePreSummaryState: boolean,
-	) {
+	): IStartSummaryResult {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
 			assert(
@@ -247,11 +247,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b4 /* "We should not already be tracking used routes when to track a new summary" */,
 			);
 		}
-		super.startSummary(
+		return super.startSummary(
 			referenceSequenceNumber,
 			summaryLogger,
 			latestSummarySequenceNumber,
-			shouldValidatePreSummaryState,
 		);
 	}
 

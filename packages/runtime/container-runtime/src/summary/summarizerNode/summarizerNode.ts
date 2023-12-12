@@ -36,6 +36,7 @@ import {
 	ICreateChildDetails,
 	IInitialSummary,
 	IRefreshSummaryResult,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
 	parseSummaryTreeForSubtrees,
@@ -105,8 +106,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryBaseLogger,
 		latestSummarySequenceNumber: number,
-		shouldValidatePreSummaryState: boolean,
-	) {
+	): IStartSummaryResult {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -116,38 +116,41 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
+		let nodes = 1;
+		let invalidNodes = 0;
+		const sequenceNumberMismatchKeySet = new Set<string>();
+
 		const nodeLatestSummarySequenceNumber = this._latestSummary?.referenceSequenceNumber;
 		if (
 			nodeLatestSummarySequenceNumber !== undefined &&
 			latestSummarySequenceNumber !== nodeLatestSummarySequenceNumber
 		) {
-			const error = new LoggingError("LatestSummarySequenceNumberMismatch", {
-				latestSummarySequenceNumber,
-				nodeLatestSummarySequenceNumber,
-			});
-			this.logger.sendErrorEvent(
-				{
-					eventName: "LatestSummarySequenceNumberMismatch",
-				},
-				error,
+			invalidNodes++;
+			sequenceNumberMismatchKeySet.add(
+				`${latestSummarySequenceNumber}-${nodeLatestSummarySequenceNumber}`,
 			);
-
-			if (shouldValidatePreSummaryState) {
-				throw error;
-			}
 		}
 
 		this.wipSummaryLogger = summaryLogger;
 
 		for (const child of this.children.values()) {
-			child.startSummary(
+			const childStartSummaryResult = child.startSummary(
 				referenceSequenceNumber,
 				this.wipSummaryLogger,
 				latestSummarySequenceNumber,
-				shouldValidatePreSummaryState,
 			);
+			nodes += childStartSummaryResult.nodes;
+			invalidNodes += childStartSummaryResult.invalidNodes;
+			for (const invalidSequenceNumber of childStartSummaryResult.mismatchNumbers) {
+				sequenceNumberMismatchKeySet.add(invalidSequenceNumber);
+			}
 		}
 		this.wipReferenceSequenceNumber = referenceSequenceNumber;
+		return {
+			nodes,
+			invalidNodes,
+			mismatchNumbers: Array.from(sequenceNumberMismatchKeySet),
+		};
 	}
 
 	public async summarize(

@@ -3152,12 +3152,30 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(
+			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
 				summaryNumberLogger,
 				latestSummarySequenceNumber,
-				shouldValidatePreSummaryState,
 			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.length > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummarySequenceNumberMismatch",
+					...startSummaryResult,
+				});
+
+				if (shouldValidatePreSummaryState) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {
