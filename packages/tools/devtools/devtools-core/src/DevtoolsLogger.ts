@@ -60,7 +60,7 @@ export interface IDevtoolsLogger extends ITelemetryBaseLogger {}
  *
  * @sealed
  */
-export class DevtoolsLogger implements IDevtoolsLogger {
+class DevtoolsLogger implements IDevtoolsLogger {
 	/**
 	 * Base telemetry logger provided by the consumer.
 	 * All messages sent to the Devtools logger will be forwarded to this.
