@@ -15,7 +15,9 @@ import {
 	take,
 	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	createIdCompressor,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -23,9 +25,9 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IdCompressor, createSessionId, assertIsSessionId } from "../../id-compressor";
+} from "../";
+import { IdCompressor } from "../idCompressor";
+import { assertIsSessionId, createSessionId } from "../utilities";
 import {
 	FinalCompressedId,
 	getOrCreate,
@@ -96,7 +98,7 @@ export class CompressorFactory {
 		clusterCapacity = 5,
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
-		const compressor = IdCompressor.create(sessionId, logger);
+		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
 		compressor.clusterCapacity = clusterCapacity;
 		return compressor;
 	}
