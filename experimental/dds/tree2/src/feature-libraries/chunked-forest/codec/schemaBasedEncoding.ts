@@ -6,7 +6,6 @@
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	TreeFieldStoredSchema,
-	ITreeCursorSynchronous,
 	StoredSchemaCollection,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
@@ -14,7 +13,7 @@ import {
 import { FullSchemaPolicy } from "../../modular-schema";
 import { fail } from "../../../util";
 import { Multiplicity } from "../../multiplicity";
-import { EncodedChunk, EncodedValueShape } from "./format";
+import { EncodedFieldBatch, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -26,6 +25,7 @@ import {
 	compressedEncode,
 } from "./compressedEncode";
 import { NodeShape } from "./nodeShape";
+import { FieldBatch } from "./fieldBatch";
 
 /**
  * Encode data from `cursor` in into an `EncodedChunk`.
@@ -36,8 +36,8 @@ import { NodeShape } from "./nodeShape";
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	cursor: ITreeCursorSynchronous,
-): EncodedChunk {
+	cursor: FieldBatch,
+): EncodedFieldBatch {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 

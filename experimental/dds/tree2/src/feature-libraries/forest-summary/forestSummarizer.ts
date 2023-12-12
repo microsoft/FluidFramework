@@ -11,27 +11,34 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	applyDelta,
 	DeltaFieldChanges,
 	FieldKey,
+	forEachField,
 	IEditableForest,
 	ITreeCursorSynchronous,
+	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
-	mapCursorFields,
 	StoredSchemaCollection,
-} from "../core";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { idAllocatorFromMaxId } from "../util";
-import { ICodecOptions, IJsonCodec, noopValidator } from "../codec";
-import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
-import { FullSchemaPolicy } from "./modular-schema";
-import { TreeCompressionStrategy } from "./treeCompressionUtils";
-import { Format } from "./forestSummarizerFormat";
-import { makeForestSummarizerCodec } from "./forestSummarizerCodec";
-
+	TreeNavigationResult,
+} from "../../core";
+import {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../../shared-tree-core";
+import { idAllocatorFromMaxId } from "../../util";
+import { ICodecOptions, noopValidator } from "../../codec";
+import { FieldBatchCodec } from "../chunked-forest";
+import { FullSchemaPolicy } from "../modular-schema";
+import { TreeCompressionStrategy } from "../treeCompressionUtils";
+// eslint-disable-next-line import/no-internal-modules
+import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree";
+import { Format } from "./format";
+import { ForestCodec, makeForestSummarizerCodec } from "./codec";
 /**
  * The storage key for the blob in the summary containing tree data
  */
@@ -43,24 +50,23 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly schema: StoredSchemaCollection;
-	private readonly policy: FullSchemaPolicy;
-	private readonly encodeType: TreeCompressionStrategy;
-	private readonly codec: IJsonCodec<[FieldKey, EncodedChunk][], Format>;
-	private readonly options: ICodecOptions;
+	private readonly codec: ReturnType<ForestCodec>;
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		schema: StoredSchemaCollection,
-		policy: FullSchemaPolicy,
-		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-		options?: ICodecOptions,
+		private readonly schema: StoredSchemaCollection,
+		private readonly policy: FullSchemaPolicy,
+		private readonly encodeType: TreeCompressionStrategy,
+		fieldBatchCodec: FieldBatchCodec,
+		private readonly options: ICodecOptions = { jsonValidator: noopValidator },
 	) {
-		this.schema = schema;
-		this.policy = policy;
-		this.encodeType = encodeType;
-		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeForestSummarizerCodec(this.options);
+		this.codec = makeForestSummarizerCodec(
+			this.options,
+			fieldBatchCodec,
+		)({
+			schema: { schema: this.schema, policy: this.policy },
+			encodeType: this.encodeType,
+		});
 	}
 
 	/**
@@ -72,12 +78,24 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
+		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> = new Map();
 		// TODO: Encode all detached fields in one operation for better performance and compression
-		const fields: [FieldKey, EncodedChunk][] = mapCursorFields(rootCursor, (cursor) => [
-			rootCursor.getFieldKey(),
-			encodeSummary(cursor, this.schema, this.policy, this.encodeType),
-		]);
-		return stringify(this.codec.encode(fields));
+		forEachField(rootCursor, (cursor) => {
+			const key = cursor.getFieldKey();
+			const innerCursor = this.forest.allocateCursor();
+			assert(
+				this.forest.tryMoveCursorToField(
+					{ fieldKey: key, parent: undefined },
+					innerCursor,
+				) === TreeNavigationResult.Ok,
+				"failed to navigate to field",
+			);
+			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
+		});
+		const encoded = this.codec.encode(fieldMap);
+
+		fieldMap.forEach((value) => value.free());
+		return stringify(encoded);
 	}
 
 	public getAttachSummary(
@@ -119,27 +137,27 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = this.codec.decode(parse(treeBufferString) as Format);
 			const allocator = idAllocatorFromMaxId();
-			const fieldChanges: [FieldKey, DeltaFieldChanges][] = fields.map(
-				([fieldKey, content]) => {
-					const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
-						cursor.fork(),
-					);
-					const buildId = { minor: allocator.allocate(nodeCursors.length) };
+			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
+			for (const [fieldKey, field] of fields) {
+				const chunked = chunkField(field, defaultChunkPolicy);
+				const nodeCursors = chunked.flatMap((chunk) =>
+					mapCursorField(chunk.cursor(), (cursor) => cursor.fork()),
+				);
+				const buildId = { minor: allocator.allocate(nodeCursors.length) };
 
-					return [
-						fieldKey,
-						{
-							build: [
-								{
-									id: buildId,
-									trees: nodeCursors,
-								},
-							],
-							local: [{ count: nodeCursors.length, attach: buildId }],
-						},
-					];
-				},
-			);
+				fieldChanges.push([
+					fieldKey,
+					{
+						build: [
+							{
+								id: buildId,
+								trees: nodeCursors,
+							},
+						],
+						local: [{ count: nodeCursors.length, attach: buildId }],
+					},
+				]);
+			}
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
 			applyDelta(
@@ -148,21 +166,5 @@ export class ForestSummarizer implements Summarizable {
 				makeDetachedFieldIndex("init"),
 			);
 		}
-	}
-}
-
-function encodeSummary(
-	cursor: ITreeCursorSynchronous,
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	encodeType: TreeCompressionStrategy,
-): EncodedChunk {
-	switch (encodeType) {
-		case TreeCompressionStrategy.Compressed:
-			return schemaCompressedEncode(schema, policy, cursor);
-		case TreeCompressionStrategy.Uncompressed:
-			return uncompressedEncode(cursor);
-		default:
-			unreachableCase(encodeType);
 	}
 }

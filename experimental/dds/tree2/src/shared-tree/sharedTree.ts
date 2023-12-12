@@ -49,6 +49,7 @@ import {
 	FieldKinds,
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
+	makeFieldBatchCodec,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
@@ -179,11 +180,13 @@ export class SharedTree
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			fieldBatchCodec,
 			options,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);

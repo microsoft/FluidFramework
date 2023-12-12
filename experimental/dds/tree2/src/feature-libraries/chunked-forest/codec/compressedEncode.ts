@@ -23,13 +23,14 @@ import {
 } from "./chunkEncodingGeneric";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities";
 import {
-	EncodedChunk,
 	version,
 	EncodedChunkShape,
 	EncodedValueShape,
 	EncodedAnyShape,
 	EncodedNestedArray,
+	EncodedFieldBatch,
 } from "./format";
+import { FieldBatch } from "./fieldBatch";
 
 /**
  * Encode data from `cursor` in into an `EncodedChunk`.
@@ -38,15 +39,16 @@ import {
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(
-	cursor: ITreeCursorSynchronous,
-	cache: EncoderCache,
-): EncodedChunk {
-	const buffer: BufferFormat = [];
+export function compressedEncode(cursors: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
+	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
-	anyFieldEncoder.encodeField(cursor, cache, buffer);
-	return handleShapesAndIdentifiers(version, buffer);
+	for (const cursor of cursors) {
+		const buffer: BufferFormat = [];
+		anyFieldEncoder.encodeField(cursor, cache, buffer);
+		batchBuffer.push(buffer);
+	}
+	return handleShapesAndIdentifiers(version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
