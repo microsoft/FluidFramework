@@ -10,6 +10,7 @@
 @fluidframework/test-driver-definitions
 @fluidframework/mocha-test-setup
 @fluid-experimental/odsp-client
+@fluid-experimental/odsp-end-to-end-tests
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
