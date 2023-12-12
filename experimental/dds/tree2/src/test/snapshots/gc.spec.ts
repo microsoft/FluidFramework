@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
-	MockIdCompressor,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedTree, SharedTreeFactory } from "../../shared-tree";
@@ -34,7 +34,7 @@ const config = new TreeConfiguration(SomeType, () => ({
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: new MockIdCompressor(),
+		idCompressor: createIdCompressor(),
 	});
 	const tree = new SharedTree(
 		id,
@@ -56,7 +56,7 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 function createLocalTree(id: string) {
 	const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 	return factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: new MockIdCompressor() }),
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 		id,
 	);
 }

@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
@@ -14,7 +13,12 @@ import { DecodedMessage } from "../../shared-tree-core/messageTypes";
 import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
 import { useDeterministicStableId } from "../../util";
 import { TestChange } from "../testChange";
-import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../utils";
+import {
+	EncodingTestData,
+	MockIdCompressor,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+} from "../utils";
 
 const commit1 = {
 	revision: mintRevisionTag(),

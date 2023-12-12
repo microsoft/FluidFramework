@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SessionId } from "@fluidframework/runtime-definitions";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { typeboxValidator } from "../../external-utilities";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
 import { RevisionTagCodec, SummaryData, makeEditManagerCodec } from "../../shared-tree-core";
-import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../utils";
+import {
+	EncodingTestData,
+	MockIdCompressor,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+} from "../utils";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 

@@ -19,7 +19,6 @@ export {
 	MockObjectStorageService,
 	MockQuorumClients,
 	MockSharedObjectServices,
-	MockIdCompressor,
 } from "./mocks";
 export {
 	MockContainerRuntimeFactoryForReconnection,

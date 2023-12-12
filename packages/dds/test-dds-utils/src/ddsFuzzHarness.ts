@@ -980,7 +980,6 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	containerRuntimeFactory.processAllMessages();
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,

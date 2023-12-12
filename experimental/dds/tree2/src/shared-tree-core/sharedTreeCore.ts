@@ -96,18 +96,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		/**
-		 * A random ID that uniquely identifies this client in the collab session.
-		 * This is sent alongside every op to identify which client the op originated from.
-		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
-		 */
-		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		assert(
 			runtime.idCompressor !== undefined,
 			"IdCompressor must be enabled to use SharedTree",
 		);
 		this.idCompressor = runtime.idCompressor;
 		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
+		/**
+		 * A random ID that uniquely identifies this client in the collab session.
+		 * This is sent alongside every op to identify which client the op originated from.
+		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
+		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {

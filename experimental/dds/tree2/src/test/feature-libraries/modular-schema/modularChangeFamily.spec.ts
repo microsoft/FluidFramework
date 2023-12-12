@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -42,6 +41,7 @@ import { makeCodecFamily } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
 	EncodingTestData,
+	MockIdCompressor,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,

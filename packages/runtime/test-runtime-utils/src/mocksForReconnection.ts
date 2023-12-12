@@ -119,6 +119,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			overrides,
 		);
 
+		// Finalize all IdCreationRanges that the other runtimes have seen
 		for (const range of this.processedIdRanges) {
 			containerRuntime.finalizeIdRange(range);
 		}

@@ -47,12 +47,6 @@ import {
 	IIdCompressorCore,
 	ISummaryTreeWithStats,
 	IdCreationRange,
-	OpSpaceCompressedId,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -423,6 +417,12 @@ export class MockContainerRuntimeFactory {
 			this,
 			this.runtimeOptions,
 		);
+
+		// Finalize all IdCreationRanges that the other runtimes have seen
+		for (const idRange of this.processedIdRanges) {
+			containerRuntime.finalizeIdRange(idRange);
+		}
+
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
 	}
@@ -956,52 +956,6 @@ export class MockSharedObjectServices implements IChannelServices {
 
 	public constructor(contents: { [key: string]: string }) {
 		this.objectStorage = new MockObjectStorageService(contents);
-	}
-}
-
-/**
- * Mock implementation of IIdCompressor
- * @internal
- */
-export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
-	private count: number = 0;
-	public readonly localSessionId: SessionId;
-
-	public constructor() {
-		this.localSessionId = uuid() as SessionId;
-	}
-	public takeNextCreationRange(): IdCreationRange {
-		return undefined as unknown as IdCreationRange;
-	}
-	public finalizeCreationRange(range: IdCreationRange): void {}
-	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
-	public serialize(
-		withSession: unknown,
-	): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
-		throw new Error("Method not implemented.");
-	}
-
-	public generateCompressedId(): SessionSpaceCompressedId {
-		return this.count++ as SessionSpaceCompressedId;
-	}
-	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
-		return id as unknown as OpSpaceCompressedId;
-	}
-	public normalizeToSessionSpace(
-		id: OpSpaceCompressedId,
-		originSessionId: SessionId,
-	): SessionSpaceCompressedId {
-		return id as unknown as SessionSpaceCompressedId;
-	}
-	public decompress(id: SessionSpaceCompressedId): StableId {
-		throw new Error("Method not implemented.");
-	}
-	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
-		throw new Error("Method not implemented.");
-	}
-	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
-		throw new Error("Method not implemented.");
 	}
 }
 

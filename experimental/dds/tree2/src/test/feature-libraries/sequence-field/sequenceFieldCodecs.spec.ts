@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { MockIdCompressor } from "@fluidframework/test-runtime-utils";
 import { SequenceField as SF } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field";
 import { RevisionTagCodec } from "../../../shared-tree-core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { EncodingTestData, makeEncodingTestSuite, mintRevisionTag } from "../../utils";
+import {
+	EncodingTestData,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+	MockIdCompressor,
+} from "../../utils";
 import { populatedMarks } from "./populatedMarks";
 import { ChangeMaker as Change, cases } from "./testEdits";
 

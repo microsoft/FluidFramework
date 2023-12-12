@@ -57,14 +57,8 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
-import { OpSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { SerializedIdCompressorWithNoSession } from '@fluidframework/runtime-definitions';
-import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/runtime-definitions';
-import { SessionId } from '@fluidframework/runtime-definitions';
-import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
-import { StableId } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
@@ -539,33 +533,6 @@ export class MockHandle<T> implements IFluidHandle {
     readonly path: string;
     // (undocumented)
     protected readonly value: T;
-}
-
-// @internal
-export class MockIdCompressor implements IIdCompressor_2, IIdCompressorCore_2 {
-    constructor();
-    // (undocumented)
-    decompress(id: SessionSpaceCompressedId): StableId;
-    // (undocumented)
-    finalizeCreationRange(range: IdCreationRange): void;
-    // (undocumented)
-    generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
-    readonly localSessionId: SessionId;
-    // (undocumented)
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    // (undocumented)
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    // (undocumented)
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    // (undocumented)
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    // (undocumented)
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    // (undocumented)
-    takeNextCreationRange(): IdCreationRange;
-    // (undocumented)
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
 // @internal
