@@ -116,7 +116,7 @@ steps:
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 echo "PackageVersion: $packageVersion"
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private")
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
                   for scope in "${scopes[@]}"; do
                       if [[ "$packageName" == "$scope"* ]]; then
                           packageName="@${packageName/$scope-/$scope/}"
