@@ -451,7 +451,7 @@ export function compareCellsFromSameRevision(
 	cell2: CellId,
 	count2: number,
 ): number | undefined {
-	assert(cell1.revision === cell2.revision, "Expected cells to have the same revision");
+	assert(cell1.revision === cell2.revision, 0x85b /* Expected cells to have the same revision */);
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
