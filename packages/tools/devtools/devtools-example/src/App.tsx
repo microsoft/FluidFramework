@@ -16,7 +16,7 @@ import React from "react";
 
 import {
 	type ContainerKey,
-	DevtoolsLogger,
+	createDevtoolsLogger,
 	type HasContainerKey,
 	type IFluidDevtools,
 	initializeDevtools,
@@ -183,7 +183,7 @@ const useStyles = makeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Devtools logger
-	const logger = React.useMemo(() => new DevtoolsLogger(), []);
+	const logger = React.useMemo(() => createDevtoolsLogger(), []);
 
 	// Initialize the Fluid Container loader
 	const loader = React.useMemo(() => createLoader(logger), [logger]);
