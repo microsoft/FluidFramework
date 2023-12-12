@@ -10,18 +10,23 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "commonjs",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
 		"fluid-runner": "bin/fluid-runner"
 	},
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -66,6 +71,7 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.38.3",
 		"json2csv": "^5.0.7",
 		"yargs": "13.2.2"
 	},
@@ -90,6 +96,17 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"broken": {}

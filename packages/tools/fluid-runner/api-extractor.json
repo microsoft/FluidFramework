@@ -1,0 +1,21 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "../../../common/build/build-common/api-extractor-base.json",
+	"messages": {
+		"extractorMessageReporting": {
+			// TODO: remove once base config has this enabled as an error
+			"ae-forgotten-export": {
+				"logLevel": "warning",
+				"addToApiReportFile": false
+			},
+			"ae-undocumented": {
+				"logLevel": "warning",
+				"addToApiReportFile": false
+			},
+			"ae-unresolved-link": {
+				"logLevel": "warning",
+				"addToApiReportFile": false
+			}
+		}
+	}
+}
