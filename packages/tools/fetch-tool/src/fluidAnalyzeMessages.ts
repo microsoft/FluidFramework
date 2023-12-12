@@ -551,6 +551,10 @@ function processOp(
 			case ContainerMessageType.BlobAttach: {
 				break;
 			}
+			// The default method to count stats should be used for GC messages.
+			case ContainerMessageType.GC: {
+				break;
+			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
