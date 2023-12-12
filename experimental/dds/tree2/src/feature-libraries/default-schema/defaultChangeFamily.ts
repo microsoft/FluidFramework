@@ -19,6 +19,7 @@ import {
 	DeltaRoot,
 	StoredSchemaCollection,
 	ChangesetLocalId,
+	DeltaDetachedNodeId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -29,6 +30,7 @@ import {
 	FieldEditDescription,
 	FullSchemaPolicy,
 	intoDelta as intoModularDelta,
+	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
@@ -67,6 +69,26 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  */
 export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
 	return intoModularDelta(taggedChange, fieldKinds);
+}
+
+/**
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
+ *
+ * May be conservative by returning more removed roots than strictly necessary.
+ *
+ * Will never return IDs for non-root trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ */
+export function relevantRemovedRoots(
+	taggedChange: TaggedChange<ModularChangeset>,
+): Iterable<DeltaDetachedNodeId> {
+	return relevantModularRemovedRoots(taggedChange, fieldKinds);
 }
 
 /**
