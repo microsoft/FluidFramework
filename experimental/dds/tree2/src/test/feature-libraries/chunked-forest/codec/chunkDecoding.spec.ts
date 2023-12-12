@@ -83,7 +83,7 @@ describe("chunkDecoding", () => {
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			});
-			assert.equal(result, emptyChunk);
+			assert.deepEqual(result, [emptyChunk]);
 		});
 	});
 

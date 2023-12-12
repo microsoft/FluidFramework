@@ -109,7 +109,7 @@ describe("chunkEncodingGeneric", () => {
 				handleShapesAndIdentifiers(version, [
 					[new IdentifierToken("long string"), new IdentifierToken("long string")],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [0, 0] },
+				{ version, identifiers: ["long string"], shapes: [], data: [[0, 0]] },
 			);
 		});
 		it("identifier: mixed", () => {
@@ -136,7 +136,7 @@ describe("chunkEncodingGeneric", () => {
 				version,
 				identifiers: [],
 				shapes: [{ b: "shape data" }],
-				data: [0],
+				data: [[0]],
 			});
 		});
 		it("shape: counted", () => {

@@ -1176,18 +1176,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		builds.set(undefined, innerMap);
 		let id = firstId;
 
-		const fieldCursors = content.map((cursor) =>
-			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
-		);
-		const nodeCursors = fieldCursors
-			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
-			.flat();
-		const encodedTrees = nodeCursors.map((cursor) => chunkTree(cursor, defaultChunkPolicy));
-
 		// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-		for (const tree of encodedTrees) {
+		for (const cursor of content) {
 			assert(!innerMap.has(id), 0x854 /* Unexpected duplicate build ID */);
-			innerMap.set(id, tree);
+			innerMap.set(id, chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy));
 			id = brand((id as number) + 1);
 		}
 		return {

@@ -56,6 +56,12 @@ export function makeFieldBatchCodec(
 	return (context: Context) =>
 		makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 			encode: (data: FieldBatch): EncodedFieldBatch => {
+				for (const cursor of data) {
+					assert(
+						cursor.mode === CursorLocationType.Fields,
+						"FieldBatch expects fields cursors",
+					);
+				}
 				let encoded: EncodedFieldBatch;
 				switch (context.encodeType) {
 					case TreeCompressionStrategy.Uncompressed:

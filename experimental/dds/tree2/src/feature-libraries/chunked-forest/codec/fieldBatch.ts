@@ -7,5 +7,6 @@ import { ITreeCursorSynchronous } from "../../../core";
 
 /**
  * Collection of field cursors to compress as a batch.
+ * Cursors must be in fields mode.
  */
 export type FieldBatch = readonly ITreeCursorSynchronous[];

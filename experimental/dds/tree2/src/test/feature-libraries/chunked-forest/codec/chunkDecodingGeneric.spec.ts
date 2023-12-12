@@ -142,7 +142,9 @@ describe("chunkDecodingGeneric", () => {
 			data: [[0, 5]],
 		};
 		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
-		const chunk = decode(decoderLibrary, cache, encoded, rootDecoder);
+		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
+		assert(chunks.length === 1);
+		const chunk = chunks[0];
 		assert(chunk instanceof TestChunk2);
 		assert.equal(chunk.value, 5);
 	});
