@@ -17,11 +17,20 @@ import {
 	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
-	TreeSchema,
 	AssignableFieldKinds,
 } from "../feature-libraries";
-import { InsertableTreeNodeUnion } from "./insertable";
-import { IterableTreeListContent, createIterableTreeListContent } from "./iterableTreeListContent";
+import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
+
+/**
+ * Type alias to document which values are un-hydrated.
+ *
+ * Un-hydrated values are nodes produced from schema's create functions that haven't been inserted into a tree yet.
+ *
+ * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
+ * This no-op wrapper is used instead.
+ * @beta
+ */
+export type Unhydrated<T> = T;
 
 /**
  * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
@@ -32,42 +41,12 @@ import { IterableTreeListContent, createIterableTreeListContent } from "./iterab
  * TODO: Type tests to ensure that various tree node types are actually assignable to this.
  *
  * Using default parameters, this could be combined with TypedNode.
- * @alpha
  */
-export type TreeNode = TreeListNode | TreeObjectNode<ObjectNodeSchema> | TreeMapNode<MapNodeSchema>;
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export interface TreeListNode<out TTypes extends AllowedTypes = AllowedTypes>
-	extends TreeListNodeBase<
-		TreeNodeUnion<TTypes>,
-		InsertableTreeNodeUnion<TTypes>,
-		TreeListNode
-	> {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the list mutation APIs.
- * @alpha
- */
-export const TreeListNode = {
-	/**
-	 * Wrap an iterable of content to be inserted into a list.
-	 * @remarks
-	 * The object returned by this function can be inserted into a list as an element.
-	 * Its contents will be inserted sequentially in the corresponding location in the list.
-	 * @example
-	 * ```ts
-	 * list.insertAtEnd(list.inline(iterable))
-	 * ```
-	 */
-	inline: <T>(content: Iterable<T>) => createIterableTreeListContent(content),
-};
+export type TreeNode = TreeListNodeOld | TreeObjectNode<ObjectNodeSchema> | TreeMapNode;
 
 /**
  * A generic List type, used to defined types like {@link (TreeListNode:interface)}.
- * @alpha
+ * @beta
  */
 export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T> {
 	/**
@@ -220,7 +199,6 @@ export interface TreeListNodeBase<out T, in TNew, in TMoveFrom> extends Readonly
 
 /**
  * An object which supports property-based access to fields.
- * @alpha
  */
 export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeObjectNodeFields<
 	TSchema["objectNodeFieldsObject"]
@@ -232,7 +210,6 @@ export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeObjectNodeFie
  * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
  * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
  * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
- * @alpha
  */
 export type TreeObjectNodeFields<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
@@ -272,10 +249,19 @@ export type TreeObjectNodeFields<
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @alpha
  */
-export interface TreeMapNode<TSchema extends MapNodeSchema>
-	extends ReadonlyMap<string, TreeField<TSchema["info"], "notEmpty">> {
+export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
+	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
+
+/**
+ * A map of string keys to tree objects.
+ *
+ * @privateRemarks
+ * Add support for `clear` once we have established merge semantics for it.
+ *
+ * @beta
+ */
+export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
@@ -283,9 +269,9 @@ export interface TreeMapNode<TSchema extends MapNodeSchema>
 	 * @param value - The value of the element to add to the map.
 	 *
 	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeBase.delete} with that key.
 	 */
-	set(key: string, value: TreeField<TSchema["info"], "notEmpty"> | undefined): void;
+	set(key: string, value: TIn | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -306,7 +292,6 @@ export interface TreeMapNode<TSchema extends MapNodeSchema>
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
- * @alpha
  */
 export type TreeField<
 	TSchema extends TreeFieldSchema = TreeFieldSchema,
@@ -315,8 +300,7 @@ export type TreeField<
 > = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
- * Helper for implementing {@link InternalEditableTreeTypes#ProxyField}.
- * @alpha
+ * Helper for implementing {@link TreeField}.
  */
 export type TreeFieldInner<
 	Kind extends FieldKind,
@@ -332,7 +316,6 @@ export type TreeFieldInner<
 
 /**
  * Given multiple node schema types, return the corresponding object type union in the proxy-based API.
- * @alpha
  */
 export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
 	? unknown
@@ -351,24 +334,14 @@ export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly
 
 /**
  * Given a node's schema, return the corresponding object in the proxy-based API.
- * @alpha
  */
 export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
 	? TreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? TreeListNode<TSchema["info"]["allowedTypes"]>
+	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
 	: TSchema extends ObjectNodeSchema
 	? TreeObjectNode<TSchema>
 	: // TODO: this should be able to be replaced with `TreeNode` to provide stronger typing in some edge cases, like TypedNode<TreeNodeSchema>
 	  unknown;
-
-/**
- * The root type (the type of the entire tree) for a given schema collection.
- * */
-export type TreeRoot<TSchema extends TreeSchema> = TSchema extends TreeSchema<
-	infer TRootFieldSchema
->
-	? TreeField<TRootFieldSchema>
-	: never;

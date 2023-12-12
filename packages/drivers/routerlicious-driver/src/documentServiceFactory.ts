@@ -58,6 +58,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 /**
  * Factory for creating the routerlicious document service. Use this if you want to
  * use the routerlicious implementation.
+ * @internal
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
@@ -376,6 +377,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
  * @remarks TODO: examples of suggested actions for recovery.
  * - How would a user delete the created document?
  * - What would a retry pattern look like here?
+ * @internal
  */
 export class DocumentPostCreateError extends Error {
 	public constructor(

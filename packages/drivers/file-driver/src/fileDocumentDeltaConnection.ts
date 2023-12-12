@@ -45,6 +45,7 @@ const Claims: ITokenClaims = {
 
 /**
  * Replay service used to play ops using the delta connection.
+ * @internal
  */
 export class Replayer {
 	private currentReplayOp = 0;
@@ -110,6 +111,9 @@ export class Replayer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class ReplayFileDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable

@@ -17,6 +17,7 @@ import { IProducer } from "./queue";
  * When producing sequentially, it will produce the messages to each producer one
  * after another in order of the producers argument.
  * It will wait for each send to complete before sending the message to the next producer.
+ * @internal
  */
 export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
 	constructor(

@@ -12,9 +12,8 @@ import { type AzureMember, type AzureUser, type IAzureAudience } from "./interfa
  * Azure-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.
  *
  * @remarks Operates in terms of {@link AzureMember}s.
- *
- * @public
  * @deprecated This class will be removed. use {@link IAzureAudience} instead
+ * @internal
  */
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
 	/**
@@ -23,8 +22,6 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 	 *
 	 * @param audienceMember - Audience member for which the `ServiceAudience` will be generated.
 	 * Note: its {@link @fluidframework/protocol-definitions#IClient.user} is required to be an {@link AzureUser}.
-	 *
-	 * @internal
 	 */
 	protected createServiceMember(audienceMember: IClient): AzureMember {
 		return createAzureAudienceMember(audienceMember);

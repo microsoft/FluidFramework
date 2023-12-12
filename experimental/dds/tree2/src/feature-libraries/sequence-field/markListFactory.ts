@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Mark, MarkList } from "./format";
+import { Mark, MarkList } from "./types";
 import { isNoopMark, tryMergeMarks as tryMergeMarks } from "./utils";
 
 /**

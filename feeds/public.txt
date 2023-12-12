@@ -9,9 +9,11 @@
 @fluidframework/test-utils
 @fluidframework/test-driver-definitions
 @fluidframework/mocha-test-setup
+@fluid-experimental/odsp-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
+@fluidframework/id-compressor
 @fluidframework/datastore-definitions
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions

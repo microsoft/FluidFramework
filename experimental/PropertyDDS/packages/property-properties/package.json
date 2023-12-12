@@ -62,7 +62,7 @@
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-common": "workspace:~",
-		"ajv": "7.1.1",
+		"ajv": "^8.12.0",
 		"async": "^3.2.2",
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
@@ -75,7 +75,7 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^16.18.38",
+		"@types/node": "^18.19.0",
 		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",

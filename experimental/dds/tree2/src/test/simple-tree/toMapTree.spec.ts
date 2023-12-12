@@ -12,6 +12,7 @@ import { SchemaBuilder, leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree";
 import { brand } from "../../util";
+import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries";
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -374,6 +375,18 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("ambagious unions", () => {
+		const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
+		const a = schemaBuilder.object("a", {});
+		const b = schemaBuilder.object("b", {});
+		const schema = schemaBuilder.intoSchema([a, b]);
+
+		assert.throws(
+			() => nodeDataToMapTree({}, { schema }, schema.rootFieldSchema.types),
+			/\["test.a","test.b"]/,
+		);
+	});
+
 	// Our data serialization format does not support certain numeric values.
 	// These tests are intended to verify the mapping behaviors for those values.
 	describe("Incompatible numeric value handling", () => {
@@ -434,6 +447,62 @@ describe("toMapTree", () => {
 
 			const result = nodeDataToMapTree(-0, { schema }, schema.rootFieldSchema.types);
 			assert.equal(result.value, +0);
+		});
+
+		it("List containing `undefined` (maps values to null if allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [
+				schemaBuilder.number,
+				schemaBuilder.null,
+			]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			const actual = nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types);
+
+			const expected: MapTree = {
+				type: rootSchema.name,
+				fields: new Map([
+					[
+						EmptyKey,
+						[
+							{
+								value: 42,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+							{
+								value: 37,
+								type: schemaBuilder.number.name,
+								fields: new Map(),
+							},
+							{
+								value: null,
+								type: schemaBuilder.null.name,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("List containing `undefined` (throws if fallback type is not allowed by the schema)", () => {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const rootSchema = schemaBuilder.list("test-list", [schemaBuilder.number]);
+			const schema = schemaBuilder.intoSchema(rootSchema);
+
+			const input: (number | undefined)[] = [42, undefined, 37, undefined];
+
+			assert.throws(() => nodeDataToMapTree(input, { schema }, schema.rootFieldSchema.types));
 		});
 	});
 });

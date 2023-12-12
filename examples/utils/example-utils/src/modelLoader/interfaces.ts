@@ -8,6 +8,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 
 /**
  * Object returned from calling IModelLoader.createDetached().
+ * @internal
  */
 export interface IDetachedModel<ModelType> {
 	/**
@@ -22,6 +23,9 @@ export interface IDetachedModel<ModelType> {
 	attach: () => Promise<string>;
 }
 
+/**
+ * @internal
+ */
 export interface IModelLoader<ModelType> {
 	/**
 	 * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
@@ -55,6 +59,7 @@ export interface IModelLoader<ModelType> {
 
 /**
  * The callback signature that the container author will provide.  It must return a promise for the container's model.
+ * @internal
  */
 export type ModelMakerCallback<ModelType> = (
 	runtime: IContainerRuntime,

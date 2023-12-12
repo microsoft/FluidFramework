@@ -48,8 +48,7 @@ import { type ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
- *
- * @public
+ * @internal
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**

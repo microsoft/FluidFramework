@@ -9,8 +9,7 @@ import { type AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.
- *
- * @public
+ * @internal
  */
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 	/**
@@ -75,8 +74,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  * `SharedCell` is an `EventEmitter`, and will emit events when other clients make modifications. You should
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
  * in response to a `set`, and `delete` will be emitted in response to a `delete`.
- *
- * @public
+ * @internal
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,7 +106,6 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 	delete(): void;
 
 	/**
-	 * @alpha
 	 * @returns the AttributionKey associated with the cell's most recent change.
 	 */
 	getAttribution(): AttributionKey | undefined;
@@ -133,8 +130,7 @@ export interface ICellLocalOpMetadata<T = any> {
 
 /**
  * Options related to attribution
- *
- * @alpha
+ * @internal
  */
 export interface ICellOptions {
 	attribution?: ICellAttributionOptions;
@@ -145,8 +141,7 @@ export interface ICellOptions {
  * (i.e. who creeated the content and when it was created)
  *
  * default: false
- *
- * @alpha
+ * @internal
  */
 export interface ICellAttributionOptions {
 	track?: boolean;

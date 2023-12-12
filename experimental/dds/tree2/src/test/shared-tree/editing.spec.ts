@@ -12,13 +12,13 @@ import {
 	moveToDetachedField,
 	FieldUpPath,
 	PathVisitor,
-	Delta,
 	DetachedRangeUpPath,
 	RangeUpPath,
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	AnchorNode,
 	EmptyKey,
+	ProtoNodes,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -46,9 +46,8 @@ describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
-			const tree2 = tree1.fork();
 			insert(tree1, 0, "y");
-			tree2.rebaseOnto(tree1);
+			const tree2 = tree1.fork();
 
 			insert(tree1, 0, "x");
 			insert(tree2, 1, "a", "c");
@@ -208,10 +207,7 @@ describe("Editing", () => {
 			insert(tree2, 1, "C");
 			tree3.editor
 				.sequenceField(rootField)
-				.insert(
-					0,
-					cursorForJsonableTreeNode({ type: jsonObject.name, fields: { foo: [] } }),
-				);
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
 
 			const aEditor = tree3.editor.sequenceField({ parent: rootNode, field: brand("foo") });
 			aEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "a" }));
@@ -442,9 +438,7 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
-		// This test fails due to the sequence rebaser failing to line up the removal of A with the insert of A.
-		// See BUG 5351
-		it.skip("can rebase insert and delete over insert in the same gap", () => {
+		it("can rebase insert and delete over insert in the same gap", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
@@ -456,6 +450,27 @@ describe("Editing", () => {
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
 			expectJsonTree([tree1, tree2], ["B"]);
+		});
+
+		it("concurrent insert with nested change", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 0, "a");
+			expectJsonTree(tree1, ["a"]);
+
+			tree2.editor
+				.sequenceField(rootField)
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			tree2.editor
+				.sequenceField({ parent: rootNode, field: brand("foo") })
+				.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+			expectJsonTree(tree2, [{ foo: {} }]);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [{ foo: {} }, "a"]);
 		});
 
 		it("can rebase intra-field move over insert", () => {
@@ -1643,7 +1658,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,
@@ -1830,6 +1845,8 @@ describe("Editing", () => {
 					// Represented as an integer (0: removed, 1: present) to facilitate summing.
 					// Used to compute the index of the next node to remove.
 					const present = makeArray(nbPeers, () => makeArray(nbNodes, () => 1));
+					// Same as `present` but for `tree` branch.
+					const presentOnTree = makeArray(nbNodes, () => 1);
 					// The number of remaining undos available for each peer.
 					const undoQueues: number[][] = makeArray(nbPeers, () => []);
 
@@ -1865,13 +1882,15 @@ describe("Editing", () => {
 								unreachableCase(step);
 						}
 						tree.merge(peer, false);
+						presentOnTree[affectedNode] = presence;
 						// We only let peers with a higher index learn of this edit.
 						// This breaks the symmetry between scenarios where the permutation of actions is the same
 						// except for which peer does which set of actions.
 						// It also helps simulate different peers learning of the same edit at different times.
 						for (let downhillPeer = iPeer + 1; downhillPeer < nbPeers; downhillPeer++) {
-							peers[downhillPeer].rebaseOnto(peer);
-							present[downhillPeer][affectedNode] = presence;
+							peers[downhillPeer].rebaseOnto(tree);
+							// The peer should now be in the same state as `tree`.
+							present[downhillPeer] = [...presentOnTree];
 						}
 						present[iPeer][affectedNode] = presence;
 					}
@@ -2130,7 +2149,7 @@ describe("Editing", () => {
 			let valueAfterInsert: string | undefined;
 			const pathVisitor: PathVisitor = {
 				onDelete(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: Delta.ProtoNodes): void {},
+				onInsert(path: UpPath, content: ProtoNodes): void {},
 				afterCreate(content: DetachedRangeUpPath): void {},
 				beforeReplace(
 					newContent: DetachedRangeUpPath,

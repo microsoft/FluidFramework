@@ -10,7 +10,7 @@ import {
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -141,7 +141,7 @@ async function runAndValidateBatch(
 	}
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 

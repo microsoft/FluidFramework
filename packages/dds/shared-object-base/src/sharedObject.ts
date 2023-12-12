@@ -40,6 +40,7 @@ import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  * Base class from which all shared objects derive.
+ * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -543,9 +544,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * attached to them by the consumers of the DDS). It should not be called from outside the class or to emit events
 	 * which are only internal to the DDS. Support for calling it from outside the DDS instance might be removed in the
 	 * future.
-	 *
-	 * @internal
-	 *
 	 * @param event - The event to emit.
 	 * @param args - Arguments to pass to the event listeners.
 	 * @returns `true` if the event had listeners, `false` otherwise.
@@ -583,6 +581,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @alpha
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,

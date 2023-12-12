@@ -20,11 +20,17 @@ export type DataTransformationCallback = (
 	modelVersion: string,
 ) => Promise<unknown>;
 
+/**
+ * @internal
+ */
 export interface ISameContainerMigratorEvents extends IEvent {
 	(event: "migrated" | "migrating", listener: () => void);
 	(event: "migrationNotSupported", listener: (version: string) => void);
 }
 
+/**
+ * @internal
+ */
 export interface ISameContainerMigrator extends IEventProvider<ISameContainerMigratorEvents> {
 	/**
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new

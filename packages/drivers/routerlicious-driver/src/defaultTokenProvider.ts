@@ -7,6 +7,7 @@ import { ITokenProvider, ITokenResponse } from "./tokens";
 
 /**
  * Default token provider in case the host does not provide one. It simply caches the provided jwt and returns it back.
+ * @internal
  */
 
 export class DefaultTokenProvider implements ITokenProvider {

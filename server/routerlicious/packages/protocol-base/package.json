@@ -21,12 +21,13 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
@@ -60,7 +61,7 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.0.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-220363",
 		"events": "^3.1.0"
 	},
 	"devDependencies": {

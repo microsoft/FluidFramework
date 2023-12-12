@@ -19,7 +19,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -29,7 +29,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * read and process it successfully.
  */
 // Issue #10053
-describeFullCompat.skip("GC summary compatibility tests", (getTestObjectProvider) => {
+describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObjectProvider) => {
 	const currentVersionNumber = 0;
 	const oldVersionNumbers = [-1, -2];
 	const dataObjectFactory = new TestFluidObjectFactory([]);

@@ -265,26 +265,26 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_GCFeatureMatrix():
     TypeOnly<old.GCFeatureMatrix>;
-declare function use_current_InterfaceDeclaration_GCFeatureMatrix(
+declare function use_current_RemovedInterfaceDeclaration_GCFeatureMatrix(
     use: TypeOnly<current.GCFeatureMatrix>): void;
-use_current_InterfaceDeclaration_GCFeatureMatrix(
+use_current_RemovedInterfaceDeclaration_GCFeatureMatrix(
     get_old_InterfaceDeclaration_GCFeatureMatrix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
+* "RemovedInterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_GCFeatureMatrix():
+declare function get_current_RemovedInterfaceDeclaration_GCFeatureMatrix():
     TypeOnly<current.GCFeatureMatrix>;
 declare function use_old_InterfaceDeclaration_GCFeatureMatrix(
     use: TypeOnly<old.GCFeatureMatrix>): void;
 use_old_InterfaceDeclaration_GCFeatureMatrix(
-    get_current_InterfaceDeclaration_GCFeatureMatrix());
+    get_current_RemovedInterfaceDeclaration_GCFeatureMatrix());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -800,6 +800,7 @@ declare function get_old_InterfaceDeclaration_IGCStats():
 declare function use_current_InterfaceDeclaration_IGCStats(
     use: TypeOnly<current.IGCStats>): void;
 use_current_InterfaceDeclaration_IGCStats(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCStats());
 
 /*

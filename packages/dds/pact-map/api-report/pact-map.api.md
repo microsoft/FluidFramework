@@ -15,13 +15,13 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @internal
 export interface IAcceptedPact<T> {
     acceptedSequenceNumber: number;
     value: T | undefined;
 }
 
-// @public
+// @internal
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
     delete(key: string): void;
     get(key: string): T | undefined;
@@ -31,12 +31,12 @@ export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
     set(key: string, value: T | undefined): void;
 }
 
-// @public
+// @internal
 export interface IPactMapEvents extends ISharedObjectEvents {
     (event: "pending" | "accepted", listener: (key: string) => void): any;
 }
 
-// @public
+// @internal
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
@@ -47,19 +47,17 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     static getFactory(): IChannelFactory;
     getPending(key: string): T | undefined;
     getWithDetails(key: string): IAcceptedPact<T> | undefined;
-    // @internal (undocumented)
+    // (undocumented)
     protected initializeLocalCore(): void;
     isPending(key: string): boolean;
-    // @internal (undocumented)
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @internal (undocumented)
+    // (undocumented)
     protected onDisconnect(): void;
-    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
+    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: T | undefined): void;
-    // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 

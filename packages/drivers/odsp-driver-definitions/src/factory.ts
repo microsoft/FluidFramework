@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export interface ISnapshotOptions {
 	blobs?: number;
 	deltas?: number;
@@ -22,6 +25,9 @@ export interface ISnapshotOptions {
 	timeout?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface IOpsCachingPolicy {
 	/**
 	 * Batch size. Controls how many ops are grouped together as single cache entry
@@ -50,6 +56,9 @@ export interface IOpsCachingPolicy {
 	totalOpsToCache?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface ICollabSessionOptions {
 	/**
 	 * Value indicating the display name for session that admits unauthenticated user.
@@ -69,6 +78,9 @@ export interface ICollabSessionOptions {
 	forceAccessTokenViaAuthorizationHeader?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;
 

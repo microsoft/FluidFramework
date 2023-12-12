@@ -17,6 +17,7 @@
                   "trunk": [
                     {
                       "change": {
+                        "maxId": 0,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
@@ -35,25 +36,12 @@
                     },
                     {
                       "change": {
+                        "maxId": 1,
                         "changes": [
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "b": [
-                                [
-                                  {
-                                    "localId": 1
-                                  },
-                                  {
-                                    "type": "com.fluidframework.leaf.handle",
-                                    "value": {
-                                      "type": "__fluid_handle__",
-                                      "url": "/test/test"
-                                    }
-                                  }
-                                ]
-                              ],
                               "m": [
                                 [
                                   {
@@ -64,10 +52,42 @@
                                 ]
                               ],
                               "d": {
-                                "localId": 2
+                                "localId": 0
                               }
                             }
                           }
+                        ],
+                        "builds": [
+                          [
+                            1,
+                            {
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.handle",
+                                  true,
+                                  {
+                                    "type": "__fluid_handle__",
+                                    "url": "/test/test"
+                                  },
+                                  []
+                                ]
+                              ]
+                            }
+                          ]
                         ]
                       },
                       "revision": "beefbeef-beef-4000-8000-000000000004",

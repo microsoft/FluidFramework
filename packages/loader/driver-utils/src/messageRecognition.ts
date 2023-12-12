@@ -12,7 +12,7 @@ import {
  * Tells if message was sent by container runtime
  * @privateRemarks ADO #1385: To be moved to container-definitions
  * @returns whether the message is a runtime message
- * @public
+ * @internal
  */
 export function isRuntimeMessage(message: { type: string }): boolean {
 	return message.type === MessageType.Operation;
@@ -21,7 +21,7 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 /**
  * @privateRemarks ADO #1385: staging code changes across layers.
  * Eventually to be replaced by MessageType.accept
- * @public
+ * @internal
  */
 export enum MessageType2 {
 	Accept = "accept",
@@ -29,7 +29,7 @@ export enum MessageType2 {
 
 /**
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
- * @public
+ * @internal
  */
 export function canBeCoalescedByService(
 	message: ISequencedDocumentMessage | IDocumentMessage,

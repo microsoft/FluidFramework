@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export class Stats {
 	private frameCount = 0;
 	private _glitchCount = 0;

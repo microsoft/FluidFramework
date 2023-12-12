@@ -7,9 +7,10 @@
 
 import { SchemaBuilder } from "../../../domains";
 import {
+	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
+	InsertableFlexNode,
 	TreeFieldSchema,
-	SchemaAware,
 	TreeNodeSchema,
 } from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
@@ -37,18 +38,18 @@ export const appSchemaData = builder.intoSchema(rootFieldSchema);
 
 // Schema aware types
 
-type FlexibleListTask = SchemaAware.TypedNode<typeof listTaskSchema>;
+type FlexibleListTask = InsertableFlexNode<typeof listTaskSchema>;
 
-type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<typeof rootFieldSchema.allowedTypes>;
+type FlexibleTask = AllowedTypesToFlexInsertableTree<typeof rootFieldSchema.allowedTypes>;
 
-type FlexibleStringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;
+type FlexibleStringTask = InsertableFlexNode<typeof stringTaskSchema>;
 
 // Example Use
 {
-	const stringTask: FlexibleStringTask = { [""]: "do it" };
-	const task1: FlexibleTask = { [""]: "do it" };
+	const stringTask: FlexibleStringTask = "do it";
+	const task1: FlexibleTask = "do it";
 	const task2: FlexibleTask = {
-		items: [{ [""]: "FHL" }, { [""]: "record video" }],
+		items: ["FHL", "record video"],
 	};
 	// const task3: FlexibleTask = {
 	// 	[typeNameSymbol]: stringTaskSchema.name,
@@ -57,8 +58,8 @@ type FlexibleStringTask = SchemaAware.TypedNode<typeof stringTaskSchema>;
 
 	function makeTask(tasks: string[]): FlexibleTask {
 		if (tasks.length === 1) {
-			return { [""]: tasks[0] };
+			return tasks[0];
 		}
-		return { items: tasks.map((s) => ({ [""]: s })) };
+		return { items: tasks.map((s) => s) };
 	}
 }

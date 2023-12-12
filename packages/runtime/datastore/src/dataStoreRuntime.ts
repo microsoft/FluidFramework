@@ -82,7 +82,7 @@ import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
 /**
- * @public
+ * @alpha
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -91,7 +91,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -101,8 +101,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
- *
- * @public
+ * @alpha
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -447,7 +446,7 @@ export class FluidDataStoreRuntime
 
 		this.verifyNotClosed();
 
-		assert(!this.contexts.has(id), "addChannel() with existing ID");
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
 
 		const type = channel.attributes.type;
 		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
@@ -1164,8 +1163,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
- *
- * @public
+ * @internal
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1186,8 +1184,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- *
- * @public
+ * @internal
  */
 export const mixinSummaryHandler = (
 	handler: (

@@ -100,6 +100,7 @@ interface ISerializeOptions {
  * Thus, with the filtering options, it is NOT possible to prevent a part of a ChangeSet from being
  * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
+ * @internal
  */
 export abstract class BaseProperty {
 	protected _id: string | undefined;

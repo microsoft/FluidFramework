@@ -23,9 +23,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
-                                "id": 0
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                }
                               }
                             ]
                           }
@@ -44,17 +47,20 @@
                             "change": [
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-000000000007",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-000000000007"
                                 }
                               }
                             ]
@@ -74,17 +80,20 @@
                             "change": [
                               {
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "effect": {
+                                  "delete": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-000000000008",
                                   "localId": 0,
                                   "adjacentCells": [
-                                    {
-                                      "id": 0,
-                                      "count": 1
-                                    }
-                                  ]
+                                    [
+                                      0,
+                                      1
+                                    ]
+                                  ],
+                                  "revision": "beefbeef-beef-4000-8000-000000000008"
                                 }
                               }
                             ]
@@ -111,8 +120,11 @@
                                   "change": [
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }
@@ -138,8 +150,11 @@
                                   "change": [
                                     {
                                       "count": 1,
-                                      "type": "Delete",
-                                      "id": 0
+                                      "effect": {
+                                        "delete": {
+                                          "id": 0
+                                        }
+                                      }
                                     }
                                   ]
                                 }

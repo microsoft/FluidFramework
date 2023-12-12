@@ -65,6 +65,9 @@ const DefaultScribe: IScribe = {
 	isCorrupt: false,
 };
 
+/**
+ * @internal
+ */
 export class ScribeLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>

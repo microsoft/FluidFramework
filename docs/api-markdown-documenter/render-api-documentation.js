@@ -31,9 +31,12 @@ async function renderApiDocumentation() {
 	await fs.emptyDir(apiDocsDirectoryPath);
 
 	// Process API reports
+	console.log("Loading API model...");
 	console.group();
 
 	const apiModel = await loadModel(apiReportsDirectoryPath);
+
+	console.groupEnd();
 
 	// Custom renderers that utilize Hugo syntax for certain kinds of documentation elements.
 	const customRenderers = {
@@ -41,8 +44,6 @@ async function renderApiDocumentation() {
 		[DocumentationNodeType.Table]: renderTableNode,
 		[alertNodeType]: renderAlertNode,
 	};
-
-	console.groupEnd();
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
@@ -72,6 +73,8 @@ async function renderApiDocumentation() {
 				: DefaultPolicies.defaultFileNamePolicy(apiItem);
 		},
 		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
+		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	console.log("Generating API documentation...");

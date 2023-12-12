@@ -5,24 +5,40 @@
 
 import { IFluidHandle } from "./handles";
 
+/**
+ * @alpha
+ */
 export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 
+/**
+ * @alpha
+ */
 export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
  * A shared FluidObject has a URL from which it can be referenced
+ * @alpha
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
 	handle: IFluidHandle;
 }
 
+/**
+ * @internal
+ */
 export const IFluidRunnable: keyof IProvideFluidRunnable = "IFluidRunnable";
 
+/**
+ * @internal
+ */
 export interface IProvideFluidRunnable {
 	readonly IFluidRunnable: IFluidRunnable;
 }
+/**
+ * @internal
+ */
 export interface IFluidRunnable {
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

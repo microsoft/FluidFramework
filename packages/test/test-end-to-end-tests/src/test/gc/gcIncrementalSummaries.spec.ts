@@ -15,7 +15,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -30,7 +30,7 @@ import { defaultGCConfig } from "./gcTestConfigs.js";
  * - It received an op.
  * - Its reference state changed, i.e., it was referenced and became unreferenced or vice-versa.
  */
-describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
+describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let dataStoreA: ITestDataObject;
