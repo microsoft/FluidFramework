@@ -4,7 +4,7 @@
 
 ```ts
 
-// @internal
+// @alpha
 export function assert(condition: boolean, message: string | number): asserts condition;
 
 // @alpha
@@ -74,7 +74,7 @@ export class Lazy<T> {
     get value(): T;
 }
 
-// @internal
+// @alpha
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;

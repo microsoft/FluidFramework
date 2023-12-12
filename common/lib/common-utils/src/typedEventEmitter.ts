@@ -18,7 +18,6 @@ import {
  * This type allow us to correctly handle either type
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
- * @alpha
  */
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
 	? E
@@ -26,7 +25,6 @@ export type EventEmitterEventType = EventEmitter extends { on(event: infer E, li
 
 /**
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
- * @alpha
  */
 export type TypedEventTransform<TThis, TEvent> =
 	// Event emitter supports some special events for the emitter itself to use
@@ -47,7 +45,6 @@ export type TypedEventTransform<TThis, TEvent> =
  * Event Emitter helper class the supports emitting typed events
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
- * @alpha
  */
 export class TypedEventEmitter<TEvent>
 	extends EventEmitter

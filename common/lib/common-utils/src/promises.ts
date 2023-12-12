@@ -7,7 +7,6 @@
  * A deferred creates a promise and the ability to resolve or reject it
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
- * @alpha
  */
 export class Deferred<T> {
 	private readonly p: Promise<T>;
@@ -69,7 +68,6 @@ export class Deferred<T> {
  * All calls are then proxied to the promise returned by the execute method.
  *
  * @deprecated Moved to the `@fluidframework/core-utils` package.
- * @alpha
  */
 export class LazyPromise<T> implements Promise<T> {
 	public get [Symbol.toStringTag](): string {

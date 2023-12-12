@@ -41,7 +41,7 @@ export class Lazy<T> {
  * the promise is used, e.g. await, then, catch ...
  * The execute function is only called once.
  * All calls are then proxied to the promise returned by the execute method.
- * @internal
+ * @alpha
  */
 export class LazyPromise<T> implements Promise<T> {
 	public get [Symbol.toStringTag](): string {
