@@ -4,7 +4,7 @@
 "@fluidframework/sequence": major
 ---
 
-sequence, matrix: Some function return types are now void instead of any
+sequence: Some function return types are now void instead of any
 
 The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
 the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the

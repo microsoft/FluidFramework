@@ -2,6 +2,7 @@
 "@fluidframework/datastore": major
 ---
 
-Removed `FluidDataStoreRuntime.load(...)`
+datastore: Removed `FluidDataStoreRuntime.load(...)`
 
-The static method `FluidDataStoreRuntime.load(...)` has been removed. Please migrate all usage of this method to `FluidDataStoreRuntime` constructor.
+The static method `FluidDataStoreRuntime.load(...)` has been removed. Please migrate all usage of this method to
+`FluidDataStoreRuntime` constructor.
