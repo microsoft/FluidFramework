@@ -29,6 +29,7 @@
 		"test": "mocha src/test"
 	},
 	"dependencies": {
+		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/eslint-patch": "~1.4.0",
 		"@rushstack/eslint-plugin": "~0.13.0",
 		"@rushstack/eslint-plugin-security": "~0.7.0",

@@ -1,9 +1,11 @@
-function hasReleaseTag(comment) {
-	if (/@(internal|alpha|beta)/.test(comment.value)) {
-		return True;
-	}
+import { TSDocParser } from "@microsoft/tsdoc";
 
-	return False;
+function hasReleaseTag(comment) {
+	const parser = new TSDocParser()
+	const parserContext = parser.parseRange(comment);
+	const hasReleaseTag = parserContext.hasReleaseTag;
+
+	return hasReleaseTag
 }
 
 module.exports = {
@@ -26,7 +28,9 @@ module.exports = {
 				const comments = sourceCode.getCommentsAfter(node);
 
 				comments.forEach((comment) => {
-					if (hasReleaseTag(comment)) {
+					// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block. 
+					const formattedComment = `/** ${comment} */`;
+					if (hasReleaseTag(formattedComment)) {
 						context.report({
 							node: specifier,
 							message: `Including the ${tag} release-tag inside the ${fileName} is not allowed.`,
