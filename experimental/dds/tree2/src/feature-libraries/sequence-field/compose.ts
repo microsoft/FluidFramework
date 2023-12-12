@@ -673,7 +673,7 @@ function compareCellPositions(
 
 	assert(
 		baseCellId.revision !== undefined && newCellId.revision !== undefined,
-		"Cells should have defined revisions",
+		0x858 /* Cells should have defined revisions */,
 	);
 
 	if (!isNewAttach(newMark)) {
@@ -695,7 +695,7 @@ function compareCellPositions(
 	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
 	assert(
 		newRevisionIndex !== undefined,
-		"A cell from a new attach should have a defined revision index",
+		0x859 /* A cell from a new attach should have a defined revision index */,
 	);
 
 	// We use the tiebreaking policy of the newer cell.
