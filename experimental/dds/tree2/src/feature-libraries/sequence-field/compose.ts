@@ -451,27 +451,15 @@ function amendComposeI<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
-	const queue = new MarkQueue(
-		marks,
-		undefined,
-		moveEffects,
-		true,
-		fakeIdAllocator,
-		// TODO: Should pass in revision for new changes
-		(a, b) => composeChildChanges(a, b, composeChild),
+	const queue = new MarkQueue(marks, undefined, moveEffects, true, fakeIdAllocator, (a, b) =>
+		composeChildChanges(a, b, composeChild),
 	);
 
 	while (!queue.isEmpty()) {
 		let mark = queue.dequeue();
 		switch (mark.type) {
 			case "Placeholder": {
-				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
-				if (modifyAfter !== undefined) {
-					const changes = composeChildChanges(mark.changes, modifyAfter, composeChild);
-					mark = createNoopMark(mark.count, changes);
-				} else {
-					mark = createNoopMark(mark.count, mark.changes);
-				}
+				mark = createNoopMark(mark.count, mark.changes);
 			}
 			default:
 				break;
