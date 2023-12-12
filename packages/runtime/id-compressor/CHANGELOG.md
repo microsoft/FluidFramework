@@ -1,0 +1,1 @@
+# @fluidframework/id-compressor

@@ -102,7 +102,6 @@
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/random-js": "^1.0.31",
 		"c8": "^7.7.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -113,7 +112,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"random-js": "^1.0.8",
+		"random-js": "^2.1.0",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
