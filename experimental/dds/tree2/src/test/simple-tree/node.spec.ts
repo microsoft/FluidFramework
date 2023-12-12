@@ -8,7 +8,7 @@ import { rootFieldKey } from "../../core";
 import { TreeStatus } from "../../feature-libraries";
 import { TreeNode } from "../../simple-tree";
 import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree";
-import { getRoot } from "./utils";
+import { getRoot, makeSchema } from "./utils";
 
 describe("node API", () => {
 	const sb = new SchemaFactory("object");
@@ -17,6 +17,9 @@ describe("node API", () => {
 	});
 	const list = sb.list(object);
 	const treeSchema = sb.object("parent", { object, list });
+
+	const never = makeSchema((_) => _.object("never", {}));
+
 	const initialTree = () => ({
 		object: { content: 42 },
 		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
@@ -37,22 +40,28 @@ describe("node API", () => {
 	describe("is", () => {
 		it("object", () => {
 			const root = getRoot(treeSchema, initialTree);
+
+			// 'root.object' is an 'object'
 			assert.equal(Tree.is(root.object, object), true);
+
+			// 'root.object' is not a 'list'
 			assert.equal(Tree.is(root.object, list), false);
-			// TODO: What was this testing?
-			// assert.throws(() =>
-			// 	Tree.is(root.object, new SchemaFactory("never").list(Any)),
-			// );
+
+			// 'root.object' cannot be a 'never'
+			assert.throws(() => Tree.is(root.object, never));
 		});
 
 		it("list", () => {
 			const root = getRoot(treeSchema, initialTree);
+
+			// 'root.list' is a 'list'
 			assert.equal(Tree.is(root.list, list), true);
+
+			// 'root.list' is not an 'object'
 			assert.equal(Tree.is(root.list, object), false);
-			// TODO: What was this testing?
-			// assert.throws(() =>
-			// 	Tree.is(root.object, new SchemaFactory("never").list(Any)),
-			// );
+
+			// 'root.list' cannot be a 'never'
+			assert.throws(() => Tree.is(root.object, never));
 		});
 	});
 
