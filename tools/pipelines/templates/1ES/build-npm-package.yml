@@ -174,17 +174,11 @@ extends:
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
-
         jobs:
           # Job - Build
           - job: build
             displayName: Build
             variables:
-              # We use 'chalk' to colorize output, which auto-detects color support in the
-              # running terminal. The log output shown in Azure DevOps job runs only has
-              # basic ANSI color support though, so force that in the pipeline
-              - name: FORCE_COLOR
-                value: 1
               - group: ado-feeds
               - name: testCoverage
                 value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
