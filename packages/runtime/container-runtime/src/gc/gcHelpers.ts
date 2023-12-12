@@ -37,14 +37,14 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
  *
  * If no generation is provided, Sweep will be enabled for all documents.
  *
- * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration.
+ * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration if present.
  *
- * @param persistedGenerations - The persisted GC generations from the GC Feature Matrix
+ * @param featureMatrix - The GC Feature Matrix, containing the persisted generation value
  * @param currentGeneration - The current app-provided gcGeneration value
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
-	persistedGenerations: Pick<GCFeatureMatrix, "tombstoneGeneration" | "gcGeneration">,
+	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {
 	// If no Generation value is provided for this session, default to true
@@ -53,8 +53,7 @@ export function shouldAllowGcSweep(
 	}
 
 	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
-	const targetGeneration =
-		persistedGenerations.gcGeneration ?? persistedGenerations.tombstoneGeneration;
+	const targetGeneration = featureMatrix.tombstoneGeneration ?? featureMatrix.gcGeneration;
 
 	return currentGeneration === targetGeneration;
 }

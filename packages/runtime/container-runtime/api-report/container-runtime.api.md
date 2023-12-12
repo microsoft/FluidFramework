@@ -264,10 +264,12 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 }
 
 // @alpha (undocumented)
-export interface GCFeatureMatrix {
+export type GCFeatureMatrix = {
     gcGeneration?: number;
-    tombstoneGeneration?: number;
-}
+    tombstoneGeneration?: undefined;
+} | {
+    tombstoneGeneration: number;
+};
 
 // @alpha
 export const GCNodeType: {

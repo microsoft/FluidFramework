@@ -40,7 +40,6 @@ import {
 	nextGCVersion,
 	stableGCVersion,
 	gcVersionUpgradeToV4Key,
-	gcTombstoneGenerationOptionName,
 	gcGenerationOptionName,
 	throwOnTombstoneLoadOverrideKey,
 	gcDisableThrowOnTombstoneLoadOptionName,
@@ -253,11 +252,33 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata, {
-				[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
-				[gcGenerationOptionName]: 2, // 2 should not be persisted
+				[gcGenerationOptionName]: 2, // 2 should not replace already-persisted value of 1
+			});
+			const outputMetadata = gc.getMetadata();
+			const expectedOutputMetadata: IGCMetadata = {
+				...inputMetadata,
+				sweepEnabled: false, // Hardcoded, not used
+				gcFeature: stableGCVersion,
+			};
+			assert.deepEqual(
+				outputMetadata,
+				expectedOutputMetadata,
+				"getMetadata returned different metadata than loaded from",
+			);
+		});
+		it("Metadata Roundtrip - old file with tombstoneGeneration", () => {
+			const inputMetadata: IGCMetadata = {
+				sweepEnabled: true, // ignored
+				gcFeature: 1,
+				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+				sweepTimeoutMs: 123,
+				gcFeatureMatrix: { tombstoneGeneration: 1 }, // legacy file before gcGeneration
+			};
+			gc = createGcWithPrivateMembers(inputMetadata, {
+				[gcGenerationOptionName]: 2, // Will not be persisted - legacy file will only ever be stamped with tombstoneGeneration
 			});
 			const outputMetadata = gc.getMetadata();
 			const expectedOutputMetadata: IGCMetadata = {
@@ -277,10 +298,13 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1 }, // legacy file before gcGeneration
+				gcFeatureMatrix: { gcGeneration: 1 },
 			};
+			// An app may write both Generation options to ease the transition. Only gcGeneration will be persisted
+			// (and previous to the change introducing gcGeneration, only tombstoneGeneration would have been persisted).
 			gc = createGcWithPrivateMembers(inputMetadata, {
-				[gcGenerationOptionName]: 2, // Will be ignored - legacy file will only ever be stamped with tombstoneGeneration
+				[gcGenerationOptionName]: 1,
+				gcTombstoneGeneration: 1, // Legacy - will not be persisted but is ok to pass in
 			});
 			const outputMetadata = gc.getMetadata();
 			const expectedOutputMetadata: IGCMetadata = {
@@ -301,7 +325,7 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
@@ -323,7 +347,7 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1, gcGeneration: 1 },
+				gcFeatureMatrix: { gcGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
@@ -420,10 +444,9 @@ describe("Garbage Collection configurations", () => {
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-				gcFeatureMatrix: { tombstoneGeneration: 2, gcGeneration: 2 },
+				gcFeatureMatrix: { gcGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				[gcTombstoneGenerationOptionName]: 2,
 				[gcGenerationOptionName]: 2,
 			});
 			const outputMetadata = gc.getMetadata();
@@ -450,7 +473,7 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than expected",
 			);
 		});
-		it("Metadata Roundtrip with only gcGeneration", () => {
+		it("Metadata Roundtrip transition to gcGeneration from tombstoneGeneration", () => {
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
 				gcFeature: stableGCVersion,
@@ -458,11 +481,14 @@ describe("Garbage Collection configurations", () => {
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: {
 					gcGeneration: 2,
-					tombstoneGeneration: undefined,
+					// tombstoneGeneration will not be persisted
 				},
 			};
+			// An app may write both Generation options to ease the transition. Only gcGeneration will be persisted
+			// (and previous to the change introducing gcGeneration, only tombstoneGeneration would have been persisted).
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				[gcGenerationOptionName]: 2,
+				gcTombstoneGeneration: 2, // Legacy - will not be persisted but is ok to pass in
 			});
 			const outputMetadata = gc.getMetadata();
 			assert.deepEqual(
@@ -949,14 +975,14 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
-		it("gcDisableThrowOnTombstoneLoad undefined - Sweep Disabled takes precedence", () => {
+		it("gcDisableThrowOnTombstoneLoad undefined - Sweep Disabled does not interfere", () => {
 			injectedSettings[runSweepKey] = false; // Disable Sweep
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ [gcDisableThrowOnTombstoneLoadOptionName]: undefined },
 				false /* isSummarizerClient */,
 			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
+			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
 		});
 		it("Old 'enable' option false (ignored)", () => {
 			const gcThrowOnTombstoneLoadOptionName_old = "gcThrowOnTombstoneLoad";

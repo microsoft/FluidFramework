@@ -97,10 +97,11 @@ export function generateGCConfigs(
 		}
 	}
 
-	// The persisted GC generation must indicate Sweep is allowed, according to the GC Generation option provided this session.
+	// The persisted GC generation must indicate Sweep is allowed for this document,
+	// according to the GC Generation option provided this session.
 	// Note that if no generation option is provided, Sweep is allowed for any document.
 	const sweepAllowed = shouldAllowGcSweep(
-		persistedGcFeatureMatrix ?? {} /* persistedGenerations */,
+		persistedGcFeatureMatrix ?? {} /* featureMatrix */,
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 

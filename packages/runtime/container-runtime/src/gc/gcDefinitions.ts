@@ -33,13 +33,6 @@ export const stableGCVersion: GCVersion = 3;
 export const nextGCVersion: GCVersion = 4;
 
 /**
- * @deprecated use gcGenerationOptionName
- *
- * Note: For documents with this value persisted, it will be used in place of gcGeneration.
- */
-export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
-
-/**
  * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable throwing an error when tombstone
  * object is loaded (requested), merely logging a message instead.
  *
@@ -55,6 +48,8 @@ export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombston
  * Otherwise, the Sweep Phase will be disabled for documents where persisted value doesn't match what is passed into this session.
  * This provides a way to disallow Sweep for old documents that may be too difficult for an app to repair,
  * in case a bug is found that violates GC's assumptions.
+ *
+ * @see GCFeatureMatrix (gcGeneration)
  */
 export const gcGenerationOptionName = "gcGeneration";
 
@@ -96,26 +91,27 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
- * @see IGCMetadata.gcFeatureMatrix
+ * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
  * @alpha
  */
-export interface GCFeatureMatrix {
-	/**
-	 * Legacy - new containers would get gcGeneration instead (if anything)
-	 *
-	 * The Tombstone Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement.
-	 * Provided via Container Runtime Options.
-	 */
-	tombstoneGeneration?: number;
-
-	/**
-	 * The GC Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Sweep.
-	 * Provided via Container Runtime Options.
-	 */
-	gcGeneration?: number;
-}
+export type GCFeatureMatrix =
+	| {
+			/**
+			 * The GC Generation value in effect when this file was created.
+			 * Gives a way for an app to disqualify old files from GC Sweep.
+			 * Provided via Container Runtime Options.
+			 */
+			gcGeneration?: number;
+			/** Deprecated property from legacy type. Will not be set concurrently with gcGeneration */
+			tombstoneGeneration?: undefined;
+	  }
+	| {
+			/**
+			 * The Tombstone Generation value in effect when this file was created.
+			 * Legacy - new containers would get gcGeneration instead (if anything)
+			 */
+			tombstoneGeneration: number;
+	  };
 
 /**
  * @alpha
@@ -384,8 +380,10 @@ export interface IGCRuntimeOptions {
 	disableGC?: boolean;
 
 	/**
-	 * Flag that if true, will enable the full Sweep Phase of garbage collection,
+	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
+	 *
+	 * IMPORTANT: This only applies if this document is allowed to run Sweep Phase.
 	 *
 	 * Current default behavior is for Sweep Phase not to delete Tombstoned objects,
 	 * but merely to prevent them from being loaded.

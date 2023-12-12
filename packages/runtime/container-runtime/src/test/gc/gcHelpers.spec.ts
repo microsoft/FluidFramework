@@ -18,7 +18,7 @@ describe("Garbage Collection Helpers Tests", () => {
 			{
 				persisted: undefined,
 				current: undefined,
-				expectedShouldAllowValue: false, // Default (if no current) is now false to align with Sweep (Delete) behavior
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: undefined,
@@ -28,7 +28,7 @@ describe("Garbage Collection Helpers Tests", () => {
 			{
 				persisted: 1,
 				current: undefined,
-				expectedShouldAllowValue: false, // Default (if no current) is now false to align with Sweep (Delete) behavior
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: 1,
@@ -63,12 +63,12 @@ describe("Garbage Collection Helpers Tests", () => {
 			{
 				persisted: {},
 				current: undefined,
-				expectedShouldAllowValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: { gcGeneration: 1 },
 				current: undefined,
-				expectedShouldAllowValue: false,
+				expectedShouldAllowValue: true,
 			},
 			{
 				persisted: {},
@@ -109,17 +109,6 @@ describe("Garbage Collection Helpers Tests", () => {
 				persisted: { gcGeneration: 2 },
 				current: 1,
 				expectedShouldAllowValue: false,
-			},
-			{
-				persisted: { gcGeneration: 1, tombstoneGeneration: 0 },
-				current: 1,
-				expectedShouldAllowValue: true,
-			},
-			// This case will never happen in practice, but we want to make sure it's handled correctly
-			{
-				persisted: { gcGeneration: 1, tombstoneGeneration: 0 },
-				current: 0,
-				expectedShouldAllowValue: false, // if gcGeneration is provided, don't check against tombstoneGeneration
 			},
 		];
 		testCases.forEach(({ persisted, current, expectedShouldAllowValue }) => {
