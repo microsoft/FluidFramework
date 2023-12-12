@@ -5,14 +5,14 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	AnchorLocator,
-	StoredSchemaRepository,
+	EditableTreeStoredSchema,
 	IForestSubscription,
 	AnchorSetRootEvents,
 	Anchor,
 	AnchorNode,
 	AnchorSet,
 	IEditableForest,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	assertIsRevisionTag,
 	combineVisitors,
 	visitDelta,
@@ -82,7 +82,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * TODO:
 	 * Something should ensure the document contents are always in schema.
 	 */
-	readonly storedSchema: StoredSchemaRepository;
+	readonly storedSchema: EditableTreeStoredSchema;
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
@@ -150,7 +150,7 @@ export interface ITreeCheckout extends AnchorLocator {
 export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
 	changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
-	schema?: InMemoryStoredSchemaRepository;
+	schema?: TreeStoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
@@ -169,7 +169,7 @@ export function createTreeCheckout(args?: {
 			},
 			changeFamily,
 		);
-	const schema = forkSchemaForCheckout(branch, args?.schema);
+	const schema = forkSchemaForCheckout(branch, args?.schema); // TODO: move to caller where needed
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -264,7 +264,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
-		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
@@ -330,7 +330,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
-		// TODO: ensure editing this clone of the schema does the right thing.
 		const branch = this.branch.fork();
 		const storedSchema = forkSchemaForCheckout(branch, this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
@@ -401,9 +400,9 @@ export function runSynchronous(
 
 function forkSchemaForCheckout(
 	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	schema?: InMemoryStoredSchemaRepository,
-): InMemoryStoredSchemaRepository {
-	return new InMemoryStoredSchemaRepository(
+	schema?: TreeStoredSchemaRepository,
+): TreeStoredSchemaRepository {
+	return new TreeStoredSchemaRepository(
 		(oldSchema, newSchema) => branch.editor.setStoredSchema(newSchema, oldSchema),
 		schema,
 	);

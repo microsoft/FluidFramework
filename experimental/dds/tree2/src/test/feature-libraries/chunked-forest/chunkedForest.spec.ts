@@ -17,11 +17,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 
-import { EditableSchemaRepository } from "../../../core";
+import { TreeStoredSchemaSubscription } from "../../../core";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 
-const chunkers: [string, (schema: EditableSchemaRepository) => IChunker][] = [
+const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
 	[
 		"basic",
 		(schema): IChunker =>

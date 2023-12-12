@@ -9,7 +9,7 @@ import {
 	IEditableForest,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
-	StoredSchemaRepository,
+	EditableTreeStoredSchema,
 	FieldKey,
 	DetachedField,
 	AnchorSet,
@@ -76,7 +76,7 @@ export class ObjectForest implements IEditableForest {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
+	public clone(schema: EditableTreeStoredSchema, anchors: AnchorSet): ObjectForest {
 		const forest = new ObjectForest(anchors);
 		// Deep copy the trees.
 		for (const [key, value] of this.roots.fields) {

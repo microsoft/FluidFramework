@@ -396,15 +396,16 @@ export enum DiscardResult {
 export const disposeSymbol: unique symbol;
 
 // @alpha
-export interface EditableSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {
-}
-
-// @alpha
 export interface EditableTreeEvents {
     afterChange(event: TreeEvent): void;
     beforeChange(event: TreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
+}
+
+// @alpha
+export interface EditableTreeStoredSchema extends TreeStoredSchemaSubscription {
+    update(newSchema: TreeStoredSchema): void;
 }
 
 // @alpha
@@ -860,7 +861,7 @@ export interface IEmitter<E extends Events<E>> {
 export interface IForestSubscription extends ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
-    clone(schema: EditableSchemaRepository, anchors: AnchorSet): IEditableForest;
+    clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     getCursorAboveDetachedFields(): ITreeCursorSynchronous;
     readonly isEmpty: boolean;
@@ -1015,7 +1016,7 @@ export interface ITreeCheckout extends AnchorLocator {
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    readonly storedSchema: StoredSchemaRepository;
+    readonly storedSchema: EditableTreeStoredSchema;
     readonly transaction: ITransaction;
 }
 
@@ -1625,11 +1626,6 @@ export interface StoredSchemaCollection {
     readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
-// @alpha
-export interface StoredSchemaRepository extends EditableSchemaRepository {
-    update(newSchema: TreeStoredSchema): void;
-}
-
 // @alpha (undocumented)
 export class test_RecursiveObject extends test_RecursiveObject_base {
 }
@@ -1893,6 +1889,10 @@ export enum TreeStatus {
 // @alpha
 export interface TreeStoredSchema extends StoredSchemaCollection {
     readonly rootFieldSchema: TreeFieldStoredSchema;
+}
+
+// @alpha
+export interface TreeStoredSchemaSubscription extends ISubscribable<SchemaEvents>, TreeStoredSchema {
 }
 
 // @alpha (undocumented)

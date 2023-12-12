@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
-import { EditableSchemaRepository, FieldKey } from "../schema-stored";
+import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
@@ -71,7 +71,7 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
-	clone(schema: EditableSchemaRepository, anchors: AnchorSet): IEditableForest;
+	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
 	 * Allocates a cursor in the "cleared" state.

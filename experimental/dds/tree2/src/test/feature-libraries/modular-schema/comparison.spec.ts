@@ -23,7 +23,7 @@ import {
 	TreeNodeSchemaIdentifier,
 	storedEmptyFieldSchema,
 	FieldKindIdentifier,
-	MutableStoredSchemaRepository,
+	MutableTreeStoredSchema,
 } from "../../../core";
 import { Named, brand } from "../../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
@@ -160,7 +160,7 @@ describe("Schema Comparison", () => {
 	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
 	function updateTreeSchema(
-		repo: MutableStoredSchemaRepository,
+		repo: MutableTreeStoredSchema,
 		identifier: TreeNodeSchemaIdentifier,
 		schema: TreeNodeStoredSchema,
 	) {

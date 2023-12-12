@@ -21,10 +21,10 @@ export {
 	StoredSchemaCollection,
 } from "./schema";
 export {
-	StoredSchemaRepository,
-	EditableSchemaRepository,
-	MutableStoredSchemaRepository,
-	InMemoryStoredSchemaRepository,
+	EditableTreeStoredSchema,
+	TreeStoredSchemaSubscription,
+	MutableTreeStoredSchema,
+	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "./storedSchemaRepository";

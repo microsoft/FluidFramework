@@ -12,7 +12,7 @@ import {
 	TreeNodeSchemaIdentifier,
 	Value,
 	TreeValue,
-	EditableSchemaRepository,
+	TreeStoredSchemaSubscription,
 	CursorLocationType,
 	TreeStoredSchema,
 	StoredSchemaCollection,
@@ -36,7 +36,7 @@ export interface Disposable {
  * Creates a ChunkPolicy which responds to schema changes.
  */
 export function makeTreeChunker(
-	schema: EditableSchemaRepository,
+	schema: TreeStoredSchemaSubscription,
 	policy: FullSchemaPolicy,
 ): IChunker {
 	return new Chunker(
@@ -56,8 +56,8 @@ export function makeTreeChunker(
  * and that chunk policy uses caching which thus needs invalidation.
  */
 export interface IChunker extends ChunkPolicy, Disposable {
-	readonly schema: EditableSchemaRepository;
-	clone(schema: EditableSchemaRepository): IChunker;
+	readonly schema: TreeStoredSchemaSubscription;
+	clone(schema: TreeStoredSchemaSubscription): IChunker;
 }
 
 /**
@@ -95,7 +95,7 @@ export class Chunker implements IChunker {
 	private unregisterSchemaCallback: (() => void) | undefined;
 
 	public constructor(
-		public readonly schema: EditableSchemaRepository,
+		public readonly schema: TreeStoredSchemaSubscription,
 		public readonly policy: FullSchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
@@ -109,7 +109,7 @@ export class Chunker implements IChunker {
 		) => ShapeInfo,
 	) {}
 
-	public clone(schema: EditableSchemaRepository): IChunker {
+	public clone(schema: TreeStoredSchemaSubscription): IChunker {
 		// This does not preserve the cache.
 		// This is probably fine, but is a potential way it could be optimized in the future (with care to ensure invalidation work properly).
 		return new Chunker(

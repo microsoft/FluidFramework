@@ -8,7 +8,7 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	TreeStoredSchema,
-	StoredSchemaRepository,
+	EditableTreeStoredSchema,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
 } from "../core";
@@ -38,7 +38,7 @@ import { CheckoutEvents } from "./treeCheckout";
  * Since this makes multiple changes, callers may want to wrap it in a transaction.
  */
 export function initializeContent(
-	storedSchema: StoredSchemaRepository,
+	storedSchema: EditableTreeStoredSchema,
 	schema: TreeSchema,
 	setInitialTree: () => void,
 ): void {
@@ -99,7 +99,7 @@ export function initializeContent(
  */
 export function schematize(
 	events: ISubscribable<CheckoutEvents>,
-	storedSchema: StoredSchemaRepository,
+	storedSchema: EditableTreeStoredSchema,
 	config: SchematizeConfiguration,
 ): void {
 	// TODO: support adapters and include them here.
@@ -161,7 +161,7 @@ export function schematize(
  */
 export function afterSchemaChanges(
 	events: ISubscribable<CheckoutEvents>,
-	storedSchema: StoredSchemaRepository,
+	storedSchema: EditableTreeStoredSchema,
 	callback: () => boolean,
 ): void {
 	// Callback to cleanup afterBatch schema checking.

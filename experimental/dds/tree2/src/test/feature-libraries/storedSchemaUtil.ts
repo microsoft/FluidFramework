@@ -1,7 +1,5 @@
-import { InMemoryStoredSchemaRepository, TreeStoredSchema } from "../../core";
+import { TreeStoredSchemaRepository, TreeStoredSchema } from "../../core";
 
-export function buildTestSchemaRepository(
-	schema?: TreeStoredSchema,
-): InMemoryStoredSchemaRepository {
-	return new InMemoryStoredSchemaRepository(() => {}, schema);
+export function buildTestSchemaRepository(schema?: TreeStoredSchema): TreeStoredSchemaRepository {
+	return new TreeStoredSchemaRepository(() => {}, schema);
 }

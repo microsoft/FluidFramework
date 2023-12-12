@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import { TreeStoredSchema, MutableStoredSchemaRepository, schemaDataIsEmpty } from "../core";
+import { TreeStoredSchema, MutableTreeStoredSchema, schemaDataIsEmpty } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { JsonCompatible } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
@@ -40,7 +40,7 @@ export class SchemaSummarizer implements Summarizable {
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly schema: MutableStoredSchemaRepository,
+		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 	) {
 		this.codec = makeSchemaCodec(options);

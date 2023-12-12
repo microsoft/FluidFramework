@@ -16,7 +16,7 @@ import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
 	FieldKey,
-	InMemoryStoredSchemaRepository,
+	TreeStoredSchemaRepository,
 	JsonableTree,
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
@@ -150,7 +150,9 @@ export class SharedTree
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
-	public readonly storedSchema: InMemoryStoredSchemaRepository;
+	public get storedSchema(): TreeStoredSchemaRepository {
+		return this.view.storedSchema;
+	}
 
 	/**
 	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
@@ -170,7 +172,7 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository(failSchemaEdit);
+		const schema = new TreeStoredSchemaRepository(failSchemaEdit);
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
@@ -217,14 +219,10 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.storedSchema = schema;
 		this._events = createEmitter<CheckoutEvents>();
 		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
 			changeFamily,
-			// TODO:
-			// This passes in a version of schema thats not wrapped with the editor.
-			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			events: this._events,
@@ -283,7 +281,7 @@ export class SharedTree
 		try {
 			moveToDetachedField(this.view.forest, cursor);
 			return {
-				schema: new InMemoryStoredSchemaRepository(failSchemaEdit, this.storedSchema),
+				schema: new TreeStoredSchemaRepository(failSchemaEdit, this.storedSchema),
 				tree: jsonableTreeFromFieldCursor(cursor),
 			};
 		} finally {

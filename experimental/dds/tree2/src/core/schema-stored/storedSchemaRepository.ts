@@ -16,7 +16,7 @@ import {
 } from "./schema";
 
 /**
- * Events for {@link StoredSchemaRepository}.
+ * Events for {@link EditableTreeStoredSchema}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
  * @alpha
@@ -37,13 +37,15 @@ export interface SchemaEvents {
  * A collection of stored schema that fires events in response to changes.
  * @alpha
  */
-export interface EditableSchemaRepository extends ISubscribable<SchemaEvents>, TreeStoredSchema {}
+export interface TreeStoredSchemaSubscription
+	extends ISubscribable<SchemaEvents>,
+		TreeStoredSchema {}
 
 /**
  * Mutable collection of stored schema.
  * @alpha
  */
-export interface StoredSchemaRepository extends EditableSchemaRepository {
+export interface EditableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
@@ -55,7 +57,7 @@ export interface StoredSchemaRepository extends EditableSchemaRepository {
  * Mutable collection of stored schema.
  * @alpha
  */
-export interface MutableStoredSchemaRepository extends EditableSchemaRepository {
+export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
@@ -64,20 +66,20 @@ export interface MutableStoredSchemaRepository extends EditableSchemaRepository 
 }
 
 /**
- * StoredSchemaRepository that follows SharedTree's editing patterns.
+ * EditableTreeStoredSchema that follows SharedTree's editing patterns.
  *
  * `update` will result in an invocation of the supplied `changeReceiver`.
  * `apply` will mutate the schema repository.
  */
-export class InMemoryStoredSchemaRepository
-	implements StoredSchemaRepository, MutableStoredSchemaRepository
+export class TreeStoredSchemaRepository
+	implements EditableTreeStoredSchema, MutableTreeStoredSchema
 {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected readonly events = createEmitter<SchemaEvents>();
 
 	/**
-	 * Copies in the provided schema. If `data` is an InMemoryStoredSchemaRepository, it will be cheap-cloned.
+	 * Copies in the provided schema. If `data` is an TreeStoredSchemaRepository, it will be cheap-cloned.
 	 * Otherwise, it will be deep-cloned.
 	 *
 	 * We might not want to store schema in maps long term, as we might want a way to reserve a
@@ -103,7 +105,7 @@ export class InMemoryStoredSchemaRepository
 				compareStrings,
 			);
 		} else {
-			if (data instanceof InMemoryStoredSchemaRepository) {
+			if (data instanceof TreeStoredSchemaRepository) {
 				this.rootFieldSchemaData = data.rootFieldSchema;
 				this.nodeSchemaData = data.nodeSchemaData.clone();
 			} else {
@@ -133,14 +135,14 @@ export class InMemoryStoredSchemaRepository
 		this.changeReceiver(
 			// Clone out the data in case the receiver holds onto it to ensure
 			// it is not mutated in the subsequent apply call.
-			new InMemoryStoredSchemaRepository(this.changeReceiver, this),
+			new TreeStoredSchemaRepository(this.changeReceiver, this),
 			newSchema,
 		);
 	}
 
 	public apply(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-		const clone = new InMemoryStoredSchemaRepository(this.changeReceiver, newSchema);
+		const clone = new TreeStoredSchemaRepository(this.changeReceiver, newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
 		this.rootFieldSchemaData = clone.rootFieldSchemaData;
 		this.nodeSchemaData = clone.nodeSchemaData;
