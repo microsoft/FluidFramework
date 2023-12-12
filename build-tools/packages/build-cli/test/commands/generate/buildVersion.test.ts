@@ -365,7 +365,7 @@ describe("generate:buildVersion", () => {
 			"--tags",
 			...test_tags,
 		])
-		.it("beta version, prerelease", (ctx) => {
+		.it("RC version, prerelease", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-dev-rc.3.0.0.212045");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
@@ -387,7 +387,7 @@ describe("generate:buildVersion", () => {
 			"--tags",
 			...test_tags,
 		])
-		.it("beta version, test", (ctx) => {
+		.it("RC version, test", (ctx) => {
 			expect(ctx.stdout).to.contain("version=0.0.0-212045-test");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
@@ -407,7 +407,7 @@ describe("generate:buildVersion", () => {
 			"--tags",
 			...test_tags,
 		])
-		.it("beta version, release", (ctx) => {
+		.it("RC version, release", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-rc.3.0.0");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});

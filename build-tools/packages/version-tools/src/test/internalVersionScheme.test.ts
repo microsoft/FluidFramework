@@ -29,7 +29,7 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal/beta)", () => {
+		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal/rc)", () => {
 			const input = `2.0.0-alpha.1.0.0`;
 			const result = isInternalVersionScheme(input);
 			assert.isFalse(result);
