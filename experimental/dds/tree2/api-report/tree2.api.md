@@ -23,6 +23,18 @@ import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => {
+    readonly value: TValue;
+}) & { readonly [Property in keyof TEnum]: {
+        new (data?: EmptyObject | undefined): {
+            readonly value: TEnum[Property];
+        };
+        readonly identifier: `${TScope}.${TEnum[Property]}`;
+        readonly kind: NodeKind.Object;
+        readonly info: unknown;
+    }; };
+
+// @alpha
 export interface Adapters {
     // (undocumented)
     readonly tree?: readonly TreeAdapter[];
@@ -411,6 +423,18 @@ export type EmptyObject = {};
 
 // @alpha
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
+
+// @alpha
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => {
+    readonly value: TValue;
+}) & Record<Members, {
+    new (data?: EmptyObject | undefined): {
+        readonly value: Members;
+    };
+    readonly identifier: `${TScope}.${Members}`;
+    readonly kind: NodeKind.Object;
+    readonly info: unknown;
+}>;
 
 // @beta
 export type Events<E> = {
@@ -1471,7 +1495,7 @@ export interface SchemaEvents {
 }
 
 // @beta @sealed
-export class SchemaFactory<TScope extends string, TName extends number | string = string> {
+export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
     constructor(scope: TScope);
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     fixRecursiveReference<T extends AllowedTypes_2>(...types: T): void;
@@ -1598,6 +1622,16 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 
 // @alpha
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
+
+// @alpha
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): {
+    new (data?: EmptyObject): {
+        readonly value: TName;
+    };
+    readonly identifier: `${TScope}.${TName}`;
+    readonly kind: NodeKind.Object;
+    readonly info: unknown;
+};
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
@@ -1919,6 +1953,9 @@ TFields extends {
     -readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
 } : EmptyObject
 ][_InlineTrick];
+
+// @alpha
+export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @alpha
 export const typeNameSymbol: unique symbol;

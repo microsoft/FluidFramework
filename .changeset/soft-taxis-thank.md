@@ -1,9 +1,12 @@
 ---
 "@fluidframework/sequence": minor
-"@fluid-experimental/sequence-deprecated": minor
 ---
 
-Deprecate API `previousInterval` and `nextInterval` from `IntervalCollection`, these functionalities are moved to the `EndpointIndex`. Users are advised to independently attach the index to the collection and utilize the API accordingly, for instance:
+sequence: Deprecated previousInterval and nextInterval APIs
+
+The `previousInterval` and `nextInterval` APIs from `IntervalCollection` have been deprecated. These functions are moved
+to the `EndpointIndex`. Users should independently attach the index to the collection and utilize the API accordingly,
+for instance:
 
 ```typescript
 const endpointIndex = createEndpointIndex(sharedString);

@@ -20,7 +20,6 @@ import {
 	waitForContainerConnection,
 	mockConfigProvider,
 	ITestContainerConfig,
-	timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -49,7 +48,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		gcSweepGeneration: 1,
+		enableGCSweep: true,
 		sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
 	};
 	const testContainerConfig: ITestContainerConfig = {
@@ -169,28 +168,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		};
 	};
 
-	/**
-	 * Returns a promise that will resolve when all the passed in containers have closed dur
-	 * to "DataStore was deleted" error.
-	 */
-	const getContainersClosePromise = async (containers: IContainer[]) => {
-		const closePromises: Promise<void>[] = [];
-		for (const container of containers) {
-			const promise = timeoutPromise((resolve, reject) => {
-				const listener = (error: IErrorBase | undefined) => {
-					if (!error?.message.startsWith("DataStore was deleted:")) {
-						reject(error);
-					}
-					container.off("closed", listener);
-					resolve();
-				};
-				container.on("closed", listener);
-			});
-			closePromises.push(promise);
-		}
-		return Promise.all(closePromises);
-	};
-
 	describe("Using swept data stores not allowed", () => {
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
@@ -203,6 +180,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
+					callSite: "submitMessage",
 				},
 			],
 			async () => {
@@ -238,6 +216,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
+					callSite: "submitSignal",
 				},
 			],
 			async () => {
@@ -262,10 +241,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		);
 	});
 
-	describe("Loading swept data stores not allowed", () => {
-		// TODO: Receive ops scenarios - loaded before and loaded after (are these just context loading errors?)
+	describe("Using deleted data stores", () => {
 		itExpects(
-			"Requesting swept datastores fails in client loaded after sweep timeout and summarizing container",
+			"Requesting swept datastores not allowed",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
@@ -274,11 +252,13 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 					clientType: "interactive",
+					callSite: "getDataStore",
 				},
-				// Summarizer client's request
+				// Summarizer client's request logs an error
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 					clientType: "noninteractive/summarizer",
+					callSite: "getDataStore",
 				},
 			],
 			async () => {
@@ -336,35 +316,26 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		);
 
 		itExpects(
-			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
+			"Ops for swept data stores is ignored but logs an error",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
+					callSite: "processFluidDataStoreOp",
 				},
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "interactive",
+					callSite: "processFluidDataStoreOp",
 				},
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					clientType: "interactive",
+					callSite: "processFluidDataStoreOp",
 				},
 			],
 			async () => {
@@ -391,12 +362,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				const { summaryVersion } = await summarize(summarizer);
 				const receivingContainer = await loadContainer(summaryVersion);
 
-				const closePromise = getContainersClosePromise([
-					sendingContainer,
-					summarizingContainer,
-					receivingContainer,
-				]);
-
 				// Send an op to the swept data store
 				dataObject._root.set("send", "op");
 
@@ -405,54 +370,44 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 				// Wait for the GC and the above op to be processed which will close all the containers.
 				await provider.ensureSynchronized();
-				await closePromise;
 
-				// The containers should close
+				// The containers should not close
 				assert(
-					sendingContainer.closed,
-					"Sending container with deleted datastore should close on receiving an op for it",
+					!sendingContainer.closed,
+					"Sending container should not close on receiving an op for deleted data store",
 				);
 				assert(
-					summarizingContainer.closed,
-					"Summarizing container with deleted datastore should close on receiving an op for it",
+					!summarizingContainer.closed,
+					"Summarizing container should not close on receiving an op for deleted data store",
 				);
 				assert(
-					receivingContainer.closed,
-					"Container with deleted datastore should close on receiving an op for it",
+					!receivingContainer.closed,
+					"Receiving container should close on receiving an op for deleted data store",
 				);
 			},
 		);
 
 		itExpects(
-			"Receiving signals for swept datastores fails in client after sweep timeout and summarizing container",
+			"Signals for swept datastores are ignored but logs an error",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
 					clientType: "noninteractive/summarizer",
 				},
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
+					callSite: "processSignal",
 				},
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "interactive",
+					callSite: "processSignal",
 				},
 				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
-					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					clientType: "interactive",
+					callSite: "processSignal",
 				},
 			],
 			async () => {
@@ -483,12 +438,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				const { summaryVersion } = await summarize(summarizer);
 				const receivingContainer = await loadContainer(summaryVersion);
 
-				const closePromise = getContainersClosePromise([
-					sendingContainer,
-					summarizingContainer,
-					receivingContainer,
-				]);
-
 				// Send a signal to the swept data store
 				dataObject._runtime.submitSignal("a", "signal");
 
@@ -499,21 +448,18 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				// Once the GC op has been processed, resume the inbound signal queue so that the signal is processed.
 				sendingContainer.deltaManager.inboundSignal.resume();
 
-				// All the containers should have closed now.
-				await closePromise;
-
-				// The containers should close
+				// The containers should not close
 				assert(
-					sendingContainer.closed,
-					"Sending container with deleted datastore should close on receiving an op for it",
+					!sendingContainer.closed,
+					"Sending container should not close on receiving a signal for deleted data store",
 				);
 				assert(
-					summarizingContainer.closed,
-					"Summarizing container with deleted datastore should close on receiving a signal for it",
+					!summarizingContainer.closed,
+					"Summarizing container should not close on receiving a signal for deleted data store",
 				);
 				assert(
-					receivingContainer.closed,
-					"Container with deleted datastore should close on receiving a signal for it",
+					!receivingContainer.closed,
+					"Receiving container should not close on receiving a signal for deleted data store",
 				);
 			},
 		);

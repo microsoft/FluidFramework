@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { assertIsStableId } from "@fluidframework/container-runtime";
 import {
+	assertIsStableId,
 	IIdCompressor,
 	SessionSpaceCompressedId,
 	StableId,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/id-compressor";
 import { brand, extractFromOpaque } from "../../util";
 import { StableNodeKey, LocalNodeKey } from "./nodeKey";
 
