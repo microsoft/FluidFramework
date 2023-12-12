@@ -4,7 +4,6 @@
  */
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IOdspTokenProvider } from "./token";
 
@@ -68,28 +67,22 @@ export interface OdspContainerServices {
 /**
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * It will be returned for all audience members connected.
+ *
  * @alpha
  */
-export interface OdspUser extends IUser {
+export interface OdspMember extends IMember {
+	/**
+	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
+	 */
+	userId: string;
 	/**
 	 * The user's name
 	 */
 	name: string;
-
 	/**
 	 * The user's email
 	 */
-	email: string;
-}
-
-/**
- * Since ODSP provides user names and email for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
- * It will be returned for all audience members connected.
- * @alpha
- */
-export interface OdspMember extends IMember {
-	name: string;
 	email: string;
 }
 
