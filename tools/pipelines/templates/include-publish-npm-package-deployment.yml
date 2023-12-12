@@ -53,6 +53,6 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-          - template: /tools/pipelines/templates/1ES/include-git-tag-steps.yml@self
+          - template: include-git-tag-steps.yml
             parameters:
               tagName: ${{ parameters.tagName }}

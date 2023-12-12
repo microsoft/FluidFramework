@@ -15,7 +15,7 @@ parameters:
 
 steps: 
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-    - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+    - template: include-install-pnpm.yml
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 
