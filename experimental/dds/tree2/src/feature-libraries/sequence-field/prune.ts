@@ -15,15 +15,14 @@ export function prune<TNodeChange>(
 	pruneNode: NodeChangePruner<TNodeChange>,
 ): Changeset<TNodeChange> {
 	const pruned = new MarkListFactory<TNodeChange>();
-	for (const mark of changeset) {
+	for (let mark of changeset) {
 		if (isVestigialEndpoint(mark)) {
 			delete (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
 		}
 		if (mark.changes !== undefined) {
-			pruned.push(withNodeChange(mark, pruneNode(mark.changes)));
-		} else {
-			pruned.push(mark);
+			mark = withNodeChange(mark, pruneNode(mark.changes));
 		}
+		pruned.push(mark);
 	}
 	return pruned.list;
 }
