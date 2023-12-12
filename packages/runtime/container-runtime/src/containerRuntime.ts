@@ -166,7 +166,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import {
 	GarbageCollector,
 	GCNodeType,
-	gcTombstoneGenerationOptionName,
+	gcGenerationOptionName,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -1347,8 +1347,7 @@ export class ContainerRuntime
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
-				gcOptions_gcTombstoneGeneration:
-					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
+				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
 
