@@ -171,6 +171,8 @@ export {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
+	EncodedRevisionTag,
+	EncodedChangeAtomId,
 } from "./rebase";
 
 export {
