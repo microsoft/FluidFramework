@@ -4,6 +4,9 @@
  */
 import { expect, test } from "@oclif/test";
 
+/**
+ * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
+ */
 const test_tags = [
 	"client_v2.0.0-internal.1.0.0",
 	"client_v1.2.4",
