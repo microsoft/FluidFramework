@@ -21,6 +21,16 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/protocol-definitions-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/protocol-definitions-alpha.d.ts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"main": "dist/index.cjs",
@@ -29,10 +39,12 @@
 	"scripts": {
 		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
 		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json && npm run build:rename-types",
 		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
