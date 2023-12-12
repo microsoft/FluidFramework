@@ -21,16 +21,6 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/protocol-definitions-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/protocol-definitions-alpha.d.ts",
-				"default": "./dist/index.cjs"
-			}
 		}
 	},
 	"main": "dist/index.cjs",
