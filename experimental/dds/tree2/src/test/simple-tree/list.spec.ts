@@ -42,7 +42,10 @@ describe("List", () => {
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
-		const list = getRoot((_) => _.list(_.number), () => items);
+		const list = getRoot(
+			(_) => _.list(_.number),
+			() => items,
+		);
 		assert.deepEqual(list, items);
 		return list;
 	}
@@ -50,7 +53,10 @@ describe("List", () => {
 	// TODO: Combine createList helpers once we unbox unions.
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
-		const list = getRoot((_) => _.list(_.string), () => items);
+		const list = getRoot(
+			(_) => _.list(_.string),
+			() => items,
+		);
 		assert.deepEqual(list, items);
 		return list;
 	}

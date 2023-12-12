@@ -299,7 +299,13 @@ describe("SharedTreeList", () => {
 			handles: _.list(_.handle),
 			poly: _.list([_.number, _.string, _.boolean, _.handle]),
 		});
-		const initialTree = () => ({ numbers: [], strings: [], booleans: [], handles: [], poly: [] });
+		const initialTree = () => ({
+			numbers: [],
+			strings: [],
+			booleans: [],
+			handles: [],
+			poly: [],
+		});
 		it("numbers", () => {
 			const root = getRoot(schema, initialTree);
 			root.numbers.insertAtStart(0);

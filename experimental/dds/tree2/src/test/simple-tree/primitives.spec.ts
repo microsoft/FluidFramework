@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ImplicitFieldSchema } from "../../class-tree";
+// eslint-disable-next-line import/no-internal-modules
 import { InsertableTreeFieldFromImplicitField } from "../../class-tree/internal";
 import { getRoot, makeSchema, pretty } from "./utils";
 
@@ -45,14 +46,17 @@ describe("Primitives", () => {
 	) {
 		const coercedValue = JSON.parse(JSON.stringify(value));
 		it(`initialTree(${pretty(value)}) -> throws`, () => {
-			assert.throws(() => getRoot(schema, () => value),
-				`initialTree(${pretty(value)}) must throw if coercion to '${coercedValue}' disallowed by schema.`,
+			assert.throws(
+				() => getRoot(schema, () => value),
+				`initialTree(${pretty(
+					value,
+				)}) must throw if coercion to '${coercedValue}' violates schema.`,
 			);
 		});
 	}
 
 	describe("null", () => {
-		const schema = makeSchema(_ => _.null);
+		const schema = makeSchema((_) => _.null);
 		checkExact(schema, null);
 	});
 
@@ -78,11 +82,11 @@ describe("Primitives", () => {
 		describe("disallowed without null", () => {
 			const schema = makeSchema((_) => _.number);
 			[-Infinity, NaN, Infinity].forEach((value) => {
-				checkThrows(schema, value)
+				checkThrows(schema, value);
 			});
 		});
 
-		describe("courceable without null", () => {
+		describe("coerceable without null", () => {
 			const schema = makeSchema((_) => _.number);
 			[-0].forEach((value) => {
 				checkCoerced(schema, value);
@@ -91,11 +95,7 @@ describe("Primitives", () => {
 
 		describe("coerceable with null", () => {
 			const schema = makeSchema((_) => [_.number, _.null]);
-			[
-				-Infinity,
-				NaN,
-				Infinity,
-			].forEach((value) => checkCoerced(schema, value));
+			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
 		});
 	});
 

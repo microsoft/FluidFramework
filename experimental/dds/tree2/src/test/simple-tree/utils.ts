@@ -67,7 +67,7 @@ export function makeSchema<TSchema extends ImplicitFieldSchema>(
 // Returns true if the given function is a class constructor (i.e., should be invoked with 'new')
 // eslint-disable-next-line @typescript-eslint/ban-types
 function isCtor(candidate: Function) {
-	return candidate.prototype?.constructor.name !== undefined
+	return candidate.prototype?.constructor.name !== undefined;
 }
 
 /**
