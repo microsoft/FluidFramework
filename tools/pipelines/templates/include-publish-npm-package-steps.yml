@@ -110,7 +110,7 @@ steps:
             else
               feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
               echo "FeedName: $feedName"
-              if [[ $release == "release" && $feedName == "build" ]]; then
+              if [[ $release == "release" && $feedName == "test-absander" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 echo "PackageVersion: $packageVersion"
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
