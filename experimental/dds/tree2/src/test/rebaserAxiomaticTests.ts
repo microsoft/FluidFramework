@@ -172,7 +172,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const rollbacks = sourceEdits.map((change) =>
 								tagRollbackInverse(
 									fieldRebaser.invert(change),
-									change.revision as RevisionTag,
+									intentionMinter() as RevisionTag,
 									change.revision,
 								),
 							);
