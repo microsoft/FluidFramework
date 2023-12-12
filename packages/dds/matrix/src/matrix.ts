@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -29,6 +27,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
@@ -101,7 +100,7 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 			conflictingValue: MatrixItem<T>,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 }
 
 /**
@@ -608,6 +607,7 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
+		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		pos: number,
 		referenceSequenceNumber: number,

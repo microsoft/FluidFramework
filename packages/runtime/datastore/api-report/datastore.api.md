@@ -88,12 +88,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get idCompressor(): IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
-    // @deprecated (undocumented)
-    static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
