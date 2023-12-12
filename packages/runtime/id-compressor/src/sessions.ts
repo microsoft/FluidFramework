@@ -4,8 +4,8 @@
  */
 
 import BTree from "sorted-btree";
-import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/core-utils";
+import { SessionId, StableId } from "./types";
 import {
 	compareBigints,
 	localIdFromGenCount,
