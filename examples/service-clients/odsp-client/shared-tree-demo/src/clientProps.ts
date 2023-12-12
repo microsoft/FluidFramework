@@ -6,26 +6,21 @@ import { OdspClientProps, OdspConnectionConfig } from "@fluid-experimental/odsp-
 import { OdspTestTokenProvider } from "./tokenProvider";
 
 export interface OdspTestCredentials {
+	siteUrl: string;
+	driveId: string;
 	clientId: string;
-	clientSecret: string;
-	username: string;
-	password: string;
 }
 
-/**
- * Default test credentials for odsp-client.
- */
-const clientCreds: OdspTestCredentials = {
-	clientId: "<client_id>",
-	clientSecret: "<client_secret>",
-	username: "<email_id>",
-	password: "<password>",
+export const props: OdspTestCredentials = {
+	siteUrl: "<site__url>",
+	driveId: "<drive__id>",
+	clientId: "<client__id>",
 };
 
 const connectionConfig: OdspConnectionConfig = {
-	tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
-	siteUrl: "<site_url>",
-	driveId: "<raas_drive_id>",
+	tokenProvider: new OdspTestTokenProvider(props.clientId),
+	siteUrl: props.siteUrl,
+	driveId: props.driveId,
 };
 
 export const clientProps: OdspClientProps = {

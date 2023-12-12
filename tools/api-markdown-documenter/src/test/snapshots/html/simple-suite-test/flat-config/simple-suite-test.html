@@ -253,20 +253,6 @@
         <tbody>
           <tr>
             <td>
-              <a href='docs/simple-suite-test#testfunction-function'>testFunction(testParameter, testOptionalParameter)</a>
-            </td>
-            <td>
-              <code>ALPHA</code>
-            </td>
-            <td>
-              <span>TTypeParameter</span>
-            </td>
-            <td>
-              Test function
-            </td>
-          </tr>
-          <tr>
-            <td>
               <a href='docs/simple-suite-test#testfunctionreturninginlinetype-function'>testFunctionReturningInlineType()</a>
             </td>
             <td>
@@ -876,7 +862,7 @@
             export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter&lt;number&gt;
           </code>
           <p>
-            <span><span><b>Extends:</b> </span><span><a href='docs/simple-suite-test#testinterface-interface'>TestInterface</a></span>, <span><a href='docs/simple-suite-test#testmappedtype-typealias'>TestMappedType</a></span>, <span><a href='docs/simple-suite-test#testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a></span></span>
+            <span><span><b>Extends:</b> </span><span><a href='docs/simple-suite-test#testinterface-interface'>TestInterface</a></span>, <span><a href='docs/simple-suite-test#testmappedtype-typealias'>TestMappedType</a></span>, <span><a href='docs/simple-suite-test#testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a>&lt;number&gt;</span></span>
           </p>
         </section>
         <section>
@@ -2531,7 +2517,7 @@
             Signature
           </h3>
           <code>
-            export declare type TestMappedType = {
+            export type TestMappedType = {
             <br>
                 [K in TestEnum]: boolean;
             <br>
@@ -2561,7 +2547,7 @@
             Signature
           </h3>
           <code>
-            export declare type TypeAlias = string;
+            export type TypeAlias = string;
           </code>
         </section>
         <section>
@@ -2870,33 +2856,6 @@
         </section>
         <section>
           <h3>
-            Interfaces
-          </h3>
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  Interface
-                </th>
-                <th>
-                  Description
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <a href='docs/simple-suite-test#testnamespace-testinterface-interface'>TestInterface</a>
-                </td>
-                <td>
-                  Test interface
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-        <section>
-          <h3>
             Classes
           </h3>
           <table>
@@ -3020,6 +2979,9 @@
                   Variable
                 </th>
                 <th>
+                  Alerts
+                </th>
+                <th>
                   Modifiers
                 </th>
                 <th>
@@ -3031,6 +2993,9 @@
               <tr>
                 <td>
                   <a href='docs/simple-suite-test#testnamespace-testconst-variable'>TestConst</a>
+                </td>
+                <td>
+                  <code>BETA</code>
                 </td>
                 <td>
                   <code>readonly</code>
@@ -3068,142 +3033,6 @@
               </tr>
             </tbody>
           </table>
-        </section>
-        <section>
-          <h3>
-            Interface Details
-          </h3>
-          <section>
-            <h4 id="testnamespace-testinterface-interface">
-              TestInterface
-            </h4>
-            <section>
-              <p>
-                Test interface
-              </p>
-            </section>
-            <section>
-              <h5 id="testinterface-signature">
-                Signature
-              </h5>
-              <code>
-                interface TestInterface extends TestInterfaceWithTypeParameter&lt;TestEnum&gt;
-              </code>
-              <p>
-                <span><span><b>Extends:</b> </span><span><a href='docs/simple-suite-test#testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a>&lt;<a href='docs/simple-suite-test#testnamespace-testenum-enum'>TestEnum</a></span></span>
-              </p>
-            </section>
-            <section>
-              <h5>
-                Properties
-              </h5>
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      Property
-                    </th>
-                    <th>
-                      Type
-                    </th>
-                    <th>
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <a href='docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature'>testInterfaceProperty</a>
-                    </td>
-                    <td>
-                      <span>boolean</span>
-                    </td>
-                    <td>
-                      Test interface property
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
-            <section>
-              <h5>
-                Methods
-              </h5>
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      Method
-                    </th>
-                    <th>
-                      Return Type
-                    </th>
-                    <th>
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <a href='docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature'>testInterfaceMethod()</a>
-                    </td>
-                    <td>
-                      <span>void</span>
-                    </td>
-                    <td>
-                      Test interface method
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
-            <section>
-              <h5>
-                Property Details
-              </h5>
-              <section>
-                <h6 id="testnamespace-testinterface-testinterfaceproperty-propertysignature">
-                  testInterfaceProperty
-                </h6>
-                <section>
-                  <p>
-                    Test interface property
-                  </p>
-                </section>
-                <section>
-                  <a name="testinterfaceproperty-signature" />
-                  <b>Signature</b>
-                  <code>
-                    testInterfaceProperty: boolean;
-                  </code>
-                </section>
-              </section>
-            </section>
-            <section>
-              <h5>
-                Method Details
-              </h5>
-              <section>
-                <h6 id="testnamespace-testinterface-testinterfacemethod-methodsignature">
-                  testInterfaceMethod
-                </h6>
-                <section>
-                  <p>
-                    Test interface method
-                  </p>
-                </section>
-                <section>
-                  <a name="testinterfacemethod-signature" />
-                  <b>Signature</b>
-                  <code>
-                    testInterfaceMethod(): void;
-                  </code>
-                </section>
-              </section>
-            </section>
-          </section>
         </section>
         <section>
           <h3>
@@ -3679,12 +3508,15 @@
           </h3>
           <section>
             <h4 id="testnamespace-testconst-variable">
-              TestConst
+              TestConst (BETA)
             </h4>
             <section>
               <p>
                 Test Constant
               </p>
+            </section>
+            <section>
+              <span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span>
             </section>
             <section>
               <h5 id="testconst-signature">

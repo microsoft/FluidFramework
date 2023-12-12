@@ -142,6 +142,21 @@ export class GCTelemetryTracker {
 
 		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.id);
 		const nodeType = this.getNodeType(nodeUsageProps.id);
+		const timeout = (() => {
+			switch (nodeStateTracker?.state) {
+				case UnreferencedState.Inactive:
+					return this.configs.inactiveTimeoutMs;
+				case UnreferencedState.TombstoneReady:
+					return this.configs.sweepTimeoutMs;
+				case UnreferencedState.SweepReady:
+					return (
+						this.configs.sweepTimeoutMs &&
+						this.configs.sweepTimeoutMs + this.configs.sweepGracePeriodMs
+					);
+				default:
+					return undefined;
+			}
+		})();
 		const {
 			usageType,
 			currentReferenceTimestampMs,
@@ -159,10 +174,7 @@ export class GCTelemetryTracker {
 					? nodeUsageProps.currentReferenceTimestampMs -
 					  nodeStateTracker.unreferencedTimestampMs
 					: -1,
-			timeout:
-				nodeStateTracker?.state === UnreferencedState.Inactive
-					? this.configs.inactiveTimeoutMs
-					: this.configs.sweepTimeoutMs,
+			timeout,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...propsToLog,
 			...this.createContainerMetadata,

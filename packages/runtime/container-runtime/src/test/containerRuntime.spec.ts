@@ -1112,9 +1112,11 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage = {
-					type: "FROM_THE_FUTURE",
+				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+					Record<string, unknown> = {
+					type: "FROM THE FUTURE",
 					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
 				};
 
 				const packedOp: Omit<
@@ -1143,11 +1145,9 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-					Record<string, unknown> = {
-					type: "FROM THE FUTURE",
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
 					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
 				};
 
 				const packedOp: Omit<
