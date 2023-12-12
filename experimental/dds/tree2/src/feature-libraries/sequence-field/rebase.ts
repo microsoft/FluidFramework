@@ -182,7 +182,12 @@ function rebaseMarkList<TNodeChange>(
 				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
 			);
 
-			setMarkAdjacentCells(rebasedMark, detachBlock);
+			// Rebasing over an inverse attach will already provide a cell ID with the adjacent cells from the original detach.
+			// The base changeset may not have all the detaches from the original detach revision,
+			// so we should not try to recompute the adjacent cells here.
+			if (!isInverseAttach(baseMark)) {
+				setMarkAdjacentCells(rebasedMark, detachBlock);
+			}
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
@@ -209,6 +214,18 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	}
 
 	return factory.list;
+}
+
+function isInverseAttach(effect: MarkEffect): boolean {
+	switch (effect.type) {
+		case "Delete":
+		case "MoveOut":
+			return effect.detachIdOverride !== undefined;
+		case "AttachAndDetach":
+			return isInverseAttach(effect.detach);
+		default:
+			return false;
+	}
 }
 
 /**
@@ -865,9 +882,8 @@ function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): vo
 		mark.cellId !== undefined,
 		0x74d /* Can only set adjacent cells on a mark with cell ID */,
 	);
-	if (mark.cellId.adjacentCells === undefined) {
-		mark.cellId.adjacentCells = adjacentCells;
-	}
+	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
+	mark.cellId.adjacentCells = adjacentCells;
 }
 
 function shouldReceiveLineage(
