@@ -262,6 +262,12 @@ export {
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 
+	// experimental @alpha APIs:
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
+
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,

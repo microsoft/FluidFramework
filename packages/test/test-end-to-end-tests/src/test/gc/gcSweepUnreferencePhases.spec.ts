@@ -40,7 +40,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	const settings = {};
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: sweepTimeoutMs / 2, // Required to avoid an error
-		gcSweepGeneration: 1,
+		enableGCSweep: true,
 		sweepGracePeriodMs,
 	};
 	const testContainerConfig: ITestContainerConfig = {
