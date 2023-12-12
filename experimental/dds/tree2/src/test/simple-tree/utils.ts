@@ -75,14 +75,14 @@ function isCtor(candidate: Function) {
  */
 export function getRoot<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema | ((factory: SchemaFactory) => TSchema),
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
 	// Schema objects may also be class constructors.
 	if (typeof schema === "function" && !isCtor(schema)) {
 		// eslint-disable-next-line no-param-reassign
 		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
 	}
-	const config = new TreeConfiguration(schema as TSchema, data);
+	const config = new TreeConfiguration(schema as TSchema, initialTree);
 	const factory = new TreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
