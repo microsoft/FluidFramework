@@ -510,8 +510,6 @@ function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follo
 			}
 			return { remains, follows };
 		}
-		case "Placeholder":
-			fail("Placeholder marks should not be rebased");
 		default:
 			unreachableCase(type);
 	}

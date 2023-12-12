@@ -6,6 +6,7 @@
 import { Changeset } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { withNodeChange } from "./utils";
+import { VestigialEndpoint, isVestigialEndpoint } from "./moveEffectTable";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
 
@@ -15,6 +16,9 @@ export function prune<TNodeChange>(
 ): Changeset<TNodeChange> {
 	const pruned = new MarkListFactory<TNodeChange>();
 	for (const mark of changeset) {
+		if (isVestigialEndpoint(mark)) {
+			delete (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
+		}
 		if (mark.changes !== undefined) {
 			pruned.push(withNodeChange(mark, pruneNode(mark.changes)));
 		} else {

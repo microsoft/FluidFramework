@@ -300,8 +300,6 @@ function invertMark<TNodeChange>(
 
 			return inverses;
 		}
-		case "Placeholder":
-			fail("Should not invert placeholder marks");
 		default:
 			unreachableCase(type);
 	}

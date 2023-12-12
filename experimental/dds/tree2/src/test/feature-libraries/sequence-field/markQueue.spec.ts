@@ -8,13 +8,10 @@ import { strict as assert } from "assert";
 import { MarkQueue } from "../../../feature-libraries/sequence-field/markQueue";
 // eslint-disable-next-line import/no-internal-modules
 import { MoveEffect, MoveEffectTable } from "../../../feature-libraries/sequence-field";
-import {
-	CellMark,
-	MarkList,
-	MoveId,
-	MovePlaceholder,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types";
+// eslint-disable-next-line import/no-internal-modules
+import { MoveId } from "../../../feature-libraries/sequence-field/types";
+// eslint-disable-next-line import/no-internal-modules
+import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field/moveEffectTable";
 import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries";
 import { brand, idAllocatorFromMaxId } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -24,7 +21,7 @@ const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();
 
 describe("SequenceField - MarkQueue", () => {
-	it("applies effects to Placeholder marks", () => {
+	it("applies effects to VestigialEndpoint marks", () => {
 		const idAllocator = idAllocatorFromMaxId();
 		const changes = TestChange.mint([], 1);
 		const moveEffects = SF.newCrossFieldTable() as MoveEffectTable<TestChange>;
@@ -33,14 +30,15 @@ describe("SequenceField - MarkQueue", () => {
 			basis: brand(0),
 		};
 		moveEffects.set(CrossFieldTarget.Source, tag1, brand(1), 1, effect, false);
-		const placeholder: CellMark<MovePlaceholder, TestChange> = {
-			type: "Placeholder",
-			revision: tag1,
-			id: brand(0),
+		const vestige: VestigialEndpointMark<TestChange> = {
+			vestigialEndpoint: {
+				revision: tag1,
+				localId: brand(0),
+			},
 			count: 2,
 		};
 		const queue = new MarkQueue<TestChange>(
-			[placeholder],
+			[vestige],
 			undefined,
 			moveEffects,
 			true,
@@ -57,17 +55,19 @@ describe("SequenceField - MarkQueue", () => {
 			actual.push(queue.dequeue());
 		}
 
-		const expected: MarkList<TestChange> = [
+		const expected: VestigialEndpointMark<TestChange>[] = [
 			{
-				type: "Placeholder",
-				revision: tag1,
-				id: brand(0),
+				vestigialEndpoint: {
+					revision: tag1,
+					localId: brand(0),
+				},
 				count: 1,
 			},
 			{
-				type: "Placeholder",
-				revision: tag1,
-				id: brand(1),
+				vestigialEndpoint: {
+					revision: tag1,
+					localId: brand(1),
+				},
 				count: 1,
 				changes,
 			},

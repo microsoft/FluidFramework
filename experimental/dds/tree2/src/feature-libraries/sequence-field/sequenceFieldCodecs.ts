@@ -22,7 +22,6 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
-	MovePlaceholder,
 } from "./types";
 import { Changeset as ChangesetSchema, Encoded } from "./format";
 import { isNoopMark } from "./utils";
@@ -102,16 +101,6 @@ function makeV0Codec<TNodeChange>(
 							detach: markEffectCodec.encode(effect.detach) as Encoded.Detach,
 						},
 					};
-				case "Placeholder":
-					return {
-						placeholder: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision),
-							id: effect.id,
-						},
-					};
 				case NoopMarkType:
 					fail(`Mark type: ${type} should not be encoded.`);
 				default:
@@ -181,17 +170,6 @@ function makeV0Codec<TNodeChange>(
 			}
 			if (detachIdOverride !== undefined) {
 				mark.detachIdOverride = decodeChangeAtomId(revisionTagCodec, detachIdOverride);
-			}
-			return mark;
-		},
-		placeholder(encoded: Encoded.MovePlaceholder): MovePlaceholder {
-			const { id, revision } = encoded;
-			const mark: MovePlaceholder = {
-				type: "Placeholder",
-				id,
-			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision);
 			}
 			return mark;
 		},

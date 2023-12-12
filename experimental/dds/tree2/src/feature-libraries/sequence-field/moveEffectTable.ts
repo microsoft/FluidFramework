@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut, MovePlaceholder } from "./types";
+import { CellMark, Delete, Mark, MarkEffect, MoveId, MoveIn, MoveOut, NoopMark } from "./types";
 import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
 import { MoveMarkEffect } from "./helperTypes";
 
@@ -150,17 +150,18 @@ function applyMoveEffectsToDest(
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: CellMark<MoveOut | MovePlaceholder, T>,
+	mark: CellMark<MoveOut | VestigialEndpoint, T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 ): Mark<T> {
+	const endpoint = getMoveEndpoint(mark);
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
 		effects,
-		mark.revision ?? revision,
-		mark.id,
+		endpoint.revision ?? revision,
+		endpoint.localId,
 		mark.count,
 		consumeEffect,
 	);
@@ -223,8 +224,35 @@ function updateEndpoint(
 	}
 }
 
+/**
+ * Some marks (noop and delete) need to be tagged with information that specifies they used to be the endpoint of a
+ * move that has since been cancelled out.
+ * This is needed so we can send and apply effects to such marks.
+ */
+export type VestigialEndpoint = {
+	vestigialEndpoint: ChangeAtomId;
+} & (NoopMark | Delete);
+
+export type VestigialEndpointMark<T> = CellMark<VestigialEndpoint, T>;
+
+function getMoveEndpoint<T>(mark: Mark<T> | VestigialEndpointMark<T>): ChangeAtomId {
+	if (isMoveMark(mark)) {
+		return { revision: mark.revision, localId: mark.id };
+	}
+	const vestige = (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
+	assert(vestige !== undefined, "Expected mark to be a move endpoint");
+	return vestige;
+}
+
+export function isVestigialEndpoint<T>(
+	mark: Mark<T> | VestigialEndpointMark<T>,
+): mark is VestigialEndpointMark<T> {
+	const vestige = (mark as Partial<VestigialEndpoint>).vestigialEndpoint;
+	return vestige !== undefined;
+}
+
 export function applyMoveEffectsToMark<T>(
-	mark: Mark<T>,
+	mark: Mark<T> | VestigialEndpointMark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
@@ -361,16 +389,16 @@ export function applyMoveEffectsToMark<T>(
 
 			return [newMark];
 		}
-	} else if (isMoveMark(mark) || mark.type === "Placeholder") {
+	} else if (isMoveMark(mark) || isVestigialEndpoint(mark)) {
 		const type = mark.type;
 		switch (type) {
-			case "Placeholder":
-			case "MoveOut": {
+			default: {
+				const endpoint = getMoveEndpoint(mark);
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
-					mark.revision ?? revision,
-					mark.id,
+					endpoint.revision ?? revision,
+					endpoint.localId,
 					mark.count,
 				);
 
@@ -438,8 +466,6 @@ export function applyMoveEffectsToMark<T>(
 				applyMoveEffectsToDest(newMark, mark.count, revision, effects, consumeEffect);
 				return [newMark];
 			}
-			default:
-				unreachableCase(type);
 		}
 	}
 	return [mark];

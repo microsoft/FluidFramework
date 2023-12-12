@@ -177,15 +177,6 @@ export type Attach = Insert | MoveIn;
 export type Detach = Delete | MoveOut;
 
 /**
- * Mark used during compose to temporarily remember the position of nodes which were being moved
- * but had their move cancelled with an inverse.
- * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
- */
-export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
-	type: "Placeholder";
-}
-
-/**
  * Fills then empties cells.
  *
  * Only ever targets empty cells.
@@ -200,7 +191,7 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | AttachAndDetach;
+export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 
