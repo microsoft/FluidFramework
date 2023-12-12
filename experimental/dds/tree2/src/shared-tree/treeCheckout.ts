@@ -169,7 +169,7 @@ export function createTreeCheckout(args?: {
 			},
 			changeFamily,
 		);
-	const schema = forkSchemaForCheckout(branch, args?.schema); // TODO: move to caller where needed
+	const schema = args?.schema ?? forkSchemaForCheckout(branch);
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -398,7 +398,7 @@ export function runSynchronous(
 		: view.transaction.commit();
 }
 
-function forkSchemaForCheckout(
+export function forkSchemaForCheckout(
 	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	schema?: TreeStoredSchemaRepository,
 ): TreeStoredSchemaRepository {

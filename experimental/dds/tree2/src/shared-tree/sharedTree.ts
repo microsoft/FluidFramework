@@ -62,7 +62,12 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
+import {
+	TreeCheckout,
+	CheckoutEvents,
+	createTreeCheckout,
+	forkSchemaForCheckout,
+} from "./treeCheckout";
 import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
@@ -220,10 +225,11 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this._events = createEmitter<CheckoutEvents>();
+		const localBranch = this.getLocalBranch();
 		this.view = createTreeCheckout({
-			branch: this.getLocalBranch(),
+			branch: localBranch,
 			changeFamily,
-			schema,
+			schema: forkSchemaForCheckout(localBranch, schema),
 			forest,
 			events: this._events,
 			removedRoots,
