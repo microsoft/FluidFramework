@@ -21,15 +21,16 @@ const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
 const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
 
 /**
+ * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions,
+ * this is the default prerelease indentifier.
+ */
+export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
+
+/**
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
  * value must always match one of these values.
- *
- * @privateRemarks
- *
- * "internal" should always be the first value since there is code that treats ALLOWED_PRERELEASE_IDENTIFIER[0] as the
- * "default value", and internal was the default value when we started using the internal version scheme.
  */
-export const ALLOWED_PRERELEASE_IDENTIFIERS = ["internal", "rc"];
+export const ALLOWED_PRERELEASE_IDENTIFIERS = [DEFAULT_PRERELEASE_IDENTIFIER, "rc"] as const;
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
