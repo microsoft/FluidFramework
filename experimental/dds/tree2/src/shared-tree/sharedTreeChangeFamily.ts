@@ -45,21 +45,29 @@ export class SharedTreeChangeFamily
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
 		const newChanges: Mutable<SharedTreeChange["changes"]> = [];
 		const dataChangeRun: TaggedChange<ModularChangeset>[] = [];
+
+		const flushDataChangeRun = (): void => {
+			if (dataChangeRun.length > 0) {
+				newChanges.push({
+					type: "data",
+					innerChange: this.modularChangeFamily.compose(dataChangeRun),
+				});
+				dataChangeRun.length = 0;
+			}
+		};
+
 		for (const topChange of changes) {
 			for (const change of topChange.change.changes) {
 				if (change.type === "schema") {
-					if (dataChangeRun.length > 0) {
-						newChanges.push({
-							type: "data",
-							innerChange: this.modularChangeFamily.compose(dataChangeRun),
-						});
-					}
+					flushDataChangeRun();
 					newChanges.push(change);
 				} else {
 					dataChangeRun.push(tagChange(change.innerChange, topChange.revision));
 				}
 			}
 		}
+
+		flushDataChangeRun();
 		return { changes: newChanges };
 	}
 
