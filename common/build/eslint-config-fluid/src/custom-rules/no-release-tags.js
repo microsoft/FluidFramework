@@ -1,11 +1,11 @@
 import { TSDocParser } from "@microsoft/tsdoc";
 
 function hasReleaseTag(comment) {
-	const parser = new TSDocParser()
+	const parser = new TSDocParser();
 	const parserContext = parser.parseRange(comment);
 	const hasReleaseTag = parserContext.hasReleaseTag;
 
-	return hasReleaseTag
+	return hasReleaseTag;
 }
 
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
 				const comments = sourceCode.getCommentsAfter(node);
 
 				comments.forEach((comment) => {
-					// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block. 
+					// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
 					const formattedComment = `/** ${comment} */`;
 					if (hasReleaseTag(formattedComment)) {
 						context.report({
