@@ -37,10 +37,10 @@
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
-		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"api-extractor:commonjs": "api-extractor run --local",
 		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
+		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
 		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json && npm run build:rename-types",
 		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
