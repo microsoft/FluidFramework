@@ -12,7 +12,7 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, OdspTestCredentials } from "./OdspClientFactory";
+import { createOdspClient, OdspLoginCredentials } from "./OdspClientFactory";
 import { waitForMember } from "./utils";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -22,12 +22,12 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 /**
  * Default test credentials for odsp-client.
  */
-const client1Creds: OdspTestCredentials = {
+const client1Creds: OdspLoginCredentials = {
 	username: process.env.odsp__client__login__username as string,
 	password: process.env.odsp__client__login__password as string,
 };
 
-const client2Creds: OdspTestCredentials = {
+const client2Creds: OdspLoginCredentials = {
 	username: process.env.odsp__client2__login__username as string,
 	password: process.env.odsp__client2__login__password as string,
 };

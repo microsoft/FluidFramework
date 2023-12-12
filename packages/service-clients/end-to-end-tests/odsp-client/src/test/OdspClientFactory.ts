@@ -15,16 +15,14 @@ import { OdspTestTokenProvider } from "./OdspTokenFactory";
 /**
  * Interface representing the credentials required for testing odsp-client.
  */
-export interface OdspTestCredentials {
+export interface OdspLoginCredentials {
 	username: string;
 	password: string;
 }
 
-export interface OdspCredentials {
+export interface OdspCredentials extends OdspLoginCredentials {
 	clientId: string;
 	clientSecret: string;
-	username: string;
-	password: string;
 }
 
 /**
@@ -32,7 +30,7 @@ export interface OdspCredentials {
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
-	creds: OdspTestCredentials,
+	creds: OdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
