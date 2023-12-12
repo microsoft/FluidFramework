@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SessionSpaceCompressedId,
-	StableId,
-	OpSpaceCompressedId,
-} from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/core-utils";
-import {
-	IdCompressor,
-	numericUuidFromStableId,
-	offsetNumericUuid,
-	stableIdFromNumericUuid,
-} from "../../id-compressor";
+import { SessionSpaceCompressedId, StableId, OpSpaceCompressedId } from "../";
+import { numericUuidFromStableId, offsetNumericUuid, stableIdFromNumericUuid } from "../utilities";
+import { IdCompressor } from "../idCompressor";
 
 /**
  * An identifier (v4 UUID) that has been shortened by a distributed compression algorithm.

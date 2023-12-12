@@ -15,6 +15,7 @@
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
+@fluidframework/id-compressor
 @fluidframework/datastore-definitions
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions

@@ -86,12 +86,14 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import type {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/id-compressor";
 import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -856,16 +858,18 @@ export class ContainerRuntime
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
-			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
+				"@fluidframework/id-compressor"
+			);
 
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
 			} else {
-				idCompressor = IdCompressor.create(logger);
+				idCompressor = createIdCompressor(logger);
 			}
 		}
 

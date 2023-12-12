@@ -8,6 +8,8 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IdCompressor } from '@fluidframework/id-compressor';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -15,6 +17,8 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -27,6 +31,13 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
+import { OpSpaceCompressedId } from '@fluidframework/id-compressor';
+import { SerializedIdCompressor } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
+import { SessionId } from '@fluidframework/id-compressor';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import { StableId } from '@fluidframework/id-compressor';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
@@ -150,17 +161,9 @@ export interface IDataStore {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
-// @alpha
-export interface IdCreationRange {
-    // (undocumented)
-    readonly ids?: {
-        readonly firstGenCount: number;
-        readonly count: number;
-        readonly requestedClusterSize: number;
-    };
-    // (undocumented)
-    readonly sessionId: SessionId;
-}
+export { IdCompressor }
+
+export { IdCreationRange }
 
 // @internal
 export interface IEnvelope {
@@ -292,25 +295,9 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @alpha
-export interface IIdCompressor {
-    decompress(id: SessionSpaceCompressedId): StableId;
-    generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
-    localSessionId: SessionId;
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
+export { IIdCompressor }
 
-// @alpha (undocumented)
-export interface IIdCompressorCore {
-    finalizeCreationRange(range: IdCreationRange): void;
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    takeNextCreationRange(): IdCreationRange;
-}
+export { IIdCompressorCore }
 
 // @alpha
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -452,40 +439,19 @@ export interface OpAttributionKey {
     type: "op";
 }
 
-// @alpha
-export type OpSpaceCompressedId = number & {
-    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
-};
+export { OpSpaceCompressedId }
 
-// @alpha
-export type SerializedIdCompressor = string & {
-    readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
-};
+export { SerializedIdCompressor }
 
-// @alpha
-export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
-    readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
-};
+export { SerializedIdCompressorWithNoSession }
 
-// @alpha
-export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
-    readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-};
+export { SerializedIdCompressorWithOngoingSession }
 
-// @alpha
-export type SessionId = StableId & {
-    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
-};
+export { SessionId }
 
-// @alpha
-export type SessionSpaceCompressedId = number & {
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
-};
+export { SessionSpaceCompressedId }
 
-// @alpha
-export type StableId = string & {
-    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
-};
+export { StableId }
 
 // @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

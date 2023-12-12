@@ -17,7 +17,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';

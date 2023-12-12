@@ -5728,6 +5728,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -5769,6 +5770,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/id-compressor': link:../../../packages/runtime/id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
@@ -9184,6 +9186,7 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -9222,6 +9225,7 @@ importers:
       '@fluidframework/datastore': link:../datastore
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -9387,6 +9391,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions-previous': npm:@fluidframework/datastore-definitions@2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.38.3
@@ -9398,6 +9403,7 @@ importers:
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
@@ -9414,6 +9420,65 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
+  packages/runtime/id-compressor:
+    specifiers:
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-tools/benchmark': ^0.48.0
+      '@fluid-tools/build-cli': ^0.28.0
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.28.0
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
+      '@types/mocha': ^9.1.1
+      '@types/uuid': ^9.0.2
+      c8: ^7.7.1
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sorted-btree: ^1.8.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      sorted-btree: 1.8.1
+      uuid: 9.0.1
+    devDependencies:
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-tools/benchmark': 0.48.0
+      '@fluid-tools/build-cli': 0.28.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.28.0
+      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@types/mocha': 9.1.1
+      '@types/uuid': 9.0.7
+      c8: 7.14.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   packages/runtime/runtime-definitions:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -9424,6 +9489,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.38.3
@@ -9437,6 +9503,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9537,6 +9604,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
@@ -9570,6 +9638,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../runtime-definitions
