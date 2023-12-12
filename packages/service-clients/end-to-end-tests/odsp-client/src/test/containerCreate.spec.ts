@@ -14,10 +14,10 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { OdspTestCredentials, createOdspClient } from "./OdspClientFactory";
 
 const clientCreds: OdspTestCredentials = {
-	clientId: "process.env.odsp__client__client__id",
-	clientSecret: "process.env.odsp__client__client__secret",
-	username: "process.env.odsp__client__login__username",
-	password: "process.env.odsp__client__login__password",
+	clientId: process.env.odsp__client__client__id,
+	clientSecret: process.env.odsp__client__client__secret,
+	username: process.env.odsp__client__login__username,
+	password: process.env.odsp__client__login__password,
 };
 
 describe("Container create scenarios", () => {
