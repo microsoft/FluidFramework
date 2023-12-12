@@ -59,7 +59,7 @@ export function getOldRoot<TRoot extends TreeFieldSchema>(
  * Helper for making small test schemas.
  */
 export function makeSchema<TSchema extends ImplicitFieldSchema>(
-	fn: (factory: SchemaFactory<string>) => TSchema,
+	fn: (factory: SchemaFactory) => TSchema,
 ) {
 	return fn(new SchemaFactory(`test.schema.${Math.random().toString(36).slice(2)}`));
 }
@@ -74,13 +74,13 @@ function isCtor(candidate: Function) {
  * Given the schema and initial tree data, returns a hydrated tree node.
  */
 export function getRoot<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema | ((factory: SchemaFactory<string>) => TSchema),
-	data: () => InsertableTreeFieldFromImplicitField<TSchema>,
+	schema: TSchema | ((factory: SchemaFactory) => TSchema),
+	data: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
 	// Schema objects may also be class constructors.
 	if (typeof schema === "function" && !isCtor(schema)) {
 		// eslint-disable-next-line no-param-reassign
-		schema = makeSchema(schema as (builder: SchemaFactory<string>) => TSchema);
+		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
 	}
 	const config = new TreeConfiguration(schema as TSchema, data);
 	const factory = new TreeFactory({

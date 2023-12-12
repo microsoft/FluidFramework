@@ -105,7 +105,7 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
  *
  * @sealed @beta
  */
-export class SchemaFactory<TScope extends string, TName extends number | string = string> {
+export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**

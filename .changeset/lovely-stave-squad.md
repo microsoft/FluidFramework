@@ -3,8 +3,10 @@
 "@fluidframework/runtime-definitions": minor
 ---
 
-Moves `IdCompressor` and related types from `@fluidframework/container-runtime` and `@fluidframework/runtime-definitions` into their own package, `@fluidframework/id-compressor`.
-Exports from original packages have been marked as deprecated.
+container-runtime/runtime-definitions: `IdCompressor` and related types deprecated
 
-Additionally, marks the `IdCompressor` class as deprecated.
-Consumers should use the interfaces, `IIdCompressor` and `IIdCompressorCore`, in conjunction with the factory function `createIdCompressor` instead.
+`IdCompressor` and related types from the @fluidframework/container-runtime and @fluidframework/runtime-definitions
+packages have been deprecated. They can now be found in a new package, @fluidframework/id-compressor.
+
+The `IdCompressor` class is deprecated even in the new package. Consumers should use the interfaces, `IIdCompressor` and
+`IIdCompressorCore`, in conjunction with the factory function `createIdCompressor` instead.
