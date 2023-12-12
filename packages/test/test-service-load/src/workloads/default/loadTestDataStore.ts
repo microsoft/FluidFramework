@@ -5,6 +5,7 @@
 
 import * as crypto from "crypto";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
@@ -14,7 +15,6 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDetachedTestRunner, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
-import { LeaderElection } from "../../leaderElection";
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";

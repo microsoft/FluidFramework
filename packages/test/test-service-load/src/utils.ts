@@ -150,7 +150,10 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export async function createCodeLoader(options: IContainerRuntimeOptions, workLoadPath: string) {
+export async function createCodeLoader(
+	runtimeOptions: IContainerRuntimeOptions,
+	workLoadPath: string,
+) {
 	// The work load path must contain a `fluidExport` which provides IFluidDataStoreFactory.
 	const module = await import(`./${workLoadPath}/fluidExport`);
 	const dataStoreFactory = (module.fluidExport as IProvideFluidDataStoreFactory)
@@ -160,13 +163,11 @@ export async function createCodeLoader(options: IContainerRuntimeOptions, workLo
 		"Invalid data store factory in workload directory's fluidExport",
 	);
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataStoreFactory,
-		[[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
-		undefined,
-		undefined,
-		options,
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataStoreFactory,
+		registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
+		runtimeOptions,
+	});
 	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 	return codeLoader;
 }

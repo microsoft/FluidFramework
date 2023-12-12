@@ -6,16 +6,11 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	IFluidHandle,
-	ITelemetryBaseEvent,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred, assert, delay } from "@fluidframework/core-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { IValueChanged, SharedMap } from "@fluidframework/map";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 
 /**
@@ -60,7 +55,7 @@ interface IActivityObjectDetails {
 	object: IGCActivityObject;
 }
 
-function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent) {
+function logEvent(logger: ITelemetryLoggerExt, props: ITelemetryGenericEventExt & { id: string }) {
 	logger.sendTelemetryEvent(props);
 	const toId = props.id !== undefined ? `-> ${props.id}` : "";
 	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
@@ -91,7 +86,7 @@ const ReferenceActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 5,
 };
-type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof ReferenceActivityType];
+type ReferenceActivityType = (typeof ReferenceActivityType)[keyof typeof ReferenceActivityType];
 
 /**
  * Activities that can be performed by the attachment blob object.
@@ -104,7 +99,7 @@ const BlobActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 2,
 };
-type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
+type BlobActivityType = (typeof BlobActivityType)[keyof typeof BlobActivityType];
 
 /**
  * Activities that can be performed by the leaf data object.
@@ -119,7 +114,7 @@ const LeafActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 3,
 };
-type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
+type LeafActivityType = (typeof LeafActivityType)[keyof typeof LeafActivityType];
 
 /**
  * The activity object implementation for an attachment blob.
@@ -208,10 +203,7 @@ abstract class BaseDataObject extends DataObject {
  * sends ops at a regular interval by incrementing a counter.
  */
 export class LeafDataObject extends BaseDataObject implements IGCActivityObject {
-	public static get type(): string {
-		return "LeafDataObject";
-	}
-
+	public static type = "LeafDataObject";
 	private running: boolean = false;
 
 	private readonly counter2Key = "counter2";
@@ -353,8 +345,8 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		return this._childRunConfig;
 	}
 
-	private _logger: ITelemetryLogger | undefined;
-	private get logger(): ITelemetryLogger {
+	private _logger: ITelemetryLoggerExt | undefined;
+	private get logger(): ITelemetryLoggerExt {
 		assert(this._logger !== undefined, "Logger must be available");
 		return this._logger;
 	}

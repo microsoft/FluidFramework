@@ -3,22 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
-	IFluidHandle,
-	IRequest,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-} from "@fluidframework/core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
 
 /**
@@ -65,7 +55,7 @@ const RootActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 3,
 };
-type RootActivityType = typeof RootActivityType[keyof typeof RootActivityType];
+type RootActivityType = (typeof RootActivityType)[keyof typeof RootActivityType];
 
 /**
  * Activities that can be performed by the leaf data object.
@@ -84,9 +74,9 @@ const LeafActivityType = {
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
 	Count: 5,
 };
-type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
+type LeafActivityType = (typeof LeafActivityType)[keyof typeof LeafActivityType];
 
-function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent) {
+function logEvent(logger: ITelemetryLoggerExt, props: ITelemetryGenericEventExt & { id?: string }) {
 	logger.sendTelemetryEvent(props);
 	const toId = props.id !== undefined ? `-> ${props.id}` : "";
 	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
@@ -122,10 +112,7 @@ abstract class BaseDataObject extends DataObject {
  * "LeafActivityType" at regular intervals.
  */
 export class LeafDataObject extends DataObject implements IActivityObject {
-	public static get type(): string {
-		return "LeafDataObject";
-	}
-
+	public static type = "LeafDataObject";
 	private running: boolean = false;
 	private _nodeId: string | undefined;
 	private get nodeId(): string {
@@ -135,8 +122,8 @@ export class LeafDataObject extends DataObject implements IActivityObject {
 	private activityFailed: boolean = false;
 	private activityFailedError: any;
 
-	private _logger: ITelemetryLogger | undefined;
-	private get logger(): ITelemetryLogger {
+	private _logger: ITelemetryLoggerExt | undefined;
+	private get logger(): ITelemetryLoggerExt {
 		assert(this._logger !== undefined, "Logger must be available");
 		return this._logger;
 	}
@@ -315,8 +302,8 @@ export class RootDataObject extends BaseDataObject implements ITestRunner {
 		return this._childRunConfig;
 	}
 
-	private _logger: ITelemetryLogger | undefined;
-	private get logger(): ITelemetryLogger {
+	private _logger: ITelemetryLoggerExt | undefined;
+	private get logger(): ITelemetryLoggerExt {
 		assert(this._logger !== undefined, "Logger must be available");
 		return this._logger;
 	}
@@ -533,24 +520,3 @@ export const rootDataObjectFactory = new DataObjectFactory(
 	{},
 	[[LeafDataObject.type, Promise.resolve(leafDataObjectFactory)]],
 );
-
-const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
-
-export const createSummarizerFluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		rootDataObjectFactory,
-		[[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
-
-export const fluidExport = (options: IContainerRuntimeOptions) =>
-	new ContainerRuntimeFactoryWithDefaultDataStore(
-		rootDataObjectFactory,
-		[[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		options,
-	);
