@@ -127,6 +127,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_DevtoolsLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
