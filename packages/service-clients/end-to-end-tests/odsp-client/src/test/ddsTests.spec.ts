@@ -16,10 +16,10 @@ import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
 
 const clientCreds: OdspTestCredentials = {
-	clientId: process.env.odsp__client__client__id,
-	clientSecret: process.env.odsp__client__client__secret,
-	username: process.env.odsp__client__login__username,
-	password: process.env.odsp__client__login__password,
+	clientId: process.env.odsp__client__client__id as string,
+	clientSecret: process.env.odsp__client__client__secret as string,
+	username: process.env.odsp__client__login__username as string,
+	password: process.env.odsp__client__login__password as string,
 };
 
 describe("Fluid data updates", () => {
