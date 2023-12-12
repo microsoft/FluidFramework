@@ -11,7 +11,7 @@ import { MoveEffect, MoveEffectTable } from "../../../feature-libraries/sequence
 // eslint-disable-next-line import/no-internal-modules
 import { MoveId } from "../../../feature-libraries/sequence-field/types";
 // eslint-disable-next-line import/no-internal-modules
-import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field/moveEffectTable";
+import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field/helperTypes";
 import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries";
 import { brand, idAllocatorFromMaxId } from "../../../util";
 import { TestChange } from "../../testChange";
