@@ -52,7 +52,6 @@ import {
 	UnreferencedState,
 	defaultSweepGracePeriodMs,
 	GarbageCollectionMessage,
-	gcSweepGenerationOptionName,
 } from "../../gc";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes";
 import {
@@ -239,7 +238,7 @@ describe("Garbage Collection Tests", () => {
 			defaultGCData.gcNodes[nodes[1]] = [];
 
 			// Sweep enabled
-			gc = createGarbageCollector({ gcOptions: { [gcSweepGenerationOptionName]: 1 } });
+			gc = createGarbageCollector({ gcOptions: { enableGCSweep: true } });
 			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
 			// The original behavior of the function is preserved, but we can check how it was called.
 			const spies = {
