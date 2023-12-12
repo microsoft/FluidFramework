@@ -14,7 +14,16 @@ import {
 } from "../../core";
 import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
-import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./types";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	NoopMarkType,
+	CellId,
+	NoopMark,
+	CellMark,
+	Detach,
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -219,10 +228,19 @@ function composeMarks<TNodeChange>(
 
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
 			// so we are just left with the detach portion of the AttachAndDetach.
-			return withRevision(
-				withNodeChange({ ...newAttachAndDetach.detach, count: baseMark.count }, nodeChange),
-				newDetachRevision,
-			);
+			const newDetach: CellMark<Detach, TNodeChange> & Partial<VestigialEndpoint> = {
+				...newAttachAndDetach.detach,
+				count: baseMark.count,
+			};
+			// We may need to apply effects to the source location of the base MoveOut so we annotate the mark with
+			// information about that location.
+			if (isMoveOut(baseMark)) {
+				newDetach.vestigialEndpoint = {
+					revision: baseMark.revision,
+					localId: baseMark.id,
+				};
+			}
+			return withRevision(withNodeChange(newDetach, nodeChange), newDetachRevision);
 		}
 
 		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {

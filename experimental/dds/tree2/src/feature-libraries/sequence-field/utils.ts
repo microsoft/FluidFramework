@@ -48,7 +48,7 @@ import {
 	isMoveMark,
 	isVestigialEndpoint,
 	MoveEffectTable,
-	VestigialEndpointMark,
+	VestigialEndpoint,
 } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
@@ -540,9 +540,9 @@ function areMergeableCellIds(
  * When `undefined` is returned, `lhs` is left untouched.
  */
 export function tryMergeMarks<T>(
-	lhs: Mark<T> | VestigialEndpointMark<T>,
-	rhs: Readonly<Mark<T> | VestigialEndpointMark<T>>,
-): Mark<T> | VestigialEndpointMark<T> | undefined {
+	lhs: Mark<T> & Partial<VestigialEndpoint>,
+	rhs: Readonly<Mark<T> & Partial<VestigialEndpoint>>,
+): (Mark<T> & Partial<VestigialEndpoint>) | undefined {
 	if (rhs.type !== lhs.type) {
 		return undefined;
 	}
@@ -1016,7 +1016,7 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<T, TMark extends Mark<T> | VestigialEndpointMark<T>>(
+export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>(
 	mark: TMark,
 	length: number,
 ): [TMark, TMark] {

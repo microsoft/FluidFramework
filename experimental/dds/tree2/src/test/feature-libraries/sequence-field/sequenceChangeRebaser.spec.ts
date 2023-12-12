@@ -499,30 +499,29 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 		}
 	}
 
-	// TODO: fix bugs encountered when this is enabled
-	// Made nested changes to a node
-	// for (let i = 0; i < currentState.length; i += 1) {
-	// 	const modifyIntention = mintIntention();
-	// 	const nestedChange = config.allocator.allocate();
-	// 	const newState = [...currentState];
-	// 	const node = currentState[i];
-	// 	newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
-	// 	yield {
-	// 		content: {
-	// 			currentState: newState,
-	// 			config,
-	// 		},
-	// 		mostRecentEdit: {
-	// 			changeset: tagChange(
-	// 				Change.modify(i, TestChange.mint(node.nested, nestedChange)),
-	// 				tagFromIntention(modifyIntention),
-	// 			),
-	// 			intention: modifyIntention,
-	// 			description: `Mod(${nestedChange}on${node.id})`,
-	// 		},
-	// 		parent: state,
-	// 	};
-	// }
+	// Make nested changes to a node
+	for (let i = 0; i < currentState.length; i += 1) {
+		const modifyIntention = mintIntention();
+		const nestedChange = config.allocator.allocate();
+		const newState = [...currentState];
+		const node = currentState[i];
+		newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
+		yield {
+			content: {
+				currentState: newState,
+				config,
+			},
+			mostRecentEdit: {
+				changeset: tagChange(
+					Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+					tagFromIntention(modifyIntention),
+				),
+				intention: modifyIntention,
+				description: `Mod(${nestedChange}on${node.id})`,
+			},
+			parent: state,
+		};
+	}
 };
 
 describe("SequenceField - State-based Rebaser Axioms", () => {
