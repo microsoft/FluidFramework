@@ -239,6 +239,9 @@ export class GCTelemetryTracker {
 					details: detailedProps,
 					gcConfigs,
 				};
+
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
 				this.mc.logger.sendTelemetryEvent(event);
 			}
 		}

@@ -252,9 +252,8 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		/**
-		 * Set up the initializer which initializes the GC state from the data in base snapshot. This is done when
-		 * connected in write mode or when GC runs the first time. It sets up all unreferenced nodes from the base
-		 * GC state and updates their inactive or sweep-ready state.
+		 * Set up the initializer which initializes the GC state from the data in base snapshot. It sets up GC data
+		 * from the base GC state and starts tracking the state of unreferenced nodes.
 		 *
 		 * Must only be called if there is a current reference timestamp.
 		 */
@@ -272,6 +271,8 @@ export class GarbageCollector implements IGarbageCollector {
 			 * 3. A summary that was generated before GC even existed.
 			 */
 			const baseSnapshotData = await this.baseSnapshotDataP;
+			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
+
 			if (baseSnapshotData?.gcState === undefined) {
 				return;
 			}
@@ -295,8 +296,6 @@ export class GarbageCollector implements IGarbageCollector {
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
 			}
 			this.gcDataFromLastRun = { gcNodes };
-
-			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
 		});
 
 		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
@@ -330,8 +329,10 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called during container initialization. Initialize from the tombstone state in the base snapshot. This is done
-	 * during initialization so that deleted or tombstoned objects are marked as such before they are loaded or used.
+	 * Called during container initialization. Initializes the tombstone and deleted nodes state from the base snapshot.
+	 * Also, initializes the GC state including unreferenced nodes tracking if a current reference timestamp exists.
+	 * Note that if there is any GC state in the base snapshot, then there will definitely be a reference timestamp
+	 * to work with - The GC state would have been generated using a timestamp which is part of the snapshot.
 	 */
 	public async initializeBaseState(): Promise<void> {
 		const baseSnapshotData = await this.baseSnapshotDataP;
