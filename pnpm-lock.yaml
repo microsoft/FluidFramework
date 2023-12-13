@@ -5421,6 +5421,49 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
+  experimental/dds/ephemeral-dds:
+    specifiers:
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-tools/build-cli': ^0.28.0
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.28.0
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/map': workspace:~
+      '@fluidframework/runtime-definitions': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
+      '@types/node': ^18.19.0
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      events: ^3.1.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+    dependencies:
+      '@fluid-internal/client-utils': link:../../../packages/common/client-utils
+      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils': link:../../../packages/common/core-utils
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/map': link:../../../packages/dds/map
+      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      events: 3.3.0
+    devDependencies:
+      '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@types/node': 18.19.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   experimental/dds/ot/ot:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
