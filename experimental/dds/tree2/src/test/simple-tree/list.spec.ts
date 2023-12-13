@@ -39,7 +39,7 @@ describe("List", () => {
 		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
-	// TODO: Combine createList helpers once we unbox unions.
+	// TODO: Consider combining createList helpers now that unions are supported.
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
 		const list = getRoot(
@@ -50,7 +50,7 @@ describe("List", () => {
 		return list;
 	}
 
-	// TODO: Combine createList helpers once we unbox unions.
+	// TODO: Consider combining createList helpers now that unions are supported.
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
 		const list = getRoot(
@@ -654,7 +654,7 @@ describe("List", () => {
 			});
 
 			describe("toLocaleString()", () => {
-				// TODO: Use 'test2' once we unbox unions.
+				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {
 					const expected = array.toLocaleString();
 					it(prettyCall("toLocaleString", array, [], expected), () => {
@@ -671,7 +671,7 @@ describe("List", () => {
 			});
 
 			describe("toString()", () => {
-				// TODO: Use 'test2' once we unbox unions.
+				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {
 					const expected = array.toString();
 					it(prettyCall("toString", array, [], expected), () => {

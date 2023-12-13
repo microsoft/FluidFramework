@@ -15,6 +15,13 @@ import { getRoot, makeSchema, pretty } from "./utils";
 // Also covers the corner case of an empty tree (via optional root) by constructing
 // a tree with an 'undefined' root.
 describe("Primitives", () => {
+	/**
+	 * Verifies that that 'value' is preserved when written and read back from a SharedTree
+	 * with the given schema.
+	 *
+	 * @param schema - Schema to use for the test (must include the type of 'value'.)
+	 * @param value - The value to be written/read/verified.
+	 */
 	function checkExact<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
@@ -30,8 +37,22 @@ describe("Primitives", () => {
 			const actual = getRoot(schema, () => value);
 			assert.deepEqual(actual, value, "Readback of initialTree must match expected value.");
 		});
+
+		// TODO: Consider improving coverage with more variations:
+		// - reading/writting an object field
+		// - reading/writting a list element
+		// - reading/writting a map entry
+		// - optional
 	}
 
+	/**
+	 * Returns the value that JSON.stringify/parse would coerce the given value to.
+	 *
+	 * Sanity checks that the given value is in fact coerced.
+	 *
+	 * @param value - The value to be coerced.
+	 * @returns The coerced value.
+	 */
 	function getCoercedValue(value: any): unknown {
 		const coercedValue = JSON.parse(JSON.stringify(value));
 
@@ -41,6 +62,13 @@ describe("Primitives", () => {
 		return coercedValue;
 	}
 
+	/**
+	 * Verifies that that 'value' is coerced when written and read back from a SharedTree
+	 * with the given schema.
+	 *
+	 * @param schema - Schema to use for the test (must include the coerced type of 'value'.)
+	 * @param value - The value to be written/read/verified.
+	 */
 	function checkCoerced<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
@@ -57,8 +85,21 @@ describe("Primitives", () => {
 				"Readback of initialTree must match expected value.",
 			);
 		});
+
+		// TODO: Consider improving coverage with more variations:
+		// - reading/writting an object field
+		// - reading/writting a list element
+		// - reading/writting a map entry
+		// - optional
 	}
 
+	/**
+	 * Verifies that attempting to write 'value' throws due to the coerced value violating the
+	 * given schema.
+	 *
+	 * @param schema - Schema to use for the test (must include the coerced type of 'value'.)
+	 * @param value - The value to be written/read/verified.
+	 */
 	function checkThrows<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
@@ -75,6 +116,12 @@ describe("Primitives", () => {
 				)}) must throw when coercion to '${coercedValue}' violates schema.`,
 			);
 		});
+
+		// TODO: Consider improving coverage with more variations:
+		// - reading/writting an object field
+		// - reading/writting a list element
+		// - reading/writting a map entry
+		// - optional
 	}
 
 	describe("null", () => {
