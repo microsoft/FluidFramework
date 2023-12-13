@@ -105,7 +105,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public startSummary(
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryBaseLogger,
-		latestSummarySequenceNumber: number,
+		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult {
 		assert(
 			this.wipSummaryLogger === undefined,
@@ -120,14 +120,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 		let invalidNodes = 0;
 		const sequenceNumberMismatchKeySet = new Set<string>();
 
-		const nodeLatestSummarySequenceNumber = this._latestSummary?.referenceSequenceNumber;
+		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
 		if (
-			nodeLatestSummarySequenceNumber !== undefined &&
-			latestSummarySequenceNumber !== nodeLatestSummarySequenceNumber
+			nodeLatestSummaryRefSeqNum !== undefined &&
+			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
 		) {
 			invalidNodes++;
 			sequenceNumberMismatchKeySet.add(
-				`${latestSummarySequenceNumber}-${nodeLatestSummarySequenceNumber}`,
+				`${latestSummaryRefSeqNum}-${nodeLatestSummaryRefSeqNum}`,
 			);
 		}
 
@@ -137,7 +137,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			const childStartSummaryResult = child.startSummary(
 				referenceSequenceNumber,
 				this.wipSummaryLogger,
-				latestSummarySequenceNumber,
+				latestSummaryRefSeqNum,
 			);
 			nodes += childStartSummaryResult.nodes;
 			invalidNodes += childStartSummaryResult.invalidNodes;
@@ -447,12 +447,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 						maybeSummaryNode.referenceSequenceNumber,
 					);
 					isSummaryTracked = true;
-				}
-				if (this.pendingSummaries.size > 0) {
-					this.logger.sendErrorEvent(
-						{ eventName: "PendingSummariesNotAcked" },
-						new Error("PendingSummariesNotAcked"),
-					);
 				}
 				event.end({ ...eventProps, isSummaryNewer, pendingSummaryFound: isSummaryTracked });
 				return { isSummaryTracked, isSummaryNewer };

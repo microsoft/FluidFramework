@@ -49,7 +49,7 @@ export interface ISummarizerNodeRootContract {
 	startSummary(
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryLoggerExt,
-		latestSummarySequenceNumber: number,
+		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
 	completeSummary(proposalHandle: string, validate: boolean): void;

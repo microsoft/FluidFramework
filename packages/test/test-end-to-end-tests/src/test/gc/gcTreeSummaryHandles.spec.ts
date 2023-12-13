@@ -115,7 +115,7 @@ async function submitFailingSummary(
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
-	latestSummarySequenceNumber: number,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 ) {
 	await provider.ensureSynchronized();
@@ -125,7 +125,7 @@ async function submitFailingSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
-		latestSummarySequenceNumber,
+		latestSummaryRefSeqNum,
 	});
 
 	const stageMap = new Map<FailingSubmitSummaryStage, string>();
@@ -148,7 +148,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
-	latestSummarySequenceNumber: number,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -161,7 +161,7 @@ async function submitAndAckSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
-		latestSummarySequenceNumber,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -273,13 +273,13 @@ describeCompat(
 			},
 			isHandle: boolean,
 		): Promise<string> {
-			const latestSummarySequenceNumber =
+			const latestSummaryRefSeqNum =
 				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
-				latestSummarySequenceNumber,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -404,14 +404,14 @@ describeCompat(
 				// A gc blob handle should be submitted as there are no gc changes
 				await submitSummaryAndValidateState(summarizerClient1, isTreeHandle);
 
-				const latestSummarySequenceNumber =
+				const latestSummaryRefSeqNum =
 					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
-					latestSummarySequenceNumber,
+					latestSummaryRefSeqNum,
 				);
 
 				// GC blob handle expected
@@ -424,14 +424,14 @@ describeCompat(
 
 				await provider.ensureSynchronized();
 
-				const latestSummarySequenceNumber =
+				const latestSummaryRefSeqNum =
 					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Upload,
-					latestSummarySequenceNumber,
+					latestSummaryRefSeqNum,
 				);
 
 				// GC blob expected as the summary had changed
@@ -446,14 +446,14 @@ describeCompat(
 				// Make a reference change by deleting a handle
 				dataStoreA.root.delete("dataStoreB");
 
-				const latestSummarySequenceNumber =
+				const latestSummaryRefSeqNum =
 					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				await submitFailingSummary(
 					provider,
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
-					latestSummarySequenceNumber,
+					latestSummaryRefSeqNum,
 				);
 
 				// GC blob expected as the summary had changed

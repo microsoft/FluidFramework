@@ -238,7 +238,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	public startSummary(
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryBaseLogger,
-		latestSummarySequenceNumber: number,
+		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
@@ -247,11 +247,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b4 /* "We should not already be tracking used routes when to track a new summary" */,
 			);
 		}
-		return super.startSummary(
-			referenceSequenceNumber,
-			summaryLogger,
-			latestSummarySequenceNumber,
-		);
+		return super.startSummary(referenceSequenceNumber, summaryLogger, latestSummaryRefSeqNum);
 	}
 
 	/**

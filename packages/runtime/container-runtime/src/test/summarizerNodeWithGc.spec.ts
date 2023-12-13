@@ -406,7 +406,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
-			const latestSummarySequenceNumber = summaryRefSeq;
+			const latestSummaryRefSeqNum = summaryRefSeq;
 			rootNode.startSummary(summaryRefSeq++, logger, 0);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
@@ -419,7 +419,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
-			rootNode.startSummary(summaryRefSeq++, logger, latestSummarySequenceNumber);
+			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
 			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
 			midNode?.updateUsedRoutes([`/`, `/${ids[2]}`]);
 
@@ -445,7 +445,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
-			const latestSummarySequenceNumber = summaryRefSeq;
+			const latestSummaryRefSeqNum = summaryRefSeq;
 			rootNode.startSummary(summaryRefSeq++, logger, 0);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
@@ -458,7 +458,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
-			rootNode.startSummary(summaryRefSeq++, logger, latestSummarySequenceNumber);
+			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
 

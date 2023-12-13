@@ -3059,7 +3059,7 @@ export class ContainerRuntime
 			finalAttempt = false,
 			refreshLatestAck,
 			summaryLogger,
-			latestSummarySequenceNumber,
+			latestSummaryRefSeqNum,
 		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
@@ -3154,7 +3154,7 @@ export class ContainerRuntime
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
 				summaryNumberLogger,
-				latestSummarySequenceNumber,
+				latestSummaryRefSeqNum,
 			);
 
 			if (
@@ -3162,7 +3162,7 @@ export class ContainerRuntime
 				startSummaryResult.mismatchNumbers.length > 0
 			) {
 				summaryLogger.sendErrorEvent({
-					eventName: "LatestSummarySequenceNumberMismatch",
+					eventName: "LatestSummaryRefSeqNumMismatch",
 					...startSummaryResult,
 				});
 

@@ -318,7 +318,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 		[
 			{
 				category: "error",
-				eventName: "fluid:telemetry:Summarizer:Running:LatestSummarySequenceNumberMismatch",
+				eventName: "fluid:telemetry:Summarizer:Running:LatestSummaryRefSeqNumMismatch",
 			},
 		],
 		async () => {
