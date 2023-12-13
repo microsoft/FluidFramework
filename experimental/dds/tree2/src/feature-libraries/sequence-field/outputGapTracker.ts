@@ -51,7 +51,7 @@ export class OutputGapTracker {
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(mark, markRevision, undefined);
 			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
-			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
+			assert(detachId.revision !== undefined, "Detach ID should have a revision");
 			const detachBlock = getOrAddEmptyToMap(this._detachBlocks, detachId.revision);
 			addIdRange(detachBlock, {
 				id: detachId.localId,
@@ -102,7 +102,7 @@ function getAttachRevisionIndex(
 	}
 
 	if (markFillsCells(mark)) {
-		assert(isAttach(mark), 0x81b /* Only attach marks can fill cells */);
+		assert(isAttach(mark), "Only attach marks can fill cells");
 		return getRevisionIndex(
 			metadata,
 			mark.revision ?? revision ?? fail("Mark must have revision"),
@@ -129,7 +129,7 @@ function getDetachRevisionIndex(
 	}
 
 	if (markEmptiesCells(mark)) {
-		assert(isDetach(mark), 0x81c /* Only detach marks can empty cells */);
+		assert(isDetach(mark), "Only detach marks can empty cells");
 		return getRevisionIndex(
 			metadata,
 			mark.revision ?? revision ?? fail("Mark must have revision"),
