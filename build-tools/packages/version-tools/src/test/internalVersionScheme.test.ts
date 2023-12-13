@@ -135,11 +135,13 @@ describe("internalScheme", () => {
 			assert.isTrue(isInternalVersionRange(input));
 		});
 
-		// This test case should fail but it doesn't. It's skipped because I think the case it guards against isn't likely,
-		// so I don't think it's worth the cost of fixing it.
+		// This test case should fail but it doesn't. "Fluid internal version ranges" should always have a prerelease
+		// identifier that matches between the upper and lower bount. It's skipped because I think the case it guards
+		// against isn't likely, so I don't think it's worth the cost of fixing it.
 		//
-		// The reason the code behave wrong is because it only checks the lower bound of the range. That's all the semver
-		// library provides - semver.minVersion(range). Since ranges need not hane an upper bound, this is an undertsnadable
+		// The reason the code behaves wrong is because it only checks the lower bound of the range to see if it's an
+		// internal version. If the lower bound version is internal, then the function returns true. The semver library only
+		// provides semver.minVersion(range). Since ranges need not have an upper bound, maxVersion is an understandable
 		// omission, but it means that we're on our own to parse the range and get an upper bound version from it. Once we
 		// have the two versions then we could parse them and compare their prerelease identifiers to make sure they match.
 		//
@@ -147,7 +149,7 @@ describe("internalScheme", () => {
 		it(">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0 is not internal", () => {
 			const input = `>=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0`;
 			assert.isFalse(isInternalVersionRange(input));
-		}).skip();
+		});
 
 		it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
 			const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
