@@ -1427,12 +1427,7 @@ export const handlers: Handler[] = [
 		name: "api-extractor-public-packages",
 		match,
 		handler: async (file) => {
-			let json: {
-				name: string;
-				private?: boolean;
-				devDependencies?: Record<string, string>;
-				scripts?: Record<string, string>;
-			};
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
