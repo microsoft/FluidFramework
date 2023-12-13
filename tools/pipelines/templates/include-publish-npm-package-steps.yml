@@ -109,7 +109,7 @@ steps:
                 fi
             else
               feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              
+
               if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
 
