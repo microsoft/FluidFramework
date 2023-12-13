@@ -91,6 +91,7 @@ declare function get_current_ClassDeclaration_DataObject():
 declare function use_old_ClassDeclaration_DataObject(
     use: TypeOnly<old.DataObject>): void;
 use_old_ClassDeclaration_DataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataObject());
 
 /*
@@ -163,31 +164,20 @@ declare function get_current_InterfaceDeclaration_IDataObjectProps():
 declare function use_old_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<old.IDataObjectProps>): void;
 use_old_InterfaceDeclaration_IDataObjectProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataObjectProps());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<old.IRootDataObjectFactory>;
-declare function use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<current.IRootDataObjectFactory>): void;
-use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    get_old_InterfaceDeclaration_IRootDataObjectFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<current.IRootDataObjectFactory>;
-declare function use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<old.IRootDataObjectFactory>): void;
-use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    get_current_InterfaceDeclaration_IRootDataObjectFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -211,6 +201,7 @@ declare function get_current_ClassDeclaration_PureDataObject():
 declare function use_old_ClassDeclaration_PureDataObject(
     use: TypeOnly<old.PureDataObject>): void;
 use_old_ClassDeclaration_PureDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PureDataObject());
 
 /*
@@ -240,143 +231,71 @@ use_old_ClassDeclaration_PureDataObjectFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_defaultFluidObjectRequestHandler():
-    TypeOnly<typeof old.defaultFluidObjectRequestHandler>;
-declare function use_current_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    use: TypeOnly<typeof current.defaultFluidObjectRequestHandler>): void;
-use_current_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    get_old_FunctionDeclaration_defaultFluidObjectRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_defaultFluidObjectRequestHandler": {"backCompat": false}
+* "RemovedFunctionDeclaration_defaultFluidObjectRequestHandler": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_defaultFluidObjectRequestHandler():
-    TypeOnly<typeof current.defaultFluidObjectRequestHandler>;
-declare function use_old_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    use: TypeOnly<typeof old.defaultFluidObjectRequestHandler>): void;
-use_old_FunctionDeclaration_defaultFluidObjectRequestHandler(
-    get_current_FunctionDeclaration_defaultFluidObjectRequestHandler());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_defaultRouteRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_defaultRouteRequestHandler():
-    TypeOnly<typeof old.defaultRouteRequestHandler>;
-declare function use_current_VariableDeclaration_defaultRouteRequestHandler(
-    use: TypeOnly<typeof current.defaultRouteRequestHandler>): void;
-use_current_VariableDeclaration_defaultRouteRequestHandler(
-    get_old_VariableDeclaration_defaultRouteRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_defaultRouteRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_defaultRouteRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_defaultRouteRequestHandler():
-    TypeOnly<typeof current.defaultRouteRequestHandler>;
-declare function use_old_VariableDeclaration_defaultRouteRequestHandler(
-    use: TypeOnly<typeof old.defaultRouteRequestHandler>): void;
-use_old_VariableDeclaration_defaultRouteRequestHandler(
-    get_current_VariableDeclaration_defaultRouteRequestHandler());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getDefaultObjectFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getDefaultObjectFromContainer():
-    TypeOnly<typeof old.getDefaultObjectFromContainer>;
-declare function use_current_FunctionDeclaration_getDefaultObjectFromContainer(
-    use: TypeOnly<typeof current.getDefaultObjectFromContainer>): void;
-use_current_FunctionDeclaration_getDefaultObjectFromContainer(
-    get_old_FunctionDeclaration_getDefaultObjectFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getDefaultObjectFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getDefaultObjectFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getDefaultObjectFromContainer():
-    TypeOnly<typeof current.getDefaultObjectFromContainer>;
-declare function use_old_FunctionDeclaration_getDefaultObjectFromContainer(
-    use: TypeOnly<typeof old.getDefaultObjectFromContainer>): void;
-use_old_FunctionDeclaration_getDefaultObjectFromContainer(
-    get_current_FunctionDeclaration_getDefaultObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getObjectFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getObjectFromContainer():
-    TypeOnly<typeof old.getObjectFromContainer>;
-declare function use_current_FunctionDeclaration_getObjectFromContainer(
-    use: TypeOnly<typeof current.getObjectFromContainer>): void;
-use_current_FunctionDeclaration_getObjectFromContainer(
-    get_old_FunctionDeclaration_getObjectFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getObjectFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getObjectFromContainer():
-    TypeOnly<typeof current.getObjectFromContainer>;
-declare function use_old_FunctionDeclaration_getObjectFromContainer(
-    use: TypeOnly<typeof old.getObjectFromContainer>): void;
-use_old_FunctionDeclaration_getObjectFromContainer(
-    get_current_FunctionDeclaration_getObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectWithIdFromContainer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getObjectWithIdFromContainer():
-    TypeOnly<typeof old.getObjectWithIdFromContainer>;
-declare function use_current_FunctionDeclaration_getObjectWithIdFromContainer(
-    use: TypeOnly<typeof current.getObjectWithIdFromContainer>): void;
-use_current_FunctionDeclaration_getObjectWithIdFromContainer(
-    get_old_FunctionDeclaration_getObjectWithIdFromContainer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getObjectWithIdFromContainer": {"backCompat": false}
+* "RemovedFunctionDeclaration_getObjectWithIdFromContainer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getObjectWithIdFromContainer():
-    TypeOnly<typeof current.getObjectWithIdFromContainer>;
-declare function use_old_FunctionDeclaration_getObjectWithIdFromContainer(
-    use: TypeOnly<typeof old.getObjectWithIdFromContainer>): void;
-use_old_FunctionDeclaration_getObjectWithIdFromContainer(
-    get_current_FunctionDeclaration_getObjectWithIdFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_mountableViewRequestHandler():
-    TypeOnly<typeof old.mountableViewRequestHandler>;
-declare function use_current_VariableDeclaration_mountableViewRequestHandler(
-    use: TypeOnly<typeof current.mountableViewRequestHandler>): void;
-use_current_VariableDeclaration_mountableViewRequestHandler(
-    get_old_VariableDeclaration_mountableViewRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mountableViewRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_mountableViewRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_mountableViewRequestHandler():
-    TypeOnly<typeof current.mountableViewRequestHandler>;
-declare function use_old_VariableDeclaration_mountableViewRequestHandler(
-    use: TypeOnly<typeof old.mountableViewRequestHandler>): void;
-use_old_VariableDeclaration_mountableViewRequestHandler(
-    get_current_VariableDeclaration_mountableViewRequestHandler());

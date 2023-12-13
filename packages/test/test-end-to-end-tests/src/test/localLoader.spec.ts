@@ -11,10 +11,10 @@ import {
 	IDataObjectProps,
 } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	createAndAttachContainer,
@@ -115,12 +115,9 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 		documentId: string,
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
@@ -142,12 +139,9 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 		containerUrl: IResolvedUrl | undefined,
 		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
-		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [inner],
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
