@@ -601,7 +601,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * Splitting the schema into its own file with minimal dependencies can help with this.
 	 *
 	 * Ensure `"noImplicitAny": true` is set in the `tsconfig.json`.
-	 * Without it recursive types that are not working properly can infer `any` and give very non-type-safe results instead of erroring.
+	 * Without it, recursive types that are not working properly can infer `any` and give very non-type-safe results instead of erroring.
 	 *
 	 * @example
 	 * ```typescript
