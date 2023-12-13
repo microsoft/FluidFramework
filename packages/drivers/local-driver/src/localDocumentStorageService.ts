@@ -36,10 +36,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl: string = "";
 
 	constructor(
 		private readonly id: string,

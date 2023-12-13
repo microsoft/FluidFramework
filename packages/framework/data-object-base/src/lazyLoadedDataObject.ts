@@ -10,8 +10,6 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandle,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -28,18 +26,10 @@ export abstract class LazyLoadedDataObject<
 		TEvents extends IEvent = IEvent,
 	>
 	extends EventForwarder<TEvents>
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidLoadable, IProvideFluidHandle, IFluidRouter
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	private _handle?: IFluidHandle<this>;
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
-		return this;
-	}
 	public get IFluidLoadable() {
 		return this;
 	}
@@ -61,15 +51,11 @@ export abstract class LazyLoadedDataObject<
 		this.root = root as TRoot;
 	}
 
-	// #region IFluidRouter
-
 	public async request(r: IRequest): Promise<IResponse> {
 		return r.url === "" || r.url === "/"
 			? { status: 200, mimeType: "fluid/object", value: this }
 			: create404Response(r);
 	}
-
-	// #endregion IFluidRouter
 
 	// #region IFluidLoadable
 

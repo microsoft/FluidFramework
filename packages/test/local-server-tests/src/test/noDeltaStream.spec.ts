@@ -25,7 +25,6 @@ import {
 } from "@fluidframework/test-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
@@ -40,7 +39,6 @@ describe("No Delta Stream", () => {
 		"",
 		new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]),
 		{},
-		[rootDataStoreRequestHandler],
 	);
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;

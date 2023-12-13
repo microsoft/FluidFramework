@@ -5,7 +5,6 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -18,12 +17,6 @@ import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-import { ServiceAudience } from '@fluidframework/fluid-static';
-
-// @internal @deprecated
-export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    protected createServiceMember(audienceMember: IClient): AzureMember;
-}
 
 // @alpha
 export class AzureClient {
