@@ -3,11 +3,5 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Size interfaces
- */
-export interface ISize {
-	width: number;
-
-	height: number;
-}
+// Build pipeline breaks without this file ("No test files found")
+describe("requestHandler-placeholder", () => {});

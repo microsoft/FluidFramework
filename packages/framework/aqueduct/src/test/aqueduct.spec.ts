@@ -3,7 +3,5 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	mode: "production",
-	devtool: "source-map",
-};
+// Build pipeline breaks without this file ("No test files found")
+describe("aqueduct-placeholder", () => {});

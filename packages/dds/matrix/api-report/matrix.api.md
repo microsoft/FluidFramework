@@ -27,20 +27,20 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 // @alpha (undocumented)
 export interface IRevertible {
     // (undocumented)
-    discard(): any;
+    discard(): void;
     // (undocumented)
-    revert(): any;
+    revert(): void;
 }
 
 // @alpha
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
-    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
+    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): void;
 }
 
 // @alpha (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
-    pushToCurrentOperation(revertible: IRevertible): any;
+    pushToCurrentOperation(revertible: IRevertible): void;
 }
 
 // @alpha

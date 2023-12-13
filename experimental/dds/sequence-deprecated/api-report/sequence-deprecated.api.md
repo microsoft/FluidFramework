@@ -224,7 +224,7 @@ export class SparseMatrixFactory implements IChannelFactory {
 }
 
 // @internal @deprecated (undocumented)
-export type SparseMatrixItem = Serializable;
+export type SparseMatrixItem = any;
 
 export { SubSequence }
 
