@@ -153,7 +153,7 @@ describe("Interval Stashed Ops on client ", () => {
 				key: label,
 				type: "act",
 				value: {
-					opName: IntervalOpType.PROPERTY_CHANGED,
+					opName: IntervalOpType.CHANGE,
 					value: {
 						properties: { intervalId, a: 2 },
 						sequenceNumber: sharedString.getCurrentSeq(),
@@ -164,25 +164,6 @@ describe("Interval Stashed Ops on client ", () => {
 			const metadata = sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
-		});
-		it("for string position remove", () => {
-			const opArgs: IMapValueTypeOperation = {
-				key: label,
-				type: "act",
-				value: {
-					opName: IntervalOpType.POSITION_REMOVE,
-					value: {
-						start: 1,
-						end: 5,
-						properties: { intervalId },
-						sequenceNumber: sharedString.getCurrentSeq(),
-						intervalType: IntervalType.SlideOnRemove,
-					},
-				},
-			};
-			const metadata = sharedString["applyStashedOp"](opArgs);
-			assert.equal(sharedString.getText(), "h world");
-			assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
 		});
 	});
 });

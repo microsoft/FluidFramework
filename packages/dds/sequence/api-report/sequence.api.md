@@ -43,7 +43,6 @@ import { PropertySet } from '@fluidframework/merge-tree';
 import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
-import { SegmentGroup } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
@@ -546,8 +545,8 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
-    // @internal (undocumented)
-    protected applyStashedOp(content: any): IMapMessageLocalMetadata | SegmentGroup | SegmentGroup[];
+    // (undocumented)
+    protected applyStashedOp(content: any): unknown;
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;

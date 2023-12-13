@@ -145,6 +145,8 @@ export interface IValueOperation<T> {
 	):
 		| { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata }
 		| undefined;
+
+	applyStashedOp(value: T, op: IValueTypeOperationValue): any;
 }
 
 /**

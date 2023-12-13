@@ -35,6 +35,7 @@ import {
 	IValueOpEmitter,
 	IValueOperation,
 	IValueType,
+	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
 import {
@@ -578,6 +579,13 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
+	const applyStashedOp: IValueOperation<IntervalCollection<T>>["applyStashedOp"] = (
+		collection,
+		op,
+	) => {
+		return collection.applyStashedOp(op);
+	};
+
 	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
 		[
 			IntervalOpType.ADD,
@@ -592,6 +600,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackAdd(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 		[
@@ -605,6 +614,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					// Deletion of intervals is based on id, so requires no rebasing.
 					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
 				},
+				applyStashedOp,
 			},
 		],
 		[
@@ -620,6 +630,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackChange(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 	]);
@@ -1757,6 +1768,52 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 
 		return rebased;
+	}
+
+	public applyStashedOp(op: IValueTypeOperationValue): unknown {
+		let metadata: IMapMessageLocalMetadata | undefined;
+		let interval: TInterval | undefined;
+		let props: PropertySet | undefined;
+		let intervalId: string;
+		switch (op.opName) {
+			case IntervalOpType.ADD:
+				assert(op.value.start !== undefined, "start is undefined");
+				assert(op.value.end !== undefined, "end is undefined");
+				interval = this.add({
+					start: op.value.start,
+					end: op.value.end,
+					props: op.value.properties,
+				});
+				metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				break;
+			case IntervalOpType.DELETE:
+				this.removeIntervalById(op.value.properties?.intervalId);
+				metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				break;
+			case IntervalOpType.CHANGE:
+				assert(op.value.properties !== undefined, "properties is undefined");
+				({ intervalId, ...props } = op.value.properties);
+				interval = this.change(intervalId, {
+					start: op.value.start,
+					end: op.value.end,
+					props,
+				});
+				metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				break;
+			default:
+				metadata = undefined;
+		}
+		return metadata;
 	}
 
 	private getSlideToSegment(
