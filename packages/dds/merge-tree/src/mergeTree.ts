@@ -183,7 +183,10 @@ function tileShift(
 			? block.rightmostTiles[searchInfo.tileLabel]
 			: block.leftmostTiles[searchInfo.tileLabel];
 		if (marker !== undefined) {
-			assert(marker.isLeaf() && Marker.is(marker), "Object returned is not a valid marker");
+			assert(
+				marker.isLeaf() && Marker.is(marker),
+				0x868 /* Object returned is not a valid marker */,
+			);
 			searchInfo.tile = marker;
 		}
 	}
@@ -1743,7 +1746,10 @@ export class MergeTree {
 							_movedSeq = movedSeq;
 							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, "expected client id to exist");
+							assert(
+								movedClientId !== undefined,
+								0x869 /* expected client id to exist */,
+							);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1756,7 +1762,10 @@ export class MergeTree {
 							const clientIdIdx =
 								left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(movedClientId !== undefined, "expected client id to exist");
+							assert(
+								movedClientId !== undefined,
+								0x86a /* expected client id to exist */,
+							);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1784,7 +1793,7 @@ export class MergeTree {
 				if (_localMovedSeq !== undefined || _movedSeq !== undefined) {
 					assert(
 						movedClientIds !== undefined,
-						"movedClientIds should be set if local/moved seq is set",
+						0x86b /* movedClientIds should be set if local/moved seq is set */,
 					);
 					const moveInfo = {
 						movedClientIds,
@@ -1802,7 +1811,10 @@ export class MergeTree {
 							moveInfo.localMovedSeq,
 						);
 
-						assert(movedSegmentGroup !== undefined, "expected segment group to exist");
+						assert(
+							movedSegmentGroup !== undefined,
+							0x86c /* expected segment group to exist */,
+						);
 
 						this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
 					}

@@ -191,7 +191,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				case MergeTreeDeltaType.OBLITERATE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
+						assert(
+							lastRem.pos2 !== undefined,
+							0x874 /* pos2 should not be undefined here */,
+						);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
 						ops.push(
