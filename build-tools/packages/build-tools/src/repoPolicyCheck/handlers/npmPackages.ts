@@ -1454,21 +1454,32 @@ export const handlers: Handler[] = [
 				);
 			}
 
+			/**
+			 * Creates an error string noting the package.json is missing a script of the provided name.
+			 * @param missingScriptName - The name of the missing script.
+			 */
+			function createMissingScriptErrorString(missingScriptName): string {
+				return `Public package ${json.name} must have "${missingScriptName}" script to generate API metadata`;
+			}
+
 			const scripts = Object.keys(json.scripts ?? {});
 
 			// Ensure `build:docs` script exists
 			if (!scripts.includes("build:docs")) {
-				errors.push(
-					`Public package ${json.name} must have "build:docs" script to generate API metadata`,
-				);
+				errors.push(createMissingScriptErrorString("build:docs"));
+			}
+
+			// Ensure `ci:build:docs` script exists
+			if (!scripts.includes("ci:build:docs")) {
+				errors.push(createMissingScriptErrorString("ci:build:docs"));
 			}
 
 			// Ensure `check:release-tags` script exists
 			if (!scripts.includes("check:release-tags")) {
-				errors.push(
-					`Public package ${json.name} must have "check:release-tags" script to validate release tag compatibility with other packages`,
-				);
+				errors.push(createMissingScriptErrorString("check:release-tags"));
 			}
+
+			// TODO: any other scripts to check? `apis`? `api-extractor:*`?
 
 			if (errors.length > 0) {
 				return `package.json API-Extractor violations: ${newline}${errors.join(newline)}`;
@@ -1486,24 +1497,33 @@ export const handlers: Handler[] = [
 				if (json.private === true) {
 					return;
 				}
+
 				const scripts = json.scripts;
-				// Add `build:docs` script if missing.
-				if (scripts["build:docs"] === undefined) {
-					scripts["build:docs"] = buildDocsScriptBody;
+
+				/**
+				 * Creates an error string noting the package.json is missing a script of the provided name.
+				 * @param scriptName - The name of the script.
+				 * @param scriptBodyToInsert - The script body to insert if the script is missing.
+				 */
+				function addScriptIfMissing(scriptName: string, scriptBodyToInsert: string): void {
+					if (scripts[scriptName] === undefined) {
+						scripts[scriptName] = scriptBodyToInsert;
+					}
 				}
-				// Add `check:release-tags` script if missing.
-				if (scripts["check:release-tags"] === undefined) {
-					scripts["check:release-tags"] = checkReleaseTagsScriptBody;
-				}
+
+				// Add missing scripts.
+				addScriptIfMissing("build:docs", "fluid-build . --task api");
+				addScriptIfMissing("ci:build:docs", "api-extractor run");
+				addScriptIfMissing(
+					"check:release-tags",
+					"api-extractor run --local --config ./api-extractor-lint.json",
+				);
 			});
 
 			return result;
 		},
 	},
 ];
-
-const buildDocsScriptBody = "fluid-build . --task api";
-const checkReleaseTagsScriptBody = "api-extractor run --local --config ./api-extractor-lint.json";
 
 function missingCleanDirectories(scripts: any) {
 	const expectedClean: string[] = [];
