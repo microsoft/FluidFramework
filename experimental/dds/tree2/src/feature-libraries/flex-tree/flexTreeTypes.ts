@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { type TypedEventEmitter } from "@fluid-internal/client-utils";
 // TODO: remove flexible types from "schema-aware", and just accept cursors.
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
@@ -24,6 +23,7 @@ import {
 } from "../typed-schema";
 import { FieldKinds } from "../default-schema";
 import { FieldKind } from "../modular-schema";
+import { IEmitter } from "../../events";
 import { EditableTreeEvents } from "./treeEvents";
 import { FlexTreeContext } from "./context";
 
@@ -221,7 +221,7 @@ export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
 	 * @privateRemarks Defined as a getter instead of a plain property so it's not enumerable; otherwise some tests fail
 	 * because they iterate over the enumerable properties of tree nodes and find this one which breaks deep-equality checks.
 	 */
-	[internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents>;
+	[internalEmitterSymbol](): IEmitter<EditableTreeEvents>;
 }
 
 /**

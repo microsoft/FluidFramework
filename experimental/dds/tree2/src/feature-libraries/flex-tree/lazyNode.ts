@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	Value,
 	Anchor,
@@ -39,6 +38,7 @@ import {
 } from "../typed-schema";
 import { FieldKinds } from "../default-schema";
 import { LocalNodeKey } from "../node-key";
+import { IEmitter, createEmitter } from "../../events";
 import { EditableTreeEvents, ITreeEvent, TreeEvent } from "./treeEvents";
 import { Context } from "./context";
 import {
@@ -176,14 +176,17 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 
 		// Subscribe to events on the backing anchorNode
 		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
-			this.#internalEmitter.emit("afterChange");
+			this.#internalEmitter.emit("afterChange", new TreeEvent(this));
 		});
 		this.#anchorNode.on("beforeChange", (anchorNodeInEvent: AnchorNode) => {
-			this.#internalEmitter.emit("beforeChange");
+			this.#internalEmitter.emit("beforeChange", new TreeEvent(this));
 		});
 
 		// Set up listeners for internal emitter. This will handle events triggered by this node, and by other nodes
 		// that get the emitter and make it fire (e.g. child nodes that want to bubble up events).
+		// NOTE: by design, the listeners on #internalEmitter just want to be signaled to do their thing, they don't need an
+		// event object, even if IEmitter kind of forces one type-wise. Inside the #onInternalEvent method we have to do
+		// some casting to keep TypeScript happy because of this.
 		this.#internalEmitter.on("beforeChange", () => {
 			this.#onInternalEvent("beforeChange");
 		});
@@ -299,14 +302,14 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			"beforeChange" | "afterChange"
 		>]: EditableTreeEvents[eventName][];
 	};
-	readonly #internalEmitter = new TypedEventEmitter<EditableTreeEvents>();
+	readonly #internalEmitter = createEmitter<EditableTreeEvents>();
 
 	// Note: as far as we can tell, @ineritdoc probably doesn't work for symbol-keyed properties; using it anyway to follow
 	// the usual documentation patterns and because it still points people reading the code to the relevant documentation.
 	/**
 	 * {@inheritdoc FlexTreeNode.[internalEmitterSymbol]}
 	 */
-	public [internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents> {
+	public [internalEmitterSymbol](): IEmitter<EditableTreeEvents> {
 		return this.#internalEmitter;
 	}
 
@@ -330,7 +333,10 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		}
 		const parentNode = this.parentField.parent.parent;
 		if (parentNode !== undefined) {
-			parentNode[internalEmitterSymbol]().emit(eventName);
+			// NOTE: by design, the listeners on a node's #internalEmitter do not need an event object, they just need to
+			// be signaled to do do their thing, but since IEmitter requires an event object to be passed we need to trick
+			// the compiler into thinking we're passing one.
+			parentNode[internalEmitterSymbol]().emit(eventName, undefined as unknown as ITreeEvent);
 		}
 	};
 

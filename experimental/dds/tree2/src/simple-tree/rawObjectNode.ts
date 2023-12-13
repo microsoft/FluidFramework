@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { type TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core";
 import { capitalize } from "../util";
 import {
@@ -24,6 +23,7 @@ import {
 } from "../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { FlexTreeEntityKind, flexTreeMarker } from "../feature-libraries/flex-tree/flexTreeTypes";
+import { IEmitter } from "../events";
 
 const nodeContent = Symbol();
 interface HasNodeContent<T> {
@@ -112,7 +112,7 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexT
 		return rawObjectNodeError();
 	}
 
-	public [internalEmitterSymbol](): TypedEventEmitter<EditableTreeEvents> {
+	public [internalEmitterSymbol](): IEmitter<EditableTreeEvents> {
 		return rawObjectNodeError();
 	}
 

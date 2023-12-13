@@ -198,7 +198,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
-	// Instead, use the static `create` function to get an instance which allows emitting events.
+	// Instead, use the `createEmitter` function to get an instance which allows emitting events.
 	protected constructor(private readonly noListeners?: NoListenersCallback<E>) {}
 
 	protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
