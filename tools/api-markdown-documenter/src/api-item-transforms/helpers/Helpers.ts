@@ -706,7 +706,7 @@ function createExampleSection(
 	}
 
 	const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
-		example.exampleNumber === undefined ? "" : example.exampleNumber
+		example.exampleNumber ?? ""
 	}`;
 
 	return wrapInSection([exampleParagraph], {
