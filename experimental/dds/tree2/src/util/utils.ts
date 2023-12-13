@@ -9,8 +9,8 @@ import structuredClone from "@ungap/structured-clone";
 import {
 	generateStableId as runtimeGenerateStableId,
 	assertIsStableId,
-} from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+	StableId,
+} from "@fluidframework/id-compressor";
 
 /**
  * Subset of Map interface.
