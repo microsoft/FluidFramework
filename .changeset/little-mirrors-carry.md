@@ -3,6 +3,7 @@
 "@fluidframework/container-runtime": major
 ---
 
-Remove Pending State Related Deprecations
+container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching
 
-This change removes the deprecated `IPendingLocalState` and `IRuntiume.notifyAttaching`. There is no replacement as they are not longer used.
+The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
+not longer used.
