@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 import { compare } from "semver";
-import { bufferToString } from "@fluid-internal/client-utils";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	ISnapshotTreeWithBlobContents,
-} from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	LocalCodeLoader,
@@ -24,6 +19,7 @@ import {
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	IDocumentAttributes,
+	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
@@ -37,11 +33,9 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	getSnapshotTreeFromSerializedContainer,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/lib/utils.mjs";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+// eslint-disable-next-line import/no-internal-modules
+import { ISerializableBlobContents } from "@fluidframework/container-loader/dist/containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -122,45 +116,40 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 }
 
 describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjectProvider) => {
-	function assertSubtree(
-		tree: ISnapshotTreeWithBlobContents,
-		key: string,
-		msg?: string,
-	): ISnapshotTreeWithBlobContents {
+	function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
 		const subTree = tree.trees[key];
 		assert(subTree, msg ?? `${key} subtree not present`);
 		return subTree;
 	}
 
-	const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) =>
+	const assertChannelsTree = (rootOrDatastore: ISnapshotTree) =>
 		assertSubtree(rootOrDatastore, ".channels");
-	const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) =>
-		assertSubtree(root, ".protocol");
+	const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
 
-	function assertChannelTree(
-		rootOrDatastore: ISnapshotTreeWithBlobContents,
-		key: string,
-		msg?: string,
-	) {
+	function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
 		const channelsTree = assertChannelsTree(rootOrDatastore);
 		return {
 			channelsTree,
 			datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
 		};
 	}
-	const assertDatastoreTree = (root: ISnapshotTreeWithBlobContents, key: string, msg?: string) =>
+	const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
 		assertChannelTree(root, key, `${key} datastore not present`);
 
-	function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
+	function assertBlobContents<T>(
+		subtree: ISnapshotTree,
+		blobs: ISerializableBlobContents,
+		key: string,
+	): T {
 		const id = subtree.blobs[key];
 		assert(id, `blob id for ${key} missing`);
-		const contents = subtree.blobsContents[id];
+		const contents = blobs[id];
 		assert(contents, `blob contents for ${key} missing`);
-		return JSON.parse(bufferToString(contents, "utf8")) as T;
+		return JSON.parse(contents) as T;
 	}
 
-	const assertProtocolAttributes = (s: ISnapshotTreeWithBlobContents) =>
-		assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), "attributes");
+	const assertProtocolAttributes = (s: ISnapshotTree, b: ISerializableBlobContents) =>
+		assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), b, "attributes");
 
 	const codeDetails: IFluidCodeDetails = {
 		package: "detachedContainerTestPackage1",
@@ -232,10 +221,16 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 		return handle.get();
 	}
 
-	const getSnapshotTreeFromSerializedSnapshot = (container: IContainer) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
-	};
+	function getSnapshotInfoFromSerializedContainer(
+		container: IContainer,
+	): [ISnapshotTree, ISerializableBlobContents] {
+		const snapshot = container.serialize();
+		const deserializedSummary = JSON.parse(snapshot);
+		return [
+			deserializedSummary.baseSnapshot as ISnapshotTree,
+			deserializedSummary.snapshotBlobs as ISerializableBlobContents,
+		];
+	}
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider();
@@ -257,7 +252,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 	const tests = () => {
 		it("Dehydrated container snapshot", async () => {
 			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
-			const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+			const [snapshotTree, snapshotBlobs] = getSnapshotInfoFromSerializedContainer(container);
 
 			// Check for protocol attributes
 			const protocolTree = assertProtocolTree(snapshotTree);
@@ -267,7 +262,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 				"4 protocol blobs should be there.",
 			);
 
-			const protocolAttributes = assertProtocolAttributes(snapshotTree);
+			const protocolAttributes = assertProtocolAttributes(snapshotTree, snapshotBlobs);
 			assert.strictEqual(
 				protocolAttributes.sequenceNumber,
 				detachedContainerRefSeqNumber,
@@ -279,12 +274,12 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			);
 
 			// Check blobs contents for protocolAttributes
-			const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-			assert(
-				snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !==
-					undefined,
-				"Blobs should contain attributes blob",
-			);
+			// const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+			// assert(
+			// 	snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !==
+			// 		undefined,
+			// 	"Blobs should contain attributes blob",
+			// );
 			// Check for default dataStore
 			const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
 				snapshotTree,
@@ -292,6 +287,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			);
 			const datastoreAttributes = assertBlobContents<{ pkg: string }>(
 				snapshotDefaultDataStore,
+				snapshotBlobs,
 				".component",
 			);
 			assert.strictEqual(
@@ -303,14 +299,16 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 
 		it("Dehydrated container snapshot 2 times with changes in between", async () => {
 			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
-			const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
+			const [snapshotTree1, snapshotBlobs1] =
+				getSnapshotInfoFromSerializedContainer(container);
 			// Create a channel
 			const channel = defaultDataStore.runtime.createChannel(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			) as SharedMap;
 			channel.bindToContext();
-			const snapshotTree2 = getSnapshotTreeFromSerializedSnapshot(container);
+			const [snapshotTree2, snapshotBlobs2] =
+				getSnapshotInfoFromSerializedContainer(container);
 
 			assert.strictEqual(
 				JSON.stringify(Object.keys(snapshotTree1.trees)),
@@ -319,8 +317,8 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			);
 
 			// Check for protocol attributes
-			const protocolAttributes1 = assertProtocolAttributes(snapshotTree1);
-			const protocolAttributes2 = assertProtocolAttributes(snapshotTree2);
+			const protocolAttributes1 = assertProtocolAttributes(snapshotTree1, snapshotBlobs1);
+			const protocolAttributes2 = assertProtocolAttributes(snapshotTree2, snapshotBlobs2);
 			assert.strictEqual(
 				JSON.stringify(protocolAttributes1),
 				JSON.stringify(protocolAttributes2),
@@ -355,7 +353,7 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
 			rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-			const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+			const [snapshotTree, snapshotBlobs] = getSnapshotInfoFromSerializedContainer(container);
 
 			assertProtocolTree(snapshotTree);
 			assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
@@ -949,32 +947,10 @@ describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjec
 			// Create another not bounded dataStore
 			await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-			const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+			const [snapshotTree, snapshotBlobs] = getSnapshotInfoFromSerializedContainer(container);
 
 			assertProtocolTree(snapshotTree);
 			assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
-		});
-
-		it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
-			const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
-			const summaryString = JSON.stringify(summaryTree);
-
-			await assert.doesNotReject(
-				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-			);
-		});
-
-		it("can rehydrate from summary that does not start with seq. #0", async () => {
-			const attr = {
-				...baseAttributes,
-				sequenceNumber: 5,
-			};
-			const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
-			const summaryString = JSON.stringify(summaryTree);
-
-			await assert.doesNotReject(
-				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-			);
 		});
 	};
 

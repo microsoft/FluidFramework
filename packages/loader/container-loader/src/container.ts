@@ -105,14 +105,18 @@ import { pkgVersion } from "./packageVersion";
 import {
 	ContainerStorageAdapter,
 	getBlobContentsFromTree,
-	getBlobContentsFromTreeWithBlobContents,
+	// getBlobContentsFromTreeWithBlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import {
+	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	getProtocolSnapshotTree,
-	getSnapshotTreeFromSerializedContainer,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+	isPendingDetachedContainerState,
+	recombineSnapshotTreeAndSnapshotBlobs,
+	// getSnapshotTreeFromSerializedContainer,
 } from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
@@ -363,6 +367,12 @@ export interface IPendingContainerState {
 	clientId?: string;
 }
 
+export interface IPendingDetachedContainerState {
+	attached: boolean;
+	baseSnapshot: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
+}
+
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -474,12 +484,14 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot);
-				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+				const detachedContainerState = JSON.parse(snapshot);
+				if (!isPendingDetachedContainerState(detachedContainerState)) {
 					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 				}
-
-				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+				await container.rehydrateDetachedFromSnapshot(
+					detachedContainerState.baseSnapshot,
+					detachedContainerState.snapshotBlobs,
+				);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1203,7 +1215,17 @@ export class Container
 				content: "true",
 			};
 		}
-		return JSON.stringify(combinedSummary);
+		const [baseSnapshot, snapshotBlobs] = getSnapshotTreeAndBlobsFromSerializedContainer(
+			combinedSummary,
+			hasBlobsSummaryTree,
+		);
+
+		const detachedContainerState: IPendingDetachedContainerState = {
+			attached: false,
+			baseSnapshot,
+			snapshotBlobs,
+		};
+		return JSON.stringify(detachedContainerState);
 	}
 
 	public async attach(
@@ -1254,10 +1276,13 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(
+									summary,
+									hasBlobsSummaryTree,
+								);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 					}
 
@@ -1317,10 +1342,13 @@ export class Container
 						this.runtime.setAttachState(AttachState.Attaching);
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
-							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							const [snapshot, snapshotBlobs] =
+								getSnapshotTreeAndBlobsFromSerializedContainer(
+									summary,
+									hasBlobsSummaryTree,
+								);
 							this.baseSnapshot = snapshot;
-							this.baseSnapshotBlobs =
-								getBlobContentsFromTreeWithBlobContents(snapshot);
+							this.baseSnapshotBlobs = snapshotBlobs;
 						}
 
 						await this.storageAdapter.uploadSummaryWithContext(summary, {
@@ -1830,24 +1858,22 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
-			assert(
-				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
-				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
-			);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
-		}
-
-		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
-		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
+	private async rehydrateDetachedFromSnapshot(
+		snapshotTree: ISnapshotTree,
+		snapshotBlobs: ISerializableBlobContents,
+	) {
+		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
+			recombineSnapshotTreeAndSnapshotBlobs(snapshotTree, snapshotBlobs);
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTreeWithBlobContents);
+		const attributes = await this.getDocumentAttributes(
+			this.storageAdapter,
+			snapshotTreeWithBlobContents,
+		);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTree);
+		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1862,7 +1888,7 @@ export class Container
 		);
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
-		await this.instantiateRuntime(codeDetails, snapshotTree);
+		await this.instantiateRuntime(codeDetails, snapshotTreeWithBlobContents);
 
 		this.setLoaded();
 	}

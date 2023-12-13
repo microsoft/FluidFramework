@@ -18,7 +18,6 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -971,32 +970,4 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
-
-	it("Directly attach container through service factory, should resolve to same container", async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-
-		// Create a sub dataStore of type TestFluidObject.
-		const subDataStore1 = await createFluidObject(dataStore.context, "default");
-		dataStore.root.set("attachKey", subDataStore1.handle);
-
-		const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
-		const resolvedUrl = await provider.urlResolver.resolve(request);
-		assert(resolvedUrl);
-		const service = await provider.documentServiceFactory.createContainer(
-			summaryForAttach,
-			resolvedUrl,
-		);
-		const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
-
-		const container2 = await loader.resolve({ url: absoluteUrl });
-		// Get the root dataStore from the detached container.
-		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		assert.strictEqual(
-			dataStore2.root.get("attachKey").absolutePath,
-			subDataStore1.handle.absolutePath,
-			"Stored handle should match!!",
-		);
-	});
 });
