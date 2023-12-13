@@ -61,7 +61,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	afterEach(() => {

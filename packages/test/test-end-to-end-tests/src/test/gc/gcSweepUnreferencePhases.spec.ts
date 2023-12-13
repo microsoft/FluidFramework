@@ -87,7 +87,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 
 		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {

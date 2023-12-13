@@ -70,7 +70,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	async function loadContainer(summaryVersion: string) {

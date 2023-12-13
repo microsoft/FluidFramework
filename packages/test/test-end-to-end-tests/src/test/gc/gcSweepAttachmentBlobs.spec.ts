@@ -108,7 +108,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = tombstoneTimeoutMs;
+		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
 
 	describe("Attachment blobs in attached container", () => {

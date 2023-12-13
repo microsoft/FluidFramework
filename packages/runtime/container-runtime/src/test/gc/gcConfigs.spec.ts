@@ -71,7 +71,7 @@ describe("Garbage Collection configurations", () => {
 
 	const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
 	const testOverrideInactiveTimeoutKey = "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs";
-	const testOverrideSweepTimeoutKey = "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs";
+	const testOverrideSweepTimeoutKey = "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs";
 	const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 
 	let gc: GcWithPrivates | undefined;
@@ -512,7 +512,7 @@ describe("Garbage Collection configurations", () => {
 		// Config sources for Sweep Timeout:
 		// 1. IGCMetadata.tombstoneTimeoutMs
 		// 2. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
-		// 3. "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs" setting (only applicable on create)
+		// 3. "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs" setting (only applicable on create)
 
 		it("defaultSessionExpiryDurationMs", () => {
 			gc = createGcWithPrivateMembers();
@@ -605,7 +605,7 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("IGCMetadata.tombstoneTimeoutMs only", () => {
 			injectedSettings[testOverrideSweepTimeoutKey] = 1337; // Should be ignored
-			// This could happen if you used TestOverride.SweepTimeoutMs but had SessionExpiry disabled, then loaded that container.
+			// This could happen if you used TestOverride.TombstoneTimeoutMs but had SessionExpiry disabled, then loaded that container.
 			gc = createGcWithPrivateMembers({ tombstoneTimeoutMs: 789 } /* metadata */);
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
@@ -650,7 +650,7 @@ describe("Garbage Collection configurations", () => {
 		});
 
 		function testSessionExpiryMsOverride() {
-			const expectedSweepTimeoutMs = defaultSessionExpiryDurationMs + 6 * oneDayMs;
+			const expectedTombstoneTimeoutMs = defaultSessionExpiryDurationMs + 6 * oneDayMs;
 			assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
 			assert.equal(
 				gc.configs.sessionExpiryTimeoutMs,
@@ -664,7 +664,7 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert.equal(
 				gc.configs.tombstoneTimeoutMs,
-				expectedSweepTimeoutMs,
+				expectedTombstoneTimeoutMs,
 				"tombstoneTimeoutMs incorrect",
 			);
 
@@ -672,7 +672,7 @@ describe("Garbage Collection configurations", () => {
 				sweepEnabled: false,
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				tombstoneTimeoutMs: expectedSweepTimeoutMs,
+				tombstoneTimeoutMs: expectedTombstoneTimeoutMs,
 				gcFeatureMatrix: undefined,
 			};
 			const outputMetadata = gc.getMetadata();

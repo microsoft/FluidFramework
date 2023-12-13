@@ -76,8 +76,8 @@ export function generateGCConfigs(
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
 		// This Test Override only applies for new containers
-		const testOverrideSweepTimeoutMs = mc.config.getNumber(
-			"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs",
+		const testOverrideTombstoneTimeoutMs = mc.config.getNumber(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 		);
 
 		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
@@ -90,7 +90,7 @@ export function generateGCConfigs(
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
 		tombstoneTimeoutMs =
-			testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
+			testOverrideTombstoneTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
 		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 		if (gcGeneration !== undefined) {

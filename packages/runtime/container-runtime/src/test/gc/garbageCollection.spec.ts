@@ -82,7 +82,7 @@ type GcWithPrivates = IGarbageCollector & {
 
 describe("Garbage Collection Tests", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const defaultSweepTimeoutMs =
+	const defaultTombstoneTimeoutMs =
 		defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
@@ -258,7 +258,7 @@ describe("Garbage Collection Tests", () => {
 			spies.updateTombstonedRoutes.resetHistory();
 
 			// Skip to TombstoneReady state
-			clock.tick(defaultSweepTimeoutMs);
+			clock.tick(defaultTombstoneTimeoutMs);
 			await gc.collectGarbage({});
 
 			assert(
@@ -307,7 +307,7 @@ describe("Garbage Collection Tests", () => {
 			await gc.collectGarbage({});
 
 			// Skip all the way past Sweep Grace Period.  But Sweep is disabled, so Tombstone should happen
-			clock.tick(defaultSweepTimeoutMs + defaultSweepGracePeriodMs);
+			clock.tick(defaultTombstoneTimeoutMs + defaultSweepGracePeriodMs);
 			assert.equal(
 				gc.unreferencedNodesState.get(nodes[0])?.state,
 				"SweepReady",
@@ -823,7 +823,7 @@ describe("Garbage Collection Tests", () => {
 
 		describe("TombstoneReady events (summarizer container)", () => {
 			summarizerContainerTests(
-				defaultSweepTimeoutMs,
+				defaultTombstoneTimeoutMs,
 				"tombstone",
 				"GarbageCollector:TombstoneReadyObject_Revived",
 				"GarbageCollector:TombstoneReadyObject_Changed",
@@ -833,7 +833,7 @@ describe("Garbage Collection Tests", () => {
 
 		describe("SweepReady events - No sweepGracePeriodMs (summarizer container)", () => {
 			summarizerContainerTests(
-				defaultSweepTimeoutMs,
+				defaultTombstoneTimeoutMs,
 				"sweep", // Jump straight to SweepReady given 0 delay
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
@@ -844,7 +844,7 @@ describe("Garbage Collection Tests", () => {
 
 		describe("SweepReady events - with sweepGracePeriodMs delay (summarizer container)", () => {
 			summarizerContainerTests(
-				defaultSweepTimeoutMs + defaultSweepGracePeriodMs,
+				defaultTombstoneTimeoutMs + defaultSweepGracePeriodMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
 				"GarbageCollector:SweepReadyObject_Changed",
@@ -1024,7 +1024,7 @@ describe("Garbage Collection Tests", () => {
 			validateUnreferencedStates({ 2: "Inactive", 3: "Inactive" });
 
 			// Advance the clock to trigger tombstoneTimeoutMs and validate that we get tombstone ready events.
-			clock.tick(defaultSweepTimeoutMs - inactiveTimeoutMs);
+			clock.tick(defaultTombstoneTimeoutMs - inactiveTimeoutMs);
 			await garbageCollector.collectGarbage({});
 			validateUnreferencedStates({ 2: "TombstoneReady", 3: "TombstoneReady" });
 
@@ -1740,7 +1740,7 @@ describe("Garbage Collection Tests", () => {
 		// This means this node should time out as soon as its data is loaded.
 		const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
 			gcData: { gcNodes: { "/": [] } },
-			unrefTimestamp: Date.now() - defaultSweepTimeoutMs * 100,
+			unrefTimestamp: Date.now() - defaultTombstoneTimeoutMs * 100,
 		};
 		const node3Snapshot = getDummySnapshotTree();
 		const gcBlobId = "node3GCDetails";
@@ -1760,7 +1760,7 @@ describe("Garbage Collection Tests", () => {
 			[attributesBlobId, {}],
 		]);
 		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
-			tombstoneTimeoutMs: defaultSweepTimeoutMs,
+			tombstoneTimeoutMs: defaultTombstoneTimeoutMs,
 		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.

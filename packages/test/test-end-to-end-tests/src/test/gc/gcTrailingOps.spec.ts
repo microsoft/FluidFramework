@@ -31,7 +31,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		const tombstoneTimeoutMs = 1;
 		const settings = {
 			"Fluid.GarbageCollection.ThrowOnTombstoneUsage": true,
-			"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": tombstoneTimeoutMs,
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs": tombstoneTimeoutMs,
 		};
 
 		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
