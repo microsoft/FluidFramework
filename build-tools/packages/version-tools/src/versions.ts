@@ -8,7 +8,6 @@ import * as semver from "semver";
 
 import { detectVersionScheme, getLatestReleaseFromList } from "./schemes";
 import {
-	DEFAULT_PRERELEASE_IDENTIFIER,
 	changePreReleaseIdentifier,
 	fromInternalScheme,
 	isInternalVersionScheme,
@@ -41,7 +40,9 @@ export function getSimpleVersion(
 			const [, , prereleaseId] = fromInternalScheme(version);
 			version = changePreReleaseIdentifier(
 				version,
-				prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "dev" : `dev-${prereleaseId}`,
+				// The "internal" prerelease identifier was historically transformed to "dev", so that behavior is preserved
+				// here
+				prereleaseId === "internal" ? "dev" : `dev-${prereleaseId}`,
 			);
 		}
 	}
