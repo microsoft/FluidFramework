@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-azure-frs pipeline
+# test-services-client pipeline
 
 name: $(Build.BuildId)
 
