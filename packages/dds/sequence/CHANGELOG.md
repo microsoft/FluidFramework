@@ -1,5 +1,62 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   sequence: `change` and `changeProperties` are now a single method ([#18676](https://github.com/microsoft/FluidFramework/issues/18676)) [12c83d2696](https://github.com/microsoft/FluidFramework/commits/12c83d26962a1d76db6eb0ccad31fd6a7976a1af)
+
+    Instead of having two separate methods to change the endpoints of an interval and the properties, they have been combined into a
+    single method that will change the endpoints, properties, or both, depending on the arguments passed in. The signature
+    of this combined method is now updated as well.
+
+    The new way to use the change method is to call it with an interval id as the first parameter and an object containing
+    the desired portions of the interval to update as the second parameter. For the object parameter, the `endpoints` field
+    should be an object containing the new `start` and `end` values for the interval, and the `properties` field should be
+    an object containing the new properties for the interval. Either the `endpoints` field or the `properties` field can be
+    omitted, and if neither are present, `change` will return `undefined`.
+
+    The new usage of the change method is as follows:
+
+    Change interval endpoints: `change(id, { endpoints: { start: 1, end: 4 } });`
+
+    Change interval properties: `change(id { props: { a: 1 } });`
+
+    Change interval endpoints and properties: `change(id, { endpoints: { start: 1, end: 4 }, props: { a: 1 } });`
+
+-   sequence: Deprecated findOverlappingIntervals API ([#18036](https://github.com/microsoft/FluidFramework/issues/18036)) [52b864ea42](https://github.com/microsoft/FluidFramework/commits/52b864ea42759403771f2cbcb282b0ba19ce42f6)
+
+    The `findOverlappingIntervals` API from `IntervalCollection` has been deprecated. This functionality is moved to the
+    `OverlappingIntervalsIndex`. Users should independently attach the index to the collection and utilize the API
+    accordingly, for instance:
+
+    ```typescript
+    const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+    collection.attachIndex(overlappingIntervalsIndex);
+    const result = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+    ```
+
+-   sequence: Deprecated previousInterval and nextInterval APIs ([#18060](https://github.com/microsoft/FluidFramework/issues/18060)) [05fb45d26f](https://github.com/microsoft/FluidFramework/commits/05fb45d26f3065297e219a4bce5763e25bdcffc9)
+
+    The `previousInterval` and `nextInterval` APIs from `IntervalCollection` have been deprecated. These functions are moved
+    to the `EndpointIndex`. Users should independently attach the index to the collection and utilize the API accordingly,
+    for instance:
+
+    ```typescript
+    const endpointIndex = createEndpointIndex(sharedString);
+    collection.attachIndex(endpointIndex);
+
+    const result1 = endpointIndex.previousInterval(pos);
+    const result2 = endpointIndex.nextInterval(pos);
+    ```
+
+-   sequence: Deprecated ICombiningOp, PropertiesRollback.Rewrite, and SharedString.annotateMarkerNotifyConsensus ([#18318](https://github.com/microsoft/FluidFramework/issues/18318)) [e67c2cac5f](https://github.com/microsoft/FluidFramework/commits/e67c2cac5f275fc5c875c0bc044bbb72aaf76648)
+
+    The `ICombiningOp` and its usage in various APIs has been deprecated. APIs affected include
+    `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`. `SharedString.annotateMarkerNotifyConsensus`
+    has also been deprecated, because it is related to combining ops. This functionality had no test coverage and was
+    largely unused.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.
