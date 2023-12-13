@@ -9,16 +9,16 @@ import {
 	GenericChangeset,
 	genericFieldKind,
 	CrossFieldManager,
-	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
 	tagChange,
 	TaggedChange,
-	Delta,
 	FieldKey,
 	deltaForSet,
+	DeltaFieldMap,
+	DeltaFieldChanges,
 } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
 import {
@@ -27,7 +27,10 @@ import {
 	makeEncodingTestSuite,
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
+import { RevisionTagCodec } from "../../../shared-tree-core";
 import { singleJsonCursor } from "../../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
 
 const valueFieldKey: FieldKey = brand("Value");
@@ -67,10 +70,11 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
-const revisionMetadata: RevisionMetadataSource = {
-	getRevisions: () => assert.fail("Unexpected revision index query"),
+const revisionMetadata: RebaseRevisionMetadata = {
+	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
+	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -128,13 +132,13 @@ const childRebaser = (
 const detachId = { minor: 42 };
 const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.FieldMap => {
+const childToDelta = (nodeChange: NodeChangeset): DeltaFieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
 	return deltaForValueChange(valueChange.new);
 };
 
-function deltaForValueChange(newValue: number): Delta.FieldMap {
+function deltaForValueChange(newValue: number): DeltaFieldMap {
 	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
 }
 
@@ -377,7 +381,7 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const expected: Delta.FieldChanges = {
+		const expected: DeltaFieldChanges = {
 			local: [
 				{ count: 1, fields: deltaForValueChange(1) },
 				{ count: 1 },
@@ -417,7 +421,9 @@ describe("Generic FieldKind", () => {
 			decode: unexpectedDelegate,
 		};
 
-		const leafCodec = valueHandler.codecsFactory(throwCodec).resolve(0).json;
+		const leafCodec = valueHandler
+			.codecsFactory(throwCodec, new RevisionTagCodec())
+			.resolve(0).json;
 		const childCodec: IJsonCodec<NodeChangeset> = {
 			encode: (nodeChange) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
@@ -430,7 +436,7 @@ describe("Generic FieldKind", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(childCodec),
+			genericFieldKind.changeHandler.codecsFactory(childCodec, new RevisionTagCodec()),
 			encodingTestData,
 		);
 	});
@@ -444,9 +450,9 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
 	});
 
-	it("relevantRemovedTrees", () => {
-		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
-			[
+	it("relevantRemovedRoots", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
+			makeAnonChange([
 				{
 					index: 0,
 					nodeChange: nodeChange0To1,
@@ -455,7 +461,7 @@ describe("Generic FieldKind", () => {
 					index: 2,
 					nodeChange: nodeChange1To2,
 				},
-			],
+			]),
 			(child) =>
 				child === nodeChange0To1
 					? [{ minor: 42 }]

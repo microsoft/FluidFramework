@@ -17,7 +17,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
@@ -29,7 +29,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * summary or an older summary. When a summarizer loads from an older summary, it gets the ack for newer summaries and
  * refreshes its state from the newer summary. These tests validates that the GC state is correctly refreshed.
  */
-describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
+describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;

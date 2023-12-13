@@ -10,6 +10,7 @@ import { streamFromMessages } from "@fluidframework/driver-utils";
 
 /**
  * Provides access to the underlying delta storage on the server for local driver.
+ * @internal
  */
 export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(

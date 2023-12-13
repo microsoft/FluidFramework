@@ -19,6 +19,10 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "config": {
+            "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": {{ .Values.config.secretNamesToRedactInConfigDump }}
+        },
         "lumberjack": {
             "options": {
                 "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }},

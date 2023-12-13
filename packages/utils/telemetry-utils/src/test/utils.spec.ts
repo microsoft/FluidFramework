@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { IEventSampler, createSampledLogger, logIfFalse } from "../utils";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
-import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
+import { mixinMonitoringContext } from "../config";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes";
 
 class TestLogger implements ITelemetryBaseLogger {

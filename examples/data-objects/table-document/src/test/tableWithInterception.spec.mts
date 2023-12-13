@@ -4,16 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { PropertySet } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
-import { describeLoaderCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { ITable } from "../table.js";
 import { TableDocument } from "../document.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createTableWithInterception } from "../interception/index.js";
 
-describeLoaderCompat("Table Document with Interception", (getTestObjectProvider) => {
+describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjectProvider) => {
 	describe("Simple User Attribution", () => {
 		const userAttributes = { userId: "Fake User" };
 		let tableDocument: TableDocument;

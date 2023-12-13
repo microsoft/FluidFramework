@@ -25,6 +25,8 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
+	NormalizeObjectNodeFields,
+	NormalizeField,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -39,14 +41,7 @@ export {
 	schemaLintDefault,
 } from "./schemaCollection";
 
-export {
-	FlexList,
-	markEager,
-	ArrayHasFixedLength,
-	FlexListToUnion,
-	LazyItem,
-	isLazy,
-} from "./flexList";
+export { FlexList, markEager, FlexListToUnion, LazyItem, isLazy } from "./flexList";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypedSchemaTypes from "./internal";

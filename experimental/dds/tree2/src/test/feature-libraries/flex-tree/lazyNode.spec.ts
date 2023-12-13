@@ -18,8 +18,7 @@ import {
 } from "../../../feature-libraries/flex-tree/lazyNode";
 import {
 	Any,
-	PrimitiveValue,
-	isPrimitiveValue,
+	isTreeValue,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
 	FlexTreeField,
@@ -599,7 +598,7 @@ function checkPropertyInvariants(root: FlexTreeEntity): void {
 	]);
 
 	const visited: Set<unknown> = new Set([root]);
-	const primitivesAndValues = new Map<PrimitiveValue | TreeValue, number>();
+	const primitivesAndValues = new Map<TreeValue, number>();
 	// TODO: add cycle handler to not error on Fluid handles.
 	visitOwnPropertiesRecursive(root, (parent, key, child): Skip | void => {
 		assert(typeof child !== "function");
@@ -620,7 +619,7 @@ function checkPropertyInvariants(root: FlexTreeEntity): void {
 				const prototypeInner = Object.getPrototypeOf(prototype);
 				assert(prototypeInner === LazyObjectNode.prototype);
 			}
-		} else if (isPrimitiveValue(child) || child === null) {
+		} else if (isTreeValue(child)) {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");

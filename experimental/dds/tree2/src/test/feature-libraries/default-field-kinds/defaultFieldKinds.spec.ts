@@ -17,9 +17,11 @@ import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
-import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { changesetForChild } from "../fieldKindTestUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -48,7 +50,6 @@ describe("defaultFieldKinds", () => {
 	describe("valueFieldEditor.set", () => {
 		it("valueFieldEditor.set", () => {
 			const expected: OptionalChangeset = {
-				build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
 				moves: [
 					[{ localId: brand(41) }, "self", "nodeTargeting"],
 					["self", { localId: brand(1) }, "cellTargeting"],
@@ -56,7 +57,7 @@ describe("defaultFieldKinds", () => {
 				childChanges: [],
 			};
 			assert.deepEqual(
-				valueFieldEditor.set(testTreeCursor("tree1"), {
+				valueFieldEditor.set({
 					detach: brand(1),
 					fill: brand(41),
 				}),
@@ -73,47 +74,39 @@ describe("defaultFieldKinds", () => {
 			valueChangeHandler;
 
 		const childChange1: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", nodeChange1]],
 		};
 		const childChange2: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", nodeChange2]],
 		};
 		const childChange3: OptionalChangeset = {
-			build: [],
 			moves: [],
 			childChanges: [["self", arbitraryChildChange]],
 		};
 
 		const change1 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree1"), { detach: brand(1), fill: brand(41) }),
+			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }),
 			mintRevisionTag(),
 		);
 		const change2 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree2"), { detach: brand(2), fill: brand(42) }),
+			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }),
 			mintRevisionTag(),
 		);
 
 		const change1WithChildChange: OptionalChangeset = {
-			build: [{ id: { localId: brand(41) }, set: testTree("tree1") }],
 			moves: [
 				[{ localId: brand(41) }, "self", "nodeTargeting"],
 				["self", { localId: brand(1) }, "cellTargeting"],
 			],
-			childChanges: [["self", nodeChange1]],
+			childChanges: [[{ localId: brand(41) }, nodeChange1]],
 		};
 
 		/**
 		 * Represents the outcome of composing change1 and change2.
 		 */
 		const change1And2: TaggedChange<OptionalChangeset> = makeAnonChange({
-			build: [
-				{ id: { localId: brand(41), revision: change1.revision }, set: testTree("tree1") },
-				{ id: { localId: brand(42), revision: change2.revision }, set: testTree("tree2") },
-			],
 			moves: [
 				[
 					{ localId: brand(41), revision: change1.revision },
@@ -147,12 +140,6 @@ describe("defaultFieldKinds", () => {
 			it("a field change and a child change", () => {
 				const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
 				const expected: OptionalChangeset = {
-					build: [
-						{
-							id: { localId: brand(41), revision: change1.revision },
-							set: testTree("tree1"),
-						},
-					],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },
@@ -165,7 +152,9 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [["self", nodeChange1]],
+					childChanges: [
+						[{ localId: brand(41), revision: change1.revision }, nodeChange1],
+					],
 				};
 				const actual = fieldHandler.rebaser.compose(
 					[change1, taggedChildChange1],
@@ -186,12 +175,6 @@ describe("defaultFieldKinds", () => {
 					defaultRevisionMetadataFromChanges([change1]),
 				);
 				const expected2: OptionalChangeset = {
-					build: [
-						{
-							id: { localId: brand(41), revision: change1.revision },
-							set: testTree("tree1"),
-						},
-					],
 					moves: [
 						[
 							{ localId: brand(41), revision: change1.revision },
@@ -204,9 +187,7 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [
-						[{ revision: change1.revision, localId: brand(1) }, nodeChange1],
-					],
+					childChanges: [["self", nodeChange1]],
 				};
 				assertEqual(makeAnonChange(actual), makeAnonChange(expected2));
 			});
@@ -245,7 +226,6 @@ describe("defaultFieldKinds", () => {
 			assertEqual(
 				makeAnonChange(inverted),
 				makeAnonChange({
-					build: [],
 					moves: [
 						[
 							{ localId: brand(1), revision: taggedChange.revision },
@@ -258,9 +238,7 @@ describe("defaultFieldKinds", () => {
 							"cellTargeting",
 						],
 					],
-					childChanges: [
-						[{ localId: brand(41), revision: taggedChange.revision }, nodeChange2],
-					],
+					childChanges: [["self", nodeChange2]],
 				}),
 			);
 		});
@@ -275,7 +253,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					rebaseRevisionMetadataFromInfo([], []),
 				),
 				change2.change,
 			);
@@ -301,7 +279,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					rebaseRevisionMetadataFromInfo([], []),
 				),
 				childChange3,
 			);

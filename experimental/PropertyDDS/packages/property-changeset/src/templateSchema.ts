@@ -173,6 +173,9 @@ const originalSchema = {
 	required: ["typeid"],
 };
 
+/**
+ * @internal
+ */
 const TemplateSchema = {
 	$schema: "http://json-schema.org/schema",
 	title: "Property set template schema",

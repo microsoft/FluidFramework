@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
-import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository, FieldKey } from "../schema-stored";
 import {
 	Anchor,
@@ -56,7 +55,7 @@ export interface ForestEvents {
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @alpha
  */
-export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
+export interface IForestSubscription extends ISubscribable<ForestEvents> {
 	/**
 	 * Set of anchors this forest is tracking.
 	 *

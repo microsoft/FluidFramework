@@ -4,16 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	CrossFieldManager,
-	NodeChangeset,
-	RevisionMetadataSource,
-	cursorForJsonableTreeNode,
-} from "../../../feature-libraries";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	Delta,
+	DeltaFieldChanges,
 	makeAnonChange,
+	RevisionMetadataSource,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
@@ -25,7 +21,12 @@ import {
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange";
-import { deepFreeze, defaultRevisionMetadataFromChanges, isDeltaVisible } from "../../utils";
+import {
+	deepFreeze,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+	isDeltaVisible,
+} from "../../utils";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util";
 import {
 	optionalChangeRebaser,
@@ -42,6 +43,11 @@ import {
 	getSequentialStates,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
+import {
+	RebaseRevisionMetadata,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema";
 import { assertEqual } from "./optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -65,7 +71,7 @@ const OptionalChange = {
 			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
+		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
 	clear(wasEmpty: boolean, id: ChangesetLocalId) {
@@ -82,7 +88,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.FieldChanges {
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
 	);
@@ -97,10 +103,6 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		for (const build of change.build ?? []) {
-			ingest(build.id.localId);
-		}
-
 		for (const [src, dst] of change.moves) {
 			if (src !== "self") {
 				ingest(src.localId);
@@ -136,13 +138,16 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
-	metadataArg?: RevisionMetadataSource,
+	metadataArg?: RebaseRevisionMetadata,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
 	const metadata =
-		metadataArg ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+		metadataArg ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
+			base.revision,
+		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(
@@ -169,7 +174,7 @@ function rebaseTagged(
 }
 
 function rebaseComposed(
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 	change: OptionalChangeset,
 	...baseChanges: TaggedChange<OptionalChangeset>[]
 ): OptionalChangeset {

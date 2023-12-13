@@ -84,6 +84,9 @@ export async function performFuzzActionsAsync<
 	initialState: TState,
 	saveInfo?: SaveInfo,
 ): Promise<TState>;
+/**
+ * @internal
+ */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
@@ -206,6 +209,9 @@ export function performFuzzActions<
 	initialState: TState,
 	saveInfo?: SaveInfo,
 ): TState;
+/**
+ * @internal
+ */
 export function performFuzzActions<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,

@@ -48,26 +48,14 @@ use_old_TypeAliasDeclaration_RuntimeRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
+* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RuntimeRequestHandlerBuilder():
-    TypeOnly<old.RuntimeRequestHandlerBuilder>;
-declare function use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<current.RuntimeRequestHandlerBuilder>): void;
-use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    get_old_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
+* "RemovedClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RuntimeRequestHandlerBuilder():
-    TypeOnly<current.RuntimeRequestHandlerBuilder>;
-declare function use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    use: TypeOnly<old.RuntimeRequestHandlerBuilder>): void;
-use_old_ClassDeclaration_RuntimeRequestHandlerBuilder(
-    get_current_ClassDeclaration_RuntimeRequestHandlerBuilder());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -96,71 +84,35 @@ use_old_FunctionDeclaration_buildRuntimeRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createFluidObjectResponse": {"forwardCompat": false}
+* "RemovedVariableDeclaration_createFluidObjectResponse": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_createFluidObjectResponse():
-    TypeOnly<typeof old.createFluidObjectResponse>;
-declare function use_current_VariableDeclaration_createFluidObjectResponse(
-    use: TypeOnly<typeof current.createFluidObjectResponse>): void;
-use_current_VariableDeclaration_createFluidObjectResponse(
-    get_old_VariableDeclaration_createFluidObjectResponse());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createFluidObjectResponse": {"backCompat": false}
+* "RemovedVariableDeclaration_createFluidObjectResponse": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_createFluidObjectResponse():
-    TypeOnly<typeof current.createFluidObjectResponse>;
-declare function use_old_VariableDeclaration_createFluidObjectResponse(
-    use: TypeOnly<typeof old.createFluidObjectResponse>): void;
-use_old_VariableDeclaration_createFluidObjectResponse(
-    get_current_VariableDeclaration_createFluidObjectResponse());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_handleFromLegacyUri": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_handleFromLegacyUri": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_handleFromLegacyUri():
-    TypeOnly<typeof old.handleFromLegacyUri>;
-declare function use_current_FunctionDeclaration_handleFromLegacyUri(
-    use: TypeOnly<typeof current.handleFromLegacyUri>): void;
-use_current_FunctionDeclaration_handleFromLegacyUri(
-    get_old_FunctionDeclaration_handleFromLegacyUri());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_handleFromLegacyUri": {"backCompat": false}
+* "RemovedFunctionDeclaration_handleFromLegacyUri": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_handleFromLegacyUri():
-    TypeOnly<typeof current.handleFromLegacyUri>;
-declare function use_old_FunctionDeclaration_handleFromLegacyUri(
-    use: TypeOnly<typeof old.handleFromLegacyUri>): void;
-use_old_FunctionDeclaration_handleFromLegacyUri(
-    get_current_FunctionDeclaration_handleFromLegacyUri());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rootDataStoreRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_rootDataStoreRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_rootDataStoreRequestHandler():
-    TypeOnly<typeof old.rootDataStoreRequestHandler>;
-declare function use_current_VariableDeclaration_rootDataStoreRequestHandler(
-    use: TypeOnly<typeof current.rootDataStoreRequestHandler>): void;
-use_current_VariableDeclaration_rootDataStoreRequestHandler(
-    get_old_VariableDeclaration_rootDataStoreRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rootDataStoreRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_rootDataStoreRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_rootDataStoreRequestHandler():
-    TypeOnly<typeof current.rootDataStoreRequestHandler>;
-declare function use_old_VariableDeclaration_rootDataStoreRequestHandler(
-    use: TypeOnly<typeof old.rootDataStoreRequestHandler>): void;
-use_old_VariableDeclaration_rootDataStoreRequestHandler(
-    get_current_VariableDeclaration_rootDataStoreRequestHandler());

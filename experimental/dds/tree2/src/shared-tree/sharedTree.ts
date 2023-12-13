@@ -13,6 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
@@ -50,7 +51,6 @@ import {
 	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
 } from "../feature-libraries";
-import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import {
@@ -60,8 +60,8 @@ import {
 	toFlexConfig,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
+	TreeView,
 } from "../class-tree";
-import { TreeView, type ITree as OldSimpleTree } from "./simpleTree";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
@@ -99,7 +99,7 @@ export interface SharedTreeContentSnapshot {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
+export interface ISharedTree extends ISharedObject, ITree {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -110,7 +110,7 @@ export interface ISharedTree extends ISharedObject, OldSimpleTree, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITreeOld.schematizeOld}, but returns a more powerful type exposing more package internal information.
+	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
 	 * @privateRemarks
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
@@ -178,7 +178,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeDetachedFieldIndex("repair", options);
+		const removedRoots = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -187,7 +187,7 @@ export class SharedTree
 			options.summaryEncodeType,
 			options,
 		);
-		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const defaultChangeFamily = new DefaultChangeFamily(options);
 		const changeFamily = makeMitigatedChangeFamily(
 			defaultChangeFamily,
@@ -212,7 +212,7 @@ export class SharedTree
 			},
 		);
 		super(
-			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
+			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			id,
@@ -231,7 +231,7 @@ export class SharedTree
 			schema,
 			forest,
 			events: this._events,
-			removedTrees,
+			removedRoots,
 		});
 	}
 
@@ -299,7 +299,11 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): CheckoutFlexTreeView<TRoot> {
-		assert(this.hasView2 === false, 0x7f3 /* Cannot create second view from tree. */);
+		if (this.hasView2 === true) {
+			throw new UsageError(
+				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
+			);
+		}
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -348,13 +352,6 @@ export class SharedTree
 				nodeKeyFieldKey,
 			) ?? fail("Schematize failed")
 		);
-	}
-
-	public schematizeOld<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
-		const view = this.schematizeInternal(config);
-		return new WrapperTreeView(view);
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
@@ -470,28 +467,5 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
-	}
-}
-
-/**
- * Implementation of TreeView wrapping a FlexTreeView.
- */
-export class WrapperTreeView<
-	in out TRoot extends TreeFieldSchema,
-	TView extends FlexTreeView<TRoot>,
-> implements TreeView<TreeField<TRoot>>
-{
-	public constructor(public readonly view: TView) {}
-
-	public [disposeSymbol](): void {
-		this.view[disposeSymbol]();
-	}
-
-	public get events(): ISubscribable<CheckoutEvents> {
-		return this.view.checkout.events;
-	}
-
-	public get root(): TreeRoot<TreeSchema<TRoot>> {
-		return getProxyForField(this.view.editableTree);
 	}
 }

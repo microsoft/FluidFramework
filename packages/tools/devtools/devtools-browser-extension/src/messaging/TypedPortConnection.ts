@@ -10,6 +10,7 @@ import { type ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core"
  *
  * @typeParam TSend - The type of message sent to this port connection.
  * @typeParam TReceive - The type of message received by this port connection.
+ * @internal
  */
 export interface TypedPortConnection<
 	TSend extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,

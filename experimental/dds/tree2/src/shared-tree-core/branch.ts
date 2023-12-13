@@ -22,6 +22,8 @@ import {
 	RevertResult,
 	DiscardResult,
 	BranchRebaseResult,
+	rebaseChangeOverChanges,
+	tagRollbackInverse,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { fail } from "../util";
@@ -305,7 +307,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagChange(inverse, mintRevisionTag()));
+			inverses.push(tagRollbackInverse(inverse, mintRevisionTag(), commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -413,10 +415,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				ancestor === commit,
 				0x677 /* The head commit should be based off the undoable commit. */,
 			);
-			change = pathAfterUndoable.reduce(
-				(a, b) => this.changeFamily.rebaser.rebase(a, b),
-				change,
-			);
+			change = rebaseChangeOverChanges(this.changeFamily.rebaser, change, pathAfterUndoable);
 		}
 
 		return this.applyChange(
@@ -468,6 +467,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
+
+		// It's possible that the target branch already contained some of the commits that
+		// were on this branch. When that's the case, we adopt the commit objects from the target branch.
+		// Because of that, we need to make sure that any revertibles that were based on the old commit objects
+		// now point to the new object that were adopted from the target branch.
+		for (const targetCommit of targetCommits) {
+			this.updateRevertibleCommit(targetCommit);
+		}
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {

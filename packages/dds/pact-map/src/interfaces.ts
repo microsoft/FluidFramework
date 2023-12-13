@@ -7,8 +7,7 @@ import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/sh
 
 /**
  * Events emitted by {@link IPactMap}.
- *
- * @public
+ * @internal
  */
 export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
@@ -19,8 +18,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 
 /**
  * Details of the accepted pact.
- *
- * @public
+ * @internal
  */
 export interface IAcceptedPact<T> {
 	/**
@@ -44,8 +42,7 @@ export interface IAcceptedPact<T> {
  * 1. "pending" state where the proposal has been sequenced, but there are still outstanding acceptances
  * 2. "accepted" state where all clients who were connected at the time the proposal was made have either accepted
  * or disconnected.
- *
- * @public
+ * @internal
  */
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	/**

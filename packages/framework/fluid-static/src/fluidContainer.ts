@@ -14,6 +14,7 @@ import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./ty
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
+ * @alpha
  */
 export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
@@ -30,6 +31,7 @@ export type InitialObjects<T extends ContainerSchema> = {
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ * @alpha
  */
 export interface IFluidContainerEvents extends IEvent {
 	/**
@@ -94,6 +96,7 @@ export interface IFluidContainerEvents extends IEvent {
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  *
  * @remarks Note: external implementations of this interface are not supported.
+ * @alpha
  */
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends IEventProvider<IFluidContainerEvents> {
@@ -208,6 +211,9 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	dispose(): void;
 }
 
+/**
+ * @internal
+ */
 export function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
 >(props: {
@@ -226,8 +232,9 @@ export function createFluidContainer<
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
+ * @internal
  */
-export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {
@@ -344,8 +351,6 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
 	 * @remarks Used to power debug tooling.
-	 *
-	 * @internal
 	 */
 	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
 		return this.container;

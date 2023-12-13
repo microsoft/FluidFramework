@@ -4,7 +4,6 @@
  */
 
 import {
-	IIntegerRange,
 	RBNode,
 	IRBAugmentation,
 	IRBMatcher,
@@ -16,8 +15,6 @@ import { IInterval } from "./intervals";
 export interface AugmentedIntervalNode {
 	minmax: IInterval;
 }
-
-export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
 const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 

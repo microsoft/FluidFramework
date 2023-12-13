@@ -16,6 +16,9 @@ import type { IModelLoader, IDetachedModel } from "../modelLoader";
 
 // TODO: Note that this class is far from the expected state - it effectively does nothing since takeAppropriateActionForCurrentMigratable is commented out.
 // Eventually it will be in charge of extracting the v1 data and calling migrationTool.finalizeMigration() with the transformed summary, but for now it's probably best to ignore it.
+/**
+ * @internal
+ */
 export class SameContainerMigrator
 	extends TypedEventEmitter<ISameContainerMigratorEvents>
 	implements ISameContainerMigrator

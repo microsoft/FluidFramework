@@ -4,7 +4,6 @@
 		"jsx": "react",
 		"resolveJsonModule": true,
 		"typeRoots": ["../node_modules/@types"],
-		"declarationDir": "./dist",
 		"outDir": "./dist",
 	},
 	"exclude": ["dist", "node_modules"],

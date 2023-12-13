@@ -50,6 +50,9 @@ import {
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 
+/**
+ * @internal
+ */
 export class ScribeLambda implements IPartitionLambda {
 	// Value of the last processed Kafka offset
 	private lastOffset: number;
@@ -93,7 +96,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 	// Used to checkpoint if no active clients
 	private noActiveClients: boolean = false;
-	private globalCheckpointOnly: boolean = false;
+	private globalCheckpointOnly: boolean;
 
 	constructor(
 		protected readonly context: IContext,
@@ -119,6 +122,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
 		this.pendingMessages = new Deque<ISequencedDocumentMessage>(messages);
+		this.globalCheckpointOnly = this.localCheckpointEnabled ? false : true;
 	}
 
 	public async handler(message: IQueuedMessage) {
@@ -438,7 +442,9 @@ export class ScribeLambda implements IPartitionLambda {
 						);
 					}
 				} else if (value.operation.type === MessageType.ClientJoin) {
-					this.globalCheckpointOnly = false;
+					if (this.localCheckpointEnabled) {
+						this.globalCheckpointOnly = false;
+					}
 				}
 			}
 		}
@@ -448,10 +454,12 @@ export class ScribeLambda implements IPartitionLambda {
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 
 		if (this.noActiveClients) {
+			if (this.localCheckpointEnabled) {
+				this.globalCheckpointOnly = true;
+			}
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
 			this.noActiveClients = false;
 		} else {
-			this.globalCheckpointOnly = false;
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state

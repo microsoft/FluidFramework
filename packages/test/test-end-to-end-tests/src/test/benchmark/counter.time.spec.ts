@@ -11,7 +11,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 
 const counterId = "counterKey";
@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeNoCompat("SharedCounter - runtime benchmarks", (getTestObjectProvider) => {
+describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const counters: ISharedCounter[] = [];
 

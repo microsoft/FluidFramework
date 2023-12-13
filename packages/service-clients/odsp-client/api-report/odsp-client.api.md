@@ -5,11 +5,11 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
@@ -57,10 +57,9 @@ export interface OdspContainerServices {
 
 // @alpha
 export interface OdspMember extends IMember {
-    // (undocumented)
     email: string;
-    // (undocumented)
     name: string;
+    userId: string;
 }
 
 // (No @packageDocumentation comment for this package)

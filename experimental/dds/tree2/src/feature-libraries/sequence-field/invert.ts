@@ -4,9 +4,9 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, RevisionMetadataSource } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
 	Changeset,
 	Mark,
@@ -18,7 +18,7 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
-} from "./format";
+} from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,

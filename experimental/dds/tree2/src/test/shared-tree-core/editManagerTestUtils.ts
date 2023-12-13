@@ -10,18 +10,13 @@ import {
 	ChangeFamilyEditor,
 	mintRevisionTag,
 } from "../../core";
-import {
-	TestChangeFamily,
-	TestChange,
-	testChangeFamilyFactory,
-	TestChangeRebaser,
-} from "../testChange";
+import { TestChangeFamily, TestChange, testChangeFamilyFactory } from "../testChange";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
-export function editManagerFactory(options: {
+export function testChangeEditManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
 	autoDiscardRevertibles?: boolean;
@@ -29,12 +24,27 @@ export function editManagerFactory(options: {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
-	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const family = testChangeFamilyFactory(options.rebaser);
+	const manager = editManagerFactory(family, {
+		sessionId: options.sessionId,
+		autoDiscardRevertibles: options.autoDiscardRevertibles,
+	});
+
+	return { manager, family };
+}
+
+export function editManagerFactory<TChange = TestChange>(
+	family: ChangeFamily<any, TChange>,
+	options: {
+		sessionId?: SessionId;
+		autoDiscardRevertibles?: boolean;
+	} = {},
+): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
+	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const manager = new EditManager<
 		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
+		TChange,
+		ChangeFamily<ChangeFamilyEditor, TChange>
 	>(family, options.sessionId ?? "0");
 
 	if (autoDiscardRevertibles === true) {
@@ -43,34 +53,80 @@ export function editManagerFactory(options: {
 			revertible.discard();
 		});
 	}
-
-	return { manager, family };
+	return manager;
 }
 
-export function rebaseLocalEditsOverTrunkEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Apply local edit L1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each L)
+ * - Apply local edit Lc with a ref seq# pointing to edit 0
+ * -- we start measuring from here
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(L1)─...─(Lc)
+ * ```
+ *
+ * @param localEditCount - The number of local edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseLocalEditsOverTrunkEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Apply local edit L1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each L)
+ * - Apply local edit Lc with a ref seq# pointing to edit 0
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(L1)─...─(Lc)
+ * ```
+ *
+ * @param localEditCount - The number of local edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the local edits when invoked.
+ */
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseLocalEditsOverTrunkEdits(
+export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
-		manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+		manager.localBranch.apply(mintChange(), mintRevisionTag());
 	}
 	const trunkEdits = makeArray(trunkEditCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "trunk",
 	}));
@@ -82,21 +138,67 @@ export function rebaseLocalEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
-export function rebasePeerEditsOverTrunkEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit 0
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(P1)─...─(Pc)
+ * ```
+ *
+ * @param peerEditCount - The number of peer edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebasePeerEditsOverTrunkEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(not incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit 0
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc)
+ *   └───────────────(P1)─...─(Pc)
+ * ```
+ *
+ * @param peerEditCount - The number of peer edits to generate
+ * @param trunkEditCount - The number of trunk edits to generate
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebasePeerEditsOverTrunkEdits(
+export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
@@ -104,7 +206,7 @@ export function rebasePeerEditsOverTrunkEdits(
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		manager.addSequencedChange(
 			{
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: "trunk",
 			},
@@ -113,7 +215,7 @@ export function rebasePeerEditsOverTrunkEdits(
 		);
 	}
 	const peerEdits = makeArray(peerEditCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
@@ -130,26 +232,67 @@ export function rebasePeerEditsOverTrunkEdits(
 }
 
 /**
- * Establishes the following branching structure:
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
  * ```text
- * (0)-(T1)-...-(Tc-1)-(Tc)
- *  |    |          └-----------------(Pc)
- *  |    └-----------------------(P2)
- *  └-----------------------(P1)
+ * (0)─(T1)─...─(Tc─1)─(Tc)
+ *   |    |          └──────(P1)─(P2)─...─(Pc)
+ *   |    └─────────────────(P1)─(P2)
+ *   └──────────────────────(P1)
  * ```
+ *
+ * @param editCount - The number of peer and trunk edits to generate.
+ * The total number of edits generated will be twice that.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
  */
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * - Sequence trunk edit T1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each T)
+ * - Sequence trunk edit Tc with a ref seq# pointing to edit Tc-1
+ * -- inputs below this point are deferred until the returned thunk is invoked --
+ * - Sequence peer edit P1 with a ref seq# pointing to edit 0
+ * ...(incrementing the ref seq# for each P)
+ * - Sequence peer edit Pc with a ref seq# pointing to edit Tc-1
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)─(T1)─...─(Tc─1)─(Tc)
+ *   |    |          └──────(P1)─(P2)─...─(Pc)
+ *   |    └─────────────────(P1)─(P2)
+ *   └──────────────────────(P1)
+ * ```
+ *
+ * @param editCount - The number of peer and trunk edits to generate.
+ * The total number of edits generated will be twice that.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseAdvancingPeerEditsOverTrunkEdits(
+export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
-	manager: TestEditManager,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
@@ -157,7 +300,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 	for (let iChange = 0; iChange < editCount; iChange++) {
 		manager.addSequencedChange(
 			{
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: "trunk",
 			},
@@ -166,7 +309,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 		);
 	}
 	const peerEdits = makeArray(editCount, () => ({
-		change: TestChange.emptyChange,
+		change: mintChange(),
 		revision: mintRevisionTag(),
 		sessionId: "peer",
 	}));
@@ -182,31 +325,75 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits(
 	return defer ? run : run();
 }
 
-export function rebaseConcurrentPeerEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * Each peer edit is sequenced in a round-robin fashion starting with the first edit from peer 1 then
+ * the first edit from peer 2, etc. Then the second edit from each peer (in the same peer order) etc.
+ * All edit have a reference sequence number of 0.
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)
+ *   ├─(P1E1)───────────────(P1E2)──────...──────(P1Ek)
+ *   ├────────(P2E1)───────────────(P2E2)──────...──────(P2Ek)
+ *   ├...
+ *   └───────────────(PnE1)───────────────(PnE2)──────...──────(PnEk)
+ * ```
+ *
+ * @param peerCount - The number of peer to generate edits for.
+ * @param editCount - The number of edits to generate per peer.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ */
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: true,
 ): () => void;
-export function rebaseConcurrentPeerEdits(
+/**
+ * Simulates the following inputs to the EditManager:
+ * Each peer edit is sequenced in a round-robin fashion starting with the first edit from peer 1 then
+ * the first edit from peer 2, etc. Then the second edit from each peer (in the same peer order) etc.
+ * All edit have a reference sequence number of 0.
+ *
+ * This defines the following relationships between edits:
+ * ```text
+ * (0)
+ *   ├─(P1E1)───────────────(P1E2)──────...──────(P1Ek)
+ *   ├────────(P2E1)───────────────(P2E2)──────...──────(P2Ek)
+ *   ├...
+ *   └───────────────(PnE1)───────────────(PnE2)──────...──────(PnEk)
+ * ```
+ *
+ * @param peerCount - The number of peer to generate edits for.
+ * @param editCount - The number of edits to generate per peer.
+ * @param manager - The edit manager to apply the edits to
+ * @param mintChange - A function used to generate new changes
+ * @param defer - Used to invoke this specific overload.
+ * @returns A thunk that will apply the peer edits when invoked.
+ */
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 ): void;
-export function rebaseConcurrentPeerEdits(
+export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
-	rebaser: TestChangeRebaser,
+	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
+	mintChange: () => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
-	const manager = editManagerFactory({ rebaser }).manager;
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
-	const peerEdits: Commit<TestChange>[] = [];
+	const peerEdits: Commit<TChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 			peerEdits.push({
-				change: TestChange.emptyChange,
+				change: mintChange(),
 				revision: mintRevisionTag(),
 				sessionId: `p${iPeer}`,
 			});

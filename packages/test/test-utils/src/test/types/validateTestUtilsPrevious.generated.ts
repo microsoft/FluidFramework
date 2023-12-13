@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_ITestObjectProvider():
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<current.ITestObjectProvider>): void;
 use_current_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -211,6 +212,7 @@ declare function get_current_InterfaceDeclaration_ITestObjectProvider():
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<old.ITestObjectProvider>): void;
 use_old_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -331,6 +333,7 @@ declare function get_current_ClassDeclaration_TestFluidObject():
 declare function use_old_ClassDeclaration_TestFluidObject(
     use: TypeOnly<old.TestFluidObject>): void;
 use_old_ClassDeclaration_TestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestFluidObject());
 
 /*
@@ -367,6 +370,7 @@ declare function get_old_ClassDeclaration_TestObjectProvider():
 declare function use_current_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<current.TestObjectProvider>): void;
 use_current_ClassDeclaration_TestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -379,6 +383,7 @@ declare function get_current_ClassDeclaration_TestObjectProvider():
 declare function use_old_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<old.TestObjectProvider>): void;
 use_old_ClassDeclaration_TestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProvider());
 
 /*
