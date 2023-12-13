@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const { TSDocParser } = require("@microsoft/tsdoc");
 
 function hasReleaseTag(comment) {
