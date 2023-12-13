@@ -43,6 +43,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      echo "Artifact path: ${{ parameters.artifactPath }}"
       tag="--tag canary"
       if [[ "$(release)" == "release" ]]; then
         if [ "$(isLatest)" = "true" ]; then
@@ -109,6 +110,7 @@ steps:
                 fi
             else
               feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              echo "Feed Name: $feedName"
 
               if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
