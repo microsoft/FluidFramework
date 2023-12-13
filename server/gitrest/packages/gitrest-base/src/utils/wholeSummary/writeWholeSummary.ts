@@ -463,7 +463,6 @@ async function writeSummaryTree(
 		entryHandleToObjectShaCache: new Map<string, string>(),
 	};
 
-	const wholeSummaryTreeEntries: WholeSummaryTreeEntry[] = [];
 	if (options.useLowIoWrite) {
 		const lowIoWriteSummaryTreeEntries = await computeLowIoSummaryTreeEntries(
 			payload,
@@ -471,11 +470,9 @@ async function writeSummaryTree(
 			writeSummaryTreeOptions,
 			options,
 		);
-		wholeSummaryTreeEntries.push(...lowIoWriteSummaryTreeEntries);
-	} else {
-		wholeSummaryTreeEntries.push(...payload.entries);
+		return writeSummaryTreeCore(lowIoWriteSummaryTreeEntries, writeSummaryTreeOptions);
 	}
-	return writeSummaryTreeCore(wholeSummaryTreeEntries, writeSummaryTreeOptions);
+	return writeSummaryTreeCore(payload.entries, writeSummaryTreeOptions);
 }
 
 /**
@@ -551,7 +548,7 @@ export async function writeContainerSummary(
 		(isNewDocument && options.enableLowIoWrite === "initial");
 	const fullGitTree = await writeSummaryTree(payload, documentRef, {
 		...options,
-		precomputeFullTree: false,
+		precomputeFullTree: true,
 		useLowIoWrite,
 	});
 
