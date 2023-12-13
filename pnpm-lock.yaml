@@ -1608,8 +1608,8 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
-      '@fluid-experimental/app-insights-logger': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
+      '@fluidframework/app-insights-logger': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/container-loader': workspace:~
@@ -1655,8 +1655,8 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluid-experimental/app-insights-logger': link:../../../packages/framework/client-logger/app-insights-logger
       '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
+      '@fluidframework/app-insights-logger': link:../../../packages/framework/client-logger/app-insights-logger
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/counter': link:../../../packages/dds/counter
