@@ -657,7 +657,7 @@ export class PartialSequenceLengths {
 		// it's not possible to have an overlapping obliterate and remove that are both local
 		assert(
 			(!moveIsLocal && !removalIsLocal) || moveIsLocal !== removalIsLocal,
-			"overlapping local obliterate and remove",
+			0x870 /* overlapping local obliterate and remove */,
 		);
 
 		const removeHappenedFirst =
@@ -686,7 +686,7 @@ export class PartialSequenceLengths {
 			if (segment.wasMovedOnInsert) {
 				assert(
 					moveInfo.movedSeq !== -1,
-					"wasMovedOnInsert should only be set on acked obliterates",
+					0x871 /* wasMovedOnInsert should only be set on acked obliterates */,
 				);
 				segmentLen = 0;
 			} else {
@@ -1253,7 +1253,7 @@ function verifyPartialLengths(
 
 		if (partialLength.overlapObliterateClients) {
 			// Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
-			assert(!clientPartials, "Both overlapObliterateClients and clientPartials are set!");
+			assert(!clientPartials, 0x872 /* Both overlapObliterateClients and clientPartials are set! */);
 
 			// Each overlap client counts as one, but the first move to sequence was already counted.
 			// (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
