@@ -41,6 +41,7 @@ import {
 	getDetachOutputId,
 	isImpactfulCellRename,
 	compareCellsFromSameRevision,
+	setAdjacentCells,
 } from "./utils";
 import {
 	Changeset,
@@ -70,6 +71,7 @@ import {
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
+import { OutputGapTracker } from "./outputGapTracker";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -138,8 +140,23 @@ function rebaseMarkList<TNodeChange>(
 	// so we record marks which should have their lineage updated if we encounter a detach.
 	const rebasedCellBlocks: CellBlockList = [];
 
-	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	const detachBlocks = new Map<RevisionTag, IdRange[]>();
+	// The set of cells in that need to have adjacent cells set.
+	// This is populated as we process a gap then cleared encountering the end of the gap.
+	const adjacentCellsRecipients: Map<RevisionTag | undefined, CellId[]> = new Map();
+
+	const gapTracker = new OutputGapTracker(
+		metadata,
+		(gapRevision: RevisionTag | undefined, adjacentCells: undefined | IdRange[]) => {
+			const recipients = adjacentCellsRecipients.get(gapRevision);
+			if (recipients !== undefined) {
+				assert(adjacentCells !== undefined, "Expected adjacent cells for gap");
+				for (const recipient of recipients) {
+					setAdjacentCells(recipient, adjacentCells);
+				}
+				adjacentCellsRecipients.delete(gapRevision);
+			}
+		},
+	);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
 		const rebasedMark = rebaseMark(
@@ -152,6 +169,8 @@ function rebaseMarkList<TNodeChange>(
 			nodeExistenceState,
 		);
 
+		gapTracker.ingest(baseMark, baseRevision);
+
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
 		if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, baseRevision, metadata)) {
@@ -163,11 +182,6 @@ function rebaseMarkList<TNodeChange>(
 				0x816 /* Mark which empties cells should have a detach ID */,
 			);
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
-			const detachBlock = getOrAddEmptyToMap(detachBlocks, detachId.revision);
-			addIdRange(detachBlock, {
-				id: detachId.localId,
-				count: baseMark.count,
-			});
 
 			addLineageToRecipients(
 				rebasedCellBlocks,
@@ -182,27 +196,36 @@ function rebaseMarkList<TNodeChange>(
 				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
 			);
 
-			// Rebasing over an inverse attach will already provide a cell ID with the adjacent cells from the original detach.
-			// The base changeset may not have all the detaches from the original detach revision,
-			// so we should not try to recompute the adjacent cells here.
-			if (!isInverseAttach(baseMark)) {
-				setMarkAdjacentCells(rebasedMark, detachBlock);
+			// A re-detach sports a cell ID with the adjacent cells from the original detach.
+			// Marks that are rebased over such a re-detach will adopt this cell ID as-is and do not need to have the
+			// adjacent cells be updated. Moreover, the base changeset may not have all the detaches from the original
+			// detach revision, so using such re-detach marks to compile the list adjacent cells would run the risk of
+			// ending up with incomplete adjacent cell information in the rebased mark.
+			if (!isRedetach(baseMark)) {
+				assert(
+					rebasedMark.cellId !== undefined,
+					0x74d /* Can only set adjacent cells on a mark with cell ID */,
+				);
+				// Note: we track blocks of adjacent cells for rollbacks separately from that of the original revision
+				// that they are a rollback of, but we assign adjacent cells information to cells that refer to the
+				// original revision even when that adjacent cell information is for the rollback.
+				// This could lead to a situation where we try to compare two cells and fail to order them correctly
+				// because one sports adjacent cells information for the original revision and the other sports
+				// adjacent cells information for the rollback.
+				// TODO: address this somehow.
+				getOrAddEmptyToMap(adjacentCellsRecipients, detachId.revision).push(
+					rebasedMark.cellId,
+				);
 			}
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark.cellId, detachBlocks, metadata);
+			handleLineage(rebasedMark.cellId, gapTracker.detachBlocks, metadata);
 		}
 		rebasedMarks.push(rebasedMark);
-		updateLineageState(
-			rebasedCellBlocks,
-			detachBlocks,
-			baseMark,
-			baseRevision,
-			rebasedMark,
-			metadata,
-		);
+		updateLineageState(rebasedCellBlocks, baseMark, baseRevision, rebasedMark, metadata);
 	}
+	gapTracker.finalizeAllGaps();
 
 	return mergeMarkList(rebasedMarks);
 }
@@ -216,13 +239,13 @@ function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	return factory.list;
 }
 
-function isInverseAttach(effect: MarkEffect): boolean {
+function isRedetach(effect: MarkEffect): boolean {
 	switch (effect.type) {
 		case "Delete":
 		case "MoveOut":
-			return effect.detachIdOverride !== undefined;
+			return effect.redetachId !== undefined;
 		case "AttachAndDetach":
-			return isInverseAttach(effect.detach);
+			return isRedetach(effect.detach);
 		default:
 			return false;
 	}
@@ -674,7 +697,7 @@ interface CellBlock {
 
 function handleLineage(
 	cellId: CellId,
-	detachBlocks: Map<RevisionTag, IdRange[]>,
+	detachBlocks: ReadonlyMap<RevisionTag, readonly IdRange[]>,
 	metadata: RebaseRevisionMetadata,
 ) {
 	const baseRevisions = metadata
@@ -705,7 +728,6 @@ function getRevisionIndex(metadata: RevisionMetadataSource, revision: RevisionTa
 
 function updateLineageState(
 	cellBlocks: CellBlockList,
-	detachBlocks: Map<RevisionTag, IdRange[]>,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
 	rebasedMark: Mark<unknown>,
@@ -713,18 +735,6 @@ function updateLineageState(
 ) {
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
-	for (const revision of detachBlocks.keys()) {
-		const revisionIndex = getRevisionIndex(metadata, revision);
-		// revisionIndex can be -Infinity if it is from a detachIdOverride
-		if (
-			revisionIndex > -Infinity &&
-			attachRevisionIndex <= revisionIndex &&
-			revisionIndex < detachRevisionIndex
-		) {
-			detachBlocks.delete(revision);
-		}
-	}
-
 	cellBlocks.push({
 		cellId: rebasedMark.cellId,
 		firstAttachedRevisionIndex: attachRevisionIndex,
@@ -865,27 +875,6 @@ function removeLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<R
 	}
 }
 
-function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
-	if (lineageEntries.length > 0) {
-		const lastEntry = lineageEntries[lineageEntries.length - 1];
-		if ((lastEntry.id as number) + lastEntry.count === range.id) {
-			lastEntry.count += range.count;
-			return;
-		}
-	}
-
-	lineageEntries.push(range);
-}
-
-function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
-	assert(
-		mark.cellId !== undefined,
-		0x74d /* Can only set adjacent cells on a mark with cell ID */,
-	);
-	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
-	mark.cellId.adjacentCells = adjacentCells;
-}
-
 function shouldReceiveLineage(
 	cellRevision: RevisionTag | undefined,
 	detachRevision: RevisionTag,
@@ -903,7 +892,7 @@ function shouldReceiveLineage(
 	const detachIntention = rollbackOf ?? detachRevision;
 	const detachRevisionIndex = getRevisionIndex(metadata, detachIntention);
 	if (detachRevisionIndex === undefined) {
-		// This case means that these cells are being "re-detached" through a detachIdOverride.
+		// This case means that these cells are being "re-detached" through a `redetachId`.
 		// We could use the revision of the re-detach to determine whether or not this cell needs this lineage entry.
 		// But to be conservative we always add lineage here.
 		return true;

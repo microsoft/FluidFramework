@@ -40,7 +40,7 @@ import {
 	CellMark,
 	AttachAndDetach,
 	MarkEffect,
-	InverseAttachFields,
+	RedetachFields,
 	IdRange,
 	MovePlaceholder,
 } from "./types";
@@ -153,7 +153,7 @@ export function getDetachOutputId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		mark.detachIdOverride ?? {
+		mark.redetachId ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -244,6 +244,26 @@ export function cloneCellId(id: CellId): CellId {
 		cloned.lineage = [...cloned.lineage];
 	}
 	return cloned;
+}
+
+export function isRedetach(effect: MarkEffect): boolean {
+	switch (effect.type) {
+		case "Delete":
+		case "MoveOut":
+			return effect.redetachId !== undefined;
+		case "AttachAndDetach":
+			return isRedetach(effect.detach);
+		default:
+			return false;
+	}
+}
+
+export function setAdjacentCells(cellId: CellId, adjacentCells: IdRange[]): void {
+	assert(cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
+	// Only set adjacentCells if there actually are adjacent cells.
+	if (adjacentCells.length > 0 && (adjacentCells.length > 1 || adjacentCells[0].count > 1)) {
+		cellId.adjacentCells = adjacentCells;
+	}
 }
 
 function areSameLineage(
@@ -513,11 +533,11 @@ function areAdjacentIdRanges(
 }
 
 function haveMergeableIdOverrides(
-	lhs: InverseAttachFields,
+	lhs: RedetachFields,
 	lhsCount: number,
-	rhs: InverseAttachFields,
+	rhs: RedetachFields,
 ): boolean {
-	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
+	return areMergeableChangeAtoms(lhs.redetachId, lhsCount, rhs.redetachId);
 }
 
 function areMergeableCellIds(
@@ -593,7 +613,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride)
+		!areMergeableCellIds(lhs.redetachId, lhsCount, rhs.redetachId)
 	) {
 		return undefined;
 	}
@@ -1054,11 +1074,8 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
 			const effect2Delete = effect2 as Delete;
-			if (effect2Delete.detachIdOverride !== undefined) {
-				effect2Delete.detachIdOverride = splitDetachEvent(
-					effect2Delete.detachIdOverride,
-					length,
-				);
+			if (effect2Delete.redetachId !== undefined) {
+				effect2Delete.redetachId = splitDetachEvent(effect2Delete.redetachId, length);
 			}
 			return [effect1, effect2];
 		}
@@ -1070,8 +1087,8 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			const return2 = effect2 as MoveOut;
 
-			if (return2.detachIdOverride !== undefined) {
-				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
+			if (return2.redetachId !== undefined) {
+				return2.redetachId = splitDetachEvent(return2.redetachId, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {

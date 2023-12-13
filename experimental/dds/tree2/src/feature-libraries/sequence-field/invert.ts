@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator, fail } from "../../util";
+import { IdAllocator, fail, getOrAddEmptyToMap } from "../../util";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import {
 	Changeset,
@@ -18,10 +18,13 @@ import {
 	CellMark,
 	MoveIn,
 	MarkEffect,
+	CellId,
+	IdRange,
 } from "./types";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
+	cloneCellId,
 	extractMarkEffect,
 	getDetachOutputId,
 	getEndpoint,
@@ -31,10 +34,13 @@ import {
 	isDetach,
 	isImpactful,
 	isReattach,
+	isRedetach,
 	normalizeCellRename,
+	setAdjacentCells,
 	splitMark,
 	withNodeChange,
 } from "./utils";
+import { OutputGapTracker } from "./outputGapTracker";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -70,10 +76,30 @@ function invertMarkList<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
+	// The set of cells in that need to have adjacent cells set.
+	// This is populated as we process a gap then cleared encountering the end of the gap.
+	const adjacentCellsRecipients: Map<RevisionTag | undefined, CellId[]> = new Map();
+
+	const gapTracker = new OutputGapTracker(
+		revisionMetadata,
+		(gapRevision: RevisionTag | undefined, adjacentCells: undefined | IdRange[]) => {
+			const recipients = adjacentCellsRecipients.get(gapRevision);
+			if (recipients !== undefined) {
+				assert(adjacentCells !== undefined, "Expected adjacent cells for gap");
+				for (const recipient of recipients) {
+					setAdjacentCells(recipient, adjacentCells);
+				}
+				adjacentCellsRecipients.delete(gapRevision);
+			}
+		},
+	);
 
 	for (const mark of markList) {
+		gapTracker.ingest(mark, revision);
+
 		const inverseMarks = invertMark(
 			mark,
+			adjacentCellsRecipients,
 			revision,
 			invertChild,
 			crossFieldManager,
@@ -81,12 +107,14 @@ function invertMarkList<TNodeChange>(
 		);
 		inverseMarkList.push(...inverseMarks);
 	}
+	gapTracker.finalizeAllGaps();
 
 	return inverseMarkList.list;
 }
 
 function invertMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
+	adjacentCellsRecipients: Map<RevisionTag | undefined, CellId[]>,
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
@@ -106,7 +134,16 @@ function invertMark<TNodeChange>(
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
-			const outputId = getOutputCellId(mark, revision, revisionMetadata);
+			const outputId = cloneCellId(
+				getOutputCellId(mark, revision, revisionMetadata) ??
+					fail("Expected output cell ID"),
+			);
+			// Redetach marks already have adjacent cell information
+			if (!isRedetach(mark)) {
+				getOrAddEmptyToMap(adjacentCellsRecipients, mark.revision ?? revision).push(
+					outputId,
+				);
+			}
 			const inverse: Mark<TNodeChange> =
 				mark.cellId === undefined
 					? {
@@ -120,7 +157,7 @@ function invertMark<TNodeChange>(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
+							redetachId: getInputCellId(mark, revision, revisionMetadata),
 					  };
 			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
@@ -133,7 +170,7 @@ function invertMark<TNodeChange>(
 			};
 
 			if (isReattach(mark)) {
-				deleteMark.detachIdOverride = mark.cellId;
+				deleteMark.redetachId = mark.cellId;
 			}
 
 			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
@@ -166,6 +203,11 @@ function invertMark<TNodeChange>(
 				localId: mark.id,
 			};
 
+			// Redetach marks already have adjacent cell information
+			if (!isRedetach(mark)) {
+				getOrAddEmptyToMap(adjacentCellsRecipients, mark.revision ?? revision).push(cellId);
+			}
+
 			const moveIn: MoveIn = {
 				type: "MoveIn",
 				id: mark.id,
@@ -182,7 +224,7 @@ function invertMark<TNodeChange>(
 					detach: {
 						type: "Delete",
 						id: mark.id,
-						detachIdOverride: getInputCellId(mark, revision, revisionMetadata),
+						redetachId: getInputCellId(mark, revision, revisionMetadata),
 					},
 				};
 			}
@@ -200,7 +242,7 @@ function invertMark<TNodeChange>(
 			}
 
 			if (isReattach(mark)) {
-				invertedMark.detachIdOverride = mark.cellId;
+				invertedMark.redetachId = mark.cellId;
 			}
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
@@ -224,6 +266,7 @@ function invertMark<TNodeChange>(
 			};
 			const attachInverses = invertMark(
 				attach,
+				adjacentCellsRecipients,
 				revision,
 				invertChild,
 				crossFieldManager,
@@ -231,6 +274,7 @@ function invertMark<TNodeChange>(
 			);
 			const detachInverses = invertMark(
 				detach,
+				adjacentCellsRecipients,
 				revision,
 				invertChild,
 				crossFieldManager,

@@ -12,6 +12,8 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core";
+// eslint-disable-next-line import/no-internal-modules
+import { CellId, IdRange } from "../../../feature-libraries/sequence-field";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
@@ -75,16 +77,22 @@ describe("SequenceField - Invert", () => {
 			Mark.delete(1, brand(0), { changes: childChange1 }),
 			Mark.delete(1, brand(1)),
 		];
+		const adjacentCells: IdRange[] = [{ id: brand(0), count: 2 }];
 		const expected = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { changes: inverseChildChange1 }),
-			Mark.revive(1, { revision: tag1, localId: brand(1) }),
+			Mark.revive(
+				1,
+				{ revision: tag1, localId: brand(0), adjacentCells },
+				{ changes: inverseChildChange1 },
+			),
+			Mark.revive(1, { revision: tag1, localId: brand(1), adjacentCells }),
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("delete => revive (with rollback ID)", () => {
-		const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const adjacentCells: IdRange[] = [{ id: brand(0), count: 2 }];
+		const detachId: CellId = { revision: tag2, localId: brand(0), adjacentCells };
 		const input = tagRollbackInverse([Mark.delete(2, brand(0))], tag1, tag2);
 		const expected = [Mark.revive(2, detachId)];
 		const actual = invertChange(input);
@@ -92,9 +100,9 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("delete => revive (with override ID)", () => {
-		const detachIdOverride: ChangeAtomId = { revision: tag2, localId: brand(0) };
-		const input: TestChangeset = [Mark.delete(2, brand(5), { detachIdOverride })];
-		const expected = [Mark.revive(2, detachIdOverride, { id: brand(5) })];
+		const redetachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input: TestChangeset = [Mark.delete(2, brand(5), { redetachId })];
+		const expected = [Mark.revive(2, redetachId, { id: brand(5) })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -102,7 +110,7 @@ describe("SequenceField - Invert", () => {
 	it("active revive => delete", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const input = Change.revive(0, 2, cellId);
-		const expected: TestChangeset = [Mark.delete(2, brand(0), { detachIdOverride: cellId })];
+		const expected: TestChangeset = [Mark.delete(2, brand(0), { redetachId: cellId })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -114,8 +122,9 @@ describe("SequenceField - Invert", () => {
 			Mark.skip(3),
 			Mark.moveIn(2, brand(0)),
 		];
+		const adjacentCells: IdRange[] = [{ id: brand(0), count: 2 }];
 		const expected = [
-			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0) }),
+			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0), adjacentCells }),
 			Mark.skip(3),
 			Mark.moveOut(1, brand(0), { changes: inverseChildChange1 }),
 			Mark.moveOut(1, brand(1)),
@@ -131,11 +140,12 @@ describe("SequenceField - Invert", () => {
 			Mark.moveOut(1, brand(0), { changes: childChange1 }),
 			Mark.moveOut(1, brand(1)),
 		];
+		const adjacentCells: IdRange[] = [{ id: brand(0), count: 2 }];
 		const expected = [
 			Mark.moveOut(1, brand(0), { changes: inverseChildChange1 }),
 			Mark.moveOut(1, brand(1)),
 			Mark.skip(3),
-			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0) }),
+			Mark.returnTo(2, brand(0), { revision: tag1, localId: brand(0), adjacentCells }),
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -150,15 +160,16 @@ describe("SequenceField - Invert", () => {
 			Mark.returnTo(2, brand(42), cellId),
 		];
 
+		const adjacentCells: IdRange[] = [{ id: brand(42), count: 2 }];
 		const expected: TestChangeset = [
-			Mark.returnTo(2, brand(42), { revision: tag1, localId: brand(42) }),
+			Mark.returnTo(2, brand(42), { revision: tag1, localId: brand(42), adjacentCells }),
 			{ count: 3 },
 			Mark.moveOut(1, brand(42), {
-				detachIdOverride: cellId,
+				redetachId: cellId,
 				changes: inverseChildChange1,
 			}),
 			Mark.moveOut(1, brand(43), {
-				detachIdOverride: { ...cellId, localId: brand(1) },
+				redetachId: { ...cellId, localId: brand(1) },
 			}),
 		];
 		const actual = invert(input);
@@ -177,7 +188,7 @@ describe("SequenceField - Invert", () => {
 		const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
 		const expected: TestChangeset = [
 			Mark.delete(1, brand(0), {
-				detachIdOverride: cellId,
+				redetachId: cellId,
 				changes: inverseChildChange1,
 			}),
 		];
@@ -218,7 +229,7 @@ describe("SequenceField - Invert", () => {
 			Mark.delete(1, detachId.localId, {
 				cellId: detachId,
 				changes: inverseChildChange1,
-				detachIdOverride: startId,
+				redetachId: startId,
 			}),
 		];
 		assert.deepEqual(inverse, expected);
@@ -263,7 +274,7 @@ describe("SequenceField - Invert", () => {
 			Mark.attachAndDetach(
 				Mark.returnTo(1, detachId.localId, detachId),
 				Mark.delete(1, detachId.localId, {
-					detachIdOverride: startId,
+					redetachId: startId,
 				}),
 			),
 			{ count: 1 },
@@ -365,7 +376,7 @@ describe("SequenceField - Invert", () => {
 				Mark.delete(1, brand(0), {
 					changes: inverseChildChange1,
 					cellId: endId,
-					detachIdOverride: startId,
+					redetachId: startId,
 				}),
 			];
 			assert.deepEqual(actual, expected);

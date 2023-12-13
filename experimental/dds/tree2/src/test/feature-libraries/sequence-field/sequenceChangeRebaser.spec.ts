@@ -617,7 +617,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 				cellId: {
 					revision: tag2,
 					localId: brand(0),
-					adjacentCells: [{ id: brand(0), count: 1 }],
 					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 0 }],
 				},
 			}),

@@ -48,7 +48,7 @@ const HasMoveFields = Type.Composite([
 const MoveIn = Type.Composite([HasMoveFields], noAdditionalProps);
 
 const InverseAttachFields = Type.Object({
-	detachIdOverride: Type.Optional(EncodedChangeAtomId),
+	redetachId: Type.Optional(CellId),
 });
 
 const Delete = Type.Composite(

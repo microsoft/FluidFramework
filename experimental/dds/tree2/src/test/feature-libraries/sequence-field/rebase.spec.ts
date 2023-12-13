@@ -170,15 +170,7 @@ describe("SequenceField - Rebase", () => {
 			// Earlier revive is unaffected
 			Mark.pin(1, brand(0)),
 			// Overlapping pin is now a revive
-			Mark.revive(
-				1,
-				{
-					revision: tag2,
-					localId: brand(0),
-					adjacentCells: [{ id: brand(0), count: 1 }],
-				},
-				{ id: brand(1) },
-			),
+			Mark.revive(1, { revision: tag2, localId: brand(0) }, { id: brand(1) }),
 			// Later revive is unaffected
 			Mark.pin(1, brand(2)),
 		];
@@ -201,7 +193,6 @@ describe("SequenceField - Rebase", () => {
 		// Deletes --dEfGh--
 		// Where lowercase letters denote nodes that are already deleted
 		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
-		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			{ count: 2 },
@@ -210,10 +201,7 @@ describe("SequenceField - Rebase", () => {
 				Mark.delete(1, brand(0)),
 			),
 			Mark.delete(1, brand(1)),
-			Mark.onEmptyCell(
-				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
-				Mark.delete(1, brand(2)),
-			),
+			Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.delete(1, brand(2))),
 			Mark.delete(1, brand(3)),
 			Mark.onEmptyCell(
 				{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
@@ -259,7 +247,6 @@ describe("SequenceField - Rebase", () => {
 		// Moves --dEfGh--
 		// Where lowercase letters denote nodes that are deleted
 		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
-		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			Mark.moveIn(5, brand(0)),
@@ -273,10 +260,7 @@ describe("SequenceField - Rebase", () => {
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
-			Mark.onEmptyCell(
-				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
-				Mark.moveOut(1, brand(2)),
-			),
+			Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.moveOut(1, brand(2))),
 			Mark.moveOut(1, brand(3)),
 			Mark.onEmptyCell(
 				{
@@ -699,7 +683,6 @@ describe("SequenceField - Rebase", () => {
 				cellId: {
 					revision: tag1,
 					localId: brand(1),
-					adjacentCells: [{ id: brand(1), count: 1 }],
 				},
 			}),
 		];
@@ -721,7 +704,6 @@ describe("SequenceField - Rebase", () => {
 				cellId: {
 					revision: tag1,
 					localId: brand(1),
-					adjacentCells: [{ id: brand(1), count: 1 }],
 				},
 			}),
 		];
@@ -746,7 +728,6 @@ describe("SequenceField - Rebase", () => {
 				cellId: {
 					revision: tag1,
 					localId: brand(1),
-					adjacentCells: [{ id: brand(1), count: 1 }],
 				},
 			}),
 		];
@@ -767,7 +748,6 @@ describe("SequenceField - Rebase", () => {
 			Mark.returnTo(1, brand(0), {
 				revision: tag2,
 				localId: brand(1),
-				adjacentCells: [{ id: brand(1), count: 1 }],
 			}),
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
@@ -788,14 +768,12 @@ describe("SequenceField - Rebase", () => {
 			Mark.returnTo(1, brand(0), {
 				revision: tag2,
 				localId: brand(1),
-				adjacentCells: [{ id: brand(1), count: 1 }],
 			}),
 			{ count: 1 },
 			Mark.onEmptyCell(
 				{
 					revision: tag2,
 					localId: brand(2),
-					adjacentCells: [{ id: brand(2), count: 1 }],
 				},
 				Mark.moveOut(1, brand(0)),
 			),
@@ -821,7 +799,6 @@ describe("SequenceField - Rebase", () => {
 				cellId: {
 					revision: tag1,
 					localId: brand(0),
-					adjacentCells: [{ id: brand(0), count: 1 }],
 				},
 				finalEndpoint: { localId: brand(1) },
 			}),
