@@ -13,7 +13,6 @@ import {
 	tagChange,
 } from "../core";
 import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
-import { RevisionTagCodec } from "../shared-tree-core";
 import { Mutable, fail } from "../util";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
@@ -39,8 +38,7 @@ export class SharedTreeChangeFamily
 	public constructor(codecOptions: ICodecOptions) {
 		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, codecOptions);
 		this.codecs = makeSharedTreeChangeCodecFamily(
-			fieldKinds,
-			new RevisionTagCodec(),
+			this.modularChangeFamily.latestCodec,
 			codecOptions,
 		);
 	}

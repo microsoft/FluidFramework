@@ -14,16 +14,19 @@ import {
 	jsonSequenceRootSchema,
 	flexTreeViewWithContent,
 	checkoutWithContent,
+	requiredBooleanRootSchema,
 } from "../utils";
 import {
 	AllowedUpdateType,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	TreeValue,
 	Value,
 	moveToDetachedField,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { ContextuallyTypedNodeData } from "../../feature-libraries";
+import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries";
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -357,26 +360,30 @@ describe("sharedTreeView", () => {
 			assert.equal(getTestValue(child), "root");
 		});
 
-		itView("properly fork the tree schema", (parent) => {
-			const schemaA: TreeStoredSchema = {
-				nodeSchema: new Map([]),
-				rootFieldSchema: storedEmptyFieldSchema,
-			};
-			const schemaB: TreeStoredSchema = {
-				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
-				rootFieldSchema: storedEmptyFieldSchema,
-			};
-			function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
-				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
-			}
+		itView(
+			"properly fork the tree schema",
+			(parent) => {
+				const schemaB: TreeStoredSchema = {
+					nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+						[leaf.number.name, leaf.number],
+					]),
+					rootFieldSchema: storedEmptyFieldSchema,
+				};
+				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
+					return t.storedSchema.rootFieldSchema.kind.identifier ===
+						FieldKinds.required.identifier
+						? "schemaA"
+						: "schemaB";
+				}
 
-			parent.updateSchema(schemaA);
-			assert.equal(getSchema(parent), "schemaA");
-			const child = parent.fork();
-			child.updateSchema(schemaB);
-			assert.equal(getSchema(parent), "schemaA");
-			assert.equal(getSchema(child), "schemaB");
-		});
+				assert.equal(getSchema(parent), "schemaA");
+				const child = parent.fork();
+				child.updateSchema(schemaB);
+				assert.equal(getSchema(parent), "schemaA");
+				assert.equal(getSchema(child), "schemaB");
+			},
+			{ schema: requiredBooleanRootSchema, initialTree: true },
+		);
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
@@ -616,8 +623,12 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
-function itView(title: string, fn: (view: ITreeCheckout) => void): void {
-	const content: TreeContent = {
+function itView(
+	title: string,
+	fn: (view: ITreeCheckout) => void,
+	initialContent?: TreeContent,
+): void {
+	const content: TreeContent = initialContent ?? {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],
 	};

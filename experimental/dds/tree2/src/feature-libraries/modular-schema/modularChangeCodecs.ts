@@ -22,11 +22,9 @@ import {
 	nestedMapToFlatList,
 } from "../../util";
 import {
-	ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
-	makeCodecFamily,
 	SchemaValidationFunction,
 } from "../../codec";
 import {
@@ -255,12 +253,4 @@ export function makeModularChangeCodec(
 		},
 		encodedSchema: EncodedModularChangeset,
 	};
-}
-
-export function makeModularChangeCodecFamily(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
-	options: ICodecOptions,
-): ICodecFamily<ModularChangeset> {
-	return makeCodecFamily([[0, makeModularChangeCodec(fieldKinds, revisionTagCodec, options)]]);
 }

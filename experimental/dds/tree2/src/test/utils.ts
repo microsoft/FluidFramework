@@ -670,6 +670,10 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	return view.editableTree;
 }
 
+export const requiredBooleanRootSchema = new SchemaBuilder({
+	scope: "RequiredBool",
+}).intoSchema(SchemaBuilder.required(leaf.boolean));
+
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
