@@ -24,13 +24,13 @@ import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
-	const tests = (enableGCSweep?: true) => {
+	const tests = (beforeSweepTimeout: boolean) => {
 		let provider: ITestObjectProvider;
 		let settings = {};
 
 		const sweepTimeoutMs = 100;
 		const configProvider = mockConfigProvider(settings);
-		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0, enableGCSweep };
+		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0, beforeSweepTimeout: true };
 		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {
 				summaryOptions: {
@@ -95,19 +95,16 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		}
 
 		beforeEach(async function () {
-			settings = {};
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-
-			if (enableGCSweep) {
-				settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
-			}
+			settings = {};
+			settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 		});
 
 		it(`Trailing ops ${
-			enableGCSweep ? "after sweep timeout" : "before sweep timeout"
+			beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
 		} makes data store unreferenced without deleting it`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
@@ -141,7 +138,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			// for sweep timeout.
 			// If sweep is disabled, send the trailing op right away.
 			// In both the cases, the data store should be unreferenced but not deleted in the next summary.
-			if (enableGCSweep) {
+			if (beforeSweepTimeout) {
 				await delay(sweepTimeoutMs);
 			}
 			mainDefaultDataStore._root.delete("datastore");
@@ -159,7 +156,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 
 			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
 			// is not deleted in that run.
-			if (!enableGCSweep) {
+			if (!beforeSweepTimeout) {
 				await delay(sweepTimeoutMs);
 			}
 
@@ -190,7 +187,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		it(`Trailing ops ${
-			enableGCSweep ? "after sweep timeout" : "before sweep timeout"
+			beforeSweepTimeout ? "before sweep timeout" : "after sweep timeout"
 		} makes data store referenced without deleting it`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
@@ -225,7 +222,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			// for sweep timeout.
 			// If sweep is disabled, send the trailing op right away.
 			// In both the cases, the data store should be referenced and not deleted in the next summary.
-			if (enableGCSweep) {
+			if (beforeSweepTimeout) {
 				await delay(sweepTimeoutMs);
 			}
 			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
@@ -243,7 +240,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 
 			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
 			// is not deleted in that run.
-			if (!enableGCSweep) {
+			if (!beforeSweepTimeout) {
 				await delay(sweepTimeoutMs);
 			}
 
@@ -274,6 +271,6 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 		});
 	};
 
-	tests();
-	tests(true /** sweepEnabled */);
+	tests(true /** beforeSweepTimeout */);
+	tests(false /** beforeSweepTimeout */);
 });
