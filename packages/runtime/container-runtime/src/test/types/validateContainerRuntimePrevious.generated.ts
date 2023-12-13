@@ -265,26 +265,26 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_GCFeatureMatrix():
     TypeOnly<old.GCFeatureMatrix>;
-declare function use_current_InterfaceDeclaration_GCFeatureMatrix(
+declare function use_current_RemovedInterfaceDeclaration_GCFeatureMatrix(
     use: TypeOnly<current.GCFeatureMatrix>): void;
-use_current_InterfaceDeclaration_GCFeatureMatrix(
+use_current_RemovedInterfaceDeclaration_GCFeatureMatrix(
     get_old_InterfaceDeclaration_GCFeatureMatrix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
+* "RemovedInterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_GCFeatureMatrix():
+declare function get_current_RemovedInterfaceDeclaration_GCFeatureMatrix():
     TypeOnly<current.GCFeatureMatrix>;
 declare function use_old_InterfaceDeclaration_GCFeatureMatrix(
     use: TypeOnly<old.GCFeatureMatrix>): void;
 use_old_InterfaceDeclaration_GCFeatureMatrix(
-    get_current_InterfaceDeclaration_GCFeatureMatrix());
+    get_current_RemovedInterfaceDeclaration_GCFeatureMatrix());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1874,26 +1874,14 @@ use_old_TypeAliasDeclaration_SummaryStage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_TEST_requestSummarizer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_TEST_requestSummarizer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_TEST_requestSummarizer():
-    TypeOnly<typeof old.TEST_requestSummarizer>;
-declare function use_current_FunctionDeclaration_TEST_requestSummarizer(
-    use: TypeOnly<typeof current.TEST_requestSummarizer>): void;
-use_current_FunctionDeclaration_TEST_requestSummarizer(
-    get_old_FunctionDeclaration_TEST_requestSummarizer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_TEST_requestSummarizer": {"backCompat": false}
+* "RemovedFunctionDeclaration_TEST_requestSummarizer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_TEST_requestSummarizer():
-    TypeOnly<typeof current.TEST_requestSummarizer>;
-declare function use_old_FunctionDeclaration_TEST_requestSummarizer(
-    use: TypeOnly<typeof old.TEST_requestSummarizer>): void;
-use_old_FunctionDeclaration_TEST_requestSummarizer(
-    get_current_FunctionDeclaration_TEST_requestSummarizer());
 
 /*
 * Validate forward compat by using old type in place of current type

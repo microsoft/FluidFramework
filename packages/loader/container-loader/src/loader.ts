@@ -16,11 +16,7 @@ import {
 import {
 	ITelemetryBaseLogger,
 	FluidObject,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IRequest,
-	IRequestHeader,
-	IResponse,
 	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
 import {
@@ -62,14 +58,6 @@ export class RelativeLoader implements ILoader {
 		private readonly loader: ILoader | undefined,
 	) {}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public async resolve(request: IRequest): Promise<IContainer> {
 		if (request.url.startsWith("/")) {
 			ensureResolvedUrlDefined(this.container.resolvedUrl);
@@ -91,25 +79,6 @@ export class RelativeLoader implements ILoader {
 			throw new Error("Cannot resolve external containers");
 		}
 		return this.loader.resolve(request);
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		if (request.url.startsWith("/")) {
-			const container = await this.resolve(request);
-			return container.request(request);
-		}
-
-		if (this.loader === undefined) {
-			return {
-				status: 404,
-				value: "Cannot request external containers",
-				mimeType: "plain/text",
-			};
-		}
-		return this.loader.request(request);
 	}
 }
 
@@ -278,34 +247,6 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
- * With an already-resolved container, we can request a component directly, without loading the container again
- * @param container - a resolved container
- * @returns component on the container
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
- */
-export async function requestResolvedObjectFromContainer(
-	container: IContainer,
-	headers?: IRequestHeader,
-): Promise<IResponse> {
-	ensureResolvedUrlDefined(container.resolvedUrl);
-	const parsedUrl = tryParseCompatibleResolvedUrl(container.resolvedUrl.url);
-
-	if (parsedUrl === undefined) {
-		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
-	}
-
-	// eslint-disable-next-line import/no-deprecated
-	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
-	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
-
-	return router.request({
-		url: `${parsedUrl.path}${parsedUrl.query}`,
-		headers,
-	});
-}
-
-/**
  * Manages Fluid resource loading
  * @alpha
  */
@@ -356,14 +297,6 @@ export class Loader implements IHostLoader {
 		});
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter(): IFluidRouter {
-		return this;
-	}
-
 	public async createDetachedContainer(
 		codeDetails: IFluidCodeDetails,
 		createDetachedProps?: {
@@ -405,23 +338,6 @@ export class Loader implements IHostLoader {
 			);
 			return resolved.container;
 		});
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => {
-				const resolved = await this.resolveCore(request);
-				return resolved.container.request({
-					...request,
-					url: `${resolved.parsed.path}${resolved.parsed.query}`,
-				});
-			},
-		);
 	}
 
 	private async resolveCore(

@@ -24,6 +24,13 @@ export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi";
 export { toFlexConfig } from "./toFlexSchema";
 export { SchemaFactoryRecursive } from "./schemaFactoryRecursive";
 
+export {
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
+} from "./schemaCreationUtilities";
+
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalClassTreeTypes from "./internal";
 export { InternalClassTreeTypes };
