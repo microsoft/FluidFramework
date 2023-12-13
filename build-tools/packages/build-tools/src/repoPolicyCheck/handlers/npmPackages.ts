@@ -1439,7 +1439,9 @@ export const handlers: Handler[] = [
 				return "Error parsing JSON file: " + file;
 			}
 
-			if (json.private) {
+			const packageName = json.name;
+
+			if (json.private || packageName.startsWith("@fluid-private")) {
 				// If the package is private, we have nothing to validate.
 				return;
 			}
@@ -1449,9 +1451,7 @@ export const handlers: Handler[] = [
 			// Ensure the package has a dev dependency on `@microsoft/api-extractor`
 			const devDependencies = Object.keys(json.devDependencies ?? {});
 			if (!devDependencies.includes("@microsoft/api-extractor")) {
-				errors.push(
-					`Public package ${json.name} must have a dev dependency on @microsoft/api-extractor`,
-				);
+				errors.push(`Missing dev dependency: "@microsoft/api-extractor"`);
 			}
 
 			/**
@@ -1459,7 +1459,7 @@ export const handlers: Handler[] = [
 			 * @param missingScriptName - The name of the missing script.
 			 */
 			function createMissingScriptErrorString(missingScriptName): string {
-				return `Public package ${json.name} must have "${missingScriptName}" script to generate API metadata`;
+				return `Missing script: "${missingScriptName}"`;
 			}
 
 			const scripts = Object.keys(json.scripts ?? {});
@@ -1469,20 +1469,23 @@ export const handlers: Handler[] = [
 				errors.push(createMissingScriptErrorString("build:docs"));
 			}
 
-			// Ensure `ci:build:docs` script exists
-			if (!scripts.includes("ci:build:docs")) {
-				errors.push(createMissingScriptErrorString("ci:build:docs"));
-			}
-
 			// Ensure `check:release-tags` script exists
 			if (!scripts.includes("check:release-tags")) {
 				errors.push(createMissingScriptErrorString("check:release-tags"));
 			}
 
+			// Ensure `ci:build:docs` script exists
+			if (!scripts.includes("ci:build:docs")) {
+				errors.push(createMissingScriptErrorString("ci:build:docs"));
+			}
+
 			// TODO: any other scripts to check? `apis`? `api-extractor:*`?
 
 			if (errors.length > 0) {
-				return `package.json API-Extractor violations: ${newline}${errors.join(newline)}`;
+				return [
+					`API-Extractor violations for public package "${json.name}":`,
+					...errors,
+				].join(`${newline}* `);
 			}
 		},
 		// Fixes the following issues:
@@ -1494,7 +1497,7 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				// If the package is private, there is nothing to fix.
-				if (json.private === true) {
+				if (json.private === true || json.name.startsWith("@fluid-private")) {
 					return;
 				}
 
@@ -1513,11 +1516,11 @@ export const handlers: Handler[] = [
 
 				// Add missing scripts.
 				addScriptIfMissing("build:docs", "fluid-build . --task api");
-				addScriptIfMissing("ci:build:docs", "api-extractor run");
 				addScriptIfMissing(
 					"check:release-tags",
 					"api-extractor run --local --config ./api-extractor-lint.json",
 				);
+				addScriptIfMissing("ci:build:docs", "api-extractor run");
 			});
 
 			return result;
