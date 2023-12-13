@@ -321,9 +321,9 @@ async function computeInMemoryFullGitTree(
 ): Promise<IFullGitTree> {
 	const inMemoryWriteSummaryTreeOptions: IWriteSummaryTreeOptions = {
 		repoManager: inMemoryRepoManager,
-		enableLowIoWrite: writeSummaryTreeOptions.enableLowIoWrite,
-		precomputeFullTree: writeSummaryTreeOptions.precomputeFullTree,
-		currentPath: writeSummaryTreeOptions.currentPath,
+		enableLowIoWrite: true,
+		precomputeFullTree: true,
+		currentPath: "",
 		// Use blank caches caches for in-memory repo manager. Otherwise, we will be referencing
 		// blobs in storage that are not in-memory.
 		entryHandleToObjectShaCache: new Map<string, string>(),
@@ -343,7 +343,7 @@ async function computeInMemoryFullGitTree(
 		);
 		for (const treeEntry of previousSummaryMemoryFullGitTree.tree.tree) {
 			// Update entry handle to object sha map for reference when writing summary handles.
-			writeSummaryTreeOptions.entryHandleToObjectShaCache.set(
+			inMemoryWriteSummaryTreeOptions.entryHandleToObjectShaCache.set(
 				`${documentRef.object.sha}/${treeEntry.path}`,
 				treeEntry.sha,
 			);
@@ -362,7 +362,7 @@ async function computeInMemoryFullGitTree(
 			// This is caused by the previous channel summary tree being missing.
 			// Fetch the missing tree, write it into the in-memory storage, then retry.
 			const missingTreeSha = error.data.what;
-			const missingTree = await options.repoManager.getTree(
+			const missingTree = await writeSummaryTreeOptions.repoManager.getTree(
 				missingTreeSha,
 				true /* recursive */,
 			);
