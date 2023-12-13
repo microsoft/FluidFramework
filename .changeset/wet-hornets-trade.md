@@ -5,13 +5,14 @@
 "@fluidframework/tinylicious-client": major
 ---
 
-Removes Deprecated FluidStatic Classes
+azure-client: Removed deprecated FluidStatic classes
 
-This change removes a number of deprecated and unnecessarily exposed FluidStatic classes.
-The removed classes are as follows:
+Several FluidStatic classes were unnecessarily exposed and were deprecated in an earlier release. They have been replaced with creation functions. This helps us
+keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
+public surface area of downstream packages. The removed classes are as follows:
 
--   AzureAudience
--   TinyliciousAudience
--   DOProviderContainerRuntimeFactory
--   FluidContainer
--   ServiceAudience
+-   `AzureAudience` (use `IAzureAudience` instead)
+-   `TinyliciousAudience` (use `ITinyliciousAudience` instead)
+-   `DOProviderContainerRuntimeFactory`
+-   `FluidContainer`
+-   `ServiceAudience`

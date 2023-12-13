@@ -3,8 +3,11 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-Removed `resolveHandle` and `IFluidHandleContext` from ContainerRuntime interfaces
+container-runtime-definitions: Removed resolveHandle and IFluidHandleContext from ContainerRuntime interfaces
 
-The `IContainerRuntime.resolveHandle(...)` method and the `IContainerRuntimeBase.IFluidHandleContext` property have been removed. Please remove all usage of these APIs.
+The `IContainerRuntime.resolveHandle(...)` method and the `IContainerRuntimeBase.IFluidHandleContext` property have been
+removed. Please remove all usage of these APIs.
 
-See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See
+[Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+for more details.

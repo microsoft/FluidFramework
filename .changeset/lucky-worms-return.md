@@ -4,7 +4,7 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-Removed request pattern from `ContainerRuntime`, `IRuntime`, and `IContainerRuntimeBase`
+container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase
 
 The `request(...)` method and `IFluidRouter` property have been removed from the following places:
 

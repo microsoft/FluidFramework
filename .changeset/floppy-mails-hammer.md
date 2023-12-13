@@ -3,8 +3,11 @@
 "@fluidframework/container-loader": major
 ---
 
-Removed `request(...)` and `IFluidRouter` from `ILoader` and `Loader`
+container-loader: Removed request(...) and IFluidRouter from ILoader and Loader
 
-The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
+The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after
+calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
 
-See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See
+[Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+for more details.

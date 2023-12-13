@@ -196,7 +196,7 @@ export class OdspClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x878 /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}
