@@ -57,10 +57,9 @@ export type TreeNodeSchema<
 	Kind extends NodeKind = NodeKind,
 	TNode = unknown,
 	TBuild = never,
-	ImplicitlyConstructable extends boolean = boolean,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
+	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild>;
 
 /**
  * Schema which is not a class.
@@ -75,8 +74,7 @@ export interface TreeNodeSchemaNonClass<
 	out Kind extends NodeKind = NodeKind,
 	out TNode = unknown,
 	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+> extends TreeNodeSchemaCore<Name, Kind> {
 	create(data: TInsertable): TNode;
 }
 
@@ -95,8 +93,7 @@ export interface TreeNodeSchemaClass<
 	out Kind extends NodeKind = NodeKind,
 	out TNode = unknown,
 	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+> extends TreeNodeSchemaCore<Name, Kind> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -112,25 +109,13 @@ export interface TreeNodeSchemaClass<
  * @beta
  */
 export interface TreeNodeSchemaCore<
-	out Name extends string,
-	out Kind extends NodeKind,
-	out ImplicitlyConstructable extends boolean,
+	out Name extends string = string,
+	out Kind extends NodeKind = NodeKind,
+	out Specification = unknown,
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
-	readonly info: unknown;
-
-	/**
-	 * When constructing insertable content,
-	 * data that could be passed to the node's constructor can be used instead of an {@link Unhydrated} node
-	 * iff implicitlyConstructable is true.
-	 * @privateRemarks
-	 * Currently the logic for traversing insertable content,
-	 * both to build trees and to hydrate them does not defer to the schema classes to handle the policy,
-	 * so if their constructors differ from what is supported, some cases will not work.
-	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
-	 */
-	readonly implicitlyConstructable: ImplicitlyConstructable;
+	readonly info: Specification;
 }
 
 /**
@@ -300,7 +285,7 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
  * @beta
  */
 export type InsertableTypedNode<T extends TreeNodeSchema> =
-	| (T["implicitlyConstructable"] extends true ? NodeBuilderData<T> : never)
+	| NodeBuilderData<T>
 	| Unhydrated<NodeFromSchema<T>>;
 
 /**

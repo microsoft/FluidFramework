@@ -63,7 +63,8 @@ function f(n: NodeMap): Note[] {
 
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const config1 = new TreeConfiguration(
+// TODO: this should be possible, and this approach is needed in some cases where types are ambiguous:
+const config = new TreeConfiguration(
 	Canvas,
 	() =>
 		new Canvas({
@@ -73,8 +74,10 @@ const config1 = new TreeConfiguration(
 			]),
 		}),
 );
-
-const config2 = new TreeConfiguration(
+// Currently the constructors of lists and maps cannot be used to make unhydrated nodes.
+// In this case the root is an object, and the types are unambiguous,
+// so this workaround is possible, but in general it is not always possible.
+const configWorkaround = new TreeConfiguration(
 	Canvas,
 	() =>
 		new Canvas({
@@ -87,7 +90,7 @@ const config2 = new TreeConfiguration(
 );
 
 function setup(tree: ITree): Note[] {
-	const view: TreeView<Canvas> = tree.schematize(config1);
+	const view: TreeView<Canvas> = tree.schematize(configWorkaround);
 	const stuff = view.root.stuff;
 	if (stuff instanceof NodeMap) {
 		return f(stuff);
@@ -109,12 +112,5 @@ describe("Class based end to end example", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 		setup(theTree);
-	});
-
-	// Confirm that the alternative syntax for the config from the example above (config2) actually works.
-	it("config2", () => {
-		const factory = new TreeFactory({});
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
-		const view: TreeView<Canvas> = theTree.schematize(config2);
 	});
 });
