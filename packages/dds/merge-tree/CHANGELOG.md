@@ -1,5 +1,16 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   sequence: Deprecated ICombiningOp, PropertiesRollback.Rewrite, and SharedString.annotateMarkerNotifyConsensus ([#18318](https://github.com/microsoft/FluidFramework/issues/18318)) [e67c2cac5f](https://github.com/microsoft/FluidFramework/commits/e67c2cac5f275fc5c875c0bc044bbb72aaf76648)
+
+    The `ICombiningOp` and its usage in various APIs has been deprecated. APIs affected include
+    `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`. `SharedString.annotateMarkerNotifyConsensus`
+    has also been deprecated, because it is related to combining ops. This functionality had no test coverage and was
+    largely unused.
+
 ## 2.0.0-internal.7.3.0
 
 ### Minor Changes
