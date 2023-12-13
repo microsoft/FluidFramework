@@ -36,8 +36,6 @@ module.exports = {
 				const sourceCode = context.sourceCode;
 				const comments = sourceCode.getCommentsInside(node);
 
-				// console.log("comments :", comments);
-
 				comments.forEach((comment) => {
 					// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
 					const formattedComment = `/** ${comment.value} */`;
