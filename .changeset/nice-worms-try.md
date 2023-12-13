@@ -4,7 +4,7 @@
 "@fluidframework/core-interfaces": major
 ---
 
-Removed `getRootDataStore`
+container-runtime-definitions: Removed getRootDataStore
 
 The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
 
