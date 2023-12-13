@@ -1,5 +1,37 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
+    not longer used.
+
+-   container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from the following places:
+
+    -   `ContainerRuntime`
+    -   `IRuntime`
+    -   `IContainerRuntimeBase`
+
+    Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   container-runtime: Removed `ContainerRuntime.load(...)` [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The static method `ContainerRuntime.load(...)` has been removed. Please migrate all usage of this method to
+    `ContainerRuntime.loadRuntime(...)`.
+
+-   container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
 ## 2.0.0-internal.7.4.0
 
 ### Minor Changes
