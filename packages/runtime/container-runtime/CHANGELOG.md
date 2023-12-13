@@ -1,5 +1,23 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   container-runtime: (GC) Tombstoned objects will fail to load by default ([#18651](https://github.com/microsoft/FluidFramework/issues/18651)) [2245c0578e](https://github.com/microsoft/FluidFramework/commits/2245c0578e756c944caa5c22311eaafbb73452bb)
+
+    Previously, Tombstoned objects would only trigger informational logs by default, with an option via config to also cause
+    errors to be thrown on load. Now, failure to load is the default with an option to disable it if necessary. This
+    reflects the purpose of the Tombstone stage which is to mimic the user experience of objects being deleted.
+
+-   container-runtime/runtime-definitions: `IdCompressor` and related types deprecated ([#18749](https://github.com/microsoft/FluidFramework/issues/18749)) [6f070179de](https://github.com/microsoft/FluidFramework/commits/6f070179ded7c2f4398252f75485e85b39725419)
+
+    `IdCompressor` and related types from the @fluidframework/container-runtime and @fluidframework/runtime-definitions
+    packages have been deprecated. They can now be found in a new package, @fluidframework/id-compressor.
+
+    The `IdCompressor` class is deprecated even in the new package. Consumers should use the interfaces, `IIdCompressor` and
+    `IIdCompressorCore`, in conjunction with the factory function `createIdCompressor` instead.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.
