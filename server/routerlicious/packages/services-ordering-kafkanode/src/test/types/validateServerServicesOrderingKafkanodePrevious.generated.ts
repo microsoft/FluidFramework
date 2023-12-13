@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IKafkaResources():
     TypeOnly<old.IKafkaResources>;
 declare function use_current_InterfaceDeclaration_IKafkaResources(
-    use: TypeOnly<current.IKafkaResources>): void;
+    use: TypeOnly<current.IKafkaResources>);
 use_current_InterfaceDeclaration_IKafkaResources(
     get_old_InterfaceDeclaration_IKafkaResources());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IKafkaResources(
 declare function get_current_InterfaceDeclaration_IKafkaResources():
     TypeOnly<current.IKafkaResources>;
 declare function use_old_InterfaceDeclaration_IKafkaResources(
-    use: TypeOnly<old.IKafkaResources>): void;
+    use: TypeOnly<old.IKafkaResources>);
 use_old_InterfaceDeclaration_IKafkaResources(
     get_current_InterfaceDeclaration_IKafkaResources());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IKafkaResources(
 declare function get_old_ClassDeclaration_KafkaNodeConsumer():
     TypeOnly<old.KafkaNodeConsumer>;
 declare function use_current_ClassDeclaration_KafkaNodeConsumer(
-    use: TypeOnly<current.KafkaNodeConsumer>): void;
+    use: TypeOnly<current.KafkaNodeConsumer>);
 use_current_ClassDeclaration_KafkaNodeConsumer(
     get_old_ClassDeclaration_KafkaNodeConsumer());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_KafkaNodeConsumer(
 declare function get_current_ClassDeclaration_KafkaNodeConsumer():
     TypeOnly<current.KafkaNodeConsumer>;
 declare function use_old_ClassDeclaration_KafkaNodeConsumer(
-    use: TypeOnly<old.KafkaNodeConsumer>): void;
+    use: TypeOnly<old.KafkaNodeConsumer>);
 use_old_ClassDeclaration_KafkaNodeConsumer(
     get_current_ClassDeclaration_KafkaNodeConsumer());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_KafkaNodeConsumer(
 declare function get_old_ClassDeclaration_KafkaNodeProducer():
     TypeOnly<old.KafkaNodeProducer>;
 declare function use_current_ClassDeclaration_KafkaNodeProducer(
-    use: TypeOnly<current.KafkaNodeProducer>): void;
+    use: TypeOnly<current.KafkaNodeProducer>);
 use_current_ClassDeclaration_KafkaNodeProducer(
     get_old_ClassDeclaration_KafkaNodeProducer());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_KafkaNodeProducer(
 declare function get_current_ClassDeclaration_KafkaNodeProducer():
     TypeOnly<current.KafkaNodeProducer>;
 declare function use_old_ClassDeclaration_KafkaNodeProducer(
-    use: TypeOnly<old.KafkaNodeProducer>): void;
+    use: TypeOnly<old.KafkaNodeProducer>);
 use_old_ClassDeclaration_KafkaNodeProducer(
     get_current_ClassDeclaration_KafkaNodeProducer());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_KafkaNodeProducer(
 declare function get_old_ClassDeclaration_KafkaResources():
     TypeOnly<old.KafkaResources>;
 declare function use_current_ClassDeclaration_KafkaResources(
-    use: TypeOnly<current.KafkaResources>): void;
+    use: TypeOnly<current.KafkaResources>);
 use_current_ClassDeclaration_KafkaResources(
     get_old_ClassDeclaration_KafkaResources());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_KafkaResources(
 declare function get_current_ClassDeclaration_KafkaResources():
     TypeOnly<current.KafkaResources>;
 declare function use_old_ClassDeclaration_KafkaResources(
-    use: TypeOnly<old.KafkaResources>): void;
+    use: TypeOnly<old.KafkaResources>);
 use_old_ClassDeclaration_KafkaResources(
     get_current_ClassDeclaration_KafkaResources());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_KafkaResources(
 declare function get_old_ClassDeclaration_KafkaResourcesFactory():
     TypeOnly<old.KafkaResourcesFactory>;
 declare function use_current_ClassDeclaration_KafkaResourcesFactory(
-    use: TypeOnly<current.KafkaResourcesFactory>): void;
+    use: TypeOnly<current.KafkaResourcesFactory>);
 use_current_ClassDeclaration_KafkaResourcesFactory(
     get_old_ClassDeclaration_KafkaResourcesFactory());
 
@@ -137,6 +137,6 @@ use_current_ClassDeclaration_KafkaResourcesFactory(
 declare function get_current_ClassDeclaration_KafkaResourcesFactory():
     TypeOnly<current.KafkaResourcesFactory>;
 declare function use_old_ClassDeclaration_KafkaResourcesFactory(
-    use: TypeOnly<old.KafkaResourcesFactory>): void;
+    use: TypeOnly<old.KafkaResourcesFactory>);
 use_old_ClassDeclaration_KafkaResourcesFactory(
     get_current_ClassDeclaration_KafkaResourcesFactory());

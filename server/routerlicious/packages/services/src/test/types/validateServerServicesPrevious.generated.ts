@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_BasicWebServerFactory():
     TypeOnly<old.BasicWebServerFactory>;
 declare function use_current_ClassDeclaration_BasicWebServerFactory(
-    use: TypeOnly<current.BasicWebServerFactory>): void;
+    use: TypeOnly<current.BasicWebServerFactory>);
 use_current_ClassDeclaration_BasicWebServerFactory(
     get_old_ClassDeclaration_BasicWebServerFactory());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_BasicWebServerFactory(
 declare function get_current_ClassDeclaration_BasicWebServerFactory():
     TypeOnly<current.BasicWebServerFactory>;
 declare function use_old_ClassDeclaration_BasicWebServerFactory(
-    use: TypeOnly<old.BasicWebServerFactory>): void;
+    use: TypeOnly<old.BasicWebServerFactory>);
 use_old_ClassDeclaration_BasicWebServerFactory(
     get_current_ClassDeclaration_BasicWebServerFactory());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_BasicWebServerFactory(
 declare function get_old_ClassDeclaration_ClientManager():
     TypeOnly<old.ClientManager>;
 declare function use_current_ClassDeclaration_ClientManager(
-    use: TypeOnly<current.ClientManager>): void;
+    use: TypeOnly<current.ClientManager>);
 use_current_ClassDeclaration_ClientManager(
     get_old_ClassDeclaration_ClientManager());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_ClientManager(
 declare function get_current_ClassDeclaration_ClientManager():
     TypeOnly<current.ClientManager>;
 declare function use_old_ClassDeclaration_ClientManager(
-    use: TypeOnly<old.ClientManager>): void;
+    use: TypeOnly<old.ClientManager>);
 use_old_ClassDeclaration_ClientManager(
     get_current_ClassDeclaration_ClientManager());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_ClientManager(
 declare function get_old_TypeAliasDeclaration_ConnectionNotAvailableMode():
     TypeOnly<old.ConnectionNotAvailableMode>;
 declare function use_current_TypeAliasDeclaration_ConnectionNotAvailableMode(
-    use: TypeOnly<current.ConnectionNotAvailableMode>): void;
+    use: TypeOnly<current.ConnectionNotAvailableMode>);
 use_current_TypeAliasDeclaration_ConnectionNotAvailableMode(
     get_old_TypeAliasDeclaration_ConnectionNotAvailableMode());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_ConnectionNotAvailableMode(
 declare function get_current_TypeAliasDeclaration_ConnectionNotAvailableMode():
     TypeOnly<current.ConnectionNotAvailableMode>;
 declare function use_old_TypeAliasDeclaration_ConnectionNotAvailableMode(
-    use: TypeOnly<old.ConnectionNotAvailableMode>): void;
+    use: TypeOnly<old.ConnectionNotAvailableMode>);
 use_old_TypeAliasDeclaration_ConnectionNotAvailableMode(
     get_current_TypeAliasDeclaration_ConnectionNotAvailableMode());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_ConnectionNotAvailableMode(
 declare function get_old_ClassDeclaration_DeltaManager():
     TypeOnly<old.DeltaManager>;
 declare function use_current_ClassDeclaration_DeltaManager(
-    use: TypeOnly<current.DeltaManager>): void;
+    use: TypeOnly<current.DeltaManager>);
 use_current_ClassDeclaration_DeltaManager(
     get_old_ClassDeclaration_DeltaManager());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_DeltaManager(
 declare function get_current_ClassDeclaration_DeltaManager():
     TypeOnly<current.DeltaManager>;
 declare function use_old_ClassDeclaration_DeltaManager(
-    use: TypeOnly<old.DeltaManager>): void;
+    use: TypeOnly<old.DeltaManager>);
 use_old_ClassDeclaration_DeltaManager(
     get_current_ClassDeclaration_DeltaManager());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_DeltaManager(
 declare function get_old_ClassDeclaration_DocumentManager():
     TypeOnly<old.DocumentManager>;
 declare function use_current_ClassDeclaration_DocumentManager(
-    use: TypeOnly<current.DocumentManager>): void;
+    use: TypeOnly<current.DocumentManager>);
 use_current_ClassDeclaration_DocumentManager(
     get_old_ClassDeclaration_DocumentManager());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_DocumentManager(
 declare function get_current_ClassDeclaration_DocumentManager():
     TypeOnly<current.DocumentManager>;
 declare function use_old_ClassDeclaration_DocumentManager(
-    use: TypeOnly<old.DocumentManager>): void;
+    use: TypeOnly<old.DocumentManager>);
 use_old_ClassDeclaration_DocumentManager(
     get_current_ClassDeclaration_DocumentManager());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_DocumentManager(
 declare function get_old_ClassDeclaration_DocumentStorage():
     TypeOnly<old.DocumentStorage>;
 declare function use_current_ClassDeclaration_DocumentStorage(
-    use: TypeOnly<current.DocumentStorage>): void;
+    use: TypeOnly<current.DocumentStorage>);
 use_current_ClassDeclaration_DocumentStorage(
     get_old_ClassDeclaration_DocumentStorage());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_DocumentStorage(
 declare function get_current_ClassDeclaration_DocumentStorage():
     TypeOnly<current.DocumentStorage>;
 declare function use_old_ClassDeclaration_DocumentStorage(
-    use: TypeOnly<old.DocumentStorage>): void;
+    use: TypeOnly<old.DocumentStorage>);
 use_old_ClassDeclaration_DocumentStorage(
     get_current_ClassDeclaration_DocumentStorage());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_DocumentStorage(
 declare function get_old_ClassDeclaration_HttpServer():
     TypeOnly<old.HttpServer>;
 declare function use_current_ClassDeclaration_HttpServer(
-    use: TypeOnly<current.HttpServer>): void;
+    use: TypeOnly<current.HttpServer>);
 use_current_ClassDeclaration_HttpServer(
     get_old_ClassDeclaration_HttpServer());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_HttpServer(
 declare function get_current_ClassDeclaration_HttpServer():
     TypeOnly<current.HttpServer>;
 declare function use_old_ClassDeclaration_HttpServer(
-    use: TypeOnly<old.HttpServer>): void;
+    use: TypeOnly<old.HttpServer>);
 use_old_ClassDeclaration_HttpServer(
     get_current_ClassDeclaration_HttpServer());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_HttpServer(
 declare function get_old_InterfaceDeclaration_IHttpServerConfig():
     TypeOnly<old.IHttpServerConfig>;
 declare function use_current_InterfaceDeclaration_IHttpServerConfig(
-    use: TypeOnly<current.IHttpServerConfig>): void;
+    use: TypeOnly<current.IHttpServerConfig>);
 use_current_InterfaceDeclaration_IHttpServerConfig(
     get_old_InterfaceDeclaration_IHttpServerConfig());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IHttpServerConfig(
 declare function get_current_InterfaceDeclaration_IHttpServerConfig():
     TypeOnly<current.IHttpServerConfig>;
 declare function use_old_InterfaceDeclaration_IHttpServerConfig(
-    use: TypeOnly<old.IHttpServerConfig>): void;
+    use: TypeOnly<old.IHttpServerConfig>);
 use_old_InterfaceDeclaration_IHttpServerConfig(
     get_current_InterfaceDeclaration_IHttpServerConfig());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IHttpServerConfig(
 declare function get_old_InterfaceDeclaration_ISocketIoRedisConnection():
     TypeOnly<old.ISocketIoRedisConnection>;
 declare function use_current_InterfaceDeclaration_ISocketIoRedisConnection(
-    use: TypeOnly<current.ISocketIoRedisConnection>): void;
+    use: TypeOnly<current.ISocketIoRedisConnection>);
 use_current_InterfaceDeclaration_ISocketIoRedisConnection(
     get_old_InterfaceDeclaration_ISocketIoRedisConnection());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_ISocketIoRedisConnection(
 declare function get_current_InterfaceDeclaration_ISocketIoRedisConnection():
     TypeOnly<current.ISocketIoRedisConnection>;
 declare function use_old_InterfaceDeclaration_ISocketIoRedisConnection(
-    use: TypeOnly<old.ISocketIoRedisConnection>): void;
+    use: TypeOnly<old.ISocketIoRedisConnection>);
 use_old_InterfaceDeclaration_ISocketIoRedisConnection(
     get_current_InterfaceDeclaration_ISocketIoRedisConnection());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_ISocketIoRedisConnection(
 declare function get_old_InterfaceDeclaration_ISocketIoRedisOptions():
     TypeOnly<old.ISocketIoRedisOptions>;
 declare function use_current_InterfaceDeclaration_ISocketIoRedisOptions(
-    use: TypeOnly<current.ISocketIoRedisOptions>): void;
+    use: TypeOnly<current.ISocketIoRedisOptions>);
 use_current_InterfaceDeclaration_ISocketIoRedisOptions(
     get_old_InterfaceDeclaration_ISocketIoRedisOptions());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_ISocketIoRedisOptions(
 declare function get_current_InterfaceDeclaration_ISocketIoRedisOptions():
     TypeOnly<current.ISocketIoRedisOptions>;
 declare function use_old_InterfaceDeclaration_ISocketIoRedisOptions(
-    use: TypeOnly<old.ISocketIoRedisOptions>): void;
+    use: TypeOnly<old.ISocketIoRedisOptions>);
 use_old_InterfaceDeclaration_ISocketIoRedisOptions(
     get_current_InterfaceDeclaration_ISocketIoRedisOptions());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_ISocketIoRedisOptions(
 declare function get_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection():
     TypeOnly<old.ISocketIoRedisSubscriptionConnection>;
 declare function use_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
-    use: TypeOnly<current.ISocketIoRedisSubscriptionConnection>): void;
+    use: TypeOnly<current.ISocketIoRedisSubscriptionConnection>);
 use_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
     get_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
 declare function get_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection():
     TypeOnly<current.ISocketIoRedisSubscriptionConnection>;
 declare function use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
-    use: TypeOnly<old.ISocketIoRedisSubscriptionConnection>): void;
+    use: TypeOnly<old.ISocketIoRedisSubscriptionConnection>);
 use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
     get_current_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_ISocketIoRedisSubscriptionConnection(
 declare function get_old_VariableDeclaration_IsEphemeralContainer():
     TypeOnly<typeof old.IsEphemeralContainer>;
 declare function use_current_VariableDeclaration_IsEphemeralContainer(
-    use: TypeOnly<typeof current.IsEphemeralContainer>): void;
+    use: TypeOnly<typeof current.IsEphemeralContainer>);
 use_current_VariableDeclaration_IsEphemeralContainer(
     get_old_VariableDeclaration_IsEphemeralContainer());
 
@@ -305,7 +305,7 @@ use_current_VariableDeclaration_IsEphemeralContainer(
 declare function get_current_VariableDeclaration_IsEphemeralContainer():
     TypeOnly<typeof current.IsEphemeralContainer>;
 declare function use_old_VariableDeclaration_IsEphemeralContainer(
-    use: TypeOnly<typeof old.IsEphemeralContainer>): void;
+    use: TypeOnly<typeof old.IsEphemeralContainer>);
 use_old_VariableDeclaration_IsEphemeralContainer(
     get_current_VariableDeclaration_IsEphemeralContainer());
 
@@ -317,7 +317,7 @@ use_old_VariableDeclaration_IsEphemeralContainer(
 declare function get_old_ClassDeclaration_MongoCollection():
     TypeOnly<old.MongoCollection<any>>;
 declare function use_current_ClassDeclaration_MongoCollection(
-    use: TypeOnly<current.MongoCollection<any>>): void;
+    use: TypeOnly<current.MongoCollection<any>>);
 use_current_ClassDeclaration_MongoCollection(
     get_old_ClassDeclaration_MongoCollection());
 
@@ -329,7 +329,7 @@ use_current_ClassDeclaration_MongoCollection(
 declare function get_current_ClassDeclaration_MongoCollection():
     TypeOnly<current.MongoCollection<any>>;
 declare function use_old_ClassDeclaration_MongoCollection(
-    use: TypeOnly<old.MongoCollection<any>>): void;
+    use: TypeOnly<old.MongoCollection<any>>);
 use_old_ClassDeclaration_MongoCollection(
     get_current_ClassDeclaration_MongoCollection());
 
@@ -341,7 +341,7 @@ use_old_ClassDeclaration_MongoCollection(
 declare function get_old_ClassDeclaration_MongoDb():
     TypeOnly<old.MongoDb>;
 declare function use_current_ClassDeclaration_MongoDb(
-    use: TypeOnly<current.MongoDb>): void;
+    use: TypeOnly<current.MongoDb>);
 use_current_ClassDeclaration_MongoDb(
     get_old_ClassDeclaration_MongoDb());
 
@@ -353,7 +353,7 @@ use_current_ClassDeclaration_MongoDb(
 declare function get_current_ClassDeclaration_MongoDb():
     TypeOnly<current.MongoDb>;
 declare function use_old_ClassDeclaration_MongoDb(
-    use: TypeOnly<old.MongoDb>): void;
+    use: TypeOnly<old.MongoDb>);
 use_old_ClassDeclaration_MongoDb(
     get_current_ClassDeclaration_MongoDb());
 
@@ -365,7 +365,7 @@ use_old_ClassDeclaration_MongoDb(
 declare function get_old_ClassDeclaration_MongoDbFactory():
     TypeOnly<old.MongoDbFactory>;
 declare function use_current_ClassDeclaration_MongoDbFactory(
-    use: TypeOnly<current.MongoDbFactory>): void;
+    use: TypeOnly<current.MongoDbFactory>);
 use_current_ClassDeclaration_MongoDbFactory(
     get_old_ClassDeclaration_MongoDbFactory());
 
@@ -377,7 +377,7 @@ use_current_ClassDeclaration_MongoDbFactory(
 declare function get_current_ClassDeclaration_MongoDbFactory():
     TypeOnly<current.MongoDbFactory>;
 declare function use_old_ClassDeclaration_MongoDbFactory(
-    use: TypeOnly<old.MongoDbFactory>): void;
+    use: TypeOnly<old.MongoDbFactory>);
 use_old_ClassDeclaration_MongoDbFactory(
     get_current_ClassDeclaration_MongoDbFactory());
 
@@ -389,7 +389,7 @@ use_old_ClassDeclaration_MongoDbFactory(
 declare function get_old_ClassDeclaration_NodeAllowList():
     TypeOnly<old.NodeAllowList>;
 declare function use_current_ClassDeclaration_NodeAllowList(
-    use: TypeOnly<current.NodeAllowList>): void;
+    use: TypeOnly<current.NodeAllowList>);
 use_current_ClassDeclaration_NodeAllowList(
     get_old_ClassDeclaration_NodeAllowList());
 
@@ -401,7 +401,7 @@ use_current_ClassDeclaration_NodeAllowList(
 declare function get_current_ClassDeclaration_NodeAllowList():
     TypeOnly<current.NodeAllowList>;
 declare function use_old_ClassDeclaration_NodeAllowList(
-    use: TypeOnly<old.NodeAllowList>): void;
+    use: TypeOnly<old.NodeAllowList>);
 use_old_ClassDeclaration_NodeAllowList(
     get_current_ClassDeclaration_NodeAllowList());
 
@@ -413,7 +413,7 @@ use_old_ClassDeclaration_NodeAllowList(
 declare function get_old_ClassDeclaration_NodeCodeLoader():
     TypeOnly<old.NodeCodeLoader>;
 declare function use_current_ClassDeclaration_NodeCodeLoader(
-    use: TypeOnly<current.NodeCodeLoader>): void;
+    use: TypeOnly<current.NodeCodeLoader>);
 use_current_ClassDeclaration_NodeCodeLoader(
     get_old_ClassDeclaration_NodeCodeLoader());
 
@@ -425,7 +425,7 @@ use_current_ClassDeclaration_NodeCodeLoader(
 declare function get_current_ClassDeclaration_NodeCodeLoader():
     TypeOnly<current.NodeCodeLoader>;
 declare function use_old_ClassDeclaration_NodeCodeLoader(
-    use: TypeOnly<old.NodeCodeLoader>): void;
+    use: TypeOnly<old.NodeCodeLoader>);
 use_old_ClassDeclaration_NodeCodeLoader(
     get_current_ClassDeclaration_NodeCodeLoader());
 
@@ -437,7 +437,7 @@ use_old_ClassDeclaration_NodeCodeLoader(
 declare function get_old_ClassDeclaration_RedisCache():
     TypeOnly<old.RedisCache>;
 declare function use_current_ClassDeclaration_RedisCache(
-    use: TypeOnly<current.RedisCache>): void;
+    use: TypeOnly<current.RedisCache>);
 use_current_ClassDeclaration_RedisCache(
     get_old_ClassDeclaration_RedisCache());
 
@@ -449,7 +449,7 @@ use_current_ClassDeclaration_RedisCache(
 declare function get_current_ClassDeclaration_RedisCache():
     TypeOnly<current.RedisCache>;
 declare function use_old_ClassDeclaration_RedisCache(
-    use: TypeOnly<old.RedisCache>): void;
+    use: TypeOnly<old.RedisCache>);
 use_old_ClassDeclaration_RedisCache(
     get_current_ClassDeclaration_RedisCache());
 
@@ -461,7 +461,7 @@ use_old_ClassDeclaration_RedisCache(
 declare function get_old_ClassDeclaration_RedisSocketIoAdapter():
     TypeOnly<old.RedisSocketIoAdapter>;
 declare function use_current_ClassDeclaration_RedisSocketIoAdapter(
-    use: TypeOnly<current.RedisSocketIoAdapter>): void;
+    use: TypeOnly<current.RedisSocketIoAdapter>);
 use_current_ClassDeclaration_RedisSocketIoAdapter(
     get_old_ClassDeclaration_RedisSocketIoAdapter());
 
@@ -473,7 +473,7 @@ use_current_ClassDeclaration_RedisSocketIoAdapter(
 declare function get_current_ClassDeclaration_RedisSocketIoAdapter():
     TypeOnly<current.RedisSocketIoAdapter>;
 declare function use_old_ClassDeclaration_RedisSocketIoAdapter(
-    use: TypeOnly<old.RedisSocketIoAdapter>): void;
+    use: TypeOnly<old.RedisSocketIoAdapter>);
 use_old_ClassDeclaration_RedisSocketIoAdapter(
     get_current_ClassDeclaration_RedisSocketIoAdapter());
 
@@ -485,7 +485,7 @@ use_old_ClassDeclaration_RedisSocketIoAdapter(
 declare function get_old_ClassDeclaration_RedisThrottleAndUsageStorageManager():
     TypeOnly<old.RedisThrottleAndUsageStorageManager>;
 declare function use_current_ClassDeclaration_RedisThrottleAndUsageStorageManager(
-    use: TypeOnly<current.RedisThrottleAndUsageStorageManager>): void;
+    use: TypeOnly<current.RedisThrottleAndUsageStorageManager>);
 use_current_ClassDeclaration_RedisThrottleAndUsageStorageManager(
     get_old_ClassDeclaration_RedisThrottleAndUsageStorageManager());
 
@@ -497,7 +497,7 @@ use_current_ClassDeclaration_RedisThrottleAndUsageStorageManager(
 declare function get_current_ClassDeclaration_RedisThrottleAndUsageStorageManager():
     TypeOnly<current.RedisThrottleAndUsageStorageManager>;
 declare function use_old_ClassDeclaration_RedisThrottleAndUsageStorageManager(
-    use: TypeOnly<old.RedisThrottleAndUsageStorageManager>): void;
+    use: TypeOnly<old.RedisThrottleAndUsageStorageManager>);
 use_old_ClassDeclaration_RedisThrottleAndUsageStorageManager(
     get_current_ClassDeclaration_RedisThrottleAndUsageStorageManager());
 
@@ -509,7 +509,7 @@ use_old_ClassDeclaration_RedisThrottleAndUsageStorageManager(
 declare function get_old_TypeAliasDeclaration_RequestListener():
     TypeOnly<old.RequestListener>;
 declare function use_current_TypeAliasDeclaration_RequestListener(
-    use: TypeOnly<current.RequestListener>): void;
+    use: TypeOnly<current.RequestListener>);
 use_current_TypeAliasDeclaration_RequestListener(
     get_old_TypeAliasDeclaration_RequestListener());
 
@@ -521,7 +521,7 @@ use_current_TypeAliasDeclaration_RequestListener(
 declare function get_current_TypeAliasDeclaration_RequestListener():
     TypeOnly<current.RequestListener>;
 declare function use_old_TypeAliasDeclaration_RequestListener(
-    use: TypeOnly<old.RequestListener>): void;
+    use: TypeOnly<old.RequestListener>);
 use_old_TypeAliasDeclaration_RequestListener(
     get_current_TypeAliasDeclaration_RequestListener());
 
@@ -533,7 +533,7 @@ use_old_TypeAliasDeclaration_RequestListener(
 declare function get_old_ClassDeclaration_RestLessServer():
     TypeOnly<old.RestLessServer>;
 declare function use_current_ClassDeclaration_RestLessServer(
-    use: TypeOnly<current.RestLessServer>): void;
+    use: TypeOnly<current.RestLessServer>);
 use_current_ClassDeclaration_RestLessServer(
     get_old_ClassDeclaration_RestLessServer());
 
@@ -545,7 +545,7 @@ use_current_ClassDeclaration_RestLessServer(
 declare function get_current_ClassDeclaration_RestLessServer():
     TypeOnly<current.RestLessServer>;
 declare function use_old_ClassDeclaration_RestLessServer(
-    use: TypeOnly<old.RestLessServer>): void;
+    use: TypeOnly<old.RestLessServer>);
 use_old_ClassDeclaration_RestLessServer(
     get_current_ClassDeclaration_RestLessServer());
 
@@ -557,7 +557,7 @@ use_old_ClassDeclaration_RestLessServer(
 declare function get_old_ClassDeclaration_SecretManager():
     TypeOnly<old.SecretManager>;
 declare function use_current_ClassDeclaration_SecretManager(
-    use: TypeOnly<current.SecretManager>): void;
+    use: TypeOnly<current.SecretManager>);
 use_current_ClassDeclaration_SecretManager(
     get_old_ClassDeclaration_SecretManager());
 
@@ -569,7 +569,7 @@ use_current_ClassDeclaration_SecretManager(
 declare function get_current_ClassDeclaration_SecretManager():
     TypeOnly<current.SecretManager>;
 declare function use_old_ClassDeclaration_SecretManager(
-    use: TypeOnly<old.SecretManager>): void;
+    use: TypeOnly<old.SecretManager>);
 use_old_ClassDeclaration_SecretManager(
     get_current_ClassDeclaration_SecretManager());
 
@@ -581,7 +581,7 @@ use_old_ClassDeclaration_SecretManager(
 declare function get_old_ClassDeclaration_SocketIoRedisPublisher():
     TypeOnly<old.SocketIoRedisPublisher>;
 declare function use_current_ClassDeclaration_SocketIoRedisPublisher(
-    use: TypeOnly<current.SocketIoRedisPublisher>): void;
+    use: TypeOnly<current.SocketIoRedisPublisher>);
 use_current_ClassDeclaration_SocketIoRedisPublisher(
     get_old_ClassDeclaration_SocketIoRedisPublisher());
 
@@ -593,7 +593,7 @@ use_current_ClassDeclaration_SocketIoRedisPublisher(
 declare function get_current_ClassDeclaration_SocketIoRedisPublisher():
     TypeOnly<current.SocketIoRedisPublisher>;
 declare function use_old_ClassDeclaration_SocketIoRedisPublisher(
-    use: TypeOnly<old.SocketIoRedisPublisher>): void;
+    use: TypeOnly<old.SocketIoRedisPublisher>);
 use_old_ClassDeclaration_SocketIoRedisPublisher(
     get_current_ClassDeclaration_SocketIoRedisPublisher());
 
@@ -605,7 +605,7 @@ use_old_ClassDeclaration_SocketIoRedisPublisher(
 declare function get_old_ClassDeclaration_SocketIoRedisTopic():
     TypeOnly<old.SocketIoRedisTopic>;
 declare function use_current_ClassDeclaration_SocketIoRedisTopic(
-    use: TypeOnly<current.SocketIoRedisTopic>): void;
+    use: TypeOnly<current.SocketIoRedisTopic>);
 use_current_ClassDeclaration_SocketIoRedisTopic(
     get_old_ClassDeclaration_SocketIoRedisTopic());
 
@@ -617,7 +617,7 @@ use_current_ClassDeclaration_SocketIoRedisTopic(
 declare function get_current_ClassDeclaration_SocketIoRedisTopic():
     TypeOnly<current.SocketIoRedisTopic>;
 declare function use_old_ClassDeclaration_SocketIoRedisTopic(
-    use: TypeOnly<old.SocketIoRedisTopic>): void;
+    use: TypeOnly<old.SocketIoRedisTopic>);
 use_old_ClassDeclaration_SocketIoRedisTopic(
     get_current_ClassDeclaration_SocketIoRedisTopic());
 
@@ -629,7 +629,7 @@ use_old_ClassDeclaration_SocketIoRedisTopic(
 declare function get_old_ClassDeclaration_SocketIoWebServerFactory():
     TypeOnly<old.SocketIoWebServerFactory>;
 declare function use_current_ClassDeclaration_SocketIoWebServerFactory(
-    use: TypeOnly<current.SocketIoWebServerFactory>): void;
+    use: TypeOnly<current.SocketIoWebServerFactory>);
 use_current_ClassDeclaration_SocketIoWebServerFactory(
     get_old_ClassDeclaration_SocketIoWebServerFactory());
 
@@ -641,7 +641,7 @@ use_current_ClassDeclaration_SocketIoWebServerFactory(
 declare function get_current_ClassDeclaration_SocketIoWebServerFactory():
     TypeOnly<current.SocketIoWebServerFactory>;
 declare function use_old_ClassDeclaration_SocketIoWebServerFactory(
-    use: TypeOnly<old.SocketIoWebServerFactory>): void;
+    use: TypeOnly<old.SocketIoWebServerFactory>);
 use_old_ClassDeclaration_SocketIoWebServerFactory(
     get_current_ClassDeclaration_SocketIoWebServerFactory());
 
@@ -653,7 +653,7 @@ use_old_ClassDeclaration_SocketIoWebServerFactory(
 declare function get_old_ClassDeclaration_StorageNameRetriever():
     TypeOnly<old.StorageNameRetriever>;
 declare function use_current_ClassDeclaration_StorageNameRetriever(
-    use: TypeOnly<current.StorageNameRetriever>): void;
+    use: TypeOnly<current.StorageNameRetriever>);
 use_current_ClassDeclaration_StorageNameRetriever(
     get_old_ClassDeclaration_StorageNameRetriever());
 
@@ -665,7 +665,7 @@ use_current_ClassDeclaration_StorageNameRetriever(
 declare function get_current_ClassDeclaration_StorageNameRetriever():
     TypeOnly<current.StorageNameRetriever>;
 declare function use_old_ClassDeclaration_StorageNameRetriever(
-    use: TypeOnly<old.StorageNameRetriever>): void;
+    use: TypeOnly<old.StorageNameRetriever>);
 use_old_ClassDeclaration_StorageNameRetriever(
     get_current_ClassDeclaration_StorageNameRetriever());
 
@@ -677,7 +677,7 @@ use_old_ClassDeclaration_StorageNameRetriever(
 declare function get_old_ClassDeclaration_Tenant():
     TypeOnly<old.Tenant>;
 declare function use_current_ClassDeclaration_Tenant(
-    use: TypeOnly<current.Tenant>): void;
+    use: TypeOnly<current.Tenant>);
 use_current_ClassDeclaration_Tenant(
     get_old_ClassDeclaration_Tenant());
 
@@ -689,7 +689,7 @@ use_current_ClassDeclaration_Tenant(
 declare function get_current_ClassDeclaration_Tenant():
     TypeOnly<current.Tenant>;
 declare function use_old_ClassDeclaration_Tenant(
-    use: TypeOnly<old.Tenant>): void;
+    use: TypeOnly<old.Tenant>);
 use_old_ClassDeclaration_Tenant(
     get_current_ClassDeclaration_Tenant());
 
@@ -701,7 +701,7 @@ use_old_ClassDeclaration_Tenant(
 declare function get_old_ClassDeclaration_TenantManager():
     TypeOnly<old.TenantManager>;
 declare function use_current_ClassDeclaration_TenantManager(
-    use: TypeOnly<current.TenantManager>): void;
+    use: TypeOnly<current.TenantManager>);
 use_current_ClassDeclaration_TenantManager(
     get_old_ClassDeclaration_TenantManager());
 
@@ -713,7 +713,7 @@ use_current_ClassDeclaration_TenantManager(
 declare function get_current_ClassDeclaration_TenantManager():
     TypeOnly<current.TenantManager>;
 declare function use_old_ClassDeclaration_TenantManager(
-    use: TypeOnly<old.TenantManager>): void;
+    use: TypeOnly<old.TenantManager>);
 use_old_ClassDeclaration_TenantManager(
     get_current_ClassDeclaration_TenantManager());
 
@@ -725,7 +725,7 @@ use_old_ClassDeclaration_TenantManager(
 declare function get_old_ClassDeclaration_Throttler():
     TypeOnly<old.Throttler>;
 declare function use_current_ClassDeclaration_Throttler(
-    use: TypeOnly<current.Throttler>): void;
+    use: TypeOnly<current.Throttler>);
 use_current_ClassDeclaration_Throttler(
     get_old_ClassDeclaration_Throttler());
 
@@ -737,7 +737,7 @@ use_current_ClassDeclaration_Throttler(
 declare function get_current_ClassDeclaration_Throttler():
     TypeOnly<current.Throttler>;
 declare function use_old_ClassDeclaration_Throttler(
-    use: TypeOnly<old.Throttler>): void;
+    use: TypeOnly<old.Throttler>);
 use_old_ClassDeclaration_Throttler(
     get_current_ClassDeclaration_Throttler());
 
@@ -749,7 +749,7 @@ use_old_ClassDeclaration_Throttler(
 declare function get_old_ClassDeclaration_ThrottlerHelper():
     TypeOnly<old.ThrottlerHelper>;
 declare function use_current_ClassDeclaration_ThrottlerHelper(
-    use: TypeOnly<current.ThrottlerHelper>): void;
+    use: TypeOnly<current.ThrottlerHelper>);
 use_current_ClassDeclaration_ThrottlerHelper(
     get_old_ClassDeclaration_ThrottlerHelper());
 
@@ -761,7 +761,7 @@ use_current_ClassDeclaration_ThrottlerHelper(
 declare function get_current_ClassDeclaration_ThrottlerHelper():
     TypeOnly<current.ThrottlerHelper>;
 declare function use_old_ClassDeclaration_ThrottlerHelper(
-    use: TypeOnly<old.ThrottlerHelper>): void;
+    use: TypeOnly<old.ThrottlerHelper>);
 use_old_ClassDeclaration_ThrottlerHelper(
     get_current_ClassDeclaration_ThrottlerHelper());
 
@@ -773,7 +773,7 @@ use_old_ClassDeclaration_ThrottlerHelper(
 declare function get_old_ClassDeclaration_WebServer():
     TypeOnly<old.WebServer>;
 declare function use_current_ClassDeclaration_WebServer(
-    use: TypeOnly<current.WebServer>): void;
+    use: TypeOnly<current.WebServer>);
 use_current_ClassDeclaration_WebServer(
     get_old_ClassDeclaration_WebServer());
 
@@ -785,7 +785,7 @@ use_current_ClassDeclaration_WebServer(
 declare function get_current_ClassDeclaration_WebServer():
     TypeOnly<current.WebServer>;
 declare function use_old_ClassDeclaration_WebServer(
-    use: TypeOnly<old.WebServer>): void;
+    use: TypeOnly<old.WebServer>);
 use_old_ClassDeclaration_WebServer(
     get_current_ClassDeclaration_WebServer());
 
@@ -797,7 +797,7 @@ use_old_ClassDeclaration_WebServer(
 declare function get_old_ClassDeclaration_WholeSummaryReadGitManager():
     TypeOnly<old.WholeSummaryReadGitManager>;
 declare function use_current_ClassDeclaration_WholeSummaryReadGitManager(
-    use: TypeOnly<current.WholeSummaryReadGitManager>): void;
+    use: TypeOnly<current.WholeSummaryReadGitManager>);
 use_current_ClassDeclaration_WholeSummaryReadGitManager(
     get_old_ClassDeclaration_WholeSummaryReadGitManager());
 
@@ -809,7 +809,7 @@ use_current_ClassDeclaration_WholeSummaryReadGitManager(
 declare function get_current_ClassDeclaration_WholeSummaryReadGitManager():
     TypeOnly<current.WholeSummaryReadGitManager>;
 declare function use_old_ClassDeclaration_WholeSummaryReadGitManager(
-    use: TypeOnly<old.WholeSummaryReadGitManager>): void;
+    use: TypeOnly<old.WholeSummaryReadGitManager>);
 use_old_ClassDeclaration_WholeSummaryReadGitManager(
     get_current_ClassDeclaration_WholeSummaryReadGitManager());
 
@@ -821,7 +821,7 @@ use_old_ClassDeclaration_WholeSummaryReadGitManager(
 declare function get_old_ClassDeclaration_WholeSummaryWriteGitManager():
     TypeOnly<old.WholeSummaryWriteGitManager>;
 declare function use_current_ClassDeclaration_WholeSummaryWriteGitManager(
-    use: TypeOnly<current.WholeSummaryWriteGitManager>): void;
+    use: TypeOnly<current.WholeSummaryWriteGitManager>);
 use_current_ClassDeclaration_WholeSummaryWriteGitManager(
     get_old_ClassDeclaration_WholeSummaryWriteGitManager());
 
@@ -833,7 +833,7 @@ use_current_ClassDeclaration_WholeSummaryWriteGitManager(
 declare function get_current_ClassDeclaration_WholeSummaryWriteGitManager():
     TypeOnly<current.WholeSummaryWriteGitManager>;
 declare function use_old_ClassDeclaration_WholeSummaryWriteGitManager(
-    use: TypeOnly<old.WholeSummaryWriteGitManager>): void;
+    use: TypeOnly<old.WholeSummaryWriteGitManager>);
 use_old_ClassDeclaration_WholeSummaryWriteGitManager(
     get_current_ClassDeclaration_WholeSummaryWriteGitManager());
 
@@ -845,7 +845,7 @@ use_old_ClassDeclaration_WholeSummaryWriteGitManager(
 declare function get_old_FunctionDeclaration_containsPathTraversal():
     TypeOnly<typeof old.containsPathTraversal>;
 declare function use_current_FunctionDeclaration_containsPathTraversal(
-    use: TypeOnly<typeof current.containsPathTraversal>): void;
+    use: TypeOnly<typeof current.containsPathTraversal>);
 use_current_FunctionDeclaration_containsPathTraversal(
     get_old_FunctionDeclaration_containsPathTraversal());
 
@@ -857,7 +857,7 @@ use_current_FunctionDeclaration_containsPathTraversal(
 declare function get_current_FunctionDeclaration_containsPathTraversal():
     TypeOnly<typeof current.containsPathTraversal>;
 declare function use_old_FunctionDeclaration_containsPathTraversal(
-    use: TypeOnly<typeof old.containsPathTraversal>): void;
+    use: TypeOnly<typeof old.containsPathTraversal>);
 use_old_FunctionDeclaration_containsPathTraversal(
     get_current_FunctionDeclaration_containsPathTraversal());
 
@@ -869,7 +869,7 @@ use_old_FunctionDeclaration_containsPathTraversal(
 declare function get_old_FunctionDeclaration_createMessageReceiver():
     TypeOnly<typeof old.createMessageReceiver>;
 declare function use_current_FunctionDeclaration_createMessageReceiver(
-    use: TypeOnly<typeof current.createMessageReceiver>): void;
+    use: TypeOnly<typeof current.createMessageReceiver>);
 use_current_FunctionDeclaration_createMessageReceiver(
     get_old_FunctionDeclaration_createMessageReceiver());
 
@@ -881,7 +881,7 @@ use_current_FunctionDeclaration_createMessageReceiver(
 declare function get_current_FunctionDeclaration_createMessageReceiver():
     TypeOnly<typeof current.createMessageReceiver>;
 declare function use_old_FunctionDeclaration_createMessageReceiver(
-    use: TypeOnly<typeof old.createMessageReceiver>): void;
+    use: TypeOnly<typeof old.createMessageReceiver>);
 use_old_FunctionDeclaration_createMessageReceiver(
     get_current_FunctionDeclaration_createMessageReceiver());
 
@@ -893,7 +893,7 @@ use_old_FunctionDeclaration_createMessageReceiver(
 declare function get_old_FunctionDeclaration_createMessageSender():
     TypeOnly<typeof old.createMessageSender>;
 declare function use_current_FunctionDeclaration_createMessageSender(
-    use: TypeOnly<typeof current.createMessageSender>): void;
+    use: TypeOnly<typeof current.createMessageSender>);
 use_current_FunctionDeclaration_createMessageSender(
     get_old_FunctionDeclaration_createMessageSender());
 
@@ -905,7 +905,7 @@ use_current_FunctionDeclaration_createMessageSender(
 declare function get_current_FunctionDeclaration_createMessageSender():
     TypeOnly<typeof current.createMessageSender>;
 declare function use_old_FunctionDeclaration_createMessageSender(
-    use: TypeOnly<typeof old.createMessageSender>): void;
+    use: TypeOnly<typeof old.createMessageSender>);
 use_old_FunctionDeclaration_createMessageSender(
     get_current_FunctionDeclaration_createMessageSender());
 
@@ -917,7 +917,7 @@ use_old_FunctionDeclaration_createMessageSender(
 declare function get_old_FunctionDeclaration_createMetricClient():
     TypeOnly<typeof old.createMetricClient>;
 declare function use_current_FunctionDeclaration_createMetricClient(
-    use: TypeOnly<typeof current.createMetricClient>): void;
+    use: TypeOnly<typeof current.createMetricClient>);
 use_current_FunctionDeclaration_createMetricClient(
     get_old_FunctionDeclaration_createMetricClient());
 
@@ -929,7 +929,7 @@ use_current_FunctionDeclaration_createMetricClient(
 declare function get_current_FunctionDeclaration_createMetricClient():
     TypeOnly<typeof current.createMetricClient>;
 declare function use_old_FunctionDeclaration_createMetricClient(
-    use: TypeOnly<typeof old.createMetricClient>): void;
+    use: TypeOnly<typeof old.createMetricClient>);
 use_old_FunctionDeclaration_createMetricClient(
     get_current_FunctionDeclaration_createMetricClient());
 
@@ -941,7 +941,7 @@ use_old_FunctionDeclaration_createMetricClient(
 declare function get_old_FunctionDeclaration_createProducer():
     TypeOnly<typeof old.createProducer>;
 declare function use_current_FunctionDeclaration_createProducer(
-    use: TypeOnly<typeof current.createProducer>): void;
+    use: TypeOnly<typeof current.createProducer>);
 use_current_FunctionDeclaration_createProducer(
     get_old_FunctionDeclaration_createProducer());
 
@@ -953,7 +953,7 @@ use_current_FunctionDeclaration_createProducer(
 declare function get_current_FunctionDeclaration_createProducer():
     TypeOnly<typeof current.createProducer>;
 declare function use_old_FunctionDeclaration_createProducer(
-    use: TypeOnly<typeof old.createProducer>): void;
+    use: TypeOnly<typeof old.createProducer>);
 use_old_FunctionDeclaration_createProducer(
     get_current_FunctionDeclaration_createProducer());
 
@@ -965,7 +965,7 @@ use_old_FunctionDeclaration_createProducer(
 declare function get_old_VariableDeclaration_decodeHeader():
     TypeOnly<typeof old.decodeHeader>;
 declare function use_current_VariableDeclaration_decodeHeader(
-    use: TypeOnly<typeof current.decodeHeader>): void;
+    use: TypeOnly<typeof current.decodeHeader>);
 use_current_VariableDeclaration_decodeHeader(
     get_old_VariableDeclaration_decodeHeader());
 
@@ -977,7 +977,7 @@ use_current_VariableDeclaration_decodeHeader(
 declare function get_current_VariableDeclaration_decodeHeader():
     TypeOnly<typeof current.decodeHeader>;
 declare function use_old_VariableDeclaration_decodeHeader(
-    use: TypeOnly<typeof old.decodeHeader>): void;
+    use: TypeOnly<typeof old.decodeHeader>);
 use_old_VariableDeclaration_decodeHeader(
     get_current_VariableDeclaration_decodeHeader());
 
@@ -989,7 +989,7 @@ use_old_VariableDeclaration_decodeHeader(
 declare function get_old_VariableDeclaration_defaultErrorMessage():
     TypeOnly<typeof old.defaultErrorMessage>;
 declare function use_current_VariableDeclaration_defaultErrorMessage(
-    use: TypeOnly<typeof current.defaultErrorMessage>): void;
+    use: TypeOnly<typeof current.defaultErrorMessage>);
 use_current_VariableDeclaration_defaultErrorMessage(
     get_old_VariableDeclaration_defaultErrorMessage());
 
@@ -1001,7 +1001,7 @@ use_current_VariableDeclaration_defaultErrorMessage(
 declare function get_current_VariableDeclaration_defaultErrorMessage():
     TypeOnly<typeof current.defaultErrorMessage>;
 declare function use_old_VariableDeclaration_defaultErrorMessage(
-    use: TypeOnly<typeof old.defaultErrorMessage>): void;
+    use: TypeOnly<typeof old.defaultErrorMessage>);
 use_old_VariableDeclaration_defaultErrorMessage(
     get_current_VariableDeclaration_defaultErrorMessage());
 
@@ -1013,7 +1013,7 @@ use_old_VariableDeclaration_defaultErrorMessage(
 declare function get_old_FunctionDeclaration_getBooleanParam():
     TypeOnly<typeof old.getBooleanParam>;
 declare function use_current_FunctionDeclaration_getBooleanParam(
-    use: TypeOnly<typeof current.getBooleanParam>): void;
+    use: TypeOnly<typeof current.getBooleanParam>);
 use_current_FunctionDeclaration_getBooleanParam(
     get_old_FunctionDeclaration_getBooleanParam());
 
@@ -1025,7 +1025,7 @@ use_current_FunctionDeclaration_getBooleanParam(
 declare function get_current_FunctionDeclaration_getBooleanParam():
     TypeOnly<typeof current.getBooleanParam>;
 declare function use_old_FunctionDeclaration_getBooleanParam(
-    use: TypeOnly<typeof old.getBooleanParam>): void;
+    use: TypeOnly<typeof old.getBooleanParam>);
 use_old_FunctionDeclaration_getBooleanParam(
     get_current_FunctionDeclaration_getBooleanParam());
 
@@ -1037,7 +1037,7 @@ use_old_FunctionDeclaration_getBooleanParam(
 declare function get_old_FunctionDeclaration_getDbFactory():
     TypeOnly<typeof old.getDbFactory>;
 declare function use_current_FunctionDeclaration_getDbFactory(
-    use: TypeOnly<typeof current.getDbFactory>): void;
+    use: TypeOnly<typeof current.getDbFactory>);
 use_current_FunctionDeclaration_getDbFactory(
     get_old_FunctionDeclaration_getDbFactory());
 
@@ -1049,7 +1049,7 @@ use_current_FunctionDeclaration_getDbFactory(
 declare function get_current_FunctionDeclaration_getDbFactory():
     TypeOnly<typeof current.getDbFactory>;
 declare function use_old_FunctionDeclaration_getDbFactory(
-    use: TypeOnly<typeof old.getDbFactory>): void;
+    use: TypeOnly<typeof old.getDbFactory>);
 use_old_FunctionDeclaration_getDbFactory(
     get_current_FunctionDeclaration_getDbFactory());
 
@@ -1061,7 +1061,7 @@ use_old_FunctionDeclaration_getDbFactory(
 declare function get_old_FunctionDeclaration_handleResponse():
     TypeOnly<typeof old.handleResponse>;
 declare function use_current_FunctionDeclaration_handleResponse(
-    use: TypeOnly<typeof current.handleResponse>): void;
+    use: TypeOnly<typeof current.handleResponse>);
 use_current_FunctionDeclaration_handleResponse(
     get_old_FunctionDeclaration_handleResponse());
 
@@ -1073,7 +1073,7 @@ use_current_FunctionDeclaration_handleResponse(
 declare function get_current_FunctionDeclaration_handleResponse():
     TypeOnly<typeof current.handleResponse>;
 declare function use_old_FunctionDeclaration_handleResponse(
-    use: TypeOnly<typeof old.handleResponse>): void;
+    use: TypeOnly<typeof old.handleResponse>);
 use_old_FunctionDeclaration_handleResponse(
     get_current_FunctionDeclaration_handleResponse());
 
@@ -1085,7 +1085,7 @@ use_old_FunctionDeclaration_handleResponse(
 declare function get_old_FunctionDeclaration_run():
     TypeOnly<typeof old.run>;
 declare function use_current_FunctionDeclaration_run(
-    use: TypeOnly<typeof current.run>): void;
+    use: TypeOnly<typeof current.run>);
 use_current_FunctionDeclaration_run(
     get_old_FunctionDeclaration_run());
 
@@ -1097,7 +1097,7 @@ use_current_FunctionDeclaration_run(
 declare function get_current_FunctionDeclaration_run():
     TypeOnly<typeof current.run>;
 declare function use_old_FunctionDeclaration_run(
-    use: TypeOnly<typeof old.run>): void;
+    use: TypeOnly<typeof old.run>);
 use_old_FunctionDeclaration_run(
     get_current_FunctionDeclaration_run());
 
@@ -1109,7 +1109,7 @@ use_old_FunctionDeclaration_run(
 declare function get_old_FunctionDeclaration_runService():
     TypeOnly<typeof old.runService>;
 declare function use_current_FunctionDeclaration_runService(
-    use: TypeOnly<typeof current.runService>): void;
+    use: TypeOnly<typeof current.runService>);
 use_current_FunctionDeclaration_runService(
     get_old_FunctionDeclaration_runService());
 
@@ -1121,7 +1121,7 @@ use_current_FunctionDeclaration_runService(
 declare function get_current_FunctionDeclaration_runService():
     TypeOnly<typeof current.runService>;
 declare function use_old_FunctionDeclaration_runService(
-    use: TypeOnly<typeof old.runService>): void;
+    use: TypeOnly<typeof old.runService>);
 use_old_FunctionDeclaration_runService(
     get_current_FunctionDeclaration_runService());
 
@@ -1133,7 +1133,7 @@ use_old_FunctionDeclaration_runService(
 declare function get_old_FunctionDeclaration_validateRequestParams():
     TypeOnly<typeof old.validateRequestParams>;
 declare function use_current_FunctionDeclaration_validateRequestParams(
-    use: TypeOnly<typeof current.validateRequestParams>): void;
+    use: TypeOnly<typeof current.validateRequestParams>);
 use_current_FunctionDeclaration_validateRequestParams(
     get_old_FunctionDeclaration_validateRequestParams());
 
@@ -1145,6 +1145,6 @@ use_current_FunctionDeclaration_validateRequestParams(
 declare function get_current_FunctionDeclaration_validateRequestParams():
     TypeOnly<typeof current.validateRequestParams>;
 declare function use_old_FunctionDeclaration_validateRequestParams(
-    use: TypeOnly<typeof old.validateRequestParams>): void;
+    use: TypeOnly<typeof old.validateRequestParams>);
 use_old_FunctionDeclaration_validateRequestParams(
     get_current_FunctionDeclaration_validateRequestParams());

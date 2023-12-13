@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_DocumentContext():
     TypeOnly<old.DocumentContext>;
 declare function use_current_ClassDeclaration_DocumentContext(
-    use: TypeOnly<current.DocumentContext>): void;
+    use: TypeOnly<current.DocumentContext>);
 use_current_ClassDeclaration_DocumentContext(
     get_old_ClassDeclaration_DocumentContext());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_DocumentContext(
 declare function get_current_ClassDeclaration_DocumentContext():
     TypeOnly<current.DocumentContext>;
 declare function use_old_ClassDeclaration_DocumentContext(
-    use: TypeOnly<old.DocumentContext>): void;
+    use: TypeOnly<old.DocumentContext>);
 use_old_ClassDeclaration_DocumentContext(
     get_current_ClassDeclaration_DocumentContext());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_DocumentContext(
 declare function get_old_ClassDeclaration_DocumentLambdaFactory():
     TypeOnly<old.DocumentLambdaFactory>;
 declare function use_current_ClassDeclaration_DocumentLambdaFactory(
-    use: TypeOnly<current.DocumentLambdaFactory>): void;
+    use: TypeOnly<current.DocumentLambdaFactory>);
 use_current_ClassDeclaration_DocumentLambdaFactory(
     get_old_ClassDeclaration_DocumentLambdaFactory());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_DocumentLambdaFactory(
 declare function get_current_ClassDeclaration_DocumentLambdaFactory():
     TypeOnly<current.DocumentLambdaFactory>;
 declare function use_old_ClassDeclaration_DocumentLambdaFactory(
-    use: TypeOnly<old.DocumentLambdaFactory>): void;
+    use: TypeOnly<old.DocumentLambdaFactory>);
 use_old_ClassDeclaration_DocumentLambdaFactory(
     get_current_ClassDeclaration_DocumentLambdaFactory());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_DocumentLambdaFactory(
 declare function get_old_InterfaceDeclaration_IKafkaResources():
     TypeOnly<old.IKafkaResources>;
 declare function use_current_InterfaceDeclaration_IKafkaResources(
-    use: TypeOnly<current.IKafkaResources>): void;
+    use: TypeOnly<current.IKafkaResources>);
 use_current_InterfaceDeclaration_IKafkaResources(
     get_old_InterfaceDeclaration_IKafkaResources());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IKafkaResources(
 declare function get_current_InterfaceDeclaration_IKafkaResources():
     TypeOnly<current.IKafkaResources>;
 declare function use_old_InterfaceDeclaration_IKafkaResources(
-    use: TypeOnly<old.IKafkaResources>): void;
+    use: TypeOnly<old.IKafkaResources>);
 use_old_InterfaceDeclaration_IKafkaResources(
     get_current_InterfaceDeclaration_IKafkaResources());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IKafkaResources(
 declare function get_old_ClassDeclaration_KafkaRunner():
     TypeOnly<old.KafkaRunner>;
 declare function use_current_ClassDeclaration_KafkaRunner(
-    use: TypeOnly<current.KafkaRunner>): void;
+    use: TypeOnly<current.KafkaRunner>);
 use_current_ClassDeclaration_KafkaRunner(
     get_old_ClassDeclaration_KafkaRunner());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_KafkaRunner(
 declare function get_current_ClassDeclaration_KafkaRunner():
     TypeOnly<current.KafkaRunner>;
 declare function use_old_ClassDeclaration_KafkaRunner(
-    use: TypeOnly<old.KafkaRunner>): void;
+    use: TypeOnly<old.KafkaRunner>);
 use_old_ClassDeclaration_KafkaRunner(
     get_current_ClassDeclaration_KafkaRunner());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_KafkaRunner(
 declare function get_old_ClassDeclaration_KafkaRunnerFactory():
     TypeOnly<old.KafkaRunnerFactory>;
 declare function use_current_ClassDeclaration_KafkaRunnerFactory(
-    use: TypeOnly<current.KafkaRunnerFactory>): void;
+    use: TypeOnly<current.KafkaRunnerFactory>);
 use_current_ClassDeclaration_KafkaRunnerFactory(
     get_old_ClassDeclaration_KafkaRunnerFactory());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_KafkaRunnerFactory(
 declare function get_current_ClassDeclaration_KafkaRunnerFactory():
     TypeOnly<current.KafkaRunnerFactory>;
 declare function use_old_ClassDeclaration_KafkaRunnerFactory(
-    use: TypeOnly<old.KafkaRunnerFactory>): void;
+    use: TypeOnly<old.KafkaRunnerFactory>);
 use_old_ClassDeclaration_KafkaRunnerFactory(
     get_current_ClassDeclaration_KafkaRunnerFactory());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_KafkaRunnerFactory(
 declare function get_old_ClassDeclaration_PartitionManager():
     TypeOnly<old.PartitionManager>;
 declare function use_current_ClassDeclaration_PartitionManager(
-    use: TypeOnly<current.PartitionManager>): void;
+    use: TypeOnly<current.PartitionManager>);
 use_current_ClassDeclaration_PartitionManager(
     get_old_ClassDeclaration_PartitionManager());
 
@@ -161,6 +161,6 @@ use_current_ClassDeclaration_PartitionManager(
 declare function get_current_ClassDeclaration_PartitionManager():
     TypeOnly<current.PartitionManager>;
 declare function use_old_ClassDeclaration_PartitionManager(
-    use: TypeOnly<old.PartitionManager>): void;
+    use: TypeOnly<old.PartitionManager>);
 use_old_ClassDeclaration_PartitionManager(
     get_current_ClassDeclaration_PartitionManager());

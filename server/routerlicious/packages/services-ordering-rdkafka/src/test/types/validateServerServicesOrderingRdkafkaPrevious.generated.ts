@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IKafkaConsumerOptions():
     TypeOnly<old.IKafkaConsumerOptions>;
 declare function use_current_InterfaceDeclaration_IKafkaConsumerOptions(
-    use: TypeOnly<current.IKafkaConsumerOptions>): void;
+    use: TypeOnly<current.IKafkaConsumerOptions>);
 use_current_InterfaceDeclaration_IKafkaConsumerOptions(
     get_old_InterfaceDeclaration_IKafkaConsumerOptions());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IKafkaConsumerOptions(
 declare function get_current_InterfaceDeclaration_IKafkaConsumerOptions():
     TypeOnly<current.IKafkaConsumerOptions>;
 declare function use_old_InterfaceDeclaration_IKafkaConsumerOptions(
-    use: TypeOnly<old.IKafkaConsumerOptions>): void;
+    use: TypeOnly<old.IKafkaConsumerOptions>);
 use_old_InterfaceDeclaration_IKafkaConsumerOptions(
     get_current_InterfaceDeclaration_IKafkaConsumerOptions());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IKafkaConsumerOptions(
 declare function get_old_InterfaceDeclaration_IKafkaProducerOptions():
     TypeOnly<old.IKafkaProducerOptions>;
 declare function use_current_InterfaceDeclaration_IKafkaProducerOptions(
-    use: TypeOnly<current.IKafkaProducerOptions>): void;
+    use: TypeOnly<current.IKafkaProducerOptions>);
 use_current_InterfaceDeclaration_IKafkaProducerOptions(
     get_old_InterfaceDeclaration_IKafkaProducerOptions());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IKafkaProducerOptions(
 declare function get_current_InterfaceDeclaration_IKafkaProducerOptions():
     TypeOnly<current.IKafkaProducerOptions>;
 declare function use_old_InterfaceDeclaration_IKafkaProducerOptions(
-    use: TypeOnly<old.IKafkaProducerOptions>): void;
+    use: TypeOnly<old.IKafkaProducerOptions>);
 use_old_InterfaceDeclaration_IKafkaProducerOptions(
     get_current_InterfaceDeclaration_IKafkaProducerOptions());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IKafkaProducerOptions(
 declare function get_old_InterfaceDeclaration_IRdkafkaResources():
     TypeOnly<old.IRdkafkaResources>;
 declare function use_current_InterfaceDeclaration_IRdkafkaResources(
-    use: TypeOnly<current.IRdkafkaResources>): void;
+    use: TypeOnly<current.IRdkafkaResources>);
 use_current_InterfaceDeclaration_IRdkafkaResources(
     get_old_InterfaceDeclaration_IRdkafkaResources());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IRdkafkaResources(
 declare function get_current_InterfaceDeclaration_IRdkafkaResources():
     TypeOnly<current.IRdkafkaResources>;
 declare function use_old_InterfaceDeclaration_IRdkafkaResources(
-    use: TypeOnly<old.IRdkafkaResources>): void;
+    use: TypeOnly<old.IRdkafkaResources>);
 use_old_InterfaceDeclaration_IRdkafkaResources(
     get_current_InterfaceDeclaration_IRdkafkaResources());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IRdkafkaResources(
 declare function get_old_ClassDeclaration_RdkafkaConsumer():
     TypeOnly<old.RdkafkaConsumer>;
 declare function use_current_ClassDeclaration_RdkafkaConsumer(
-    use: TypeOnly<current.RdkafkaConsumer>): void;
+    use: TypeOnly<current.RdkafkaConsumer>);
 use_current_ClassDeclaration_RdkafkaConsumer(
     get_old_ClassDeclaration_RdkafkaConsumer());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_RdkafkaConsumer(
 declare function get_current_ClassDeclaration_RdkafkaConsumer():
     TypeOnly<current.RdkafkaConsumer>;
 declare function use_old_ClassDeclaration_RdkafkaConsumer(
-    use: TypeOnly<old.RdkafkaConsumer>): void;
+    use: TypeOnly<old.RdkafkaConsumer>);
 use_old_ClassDeclaration_RdkafkaConsumer(
     get_current_ClassDeclaration_RdkafkaConsumer());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_RdkafkaConsumer(
 declare function get_old_ClassDeclaration_RdkafkaProducer():
     TypeOnly<old.RdkafkaProducer>;
 declare function use_current_ClassDeclaration_RdkafkaProducer(
-    use: TypeOnly<current.RdkafkaProducer>): void;
+    use: TypeOnly<current.RdkafkaProducer>);
 use_current_ClassDeclaration_RdkafkaProducer(
     get_old_ClassDeclaration_RdkafkaProducer());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_RdkafkaProducer(
 declare function get_current_ClassDeclaration_RdkafkaProducer():
     TypeOnly<current.RdkafkaProducer>;
 declare function use_old_ClassDeclaration_RdkafkaProducer(
-    use: TypeOnly<old.RdkafkaProducer>): void;
+    use: TypeOnly<old.RdkafkaProducer>);
 use_old_ClassDeclaration_RdkafkaProducer(
     get_current_ClassDeclaration_RdkafkaProducer());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_RdkafkaProducer(
 declare function get_old_ClassDeclaration_RdkafkaResources():
     TypeOnly<old.RdkafkaResources>;
 declare function use_current_ClassDeclaration_RdkafkaResources(
-    use: TypeOnly<current.RdkafkaResources>): void;
+    use: TypeOnly<current.RdkafkaResources>);
 use_current_ClassDeclaration_RdkafkaResources(
     get_old_ClassDeclaration_RdkafkaResources());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_RdkafkaResources(
 declare function get_current_ClassDeclaration_RdkafkaResources():
     TypeOnly<current.RdkafkaResources>;
 declare function use_old_ClassDeclaration_RdkafkaResources(
-    use: TypeOnly<old.RdkafkaResources>): void;
+    use: TypeOnly<old.RdkafkaResources>);
 use_old_ClassDeclaration_RdkafkaResources(
     get_current_ClassDeclaration_RdkafkaResources());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_RdkafkaResources(
 declare function get_old_ClassDeclaration_RdkafkaResourcesFactory():
     TypeOnly<old.RdkafkaResourcesFactory>;
 declare function use_current_ClassDeclaration_RdkafkaResourcesFactory(
-    use: TypeOnly<current.RdkafkaResourcesFactory>): void;
+    use: TypeOnly<current.RdkafkaResourcesFactory>);
 use_current_ClassDeclaration_RdkafkaResourcesFactory(
     get_old_ClassDeclaration_RdkafkaResourcesFactory());
 
@@ -185,6 +185,6 @@ use_current_ClassDeclaration_RdkafkaResourcesFactory(
 declare function get_current_ClassDeclaration_RdkafkaResourcesFactory():
     TypeOnly<current.RdkafkaResourcesFactory>;
 declare function use_old_ClassDeclaration_RdkafkaResourcesFactory(
-    use: TypeOnly<old.RdkafkaResourcesFactory>): void;
+    use: TypeOnly<old.RdkafkaResourcesFactory>);
 use_old_ClassDeclaration_RdkafkaResourcesFactory(
     get_current_ClassDeclaration_RdkafkaResourcesFactory());
