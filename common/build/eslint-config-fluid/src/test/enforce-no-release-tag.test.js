@@ -31,13 +31,9 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
 		assert.strictEqual(result.errorCount, 4, "Should have four errors");
-		// assert.strictEqual(
-		// 	result.messages[0].message,
-		// 	"Importing @internal tagged items is not allowed: internalFunction",
-		// );
-		// assert.strictEqual(
-		// 	result.messages[1].message,
-		// 	"Importing @alpha tagged items is not allowed: alphaFunction",
-		// );
+		assert.strictEqual(
+			result.messages[0].message,
+			"Including the release-tag inside the noReleaseTagMockClass.ts is not allowed.",
+		);
 	});
 });

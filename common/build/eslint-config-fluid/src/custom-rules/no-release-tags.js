@@ -1,10 +1,18 @@
-import { TSDocParser } from "@microsoft/tsdoc";
+const { TSDocParser } = require("@microsoft/tsdoc");
 
 function hasReleaseTag(comment) {
-	const parser = new TSDocParser();
-	const parserContext = parser.parseRange(comment);
-	const hasReleaseTag = parserContext.hasReleaseTag;
+	console.log("comment", comment);
 
+	const parser = new TSDocParser();
+	const parserContext = parser.parseString(comment);
+
+	const hasReleaseTag =
+		parserContext.docComment.modifierTagSet.isAlpha() ||
+		parserContext.docComment.modifierTagSet.isBeta() ||
+		parserContext.docComment.modifierTagSet.isPublic() ||
+		parserContext.docComment.modifierTagSet.isInternal();
+
+	console.log(hasReleaseTag);
 	return hasReleaseTag;
 }
 
@@ -23,17 +31,21 @@ module.exports = {
 	create(context) {
 		return {
 			ClassDeclaration(node) {
-				const fileName = context.filename;
+				const fullFileName = context.filename;
+				const regex = /[^/]+$/;
+				const fileName = fullFileName.match(regex)[0];
 				const sourceCode = context.sourceCode;
-				const comments = sourceCode.getCommentsAfter(node);
+				const comments = sourceCode.getCommentsInside(node);
+
+				// console.log("comments :", comments);
 
 				comments.forEach((comment) => {
 					// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
-					const formattedComment = `/** ${comment} */`;
+					const formattedComment = `/** ${comment.value} */`;
 					if (hasReleaseTag(formattedComment)) {
 						context.report({
-							node: specifier,
-							message: `Including the ${tag} release-tag inside the ${fileName} is not allowed.`,
+							node: node,
+							message: `Including the release-tag inside the ${fileName} is not allowed.`,
 						});
 					}
 				});

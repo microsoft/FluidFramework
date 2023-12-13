@@ -21,4 +21,14 @@ class MockClass {
 	 * @public
 	 */
 	bazz(): void {}
+
+	/**
+	 * Correctly implemented method with valid comment.
+	 */
+	correctValidComment(): void {}
+
+	// Correctly implemented method with a slash comment.
+	correctSlashComment(): void {}
+
+	correctNoComment(): void {}
 }
