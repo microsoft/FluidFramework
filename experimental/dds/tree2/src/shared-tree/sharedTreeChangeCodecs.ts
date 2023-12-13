@@ -15,16 +15,19 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
 // These can't be an interfaces or they don't get the special string indexer bonus property.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type EncodedChange = {
+	readonly isConflicted: boolean;
+};
+
 type EncodedModularChange = {
 	type: "data";
 	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
+} & EncodedChange;
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type EncodedSchemaChange = {
 	type: "schema";
 	change: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
-};
+} & EncodedChange;
 
 export interface EncodedSharedTreeChange {
 	readonly encodedChanges: readonly (EncodedModularChange | EncodedSchemaChange)[];
@@ -47,11 +50,13 @@ export function makeSharedTreeChangeCodec(
 					changes.push({
 						type: "data",
 						change: modularChangeCodec.encode(decodedChange.innerChange),
+						isConflicted: decodedChange.isConflicted,
 					});
 				} else if (decodedChange.type === "schema") {
 					changes.push({
 						type: "schema",
 						change: schemaChangeCodec.encode(decodedChange.innerChange),
+						isConflicted: decodedChange.isConflicted,
 					});
 				}
 			}
@@ -65,11 +70,13 @@ export function makeSharedTreeChangeCodec(
 					changes.push({
 						type: "data",
 						innerChange: modularChangeCodec.decode(subChange.change),
+						isConflicted: subChange.isConflicted,
 					});
 				} else if (subChange.type === "schema") {
 					changes.push({
 						type: "schema",
 						innerChange: schemaChangeCodec.decode(subChange.change),
+						isConflicted: subChange.isConflicted,
 					});
 				}
 			}

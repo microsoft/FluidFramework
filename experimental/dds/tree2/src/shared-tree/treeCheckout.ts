@@ -278,6 +278,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
 				for (const change of event.change.change.changes) {
+					if (change.isConflicted) {
+						// Conflicts are not applied.
+						continue;
+					}
 					if (change.type === "data") {
 						const delta = intoDelta(
 							tagChange(change.innerChange, event.change.revision),

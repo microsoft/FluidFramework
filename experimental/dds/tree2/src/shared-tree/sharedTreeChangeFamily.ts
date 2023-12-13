@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions } from "../codec";
-import { ChangeFamily, ChangeRebaser, TaggedChange, tagChange } from "../core";
+import {
+	ChangeFamily,
+	ChangeRebaser,
+	TaggedChange,
+	rebaseChangeOverChanges,
+	tagChange,
+} from "../core";
 import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
 import { RevisionTagCodec } from "../shared-tree-core";
 import { Mutable, fail } from "../util";
@@ -51,6 +58,7 @@ export class SharedTreeChangeFamily
 				newChanges.push({
 					type: "data",
 					innerChange: this.modularChangeFamily.compose(dataChangeRun),
+					isConflicted: false,
 				});
 				dataChangeRun.length = 0;
 			}
@@ -58,6 +66,10 @@ export class SharedTreeChangeFamily
 
 		for (const topChange of changes) {
 			for (const change of topChange.change.changes) {
+				if (change.isConflicted) {
+					// Conflicts are dropped.
+					continue;
+				}
 				if (change.type === "schema") {
 					flushDataChangeRun();
 					newChanges.push(change);
@@ -83,12 +95,14 @@ export class SharedTreeChangeFamily
 							tagChange(innerChange.innerChange, change.revision),
 							isRollback,
 						),
+						isConflicted: innerChange.isConflicted,
 					};
 				case "schema": {
 					if (innerChange.innerChange.schema === undefined) {
 						return {
 							type: "schema",
 							innerChange: {},
+							isConflicted: innerChange.isConflicted,
 						};
 					}
 					return {
@@ -99,6 +113,7 @@ export class SharedTreeChangeFamily
 								old: innerChange.innerChange.schema.new,
 							},
 						},
+						isConflicted: innerChange.isConflicted,
 					};
 				}
 				default:
@@ -114,7 +129,52 @@ export class SharedTreeChangeFamily
 		change: SharedTreeChange,
 		over: TaggedChange<SharedTreeChange>,
 	): SharedTreeChange {
-		throw new Error("Not implemented");
+		/**
+		 * Any SharedTreeChange (a list of sub-changes) that contains a schema change will cause ANY change that rebases over it to conflict.
+		 * Similarly, any SharedTreeChange containing a schema change will fail to rebase over ANY change.
+		 * Those two combine to mean: no concurrency with schema changes is supported.
+		 * This is fine because it's an open problem. Example: a tree with an A at the root and a schema that allows an A | B at the root will
+		 * become out of schema if a schema range to restrict root types to just A is concurrent with a data change that sets it to a B.
+		 * We don't have an efficient way to detect this document-wide and there are varying opinions on restricting schema changes to prevent this.
+		 * A SharedTreeChange containing a schema change will NOT conflict in a non-concurrency case, as the "meatless sandwich" optimization
+		 * will result in rebase never being called.
+		 */
+		const hasSchemaChange = (c: SharedTreeChange) =>
+			c.changes.some((innerChange) => innerChange.type === "schema");
+		if (hasSchemaChange(change) || hasSchemaChange(over.change)) {
+			// Conflict all inner changes
+			return {
+				changes: change.changes.map((innerChange) => ({
+					...innerChange,
+					isConflicted: true,
+				})),
+			};
+		}
+		assert(
+			change.changes.length === 1 && over.change.changes.length === 1,
+			"SharedTreeChange should have exactly one inner change if no schema change is present.",
+		);
+
+		const dataChangeIntention = change.changes[0];
+		const dataChangeOver = over.change.changes[0];
+		assert(
+			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
+			"Data change should be present.",
+		);
+
+		return {
+			changes: [
+				{
+					type: "data",
+					innerChange: rebaseChangeOverChanges(
+						this.modularChangeFamily,
+						dataChangeIntention.innerChange,
+						[tagChange(dataChangeOver.innerChange, over.revision)],
+					),
+					isConflicted: false,
+				},
+			],
+		};
 	}
 
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {

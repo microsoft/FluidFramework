@@ -34,14 +34,20 @@ export class SharedTreeEditBuilder
 		private readonly changeReceiver: (change: SharedTreeChange) => void,
 	) {
 		super(modularChangeFamily, (change) =>
-			changeReceiver({ changes: [{ type: "data", innerChange: change }] }),
+			changeReceiver({
+				changes: [{ type: "data", innerChange: change, isConflicted: false }],
+			}),
 		);
 	}
 
 	public setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void {
 		this.changeReceiver({
 			changes: [
-				{ type: "schema", innerChange: { schema: { new: newSchema, old: oldSchema } } },
+				{
+					type: "schema",
+					innerChange: { schema: { new: newSchema, old: oldSchema } },
+					isConflicted: false,
+				},
 			],
 		});
 	}
