@@ -219,10 +219,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
-		assert(requestedClusterSize > 0, "Clusters must have a positive capacity.");
+		assert(requestedClusterSize > 0, 0x876 /* Clusters must have a positive capacity. */);
 		assert(
 			requestedClusterSize <= IdCompressor.maxClusterSize,
-			"Clusters must not exceed max cluster size.",
+			0x877 /* Clusters must not exceed max cluster size. */,
 		);
 	}
 
