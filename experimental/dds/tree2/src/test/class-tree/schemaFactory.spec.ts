@@ -167,7 +167,6 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof NodeBase);
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works

@@ -208,6 +208,38 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		return schema;
 	}
 
+	private makeSchema<
+		Name extends TName | string,
+		TKind extends NodeKind,
+		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		ctor: Function,
+		name: Name,
+		kind: TKind,
+		info: T,
+	): TreeNodeSchemaClass<
+		`${TScope}.${Name}`,
+		NodeKind.Object,
+		ObjectFromSchemaRecord<T>,
+		InsertableObjectFromSchemaRecord<T>
+	> {
+		Object.defineProperties(ctor, {
+			identifier: { value: this.scoped(name) },
+			kind: { value: kind },
+			info: { value: info },
+		});
+
+		markEager(ctor);
+
+		return ctor as unknown as TreeNodeSchemaClass<
+			`${TScope}.${Name}`,
+			NodeKind.Object,
+			ObjectFromSchemaRecord<T>,
+			InsertableObjectFromSchemaRecord<T>
+		>;
+	}
+
 	/**
 	 * Define a {@link TreeNodeSchema} for an object node.
 	 *
@@ -225,30 +257,46 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		ObjectFromSchemaRecord<T>,
 		InsertableObjectFromSchemaRecord<T>
 	> {
-		const allowAdditionalProperties = true;
-		class schema extends this.nodeSchema(name, NodeKind.Object, t) {
-			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
-				super(input);
+		return this.makeSchema(
+			function ctor(this: object, input: InsertableObjectFromSchemaRecord<T>) {
+				// If this 'ctor' function is invoked *directly* as a constructor, the user
+				// has not created a subclass.  In this case, we substitute '{}' for 'this'
+				// so that the prototype chain of the proxy matches the prototype chain of
+				// an object created via the '{}' literal syntax.
+				//
+				// This is required to satisfy 'deepEqual', which compares prototype chains
+				// for equality.
+				const proxyTarget = this.constructor === ctor ? {} : this;
+
+				const allowAdditionalProperties = true;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, allowAdditionalProperties, this) as schema;
+					assert(
+						getClassSchema(input.schema) === this.constructor,
+						0x83b /* building node with wrong schema */,
+					);
+
+					return createNodeProxy(input, allowAdditionalProperties, proxyTarget);
 				} else {
+					// TODO: make this a better user facing error, and explain how to copy explicitly.
+					assert(
+						!(input instanceof NodeBase),
+						0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
+					);
+
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as ObjectNodeSchema,
 						input,
 						allowAdditionalProperties,
-						this,
-					) as schema;
+						proxyTarget,
+					);
 				}
-			}
-		}
-
-		return schema as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			},
+			name,
 			NodeKind.Object,
-			ObjectFromSchemaRecord<T>,
-			InsertableObjectFromSchemaRecord<T>
-		>;
+			t,
+		);
 	}
 
 	/**

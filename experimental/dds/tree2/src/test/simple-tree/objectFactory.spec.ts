@@ -92,9 +92,7 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.poly.content, 44);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-	it.skip("don't require optional data to be included", () => {
+	it("don't require optional data to be included", () => {
 		const root = getRoot(schema, initialTree);
 		assert.equal(root.optional, undefined);
 		root.optional = new childOptional({ content: undefined });
@@ -102,9 +100,7 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.optional.content, undefined);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-	it.skip("support nesting inside of a factory", () => {
+	it("support nesting inside of a factory", () => {
 		const root = getRoot(schema, initialTree);
 		root.grand = new childC({
 			child: new childD({
@@ -120,9 +116,7 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-	it.skip("support nesting inside of a plain javascript object", () => {
+	it("support nesting inside of a plain javascript object", () => {
 		const root = getRoot(schema, initialTree);
 		root.grand = {
 			child: new childD({
