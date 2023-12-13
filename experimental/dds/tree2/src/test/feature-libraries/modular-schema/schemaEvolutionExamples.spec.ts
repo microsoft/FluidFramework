@@ -32,7 +32,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 		public readonly policy: FullSchemaPolicy,
 		data?: TreeStoredSchema,
 	) {
-		super(() => {}, data);
+		super(data);
 	}
 
 	/**

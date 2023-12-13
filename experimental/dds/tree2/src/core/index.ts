@@ -123,7 +123,6 @@ export {
 	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	EditableTreeStoredSchema,
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,

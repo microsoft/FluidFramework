@@ -159,7 +159,7 @@ export function generateTestTrees() {
 					},
 				};
 
-				tree1.storedSchema.update(wrongSchema);
+				tree1.updateSchema(wrongSchema);
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {

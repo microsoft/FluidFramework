@@ -5,7 +5,6 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	AnchorLocator,
-	EditableTreeStoredSchema,
 	IForestSubscription,
 	AnchorSetRootEvents,
 	Anchor,
@@ -21,6 +20,8 @@ import {
 	Revertible,
 	ChangeFamily,
 	tagChange,
+	TreeStoredSchema,
+	TreeStoredSchemaSubscription,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { buildForest, intoDelta } from "../feature-libraries";
@@ -82,7 +83,7 @@ export interface ITreeCheckout extends AnchorLocator {
 	 * TODO:
 	 * Something should ensure the document contents are always in schema.
 	 */
-	readonly storedSchema: EditableTreeStoredSchema;
+	readonly storedSchema: TreeStoredSchemaSubscription;
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
@@ -130,6 +131,12 @@ export interface ITreeCheckout extends AnchorLocator {
 	rebase(view: ITreeCheckoutFork): void;
 
 	/**
+	 * Replaces all schema with the provided schema.
+	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 */
+	updateSchema(newSchema: TreeStoredSchema): void;
+
+	/**
 	 * Events about this view.
 	 */
 	readonly events: ISubscribable<CheckoutEvents>;
@@ -169,7 +176,7 @@ export function createTreeCheckout(args?: {
 			},
 			changeFamily,
 		);
-	const schema = args?.schema ?? forkSchemaForCheckout(branch);
+	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -335,7 +342,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
 		const branch = this.branch.fork();
-		const storedSchema = forkSchemaForCheckout(branch, this.storedSchema);
+		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const transaction = new Transaction(branch);
 		return new TreeCheckout(
@@ -373,6 +380,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
+	public updateSchema(newSchema: TreeStoredSchema): void {
+		this.editor.setStoredSchema(this.storedSchema, newSchema);
+	}
+
 	/**
 	 * Dispose this view, freezing its state and allowing the SharedTree to release resources required by it.
 	 * Attempts to further mutate or dispose this view will error.
@@ -400,14 +411,4 @@ export function runSynchronous(
 	return result === TransactionResult.Abort
 		? view.transaction.abort()
 		: view.transaction.commit();
-}
-
-export function forkSchemaForCheckout(
-	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	schema?: TreeStoredSchemaRepository,
-): TreeStoredSchemaRepository {
-	return new TreeStoredSchemaRepository(
-		(oldSchema, newSchema) => branch.editor.setStoredSchema(newSchema, oldSchema),
-		schema,
-	);
 }

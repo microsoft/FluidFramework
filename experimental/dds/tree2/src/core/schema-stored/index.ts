@@ -21,7 +21,6 @@ export {
 	StoredSchemaCollection,
 } from "./schema";
 export {
-	EditableTreeStoredSchema,
 	TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,

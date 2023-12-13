@@ -370,10 +370,10 @@ describe("sharedTreeView", () => {
 				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
-			parent.storedSchema.update(schemaA);
+			parent.updateSchema(schemaA);
 			assert.equal(getSchema(parent), "schemaA");
 			const child = parent.fork();
-			child.storedSchema.update(schemaB);
+			child.updateSchema(schemaB);
 			assert.equal(getSchema(parent), "schemaA");
 			assert.equal(getSchema(child), "schemaB");
 		});

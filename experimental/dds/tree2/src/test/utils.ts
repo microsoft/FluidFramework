@@ -98,6 +98,7 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	DeltaProtoNode,
+	TreeStoredSchemaRepository,
 } from "../core";
 import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -111,8 +112,6 @@ import {
 	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
-// eslint-disable-next-line import/no-internal-modules
-import { buildTestSchemaRepository } from "./feature-libraries/storedSchemaUtil";
 
 // Testing utilities
 
@@ -622,7 +621,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	const view = createTreeCheckout({
 		...args,
 		forest,
-		schema: buildTestSchemaRepository(content.schema),
+		schema: new TreeStoredSchemaRepository(content.schema),
 	});
 	return new CheckoutFlexTreeView(
 		view,
@@ -659,7 +658,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	const branch = createTreeCheckout({
 		...args,
 		forest,
-		schema: buildTestSchemaRepository(content.schema),
+		schema: new TreeStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(
@@ -774,14 +773,14 @@ export function initializeTestTree(
 	schema: TreeStoredSchema = wrongSchema,
 ): void {
 	if (state === undefined) {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 		return;
 	}
 
 	if (!Array.isArray(state)) {
 		initializeTestTree(tree, [state], schema);
 	} else {
-		tree.storedSchema.update(schema);
+		tree.updateSchema(schema);
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {

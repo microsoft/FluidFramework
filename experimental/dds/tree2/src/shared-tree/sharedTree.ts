@@ -62,12 +62,7 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import {
-	TreeCheckout,
-	CheckoutEvents,
-	createTreeCheckout,
-	forkSchemaForCheckout,
-} from "./treeCheckout";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
 import { FlexTreeView, CheckoutFlexTreeView } from "./treeView";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily";
@@ -177,7 +172,7 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new TreeStoredSchemaRepository(failSchemaEdit);
+		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
@@ -229,7 +224,7 @@ export class SharedTree
 		this.view = createTreeCheckout({
 			branch: localBranch,
 			changeFamily,
-			schema: forkSchemaForCheckout(localBranch, schema),
+			schema,
 			forest,
 			events: this._events,
 			removedRoots,
@@ -278,7 +273,7 @@ export class SharedTree
 			}
 		};
 
-		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
+		afterSchemaChanges(this._events, this.view, onSchemaChange);
 		return view2;
 	}
 
@@ -287,7 +282,7 @@ export class SharedTree
 		try {
 			moveToDetachedField(this.view.forest, cursor);
 			return {
-				schema: new TreeStoredSchemaRepository(failSchemaEdit, this.storedSchema),
+				schema: this.storedSchema.clone(),
 				tree: jsonableTreeFromFieldCursor(cursor),
 			};
 		} finally {
@@ -308,7 +303,7 @@ export class SharedTree
 		// Check for empty.
 		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
 			this.view.transaction.start();
-			initializeContent(this.storedSchema, config.schema, () => {
+			initializeContent(this.view, config.schema, () => {
 				const field = { field: rootFieldKey, parent: undefined };
 				const content = normalizeNewFieldContent(
 					{ schema: this.storedSchema },
@@ -339,7 +334,7 @@ export class SharedTree
 			this.view.transaction.commit();
 		}
 
-		schematize(this.view.events, this.storedSchema, config);
+		schematize(this.view.events, this.view, config);
 
 		return (
 			this.requireSchema(
@@ -430,8 +425,4 @@ export class SharedTreeFactory implements IChannelFactory {
 		tree.initializeLocal();
 		return tree;
 	}
-}
-
-function failSchemaEdit(): void {
-	fail("Cannot generate a schema edit directly on the trunk of a SharedTree");
 }

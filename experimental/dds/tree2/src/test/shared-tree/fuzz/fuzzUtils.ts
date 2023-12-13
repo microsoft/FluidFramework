@@ -47,7 +47,7 @@ export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
 }
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(fuzzSchema);
+	tree.view.updateSchema(fuzzSchema);
 };
 
 /**

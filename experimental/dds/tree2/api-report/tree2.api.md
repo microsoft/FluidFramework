@@ -404,11 +404,6 @@ export interface EditableTreeEvents {
 }
 
 // @alpha
-export interface EditableTreeStoredSchema extends TreeStoredSchemaSubscription {
-    update(newSchema: TreeStoredSchema): void;
-}
-
-// @alpha
 export const EmptyKey: FieldKey;
 
 // @alpha
@@ -976,7 +971,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 
 // @alpha
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
-    setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void;
+    setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
 }
 
 // @alpha (undocumented)
@@ -1016,8 +1011,9 @@ export interface ITreeCheckout extends AnchorLocator {
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    readonly storedSchema: EditableTreeStoredSchema;
+    readonly storedSchema: TreeStoredSchemaSubscription;
     readonly transaction: ITransaction;
+    updateSchema(newSchema: TreeStoredSchema): void;
 }
 
 // @alpha

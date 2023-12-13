@@ -16,7 +16,7 @@ import {
 } from "./schema";
 
 /**
- * Events for {@link EditableTreeStoredSchema}.
+ * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
  * @alpha
@@ -45,18 +45,6 @@ export interface TreeStoredSchemaSubscription
  * Mutable collection of stored schema.
  * @alpha
  */
-export interface EditableTreeStoredSchema extends TreeStoredSchemaSubscription {
-	/**
-	 * Replaces all schema with the provided schema.
-	 * Can over-write preexisting schema, and removes unmentioned schema.
-	 */
-	update(newSchema: TreeStoredSchema): void;
-}
-
-/**
- * Mutable collection of stored schema.
- * @alpha
- */
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
 	 * Replaces all schema with the provided schema.
@@ -66,14 +54,9 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 }
 
 /**
- * EditableTreeStoredSchema that follows SharedTree's editing patterns.
- *
- * `update` will result in an invocation of the supplied `changeReceiver`.
- * `apply` will mutate the schema repository.
+ * Mutable TreeStoredSchema repository.
  */
-export class TreeStoredSchemaRepository
-	implements EditableTreeStoredSchema, MutableTreeStoredSchema
-{
+export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected readonly events = createEmitter<SchemaEvents>();
@@ -91,13 +74,7 @@ export class TreeStoredSchemaRepository
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
-	public constructor(
-		private readonly changeReceiver: (
-			oldSchema: TreeStoredSchema,
-			newSchema: TreeStoredSchema,
-		) => void,
-		data?: TreeStoredSchema,
-	) {
+	public constructor(data?: TreeStoredSchema) {
 		if (data === undefined) {
 			this.rootFieldSchemaData = storedEmptyFieldSchema;
 			this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
@@ -131,22 +108,17 @@ export class TreeStoredSchemaRepository
 		return this.rootFieldSchemaData;
 	}
 
-	public update(newSchema: TreeStoredSchema): void {
-		this.changeReceiver(
-			// Clone out the data in case the receiver holds onto it to ensure
-			// it is not mutated in the subsequent apply call.
-			new TreeStoredSchemaRepository(this.changeReceiver, this),
-			newSchema,
-		);
-	}
-
 	public apply(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-		const clone = new TreeStoredSchemaRepository(this.changeReceiver, newSchema);
+		const clone = new TreeStoredSchemaRepository(newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
 		this.rootFieldSchemaData = clone.rootFieldSchemaData;
 		this.nodeSchemaData = clone.nodeSchemaData;
 		this.events.emit("afterSchemaChange", newSchema);
+	}
+
+	public clone(): TreeStoredSchemaRepository {
+		return new TreeStoredSchemaRepository(this);
 	}
 }
 

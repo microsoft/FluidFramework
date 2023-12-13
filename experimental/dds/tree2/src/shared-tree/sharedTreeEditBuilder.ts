@@ -14,11 +14,11 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes";
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
 	/**
 	 * Updates the stored schema.
-	 * @param newSchema - The new schema to apply.
 	 * @param oldSchema - The schema being overwritten.
+	 * @param newSchema - The new schema to apply.
 	 * @alpha
 	 */
-	setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void;
+	setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -40,7 +40,7 @@ export class SharedTreeEditBuilder
 		);
 	}
 
-	public setStoredSchema(newSchema: TreeStoredSchema, oldSchema: TreeStoredSchema): void {
+	public setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void {
 		this.changeReceiver({
 			changes: [
 				{
