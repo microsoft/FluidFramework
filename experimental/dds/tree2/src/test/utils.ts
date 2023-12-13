@@ -22,6 +22,7 @@ import {
 	createSummarizer,
 	summarizeNow,
 	ITestContainerConfig,
+	SummaryInfo,
 } from "@fluidframework/test-utils";
 import {
 	MockContainerRuntimeFactory,
@@ -309,15 +310,7 @@ export class TestTreeProvider {
 	 * was set to true when calling the create() method.
 	 * @returns void after a summary has been resolved. May be called multiple times.
 	 */
-	public async summarize(): Promise<void> {
-		assert(
-			this.summarizer !== undefined,
-			"can't summarize because summarizeOnDemand was not set to true.",
-		);
-		await summarizeNow(this.summarizer, "TestTreeProvider");
-	}
-
-	public async getSummaryInfo() {
+	public async summarize(): Promise<SummaryInfo> {
 		assert(
 			this.summarizer !== undefined,
 			"can't summarize because summarizeOnDemand was not set to true.",

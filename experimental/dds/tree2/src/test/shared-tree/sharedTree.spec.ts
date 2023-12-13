@@ -333,7 +333,7 @@ describe("SharedTree", () => {
 		tree1.editableTree.insertAt(0, ["A"]);
 
 		await provider.ensureSynchronized();
-		const { summaryTree } = await provider.getSummaryInfo();
+		const { summaryTree } = await provider.summarize();
 		assert(
 			summaryTree.tree[".channels"].type === SummaryType.Tree,
 			"Runtime summary tree not created for blob dds test",

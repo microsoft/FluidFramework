@@ -33,6 +33,9 @@ import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
 const schemaStringKey = "SchemaString";
 
+interface CollabWindow {
+	getCurrentSeq: () => number | undefined;
+}
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
@@ -47,7 +50,7 @@ export class SchemaSummarizer implements Summarizable {
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: StoredSchemaRepository,
 		options: ICodecOptions,
-		collabWindow: { getCurrentSeq(): number | undefined },
+		collabWindow: CollabWindow,
 	) {
 		this.codec = makeSchemaCodec(options);
 		this.schema.on("afterSchemaChange", () => {

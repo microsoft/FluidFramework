@@ -241,11 +241,17 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @internal
-export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<{
-    summaryTree: ISummaryTree;
-    summaryVersion: string;
+export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<SummaryInfo>;
+
+// @internal
+export interface SummaryInfo {
+    // (undocumented)
     summaryRefSeq: number;
-}>;
+    // (undocumented)
+    summaryTree: ISummaryTree;
+    // (undocumented)
+    summaryVersion: string;
+}
 
 // @internal (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
