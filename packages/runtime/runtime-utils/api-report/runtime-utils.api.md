@@ -191,7 +191,7 @@ export class TelemetryContext implements ITelemetryContext {
 }
 
 // @internal
-export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
+export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;
 
 // @internal (undocumented)
 export function utf8ByteLength(str: string): number;

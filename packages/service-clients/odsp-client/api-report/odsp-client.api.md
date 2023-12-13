@@ -57,10 +57,9 @@ export interface OdspContainerServices {
 
 // @alpha
 export interface OdspMember extends IMember {
-    // (undocumented)
     email: string;
-    // (undocumented)
     name: string;
+    userId: string;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -39,6 +39,7 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},

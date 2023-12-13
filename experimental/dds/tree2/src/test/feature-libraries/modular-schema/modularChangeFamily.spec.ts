@@ -14,9 +14,15 @@ import {
 	FieldChange,
 	ModularChangeset,
 	FieldKindWithEditor,
+	RelevantRemovedRootsFromChild,
+	chunkTree,
+	defaultChunkPolicy,
+	uncompressedEncode,
+	EncodedChunk,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
+	makeDetachedNodeId,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
@@ -27,8 +33,10 @@ import {
 	assertIsRevisionTag,
 	deltaForSet,
 	revisionMetadataSourceFromInfo,
+	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
+	DeltaDetachedNodeId,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily } from "../../../codec";
@@ -42,6 +50,7 @@ import {
 } from "../../utils";
 import {
 	ModularChangeFamily,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily";
@@ -74,7 +83,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		relevantRemovedRootsFromChild(change),
+		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -333,11 +342,15 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(1)]])]]),
+				builds: new Map([
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(1))]])],
+				]),
 			};
 			const change2: ModularChangeset = {
 				fieldChanges: new Map(),
-				builds: new Map([[undefined, new Map([[brand(0), singleJsonCursor(2)]])]]),
+				builds: new Map([
+					[undefined, new Map([[brand(0), encodedChunkFromCursor(singleJsonCursor(2))]])],
+				]),
 			};
 			assert.deepEqual(
 				family.compose([makeAnonChange(change1), makeAnonChange(change2)]),
@@ -535,8 +548,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(0), node1]])],
-						[tag3, new Map([[brand(0), node1]])],
+						[undefined, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
 					]),
 				},
 				tag1,
@@ -546,8 +559,8 @@ describe("ModularChangeFamily", () => {
 				{
 					fieldChanges: new Map([]),
 					builds: new Map([
-						[undefined, new Map([[brand(2), node1]])],
-						[tag3, new Map([[brand(2), node1]])],
+						[undefined, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					]),
 					revisions: [{ revision: tag2 }],
 				},
@@ -561,13 +574,13 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				fieldChanges: new Map(),
 				builds: new Map([
-					[tag1, new Map([[brand(0), node1]])],
-					[tag2, new Map([[brand(2), node1]])],
+					[tag1, new Map([[brand(0), encodedChunkFromCursor(node1)]])],
+					[tag2, new Map([[brand(2), encodedChunkFromCursor(node1)]])],
 					[
 						tag3,
 						new Map([
-							[brand(0), node1],
-							[brand(2), node1],
+							[brand(0), encodedChunkFromCursor(node1)],
+							[brand(2), encodedChunkFromCursor(node1)],
 						]),
 					],
 				]),
@@ -690,6 +703,149 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
+	describe("relevantRemovedRoots", () => {
+		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
+		interface HasRemovedRootsRefs {
+			shallow: DeltaDetachedNodeId[];
+			nested: HasRemovedRootsRefs[];
+		}
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
+			relevantRemovedRoots: (
+				{ change, revision }: TaggedChange<HasRemovedRootsRefs>,
+				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+			) => {
+				return [
+					...change.shallow.map((id) =>
+						makeDetachedNodeId(id.major ?? revision, id.minor),
+					),
+					...change.nested.flatMap((c) =>
+						Array.from(
+							relevantRemovedRootsFromChild({
+								fieldChanges: new Map([
+									[brand("nested"), { fieldKind, change: brand(c) }],
+								]),
+							}),
+						),
+					),
+				];
+			},
+		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
+		const hasRemovedRootsRefsField = new FieldKindWithEditor(
+			fieldKind,
+			Multiplicity.Single,
+			handler,
+			() => false,
+			new Set(),
+		);
+		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+
+		function relevantRemovedRoots(
+			input: TaggedChange<ModularChangeset>,
+		): DeltaDetachedNodeId[] {
+			deepFreeze(input);
+			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+		}
+
+		it("sibling fields", () => {
+			const a1 = { major: "A", minor: 1 };
+			const a2 = { major: "A", minor: 2 };
+			const b1 = { major: "B", minor: 1 };
+
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1, a2],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [b1],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind, change: brand(changeA) }],
+					[brand("fB"), { fieldKind, change: brand(changeB) }],
+				]),
+			};
+
+			const actual = relevantRemovedRoots(makeAnonChange(input));
+			assert.deepEqual(actual, [a1, a2, b1]);
+		});
+
+		it("nested fields", () => {
+			const a1 = { major: "A", minor: 1 };
+			const c1 = { major: "C", minor: 1 };
+
+			const changeC: HasRemovedRootsRefs = {
+				shallow: [c1],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [],
+				nested: [changeC],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1],
+				nested: [changeB],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+			};
+
+			const actual = relevantRemovedRoots(makeAnonChange(input));
+			assert.deepEqual(actual, [a1, c1]);
+		});
+
+		it("default revision from tag", () => {
+			const major = mintRevisionTag();
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [{ minor: 2 }],
+				nested: [],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [changeB],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+			};
+
+			const actual = relevantRemovedRoots(tagChange(input, major));
+			assert.deepEqual(actual, [
+				{ major, minor: 1 },
+				{ major, minor: 2 },
+			]);
+		});
+
+		it("default revision from field", () => {
+			const majorAB = mintRevisionTag();
+			const majorC = mintRevisionTag();
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [{ minor: 2 }],
+				nested: [],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [changeB],
+			};
+			const changeC: HasRemovedRootsRefs = {
+				shallow: [{ minor: 1 }],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind, change: brand(changeA), revision: majorAB }],
+					[brand("fC"), { fieldKind, change: brand(changeC), revision: majorC }],
+				]),
+			};
+
+			const actual = relevantRemovedRoots(makeAnonChange(input));
+			assert.deepEqual(actual, [
+				{ major: majorAB, minor: 1 },
+				{ major: majorAB, minor: 2 },
+				{ major: majorC, minor: 1 },
+			]);
+		});
+	});
+
 	describe("Encoding", () => {
 		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
 			successes: [
@@ -734,3 +890,7 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(changes, [expectedChange]);
 	});
 });
+
+function encodedChunkFromCursor(cursor: ITreeCursorSynchronous): EncodedChunk {
+	return uncompressedEncode(chunkTree(cursor, defaultChunkPolicy).cursor());
+}
