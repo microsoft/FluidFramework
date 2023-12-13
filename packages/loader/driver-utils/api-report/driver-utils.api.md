@@ -220,7 +220,7 @@ export interface IProgress {
 }
 
 // @internal
-export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
+export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
 // @internal
 export function isOnline(): OnlineStatus;

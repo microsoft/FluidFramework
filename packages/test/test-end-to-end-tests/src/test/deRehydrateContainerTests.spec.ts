@@ -20,8 +20,6 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
-	ISummaryTree,
-	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -38,82 +36,6 @@ import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { ISerializableBlobContents } from "@fluidframework/container-loader/dist/containerStorageAdapter";
 
 const detachedContainerRefSeqNumber = 0;
-
-const fluidCodeDetails: IFluidCodeDetails = {
-	package: "detachedContainerTestPackage1",
-	config: {},
-};
-
-// Quorum val transormations
-const quorumKey = "code";
-const baseQuorum = [
-	[
-		quorumKey,
-		{
-			key: quorumKey,
-			value: fluidCodeDetails,
-			approvalSequenceNumber: 0,
-			commitSequenceNumber: 0,
-			sequenceNumber: 0,
-		},
-	],
-];
-
-const baseAttributes = {
-	minimumSequenceNumber: 0,
-	sequenceNumber: 0,
-	term: 1,
-};
-
-const baseSummarizer = {
-	electionSequenceNumber: 0,
-};
-
-function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
-	return {
-		type: SummaryType.Tree,
-		tree: {
-			".protocol": {
-				type: 1,
-				tree: {
-					quorumMembers: {
-						type: SummaryType.Blob,
-						content: "[]",
-					},
-					quorumProposals: {
-						type: SummaryType.Blob,
-						content: "[]",
-					},
-					quorumValues: {
-						type: SummaryType.Blob,
-						content: JSON.stringify(quorumVal),
-					},
-					attributes: {
-						type: SummaryType.Blob,
-						content: JSON.stringify(attr),
-					},
-				},
-			},
-			".app": {
-				type: 1,
-				tree: {
-					[".channels"]: {
-						type: SummaryType.Tree,
-						tree: {},
-					},
-					".metadata": {
-						type: 2,
-						content: "{}",
-					},
-					".electedSummarizer": {
-						type: 2,
-						content: JSON.stringify(summarizer),
-					},
-				},
-			},
-		},
-	};
-}
 
 describeCompat(`Dehydrate Rehydrate Container Test`, "FullCompat", (getTestObjectProvider) => {
 	function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {

@@ -136,8 +136,6 @@ const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-const hasBlobsSummaryTree = ".hasAttachmentBlobs";
-
 /**
  * @internal
  */
@@ -371,6 +369,7 @@ export interface IPendingDetachedContainerState {
 	attached: boolean;
 	baseSnapshot: ISnapshotTree;
 	snapshotBlobs: ISerializableBlobContents;
+	hasAttachmentBlobs: boolean;
 }
 
 const summarizerClientType = "summarizer";
@@ -488,10 +487,7 @@ export class Container
 				if (!isPendingDetachedContainerState(detachedContainerState)) {
 					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 				}
-				await container.rehydrateDetachedFromSnapshot(
-					detachedContainerState.baseSnapshot,
-					detachedContainerState.snapshotBlobs,
-				);
+				await container.rehydrateDetachedFromSnapshot(detachedContainerState);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1209,21 +1205,14 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[hasBlobsSummaryTree] = {
-				type: SummaryType.Blob,
-				content: "true",
-			};
-		}
-		const [baseSnapshot, snapshotBlobs] = getSnapshotTreeAndBlobsFromSerializedContainer(
-			combinedSummary,
-			hasBlobsSummaryTree,
-		);
+		const [baseSnapshot, snapshotBlobs] =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
 			baseSnapshot,
 			snapshotBlobs,
+			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1277,10 +1266,7 @@ export class Container
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const [snapshot, snapshotBlobs] =
-								getSnapshotTreeAndBlobsFromSerializedContainer(
-									summary,
-									hasBlobsSummaryTree,
-								);
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
 							this.baseSnapshotBlobs = snapshotBlobs;
 						}
@@ -1343,10 +1329,7 @@ export class Container
 						this.emit("attaching");
 						if (this.offlineLoadEnabled) {
 							const [snapshot, snapshotBlobs] =
-								getSnapshotTreeAndBlobsFromSerializedContainer(
-									summary,
-									hasBlobsSummaryTree,
-								);
+								getSnapshotTreeAndBlobsFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
 							this.baseSnapshotBlobs = snapshotBlobs;
 						}
@@ -1858,12 +1841,20 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot(
-		snapshotTree: ISnapshotTree,
-		snapshotBlobs: ISerializableBlobContents,
-	) {
+	private async rehydrateDetachedFromSnapshot({
+		attached,
+		baseSnapshot,
+		snapshotBlobs,
+		hasAttachmentBlobs,
+	}: IPendingDetachedContainerState) {
+		if (hasAttachmentBlobs) {
+			assert(
+				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
+			);
+		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			recombineSnapshotTreeAndSnapshotBlobs(snapshotTree, snapshotBlobs);
+			recombineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTreeWithBlobContents);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,

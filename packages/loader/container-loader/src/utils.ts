@@ -261,10 +261,9 @@ export function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-	optionalRoots: string,
 ): [ISnapshotTree, ISerializableBlobContents] => {
 	assert(
-		isCombinedAppAndProtocolSummary(detachedContainerSnapshot, optionalRoots),
+		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		"Protocol and App summary trees should be present",
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
@@ -333,7 +332,8 @@ export function isPendingDetachedContainerState(
 	if (
 		detachedContainerState?.attached === undefined ||
 		detachedContainerState?.baseSnapshot === undefined ||
-		detachedContainerState?.snapshotBlobs === undefined
+		detachedContainerState?.snapshotBlobs === undefined ||
+		detachedContainerState?.hasAttachmentBlobs === undefined
 	) {
 		return false;
 	}
