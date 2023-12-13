@@ -9,6 +9,8 @@
 "@fluid-experimental/tree2": major
 ---
 
+datastore-definitions: Jsonable and Serializable now require a generic parameter
+
 The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
 if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
 limitation of serialization.
