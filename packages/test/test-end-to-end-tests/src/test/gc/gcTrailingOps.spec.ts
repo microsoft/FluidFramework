@@ -17,27 +17,21 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
-import { defaultGCConfig } from "./gcTestConfigs.js";
+import { delay } from "@fluidframework/core-utils";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
+import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
-	const tests = (tombstoneEnabled: boolean = false) => {
+	const tests = (enableGCSweep?: true) => {
 		let provider: ITestObjectProvider;
+		let settings = {};
 
-		const sweepTimeoutMs = 1;
-		const settings = {
-			"Fluid.GarbageCollection.ThrowOnTombstoneUsage": true,
-			"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
-		};
-
-		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
-		const configProvider = tombstoneEnabled
-			? mockConfigProvider(settings)
-			: mockConfigProvider();
-		const tombstoneConfig: ITestContainerConfig = {
+		const sweepTimeoutMs = 100;
+		const configProvider = mockConfigProvider(settings);
+		const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0, enableGCSweep };
+		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: {
@@ -48,46 +42,84 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			},
 			loaderProps: { configProvider },
 		};
-		const testContainerConfig: ITestContainerConfig = tombstoneEnabled
-			? tombstoneConfig
-			: defaultGCConfig;
 
 		/**
-		 * Submits a summary and returns the unreferenced timestamp for all the nodes in the container. If a node is
-		 * referenced, the unreferenced timestamp is undefined.
-		 * @returns a map of nodeId to its unreferenced timestamp.
+		 * Validates that the data store is not deleted from the data store and GC trees in the summary.
 		 */
-		async function getUnreferencedTimestamps(summaryTree: ISummaryTree) {
+		function validateDataStoreStateInSummary(
+			summaryTree: ISummaryTree,
+			dataStoreNodePath: string,
+			expectGCStateHandle: boolean,
+			referenced: boolean,
+		) {
+			// Validate that the data store is not deleted from the data store summary tree.
+			const dataStoreId = dataStoreNodePath.split("/")[1];
+			const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+			assert.equal(
+				Object.keys(channelsTree).includes(dataStoreId),
+				true,
+				`Data store ${dataStoreId} should not have been deleted from the summary`,
+			);
+
+			// If expecting the GC state to be a handle, validate that and return.
+			if (expectGCStateHandle) {
+				assert.equal(
+					summaryTree.tree[gcTreeKey].type,
+					SummaryType.Handle,
+					"Expecting the GC tree to be handle",
+				);
+				return;
+			}
+
+			// Validate that the GC state does contains an entry for the data store.
 			const gcState = getGCStateFromSummary(summaryTree);
 			assert(gcState !== undefined, "GC tree is not available in the summary");
-			const nodeTimestamps: Map<string, number | undefined> = new Map();
-			for (const [nodeId, nodeData] of Object.entries(gcState.gcNodes)) {
-				nodeTimestamps.set(nodeId.slice(1), nodeData.unreferencedTimestampMs);
-			}
-			return nodeTimestamps;
+			const dataStoreGCData = gcState.gcNodes[dataStoreNodePath];
+			assert(
+				dataStoreGCData !== undefined,
+				`Data store ${dataStoreNodePath} should be present in GC state`,
+			);
+			assert.equal(
+				dataStoreGCData.unreferencedTimestampMs ? false : true,
+				referenced,
+				`Data store ${dataStoreNodePath}'s referenced state is incorrect`,
+			);
+
+			// Validate that the deleted nodes in the GC data does not have the data store.
+			const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
+			assert.equal(
+				deletedNodesState?.includes(dataStoreNodePath) ?? false,
+				false,
+				`Data store ${dataStoreNodePath} should not be in deleted nodes`,
+			);
 		}
 
 		beforeEach(async function () {
+			settings = {};
 			provider = getTestObjectProvider({ syncSummarizer: true });
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
+
+			if (enableGCSweep) {
+				settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+			}
 		});
 
-		it(`A summary has a datastore and blob referenced, but trailing ops unreferenced them ${
-			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
-		}`, async () => {
+		it(`Trailing ops ${
+			enableGCSweep ? "after sweep timeout" : "before sweep timeout"
+		} makes data store unreferenced without deleting it`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
-			// Create a data store and blob.
+			// Create a data store and reference it.
 			const newDataStore =
 				await mainDefaultDataStore._context.containerRuntime.createDataStore(
 					TestDataObjectType,
 				);
 			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-			const blobContents = "Blob contents";
-			const blobHandle = await mainDefaultDataStore._runtime.uploadBlob(
-				stringToBuffer(blobContents, "utf-8"),
-			);
+			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
 
 			// Create a summarizer
 			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
@@ -95,30 +127,29 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				loaderProps: { configProvider },
 			});
 
-			// Reference datastore and blob
-			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-			mainDefaultDataStore._root.set("blob", blobHandle);
-
-			// Summarize and verify that the datastore and blob are referenced
+			// Summarize and verify that the datastore is referenced.
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(mainSummarizer);
-			const unreferencedTimestamps1 = await getUnreferencedTimestamps(summary1.summaryTree);
-			const dataStoreTimestamp1 = unreferencedTimestamps1.get(
-				newDataStore.entryPoint.absolutePath.slice(1),
+			validateDataStoreStateInSummary(
+				summary1.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				false /* expectGCStateHandle */,
+				true /* referenced */,
 			);
-			const blobTimestamp1 = unreferencedTimestamps1.get(blobHandle.absolutePath.slice(1));
-			assert(dataStoreTimestamp1 === undefined, `Should have referenced datastore`);
-			assert(blobTimestamp1 === undefined, `Should have referenced blob`);
 
-			// Create trailing ops where the datastore and blob are unreferenced
+			// If sweep is enabled, send the trailing op that makes data store unreferenced after waiting
+			// for sweep timeout.
+			// If sweep is disabled, send the trailing op right away.
+			// In both the cases, the data store should be unreferenced but not deleted in the next summary.
+			if (enableGCSweep) {
+				await delay(sweepTimeoutMs);
+			}
 			mainDefaultDataStore._root.delete("datastore");
-			mainDefaultDataStore._root.delete("blob");
-			await provider.ensureSynchronized();
 
-			mainContainer.close();
+			// Close the summarizer so that it doesn't interfere with the new one.
 			mainSummarizer.close();
 
-			// Load a new container/summarizer from the summary and trailing ops
+			// Load a new summarizer from the summary. It should process the trailing op before running GC.
 			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
@@ -126,35 +157,53 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				summary1.summaryVersion,
 			);
 
-			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are unreferenced
+			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
+			// is not deleted in that run.
+			if (!enableGCSweep) {
+				await delay(sweepTimeoutMs);
+			}
+
+			// Ensure trailing ops are processed and summarize.
 			await provider.ensureSynchronized();
 			const summary2 = await summarizeNow(summarizer);
-			const unreferencedTimestamps2 = await getUnreferencedTimestamps(summary2.summaryTree);
-			const dataStoreTimestamp2 = unreferencedTimestamps2.get(
-				newDataStore.entryPoint.absolutePath.slice(1),
+
+			// Validate that data store is unreferenced but not deleted.
+			validateDataStoreStateInSummary(
+				summary2.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				false /* expectGCStateHandle */,
+				false /* referenced */,
 			);
-			const blobTimestamp2 = unreferencedTimestamps2.get(blobHandle.absolutePath.slice(1));
-			assert(dataStoreTimestamp2 !== undefined, `Should have unreferenced datastore`);
-			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
+
+			// Summarize again to ensure that GC sweep op (if any) is now processed.
+			await provider.ensureSynchronized();
+			const summary3 = await summarizeNow(summarizer);
+
+			// Validate that data store is still unreferenced but not deleted. The GC state should not be a handle
+			// since it should not have changed since last time.
+			validateDataStoreStateInSummary(
+				summary3.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				true /* expectGCStateHandle */,
+				false /* referenced */,
+			);
 		});
 
-		it(`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
-			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
-		}`, async () => {
+		it(`Trailing ops ${
+			enableGCSweep ? "after sweep timeout" : "before sweep timeout"
+		} makes data store referenced without deleting it`, async () => {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer);
 
-			// Create a data store and blob.
+			// Create a data store and make it unreferenced.
 			const newDataStore =
 				await mainDefaultDataStore._context.containerRuntime.createDataStore(
 					TestDataObjectType,
 				);
 			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-			const blobContents = "Blob contents";
-			const blobHandle = await mainDefaultDataStore._runtime.uploadBlob(
-				stringToBuffer(blobContents, "utf-8"),
-			);
+			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
+			mainDefaultDataStore._root.delete("datastore");
 
 			// Create a summarizer
 			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
@@ -162,33 +211,29 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				loaderProps: { configProvider },
 			});
 
-			// Make the datastore and blob live and unreferenced
-			// Note: Technically the blob is live once the blob is uploaded and the attach op is sequenced, view the BlobManager for more details.
-			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-			mainDefaultDataStore._root.set("blob", blobHandle);
-			mainDefaultDataStore._root.delete("datastore");
-			mainDefaultDataStore._root.delete("blob");
-
-			// Summarize and verify that the datastore and blob are unreferenced
+			// Summarize and verify that the datastore is unreferenced.
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(mainSummarizer);
-			const unreferencedTimestamps1 = await getUnreferencedTimestamps(summary1.summaryTree);
-			const dataStoreTimestamp1 = unreferencedTimestamps1.get(
-				newDataStore.entryPoint.absolutePath.slice(1),
+			validateDataStoreStateInSummary(
+				summary1.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				false /* expectGCStateHandle */,
+				false /* referenced */,
 			);
-			const blobTimestamp1 = unreferencedTimestamps1.get(blobHandle.absolutePath.slice(1));
-			assert(dataStoreTimestamp1 !== undefined, `Should have unreferenced datastore`);
-			assert(blobTimestamp1 !== undefined, `Should have unreferenced blob`);
 
-			// Create trailing ops where the datastore and blob are referenced
+			// If sweep is enabled, send the trailing op that makes data store referenced after waiting
+			// for sweep timeout.
+			// If sweep is disabled, send the trailing op right away.
+			// In both the cases, the data store should be referenced and not deleted in the next summary.
+			if (enableGCSweep) {
+				await delay(sweepTimeoutMs);
+			}
 			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-			mainDefaultDataStore._root.set("blob", blobHandle);
-			await provider.ensureSynchronized();
 
-			mainContainer.close();
+			// Close the summarizer so that it doesn't interfere with the new one.
 			mainSummarizer.close();
 
-			// Load a new container/summarizer from the summary and trailing ops
+			// Load a new summarizer from the summary.
 			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
@@ -196,21 +241,39 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 				summary1.summaryVersion,
 			);
 
-			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced
+			// If sweep is not enabled, wait for sweep timeout before running GC to ensure that the data store
+			// is not deleted in that run.
+			if (!enableGCSweep) {
+				await delay(sweepTimeoutMs);
+			}
+
+			// Ensure trailing ops are processed and summarize.
 			await provider.ensureSynchronized();
 			const summary2 = await summarizeNow(summarizer);
-			const unreferencedTimestamps2 = await getUnreferencedTimestamps(summary2.summaryTree);
-			const dataStoreId = newDataStore.entryPoint.absolutePath.slice(1);
-			const blobId = blobHandle.absolutePath.slice(1);
-			assert(unreferencedTimestamps2.has(dataStoreId), `GC should detect the datastore`);
-			assert(unreferencedTimestamps2.has(blobId), `GC should detect the blob`);
-			const dataStoreTimestamp2 = unreferencedTimestamps2.get(dataStoreId);
-			const blobTimestamp2 = unreferencedTimestamps2.get(blobId);
-			assert(dataStoreTimestamp2 === undefined, `Should have a referenced datastore`);
-			assert(blobTimestamp2 === undefined, `Should have a referenced blob`);
+
+			// Validate that data store is referenced and not deleted.
+			validateDataStoreStateInSummary(
+				summary2.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				false /* expectGCStateHandle */,
+				true /* referenced */,
+			);
+
+			// Summarize again to ensure that GC sweep op (if any) is now processed.
+			await provider.ensureSynchronized();
+			const summary3 = await summarizeNow(summarizer);
+
+			// Validate that data store is still referenced and not deleted. The GC state should not be a handle
+			// since it should not have changed since last time.
+			validateDataStoreStateInSummary(
+				summary3.summaryTree,
+				newDataStore.entryPoint.absolutePath,
+				true /* expectGCStateHandle */,
+				true /* referenced */,
+			);
 		});
 	};
 
 	tests();
-	tests(true /** tombstoneEnabled */);
+	tests(true /** sweepEnabled */);
 });
