@@ -12,34 +12,26 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, OdspTestCredentials } from "./OdspClientFactory";
+import { createOdspClient, OdspLoginCredentials } from "./OdspClientFactory";
 import { waitForMember } from "./utils";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-/**
- * Default test credentials for odsp-client.
- */
-const client1Creds: OdspTestCredentials = {
-	clientId: process.env.odsp__client__client__id as string,
-	clientSecret: process.env.odsp__client__client__secret as string,
-	username: process.env.odsp__client__login__username as string,
-	password: process.env.odsp__client__login__password as string,
-};
-
-const client2Creds: OdspTestCredentials = {
-	clientId: process.env.odsp__client2__client__id as string,
-	clientSecret: process.env.odsp__client2__client__secret as string,
-	username: process.env.odsp__client2__login__username as string,
-	password: process.env.odsp__client2__login__password as string,
-};
-
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+	const client1Creds: OdspLoginCredentials = {
+		username: process.env.odsp__client__login__username as string,
+		password: process.env.odsp__client__login__password as string,
+	};
+
+	const client2Creds: OdspLoginCredentials = {
+		username: process.env.odsp__client2__login__username as string,
+		password: process.env.odsp__client2__login__password as string,
+	};
 
 	beforeEach(() => {
 		client = createOdspClient(client1Creds);
@@ -124,16 +116,13 @@ describe("Fluid audience", () => {
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		const members = servicesGet.audience.getMembers();
-		// TODO: uncomment this. One more test creds are required
-		// assert.strictEqual(members.size, 2, "We should have two members at this point.");
-		assert.strictEqual(members.size, 1, "We should have two members at this point.");
+		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
-		// TODO: login using a different M365 account
-		// assert.notStrictEqual(
-		// 	partner?.userId,
-		// 	originalSelf?.userId,
-		// 	"Self and partner should have different IDs",
-		// );
+		assert.notStrictEqual(
+			partner?.userId,
+			originalSelf?.userId,
+			"Self and partner should have different IDs",
+		);
 	});
 
 	/**
@@ -168,9 +157,7 @@ describe("Fluid audience", () => {
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		let members = servicesGet.audience.getMembers();
-		// TODO: uncomment this. One more test creds are required
-		// assert.strictEqual(members.size, 2, "We should have two members at this point.");
-		assert.strictEqual(members.size, 1, "We should have two members at this point.");
+		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		container.disconnect();
 

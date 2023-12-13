@@ -15,11 +15,14 @@ import { OdspTestTokenProvider } from "./OdspTokenFactory";
 /**
  * Interface representing the credentials required for testing odsp-client.
  */
-export interface OdspTestCredentials {
-	clientId: string;
-	clientSecret: string;
+export interface OdspLoginCredentials {
 	username: string;
 	password: string;
+}
+
+export interface OdspCredentials extends OdspLoginCredentials {
+	clientId: string;
+	clientSecret: string;
 }
 
 /**
@@ -27,12 +30,14 @@ export interface OdspTestCredentials {
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
-	creds: OdspTestCredentials,
+	creds: OdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
+	const clientId = process.env.odsp__client__client__id as string;
+	const clientSecret = process.env.odsp__client__client__secret as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
@@ -40,18 +45,31 @@ export function createOdspClient(
 		throw new Error("RaaS drive id is missing");
 	}
 
-	if (
-		creds.clientId === undefined ||
-		creds.clientSecret === undefined ||
-		creds.username === undefined ||
-		creds.password === undefined
-	) {
-		throw new Error("Some of the odsp credentials are undefined");
+	if (clientId === "" || clientId === undefined) {
+		throw new Error("client id is missing");
 	}
+
+	if (clientSecret === "" || clientSecret === undefined) {
+		throw new Error("client secret is missing");
+	}
+
+	if (creds.username === undefined) {
+		throw new Error("odsp username is undefined");
+	}
+
+	if (creds.password === undefined) {
+		throw new Error("odsp password is undefined");
+	}
+
+	const credentials: OdspCredentials = {
+		clientId,
+		clientSecret,
+		...creds,
+	};
 
 	const connectionProps: OdspConnectionConfig = {
 		siteUrl,
-		tokenProvider: new OdspTestTokenProvider(creds),
+		tokenProvider: new OdspTestTokenProvider(credentials),
 		driveId,
 	};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
