@@ -1420,7 +1420,10 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		// Verify that non-private packages are configured with API-Extractor
+		// Verify that non-private packages are configured correctly for API-Extractor by checking for the following:
+		// - dev dependency on `@microsoft/api-extractor`
+		// - `build:docs` script
+		// - `check:release-tags` script
 		name: "api-extractor-public-packages",
 		match,
 		handler: async (file) => {
@@ -1471,22 +1474,36 @@ export const handlers: Handler[] = [
 				return `package.json API-Extractor violations: ${newline}${errors.join(newline)}`;
 			}
 		},
+		// Fixes the following issues:
+		// - Adds missing `build:docs` script
+		// - Adds missing `check:release-tags` script
+		// TODO: we don't currently have a nice mechanism for auto-installing missing deps from here,
+		// but we could in theory install a version that matches what's in the base package.json or something.
 		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				const devDependencies = Object.keys(json.devDependencies ?? {});
-				// Add missing dep
-				// TODO
-				// Add missing `build:docs` script
-				// TODO
-				// Add missing `check:release-tags` script
-				// TODO
+				// If the package is private, there is nothing to fix.
+				if (json.private === true) {
+					return;
+				}
+				const scripts = json.scripts;
+				// Add `build:docs` script if missing.
+				if (scripts["build:docs"] === undefined) {
+					scripts["build:docs"] = buildDocsScriptBody;
+				}
+				// Add `check:release-tags` script if missing.
+				if (scripts["check:release-tags"] === undefined) {
+					scripts["check:release-tags"] = checkReleaseTagsScriptBody;
+				}
 			});
 
 			return result;
 		},
 	},
 ];
+
+const buildDocsScriptBody = "fluid-build . --task api";
+const checkReleaseTagsScriptBody = "api-extractor run --local --config ./api-extractor-lint.json";
 
 function missingCleanDirectories(scripts: any) {
 	const expectedClean: string[] = [];
