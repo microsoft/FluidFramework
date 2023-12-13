@@ -58,7 +58,7 @@ trigger:
     - packages/framework/fluid-static
     - packages/framework/loader/container-loader
     - packages/test/test-end-to-end-tests
-    - tools/pipelines/test-services-client.yml
+    - tools/pipelines/test-service-clients.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
 pr:
@@ -92,7 +92,7 @@ pr:
     - packages/framework/fluid-static
     - packages/framework/loader/container-loader
     - packages/test/test-end-to-end-tests
-    - tools/pipelines/test-services-client.yml
+    - tools/pipelines/test-service-clients.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
 extends:

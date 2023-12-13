@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-services-client pipeline
+# test-service-clients pipeline
 
 name: $(Build.BuildId)
 
