@@ -34,26 +34,3 @@ export interface IResponse {
 	headers?: { [key: string]: any };
 	stack?: string;
 }
-
-/**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export const IFluidRouter: keyof IProvideFluidRouter = "IFluidRouter";
-
-/**
- * Request routing
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export interface IProvideFluidRouter {
-	readonly IFluidRouter: IFluidRouter;
-}
-
-/**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @alpha
- */
-export interface IFluidRouter extends IProvideFluidRouter {
-	request(request: IRequest): Promise<IResponse>;
-}
