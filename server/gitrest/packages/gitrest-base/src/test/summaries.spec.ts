@@ -24,6 +24,11 @@ import {
 	sampleChannelSummaryResult,
 } from "./examples";
 import { Volume } from "memfs/lib/volume";
+import {
+	StorageAccessCallCounts,
+	checkFullStorageAccessBaselinePerformance,
+	checkInitialWriteStorageAccessBaselinePerformance,
+} from "./storageAccess";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
@@ -96,6 +101,12 @@ testModes.forEach((testMode) => {
 			);
 		};
 		let memfsVolumeSpy: SinonSpiedInstance<Volume>;
+		const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts => ({
+			readFile: memfsVolumeSpy.readFile.callCount,
+			writeFile: memfsVolumeSpy.writeFile.callCount,
+			mkdir: memfsVolumeSpy.mkdir.callCount,
+			stat: memfsVolumeSpy.stat.callCount,
+		});
 		beforeEach(async () => {
 			documentId = uuid();
 			// Spy on memfs volume to record number of calls to storage.
@@ -127,15 +138,6 @@ testModes.forEach((testMode) => {
 					JSON.stringify(memfsManagerFactory.volume.toJSON()).length / 1_024,
 				)}kb\n`,
 			);
-			const callCounts: { [K in keyof Volume]?: number } = {
-				readFile: memfsVolumeSpy.readFile.callCount,
-				writeFile: memfsVolumeSpy.writeFile.callCount,
-				mkdir: memfsVolumeSpy.mkdir.callCount,
-				stat: memfsVolumeSpy.stat.callCount,
-			};
-			process.stdout.write(
-				`\nFinal storage call counts: ${JSON.stringify(callCounts, undefined, 2)}\n`,
-			);
 			// Reset storage volume after each test.
 			memfsManagerFactory.volume.reset();
 			// Reset Sinon spies after each test.
@@ -158,18 +160,9 @@ testModes.forEach((testMode) => {
 				"Initial summary write response should match expected response.",
 			);
 
-			const callCounts: { [K in keyof Volume]?: number } = {
-				readFile: memfsVolumeSpy.readFile.callCount,
-				writeFile: memfsVolumeSpy.writeFile.callCount,
-				mkdir: memfsVolumeSpy.mkdir.callCount,
-				stat: memfsVolumeSpy.stat.callCount,
-			};
-			process.stdout.write(
-				`\nInitial Write storage call counts: ${JSON.stringify(
-					callCounts,
-					undefined,
-					2,
-				)}\n`,
+			checkInitialWriteStorageAccessBaselinePerformance(
+				testMode,
+				getCurrentStorageAccessCallCounts(),
 			);
 
 			const initialReadResponse = await getWholeSummaryManager().readSummary(LatestSummaryId);
@@ -236,6 +229,11 @@ testModes.forEach((testMode) => {
 				initialLaterReadResponse,
 				sampleInitialSummaryResponse,
 				"Later initial summary read response should match expected initial summary response.",
+			);
+
+			checkFullStorageAccessBaselinePerformance(
+				testMode,
+				getCurrentStorageAccessCallCounts(),
 			);
 		});
 	});
