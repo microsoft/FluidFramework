@@ -5,7 +5,7 @@
 
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util";
 import { FlexListToUnion, LazyItem } from "../feature-libraries";
-import { Unhydrated } from "../simple-tree";
+import { Unhydrated, TreeMapNodeBase } from "../simple-tree";
 
 /**
  * Base type which all nodes extend.
@@ -305,3 +305,14 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 >
 	? TBuild
 	: never;
+
+/**
+ * A map of string keys to tree objects.
+ *
+ * @beta
+ */
+export interface TreeMapNode<T extends ImplicitAllowedTypes>
+	extends TreeMapNodeBase<
+		TreeNodeFromImplicitAllowedTypes<T>,
+		InsertableTreeNodeFromImplicitAllowedTypes<T>
+	> {}

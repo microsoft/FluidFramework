@@ -9,6 +9,7 @@ import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
 	RevisionInfo,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -38,7 +39,7 @@ export function composeNoVerify(
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
@@ -71,7 +72,7 @@ export function shallowCompose<T>(
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
-	revInfos?: RevisionInfo[],
+	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -81,7 +82,9 @@ function composeI<T>(
 		idAllocator,
 		moveEffects,
 		revInfos !== undefined
-			? revisionMetadataSourceFromInfo(revInfos)
+			? Array.isArray(revInfos)
+				? revisionMetadataSourceFromInfo(revInfos)
+				: revInfos
 			: defaultRevisionMetadataFromChanges(changes),
 	);
 
@@ -239,12 +242,13 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
-		if (mark.cellId?.lineage === undefined) {
+		if (mark.cellId?.lineage === undefined && mark.cellId?.adjacentCells === undefined) {
 			factory.push(mark);
 		} else {
 			const cloned = SF.cloneMark(mark);
 			assert(cloned.cellId !== undefined, "Should have cell ID");
 			delete cloned.cellId.lineage;
+			delete cloned.cellId.adjacentCells;
 			factory.push(cloned);
 		}
 	}

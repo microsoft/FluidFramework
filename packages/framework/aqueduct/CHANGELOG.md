@@ -1,5 +1,14 @@
 # @fluidframework/aqueduct
 
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   aqueduct: Deprecated IRootDataObjectFactory ([#18565](https://github.com/microsoft/FluidFramework/issues/18565)) [030ab7adf9](https://github.com/microsoft/FluidFramework/commits/030ab7adf991d2d983437544600a191ac15ca5a5)
+
+    The `IRootDataObjectFactory` interface has been deprecated and will be removed in a future major release. Please remove
+    all usage of it.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

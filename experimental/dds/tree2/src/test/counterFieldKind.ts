@@ -8,12 +8,12 @@ import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
+	Multiplicity,
 	cursorForJsonableTreeNode,
 } from "../feature-libraries";
 // This is imported directly to implement an example of a field kind.
 import {
 	FieldKindWithEditor,
-	Multiplicity,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";

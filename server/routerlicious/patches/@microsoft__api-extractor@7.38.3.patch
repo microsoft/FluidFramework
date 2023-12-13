@@ -112,3 +112,26 @@ index 3511bb2fd2269cce8c45197ef8dc61c28158f743..61101cea95d362b94be8b9e9ccc3e833
                  const entryPointFilename = path.basename(collector.workingPackage.entryPointSourceFile.fileName);
                  if (!alreadyWarnedEntities.has(referencedEntity)) {
                      alreadyWarnedEntities.add(referencedEntity);
+diff --git a/lib/generators/DtsRollupGenerator.js b/lib/generators/DtsRollupGenerator.js
+index 5a6490760417c2cbefc8ff277f9183a7c870e797..4b93942c049e1fe3940f9cc71c781c591d2bb97a 100644
+--- a/lib/generators/DtsRollupGenerator.js
++++ b/lib/generators/DtsRollupGenerator.js
+@@ -103,16 +103,9 @@ class DtsRollupGenerator {
+         // Emit the imports
+         for (const entity of collector.entities) {
+             if (entity.astEntity instanceof AstImport_1.AstImport) {
++                // BUG MITIGATION: don't trim imports based on their release tags
+                 const astImport = entity.astEntity;
+-                // For example, if the imported API comes from an external package that supports AEDoc,
+-                // and it was marked as `@internal`, then don't emit it.
+-                const symbolMetadata = collector.tryFetchMetadataForAstEntity(astImport);
+-                const maxEffectiveReleaseTag = symbolMetadata
+-                    ? symbolMetadata.maxEffectiveReleaseTag
+-                    : api_extractor_model_1.ReleaseTag.None;
+-                if (this._shouldIncludeReleaseTag(maxEffectiveReleaseTag, dtsKind)) {
+-                    DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, astImport);
+-                }
++                DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, astImport);
+             }
+         }
+         writer.ensureSkippedLine();
