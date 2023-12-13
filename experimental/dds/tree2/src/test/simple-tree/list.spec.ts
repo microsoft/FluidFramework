@@ -42,7 +42,7 @@ describe("List", () => {
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
 		const list = getRoot(
-			(_) => _.list(_.number),
+			(_) => _.array(_.number),
 			() => items,
 		);
 		assert.deepEqual(list, items);
@@ -52,7 +52,7 @@ describe("List", () => {
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
 		const list = getRoot(
-			(_) => _.list(_.string),
+			(_) => _.array(_.string),
 			() => items,
 		);
 		assert.deepEqual(list, items);

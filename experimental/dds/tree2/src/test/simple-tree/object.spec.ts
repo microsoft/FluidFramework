@@ -268,21 +268,21 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("test");
-			return _.list(_.string);
+			return _.array(_.string);
 		})(),
 		initialTree: [],
 	},
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("test");
-			return _.list(_.string);
+			return _.array(_.string);
 		})(),
 		initialTree: ["A"],
 	},
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("test");
-			return _.list(_.string);
+			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
 	},
