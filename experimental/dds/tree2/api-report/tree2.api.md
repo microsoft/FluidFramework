@@ -32,6 +32,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
         readonly identifier: `${TScope}.${TEnum[Property]}`;
         readonly kind: NodeKind.Object;
         readonly info: unknown;
+        readonly implicitlyConstructable: true;
     }; };
 
 // @alpha
@@ -434,6 +435,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
     readonly identifier: `${TScope}.${Members}`;
     readonly kind: NodeKind.Object;
     readonly info: unknown;
+    readonly implicitlyConstructable: true;
 }>;
 
 // @beta
@@ -1636,6 +1638,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly identifier: `${TScope}.${TName}`;
     readonly kind: NodeKind.Object;
     readonly info: unknown;
+    readonly implicitlyConstructable: true;
 };
 
 // @alpha

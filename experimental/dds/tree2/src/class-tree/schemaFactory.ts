@@ -357,7 +357,11 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	}
 
 	/**
-	 * See note on `namedList`.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeMapNode:interface)}.
+	 *
+	 * @param name - Unique identifier for this schema within this factory's scope.
+	 *
+	 * @remarks See remarks on {@link SchemaFactory.namedList}.
 	 */
 	public namedMap<
 		Name extends TName | string,
@@ -515,7 +519,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * @privateRemarks
 	 * TODO: this should be made private or protected.
 	 * Doing so breaks due to:
-	 * `src/class-tree/schemaFactoryRecursive.ts:43:9 - error TS2310: Type 'List' recursively references itself as a base type.`
+	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'List' recursively references itself as a base type.`
 	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
 	public namedList<
