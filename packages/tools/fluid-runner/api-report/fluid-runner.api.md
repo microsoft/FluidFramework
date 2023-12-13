@@ -15,6 +15,8 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 // @internal
 export function createContainerAndExecute(localOdspSnapshot: string | Uint8Array, fluidFileConverter: IFluidFileConverter, logger: ITelemetryLoggerExt, options?: string, timeout?: number, disableNetworkFetch?: boolean): Promise<string>;
 
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/fluid-runner" does not have an export "IFileLogger"
+//
 // @internal
 export function createLogger(filePath: string, options?: ITelemetryOptions): {
     logger: ITelemetryLoggerExt;

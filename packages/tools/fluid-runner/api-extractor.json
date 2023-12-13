@@ -3,7 +3,7 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
 	"messages": {
 		"extractorMessageReporting": {
-			// TODO: remove once base config has this enabled as an error
+			// TODO: fix violations and remove overrides
 			"ae-forgotten-export": {
 				"logLevel": "warning",
 				"addToApiReportFile": false
@@ -14,7 +14,7 @@
 			},
 			"ae-unresolved-link": {
 				"logLevel": "warning",
-				"addToApiReportFile": false
+				"addToApiReportFile": true
 			}
 		}
 	}
