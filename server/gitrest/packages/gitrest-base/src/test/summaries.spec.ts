@@ -5,6 +5,8 @@
 
 import assert from "assert";
 import { v4 as uuid } from "uuid";
+import { SinonSpiedInstance, restore, spy } from "sinon";
+import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
 import { GitWholeSummaryManager, IsomorphicGitManagerFactory, MemFsManagerFactory } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
@@ -16,7 +18,7 @@ import {
 	sampleInitialSummaryUpload,
 	sampleChannelSummaryResult,
 } from "./examples";
-import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
+import { Volume } from "memfs/lib/volume";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
@@ -75,8 +77,11 @@ testModes.forEach((testMode) => {
 		const tenantId = "gitrest-summaries-test";
 		let documentId: string;
 		let wholeSummaryManager: GitWholeSummaryManager;
+		let memfsVolumeSpy: SinonSpiedInstance<Volume>;
 		beforeEach(async () => {
 			documentId = uuid();
+			// Spy on memfs volume to record number of calls to storage.
+			memfsVolumeSpy = spy(memfsManagerFactory.volume);
 			const repoManagerFactory = new IsomorphicGitManagerFactory(
 				{
 					useRepoOwner: true,
@@ -114,7 +119,27 @@ testModes.forEach((testMode) => {
 					JSON.stringify(memfsManagerFactory.volume.toJSON()).length / 1_024,
 				)}kb\n`,
 			);
+			const callCounts: { [K in keyof Volume]?: number } = {
+				readFile: memfsVolumeSpy.readFile.callCount,
+				writeFile: memfsVolumeSpy.writeFile.callCount,
+				unlink: memfsVolumeSpy.unlink.callCount,
+				readdir: memfsVolumeSpy.readdir.callCount,
+				mkdir: memfsVolumeSpy.mkdir.callCount,
+				rmdir: memfsVolumeSpy.rmdir.callCount,
+				stat: memfsVolumeSpy.stat.callCount,
+				lstat: memfsVolumeSpy.lstat.callCount,
+				readlink: memfsVolumeSpy.readlink.callCount,
+				symlink: memfsVolumeSpy.symlink.callCount,
+				chmod: memfsVolumeSpy.chmod.callCount,
+				rm: memfsVolumeSpy.rm.callCount,
+			};
+			process.stdout.write(
+				`\nFinal storage call counts: ${JSON.stringify(callCounts, undefined, 2)}\n`,
+			);
+			// Reset storage volume after each test.
 			memfsManagerFactory.volume.reset();
+			// Reset Sinon spies after each test.
+			restore();
 		});
 
 		it("Can create and read an initial summary and a subsequent incremental summary", async () => {
