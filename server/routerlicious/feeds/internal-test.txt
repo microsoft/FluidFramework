@@ -1,3 +1,4 @@
+tinylicious
 @fluidframework/server-test-utils
 @fluidframework/server-services-utils
 @fluidframework/server-services-telemetry

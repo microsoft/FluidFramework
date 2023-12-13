@@ -46,6 +46,9 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 	throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
 }
 
+/**
+ * @internal
+ */
 export class WholeSummaryWriteGitManager {
 	constructor(
 		/**

@@ -8,7 +8,7 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, MapTree } from "../../core";
 
 import {
-	isPrimitiveValue,
+	isTreeValue,
 	applyTypesFromContext,
 	ContextuallyTypedNodeDataObject,
 	cursorFromContextualData,
@@ -19,18 +19,18 @@ import { FieldKinds, TreeFieldSchema, jsonableTreeFromCursor } from "../../featu
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("ContextuallyTyped", () => {
-	it("isPrimitiveValue", () => {
-		assert(isPrimitiveValue(0));
-		assert(isPrimitiveValue(0.001));
-		assert(isPrimitiveValue(NaN));
-		assert(isPrimitiveValue(true));
-		assert(isPrimitiveValue(false));
-		assert(isPrimitiveValue(""));
-		assert(!isPrimitiveValue({}));
-		assert(!isPrimitiveValue(undefined));
-		assert(!isPrimitiveValue(null));
-		assert(!isPrimitiveValue([]));
-		assert(!isPrimitiveValue(new MockHandle(5)));
+	it("isTreeValue", () => {
+		assert(isTreeValue(0));
+		assert(isTreeValue(0.001));
+		assert(isTreeValue(NaN));
+		assert(isTreeValue(true));
+		assert(isTreeValue(false));
+		assert(isTreeValue(""));
+		assert(!isTreeValue({}));
+		assert(!isTreeValue(undefined));
+		assert(isTreeValue(null));
+		assert(!isTreeValue([]));
+		assert(isTreeValue(new MockHandle(5)));
 	});
 
 	it("applyTypesFromContext omits empty fields", () => {

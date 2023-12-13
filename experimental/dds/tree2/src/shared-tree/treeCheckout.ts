@@ -19,6 +19,7 @@ import {
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
 	Revertible,
+	ChangeFamily,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -27,6 +28,7 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
+	intoDelta,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult } from "../util";
@@ -34,7 +36,7 @@ import { noopValidator } from "../codec";
 
 /**
  * Events for {@link ITreeCheckout}.
- * @alpha
+ * @beta
  */
 export interface CheckoutEvents {
 	/**
@@ -150,13 +152,13 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: DefaultChangeFamily;
+	changeFamily?: ChangeFamily<DefaultEditBuilder, DefaultChangeset>;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	events?: ISubscribable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
-	removedTrees?: DetachedFieldIndex;
+	removedRoots?: DetachedFieldIndex;
 }): TreeCheckout {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
@@ -182,7 +184,7 @@ export function createTreeCheckout(args?: {
 		schema,
 		forest,
 		events,
-		args?.removedTrees,
+		args?.removedRoots,
 	);
 }
 
@@ -264,13 +266,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
+		private readonly changeFamily: ChangeFamily<DefaultEditBuilder, DefaultChangeset>,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
-		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
@@ -278,20 +280,20 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const delta = this.changeFamily.intoDelta(event.change);
+				const delta = intoDelta(event.change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
 				const combinedVisitor = combineVisitors(
 					[this.forest.acquireVisitor(), anchorVisitor],
 					[anchorVisitor],
 				);
-				visitDelta(delta, combinedVisitor, this.removedTrees);
+				visitDelta(delta, combinedVisitor, this.removedRoots);
 				combinedVisitor.free();
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
 				const transactionRevision = event.newCommits[0].revision;
 				for (const transactionStep of event.removedCommits) {
-					this.removedTrees.updateMajor(transactionStep.revision, transactionRevision);
+					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
 			}
 		});
@@ -331,7 +333,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
-			this.removedTrees.clone(),
+			this.removedRoots.clone(),
 		);
 	}
 

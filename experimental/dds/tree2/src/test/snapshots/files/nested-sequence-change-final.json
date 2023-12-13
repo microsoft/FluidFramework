@@ -24,9 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 },
@@ -37,9 +40,12 @@
                                       "fieldKind": "Sequence",
                                       "change": [
                                         {
-                                          "type": "Insert",
-                                          "id": 1,
                                           "count": 1,
+                                          "effect": {
+                                            "insert": {
+                                              "id": 1
+                                            }
+                                          },
                                           "cellId": {
                                             "localId": 1
                                           }
@@ -56,13 +62,53 @@
                           [
                             0,
                             {
-                              "type": "has-sequence-map.SeqMap"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ]
                             }
                           ],
                           [
                             1,
                             {
-                              "type": "has-sequence-map.SeqMap"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "has-sequence-map.SeqMap",
+                                  false,
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]

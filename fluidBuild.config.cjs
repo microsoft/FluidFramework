@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -71,6 +71,8 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:release-tags": ["tsc"],
+		"check:are-the-types-wrong": ["build"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -189,10 +191,11 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 			"npm-package-json-script-mocha-config": [
-				// these doesn't use mocha config for reporters yet.
+				// these don't use mocha config for reporters yet.
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
+				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -268,7 +271,12 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"@fluid-internal/client-utils",
+					"tinylicious",
+				],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -328,7 +336,12 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: ["tsc:watch"],
+				ignoreTasks: [
+					"tsc:watch",
+					"watch:devtools",
+					"watch:devtools-core",
+					"watch:devtools-view",
+				],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},

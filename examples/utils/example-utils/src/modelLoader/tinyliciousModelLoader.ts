@@ -25,6 +25,9 @@ class TinyliciousService {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
 	private readonly tinyliciousService = new TinyliciousService();
 	private readonly modelLoader = new ModelLoader<ModelType>({

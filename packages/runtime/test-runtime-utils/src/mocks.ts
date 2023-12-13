@@ -52,6 +52,7 @@ import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
+ * @internal
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -94,6 +95,9 @@ export class MockDeltaConnection implements IDeltaConnection {
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
+/**
+ * @internal
+ */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
 	clientSequenceNumber: number;
@@ -102,6 +106,7 @@ export interface IMockContainerRuntimePendingMessage {
 
 /**
  * Options for the container runtime mock.
+ * @internal
  */
 export interface IMockContainerRuntimeOptions {
 	/**
@@ -142,6 +147,7 @@ interface IInternalMockRuntimeMessage {
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
+ * @internal
  */
 export class MockContainerRuntime {
 	public clientId: string;
@@ -331,6 +337,7 @@ export class MockContainerRuntime {
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
+ * @internal
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -473,6 +480,9 @@ export class MockContainerRuntimeFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
 	private readonly eventEmitter = new EventEmitter();
@@ -569,6 +579,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
+ * @internal
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
@@ -602,13 +613,6 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 	public get objectsRoutingContext(): IFluidHandleContext {
-		return this;
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
 		return this;
 	}
 
@@ -772,9 +776,6 @@ export class MockFluidDataStoreRuntime
 		return this.request(request);
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}
@@ -849,6 +850,7 @@ export class MockFluidDataStoreRuntime
 
 /**
  * Mock implementation of IDeltaConnection
+ * @internal
  */
 export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public connected = false;
@@ -865,6 +867,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
+ * @internal
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
@@ -887,6 +890,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
+ * @internal
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

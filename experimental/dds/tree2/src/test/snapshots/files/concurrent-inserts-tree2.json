@@ -24,9 +24,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
@@ -38,8 +41,28 @@
                           [
                             0,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "y"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "y",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -57,9 +80,12 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Insert",
-                                "id": 1,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 1
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 1
                                 }
@@ -71,8 +97,28 @@
                           [
                             1,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "x"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "x",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -93,9 +139,12 @@
                                 "count": 2
                               },
                               {
-                                "type": "Insert",
-                                "id": 0,
                                 "count": 2,
+                                "effect": {
+                                  "insert": {
+                                    "id": 0
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 0
                                 }
@@ -107,15 +156,55 @@
                           [
                             0,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "a"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "a",
+                                  []
+                                ]
+                              ]
                             }
                           ],
                           [
                             1,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "c"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "c",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]
@@ -136,9 +225,12 @@
                                 "count": 3
                               },
                               {
-                                "type": "Insert",
-                                "id": 2,
                                 "count": 1,
+                                "effect": {
+                                  "insert": {
+                                    "id": 2
+                                  }
+                                },
                                 "cellId": {
                                   "localId": 2
                                 }
@@ -150,8 +242,28 @@
                           [
                             2,
                             {
-                              "type": "com.fluidframework.leaf.string",
-                              "value": "b"
+                              "version": 1,
+                              "identifiers": [],
+                              "shapes": [
+                                {
+                                  "c": {
+                                    "extraFields": 1,
+                                    "fields": []
+                                  }
+                                },
+                                {
+                                  "a": 0
+                                }
+                              ],
+                              "data": [
+                                1,
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "b",
+                                  []
+                                ]
+                              ]
                             }
                           ]
                         ]

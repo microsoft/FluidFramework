@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	ITestDataObject,
 	TestDataObjectType,
-	describeNoCompat,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
@@ -22,7 +22,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
-describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
+describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider) => {
 	const settings = {};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

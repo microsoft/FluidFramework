@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,6 +31,7 @@
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
 		"changeset": "flub changeset add --releaseGroup client",
+		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -349,7 +350,7 @@
 		],
 		"overrides": {
 			"@microsoft/api-extractor>typescript": "$typescript",
-			"@types/node": "^16.18.38",
+			"@types/node@<18": "^18.19.0",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
@@ -376,7 +377,8 @@
 		},
 		"patchedDependencies": {
 			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
-			"engine.io-client@6.5.2": "patches/engine.io-client@6.5.2.patch"
+			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch",
+			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
 }

@@ -8,8 +8,7 @@ import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "./S
 
 /**
  * {@link CollaborativeTextArea} input props.
- *
- * @public
+ * @internal
  */
 export interface ICollaborativeTextAreaProps {
 	/**
@@ -35,8 +34,7 @@ export interface ICollaborativeTextAreaProps {
 
 /**
  * Given a {@link SharedStringHelper}, will produce a collaborative text area element.
- *
- * @public
+ * @internal
  */
 export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	props: ICollaborativeTextAreaProps,

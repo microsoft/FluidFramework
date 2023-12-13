@@ -21,6 +21,9 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
+/**
+ * @internal
+ */
 export class MigrationTool extends DataObject implements IMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 	private _crc: IConsensusRegisterCollection<string> | undefined;
@@ -151,6 +154,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
+ * @internal
  */
 export const MigrationToolInstantiationFactory = new DataObjectFactory<MigrationTool>(
 	"migration-tool",

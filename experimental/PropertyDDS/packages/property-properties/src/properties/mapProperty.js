@@ -26,6 +26,7 @@ const PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
 /**
  * A MapProperty is a collection class that can contain an dictionary that maps from strings to properties.
+ * @internal
  */
 export class MapProperty extends IndexedCollectionBaseProperty {
 	/**

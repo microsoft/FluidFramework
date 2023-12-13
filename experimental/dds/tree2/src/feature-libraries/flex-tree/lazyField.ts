@@ -47,6 +47,8 @@ import {
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
+	FlexTreeEntityKind,
+	flexTreeMarker,
 } from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
@@ -121,6 +123,9 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
+	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
+		return FlexTreeEntityKind.Field;
+	}
 	public readonly key: FieldKey;
 
 	public constructor(
@@ -189,16 +194,16 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> {
+	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
-			return undefined as FlexTreeTypedNodeUnion<TTypes>;
+			return undefined;
 		}
 
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			makeTree(this.context, cursor),
-		) as FlexTreeTypedNodeUnion<TTypes>;
+		) as unknown as FlexTreeTypedNodeUnion<TTypes>;
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
@@ -214,7 +219,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as FlexTreeTypedNodeUnion<TTypes>,
+			(cursor) => makeTree(this.context, cursor) as unknown as FlexTreeTypedNodeUnion<TTypes>,
 		);
 	}
 
@@ -467,7 +472,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0);
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
 

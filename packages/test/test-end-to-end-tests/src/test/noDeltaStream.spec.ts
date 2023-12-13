@@ -24,7 +24,7 @@ import {
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -71,7 +71,7 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 	},
 };
 
-describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
+describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObjectProvider) => {
 	const scenarioToContainerUrl = new Map<string, string>();
 	const scenarioToSeqNum = new Map<string, number>();
 

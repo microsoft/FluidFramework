@@ -5,15 +5,21 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITokenProvider } from '@fluidframework/azure-client';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+// @alpha
+export interface IOdspTokenProvider {
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+}
 
 // @alpha @sealed
 export class OdspClient {
@@ -41,7 +47,7 @@ export interface OdspClientProps {
 export interface OdspConnectionConfig {
     driveId: string;
     siteUrl: string;
-    tokenProvider: ITokenProvider;
+    tokenProvider: IOdspTokenProvider;
 }
 
 // @alpha
@@ -51,10 +57,9 @@ export interface OdspContainerServices {
 
 // @alpha
 export interface OdspMember extends IMember {
-    // (undocumented)
     email: string;
-    // (undocumented)
     name: string;
+    userId: string;
 }
 
 // (No @packageDocumentation comment for this package)

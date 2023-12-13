@@ -11,7 +11,13 @@ import {
 } from "../../core";
 import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
-import { FlexTreeEntity, TreeStatus, boxedIterator } from "./flexTreeTypes";
+import {
+	FlexTreeEntity,
+	FlexTreeEntityKind,
+	TreeStatus,
+	boxedIterator,
+	flexTreeMarker,
+} from "./flexTreeTypes";
 
 /**
  * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.
@@ -85,6 +91,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	}
 
 	public abstract [boxedIterator](): IterableIterator<FlexTreeEntity>;
+	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
 
 	public abstract treeStatus(): TreeStatus;
 

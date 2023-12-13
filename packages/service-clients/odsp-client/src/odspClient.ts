@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 import { v4 as uuid } from "uuid";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
-	createOdspCreateContainerRequest,
-	createOdspUrl,
-	isOdspResolvedUrl,
-} from "@fluidframework/odsp-driver";
+	AttachState,
+	IContainer,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	type ContainerSchema,
 	createDOProviderContainerRuntimeFactory,
@@ -20,51 +21,50 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
-	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
+	createOdspCreateContainerRequest,
+	createOdspUrl,
+	isOdspResolvedUrl,
+} from "@fluidframework/odsp-driver";
+import type {
+	OdspResourceTokenFetchOptions,
+	TokenResponse,
+} from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
-import type { ITokenResponse } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- *
- * @alpha @sealed
+ * @sealed
+ * @alpha
  */
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
 
 	public constructor(private readonly properties: OdspClientProps) {
-		const getSharePointToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
+		const getStorageToken = async (options: OdspResourceTokenFetchOptions) => {
+			const tokenResponse: TokenResponse =
 				await this.properties.connection.tokenProvider.fetchStorageToken(
 					options.siteUrl,
-					"",
+					options.refresh,
 				);
-			return {
-				token: tokenResponse.jwt,
-			};
+			return tokenResponse;
 		};
 
-		const getPushServiceToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: ITokenResponse =
-				await this.properties.connection.tokenProvider.fetchOrdererToken(options.siteUrl);
-			return {
-				token: tokenResponse.jwt,
-			};
+		const getWebsocketToken = async (options: OdspResourceTokenFetchOptions) => {
+			const tokenResponse: TokenResponse =
+				await this.properties.connection.tokenProvider.fetchWebsocketToken(
+					options.siteUrl,
+					options.refresh,
+				);
+			return tokenResponse;
 		};
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			getSharePointToken,
-			getPushServiceToken,
+			getStorageToken,
+			getWebsocketToken,
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
@@ -107,9 +107,10 @@ export class OdspClient {
 		});
 		const container = await loader.resolve({ url });
 
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
-		const fluidContainer = createFluidContainer({ container, rootDataObject });
+		const fluidContainer = createFluidContainer({
+			container,
+			rootDataObject: await this.getContainerEntryPoint(container),
+		});
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -147,8 +148,7 @@ export class OdspClient {
 		container: IContainer,
 		connection: OdspConnectionConfig,
 	): Promise<IFluidContainer> {
-		// eslint-disable-next-line import/no-deprecated
-		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -190,5 +190,14 @@ export class OdspClient {
 				createServiceMember: createOdspAudienceMember,
 			}),
 		};
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			"entryPoint must be of type IRootDataObject",
+		);
+		return rootDataObject.IRootDataObject;
 	}
 }

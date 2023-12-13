@@ -35,7 +35,7 @@ npm i @fluid-private/test-version-utils -D
 
 ### Layer version combinations
 
-Similar to `mocha`'s `describe`, this package provide various `describe*` functions that will generate variants with
+Similar to `mocha`'s `describe`, this package provide a `describeCompat` function that will generate variants with
 a specific driver and different version combinations of Fluid API between layers. All possible layer combinations that
 are generated (empty entries are current versions):
 
@@ -51,38 +51,53 @@ are generated (empty entries are current versions):
 | NewContainerRuntime | old    | old    |                   | old          |
 | NewDataRuntime      | old    | old    | old               |              |
 
+### Cross version combinations
+
+In addition to the layer version combinations seen above, this package also provides functions to generate variations
+intended to test all layers of one version against all layers of another version in tests that feature more than one client.
+The intention is to simulate scenarios where the client that created a document was using a different version than the client
+loading the document. These variations are applied in our cross version tests where we test the current version against the
+most recent **public** release.
+
+For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
+Therefore, we would test the following combinations:
+
+-   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
+-   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
+
 ### Mocha test setup with layer version combinations
 
-There are three compat `describe*` to generate different combinations, depending of the need of the tests
+`describeCompat` expects 3 arguments (name: string, compatVersionKind: CompatVersionKind, tests). There are three compatVersionKind options to generate different combinations, depending of the need of the tests:
 
-`describeFullCompat`: generate test variants with compat combinations that varies the version for all layers.
+`FullCompat`: generate test variants with compat combinations that varies the version for all layers.
 
 -   Used for tests that exercise all layers and will benefits compat combinations of all layers.
 
-`describeLoaderCompat`: generate test variants with compat combinations that only varies the loader version.
+`LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
 
 -   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
 -   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
-`describeNoCompat` - generate one test variant that doesn't varies version of any layers.
+`NoCompat` - generate one test variant that doesn't varies version of any layers.
 
 -   Use for tests that doesn't benefit or require any compat testing.
 -   Test combination generated: [CompatKind.None]
 
-These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
+This compat `describe*` function will also load the APIs with appropriate version and provide the test with a
 `TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
-to enable compat testing easily in the future just by changing the `describe*`.
+to enable compat testing easily in the future just by changing the compatVersionKind parameter.
 
 ### Legacy version defaults and installation
 
-By default, N-1, N-2, and LTS (hard coded) test variants are generated. The versions can be specified using command
-line (see below) to run the test against any two versions. This package includes a `mocha` global hook that will
-install legacy packages at the beginning of the package based on the `compatVersion` settings.
+By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
+generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
+`compatVersion` settings.
 
 ## Command line options
 
-Tests using the compat `describe*` will be controllable using the command line options when running mocha on
+Tests using `describeCompat` will be controllable using the command line options when running mocha on
 driver selection, versions for compat testing, and compat kind combinations.
 
 ```text

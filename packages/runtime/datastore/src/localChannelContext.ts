@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -245,18 +246,19 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 	}
 
 	private isSnapshotInOldFormatAndCollectBlobs(
-		snapshotTree: ISnapshotTree,
+		snapshotTree: ISnapshotTreeWithBlobContents,
 		blobMap: Map<string, ArrayBufferLike>,
 	): boolean {
 		let sanitize = false;
-		const blobsContents: { [path: string]: ArrayBufferLike } = (snapshotTree as any)
-			.blobsContents;
-		Object.entries(blobsContents).forEach(([key, value]) => {
-			blobMap.set(key, value);
-			if (snapshotTree.blobs[key] !== undefined) {
-				sanitize = true;
-			}
-		});
+		const blobsContents = snapshotTree.blobsContents;
+		if (blobsContents !== undefined) {
+			Object.entries(blobsContents).forEach(([key, value]) => {
+				blobMap.set(key, value);
+				if (snapshotTree.blobs[key] !== undefined) {
+					sanitize = true;
+				}
+			});
+		}
 		for (const value of Object.values(snapshotTree.trees)) {
 			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
 		}
@@ -280,11 +282,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
 	private readonly dirtyFn: () => void;
-	public readonly channel: IChannel;
 	constructor(
-		id: string,
-		registry: ISharedObjectRegistry,
-		type: string,
+		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
@@ -293,14 +292,8 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
-		const factory = registry.get(type);
-		if (factory === undefined) {
-			throw new Error(`Channel Factory ${type} not registered`);
-		}
-		const channel = factory.create(runtime, id);
 		super(
-			id,
+			channel.id,
 			runtime,
 			new Lazy(() => {
 				return createChannelServiceEndpoints(
@@ -318,7 +311,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.channel = channel;
 
 		this.dirtyFn = () => {
-			dirtyFn(id);
+			dirtyFn(channel.id);
 		};
 	}
 }

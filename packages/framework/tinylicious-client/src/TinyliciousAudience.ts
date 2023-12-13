@@ -4,27 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./interfaces";
-
-/**
- * {@inheritDoc ITinyliciousAudience}
- *
- * @public
- * @deprecated use {@link ITinyliciousAudience} instead
- */
-export class TinyliciousAudience
-	extends ServiceAudience<TinyliciousMember>
-	implements ITinyliciousAudience
-{
-	/**
-	 * @internal
-	 */
-	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
-		return createTinyliciousAudienceMember(audienceMember);
-	}
-}
+import { TinyliciousMember, TinyliciousUser } from "./interfaces";
 
 export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
 	const tinyliciousUser = audienceMember.user as TinyliciousUser;

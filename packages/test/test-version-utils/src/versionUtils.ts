@@ -285,10 +285,42 @@ export function checkInstalled(requested: string) {
  */
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
-	const pkgJson: { main: string } = JSON.parse(
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
-	return import(pathToFileURL(path.join(pkgPath, pkgJson.main)).href);
+	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
+	let primaryExport: string;
+	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
+		if (typeof pkgJson.exports === "string") {
+			primaryExport = pkgJson.exports;
+		} else {
+			const exp = pkgJson.exports["."];
+			primaryExport = typeof exp === "string" ? exp : exp.require.default;
+			if (primaryExport === undefined) {
+				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			}
+		}
+	} else {
+		if (pkgJson.main === undefined) {
+			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		primaryExport = pkgJson.main;
+	}
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
 
 /**

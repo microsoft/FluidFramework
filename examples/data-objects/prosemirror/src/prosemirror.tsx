@@ -14,19 +14,11 @@ import {
 } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-	IMergeTreeInsertMsg,
-	ReferenceType,
-	reservedRangeLabelsKey,
-	MergeTreeDeltaType,
-	// eslint-disable-next-line import/no-deprecated
-	createMap,
-} from "@fluidframework/merge-tree";
-import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString, ReferenceType, reservedRangeLabelsKey } from "@fluidframework/sequence";
 import { EditorView } from "prosemirror-view";
 import { create404Response } from "@fluidframework/runtime-utils";
 
@@ -35,40 +27,30 @@ import React, { useEffect, useRef } from "react";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 
-function createTreeMarkerOps(
+function insertMarkers(
+	text: SharedString,
 	treeRangeLabel: string,
 	beginMarkerPos: number,
 	endMarkerPos: number,
 	nodeType: string,
-): IMergeTreeInsertMsg[] {
-	// eslint-disable-next-line import/no-deprecated
-	const endMarkerProps = createMap<any>();
+) {
+	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
 
-	// eslint-disable-next-line import/no-deprecated
-	const beginMarkerProps = createMap<any>();
+	const beginMarkerProps = {};
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	return [
-		{
-			seg: { marker: { refType: ReferenceType.NestBegin }, props: beginMarkerProps },
-			pos1: beginMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-		{
-			seg: { marker: { refType: ReferenceType.NestEnd }, props: endMarkerProps },
-			pos1: endMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-	];
+	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
+	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
 }
 
 /**
  * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
+ * @internal
  */
 export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
@@ -112,8 +94,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
-			text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
+			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);
@@ -137,6 +118,9 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	}
 }
 
+/**
+ * @internal
+ */
 export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/prosemirror";
 	public readonly type = ProseMirrorFactory.type;
@@ -209,6 +193,9 @@ export interface IProseMirrorReactViewProps {
 	readonly collabManager: FluidCollabManager;
 }
 
+/**
+ * @internal
+ */
 export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
 	props: IProseMirrorReactViewProps,
 ) => {

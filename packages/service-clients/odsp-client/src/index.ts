@@ -11,3 +11,4 @@ export type {
 	OdspMember,
 } from "./interfaces";
 export { OdspClient } from "./odspClient";
+export { type IOdspTokenProvider } from "./token";
