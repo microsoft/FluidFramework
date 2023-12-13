@@ -1253,7 +1253,10 @@ function verifyPartialLengths(
 
 		if (partialLength.overlapObliterateClients) {
 			// Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
-			assert(!clientPartials, 0x872 /* Both overlapObliterateClients and clientPartials are set! */);
+			assert(
+				!clientPartials,
+				0x872 /* Both overlapObliterateClients and clientPartials are set! */,
+			);
 
 			// Each overlap client counts as one, but the first move to sequence was already counted.
 			// (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
