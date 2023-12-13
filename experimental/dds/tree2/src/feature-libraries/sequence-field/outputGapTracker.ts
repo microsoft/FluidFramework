@@ -50,10 +50,7 @@ export class OutputGapTracker {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
 			const detachId = getOutputCellId(mark, markRevision, undefined);
-			assert(
-				detachId !== undefined,
-				0x816 /* Mark which empties cells should have a detach ID */,
-			);
+			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
 			const detachBlock = getOrAddEmptyToMap(this._detachBlocks, detachId.revision);
 			addIdRange(detachBlock, {
