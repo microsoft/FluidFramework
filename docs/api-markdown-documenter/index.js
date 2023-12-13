@@ -5,7 +5,7 @@
 
 /**
  * This index script runs the renderApiDocumentation script using the version configurations described 
- * in versions.json. This script allows for an optional boolean parameter which determines whether 
+ * in data/versions.json. This script allows for an optional boolean parameter which determines whether 
  * renderApiDocumentation will be ran for all versions or only previous versions. (pass in true for all versions)
  * e.g. "node ./api-markdown-documenter/index.js true"
  */
