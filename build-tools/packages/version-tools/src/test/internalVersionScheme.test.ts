@@ -140,12 +140,7 @@ describe("internalScheme", () => {
 		// against isn't likely, so I don't think it's worth the cost of fixing it.
 		//
 		// The reason the code behaves wrong is because it only checks the lower bound of the range to see if it's an
-		// internal version. If the lower bound version is internal, then the function returns true. The semver library only
-		// provides semver.minVersion(range). Since ranges need not have an upper bound, maxVersion is an understandable
-		// omission, but it means that we're on our own to parse the range and get an upper bound version from it. Once we
-		// have the two versions then we could parse them and compare their prerelease identifiers to make sure they match.
-		//
-		// But that is quite a lot of code to add and maintain for what should be a rare confition.
+		// internal version. If the lower bound version is internal, then the function returns true.
 		it.skip(">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0 is not internal", () => {
 			const input = `>=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0`;
 			assert.isFalse(isInternalVersionRange(input));
