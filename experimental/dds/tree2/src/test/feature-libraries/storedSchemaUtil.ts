@@ -1,9 +1,9 @@
-import { fail } from "node:assert";
 import { TreeStoredSchemaRepository, TreeStoredSchema } from "../../core";
 
 export function buildTestSchemaRepository(schema?: TreeStoredSchema): TreeStoredSchemaRepository {
-	return new TreeStoredSchemaRepository(
-		() => fail("Editor-based schema changes not supported in test schema."),
+	const repository: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(
+		(_, newSchema) => repository.apply(newSchema),
 		schema,
 	);
+	return repository;
 }
