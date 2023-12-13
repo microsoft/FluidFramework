@@ -68,7 +68,7 @@ stages:
           logger__morganFormat: tiny
   
   - stage:
-    displayName: e2e - odsp client with odsp 
+    displayName: e2e - odsp client with odsp service
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
