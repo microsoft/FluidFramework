@@ -17,7 +17,7 @@ export interface IRefreshSummaryResult {
 export interface IStartSummaryResult {
 	/** The number of summarizerNodes at the start of the summary. */
 	nodes: number;
-	/** The number of summarizerNodes at the in the wrong state. */
+	/** The number of summarizerNodes in the wrong state. */
 	invalidNodes: number;
 	/** The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber */
 	mismatchNumbers: string[];
