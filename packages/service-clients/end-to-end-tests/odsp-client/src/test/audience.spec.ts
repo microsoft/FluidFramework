@@ -78,6 +78,8 @@ describe("Fluid audience", () => {
 	 *
 	 * Expected behavior: upon resolving container, the partner member should be able
 	 * to resolve original member.
+	 *
+	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly.
 	 */
 	it.skip("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
@@ -130,6 +132,8 @@ describe("Fluid audience", () => {
 	 *
 	 * Expected behavior: upon 1 partner leaving, other parther should observe
 	 * memberRemoved event and have correct partner count.
+	 *
+	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly.
 	 */
 	it.skip("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);
