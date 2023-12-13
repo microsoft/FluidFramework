@@ -11,7 +11,7 @@ import { assert } from "@fluidframework/core-utils";
  * @returns A map of used routes of each children of the the given node.
  * @internal
  */
-export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
+export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]) {
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const filteredUsedRoutes = usedRoutes.filter((route) => route !== "" && route !== "/");
 	const childUsedRoutesMap: Map<string, string[]> = new Map();

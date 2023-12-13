@@ -59,16 +59,16 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0",
+		"@fluidframework/common-utils": "3.0.0-220318",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.1.0-220363",
 		"axios": "^1.6.2",
 		"crc-32": "1.2.0",
 		"debug": "^4.3.4",
 		"json-stringify-safe": "^5.0.1",
 		"jsrsasign": "^10.5.25",
-		"jwt-decode": "^3.0.0",
+		"jwt-decode": "^4.0.0",
 		"querystring": "^0.2.0",
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0"
@@ -82,7 +82,6 @@
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/debug": "^4.1.5",
 		"@types/jsrsasign": "^8.0.8",
-		"@types/jwt-decode": "^2.2.1",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
 		"axios-mock-adapter": "^1.19.0",

@@ -79,6 +79,8 @@ async function renderApiDocumentation(version) {
 				: DefaultPolicies.defaultFileNamePolicy(apiItem);
 		},
 		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
+		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	console.log("Generating API documentation...");

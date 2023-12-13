@@ -50,10 +50,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				} else if (Array.isArray(node)) {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
-					return (Object.keys(node) as FieldKey[]).filter((key) => {
-						const value = node[key];
-						return !Array.isArray(value) || value.length !== 0;
-					});
+					return Object.keys(node) as FieldKey[];
 				}
 			default:
 				return [];
@@ -107,8 +104,8 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case leaf.number.name:
 		case leaf.boolean.name:
 		case leaf.string.name:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
 		case jsonArray.name: {
 			reader.enterField(EmptyKey);

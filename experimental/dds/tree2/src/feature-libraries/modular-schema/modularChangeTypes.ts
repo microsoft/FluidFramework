@@ -8,11 +8,11 @@ import {
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
-	JsonableTree,
 	RevisionInfo,
 	RevisionTag,
 } from "../../core";
 import { Brand } from "../../util";
+import { EncodedChunk } from "../chunked-forest";
 
 /**
  * @alpha
@@ -32,7 +32,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	fieldChanges: FieldChangeMap;
 	constraintViolationCount?: number;
 	// TODO:YA6307 adopt more efficient representation, likely based on contiguous runs of IDs
-	readonly builds?: ChangeAtomIdMap<JsonableTree>;
+	readonly builds?: ChangeAtomIdMap<EncodedChunk>;
 }
 
 /**

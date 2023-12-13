@@ -5,23 +5,19 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	ITreeCursor,
 	TaggedChange,
 	tagChange,
 	ChangesetLocalId,
 	RevisionTag,
 	areEqualChangeAtomIds,
-	JsonableTree,
 	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
-	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
-import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -185,8 +181,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let latestReservedDetachId: RegisterId | undefined;
 		let inputContext: "empty" | "filled" | undefined;
 
-		// Using a map here avoids potential duplicate builds from sandwich rebases.
-		const builds = new RegisterMap<JsonableTree>();
 		const childChangesByOriginalId = new RegisterMap<TaggedChange<NodeChangeset>[]>();
 		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
 		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
@@ -201,16 +195,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				const intention = getIntention(id.revision ?? revision, revisionMetadata);
 				return { revision: intention, localId: id.localId };
 			};
-
-			for (const { id, set } of change.build) {
-				builds.set(
-					{
-						revision: id.revision ?? revision,
-						localId: id.localId,
-					},
-					set,
-				);
-			}
 
 			const nextSrcToDst = new RegisterMap<
 				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
@@ -230,7 +214,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (originalSrc !== undefined) {
 					const [dst2, existingTarget] =
 						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
-					assert(areEqualRegisterIds(dst2, src), "expected consistent backward mapping");
+					assert(
+						areEqualRegisterIds(dst2, src),
+						0x855 /* expected consistent backward mapping */,
+					);
 					currentTarget = existingTarget;
 				} else {
 					originalSrc = src;
@@ -275,13 +262,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			composedMoves.push([src, dst, target]);
 		}
 
-		const composedBuilds: OptionalChangeset["build"] = [];
-		for (const [id, set] of builds.entries()) {
-			assert(id !== "self", "Detached trees should not be built directly to self register");
-			composedBuilds.push({ id, set });
-		}
 		const composed: OptionalChangeset = {
-			build: composedBuilds,
 			moves: composedMoves,
 			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
 				id,
@@ -322,7 +303,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
 			assert(
 				src === "self" || dst === "self",
-				"Invert is not currently supported for changes that transfer nodes between non-self registers.",
+				0x856 /* Invert is not currently supported for changes that transfer nodes between non-self registers. */,
 			);
 			if (src !== "self" && dst === "self") {
 				inverseEmptiesSelf = true;
@@ -334,7 +315,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 		const inverted: OptionalChangeset = {
-			build: [],
 			moves: invertedMoves,
 			childChanges: childChanges.map(([id, childChange]) => [
 				withIntention(invertIdMap.get(id) ?? id),
@@ -365,7 +345,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { revision: intention, localId: id.localId };
 		};
 
-		const { moves, childChanges, build } = change;
+		const { moves, childChanges } = change;
 		const { change: overChange } = overTagged;
 		const rebasedMoves: typeof moves = [];
 
@@ -388,7 +368,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		for (const [src, dst, target] of moves) {
 			if (target === "cellTargeting") {
-				assert(src === "self", "Cell targeting moves must have self as a source");
+				assert(src === "self", 0x857 /* Cell targeting moves must have self as a source */);
 				// TODO: Should we drop cell targeting / node targeting and just special-case 'self'? Might be simpler to understand.
 				// Holding off on making a call until AB#6298 is addressed (possibly support for rebasing transactions makes the
 				// answer to this more obvious).
@@ -442,7 +422,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const rebased: OptionalChangeset = {
-			build,
 			moves: rebasedMoves,
 			childChanges: rebasedChildChanges,
 		};
@@ -455,7 +434,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
 		const childChanges: OptionalChangeset["childChanges"] = [];
 		const prunedChange: OptionalChangeset = {
-			build: change.build,
 			moves: change.moves,
 			childChanges,
 		};
@@ -483,7 +461,6 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		ids: {
 			fill: ChangesetLocalId;
@@ -501,7 +478,6 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		ids: {
 			fill: ChangesetLocalId;
@@ -510,7 +486,6 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	): OptionalChangeset => {
 		const result: OptionalChangeset = {
-			build: [{ id: { localId: ids.fill }, set: jsonableTreeFromCursor(newContent) }],
 			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
 			childChanges: [],
 		};
@@ -524,9 +499,8 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 
 	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset =>
 		wasEmpty
-			? { build: [], moves: [], childChanges: [], reservedDetachId: { localId: detachId } }
+			? { moves: [], childChanges: [], reservedDetachId: { localId: detachId } }
 			: {
-					build: [],
 					moves: [["self", { localId: detachId }, "cellTargeting"]],
 					childChanges: [],
 			  },
@@ -534,7 +508,6 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 		return {
-			build: [],
 			moves: [],
 			childChanges: [["self", childChange]],
 		};
@@ -546,17 +519,6 @@ export function optionalFieldIntoDelta(
 	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
 	const delta: Mutable<DeltaFieldChanges> = {};
-
-	if (change.build.length > 0) {
-		const builds: DeltaDetachedNodeBuild[] = [];
-		for (const build of change.build) {
-			builds.push({
-				id: { major: build.id.revision ?? revision, minor: build.id.localId },
-				trees: [cursorForJsonableTreeNode(build.set)],
-			});
-		}
-		delta.build = builds;
-	}
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -621,7 +583,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
+		change.childChanges.length === 0 && change.moves.length === 0,
 };
 
 function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
@@ -633,30 +595,24 @@ function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 }
 
 function* relevantRemovedRoots(
-	change: OptionalChangeset,
+	{ change, revision }: TaggedChange<OptionalChangeset>,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
-	const dstToSrc = new RegisterMap<RegisterId>();
-	const alreadyYieldedOrNewlyBuilt = new RegisterMap<boolean>();
-	for (const { id } of change.build) {
-		alreadyYieldedOrNewlyBuilt.set(id, true);
-	}
+	const alreadyYielded = new RegisterMap<boolean>();
 
-	for (const [src, dst] of change.moves) {
-		dstToSrc.set(dst, src);
-		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
-			alreadyYieldedOrNewlyBuilt.set(src, true);
-			yield nodeIdFromChangeAtom(src);
+	for (const [src] of change.moves) {
+		if (src !== "self" && !alreadyYielded.has(src)) {
+			alreadyYielded.set(src, true);
+			yield nodeIdFromChangeAtom(src, revision);
 		}
 	}
 
 	for (const [id, childChange] of change.childChanges) {
-		// Child changes are relevant unless they apply to the tree which existed in the starting context of
+		// Child changes make the tree they apply to relevant unless that tree existed in the starting context of
 		// of this change.
-		const startingId = dstToSrc.get(id) ?? id;
-		if (startingId !== "self" && !alreadyYieldedOrNewlyBuilt.has(startingId)) {
-			alreadyYieldedOrNewlyBuilt.set(startingId, true);
-			yield nodeIdFromChangeAtom(startingId);
+		if (id !== "self" && !alreadyYielded.has(id)) {
+			alreadyYielded.set(id, true);
+			yield nodeIdFromChangeAtom(id);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}

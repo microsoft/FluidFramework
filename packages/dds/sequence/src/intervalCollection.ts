@@ -690,7 +690,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			op: ISequencedDocumentMessage | undefined,
 			slide: boolean,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval is added or removed from the collection.
 	 * `local` reflects whether the change originated locally.
@@ -703,7 +703,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval's properties have changed.
 	 * `interval` reflects the state of the updated properties.
@@ -721,7 +721,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
 }
 
 // solely for type checking in the implementation of add - will be removed once
@@ -865,19 +865,33 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	removeIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Changes the properties on an existing interval.
+	 * @deprecated - call change with the id and and object containing the new properties
 	 * @param id - Id of the interval whose properties should be changed
 	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
 	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
 	 */
-	changeProperties(id: string, props: PropertySet);
+	changeProperties(id: string, props: PropertySet): void;
 	/**
 	 * Changes the endpoints of an existing interval.
+	 * @deprecated - call change with the start and end parameters encapsulated in an object
 	 * @param id - Id of the interval to change
 	 * @param start - New start value. To leave the endpoint unchanged, pass the current value.
 	 * @param end - New end value. To leave the endpoint unchanged, pass the current value.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
 	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
+	/**
+	 * Changes the endpoints, properties, or both of an existing interval.
+	 * @param id - Id of the Interval to change
+	 * @returns the interval that was changed, if it existed in the collection.
+	 * Pass the desired new start position, end position, and/or properties in an object. Start and end positions must be changed
+	 * simultaneously - they must either both be specified or both undefined. To only change the properties, leave both endpoints
+	 * undefined. To only change the endpoints, leave the properties undefined.
+	 */
+	change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1390,70 +1404,83 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.changeProperties}
+	 * @deprecated - call change with the id and an object containing the new props values
 	 */
 	public changeProperties(id: string, props: PropertySet) {
-		if (!this.attached) {
-			throw new LoggingError("Attach must be called before accessing intervals");
-		}
-		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
-		}
-		if (!props) {
-			throw new LoggingError("changeProperties should be called with a property set");
-		}
-		// prevent the overwriting of an interval label, it should remain unchanged
-		// once it has been inserted into the collection.
-		if (props[reservedRangeLabelsKey] !== undefined) {
-			throw new LoggingError(
-				"The label property should not be modified once inserted to the collection",
-			);
-		}
-
-		const interval = this.getIntervalById(id);
-		if (interval) {
-			const deltaProps = interval.addProperties(
-				props,
-				true,
-				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
-			);
-			const serializedInterval: ISerializedInterval = interval.serialize();
-
-			// Emit a change op that will only change properties. Add the ID to
-			// the property bag provided by the caller.
-			serializedInterval.start = undefined as any;
-			serializedInterval.end = undefined as any;
-
-			serializedInterval.properties = props;
-			serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.emit("propertyChanged", interval, deltaProps, true, undefined);
-		}
+		this.change(id, { props });
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.change}
+	 * @deprecated - call change with the id and an object containing the new start, end, and/or props values
 	 */
-	public change(id: string, start: SequencePlace, end: SequencePlace) {
+	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
+	/**
+	 * {@inheritdoc IIntervalCollection.change}
+	 */
+	public change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined;
+	public change(
+		arg1: string,
+		arg2: SequencePlace | { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+		arg3?: SequencePlace,
+	): TInterval | undefined {
+		const id: string = arg1;
+		let start: SequencePlace | undefined;
+		let end: SequencePlace | undefined;
+		let props: PropertySet | undefined;
+		if (isSequencePlace(arg2)) {
+			start = arg2;
+			end = arg3;
+		} else {
+			start = arg2.start;
+			end = arg2.end;
+			props = arg2.props;
+		}
+
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 
 		// Force id to be a string.
 		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
+			throw new UsageError("Change API requires an ID that is a string");
+		}
+
+		// Ensure that both start and end are defined or both are undefined.
+		if ((start === undefined) !== (end === undefined)) {
+			throw new UsageError(
+				"Change API requires both start and end to be defined or undefined",
+			);
+		}
+
+		// prevent the overwriting of an interval label, it should remain unchanged
+		// once it has been inserted into the collection.
+		if (props?.[reservedRangeLabelsKey] !== undefined) {
+			throw new UsageError(
+				"The label property should not be modified once inserted to the collection",
+			);
 		}
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
-			const newInterval = this.localCollection.changeInterval(interval, start, end);
-			if (!newInterval) {
-				return undefined;
+			let deltaProps: PropertySet | undefined;
+			let newInterval: TInterval | undefined;
+			if (props !== undefined) {
+				deltaProps = interval.addProperties(
+					props,
+					true,
+					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+				);
 			}
-			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
-				setSlideOnRemove(newInterval.start);
-				setSlideOnRemove(newInterval.end);
+			if (start !== undefined && end !== undefined) {
+				newInterval = this.localCollection.changeInterval(interval, start, end);
+				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+					setSlideOnRemove(newInterval.start);
+					setSlideOnRemove(newInterval.end);
+				}
 			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
@@ -1463,15 +1490,21 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			serializedInterval.startSide = startSide;
 			serializedInterval.endSide = endSide;
 			serializedInterval.stickiness = stickiness;
-			// Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
+			// Emit a property bag containing the ID and the other (if any) properties changed
 			serializedInterval.properties = {
 				[reservedIntervalIdKey]: interval.getIntervalId(),
+				...props,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.addPendingChange(id, serializedInterval);
-			this.emitChange(newInterval, interval, true, false);
+			if (deltaProps !== undefined) {
+				this.emit("propertyChanged", interval, deltaProps, true, undefined);
+			}
+			if (newInterval) {
+				this.addPendingChange(id, serializedInterval);
+				this.emitChange(newInterval, interval, true, false);
+			}
 			return newInterval;
 		}
 		// No interval to change
