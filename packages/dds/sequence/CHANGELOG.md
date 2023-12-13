@@ -1,5 +1,116 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   sequence: Some function return types are now void instead of any [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
+    the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the
+    typing of these functions more accurate.
+
+-   sequence: Add experimental support for the obliterate operation [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    This change adds experimental support for _obliterate_, a form of _remove_ that deletes concurrently inserted segments.
+    To use, enable the `mergeTreeEnableObliterate` feature flag and call the new `obliterateRange` functions.
+
+    Note: this change may cause compilation errors for those attaching event listeners. As long as obliterate isn't used in
+    current handlers, their current implementation is sound.
+
+-   datastore-definitions: Jsonable and Serializable now require a generic parameter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
+    if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
+    limitation of serialization.
+
+    Additional modifications:
+
+    -   `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
+        `void`.
+    -   Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
+    -   Recursive types with arrays (`[]`) are now supported.
+
+    `Serializable` is commonly used for DDS values and now requires more precision when using them. For example SharedMatrix
+    (unqualified) has an `any` default that meant values were `Serializable<any>` (i.e. `any`), but now `Serializable<any>`
+    is `JsonableTypeWith<IFluidHandle>` which may be problematic for reading or writing. Preferred correction is to specify
+    the value type but casting through `any` may provide a quick fix.
+
+-   sequence: Removed Marker.hasSimpleType and made sequence operations return void [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    `Marker.hasSimpleType` was unused. Sequence operations now no longer return IMergeTree\*Msg types.
+    These types are redundant with the input.
+
+-   sequence: Removed several public exports from merge-tree and sequence [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed or marked internal in merge-tree and sequence. This functionality was never
+    intended for public export.
+
+    -   `BaseSegment.ack`
+    -   `Client`
+    -   `CollaborationWindow`
+    -   `compareNumbers`
+    -   `compareStrings`
+    -   `createAnnotateMarkerOp`
+    -   `createAnnotateRangeOp`
+    -   `createGroupOp`
+    -   `createInsertOp`
+    -   `createInsertSegmentOp`
+    -   `createRemoveRangeOp`
+    -   `IConsensusInfo`
+    -   `IConsensusValue`
+    -   `IMarkerModifiedAction`
+    -   `IMergeTreeTextHelper`
+    -   `LocalClientId`
+    -   `MergeTreeDeltaCallback`
+    -   `MergeTreeMaintenanceCallback`
+    -   `NonCollabClient`
+    -   `SegmentAccumulator`
+    -   `SegmentGroup`
+    -   `SegmentGroupCollection.enqueue`
+    -   `SegmentGroupCollection.dequeue`
+    -   `SegmentGroupCollection.pop`
+    -   `SortedSegmentSet`
+    -   `SortedSegmentSetItem`
+    -   `SortedSet`
+    -   `toRemovalInfo`
+    -   `TreeMaintenanceSequenceNumber`
+    -   `UniversalSequenceNumber`
+    -   `SharedSegmentSequence.submitSequenceMessage`
+
+-   sequence: Remove support for combining ops [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    In sequence, removed the following APIs:
+
+    -   the `combiningOp` argument from `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`
+    -   the function `SharedString.annotateMarkerNotifyConsensus`
+
+    In merge-tree, removed the following APIs:
+
+    -   `ICombiningOp`
+    -   the `combiningOp` field from `IMergeTreeAnnotateMsg`
+    -   the `op` argument from `BaseSegment.addProperties`, `PropertiesManager.addProperties`, and `ReferencePosition.addProperties`
+    -   the enum variant `PropertiesRollback.Rewrite`.
+
+    This functionality was largely unused and had no test coverage.
+
+-   sequence: Removed several APIs [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed:
+
+    -   `Client.getStackContext`
+    -   `SharedSegmentSequence.getStackContext`
+    -   `IntervalType.Nest`
+    -   `ReferenceType.NestBegin`
+    -   `ReferenceType.NestEnd`
+    -   `internedSpaces`
+    -   `RangeStackMap`
+    -   `refGetRangeLabels`
+    -   `refHasRangeLabel`
+    -   `refHasRangeLabels`
+
+    This functionality is deprecated, has low test coverage, and is largely unused.
+
 ## 2.0.0-internal.7.4.0
 
 ### Minor Changes
