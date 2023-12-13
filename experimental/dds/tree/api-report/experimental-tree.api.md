@@ -26,7 +26,6 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluid-experimental/tree2';
-import type { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TreeFactory } from '@fluid-experimental/tree2';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -731,7 +730,7 @@ export interface ParentData {
 }
 
 // @internal
-export type Payload = Serializable;
+export type Payload = any;
 
 // @internal
 export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace;

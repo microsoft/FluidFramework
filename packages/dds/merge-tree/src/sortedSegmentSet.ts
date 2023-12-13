@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet";
 
 /**
@@ -31,6 +30,7 @@ export type SortedSegmentSetItem =
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
 	T,
 	string

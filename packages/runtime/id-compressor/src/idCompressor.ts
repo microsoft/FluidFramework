@@ -18,7 +18,6 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	initialClusterCapacity,
 } from "./types";
 import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
 import {
@@ -85,15 +84,21 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	// The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
 	// This is updated to be equal to `generatedIdCount` + 1 each time it is called.
 	private nextRangeBaseGenCount = 1;
-	// The capacity of the next cluster to be created
-	private newClusterCapacity = initialClusterCapacity;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
 
 	// #endregion
 
-	// #region Telemetry state
+	// #region Ephemeral state
 
+	/**
+	 * Roughly equates to a minimum of 1M sessions before we start allocating 64 bit IDs.
+	 * Eventually, this can be adjusted dynamically to have cluster reservation policies that
+	 * optimize the number of eager finals.
+	 * It is not readonly as it is accessed by tests for clear-box testing.
+	 */
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly
+	private nextRequestedClusterSize: number = 512;
 	// The number of local IDs generated since the last telemetry was sent.
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
@@ -157,25 +162,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return compressor;
 	}
 
-	/**
-	 * The size of each newly created ID cluster.
-	 *
-	 * @remarks Must only be set with a value upon which consensus has been reached.
-	 * Value must be greater than zero and less than {@link IdCompressor.maxClusterSize}.
-	 */
-	public get clusterCapacity(): number {
-		return this.newClusterCapacity;
-	}
-	public set clusterCapacity(value: number) {
-		if (value <= 0) {
-			throw new Error("Clusters must have a positive capacity.");
-		}
-		if (value > IdCompressor.maxClusterSize) {
-			throw new Error("Clusters must not exceed max cluster size.");
-		}
-		this.newClusterCapacity = value;
-	}
-
 	public generateCompressedId(): SessionSpaceCompressedId {
 		this.localGenCount++;
 		const lastCluster = this.localSession.getLastCluster();
@@ -219,10 +205,25 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			ids: {
 				firstGenCount: this.nextRangeBaseGenCount,
 				count,
+				requestedClusterSize: this.nextRequestedClusterSize,
 			},
 		};
 		this.nextRangeBaseGenCount = this.localGenCount + 1;
+		IdCompressor.assertValidRange(range);
 		return range;
+	}
+
+	private static assertValidRange(range: IdCreationRange): void {
+		if (range.ids === undefined) {
+			return;
+		}
+		const { count, requestedClusterSize } = range.ids;
+		assert(count > 0, 0x755 /* Malformed ID Range. */);
+		assert(requestedClusterSize > 0, "Clusters must have a positive capacity.");
+		assert(
+			requestedClusterSize <= IdCompressor.maxClusterSize,
+			"Clusters must not exceed max cluster size.",
+		);
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
@@ -231,9 +232,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return;
 		}
 
-		assert(range.ids.count > 0, 0x755 /* Malformed ID Range. */);
+		IdCompressor.assertValidRange(range);
 		const { sessionId, ids } = range;
-		const { count, firstGenCount } = ids;
+		const { count, firstGenCount, requestedClusterSize } = ids;
 		const session = this.sessions.getOrCreate(sessionId);
 		const isLocal = session === this.localSession;
 		const rangeBaseLocal = localIdFromGenCount(firstGenCount);
@@ -243,7 +244,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			if (rangeBaseLocal !== -1) {
 				throw new Error("Ranges finalized out of order.");
 			}
-			lastCluster = this.addEmptyCluster(session, this.clusterCapacity + count);
+			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
 				this.logger?.sendTelemetryEvent({
 					eventName: "RuntimeIdCompressor:FirstCluster",
@@ -262,7 +263,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			lastCluster.count += count;
 		} else {
 			const overflow = count - remainingCapacity;
-			const newClaimedFinalCount = overflow + this.clusterCapacity;
+			const newClaimedFinalCount = overflow + requestedClusterSize;
 			if (lastCluster === this.finalSpace.getLastCluster()) {
 				// The last cluster in the sessions chain is the last cluster globally, so it can be expanded.
 				lastCluster.capacity += newClaimedFinalCount;
@@ -492,7 +493,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const totalSize =
 			1 + // version
 			1 + // hasLocalState
-			1 + // cluster capacity
 			1 + // session count
 			1 + // cluster count
 			sessionIndexMap.size * 2 + // session IDs
@@ -504,7 +504,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let index = 0;
 		index = writeNumber(serializedFloat, index, currentWrittenVersion);
 		index = writeBoolean(serializedFloat, index, hasLocalState);
-		index = writeNumber(serializedFloat, index, this.clusterCapacity);
 		index = writeNumber(serializedFloat, index, sessionIndexMap.size);
 		index = writeNumber(serializedFloat, index, finalSpace.clusters.length);
 
@@ -561,7 +560,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const version = readNumber(index);
 		assert(version === currentWrittenVersion, 0x75c /* Unknown serialized version. */);
 		const hasLocalState = readBoolean(index);
-		const clusterCapacity = readNumber(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
 
@@ -587,7 +585,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		const compressor = new IdCompressor(new Sessions(sessions));
-		compressor.clusterCapacity = clusterCapacity;
 
 		// Clusters
 		let baseFinalId = 0;
@@ -634,7 +631,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return false;
 		}
 		return (
-			this.newClusterCapacity === other.newClusterCapacity &&
 			this.sessions.equals(other.sessions, includeLocalState) &&
 			this.finalSpace.equals(other.finalSpace)
 		);

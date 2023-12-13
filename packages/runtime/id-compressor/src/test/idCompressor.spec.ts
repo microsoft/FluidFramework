@@ -24,22 +24,6 @@ import {
 import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon";
 
 describe("IdCompressor", () => {
-	it("detects invalid cluster sizes", () => {
-		const compressor = CompressorFactory.createCompressor(Client.Client1, 1);
-		assert.throws(
-			() => (compressor.clusterCapacity = -1),
-			(e: Error) => e.message === "Clusters must have a positive capacity.",
-		);
-		assert.throws(
-			() => (compressor.clusterCapacity = 0),
-			(e: Error) => e.message === "Clusters must have a positive capacity.",
-		);
-		assert.throws(
-			() => (compressor.clusterCapacity = 2 ** 20 + 1),
-			(e: Error) => e.message === "Clusters must not exceed max cluster size.",
-		);
-	});
-
 	it("reports the proper session ID", () => {
 		const sessionId = createSessionId();
 		const compressor = CompressorFactory.createCompressorWithSession(sessionId);
@@ -704,7 +688,7 @@ describe("IdCompressor", () => {
 			mockLogger.assertMatchAny([
 				{
 					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
-					size: 80,
+					size: 72,
 					clusterCount: 1,
 					sessionCount: 1,
 				},
@@ -970,23 +954,6 @@ describe("IdCompressor", () => {
 			network.deliverOperations(DestinationClient.All);
 		});
 
-		itNetwork("can set the cluster size via API", 2, (network) => {
-			const compressor = network.getCompressor(Client.Client1);
-			const compressor2 = network.getCompressor(Client.Client2);
-			const initialClusterCapacity = compressor.clusterCapacity;
-			network.allocateAndSendIds(Client.Client1, 1);
-			network.allocateAndSendIds(Client.Client2, 1);
-			network.enqueueCapacityChange(5);
-			network.allocateAndSendIds(Client.Client1, 3);
-			const opSpaceIds = network.allocateAndSendIds(Client.Client2, 3);
-			network.deliverOperations(DestinationClient.All);
-			// Glass box test, as it knows the order of final IDs
-			assert.equal(
-				compressor.normalizeToSessionSpace(opSpaceIds[2], compressor2.localSessionId),
-				(initialClusterCapacity + 1) * 2 + compressor.clusterCapacity + 1,
-			);
-		});
-
 		itNetwork("does not decompress ids for empty parts of clusters", 2, (network) => {
 			// This is a glass box test in that it creates a final ID outside of the ID compressor
 			network.allocateAndSendIds(Client.Client1, 1);
@@ -1006,14 +973,19 @@ describe("IdCompressor", () => {
 				network.allocateAndSendIds(Client.Client1, 3);
 				network.allocateAndSendIds(
 					Client.Client2,
-					network.getCompressor(Client.Client2).clusterCapacity * 2,
+
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+					network.getCompressor(Client.Client2)["nextRequestedClusterSize"] * 2,
 				);
 				network.allocateAndSendIds(Client.Client3, 5);
 				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
 			});
 
 			itNetwork("can finalize a range when the current cluster is full", 5, (network) => {
-				const clusterCapacity = network.getCompressor(Client.Client1).clusterCapacity;
+				const clusterCapacity = network.getCompressor(
+					Client.Client1,
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				)["nextRequestedClusterSize"];
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
 				network.allocateAndSendIds(Client.Client2, clusterCapacity);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
@@ -1021,7 +993,10 @@ describe("IdCompressor", () => {
 			});
 
 			itNetwork("can finalize a range that spans multiple clusters", 5, (network) => {
-				const clusterCapacity = network.getCompressor(Client.Client1).clusterCapacity;
+				const clusterCapacity = network.getCompressor(
+					Client.Client1,
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				)["nextRequestedClusterSize"];
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.allocateAndSendIds(Client.Client2, 1);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity * 3);
@@ -1095,31 +1070,14 @@ describe("IdCompressor", () => {
 				expectSerializes(network.getCompressor(Client.Client3));
 			});
 
-			// TODO: test in Rust
-			// itNetwork(
-			// 	"packs IDs into a single cluster when a single client generates non-overridden ids",
-			// 	3,
-			// 	(network) => {
-			// 		network.allocateAndSendIds(Client.Client1, 20);
-			// 		network.deliverOperations(DestinationClient.All);
-			// 		const [serialized1WithNoSession, serialized1WithSession] = expectSerializes(
-			// 			network.getCompressor(Client.Client1),
-			// 		);
-			// 		assert.equal(serialized1WithNoSession.clusters.length, 1);
-			// 		assert.equal(serialized1WithSession.clusters.length, 1);
-			// 		const [serialized3WithNoSession, serialized3WithSession] = expectSerializes(
-			// 			network.getCompressor(Client.Client3),
-			// 		);
-			// 		assert.equal(serialized3WithNoSession.clusters.length, 1);
-			// 		assert.equal(serialized3WithSession.clusters.length, 1);
-			// 	},
-			// );
-
 			itNetwork(
 				"can resume a session and interact with multiple other clients",
 				3,
 				(network) => {
-					const clusterSize = network.getCompressor(Client.Client1).clusterCapacity;
+					const clusterSize = network.getCompressor(
+						Client.Client1,
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+					)["nextRequestedClusterSize"];
 					network.allocateAndSendIds(Client.Client1, clusterSize);
 					network.allocateAndSendIds(Client.Client2, clusterSize);
 					network.allocateAndSendIds(Client.Client3, clusterSize);

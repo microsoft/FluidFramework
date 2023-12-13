@@ -90,16 +90,13 @@ export function incrementStableId(stableId: StableId, offset: number): StableId 
 }
 
 /** An immutable view of an `IdCompressor` */
-export interface ReadonlyIdCompressor
-	extends Omit<
-		IdCompressor,
-		| "generateCompressedId"
-		| "generateCompressedIdRange"
-		| "takeNextCreationRange"
-		| "finalizeCreationRange"
-	> {
-	readonly clusterCapacity: number;
-}
+export type ReadonlyIdCompressor = Omit<
+	IdCompressor,
+	| "generateCompressedId"
+	| "generateCompressedIdRange"
+	| "takeNextCreationRange"
+	| "finalizeCreationRange"
+>;
 
 /**
  * Asserts a value is not undefined, and returns the value.
