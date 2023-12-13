@@ -53,12 +53,8 @@ export function createOdspClient(
 		throw new Error("client secret is missing");
 	}
 
-	if (creds.username === undefined) {
-		throw new Error("odsp username is undefined");
-	}
-
-	if (creds.password === undefined) {
-		throw new Error("odsp password is undefined");
+	if (creds.username === undefined || creds.password === undefined) {
+		throw new Error("username or password is missing for login account");
 	}
 
 	const credentials: OdspCredentials = {
