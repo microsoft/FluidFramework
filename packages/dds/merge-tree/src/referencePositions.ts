@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
-import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
-import { ReferenceType, ICombiningOp } from "./ops";
-import { PropertySet, MapLike } from "./properties";
+import { ReferenceType } from "./ops";
+import { PropertySet } from "./properties";
 
 /**
  * @internal
@@ -41,31 +38,11 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- * @internal
- */
-export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
-	// eslint-disable-next-line no-bitwise
-	refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd) &&
-	refPos.properties
-		? (refPos.properties[reservedRangeLabelsKey] as string[])
-		: undefined;
-
-/**
  * @internal
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
 	return tileLabels?.includes(label) ?? false;
-}
-
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- * @internal
- */
-export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
-	const rangeLabels = refGetRangeLabels(refPos);
-	return rangeLabels?.includes(label) ?? false;
 }
 
 /**
@@ -76,14 +53,6 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
 }
 
 /**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- * @internal
- */
-export function refHasRangeLabels(refPos: ReferencePosition): boolean {
-	return refGetRangeLabels(refPos) !== undefined;
-}
-
-/**
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
@@ -91,12 +60,15 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
  */
 export interface ReferencePosition {
 	/**
-	 * @returns Properties associated with this reference
+	 * Properties associated with this reference
 	 */
 	properties?: PropertySet;
 
 	/**
-	 * Defaults to forward
+	 * The direction for this reference position to slide when the segment it
+	 * points to is removed. See {@link (SlidingPreference:type)} for additional context.
+	 *
+	 * Defaults to SlidingPreference.Forward
 	 */
 	slidingPreference?: SlidingPreference;
 
@@ -120,19 +92,12 @@ export interface ReferencePosition {
 
 	/**
 	 * @param newProps - Properties to add to this reference.
-	 * @param op - Combining semantics for changed properties. By default, property changes are last-write-wins.
 	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
 	 */
-	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
+	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
 }
-
-/**
- * @deprecated This functionality is deprecated and will be removed in a future release.
- * @alpha
- */
-export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 /**
  * @internal

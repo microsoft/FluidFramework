@@ -225,7 +225,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -235,17 +235,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		this.rebasedCount += 1;
 		return change;
 	}
 
-	public invert(change: TaggedChange<TestChange>): TestChange {
+	public override invert(change: TaggedChange<TestChange>): TestChange {
 		this.invertedCount += 1;
 		return change.change;
 	}
 
-	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+	public override compose(changes: TaggedChange<TestChange>[]): TestChange {
 		this.composedCount += changes.length;
 		return changes.length === 0 ? emptyChange : changes[0].change;
 	}
@@ -261,7 +261,7 @@ export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 		super();
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}
