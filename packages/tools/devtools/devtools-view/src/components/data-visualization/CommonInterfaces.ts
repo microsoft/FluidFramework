@@ -36,5 +36,5 @@ export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = Visua
  * TODO
  */
 export interface CanSupplyEdit {
-	edit(newValue: Serializable<unknown>);
+	edit<T>(newValue: Serializable<T>);
 }

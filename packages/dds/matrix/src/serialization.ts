@@ -9,10 +9,10 @@ import { BlobTreeEntry } from "@fluidframework/driver-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { bufferToString } from "@fluid-internal/client-utils";
 
-export const serializeBlob = (
+export const serializeBlob = <T>(
 	handle: IFluidHandle,
 	path: string,
-	snapshot: Serializable,
+	snapshot: Serializable<T>,
 	serializer: IFluidSerializer,
 ) => new BlobTreeEntry(path, serializer.stringify(snapshot, handle));
 

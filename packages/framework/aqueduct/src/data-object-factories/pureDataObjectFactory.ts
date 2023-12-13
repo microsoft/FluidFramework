@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
@@ -31,15 +30,6 @@ import {
 
 import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
-/**
- * Useful interface in places where it's useful to do type erasure for PureDataObject generic
- * @deprecated Will be removed in future major release. Please remove all usage of it.
- * @alpha
- */
-export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
-	// eslint-disable-next-line import/no-deprecated
-	createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
 
 /**
  * Proxy over PureDataObject
@@ -136,10 +126,7 @@ export class PureDataObjectFactory<
 		TObj extends PureDataObject<I>,
 		I extends DataObjectTypes = DataObjectTypes,
 	>
-	implements
-		IFluidDataStoreFactory,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IRootDataObjectFactory
+	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;

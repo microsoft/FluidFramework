@@ -4,7 +4,12 @@
  */
 
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandleContext,
+	IFluidLoadable,
+	IRequest,
+} from "@fluidframework/core-interfaces";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -121,8 +126,6 @@ export async function getVersionedTestObjectProviderFromApis(
 		driverConfig?.config,
 		apis.driver,
 	);
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -136,7 +139,6 @@ export async function getVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
-			[innerRequestHandler],
 		);
 	};
 
@@ -196,7 +198,9 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	);
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		(
+			runtime as any as Required<FluidObject<IFluidHandleContext>>
+		).IFluidHandleContext.resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(

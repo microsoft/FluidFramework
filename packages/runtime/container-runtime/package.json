@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-internal.8.0.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -131,6 +131,10 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_TEST_requestSummarizer": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IGCStats": {
