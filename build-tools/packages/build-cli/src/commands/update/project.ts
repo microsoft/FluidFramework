@@ -27,6 +27,9 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		renameTypes: Flags.boolean({
 			description: "Enable scripts to rename ESM types and rewrite imports.",
 		}),
+		attw: Flags.boolean({
+			description: "Add are-the-types-wrong script and dependencies.",
+		}),
 		...PackageCommand.flags,
 	};
 
@@ -39,18 +42,24 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 		if (flags.tscMulti) {
 			if (pkg.getScript("build:esnext") === undefined) {
-				this.warning(`${pkg.nameColored} has no build:esnext script; skipping.`);
-				return;
+				this.warning(`${pkg.nameColored} has no build:esnext script; skipping tscMulti.`);
+			} else {
+				await this.tscMulti(pkg);
 			}
-			await this.tscMulti(pkg);
 		}
 
 		if (flags.renameTypes) {
 			if (pkg.getScript("build:esnext") === undefined) {
-				this.warning(`${pkg.nameColored} has no build:esnext script; skipping.`);
-				return;
+				this.warning(
+					`${pkg.nameColored} has no build:esnext script; skipping renameTypes.`,
+				);
+			} else {
+				await this.renameTypes(pkg);
 			}
-			await this.renameTypes(pkg);
+		}
+
+		if (flags.attw) {
+			await this.addAttw(pkg);
 		}
 	}
 
@@ -238,6 +247,19 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		});
 	}
 
+	private async addAttw(pkg: Package): Promise<void> {
+		this.info(`adding attw`);
+		updatePackageJsonFile(pkg.directory, (packageJson) => {
+			if (packageJson.devDependencies === undefined) {
+				this.warning(`Package has no devDependencies: ${pkg.nameColored}`);
+				return;
+			}
+
+			packageJson.scripts["check:are-the-types-wrong"] = "attw --pack";
+			packageJson.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
+		});
+	}
+
 	private async renameTypes(pkg: Package): Promise<void> {
 		// const context = await this.getContext();
 		// const repoRoot = context.repo.resolvedRoot;
@@ -248,6 +270,8 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		// 		"common/build/build-common/replace-in-file-rewrite-type-imports.cjs",
 		// 	),
 		// );
+
+		// await this.addAttw(pkg);
 
 		updatePackageJsonFile(pkg.directory, (packageJson) => {
 			if (packageJson.devDependencies === undefined) {
@@ -268,9 +292,6 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 			// 	"build:rewrite-type-imports"
 			// ] = `replace-in-file --configFile ${rewriteImportsConfigPath}`;
 
-			packageJson.scripts["check:are-the-types-wrong"] = "attw --pack";
-
-			packageJson.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
 			packageJson.devDependencies.renamer = "^4.0.0";
 			// packageJson.devDependencies["replace-in-file"] = "^6.3.5";
 

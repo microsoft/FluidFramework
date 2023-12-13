@@ -11,11 +11,13 @@ Updates a project.
 
 ```
 USAGE
-  $ flub update project [-v | --quiet] [--newTsconfigs] [--tscMulti] [--renameTypes] [--concurrency <value>] [--all
-    | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub update project [-v | --quiet] [--newTsconfigs] [--tscMulti] [--renameTypes] [--attw] [--concurrency
+    <value>] [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope
+    <value>]
 
 FLAGS
+  --attw                 Add are-the-types-wrong script and dependencies.
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
   --newTsconfigs         Enable new tsconfigs in the package.
   --renameTypes          Enable scripts to rename ESM types and rewrite imports.
