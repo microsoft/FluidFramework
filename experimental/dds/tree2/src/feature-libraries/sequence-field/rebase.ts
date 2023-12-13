@@ -171,8 +171,6 @@ function rebaseMarkList<TNodeChange>(
 
 		gapTracker.ingest(baseMark, baseRevision);
 
-		// Inverse attaches do not contribute to lineage as they are effectively reinstating
-		// an older detach which cells should already have any necessary lineage for.
 		if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, baseRevision, metadata)) {
 			// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 			// We don't pass a `RevisionMetadataSource` to `getOutputCellId` so that we get the true revision.
