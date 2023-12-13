@@ -28,7 +28,7 @@ variables:
   value: "@fluidframework/azure-end-to-end-tests"
   readonly: true
 - name: testOdspPackage
-  value: "@fluidframework/odsp-end-to-end-tests"
+  value: "@fluid-experimental/odsp-end-to-end-tests"
   readonly: true
 
 stages:
