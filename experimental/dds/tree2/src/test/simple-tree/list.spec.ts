@@ -93,6 +93,11 @@ describe("List", () => {
 				Object.prototype.toString.call(target),
 			);
 
+			// An older technique for detecting arrays is to use the 'instanceof' operator.
+			// However, this is not reliable in the presence of multiple global contexts (e.g.,
+			// if an Array is passed across frame boundaries.)
+			test0("instanceof Array", (target: unknown) => target instanceof Array);
+
 			// 'deepEquals' requires that objects have the same prototype to be considered equal.
 			test0(
 				"Object.getPrototypeOf",
