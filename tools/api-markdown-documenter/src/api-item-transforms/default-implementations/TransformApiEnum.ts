@@ -2,7 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ApiEnum, type ApiEnumMember, type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import {
+	type ApiEnum,
+	type ApiEnumMember,
+	type ApiItem,
+	ApiItemKind,
+} from "@microsoft/api-extractor-model";
 
 import { type DocumentationNode, type SectionNode } from "../../documentation-domain";
 import { filterByKind } from "../../utilities";

@@ -2,7 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ApiEntryPoint, type ApiItem, type ApiModel, type ApiPackage } from "@microsoft/api-extractor-model";
+import {
+	type ApiEntryPoint,
+	type ApiItem,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
 import { type DocumentNode, type SectionNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
