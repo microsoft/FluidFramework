@@ -45,6 +45,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 
 		/**
 		 * Validates that the data store is not deleted from the data store and GC trees in the summary.
+		 * Also, it is referenced / unreferenced as expected.
 		 */
 		function validateDataStoreStateInSummary(
 			summaryTree: ISummaryTree,
