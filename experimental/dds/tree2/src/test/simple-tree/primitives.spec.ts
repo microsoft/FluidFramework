@@ -102,7 +102,7 @@ describe("Primitives", () => {
 				Number.MAX_VALUE,
 			].forEach((value) => checkExact(schema, value));
 
-			// JSON coerces non-finite numbers are coerced to 'null'.  If 'null' violates schema,
+			// JSON coerces non-finite numbers to 'null'.  If 'null' violates schema,
 			// this must throw a TypeError.
 			[-Infinity, NaN, Infinity].forEach((value) => {
 				checkThrows(schema, value);
