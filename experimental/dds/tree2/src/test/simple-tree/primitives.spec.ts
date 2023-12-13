@@ -115,7 +115,7 @@ describe("Primitives", () => {
 		});
 
 		describe("with schema [_.number, _.null]", () => {
-			// JSON coerces non-finite numbers are coerced to 'null'.  This succeeds when 'null' is
+			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
 			const schema = makeSchema((_) => [_.number, _.null]);
 			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
