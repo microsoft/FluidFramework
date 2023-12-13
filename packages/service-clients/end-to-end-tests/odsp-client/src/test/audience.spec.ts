@@ -12,7 +12,7 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, OdspLoginCredentials } from "./OdspClientFactory";
+import { createOdspClient, IOdspLoginCredentials } from "./OdspClientFactory";
 import { waitForMember } from "./utils";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -23,12 +23,12 @@ describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
-	const client1Creds: OdspLoginCredentials = {
+	const client1Creds: IOdspLoginCredentials = {
 		username: process.env.odsp__client__login__username as string,
 		password: process.env.odsp__client__login__password as string,
 	};
 
-	const client2Creds: OdspLoginCredentials = {
+	const client2Creds: IOdspLoginCredentials = {
 		username: process.env.odsp__client2__login__username as string,
 		password: process.env.odsp__client2__login__password as string,
 	};
@@ -79,7 +79,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: upon resolving container, the partner member should be able
 	 * to resolve original member.
 	 *
-	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly.
+	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly. AB#6425
 	 */
 	it.skip("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
@@ -133,7 +133,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: upon 1 partner leaving, other parther should observe
 	 * memberRemoved event and have correct partner count.
 	 *
-	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly.
+	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly. AB#6425
 	 */
 	it.skip("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);

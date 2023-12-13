@@ -13,14 +13,18 @@ import {
 import { OdspTestTokenProvider } from "./OdspTokenFactory";
 
 /**
- * Interface representing the credentials required for testing odsp-client.
+ * Interface representing the odsp-client login account credentials.
  */
-export interface OdspLoginCredentials {
+export interface IOdspLoginCredentials {
 	username: string;
 	password: string;
 }
 
-export interface OdspCredentials extends OdspLoginCredentials {
+/**
+ * Interface representing extended credentials for odsp-client, including AAD information.
+ * Extends the basic login credentials with client ID and client secret.
+ */
+export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
 	clientSecret: string;
 }
@@ -30,7 +34,7 @@ export interface OdspCredentials extends OdspLoginCredentials {
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createOdspClient(
-	creds: OdspLoginCredentials,
+	creds: IOdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
@@ -57,7 +61,7 @@ export function createOdspClient(
 		throw new Error("username or password is missing for login account");
 	}
 
-	const credentials: OdspCredentials = {
+	const credentials: IOdspCredentials = {
 		clientId,
 		clientSecret,
 		...creds,
