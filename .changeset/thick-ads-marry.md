@@ -4,7 +4,7 @@
 "@fluidframework/request-handler": major
 ---
 
-Removed `requestHandler` utilities
+aqueduct: Removed requestHandler utilities
 
 The following `requestHandler` utilities have been removed:
 

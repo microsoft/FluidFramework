@@ -2,7 +2,7 @@
 "@fluidframework/runtime-utils": major
 ---
 
-Removed `requestFluidObject`
+runtime-utils: Removed requestFluidObject
 
 The `requestFluidObject` utility has been removed. Please migrate all usage of it to the new `entryPoint` pattern.
 

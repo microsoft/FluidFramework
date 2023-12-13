@@ -3,10 +3,18 @@
 "@fluidframework/sequence": major
 ---
 
-Remove support for combining ops
+sequence: Remove support for combining ops
 
-In `merge-tree`, removes ICombiningOp; the combiningOp field from IMergeTreeAnnotateMsg; the op argument from BaseSegment.addProperties, PropertiesManager.addProperties, and ReferencePosition.addProperties; and the enum variant PropertiesRollback.Rewrite.
+In sequence, removed the following APIs:
 
-In `sequence`, removes the combiningOp argument from SharedSegmentSequence.annotateRange and SharedString.annotateMarker and the function SharedString.annotateMarkerNotifyConsensus.
+- the `combiningOp` argument from `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`
+- the function `SharedString.annotateMarkerNotifyConsensus`
+
+In merge-tree, removed the following APIs:
+
+- `ICombiningOp`
+- the `combiningOp` field from `IMergeTreeAnnotateMsg`
+- the `op` argument from `BaseSegment.addProperties`, `PropertiesManager.addProperties`, and `ReferencePosition.addProperties`
+- the enum variant `PropertiesRollback.Rewrite`.
 
 This functionality was largely unused and had no test coverage.

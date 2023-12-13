@@ -2,7 +2,7 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-Removed `request` and `IFluidRouter` from `IDataStore`
+runtime-definitions: Removed request and IFluidRouter from IDataStore
 
 The `request` method and `IFluidRouter` property have been removed from `IDataStore`. Please migrate all usage to the `IDataStore.entryPoint` API.
 

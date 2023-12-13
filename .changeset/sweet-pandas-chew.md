@@ -2,7 +2,7 @@
 "@fluidframework/core-interfaces": major
 ---
 
-Removed `IFluidRouter` and `IProvideFluidRouter`
+core-interfaces: Removed IFluidRouter and IProvideFluidRouter
 
 The `IFluidRouter` and `IProvideFluidRouter` interfaces have been removed. Please migrate all usage to the new `entryPoint` pattern.
 

@@ -301,7 +301,7 @@ export class SnapshotV1 {
 				if (segment.movedSeq !== undefined) {
 					assert(
 						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
-						"On move info preservation, segment has invalid moved sequence number!",
+						0x873 /* On move info preservation, segment has invalid moved sequence number! */,
 					);
 					raw.movedSeq = segment.movedSeq;
 					raw.movedSeqs = segment.movedSeqs;
