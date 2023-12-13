@@ -52,7 +52,7 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-    # Relevant to the test-azure-frs pipeline
+    # Relevant to the test-service-clientspipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
     - packages/framework/fluid-static
@@ -86,7 +86,7 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-    # Relevant to the test-azure-frs pipeline
+    # Relevant to the test-service-clientspipeline
     - packages/dds/map
     - packages/drivers/routerlicious-driver
     - packages/framework/fluid-static
