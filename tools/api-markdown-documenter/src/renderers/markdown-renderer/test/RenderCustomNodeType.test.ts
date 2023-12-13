@@ -5,8 +5,8 @@
 import { expect } from "chai";
 
 import { DocumentationLiteralNodeBase } from "../../../documentation-domain";
-import { DocumentWriter } from "../../DocumentWriter";
-import { RenderContext } from "../RenderContext";
+import { type DocumentWriter } from "../../DocumentWriter";
+import { type RenderContext } from "../RenderContext";
 import { testRender } from "./Utilities";
 
 /**

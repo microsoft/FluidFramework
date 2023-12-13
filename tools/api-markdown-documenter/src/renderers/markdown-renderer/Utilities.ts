@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentationNode } from "../../documentation-domain";
-import { DocumentWriter } from "../DocumentWriter";
+import { type DocumentationNode } from "../../documentation-domain";
+import { type DocumentWriter } from "../DocumentWriter";
 import {
-	RenderContext as HtmlRenderContext,
+	type RenderContext as HtmlRenderContext,
 	renderNode as renderNodeAsHtml,
 } from "../html-renderer";
-import { RenderContext as MarkdownRenderContext } from "./RenderContext";
+import { type RenderContext as MarkdownRenderContext } from "./RenderContext";
 
 /**
  * Renders the provided {@link DocumentationNode} using HTML syntax.
