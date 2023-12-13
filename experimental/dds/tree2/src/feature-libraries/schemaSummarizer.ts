@@ -5,7 +5,6 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
@@ -32,11 +31,6 @@ import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".
 import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
-/**
- * The storage key for the blob in the summary containing schema data
- */
-const schemaBlobKey = "SchemaBlob";
-
 const schemaStringKey = "SchemaString";
 
 /**
@@ -46,17 +40,19 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
-	private schemaChanged = false;
+
+	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: StoredSchemaRepository,
 		options: ICodecOptions,
+		collabWindow: { getCurrentSeq(): number | undefined },
 	) {
 		this.codec = makeSchemaCodec(options);
 		this.schema.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
-			this.schemaChanged = true;
+			this.schemaIndexLastChangedSeq = collabWindow.getCurrentSeq();
 		});
 	}
 
@@ -67,14 +63,22 @@ export class SchemaSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
-		// Currently no Fluid handles are used, so just use JSON.stringify.
-		const dataString = JSON.stringify(this.codec.encode(this.schema));
-		this.schemaChanged = false;
-		return createSchemaSummary(
-			incrementalSummaryContext?.summaryPath,
-			this.schemaChanged,
-			dataString,
-		);
+		const builder = new SummaryTreeBuilder();
+		if (
+			incrementalSummaryContext !== undefined &&
+			this.schemaIndexLastChangedSeq !== undefined &&
+			incrementalSummaryContext.latestSummarySequenceNumber >= this.schemaIndexLastChangedSeq
+		) {
+			builder.addHandle(
+				schemaStringKey,
+				SummaryType.Blob,
+				`${incrementalSummaryContext.summaryPath}/indexes/Schema/${schemaStringKey}`,
+			);
+		} else {
+			const dataString = JSON.stringify(this.codec.encode(this.schema));
+			builder.addBlob(schemaStringKey, dataString);
+		}
+		return builder.getSummaryTree();
 	}
 
 	public async summarize(
@@ -86,12 +90,9 @@ export class SchemaSummarizer implements Summarizable {
 	): Promise<ISummaryTreeWithStats> {
 		// Currently no Fluid handles are used, so just use JSON.stringify.
 		const dataString = JSON.stringify(this.codec.encode(this.schema));
-		this.schemaChanged = false;
-		return createSchemaSummary(
-			incrementalSummaryContext?.summaryPath,
-			this.schemaChanged,
-			dataString,
-		);
+		const builder = new SummaryTreeBuilder();
+		builder.addBlob(schemaStringKey, dataString);
+		return builder.getSummaryTree();
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -109,7 +110,7 @@ export class SchemaSummarizer implements Summarizable {
 		parse: SummaryElementParser,
 	): Promise<void> {
 		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
-
+		this.schemaIndexLastChangedSeq = 0;
 		// After the awaits, validate that the schema is in a clean state.
 		// This detects any schema that could have been accidentally added through
 		// invalid means and are about to be overwritten.
@@ -234,22 +235,4 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
  */
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
 	return encodeRepo(schema);
-}
-
-function createSchemaSummary(
-	summaryPath: string | undefined,
-	schemaChanged: boolean,
-	data: string,
-): ISummaryTreeWithStats {
-	const builder = new SummaryTreeBuilder();
-	if (schemaChanged === false && summaryPath !== undefined) {
-		builder.addHandle(
-			schemaStringKey,
-			SummaryType.Blob,
-			`${summaryPath}/indexes/Schema/${schemaStringKey}`,
-		);
-	} else {
-		builder.addBlob(schemaStringKey, data);
-	}
-	return builder.getSummaryTree();
 }

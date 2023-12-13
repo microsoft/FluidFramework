@@ -153,6 +153,7 @@ export class SharedTree
 		HasListeners<CheckoutEvents>;
 	public readonly view: TreeCheckout;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	private schemaIndexLastChangedSeq: number | undefined;
 
 	/**
 	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
@@ -178,7 +179,9 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const removedRoots = makeDetachedFieldIndex("repair", options);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
+			getCurrentSeq: () => this.schemaIndexLastChangedSeq,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			schema,
@@ -371,6 +374,9 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		if ((message.contents as any).type === "SchemaOp") {
+			this.schemaIndexLastChangedSeq = message.sequenceNumber;
+		}
 		// TODO: Get rid of this `as any`. There should be a better way to narrow the type of message.contents.
 		if (!this.storedSchema.tryHandleOp(message.contents as any)) {
 			super.processCore(message, local, localOpMetadata);
