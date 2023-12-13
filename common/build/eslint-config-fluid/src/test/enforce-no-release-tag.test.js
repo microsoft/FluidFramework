@@ -33,7 +33,7 @@ describe("ESLint No Release Tag Rule Tests", function () {
 		assert.strictEqual(result.errorCount, 4, "Should have four errors");
 		assert.strictEqual(
 			result.messages[0].message,
-			"Including the release-tag inside the noReleaseTagMockClass.ts is not allowed.",
+			"Including the release-tag inside the MockClass at line 9 is not allowed.",
 		);
 	});
 });

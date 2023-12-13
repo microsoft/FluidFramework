@@ -6,8 +6,6 @@
 const { TSDocParser } = require("@microsoft/tsdoc");
 
 function hasReleaseTag(comment) {
-	console.log("comment", comment);
-
 	const parser = new TSDocParser();
 	const parserContext = parser.parseString(comment);
 
@@ -17,7 +15,6 @@ function hasReleaseTag(comment) {
 		parserContext.docComment.modifierTagSet.isPublic() ||
 		parserContext.docComment.modifierTagSet.isInternal();
 
-	console.log(hasReleaseTag);
 	return hasReleaseTag;
 }
 
@@ -36,9 +33,6 @@ module.exports = {
 	create(context) {
 		return {
 			ClassDeclaration(node) {
-				const fullFileName = context.filename;
-				const regex = /[^/]+$/;
-				const fileName = fullFileName.match(regex)[0];
 				const sourceCode = context.sourceCode;
 				const comments = sourceCode.getCommentsInside(node);
 
@@ -50,7 +44,7 @@ module.exports = {
 					if (hasReleaseTag(formattedComment)) {
 						context.report({
 							node: node,
-							message: `Including the release-tag inside the ${fileName} is not allowed.`,
+							message: `Including the release-tag inside the ${node.id.name} at line ${node.loc.start.line} is not allowed.`,
 						});
 					}
 				});
