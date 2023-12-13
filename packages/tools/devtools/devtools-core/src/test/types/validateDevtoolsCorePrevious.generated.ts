@@ -523,6 +523,7 @@ declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
@@ -1531,6 +1532,7 @@ declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<old.FluidDevtoolsProps>): void;
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
@@ -1543,6 +1545,7 @@ declare function get_old_InterfaceDeclaration_FluidHandleNode():
 declare function use_current_InterfaceDeclaration_FluidHandleNode(
     use: TypeOnly<current.FluidHandleNode>): void;
 use_current_InterfaceDeclaration_FluidHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_FluidHandleNode());
 
 /*
@@ -1615,6 +1618,7 @@ declare function get_old_InterfaceDeclaration_FluidObjectNodeBase():
 declare function use_current_InterfaceDeclaration_FluidObjectNodeBase(
     use: TypeOnly<current.FluidObjectNodeBase>): void;
 use_current_InterfaceDeclaration_FluidObjectNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_FluidObjectNodeBase());
 
 /*
@@ -2695,6 +2699,7 @@ declare function get_old_TypeAliasDeclaration_Primitive():
 declare function use_current_TypeAliasDeclaration_Primitive(
     use: TypeOnly<current.Primitive>): void;
 use_current_TypeAliasDeclaration_Primitive(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_Primitive());
 
 /*
@@ -2815,6 +2820,7 @@ declare function get_old_TypeAliasDeclaration_RootHandleNode():
 declare function use_current_TypeAliasDeclaration_RootHandleNode(
     use: TypeOnly<current.RootHandleNode>): void;
 use_current_TypeAliasDeclaration_RootHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_RootHandleNode());
 
 /*
@@ -3079,6 +3085,7 @@ declare function get_old_InterfaceDeclaration_TreeNodeBase():
 declare function use_current_InterfaceDeclaration_TreeNodeBase(
     use: TypeOnly<current.TreeNodeBase>): void;
 use_current_InterfaceDeclaration_TreeNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_TreeNodeBase());
 
 /*
@@ -3103,6 +3110,7 @@ declare function get_old_InterfaceDeclaration_UnknownObjectNode():
 declare function use_current_InterfaceDeclaration_UnknownObjectNode(
     use: TypeOnly<current.UnknownObjectNode>): void;
 use_current_InterfaceDeclaration_UnknownObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_UnknownObjectNode());
 
 /*
@@ -3127,6 +3135,7 @@ declare function get_old_InterfaceDeclaration_ValueNodeBase():
 declare function use_current_InterfaceDeclaration_ValueNodeBase(
     use: TypeOnly<current.ValueNodeBase>): void;
 use_current_InterfaceDeclaration_ValueNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ValueNodeBase());
 
 /*
@@ -3151,6 +3160,7 @@ declare function get_old_TypeAliasDeclaration_VisualChildNode():
 declare function use_current_TypeAliasDeclaration_VisualChildNode(
     use: TypeOnly<current.VisualChildNode>): void;
 use_current_TypeAliasDeclaration_VisualChildNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_VisualChildNode());
 
 /*
@@ -3175,6 +3185,7 @@ declare function get_old_TypeAliasDeclaration_VisualNode():
 declare function use_current_TypeAliasDeclaration_VisualNode(
     use: TypeOnly<current.VisualNode>): void;
 use_current_TypeAliasDeclaration_VisualNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_VisualNode());
 
 /*
@@ -3199,6 +3210,7 @@ declare function get_old_InterfaceDeclaration_VisualNodeBase():
 declare function use_current_InterfaceDeclaration_VisualNodeBase(
     use: TypeOnly<current.VisualNodeBase>): void;
 use_current_InterfaceDeclaration_VisualNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_VisualNodeBase());
 
 /*
@@ -3247,6 +3259,7 @@ declare function get_old_InterfaceDeclaration_VisualTreeNode():
 declare function use_current_InterfaceDeclaration_VisualTreeNode(
     use: TypeOnly<current.VisualTreeNode>): void;
 use_current_InterfaceDeclaration_VisualTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_VisualTreeNode());
 
 /*
@@ -3271,6 +3284,7 @@ declare function get_old_InterfaceDeclaration_VisualValueNode():
 declare function use_current_InterfaceDeclaration_VisualValueNode(
     use: TypeOnly<current.VisualValueNode>): void;
 use_current_InterfaceDeclaration_VisualValueNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_VisualValueNode());
 
 /*
