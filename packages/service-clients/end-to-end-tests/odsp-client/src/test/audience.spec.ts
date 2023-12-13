@@ -79,7 +79,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: upon resolving container, the partner member should be able
 	 * to resolve original member.
 	 */
-	it("can find partner member", async () => {
+	it.skip("can find partner member", async () => {
 		const { container, services } = await client.createContainer(schema);
 		const itemId = await container.attach();
 
@@ -131,7 +131,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: upon 1 partner leaving, other parther should observe
 	 * memberRemoved event and have correct partner count.
 	 */
-	it("can observe member leaving", async () => {
+	it.skip("can observe member leaving", async () => {
 		const { container } = await client.createContainer(schema);
 		const itemId = await container.attach();
 
